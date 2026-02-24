@@ -37,6 +37,8 @@ class ApplicationDocumentController extends Controller
             ]
         );
 
-        return back()->with('success', 'Document uploaded successfully.');
+        return redirect()
+    ->route('staff.applications.show', ['application' => $application->id])
+    ->with('success', 'Document uploaded successfully.');
     }
 }

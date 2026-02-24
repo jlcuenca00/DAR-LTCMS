@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Staff\ApplicationDocumentController;
+use App\Http\Controllers\Staff\LandTransferApplicationController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -41,6 +42,13 @@ Route::middleware(['auth', 'role:staff'])
     ->prefix('staff')
     ->group(function () {
 
+        // Staff: Application Details (Checklist + Upload UI)
+        Route::get(
+            '/applications/{application}',
+            [LandTransferApplicationController::class, 'show']
+        )->name('staff.applications.show');
+
+        // Staff: Upload a required document for an application
         Route::post(
             '/applications/{application}/documents/{requiredDocument}',
             [ApplicationDocumentController::class, 'store']
