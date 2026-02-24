@@ -17,9 +17,7 @@ class RoleMiddleware
 {
     $user = $request->user();
 
-    if (!$user) {
-        abort(401);
-    }
+    if (!$user) abort(401);
 
     if (!in_array($user->role, $roles, true)) {
         abort(403);
