@@ -34,7 +34,45 @@
             <div><strong>Location:</strong> {{ $application->barangay ?? '—' }}, {{ $application->municipality ?? '—' }}</div>
             <div><strong>Status:</strong> {{ strtoupper($application->status) }}</div>
         </div>
+        
+        <div class="bg-white shadow rounded p-4 border">
+    <div class="font-semibold mb-2">Workflow Actions</div>
 
+    <div class="flex flex-wrap gap-2">
+        @if ($application->status === 'draft')
+            <form method="POST" action="{{ route('staff.applications.submit', $application) }}">
+                @csrf
+                <button type="submit" class="px-3 py-2 bg-blue-600 text-white rounded">
+                    Submit for Review
+                </button>
+            </form>
+        @endif
+
+        @if ($application->status === 'pending_review')
+            <form method="POST" action="{{ route('staff.applications.approve', $application) }}">
+                @csrf
+                <input type="text" name="decision_reason" placeholder="Reason (optional)" class="border rounded p-2 text-sm">
+                <input type="text" name="decision_notes" placeholder="Notes (optional)" class="border rounded p-2 text-sm">
+                <button type="submit" class="px-3 py-2 bg-green-600 text-white rounded">
+                    Approve
+                </button>
+            </form>
+
+            <form method="POST" action="{{ route('staff.applications.not_approved', $application) }}">
+                @csrf
+                <input type="text" name="decision_reason" placeholder="Reason (optional)" class="border rounded p-2 text-sm">
+                <input type="text" name="decision_notes" placeholder="Notes (optional)" class="border rounded p-2 text-sm">
+                <button type="submit" class="px-3 py-2 bg-red-600 text-white rounded">
+                    Mark Not Approved
+                </button>
+            </form>
+        @endif
+    </div>
+
+    <div class="text-sm text-gray-600 mt-2">
+        Current status: <strong>{{ strtoupper($application->status) }}</strong>
+    </div>
+</div>
         {{-- Completion Counter --}}
         @php
             $totalReq = $transferorRequirements->count() + $transfereeRequirements->count();
