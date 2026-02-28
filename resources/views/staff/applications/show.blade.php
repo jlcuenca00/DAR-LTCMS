@@ -211,6 +211,35 @@
 
                 @endforeach
             </div>
+            @if ($transfereeOwner)
+    <div class="bg-white shadow rounded p-4 border">
+        <div class="font-semibold text-gray-900">5-Hectare Validation (Assistive)</div>
+        <div class="text-sm text-gray-700 mt-2 space-y-1">
+            <div><strong>Transferee:</strong> {{ $transfereeOwner->full_name }}</div>
+            <div><strong>Current Approved Total:</strong> {{ number_format($currentApprovedTotal, 4) }} ha</div>
+            <div><strong>Pending Incoming Total:</strong> {{ number_format($pendingIncomingTotal, 4) }} ha</div>
+            <div><strong>This Application Total:</strong> {{ number_format($thisApplicationTotal, 4) }} ha</div>
+
+            <div class="pt-2">
+                <strong>Projected Total:</strong> {{ number_format($projectedTotal, 4) }} ha
+            </div>
+
+            @if ($exceedsFiveHectares)
+                <div class="pt-2 text-red-700 font-semibold">
+                    ⚠️ Flag: Projected total exceeds the 5-hectare limit.
+                </div>
+            @else
+                <div class="pt-2 text-green-700 font-semibold">
+                    ✅ Within the 5-hectare limit.
+                </div>
+            @endif
+
+            <div class="pt-2 text-xs text-gray-500">
+                Note: This is an assistive validation. Final approval remains a staff decision.
+            </div>
+        </div>
+    </div>
+@endif
         </div>
 
     </div>
