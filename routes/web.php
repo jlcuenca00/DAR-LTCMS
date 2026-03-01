@@ -56,6 +56,9 @@ Route::middleware(['auth', 'role:staff'])
             [ApplicationDocumentController::class, 'store']
         )->name('staff.applications.documents.store');
 
+        Route::delete('/applications/{application}/documents/{requiredDocument}', [\App\Http\Controllers\Staff\ApplicationDocumentController::class, 'destroy'])
+    ->name('staff.applications.documents.destroy');
+
 
 
 Route::post('/applications/{application}/submit', [ApplicationWorkflowController::class, 'submit'])

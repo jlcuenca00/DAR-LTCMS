@@ -20,7 +20,7 @@ class ApplicationParcel extends Model
     }
 
     public function parcel()
-    {
-        return $this->belongsTo(Parcel::class);
-    }
+{
+    return $this->belongsTo(\App\Models\Parcel::class);
+}
 }

@@ -10,6 +10,7 @@ use App\Models\LandTransferApplication;
 use App\Models\RequiredDocument;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use App\Services\LandRegistryMutationService;
 
 class ApplicationWorkflowController extends Controller
 {
@@ -36,32 +37,43 @@ class ApplicationWorkflowController extends Controller
      * - missing mandatory documents
      */
     public function approve(Request $request, LandTransferApplication $application)
-    {
-        if ($application->status !== 'pending_review') {
-            return back()->withErrors(['status' => 'Only applications pending review can be approved.']);
-        }
-
-        [$snapshot, $hasCriticalFailures] = $this->buildValidationSnapshot($application);
-
-        if ($hasCriticalFailures) {
-            return back()->withErrors([
-                'validation' => 'Approval blocked: critical validation failures detected. Mark as Not Approved or resolve issues.'
-            ]);
-        }
-
-        $application->status = 'approved';
-        $application->reviewed_by = Auth::id();
-        $application->reviewed_at = now();
-        $application->validated_at = now();
-        $application->validation_snapshot = $snapshot;
-        $application->decision_reason = $request->input('decision_reason');
-        $application->decision_notes = $request->input('decision_notes');
-        $application->save();
-
-        // NOTE (future step): update landholdings on approval
-
-        return back()->with('success', 'Application approved.');
+{
+    if ($application->status !== 'pending_review') {
+        return back()->withErrors(['status' => 'Only applications pending review can be approved.']);
     }
+
+    // Require landowner links for registry mutation integrity
+    if (!$application->transferor_landowner_id || !$application->transferee_landowner_id) {
+        return back()->with('error', 'Cannot approve: Transferor and Transferee must be linked to Landowner records.');
+    }
+
+    [$snapshot, $hasCriticalFailures] = $this->buildValidationSnapshot($application);
+
+    if ($hasCriticalFailures) {
+        return back()->withErrors([
+            'validation' => 'Approval blocked: critical validation failures detected. Mark as Not Approved or resolve issues.'
+        ]);
+    }
+    // Run land registry mutation (idempotent)
+try {
+    app(LandRegistryMutationService::class)->mutate($application);
+} catch (\Exception $e) {
+    return back()->with('error', 'Registry mutation failed: ' . $e->getMessage());
+}
+
+    $application->status = 'approved';
+    $application->reviewed_by = Auth::id();
+    $application->reviewed_at = now();
+    $application->validated_at = now();
+    $application->validation_snapshot = $snapshot;
+    $application->decision_reason = $request->input('decision_reason');
+    $application->decision_notes = $request->input('decision_notes');
+    $application->save();
+
+    // NOTE (future step): update landholdings on approval
+
+    return back()->with('success', 'Application approved.');
+}
 
     /**
      * Not Approved: pending_review -> not_approved
