@@ -56,7 +56,7 @@ class ApplicationWorkflowController extends Controller
     }
     // Run land registry mutation (idempotent)
 try {
-    app(LandRegistryMutationService::class)->mutate($application);
+    app(LandRegistryMutationService::class)->mutate($application, Auth::id());
 } catch (\Exception $e) {
     return back()->with('error', 'Registry mutation failed: ' . $e->getMessage());
 }
