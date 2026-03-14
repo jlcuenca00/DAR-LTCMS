@@ -4,6 +4,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Staff\ApplicationDocumentController;
 use App\Http\Controllers\Staff\ApplicationWorkflowController;
 use App\Http\Controllers\Staff\LandTransferApplicationController;
+use App\Http\Controllers\Staff\ApplicationClearanceController;
 use Illuminate\Support\Facades\Route;
 
 
@@ -69,6 +70,12 @@ Route::post('/applications/{application}/approve', [ApplicationWorkflowControlle
 
 Route::post('/applications/{application}/not-approved', [ApplicationWorkflowController::class, 'notApproved'])
     ->name('staff.applications.not_approved');
+
+    Route::get('/applications/{application}/clearance', [ApplicationClearanceController::class, 'show'])
+    ->name('staff.applications.clearance.show');
+
+Route::get('/applications/{application}/clearance/pdf', [ApplicationClearanceController::class, 'pdf'])
+    ->name('staff.applications.clearance.pdf');
 
     });
 

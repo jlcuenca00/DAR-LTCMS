@@ -121,7 +121,30 @@
                 Current status: <strong>{{ strtoupper($application->status) }}</strong>
             </div>
         </div>
+        @if (in_array($application->status, ['approved', 'not_approved'], true) && $application->clearance)
+    <div class="bg-white shadow rounded p-4 border">
+        <div class="font-semibold mb-2">Generated Clearance</div>
 
+        <div class="text-sm text-gray-700 space-y-1">
+            <div><strong>Clearance No.:</strong> {{ $application->clearance->clearance_number }}</div>
+            <div><strong>Decision:</strong> {{ strtoupper($application->clearance->decision_status) }}</div>
+            <div><strong>Generated At:</strong> {{ optional($application->clearance->generated_at)->format('M d, Y h:i A') ?? '—' }}</div>
+        </div>
+
+        <div class="flex flex-wrap gap-2 mt-3">
+            <a href="{{ route('staff.applications.clearance.show', $application) }}"
+               class="inline-block bg-gray-800 text-white px-4 py-2 rounded">
+                Open Print View
+            </a>
+
+            <a href="{{ route('staff.applications.clearance.pdf', $application) }}"
+               class="inline-block bg-blue-700 text-white px-4 py-2 rounded"
+               target="_blank">
+                Open PDF
+            </a>
+        </div>
+    </div>
+@endif
         {{-- Completion Counter --}}
         @php
             $totalReq = $transferorRequirements->count() + $transfereeRequirements->count();

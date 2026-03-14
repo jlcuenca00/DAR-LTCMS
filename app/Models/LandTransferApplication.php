@@ -54,4 +54,10 @@ class LandTransferApplication extends Model
     {
         return $this->belongsTo(\App\Models\Landowner::class, 'transferee_landowner_id');
     }
+
+    public function clearance()
+    {
+    return $this->hasOne(\App\Models\ApplicationClearance::class, 'land_transfer_application_id');
+    }
+
 }
