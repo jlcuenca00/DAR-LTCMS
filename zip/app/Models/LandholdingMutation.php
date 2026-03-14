@@ -34,12 +34,12 @@ class LandholdingMutation extends Model
         return $this->belongsTo(Parcel::class);
     }
 
-    public function transferorLandowner()
+    public function transferor()
     {
         return $this->belongsTo(Landowner::class, 'transferor_landowner_id');
     }
 
-    public function transfereeLandowner()
+    public function transferee()
     {
         return $this->belongsTo(Landowner::class, 'transferee_landowner_id');
     }

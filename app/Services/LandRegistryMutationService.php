@@ -11,83 +11,105 @@ use Exception;
 
 class LandRegistryMutationService
 {
-    public function mutate(LandTransferApplication $application): void
-    {
-        // 🔒 Idempotency guard
-        if ($application->registry_mutated_at !== null) {
-            throw new Exception('Registry mutation already executed for this application.');
+    public function mutate(LandTransferApplication $application, int $userId): void
+{
+    DB::transaction(function () use ($application, $userId) {
+
+        // Lock the application row to prevent double approval races
+        $application = LandTransferApplication::where('id', $application->id)
+            ->lockForUpdate()
+            ->firstOrFail();
+
+        // Idempotency guard (must be inside the lock)
+        if ($application->registry_mutated_at) {
+            return;
         }
 
-        DB::transaction(function () use ($application) {
+        $parcels = $application->applicationParcels()->get();
 
-            foreach ($application->applicationParcels as $appParcel) {
+        foreach ($parcels as $parcel) {
 
-                $parcel = $appParcel->parcel;
-                $transferArea = $appParcel->area_hectares;
+            $transferArea = $parcel->area_hectares;
 
-                $transferor = $application->transferor_landowner_id;
-                $transferee = $application->transferee_landowner_id;
+            $transferorHolding = Landholding::where([
+                'landowner_id' => $application->transferor_landowner_id,
+                'parcel_id' => $parcel->parcel_id,
+                'status' => 'active'
+            ])->lockForUpdate()->first();
 
-                // Find transferor holding
-                $transferorHolding = Landholding::where('landowner_id', $transferor)
-                    ->where('parcel_id', $parcel->id)
-                    ->first();
-
-                if (!$transferorHolding) {
-                    throw new Exception("Transferor does not own parcel ID {$parcel->id}");
-                }
-
-                $transferorBefore = $transferorHolding->area_hectares;
-
-                if ($transferorBefore < $transferArea) {
-                    throw new Exception("Transfer area exceeds transferor holding.");
-                }
-
-                // Deduct from transferor
-                $transferorHolding->area_hectares -= $transferArea;
-                $transferorHolding->save();
-
-                $transferorAfter = $transferorHolding->area_hectares;
-
-                // Add to transferee
-                $transfereeHolding = Landholding::firstOrCreate(
-                    [
-                        'landowner_id' => $transferee,
-                        'parcel_id' => $parcel->id,
-                    ],
-                    [
-                        'area_hectares' => 0,
-                        'status' => 'active',
-                    ]
-                );
-
-                $transfereeBefore = $transfereeHolding->area_hectares;
-                $transfereeHolding->area_hectares += $transferArea;
-                $transfereeHolding->source_application_id = $application->id;
-                $transfereeHolding->save();
-                $transfereeAfter = $transfereeHolding->area_hectares;
-
-                // Create ledger record
-                LandholdingMutation::create([
-                    'land_transfer_application_id' => $application->id,
-                    'parcel_id' => $parcel->id,
-                    'transferor_landowner_id' => $transferor,
-                    'transferee_landowner_id' => $transferee,
-                    'transferred_area_hectares' => $transferArea,
-                    'transferor_before_area' => $transferorBefore,
-                    'transferor_after_area' => $transferorAfter,
-                    'transferee_before_area' => $transfereeBefore,
-                    'transferee_after_area' => $transfereeAfter,
-                    'mutated_by' => Auth::id(),
-                    'mutated_at' => now(),
-                ]);
+            if (!$transferorHolding) {
+                throw new \Exception("Transferor holding not found for parcel {$parcel->parcel_id}");
             }
 
-            // Stamp mutation
-            $application->update([
-                'registry_mutated_at' => now(),
-                'registry_mutated_by' => Auth::id(),
-            ]);
-        });
-    }
+            // Check sufficient area
+            if (bccomp($transferorHolding->area_hectares, $transferArea, 4) < 0) {
+                throw new \Exception("Transfer area exceeds transferor holding.");
+            }
+
+            $beforeArea = $transferorHolding->area_hectares;
+
+            // Safe subtraction using bc math
+            $afterArea = bcsub($beforeArea, $transferArea, 4);
+
+            $transferorHolding->area_hectares = $afterArea;
+
+            // Policy: if 0 area → inactive
+            if (bccomp($afterArea, '0.0000', 4) === 0) {
+                $transferorHolding->status = 'inactive';
+                $transferorHolding->date_transferred = now();
+            }
+
+            $transferorHolding->save();
+
+            // Create / update transferee holding
+            $transfereeHolding = Landholding::firstOrCreate(
+                [
+                    'landowner_id' => $application->transferee_landowner_id,
+                    'parcel_id' => $parcel->parcel_id
+                ],
+                [
+                    'area_hectares' => '0.0000',
+                    'status' => 'active'
+                ]
+            );
+
+            $beforeTransferee = $transfereeHolding->area_hectares;
+
+            $transfereeHolding->area_hectares = bcadd(
+                $transfereeHolding->area_hectares,
+                $transferArea,
+                4
+            );
+
+            $transfereeHolding->status = 'active';
+            $transfereeHolding->save();
+
+            // Mutation ledger
+            LandholdingMutation::create([
+    'land_transfer_application_id' => $application->id,
+    'parcel_id' => $parcel->parcel_id,
+
+    'transferor_landowner_id' => $application->transferor_landowner_id,
+    'transferee_landowner_id' => $application->transferee_landowner_id,
+
+    'transferred_area_hectares' => $transferArea,
+
+    'transferor_before_area' => $beforeArea,
+    'transferor_after_area' => $afterArea,
+
+    'transferee_before_area' => $beforeTransferee,
+    'transferee_after_area' => $transfereeHolding->area_hectares,
+
+    'mutated_by' => $userId,
+    'mutated_at' => now(),
+]);
+        }
+
+        // Mark registry mutated
+        $application->update([
+            'registry_mutated_at' => now(),
+            'registry_mutated_by' => $userId
+        ]);
+    });
+}
 }
