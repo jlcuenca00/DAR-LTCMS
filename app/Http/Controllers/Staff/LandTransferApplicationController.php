@@ -14,6 +14,14 @@ class LandTransferApplicationController extends Controller
 {
     public function show(LandTransferApplication $application)
     {
+        $application->load([
+            'documents',
+            'applicationParcels.parcel',
+            'transferorLandowner',
+            'transfereeLandowner',
+            'clearance',
+        ]);
+
         // 1) Required documents (checklist)
         $transferorRequirements = RequiredDocument::where('applies_to', 'transferor')
             ->orderBy('is_mandatory', 'desc')

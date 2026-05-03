@@ -8,9 +8,11 @@ use App\Models\Landholding;
 use App\Models\Landowner;
 use App\Models\LandTransferApplication;
 use App\Models\RequiredDocument;
+use App\Services\ApplicationClearanceService;
+use App\Services\LandRegistryMutationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use App\Services\LandRegistryMutationService;
+use Illuminate\Support\Facades\DB;
 
 class ApplicationWorkflowController extends Controller
 {
@@ -37,43 +39,45 @@ class ApplicationWorkflowController extends Controller
      * - missing mandatory documents
      */
     public function approve(Request $request, LandTransferApplication $application)
-{
-    if ($application->status !== 'pending_review') {
-        return back()->withErrors(['status' => 'Only applications pending review can be approved.']);
+    {
+        if ($application->status !== 'pending_review') {
+            return back()->withErrors(['status' => 'Only applications pending review can be approved.']);
+        }
+
+        if (!$application->transferor_landowner_id || !$application->transferee_landowner_id) {
+            return back()->with('error', 'Cannot approve: Transferor and Transferee must be linked to Landowner records.');
+        }
+
+        [$snapshot, $hasCriticalFailures] = $this->buildValidationSnapshot($application);
+
+        if ($hasCriticalFailures) {
+            return back()->withErrors([
+                'validation' => 'Approval blocked: critical validation failures detected. Mark as Not Approved or resolve issues.'
+            ]);
+        }
+
+        try {
+            DB::transaction(function () use ($request, $application, $snapshot) {
+                app(LandRegistryMutationService::class)->mutate($application, Auth::id());
+
+                $application = LandTransferApplication::findOrFail($application->id);
+                $application->status = 'approved';
+                $application->reviewed_by = Auth::id();
+                $application->reviewed_at = now();
+                $application->validated_at = now();
+                $application->validation_snapshot = $snapshot;
+                $application->decision_reason = $request->input('decision_reason');
+                $application->decision_notes = $request->input('decision_notes');
+                $application->save();
+
+                app(ApplicationClearanceService::class)->generateForDecision($application, Auth::id());
+            });
+        } catch (\Throwable $e) {
+            return back()->with('error', 'Approval failed: ' . $e->getMessage());
+        }
+
+        return back()->with('success', 'Application approved and clearance generated.');
     }
-
-    // Require landowner links for registry mutation integrity
-    if (!$application->transferor_landowner_id || !$application->transferee_landowner_id) {
-        return back()->with('error', 'Cannot approve: Transferor and Transferee must be linked to Landowner records.');
-    }
-
-    [$snapshot, $hasCriticalFailures] = $this->buildValidationSnapshot($application);
-
-    if ($hasCriticalFailures) {
-        return back()->withErrors([
-            'validation' => 'Approval blocked: critical validation failures detected. Mark as Not Approved or resolve issues.'
-        ]);
-    }
-    // Run land registry mutation (idempotent)
-try {
-    app(LandRegistryMutationService::class)->mutate($application);
-} catch (\Exception $e) {
-    return back()->with('error', 'Registry mutation failed: ' . $e->getMessage());
-}
-
-    $application->status = 'approved';
-    $application->reviewed_by = Auth::id();
-    $application->reviewed_at = now();
-    $application->validated_at = now();
-    $application->validation_snapshot = $snapshot;
-    $application->decision_reason = $request->input('decision_reason');
-    $application->decision_notes = $request->input('decision_notes');
-    $application->save();
-
-    // NOTE (future step): update landholdings on approval
-
-    return back()->with('success', 'Application approved.');
-}
 
     /**
      * Not Approved: pending_review -> not_approved
@@ -81,22 +85,31 @@ try {
      */
     public function notApproved(Request $request, LandTransferApplication $application)
     {
-        if (!in_array($application->status, ['pending_review', 'draft'])) {
+        if (!in_array($application->status, ['pending_review', 'draft'], true)) {
             return back()->withErrors(['status' => 'Only draft or pending review applications can be marked Not Approved.']);
         }
 
         [$snapshot, $hasCriticalFailures] = $this->buildValidationSnapshot($application);
 
-        $application->status = 'not_approved';
-        $application->reviewed_by = Auth::id();
-        $application->reviewed_at = now();
-        $application->validated_at = now();
-        $application->validation_snapshot = $snapshot;
-        $application->decision_reason = $request->input('decision_reason');
-        $application->decision_notes = $request->input('decision_notes');
-        $application->save();
+        try {
+            DB::transaction(function () use ($request, $application, $snapshot) {
+                $application = LandTransferApplication::findOrFail($application->id);
+                $application->status = 'not_approved';
+                $application->reviewed_by = Auth::id();
+                $application->reviewed_at = now();
+                $application->validated_at = now();
+                $application->validation_snapshot = $snapshot;
+                $application->decision_reason = $request->input('decision_reason');
+                $application->decision_notes = $request->input('decision_notes');
+                $application->save();
 
-        return back()->with('success', 'Application marked as Not Approved (record retained for audit).');
+                app(ApplicationClearanceService::class)->generateForDecision($application, Auth::id());
+            });
+        } catch (\Throwable $e) {
+            return back()->with('error', 'Not Approved decision failed: ' . $e->getMessage());
+        }
+
+        return back()->with('success', 'Application marked as Not Approved and clearance generated.');
     }
 
     /**
@@ -105,7 +118,6 @@ try {
      */
     private function buildValidationSnapshot(LandTransferApplication $application): array
     {
-        // 1) 5-hectare validation
         $currentApprovedTotal = 0;
         $pendingIncomingTotal = 0;
         $thisApplicationTotal = 0;
@@ -129,27 +141,25 @@ try {
             $thisApplicationTotal = ApplicationParcel::where('land_transfer_application_id', $application->id)
                 ->sum('area_hectares');
 
-            $projectedTotal = (float)$currentApprovedTotal + (float)$pendingIncomingTotal + (float)$thisApplicationTotal;
+            $projectedTotal = (float) $currentApprovedTotal + (float) $pendingIncomingTotal + (float) $thisApplicationTotal;
             $exceedsFive = $projectedTotal > 5.0000;
         }
 
-        // 2) Mandatory documents completeness
         $mandatoryIds = RequiredDocument::where('is_mandatory', true)->pluck('id')->all();
         $uploadedIds = $application->documents()->pluck('required_document_id')->all();
 
         $missingMandatory = array_values(array_diff($mandatoryIds, $uploadedIds));
         $missingMandatoryCount = count($missingMandatory);
 
-        // Critical failures for APPROVAL:
         $hasCriticalFailures = $exceedsFive || $missingMandatoryCount > 0;
 
         $snapshot = [
             'computed_at' => now()->toDateTimeString(),
             'five_hectare' => [
-                'current_approved_total' => (float)$currentApprovedTotal,
-                'pending_incoming_total' => (float)$pendingIncomingTotal,
-                'this_application_total' => (float)$thisApplicationTotal,
-                'projected_total' => (float)$projectedTotal,
+                'current_approved_total' => (float) $currentApprovedTotal,
+                'pending_incoming_total' => (float) $pendingIncomingTotal,
+                'this_application_total' => (float) $thisApplicationTotal,
+                'projected_total' => (float) $projectedTotal,
                 'exceeds_limit' => $exceedsFive,
                 'limit' => 5.0000,
             ],
