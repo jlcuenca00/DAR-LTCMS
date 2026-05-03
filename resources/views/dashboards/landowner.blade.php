@@ -1,9 +1,15 @@
-<x-app-layout>
-    <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800">Landowner Dashboard</h2>
-    </x-slot>
-
-    <div class="p-6">
-        Welcome, {{ auth()->user()->name }} ({{ auth()->user()->role }})
+<div class="space-y-4">
+    <div>
+        <a href="{{ route('landowner.parcels.index') }}"
+           class="inline-flex items-center px-4 py-2 bg-gray-800 text-white rounded-md">
+            View My Parcel Records
+        </a>
     </div>
-</x-app-layout>
+
+    <div>
+        <a href="{{ route('landowner.applications.index') }}"
+           class="inline-flex items-center px-4 py-2 bg-gray-800 text-white rounded-md">
+            View My Application Status
+        </a>
+    </div>
+</div>
