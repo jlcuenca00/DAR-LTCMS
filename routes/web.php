@@ -5,6 +5,7 @@ use App\Http\Controllers\Staff\ApplicationDocumentController;
 use App\Http\Controllers\Staff\ApplicationWorkflowController;
 use App\Http\Controllers\Staff\LandTransferApplicationController;
 use App\Http\Controllers\Staff\ApplicationClearanceController;
+use App\Http\Controllers\Landowner\LandownerPortalController;
 use Illuminate\Support\Facades\Route;
 
 
@@ -77,6 +78,22 @@ Route::post('/applications/{application}/not-approved', [ApplicationWorkflowCont
 Route::get('/applications/{application}/clearance/pdf', [ApplicationClearanceController::class, 'pdf'])
     ->name('staff.applications.clearance.pdf');
 
+    });
+
+    /*
+|--------------------------------------------------------------------------
+| Landowner-only Routes
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware(['auth', 'role:landowner'])
+    ->prefix('landowner')
+    ->group(function () {
+        Route::get('/parcels', [LandownerPortalController::class, 'parcels'])
+            ->name('landowner.parcels.index');
+
+        Route::get('/applications', [LandownerPortalController::class, 'applications'])
+            ->name('landowner.applications.index');
     });
 
 require __DIR__.'/auth.php';

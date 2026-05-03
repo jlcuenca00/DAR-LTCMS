@@ -9,7 +9,6 @@ use App\Models\Landowner;
 use App\Models\LandTransferApplication;
 use App\Models\RequiredDocument;
 use App\Services\ApplicationClearanceService;
-use App\Services\LandRegistryMutationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -33,51 +32,61 @@ class ApplicationWorkflowController extends Controller
     }
 
     /**
-     * Approve: pending_review -> approved
-     * BLOCK if critical validations fail:
-     * - exceeds 5 hectares
-     * - missing mandatory documents
-     */
-    public function approve(Request $request, LandTransferApplication $application)
-    {
-        if ($application->status !== 'pending_review') {
-            return back()->withErrors(['status' => 'Only applications pending review can be approved.']);
-        }
-
-        if (!$application->transferor_landowner_id || !$application->transferee_landowner_id) {
-            return back()->with('error', 'Cannot approve: Transferor and Transferee must be linked to Landowner records.');
-        }
-
-        [$snapshot, $hasCriticalFailures] = $this->buildValidationSnapshot($application);
-
-        if ($hasCriticalFailures) {
-            return back()->withErrors([
-                'validation' => 'Approval blocked: critical validation failures detected. Mark as Not Approved or resolve issues.'
-            ]);
-        }
-
-        try {
-            DB::transaction(function () use ($request, $application, $snapshot) {
-                app(LandRegistryMutationService::class)->mutate($application, Auth::id());
-
-                $application = LandTransferApplication::findOrFail($application->id);
-                $application->status = 'approved';
-                $application->reviewed_by = Auth::id();
-                $application->reviewed_at = now();
-                $application->validated_at = now();
-                $application->validation_snapshot = $snapshot;
-                $application->decision_reason = $request->input('decision_reason');
-                $application->decision_notes = $request->input('decision_notes');
-                $application->save();
-
-                app(ApplicationClearanceService::class)->generateForDecision($application, Auth::id());
-            });
-        } catch (\Throwable $e) {
-            return back()->with('error', 'Approval failed: ' . $e->getMessage());
-        }
-
-        return back()->with('success', 'Application approved and clearance generated.');
+ * Approve: pending_review -> approved
+ *
+ * Scope rule:
+ * Approval generates and records a clearance decision only.
+ * It does NOT automatically transfer land ownership or mutate registry records.
+ */
+public function approve(Request $request, LandTransferApplication $application)
+{
+    if ($application->status !== 'pending_review') {
+        return back()->withErrors(['status' => 'Only applications pending review can be approved.']);
     }
+
+    if (!$application->transferor_landowner_id || !$application->transferee_landowner_id) {
+        return back()->with('error', 'Cannot approve: Transferor and Transferee must be linked to Landowner records.');
+    }
+
+    [$snapshot, $hasCriticalFailures] = $this->buildValidationSnapshot($application);
+
+    if ($hasCriticalFailures) {
+        return back()->withErrors([
+            'validation' => 'Approval blocked: critical validation failures detected. Mark as Not Approved or resolve issues.'
+        ]);
+    }
+
+    try {
+        DB::transaction(function () use ($request, $application, $snapshot) {
+            $application = LandTransferApplication::findOrFail($application->id);
+
+            $application->status = 'approved';
+            $application->reviewed_by = Auth::id();
+            $application->reviewed_at = now();
+            $application->validated_at = now();
+            $application->validation_snapshot = $snapshot;
+            $application->decision_reason = $request->input('decision_reason');
+            $application->decision_notes = $request->input('decision_notes');
+
+            /*
+             * Important:
+             * Do not call LandRegistryMutationService here.
+             * This system is limited to clearance generation, processing,
+             * monitoring, and record keeping only.
+             */
+            $application->registry_mutated_at = null;
+            $application->registry_mutated_by = null;
+
+            $application->save();
+
+            app(ApplicationClearanceService::class)->generateForDecision($application, Auth::id());
+        });
+    } catch (\Throwable $e) {
+        return back()->with('error', 'Approval failed: ' . $e->getMessage());
+    }
+
+    return back()->with('success', 'Application approved and clearance generated.');
+}
 
     /**
      * Not Approved: pending_review -> not_approved
