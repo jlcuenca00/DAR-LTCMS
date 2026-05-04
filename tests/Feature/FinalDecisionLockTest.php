@@ -53,7 +53,7 @@ class FinalDecisionLockTest extends TestCase
         );
 
         $response->assertRedirect(route('staff.applications.show', $application));
-        $response->assertSessionHas('error', 'This application is already finalized. Document uploads are locked.');
+        $response->assertSessionHas('error', 'This application is already finalized. Document uploads and metadata encoding are locked.');
 
         $this->assertDatabaseMissing('application_documents', [
             'land_transfer_application_id' => $application->id,
@@ -99,7 +99,7 @@ class FinalDecisionLockTest extends TestCase
         );
 
         $response->assertRedirect(route('staff.applications.show', $application));
-        $response->assertSessionHas('error', 'This application is already finalized. Document uploads are locked.');
+        $response->assertSessionHas('error', 'This application is already finalized. Document uploads and metadata encoding are locked.');
 
         $this->assertDatabaseMissing('application_documents', [
             'land_transfer_application_id' => $application->id,

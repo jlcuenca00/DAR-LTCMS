@@ -239,4 +239,4 @@ class AuditLoggingTest extends TestCase
         $this->assertSame(LandTransferApplication::STATUS_APPROVED, $clearanceLog->metadata['decision_status']);
         $this->assertSame(0, $clearanceLog->metadata['parcel_count']);
     }
-}
+}   
