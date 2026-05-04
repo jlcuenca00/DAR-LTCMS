@@ -6,6 +6,7 @@ use App\Models\ApplicationClearance;
 use App\Models\LandTransferApplication;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
+use App\Services\AuditLogger;
 
 class ApplicationClearanceService
 {
@@ -48,7 +49,7 @@ class ApplicationClearanceService
                 $application->id
             );
 
-            return ApplicationClearance::updateOrCreate(
+                        $clearance = ApplicationClearance::updateOrCreate(
                 [
                     'land_transfer_application_id' => $application->id,
                 ],
@@ -68,6 +69,21 @@ class ApplicationClearanceService
                     'generated_at' => now(),
                 ]
             );
+
+            AuditLogger::record(
+                'clearance_generated',
+                $application,
+                $clearance,
+                [
+                    'clearance_number' => $clearance->clearance_number,
+                    'decision_status' => $clearance->decision_status,
+                    'total_area_hectares' => $clearance->total_area_hectares,
+                    'parcel_count' => count($parcelSnapshot),
+                ],
+                $userId
+            );
+
+            return $clearance;
         });
     }
 }

@@ -9,6 +9,7 @@ use App\Models\Landowner;
 use App\Models\LandTransferApplication;
 use App\Models\RequiredDocument;
 use App\Services\ApplicationClearanceService;
+use App\Services\AuditLogger;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -29,8 +30,20 @@ class ApplicationWorkflowController extends Controller
             return back()->withErrors(['status' => 'Only draft applications can be submitted.']);
         }
 
-        $application->status = 'pending_review';
+                $oldStatus = $application->status;
+
+        $application->status = LandTransferApplication::STATUS_PENDING_REVIEW;
         $application->save();
+
+        AuditLogger::record(
+            'application_submitted',
+            $application,
+            $application,
+            [
+                'old_status' => $oldStatus,
+                'new_status' => $application->status,
+            ]
+        );
 
         return back()->with('success', 'Application submitted for review.');
     }
@@ -84,7 +97,20 @@ public function approve(Request $request, LandTransferApplication $application)
             $application->registry_mutated_at = null;
             $application->registry_mutated_by = null;
 
-            $application->save();
+                        $application->save();
+
+            AuditLogger::record(
+                'application_approved',
+                $application,
+                $application,
+                [
+                    'decision_reason' => $application->decision_reason,
+                    'decision_notes' => $application->decision_notes,
+                    'validated_at' => optional($application->validated_at)->toDateTimeString(),
+                    'has_validation_snapshot' => ! empty($application->validation_snapshot),
+                    'registry_mutation_performed' => false,
+                ]
+            );
 
             app(ApplicationClearanceService::class)->generateForDecision($application, Auth::id());
         });
@@ -120,7 +146,20 @@ public function approve(Request $request, LandTransferApplication $application)
                 $application->validation_snapshot = $snapshot;
                 $application->decision_reason = $request->input('decision_reason');
                 $application->decision_notes = $request->input('decision_notes');
-                $application->save();
+                                $application->save();
+
+                AuditLogger::record(
+                    'application_not_approved',
+                    $application,
+                    $application,
+                    [
+                        'decision_reason' => $application->decision_reason,
+                        'decision_notes' => $application->decision_notes,
+                        'validated_at' => optional($application->validated_at)->toDateTimeString(),
+                        'has_validation_snapshot' => ! empty($application->validation_snapshot),
+                        'registry_mutation_performed' => false,
+                    ]
+                );
 
                 app(ApplicationClearanceService::class)->generateForDecision($application, Auth::id());
             });

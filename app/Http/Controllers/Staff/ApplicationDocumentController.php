@@ -9,6 +9,7 @@ use App\Models\RequiredDocument;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use App\Services\AuditLogger;
 
 class ApplicationDocumentController extends Controller
 {
@@ -28,7 +29,11 @@ class ApplicationDocumentController extends Controller
 
         $path = $request->file('file')->store("application-documents/{$application->id}");
 
-        ApplicationDocument::updateOrCreate(
+                $existingDocument = ApplicationDocument::where('land_transfer_application_id', $application->id)
+            ->where('required_document_id', $requiredDocument->id)
+            ->first();
+
+        $document = ApplicationDocument::updateOrCreate(
             [
                 'land_transfer_application_id' => $application->id,
                 'required_document_id' => $requiredDocument->id,
@@ -39,6 +44,18 @@ class ApplicationDocumentController extends Controller
                 'annex_reference' => $validated['annex_reference'] ?? null,
                 'remarks' => $validated['remarks'] ?? null,
                 'uploaded_by' => Auth::id(),
+            ]
+        );
+
+        AuditLogger::record(
+            $existingDocument ? 'document_replaced' : 'document_uploaded',
+            $application,
+            $document,
+            [
+                'required_document_id' => $requiredDocument->id,
+                'required_document_name' => $requiredDocument->name,
+                'original_filename' => $document->original_filename,
+                'annex_reference' => $document->annex_reference,
             ]
         );
 
@@ -66,6 +83,18 @@ class ApplicationDocumentController extends Controller
         if ($document->file_path && Storage::exists($document->file_path)) {
             Storage::delete($document->file_path);
         }
+
+                AuditLogger::record(
+            'document_removed',
+            $application,
+            $document,
+            [
+                'required_document_id' => $requiredDocument->id,
+                'required_document_name' => $requiredDocument->name,
+                'original_filename' => $document->original_filename,
+                'file_path' => $document->file_path,
+            ]
+        );
 
         $document->delete();
 
