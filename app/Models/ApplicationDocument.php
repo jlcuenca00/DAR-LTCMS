@@ -14,6 +14,16 @@ class ApplicationDocument extends Model
         'annex_reference',
         'remarks',
         'uploaded_by',
+
+        'document_reference_number',
+        'document_metadata',
+        'metadata_encoded_by',
+        'metadata_encoded_at',
+    ];
+
+    protected $casts = [
+        'document_metadata' => 'array',
+        'metadata_encoded_at' => 'datetime',
     ];
 
     /*
@@ -35,5 +45,10 @@ class ApplicationDocument extends Model
     public function uploader()
     {
         return $this->belongsTo(User::class, 'uploaded_by');
+    }
+
+    public function metadataEncoder()
+    {
+        return $this->belongsTo(User::class, 'metadata_encoded_by');
     }
 }

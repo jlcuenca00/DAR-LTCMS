@@ -18,18 +18,33 @@ class ApplicationDocumentController extends Controller
         if ($application->isFinalized()) {
             return redirect()
                 ->route('staff.applications.show', ['application' => $application->id])
-                ->with('error', 'This application is already finalized. Document uploads are locked.');
+                ->with('error', 'This application is already finalized. Document uploads and metadata encoding are locked.');
         }
 
         $validated = $request->validate([
             'file' => ['required', 'file', 'max:10240'],
             'annex_reference' => ['nullable', 'string', 'max:100'],
             'remarks' => ['nullable', 'string', 'max:2000'],
+
+            'document_reference_number' => ['nullable', 'string', 'max:150'],
+
+            'document_metadata' => ['nullable', 'array'],
+            'document_metadata.title_number' => ['nullable', 'string', 'max:150'],
+            'document_metadata.tax_declaration_number' => ['nullable', 'string', 'max:150'],
+            'document_metadata.document_number' => ['nullable', 'string', 'max:150'],
+            'document_metadata.issuing_office' => ['nullable', 'string', 'max:255'],
+            'document_metadata.date_issued' => ['nullable', 'date'],
+            'document_metadata.reference_lot_or_parcel' => ['nullable', 'string', 'max:255'],
+            'document_metadata.verification_notes' => ['nullable', 'string', 'max:2000'],
         ]);
+
+        $metadata = $this->cleanMetadata($validated['document_metadata'] ?? []);
+
+        $hasMetadata = filled($validated['document_reference_number'] ?? null) || ! empty($metadata);
 
         $path = $request->file('file')->store("application-documents/{$application->id}");
 
-                $existingDocument = ApplicationDocument::where('land_transfer_application_id', $application->id)
+        $existingDocument = ApplicationDocument::where('land_transfer_application_id', $application->id)
             ->where('required_document_id', $requiredDocument->id)
             ->first();
 
@@ -44,6 +59,11 @@ class ApplicationDocumentController extends Controller
                 'annex_reference' => $validated['annex_reference'] ?? null,
                 'remarks' => $validated['remarks'] ?? null,
                 'uploaded_by' => Auth::id(),
+
+                'document_reference_number' => $validated['document_reference_number'] ?? null,
+                'document_metadata' => $metadata ?: null,
+                'metadata_encoded_by' => $hasMetadata ? Auth::id() : null,
+                'metadata_encoded_at' => $hasMetadata ? now() : null,
             ]
         );
 
@@ -56,12 +76,14 @@ class ApplicationDocumentController extends Controller
                 'required_document_name' => $requiredDocument->name,
                 'original_filename' => $document->original_filename,
                 'annex_reference' => $document->annex_reference,
+                'document_reference_number' => $document->document_reference_number,
+                'document_metadata' => $document->document_metadata,
             ]
         );
 
         return redirect()
             ->route('staff.applications.show', ['application' => $application->id])
-            ->with('success', 'Document uploaded successfully.');
+            ->with('success', 'Document uploaded and metadata saved successfully.');
     }
 
     public function destroy(LandTransferApplication $application, RequiredDocument $requiredDocument)
@@ -84,7 +106,7 @@ class ApplicationDocumentController extends Controller
             Storage::delete($document->file_path);
         }
 
-                AuditLogger::record(
+        AuditLogger::record(
             'document_removed',
             $application,
             $document,
@@ -93,6 +115,8 @@ class ApplicationDocumentController extends Controller
                 'required_document_name' => $requiredDocument->name,
                 'original_filename' => $document->original_filename,
                 'file_path' => $document->file_path,
+                'document_reference_number' => $document->document_reference_number,
+                'document_metadata' => $document->document_metadata,
             ]
         );
 
@@ -101,5 +125,13 @@ class ApplicationDocumentController extends Controller
         return redirect()
             ->route('staff.applications.show', ['application' => $application->id])
             ->with('success', 'Document removed successfully.');
+    }
+
+    private function cleanMetadata(array $metadata): array
+    {
+        return collect($metadata)
+            ->map(fn ($value) => is_string($value) ? trim($value) : $value)
+            ->filter(fn ($value) => filled($value))
+            ->toArray();
     }
 }

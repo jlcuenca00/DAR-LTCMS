@@ -232,134 +232,54 @@
                                     <div class="text-gray-700">Annex: {{ $doc->annex_reference }}</div>
                                 @endif
 
-                                {{-- ✅ REMOVE BUTTON --}}
-                                <form method="POST"
-                                      action="{{ route('staff.applications.documents.destroy', ['application' => $application->id, 'requiredDocument' => $req->id]) }}"
-                                      style="margin-top:10px;"
-                                      onsubmit="return confirm('Remove this uploaded document? This cannot be undone.');"
-                                >
-                                    @csrf
-                                    @method('DELETE')
+                                @if ($doc->document_reference_number)
+                                    <div class="text-gray-700">Reference No.: {{ $doc->document_reference_number }}</div>
+                                @endif
 
-                                    <button type="submit"
-                                        {{ $isFinal ? 'disabled' : '' }}
-                                        title="{{ $isFinal ? $lockMsg : 'Remove uploaded file' }}"
-                                        style="
-                                            background: {{ $isFinal ? '#9ca3af' : '#dc2626' }};
-                                            color:white;
-                                            padding:8px 12px;
-                                            border-radius:8px;
-                                            font-weight:600;
-                                            cursor: {{ $isFinal ? 'not-allowed' : 'pointer' }};
-                                            opacity: {{ $isFinal ? '0.75' : '1' }};
-                                        "
-                                    >
-                                        Remove
-                                    </button>
-                                </form>
-                            @else
-                                <div class="text-red-700 font-semibold">Not uploaded</div>
-                            @endif
-                        </div>
+                                @if ($doc->document_metadata)
+                                    <div class="mt-2 rounded bg-gray-50 border p-3 text-xs text-gray-700">
+                                        <div class="font-semibold text-gray-900 mb-1">
+                                            Encoded Document Metadata
+                                        </div>
 
-                        {{-- Upload Form --}}
-                        <form
-                            method="POST"
-                            action="{{ route('staff.applications.documents.store', ['application' => $application->id, 'requiredDocument' => $req->id]) }}"
-                            enctype="multipart/form-data"
-                            style="margin-top:12px; padding-top:12px; border-top:1px solid #e5e7eb;"
-                        >
-                            @csrf
+                                        @if (data_get($doc->document_metadata, 'title_number'))
+                                            <div><strong>Title No.:</strong> {{ data_get($doc->document_metadata, 'title_number') }}</div>
+                                        @endif
 
-                            <div style="margin-bottom:10px;">
-                                <label style="display:block; font-size:12px; color:#374151; margin-bottom:6px;">
-                                    Choose file (required)
-                                </label>
-                                <input type="file" name="file" required
-                                    {{ $isFinal ? 'disabled' : '' }}
-                                    title="{{ $isFinal ? $lockMsg : '' }}"
-                                >
-                            </div>
+                                        @if (data_get($doc->document_metadata, 'tax_declaration_number'))
+                                            <div><strong>Tax Declaration No.:</strong> {{ data_get($doc->document_metadata, 'tax_declaration_number') }}</div>
+                                        @endif
 
-                            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:10px;">
-                                <div>
-                                    <label style="display:block; font-size:12px; color:#374151; margin-bottom:6px;">
-                                        Annex reference (optional)
-                                    </label>
-                                    <input type="text" name="annex_reference"
-                                           style="width:100%; border:1px solid #d1d5db; border-radius:6px; padding:6px 8px; font-size:14px;"
-                                           {{ $isFinal ? 'disabled' : '' }}
-                                           title="{{ $isFinal ? $lockMsg : '' }}"
-                                    >
-                                </div>
+                                        @if (data_get($doc->document_metadata, 'document_number'))
+                                            <div><strong>Document No.:</strong> {{ data_get($doc->document_metadata, 'document_number') }}</div>
+                                        @endif
 
-                                <div>
-                                    <label style="display:block; font-size:12px; color:#374151; margin-bottom:6px;">
-                                        Remarks (optional)
-                                    </label>
-                                    <input type="text" name="remarks"
-                                           style="width:100%; border:1px solid #d1d5db; border-radius:6px; padding:6px 8px; font-size:14px;"
-                                           {{ $isFinal ? 'disabled' : '' }}
-                                           title="{{ $isFinal ? $lockMsg : '' }}"
-                                    >
-                                </div>
-                            </div>
+                                        @if (data_get($doc->document_metadata, 'issuing_office'))
+                                            <div><strong>Issuing Office:</strong> {{ data_get($doc->document_metadata, 'issuing_office') }}</div>
+                                        @endif
 
-                            <button
-                                type="submit"
-                                title="{{ $isFinal ? $lockMsg : '' }}"
-                                {{ $isFinal ? 'disabled' : '' }}
-                                style="
-                                    background: {{ $isFinal ? '#9ca3af' : '#111827' }};
-                                    color:#fff;
-                                    padding:10px 14px;
-                                    border-radius:8px;
-                                    font-weight:600;
-                                    cursor: {{ $isFinal ? 'not-allowed' : 'pointer' }};
-                                    opacity: {{ $isFinal ? '0.75' : '1' }};
-                                "
-                            >
-                                Upload / Replace
-                            </button>
-                        </form>
+                                        @if (data_get($doc->document_metadata, 'date_issued'))
+                                            <div><strong>Date Issued:</strong> {{ data_get($doc->document_metadata, 'date_issued') }}</div>
+                                        @endif
 
-                    </div>
+                                        @if (data_get($doc->document_metadata, 'reference_lot_or_parcel'))
+                                            <div><strong>Reference Lot/Parcel:</strong> {{ data_get($doc->document_metadata, 'reference_lot_or_parcel') }}</div>
+                                        @endif
 
-                @endforeach
-            </div>
-        </div>
+                                        @if (data_get($doc->document_metadata, 'verification_notes'))
+                                            <div><strong>Verification Notes:</strong> {{ data_get($doc->document_metadata, 'verification_notes') }}</div>
+                                        @endif
 
-        {{-- ======================= --}}
-        {{-- TRANSFEREE REQUIREMENTS --}}
-        {{-- ======================= --}}
-
-        <div class="bg-white shadow rounded border">
-            <div class="p-4 border-b font-semibold">
-                Transferee Requirements (DAR A.O. No. 4, s. 2021)
-            </div>
-
-            <div class="p-4 space-y-4">
-                @foreach ($transfereeRequirements as $req)
-
-                    @php
-                        $doc = $uploaded->get($req->id);
-                        $isUploaded = !is_null($doc);
-                    @endphp
-
-                    <div class="border p-4 rounded">
-                        <div class="font-semibold text-gray-900">
-                            {{ $req->name }}
-                            @if (!$req->is_mandatory)
-                                <span class="text-xs text-yellow-700"> (If applicable)</span>
-                            @endif
-                        </div>
-
-                        <div class="mt-2 text-sm">
-                            @if ($isUploaded)
-                                <div class="text-green-700 font-semibold">Uploaded</div>
-                                <div class="text-gray-700">File: <span class="font-mono">{{ $doc->original_filename }}</span></div>
-                                @if ($doc->annex_reference)
-                                    <div class="text-gray-700">Annex: {{ $doc->annex_reference }}</div>
+                                        @if ($doc->metadataEncoder || $doc->metadata_encoded_at)
+                                            <div class="mt-2 text-gray-500">
+                                                Encoded by:
+                                                {{ optional($doc->metadataEncoder)->name ?? 'Unknown user' }}
+                                                @if ($doc->metadata_encoded_at)
+                                                    on {{ $doc->metadata_encoded_at->format('M d, Y h:i A') }}
+                                                @endif
+                                            </div>
+                                        @endif
+                                    </div>
                                 @endif
 
                                 {{-- ✅ REMOVE BUTTON --}}
@@ -434,6 +354,202 @@
                                     >
                                 </div>
                             </div>
+
+
+                            @include('staff.applications.partials.document-metadata-fields', [
+                                'req' => $req,
+                                'doc' => $doc,
+                                'isFinal' => $isFinal,
+                                'lockMsg' => $lockMsg,
+                            ])
+
+                            <button
+                                type="submit"
+                                title="{{ $isFinal ? $lockMsg : '' }}"
+                                {{ $isFinal ? 'disabled' : '' }}
+                                style="
+                                    background: {{ $isFinal ? '#9ca3af' : '#111827' }};
+                                    color:#fff;
+                                    padding:10px 14px;
+                                    border-radius:8px;
+                                    font-weight:600;
+                                    cursor: {{ $isFinal ? 'not-allowed' : 'pointer' }};
+                                    opacity: {{ $isFinal ? '0.75' : '1' }};
+                                "
+                            >
+                                Upload / Replace
+                            </button>
+                        </form>
+
+                    </div>
+
+                @endforeach
+            </div>
+        </div>
+
+        {{-- ======================= --}}
+        {{-- TRANSFEREE REQUIREMENTS --}}
+        {{-- ======================= --}}
+
+        <div class="bg-white shadow rounded border">
+            <div class="p-4 border-b font-semibold">
+                Transferee Requirements (DAR A.O. No. 4, s. 2021)
+            </div>
+
+            <div class="p-4 space-y-4">
+                @foreach ($transfereeRequirements as $req)
+
+                    @php
+                        $doc = $uploaded->get($req->id);
+                        $isUploaded = !is_null($doc);
+                    @endphp
+
+                    <div class="border p-4 rounded">
+                        <div class="font-semibold text-gray-900">
+                            {{ $req->name }}
+                            @if (!$req->is_mandatory)
+                                <span class="text-xs text-yellow-700"> (If applicable)</span>
+                            @endif
+                        </div>
+
+                        <div class="mt-2 text-sm">
+                            @if ($isUploaded)
+                                <div class="text-green-700 font-semibold">Uploaded</div>
+                                <div class="text-gray-700">File: <span class="font-mono">{{ $doc->original_filename }}</span></div>
+                                @if ($doc->annex_reference)
+                                    <div class="text-gray-700">Annex: {{ $doc->annex_reference }}</div>
+                                @endif
+
+                                @if ($doc->document_reference_number)
+                                    <div class="text-gray-700">Reference No.: {{ $doc->document_reference_number }}</div>
+                                @endif
+
+                                @if ($doc->document_metadata)
+                                    <div class="mt-2 rounded bg-gray-50 border p-3 text-xs text-gray-700">
+                                        <div class="font-semibold text-gray-900 mb-1">
+                                            Encoded Document Metadata
+                                        </div>
+
+                                        @if (data_get($doc->document_metadata, 'title_number'))
+                                            <div><strong>Title No.:</strong> {{ data_get($doc->document_metadata, 'title_number') }}</div>
+                                        @endif
+
+                                        @if (data_get($doc->document_metadata, 'tax_declaration_number'))
+                                            <div><strong>Tax Declaration No.:</strong> {{ data_get($doc->document_metadata, 'tax_declaration_number') }}</div>
+                                        @endif
+
+                                        @if (data_get($doc->document_metadata, 'document_number'))
+                                            <div><strong>Document No.:</strong> {{ data_get($doc->document_metadata, 'document_number') }}</div>
+                                        @endif
+
+                                        @if (data_get($doc->document_metadata, 'issuing_office'))
+                                            <div><strong>Issuing Office:</strong> {{ data_get($doc->document_metadata, 'issuing_office') }}</div>
+                                        @endif
+
+                                        @if (data_get($doc->document_metadata, 'date_issued'))
+                                            <div><strong>Date Issued:</strong> {{ data_get($doc->document_metadata, 'date_issued') }}</div>
+                                        @endif
+
+                                        @if (data_get($doc->document_metadata, 'reference_lot_or_parcel'))
+                                            <div><strong>Reference Lot/Parcel:</strong> {{ data_get($doc->document_metadata, 'reference_lot_or_parcel') }}</div>
+                                        @endif
+
+                                        @if (data_get($doc->document_metadata, 'verification_notes'))
+                                            <div><strong>Verification Notes:</strong> {{ data_get($doc->document_metadata, 'verification_notes') }}</div>
+                                        @endif
+
+                                        @if ($doc->metadataEncoder || $doc->metadata_encoded_at)
+                                            <div class="mt-2 text-gray-500">
+                                                Encoded by:
+                                                {{ optional($doc->metadataEncoder)->name ?? 'Unknown user' }}
+                                                @if ($doc->metadata_encoded_at)
+                                                    on {{ $doc->metadata_encoded_at->format('M d, Y h:i A') }}
+                                                @endif
+                                            </div>
+                                        @endif
+                                    </div>
+                                @endif
+
+                                {{-- ✅ REMOVE BUTTON --}}
+                                <form method="POST"
+                                      action="{{ route('staff.applications.documents.destroy', ['application' => $application->id, 'requiredDocument' => $req->id]) }}"
+                                      style="margin-top:10px;"
+                                      onsubmit="return confirm('Remove this uploaded document? This cannot be undone.');"
+                                >
+                                    @csrf
+                                    @method('DELETE')
+
+                                    <button type="submit"
+                                        {{ $isFinal ? 'disabled' : '' }}
+                                        title="{{ $isFinal ? $lockMsg : 'Remove uploaded file' }}"
+                                        style="
+                                            background: {{ $isFinal ? '#9ca3af' : '#dc2626' }};
+                                            color:white;
+                                            padding:8px 12px;
+                                            border-radius:8px;
+                                            font-weight:600;
+                                            cursor: {{ $isFinal ? 'not-allowed' : 'pointer' }};
+                                            opacity: {{ $isFinal ? '0.75' : '1' }};
+                                        "
+                                    >
+                                        Remove
+                                    </button>
+                                </form>
+                            @else
+                                <div class="text-red-700 font-semibold">Not uploaded</div>
+                            @endif
+                        </div>
+
+                        {{-- Upload Form --}}
+                        <form
+                            method="POST"
+                            action="{{ route('staff.applications.documents.store', ['application' => $application->id, 'requiredDocument' => $req->id]) }}"
+                            enctype="multipart/form-data"
+                            style="margin-top:12px; padding-top:12px; border-top:1px solid #e5e7eb;"
+                        >
+                            @csrf
+
+                            <div style="margin-bottom:10px;">
+                                <label style="display:block; font-size:12px; color:#374151; margin-bottom:6px;">
+                                    Choose file (required)
+                                </label>
+                                <input type="file" name="file" required
+                                    {{ $isFinal ? 'disabled' : '' }}
+                                    title="{{ $isFinal ? $lockMsg : '' }}"
+                                >
+                            </div>
+
+                            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:10px;">
+                                <div>
+                                    <label style="display:block; font-size:12px; color:#374151; margin-bottom:6px;">
+                                        Annex reference (optional)
+                                    </label>
+                                    <input type="text" name="annex_reference"
+                                           style="width:100%; border:1px solid #d1d5db; border-radius:6px; padding:6px 8px; font-size:14px;"
+                                           {{ $isFinal ? 'disabled' : '' }}
+                                           title="{{ $isFinal ? $lockMsg : '' }}"
+                                    >
+                                </div>
+
+                                <div>
+                                    <label style="display:block; font-size:12px; color:#374151; margin-bottom:6px;">
+                                        Remarks (optional)
+                                    </label>
+                                    <input type="text" name="remarks"
+                                           style="width:100%; border:1px solid #d1d5db; border-radius:6px; padding:6px 8px; font-size:14px;"
+                                           {{ $isFinal ? 'disabled' : '' }}
+                                           title="{{ $isFinal ? $lockMsg : '' }}"
+                                    >
+                                </div>
+                            </div>
+
+
+                            @include('staff.applications.partials.document-metadata-fields', [
+                                'req' => $req,
+                                'doc' => $doc,
+                                'isFinal' => $isFinal,
+                                'lockMsg' => $lockMsg,
+                            ])
 
                             <button
                                 type="submit"
