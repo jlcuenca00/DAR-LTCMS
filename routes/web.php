@@ -7,6 +7,7 @@ use App\Http\Controllers\Staff\ApplicationClearanceController;
 use App\Http\Controllers\Staff\ApplicationDocumentController;
 use App\Http\Controllers\Staff\ApplicationWorkflowController;
 use App\Http\Controllers\Staff\LandTransferApplicationController;
+use App\Http\Controllers\Staff\MonitoringReportController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -53,6 +54,10 @@ Route::middleware(['auth', 'role:staff'])
     ->prefix('staff')
     ->name('staff.')
     ->group(function () {
+
+        Route::get('/reports/monitoring', [MonitoringReportController::class, 'index'])
+            ->name('reports.monitoring.index');
+            
         Route::get('/applications/{application}', [LandTransferApplicationController::class, 'show'])
             ->name('applications.show');
 
