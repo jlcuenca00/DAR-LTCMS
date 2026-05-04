@@ -21,6 +21,10 @@ class ApplicationWorkflowController extends Controller
      */
     public function submit(LandTransferApplication $application)
     {
+        if ($application->isFinalized()) {
+            return back()->withErrors(['status' => 'This application is already finalized and cannot be submitted again.']);
+        }
+
         if ($application->status !== 'draft') {
             return back()->withErrors(['status' => 'Only draft applications can be submitted.']);
         }
@@ -40,6 +44,9 @@ class ApplicationWorkflowController extends Controller
  */
 public function approve(Request $request, LandTransferApplication $application)
 {
+    if ($application->isFinalized()) {
+        return back()->withErrors(['status' => 'This application already has a final decision and cannot be approved again.']);
+    }
     if ($application->status !== 'pending_review') {
         return back()->withErrors(['status' => 'Only applications pending review can be approved.']);
     }
@@ -94,6 +101,9 @@ public function approve(Request $request, LandTransferApplication $application)
      */
     public function notApproved(Request $request, LandTransferApplication $application)
     {
+        if ($application->isFinalized()) {
+            return back()->withErrors(['status' => 'This application already has a final decision and cannot be marked Not Approved again.']);
+        }
         if (!in_array($application->status, ['pending_review', 'draft'], true)) {
             return back()->withErrors(['status' => 'Only draft or pending review applications can be marked Not Approved.']);
         }

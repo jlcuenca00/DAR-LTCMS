@@ -6,6 +6,16 @@ use Illuminate\Database\Eloquent\Model;
 
 class LandTransferApplication extends Model
 {
+    public const STATUS_DRAFT = 'draft';
+    public const STATUS_PENDING_REVIEW = 'pending_review';
+    public const STATUS_APPROVED = 'approved';
+    public const STATUS_NOT_APPROVED = 'not_approved';
+
+    public const FINAL_STATUSES = [
+        self::STATUS_APPROVED,
+        self::STATUS_NOT_APPROVED,
+    ];
+
     protected $fillable = [
         'application_code',
         'transferor_name',
@@ -21,7 +31,6 @@ class LandTransferApplication extends Model
         'validated_at',
         'validation_snapshot',
 
-        // 🔐 Registry mutation + landowner links
         'transferor_landowner_id',
         'transferee_landowner_id',
         'registry_mutated_at',
@@ -35,29 +44,38 @@ class LandTransferApplication extends Model
         'validation_snapshot' => 'array',
     ];
 
+    public function isFinalized(): bool
+    {
+        return in_array($this->status, self::FINAL_STATUSES, true);
+    }
+
+    public function isEditable(): bool
+    {
+        return ! $this->isFinalized();
+    }
+
     public function documents()
     {
-        return $this->hasMany(\App\Models\ApplicationDocument::class, 'land_transfer_application_id');
+        return $this->hasMany(ApplicationDocument::class, 'land_transfer_application_id');
     }
 
     public function applicationParcels()
     {
-        return $this->hasMany(\App\Models\ApplicationParcel::class, 'land_transfer_application_id');
+        return $this->hasMany(ApplicationParcel::class, 'land_transfer_application_id');
     }
 
     public function transferorLandowner()
     {
-        return $this->belongsTo(\App\Models\Landowner::class, 'transferor_landowner_id');
+        return $this->belongsTo(Landowner::class, 'transferor_landowner_id');
     }
 
     public function transfereeLandowner()
     {
-        return $this->belongsTo(\App\Models\Landowner::class, 'transferee_landowner_id');
+        return $this->belongsTo(Landowner::class, 'transferee_landowner_id');
     }
 
     public function clearance()
     {
-    return $this->hasOne(\App\Models\ApplicationClearance::class, 'land_transfer_application_id');
+        return $this->hasOne(ApplicationClearance::class, 'land_transfer_application_id');
     }
-
 }
