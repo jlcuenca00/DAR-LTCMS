@@ -9,6 +9,7 @@ use App\Http\Controllers\Staff\ApplicationWorkflowController;
 use App\Http\Controllers\Staff\LandTransferApplicationController;
 use App\Http\Controllers\Staff\MonitoringReportController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Staff\AuditLogController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -54,6 +55,9 @@ Route::middleware(['auth', 'role:staff'])
     ->prefix('staff')
     ->name('staff.')
     ->group(function () {
+
+        Route::get('/audit-logs', [AuditLogController::class, 'index'])
+            ->name('audit-logs.index');
 
         Route::get('/reports/monitoring', [MonitoringReportController::class, 'index'])
             ->name('reports.monitoring.index');
