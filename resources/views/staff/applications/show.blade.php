@@ -8,10 +8,9 @@
     <div class="p-6 space-y-6">
 
         @php
-            // 🔒 Finalized applications lock uploads (UI) for audit integrity
-            $isFinal = in_array($application->status, ['approved', 'not_approved'], true);
-            $lockMsg = 'Application finalized. Uploads locked.';
-        @endphp
+    $isFinal = $application->isFinalized();
+    $lockMsg = 'Application finalized. Uploads, removals, and workflow decisions are locked.';
+@endphp
 
         {{-- Success Message --}}
         @if (session('success'))
@@ -39,6 +38,41 @@
             </div>
         @endif
 
+        @if ($isFinal)
+    <div class="bg-amber-50 text-gray-900 rounded p-4 border border-amber-300">
+        <div class="font-semibold text-lg">
+            Final Decision Locked
+        </div>
+
+        <div class="text-sm mt-1 text-gray-700">
+            This application already has a final decision. Uploads, document removals,
+            resubmission, approval, and not-approved actions are locked for audit integrity.
+        </div>
+
+        <div class="text-sm mt-3">
+            <strong>Status:</strong> {{ strtoupper($application->status) }}
+            @if ($application->reviewed_at)
+                <span class="ml-3">
+                    <strong>Reviewed At:</strong>
+                    {{ $application->reviewed_at->format('M d, Y h:i A') }}
+                </span>
+            @endif
+        </div>
+
+        @if ($application->decision_reason || $application->decision_notes)
+            <div class="text-sm mt-3 text-gray-700">
+                @if ($application->decision_reason)
+                    <div><strong>Decision Reason:</strong> {{ $application->decision_reason }}</div>
+                @endif
+
+                @if ($application->decision_notes)
+                    <div><strong>Decision Notes:</strong> {{ $application->decision_notes }}</div>
+                @endif
+            </div>
+        @endif
+    </div>
+@endif
+
         {{-- Application Summary --}}
         <div class="bg-white shadow rounded p-4 border space-y-1">
             <div><strong>Application Code:</strong> {{ $application->application_code }}</div>
@@ -49,79 +83,85 @@
         </div>
 
         <div class="bg-white shadow rounded p-4 border">
-            <div class="font-semibold mb-2">Workflow Actions</div>
+    <div class="font-semibold mb-2">Workflow Actions</div>
 
-            <div class="flex flex-wrap gap-2">
-                @if ($application->status === 'draft')
-                    <form method="POST" action="{{ route('staff.applications.submit', $application) }}">
-                        @csrf
-                        <button type="submit"
-                            style="
-                                background:#2563eb;
-                                color:white;
-                                padding:10px 14px;
-                                border-radius:8px;
-                                font-weight:600;
-                                cursor:pointer;
-                            "
-                            onmouseover="this.style.background='#1d4ed8'"
-                            onmouseout="this.style.background='#2563eb'"
-                        >
-                            Submit for Review
-                        </button>
-                    </form>
-                @endif
-
-                @if ($application->status === 'pending_review')
-                    <form method="POST" action="{{ route('staff.applications.approve', $application) }}">
-                        @csrf
-                        <input type="text" name="decision_reason" placeholder="Reason (optional)" class="border rounded p-2 text-sm">
-                        <input type="text" name="decision_notes" placeholder="Notes (optional)" class="border rounded p-2 text-sm">
-
-                        <button type="submit"
-                            style="
-                                background:#16a34a;
-                                color:white;
-                                padding:10px 14px;
-                                border-radius:8px;
-                                font-weight:600;
-                                cursor:pointer;
-                            "
-                            onmouseover="this.style.background='#15803d'"
-                            onmouseout="this.style.background='#16a34a'"
-                        >
-                            Approve
-                        </button>
-                    </form>
-
-                    <form method="POST" action="{{ route('staff.applications.not_approved', $application) }}">
-                        @csrf
-                        <input type="text" name="decision_reason" placeholder="Reason (optional)" class="border rounded p-2 text-sm">
-                        <input type="text" name="decision_notes" placeholder="Notes (optional)" class="border rounded p-2 text-sm">
-
-                        <button type="submit"
-                            style="
-                                background:#dc2626;
-                                color:white;
-                                padding:10px 14px;
-                                border-radius:8px;
-                                font-weight:600;
-                                cursor:pointer;
-                            "
-                            onmouseover="this.style.background='#b91c1c'"
-                            onmouseout="this.style.background='#dc2626'"
-                        >
-                            Mark Not Approved
-                        </button>
-                    </form>
-                @endif
-            </div>
-
-            <div class="text-sm text-gray-600 mt-2">
-                Current status: <strong>{{ strtoupper($application->status) }}</strong>
-            </div>
+    @if ($isFinal)
+        <div class="rounded bg-gray-100 border border-gray-300 p-3 text-sm text-gray-700">
+            No workflow actions are available because this application is finalized.
         </div>
-        @if (in_array($application->status, ['approved', 'not_approved'], true) && $application->clearance)
+    @else
+        <div class="flex flex-wrap gap-2">
+            @if ($application->status === 'draft')
+                <form method="POST" action="{{ route('staff.applications.submit', $application) }}">
+                    @csrf
+                    <button type="submit"
+                        style="
+                            background:#2563eb;
+                            color:white;
+                            padding:10px 14px;
+                            border-radius:8px;
+                            font-weight:600;
+                            cursor:pointer;
+                        "
+                        onmouseover="this.style.background='#1d4ed8'"
+                        onmouseout="this.style.background='#2563eb'"
+                    >
+                        Submit for Review
+                    </button>
+                </form>
+            @endif
+
+            @if ($application->status === 'pending_review')
+                <form method="POST" action="{{ route('staff.applications.approve', $application) }}">
+                    @csrf
+                    <input type="text" name="decision_reason" placeholder="Reason (optional)" class="border rounded p-2 text-sm">
+                    <input type="text" name="decision_notes" placeholder="Notes (optional)" class="border rounded p-2 text-sm">
+
+                    <button type="submit"
+                        style="
+                            background:#16a34a;
+                            color:white;
+                            padding:10px 14px;
+                            border-radius:8px;
+                            font-weight:600;
+                            cursor:pointer;
+                        "
+                        onmouseover="this.style.background='#15803d'"
+                        onmouseout="this.style.background='#16a34a'"
+                    >
+                        Approve
+                    </button>
+                </form>
+
+                <form method="POST" action="{{ route('staff.applications.not_approved', $application) }}">
+                    @csrf
+                    <input type="text" name="decision_reason" placeholder="Reason (optional)" class="border rounded p-2 text-sm">
+                    <input type="text" name="decision_notes" placeholder="Notes (optional)" class="border rounded p-2 text-sm">
+
+                    <button type="submit"
+                        style="
+                            background:#dc2626;
+                            color:white;
+                            padding:10px 14px;
+                            border-radius:8px;
+                            font-weight:600;
+                            cursor:pointer;
+                        "
+                        onmouseover="this.style.background='#b91c1c'"
+                        onmouseout="this.style.background='#dc2626'"
+                    >
+                        Mark Not Approved
+                    </button>
+                </form>
+            @endif
+        </div>
+    @endif
+
+    <div class="text-sm text-gray-600 mt-2">
+        Current status: <strong>{{ strtoupper($application->status) }}</strong>
+    </div>
+</div>
+        @if ($isFinal && $application->clearance)
     <div class="bg-white shadow rounded p-4 border">
         <div class="font-semibold mb-2">Generated Clearance</div>
 
