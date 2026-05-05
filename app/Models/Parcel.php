@@ -18,4 +18,14 @@ class Parcel extends Model
         'status',
         'remarks',
     ];
+
+    protected $casts = [
+        'geometry_geojson' => 'array',
+        'area_hectares' => 'decimal:4',
+    ];
+
+    public function landholdings()
+    {
+        return $this->hasMany(Landholding::class);
+    }
 }

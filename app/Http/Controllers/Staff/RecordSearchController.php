@@ -151,4 +151,13 @@ class RecordSearchController extends Controller
             'statuses'
         ));
     }
+    public function showParcel(Parcel $parcel)
+{
+    $parcel->load([
+        'landholdings.landowner',
+        'landholdings.sourceApplication',
+    ]);
+
+    return view('staff.records.parcel-show', compact('parcel'));
+}
 }

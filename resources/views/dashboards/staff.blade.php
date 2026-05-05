@@ -19,17 +19,50 @@
                 </p>
 
                 <div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <a href="{{ route('staff.reports.monitoring.index') }}"
-                       class="block border rounded-lg p-5 hover:bg-gray-50 transition">
-                        <h4 class="font-semibold text-gray-900">
-                            Monitoring and Reports
-                        </h4>
-                        <p class="text-sm text-gray-600 mt-1">
-                            View application status counts, clearance totals, recent records,
-                            and municipality-level monitoring summaries.
-                        </p>
-                    </a>
-                </div>
+    <a href="{{ route('staff.parcel-map.index') }}"
+       class="block border rounded-lg p-5 hover:bg-gray-50 transition">
+        <h4 class="font-semibold text-gray-900">
+            Parcel Map Viewer
+        </h4>
+        <p class="text-sm text-gray-600 mt-1">
+            View mapped parcel/reference records, inspect parcel details,
+            and support clearance application review through a read-only map.
+        </p>
+    </a>
+
+    <a href="{{ route('staff.records.landowners.index') }}"
+       class="block border rounded-lg p-5 hover:bg-gray-50 transition">
+        <h4 class="font-semibold text-gray-900">
+            Landowner Records
+        </h4>
+        <p class="text-sm text-gray-600 mt-1">
+            Search and filter landowner records by name, contact details,
+            municipality, barangay, and account-link status.
+        </p>
+    </a>
+
+    <a href="{{ route('staff.records.parcels.index') }}"
+       class="block border rounded-lg p-5 hover:bg-gray-50 transition">
+        <h4 class="font-semibold text-gray-900">
+            Parcel Records
+        </h4>
+        <p class="text-sm text-gray-600 mt-1">
+            Search and filter parcel records by parcel code, title number,
+            tax declaration number, location, and status.
+        </p>
+    </a>
+
+    <a href="{{ route('staff.reports.monitoring.index') }}"
+       class="block border rounded-lg p-5 hover:bg-gray-50 transition">
+        <h4 class="font-semibold text-gray-900">
+            Monitoring and Reports
+        </h4>
+        <p class="text-sm text-gray-600 mt-1">
+            View application status counts, clearance totals, recent records,
+            and municipality-level monitoring summaries.
+        </p>
+    </a>
+</div>
             </div>
 
         </div>

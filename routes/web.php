@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Geodetic\GeodeticPortalController;
+use App\Http\Controllers\Geodetic\ParcelMapController as GeodeticParcelMapController;
 use App\Http\Controllers\Landowner\LandownerPortalController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Staff\ApplicationClearanceController;
@@ -12,6 +13,8 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Staff\AuditLogController;
 use App\Http\Controllers\Staff\UserManagementController;
 use App\Http\Controllers\Staff\RecordSearchController;
+use App\Http\Controllers\Staff\ParcelMapController;
+use App\Http\Controllers\Landowner\ParcelMapController as LandownerParcelMapController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -70,11 +73,17 @@ Route::middleware(['auth', 'role:staff'])
         Route::get('/records/parcels', [RecordSearchController::class, 'parcels'])
             ->name('records.parcels.index');
 
+        Route::get('/records/parcels/{parcel}', [RecordSearchController::class, 'showParcel'])
+            ->name('records.parcels.show');
+
         Route::get('/reports/monitoring', [MonitoringReportController::class, 'index'])
             ->name('reports.monitoring.index');
         
         Route::get('/reports/monitoring/print', [MonitoringReportController::class, 'print'])
             ->name('reports.monitoring.print');
+
+        Route::get('/parcel-map', [ParcelMapController::class, 'index'])
+            ->name('parcel-map.index');
         
         Route::get('/applications', [LandTransferApplicationController::class, 'index'])
             ->name('applications.index');
@@ -114,8 +123,14 @@ Route::middleware(['auth', 'role:landowner'])
     ->prefix('landowner')
     ->name('landowner.')
     ->group(function () {
+        Route::get('/parcel-map', [LandownerParcelMapController::class, 'index'])
+            ->name('parcel-map.index');
+
         Route::get('/parcels', [LandownerPortalController::class, 'parcels'])
             ->name('parcels.index');
+
+        Route::get('/parcels/{parcel}', [LandownerParcelMapController::class, 'show'])
+            ->name('parcels.show');
 
         Route::get('/applications', [LandownerPortalController::class, 'applications'])
             ->name('applications.index');
@@ -136,6 +151,12 @@ Route::middleware(['auth', 'role:geodetic'])
 
         Route::get('/applications', [GeodeticPortalController::class, 'applications'])
             ->name('applications.index');
+        Route::get('/parcel-map', [GeodeticParcelMapController::class, 'index'])
+            ->name('parcel-map.index');
+
+        Route::get('/parcels/{parcel}', [GeodeticParcelMapController::class, 'show'])
+            ->name('parcels.show');
+            
     });
 
 require __DIR__.'/auth.php';

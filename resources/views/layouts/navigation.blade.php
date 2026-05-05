@@ -18,38 +18,50 @@
                     </x-nav-link>
 
                     @if($role === 'staff')
-                        <x-nav-link :href="route('staff.dashboard')" :active="request()->routeIs('staff.dashboard')">
-                            Staff Dashboard
-                        </x-nav-link>
-                    @endif
+    <x-nav-link :href="route('staff.dashboard')" :active="request()->routeIs('staff.dashboard')">
+        Staff Dashboard
+    </x-nav-link>
+
+    <x-nav-link :href="route('staff.parcel-map.index')" :active="request()->routeIs('staff.parcel-map.*')">
+        Parcel Map
+    </x-nav-link>
+@endif
 
                     @if($role === 'landowner')
-                        <x-nav-link :href="route('landowner.dashboard')" :active="request()->routeIs('landowner.dashboard')">
-                            Landowner Dashboard
-                        </x-nav-link>
+    <x-nav-link :href="route('landowner.dashboard')" :active="request()->routeIs('landowner.dashboard')">
+        Landowner Dashboard
+    </x-nav-link>
 
-                        <x-nav-link :href="route('landowner.parcels.index')" :active="request()->routeIs('landowner.parcels.*')">
-                            My Parcels
-                        </x-nav-link>
+    <x-nav-link :href="route('landowner.parcel-map.index')" :active="request()->routeIs('landowner.parcel-map.*')">
+        My Parcel Map
+    </x-nav-link>
 
-                        <x-nav-link :href="route('landowner.applications.index')" :active="request()->routeIs('landowner.applications.*')">
-                            My Applications
-                        </x-nav-link>
-                    @endif
+    <x-nav-link :href="route('landowner.parcels.index')" :active="request()->routeIs('landowner.parcels.*')">
+        My Parcels
+    </x-nav-link>
+
+    <x-nav-link :href="route('landowner.applications.index')" :active="request()->routeIs('landowner.applications.*')">
+        My Applications
+    </x-nav-link>
+@endif
 
                     @if($role === 'geodetic')
-                        <x-nav-link :href="route('geodetic.dashboard')" :active="request()->routeIs('geodetic.dashboard')">
-                            Geodetic Dashboard
-                        </x-nav-link>
+    <x-nav-link :href="route('geodetic.dashboard')" :active="request()->routeIs('geodetic.dashboard')">
+        Geodetic Dashboard
+    </x-nav-link>
 
-                        <x-nav-link :href="route('geodetic.parcels.index')" :active="request()->routeIs('geodetic.parcels.*')">
-                            Parcel Reference
-                        </x-nav-link>
+    <x-nav-link :href="route('geodetic.parcel-map.index')" :active="request()->routeIs('geodetic.parcel-map.*')">
+        Parcel Map
+    </x-nav-link>
 
-                        <x-nav-link :href="route('geodetic.applications.index')" :active="request()->routeIs('geodetic.applications.*')">
-                            Application Reference
-                        </x-nav-link>
-                    @endif
+    <x-nav-link :href="route('geodetic.parcels.index')" :active="request()->routeIs('geodetic.parcels.*')">
+        Parcel Reference
+    </x-nav-link>
+
+    <x-nav-link :href="route('geodetic.applications.index')" :active="request()->routeIs('geodetic.applications.*')">
+        Application Reference
+    </x-nav-link>
+@endif
                 </div>
             </div>
 
@@ -102,38 +114,50 @@
             </x-responsive-nav-link>
 
             @if($role === 'staff')
-                <x-responsive-nav-link :href="route('staff.dashboard')" :active="request()->routeIs('staff.dashboard')">
-                    Staff Dashboard
-                </x-responsive-nav-link>
-            @endif
+    <x-responsive-nav-link :href="route('staff.dashboard')" :active="request()->routeIs('staff.dashboard')">
+        Staff Dashboard
+    </x-responsive-nav-link>
+
+    <x-responsive-nav-link :href="route('staff.parcel-map.index')" :active="request()->routeIs('staff.parcel-map.*')">
+        Parcel Map
+    </x-responsive-nav-link>
+@endif
 
             @if($role === 'landowner')
-                <x-responsive-nav-link :href="route('landowner.dashboard')" :active="request()->routeIs('landowner.dashboard')">
-                    Landowner Dashboard
-                </x-responsive-nav-link>
+    <x-responsive-nav-link :href="route('landowner.dashboard')" :active="request()->routeIs('landowner.dashboard')">
+        Landowner Dashboard
+    </x-responsive-nav-link>
 
-                <x-responsive-nav-link :href="route('landowner.parcels.index')" :active="request()->routeIs('landowner.parcels.*')">
-                    My Parcels
-                </x-responsive-nav-link>
+    <x-responsive-nav-link :href="route('landowner.parcel-map.index')" :active="request()->routeIs('landowner.parcel-map.*')">
+        My Parcel Map
+    </x-responsive-nav-link>
 
-                <x-responsive-nav-link :href="route('landowner.applications.index')" :active="request()->routeIs('landowner.applications.*')">
-                    My Applications
-                </x-responsive-nav-link>
-            @endif
+    <x-responsive-nav-link :href="route('landowner.parcels.index')" :active="request()->routeIs('landowner.parcels.*')">
+        My Parcels
+    </x-responsive-nav-link>
+
+    <x-responsive-nav-link :href="route('landowner.applications.index')" :active="request()->routeIs('landowner.applications.*')">
+        My Applications
+    </x-responsive-nav-link>
+@endif
 
             @if($role === 'geodetic')
-                <x-responsive-nav-link :href="route('geodetic.dashboard')" :active="request()->routeIs('geodetic.dashboard')">
-                    Geodetic Dashboard
-                </x-responsive-nav-link>
+    <x-responsive-nav-link :href="route('geodetic.dashboard')" :active="request()->routeIs('geodetic.dashboard')">
+        Geodetic Dashboard
+    </x-responsive-nav-link>
 
-                <x-responsive-nav-link :href="route('geodetic.parcels.index')" :active="request()->routeIs('geodetic.parcels.*')">
-                    Parcel Reference
-                </x-responsive-nav-link>
+    <x-responsive-nav-link :href="route('geodetic.parcel-map.index')" :active="request()->routeIs('geodetic.parcel-map.*')">
+        Parcel Map
+    </x-responsive-nav-link>
 
-                <x-responsive-nav-link :href="route('geodetic.applications.index')" :active="request()->routeIs('geodetic.applications.*')">
-                    Application Reference
-                </x-responsive-nav-link>
-            @endif
+    <x-responsive-nav-link :href="route('geodetic.parcels.index')" :active="request()->routeIs('geodetic.parcels.*')">
+        Parcel Reference
+    </x-responsive-nav-link>
+
+    <x-responsive-nav-link :href="route('geodetic.applications.index')" :active="request()->routeIs('geodetic.applications.*')">
+        Application Reference
+    </x-responsive-nav-link>
+@endif
         </div>
 
         <div class="pt-4 pb-1 border-t border-gray-200">
