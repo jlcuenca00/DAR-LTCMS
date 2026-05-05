@@ -12,6 +12,16 @@ class User extends Authenticatable
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable;
 
+    public const ROLE_STAFF = 'staff';
+    public const ROLE_LANDOWNER = 'landowner';
+    public const ROLE_GEODETIC = 'geodetic';
+
+    public const ROLES = [
+        self::ROLE_STAFF,
+        self::ROLE_LANDOWNER,
+        self::ROLE_GEODETIC,
+    ];
+
     /**
      * The attributes that are mass assignable.
      *
@@ -21,6 +31,8 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'role',
+        'is_active',
     ];
 
     /**
@@ -43,6 +55,27 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'is_active' => 'boolean',
         ];
+    }
+
+    public function landowner()
+    {
+        return $this->hasOne(Landowner::class);
+    }
+
+    public function isStaff(): bool
+    {
+        return $this->role === self::ROLE_STAFF;
+    }
+
+    public function isLandowner(): bool
+    {
+        return $this->role === self::ROLE_LANDOWNER;
+    }
+
+    public function isGeodetic(): bool
+    {
+        return $this->role === self::ROLE_GEODETIC;
     }
 }

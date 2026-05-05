@@ -10,6 +10,7 @@ use App\Http\Controllers\Staff\LandTransferApplicationController;
 use App\Http\Controllers\Staff\MonitoringReportController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Staff\AuditLogController;
+use App\Http\Controllers\Staff\UserManagementController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -58,6 +59,9 @@ Route::middleware(['auth', 'role:staff'])
 
         Route::get('/audit-logs', [AuditLogController::class, 'index'])
             ->name('audit-logs.index');
+
+        Route::resource('users', UserManagementController::class)
+            ->only(['index', 'create', 'store', 'edit', 'update']);
 
         Route::get('/reports/monitoring', [MonitoringReportController::class, 'index'])
             ->name('reports.monitoring.index');

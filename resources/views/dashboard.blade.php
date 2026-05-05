@@ -28,11 +28,11 @@
                         </h3>
 
                         <p class="text-sm text-gray-600 mb-6">
-                            Access staff tools for application processing, monitoring, reporting, and audit review.
+                            Access staff tools for application processing, monitoring, reporting, account management, and audit review.
                             This system supports clearance generation and monitoring only, and does not automatically transfer land ownership.
                         </p>
 
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
 
                             @if (\Illuminate\Support\Facades\Route::has('staff.applications.index'))
                                 <a href="{{ route('staff.applications.index') }}"
@@ -69,6 +69,19 @@
 
                                     <div class="text-sm text-gray-600 mt-1">
                                         View system activity history, staff actions, document changes, decisions, and clearance-related audit records.
+                                    </div>
+                                </a>
+                            @endif
+
+                            @if (\Illuminate\Support\Facades\Route::has('staff.users.index'))
+                                <a href="{{ route('staff.users.index') }}"
+                                   class="block p-4 bg-white border rounded-lg shadow-sm hover:bg-gray-50">
+                                    <div class="font-semibold text-gray-900">
+                                        User / Role Management
+                                    </div>
+
+                                    <div class="text-sm text-gray-600 mt-1">
+                                        Manage authorized staff, landowner, and geodetic user accounts, role assignments, account status, and landowner account links.
                                     </div>
                                 </a>
                             @endif
