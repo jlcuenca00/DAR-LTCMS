@@ -119,7 +119,7 @@
                                 @foreach ($auditLogs as $log)
                                     <tr class="align-top">
                                         <td class="border px-3 py-2 whitespace-nowrap">
-                                            {{ $log->created_at?->format('M d, Y h:i A') ?? 'N/A' }}
+                                            {{ $log->created_at?->timezone('Asia/Manila')->format('M d, Y h:i A') ?? 'N/A' }}
                                         </td>
 
                                         <td class="border px-3 py-2">

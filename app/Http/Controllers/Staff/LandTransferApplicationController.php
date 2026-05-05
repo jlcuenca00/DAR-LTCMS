@@ -9,6 +9,7 @@ use App\Models\Landholding;
 use App\Models\Landowner;
 use App\Models\LandTransferApplication;
 use App\Models\RequiredDocument;
+use App\Models\AuditLog;
 
 class LandTransferApplicationController extends Controller
 {
@@ -73,6 +74,11 @@ class LandTransferApplicationController extends Controller
             $exceedsFiveHectares = $projectedTotal > 5.0000;
         }
 
+        $applicationTimeline = AuditLog::with('actor')
+            ->where('land_transfer_application_id', $application->id)
+            ->oldest()
+            ->get();
+
         return view('staff.applications.show', compact(
             'application',
             'transferorRequirements',
@@ -84,6 +90,7 @@ class LandTransferApplicationController extends Controller
             'thisApplicationTotal',
             'projectedTotal',
             'exceedsFiveHectares',
+            'applicationTimeline',
         ));
     }
 }

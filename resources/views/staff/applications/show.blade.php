@@ -604,5 +604,80 @@
             @endif
         </div>
 
+        <div class="mt-6 bg-white shadow-sm sm:rounded-lg p-6 border">
+    <div class="flex items-start justify-between gap-4 mb-4">
+        <div>
+            <h3 class="text-lg font-semibold text-gray-900">
+                Application Timeline / Status History
+            </h3>
+
+            <p class="text-sm text-gray-600 mt-1">
+                Read-only timeline of recorded actions for this clearance application.
+                This supports traceability, accountability, and monitoring.
+            </p>
+
+            <p class="text-xs text-gray-500 mt-2">
+                Timeline records are based on audit logs. They do not indicate automatic land ownership transfer or registry mutation.
+            </p>
+        </div>
+    </div>
+
+    @if ($applicationTimeline->isEmpty())
+        <p class="text-sm text-gray-500">
+            No timeline records found yet.
+        </p>
+    @else
+        <div class="space-y-4">
+            @foreach ($applicationTimeline as $timelineEntry)
+                <div class="border rounded-lg p-4 bg-gray-50">
+                    <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-2">
+                        <div>
+                            <div class="font-semibold text-gray-900">
+                                {{ ucwords(str_replace('_', ' ', $timelineEntry->action)) }}
+                            </div>
+
+                            <div class="text-sm text-gray-600 mt-1">
+                                By:
+                                @if ($timelineEntry->actor)
+                                    {{ $timelineEntry->actor->name }}
+                                    <span class="text-gray-400">
+                                        ({{ $timelineEntry->actor->email }})
+                                    </span>
+                                @else
+                                    Unknown user
+                                @endif
+                            </div>
+                        </div>
+
+                        <div class="text-sm text-gray-500 md:text-right">
+                            {{ $timelineEntry->created_at?->timezone('Asia/Manila')->format('M d, Y h:i A') ?? 'N/A' }}
+                        </div>
+                    </div>
+
+                    @if ($timelineEntry->auditable_type)
+                        <div class="text-xs text-gray-500 mt-2">
+                            Related record:
+                            {{ class_basename($timelineEntry->auditable_type) }}
+                            @if ($timelineEntry->auditable_id)
+                                #{{ $timelineEntry->auditable_id }}
+                            @endif
+                        </div>
+                    @endif
+
+                    @if (! empty($timelineEntry->metadata))
+                        <details class="mt-3">
+                            <summary class="cursor-pointer text-sm text-blue-700 hover:underline">
+                                View action details
+                            </summary>
+
+                            <pre class="mt-2 p-3 bg-white border rounded text-xs overflow-x-auto text-gray-700">{{ json_encode($timelineEntry->metadata, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) }}</pre>
+                        </details>
+                    @endif
+                </div>
+            @endforeach
+        </div>
+    @endif
+</div>
+
     </div>
 </x-app-layout>
