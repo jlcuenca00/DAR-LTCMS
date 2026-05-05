@@ -11,6 +11,7 @@ use App\Http\Controllers\Staff\MonitoringReportController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Staff\AuditLogController;
 use App\Http\Controllers\Staff\UserManagementController;
+use App\Http\Controllers\Staff\RecordSearchController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -62,6 +63,12 @@ Route::middleware(['auth', 'role:staff'])
 
         Route::resource('users', UserManagementController::class)
             ->only(['index', 'create', 'store', 'edit', 'update']);
+
+        Route::get('/records/landowners', [RecordSearchController::class, 'landowners'])
+            ->name('records.landowners.index');
+
+        Route::get('/records/parcels', [RecordSearchController::class, 'parcels'])
+            ->name('records.parcels.index');
 
         Route::get('/reports/monitoring', [MonitoringReportController::class, 'index'])
             ->name('reports.monitoring.index');

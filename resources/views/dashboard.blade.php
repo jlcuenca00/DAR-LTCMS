@@ -28,7 +28,7 @@
                         </h3>
 
                         <p class="text-sm text-gray-600 mb-6">
-                            Access staff tools for application processing, monitoring, reporting, account management, and audit review.
+                            Access staff tools for application processing, monitoring, reporting, account management, record lookup, and audit review.
                             This system supports clearance generation and monitoring only, and does not automatically transfer land ownership.
                         </p>
 
@@ -43,6 +43,32 @@
 
                                     <div class="text-sm text-gray-600 mt-1">
                                         View, encode, review, and process clearance applications.
+                                    </div>
+                                </a>
+                            @endif
+
+                            @if (\Illuminate\Support\Facades\Route::has('staff.records.landowners.index'))
+                                <a href="{{ route('staff.records.landowners.index') }}"
+                                   class="block p-4 bg-white border rounded-lg shadow-sm hover:bg-gray-50">
+                                    <div class="font-semibold text-gray-900">
+                                        Landowner Records
+                                    </div>
+
+                                    <div class="text-sm text-gray-600 mt-1">
+                                        Search and review landowner records used for clearance processing, account linking, and monitoring.
+                                    </div>
+                                </a>
+                            @endif
+
+                            @if (\Illuminate\Support\Facades\Route::has('staff.records.parcels.index'))
+                                <a href="{{ route('staff.records.parcels.index') }}"
+                                   class="block p-4 bg-white border rounded-lg shadow-sm hover:bg-gray-50">
+                                    <div class="font-semibold text-gray-900">
+                                        Parcel Records
+                                    </div>
+
+                                    <div class="text-sm text-gray-600 mt-1">
+                                        Search and review parcel records by parcel code, title number, tax declaration number, location, and status.
                                     </div>
                                 </a>
                             @endif
