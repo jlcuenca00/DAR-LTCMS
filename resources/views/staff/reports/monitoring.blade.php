@@ -3,6 +3,11 @@
         <h2 class="font-semibold text-xl text-gray-800 leading-tight">
             Monitoring and Reports
         </h2>
+        <a href="{{ route('staff.reports.monitoring.print') }}"
+   target="_blank"
+   style="display:inline-block; background:#111827; color:#ffffff; padding:10px 14px; border-radius:6px; font-size:14px; font-weight:600; text-decoration:none; border:1px solid #111827;">
+    Print / Save as PDF
+</a>
     </x-slot>
 
     <div class="py-6">
@@ -31,7 +36,7 @@
                 <div class="bg-white shadow-sm rounded-lg p-5 border">
                     <div class="text-sm text-gray-500">Pending Review</div>
                     <div class="text-3xl font-bold text-orange-600 mt-2">
-                        {{ $statusCounts['pending_review'] }}
+                        {{ $statusCounts->get('pending_review', 0) }}
                     </div>
                 </div>
 
@@ -60,28 +65,28 @@
                     <div class="border rounded p-4">
                         <div class="text-gray-500">Draft</div>
                         <div class="text-2xl font-bold mt-1">
-                            {{ $statusCounts['draft'] }}
+                            {{ $statusCounts->get('draft', 0) }}
                         </div>
                     </div>
 
                     <div class="border rounded p-4">
                         <div class="text-gray-500">Pending Review</div>
                         <div class="text-2xl font-bold mt-1 text-orange-600">
-                            {{ $statusCounts['pending_review'] }}
+                            {{ $statusCounts->get('pending_review', 0) }}
                         </div>
                     </div>
 
                     <div class="border rounded p-4">
                         <div class="text-gray-500">Approved</div>
                         <div class="text-2xl font-bold mt-1 text-green-700">
-                            {{ $statusCounts['approved'] }}
+                            {{ $statusCounts->get('approved', 0) }}
                         </div>
                     </div>
 
                     <div class="border rounded p-4">
                         <div class="text-gray-500">Not Approved</div>
                         <div class="text-2xl font-bold mt-1 text-red-700">
-                            {{ $statusCounts['not_approved'] }}
+                            {{ $statusCounts->get('not_approved', 0) }}
                         </div>
                     </div>
                 </div>
