@@ -65,6 +65,9 @@ Route::middleware(['auth', 'role:staff'])
 
         Route::get('/reports/monitoring', [MonitoringReportController::class, 'index'])
             ->name('reports.monitoring.index');
+        
+        Route::get('/applications', [LandTransferApplicationController::class, 'index'])
+            ->name('applications.index');
             
         Route::get('/applications/{application}', [LandTransferApplicationController::class, 'show'])
             ->name('applications.show');

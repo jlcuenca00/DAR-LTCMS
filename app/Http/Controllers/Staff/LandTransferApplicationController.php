@@ -10,6 +10,7 @@ use App\Models\Landowner;
 use App\Models\LandTransferApplication;
 use App\Models\RequiredDocument;
 use App\Models\AuditLog;
+use Illuminate\Http\Request;
 
 class LandTransferApplicationController extends Controller
 {
@@ -93,4 +94,84 @@ class LandTransferApplicationController extends Controller
             'applicationTimeline',
         ));
     }
+    public function index(Request $request)
+{
+    $filters = $request->validate([
+        'search' => ['nullable', 'string', 'max:255'],
+        'status' => ['nullable', 'string', 'max:50'],
+        'municipality' => ['nullable', 'string', 'max:255'],
+        'barangay' => ['nullable', 'string', 'max:255'],
+        'document_reference_number' => ['nullable', 'string', 'max:150'],
+    ]);
+
+    $applicationsQuery = LandTransferApplication::query()
+        ->latest();
+
+    if (! empty($filters['search'])) {
+        $search = strtolower($filters['search']);
+
+        $applicationsQuery->where(function ($query) use ($search) {
+            $query->whereRaw('LOWER(application_code) LIKE ?', ["%{$search}%"])
+                ->orWhereRaw('LOWER(transferor_name) LIKE ?', ["%{$search}%"])
+                ->orWhereRaw('LOWER(transferee_name) LIKE ?', ["%{$search}%"]);
+        });
+    }
+
+    if (! empty($filters['status'])) {
+        $applicationsQuery->where('status', $filters['status']);
+    }
+
+    if (! empty($filters['municipality'])) {
+        $applicationsQuery->where('municipality', $filters['municipality']);
+    }
+
+    if (! empty($filters['barangay'])) {
+        $applicationsQuery->where('barangay', $filters['barangay']);
+    }
+
+    if (! empty($filters['document_reference_number'])) {
+        $documentReferenceNumber = strtolower($filters['document_reference_number']);
+
+        $applicationsQuery->whereIn('id', function ($query) use ($documentReferenceNumber) {
+            $query->select('land_transfer_application_id')
+                ->from('application_documents')
+                ->whereRaw('LOWER(document_reference_number) LIKE ?', ["%{$documentReferenceNumber}%"]);
+        });
+    }
+
+    $applications = $applicationsQuery
+        ->paginate(15)
+        ->withQueryString();
+
+    $statuses = LandTransferApplication::query()
+        ->select('status')
+        ->distinct()
+        ->orderBy('status')
+        ->pluck('status');
+
+    $municipalities = LandTransferApplication::query()
+        ->whereNotNull('municipality')
+        ->select('municipality')
+        ->distinct()
+        ->orderBy('municipality')
+        ->pluck('municipality');
+
+    $barangays = LandTransferApplication::query()
+        ->whereNotNull('barangay')
+        ->when(! empty($filters['municipality']), function ($query) use ($filters) {
+            $query->where('municipality', $filters['municipality']);
+        })
+        ->select('barangay')
+        ->distinct()
+        ->orderBy('barangay')
+        ->pluck('barangay');
+
+    return view('staff.applications.index', compact(
+        'applications',
+        'filters',
+        'statuses',
+        'municipalities',
+        'barangays'
+    ));
+}
 }
