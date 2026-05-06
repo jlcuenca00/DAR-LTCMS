@@ -217,5 +217,188 @@
             </div>
 
         </div>
+        <div class="bg-white border shadow-sm rounded-lg p-5 mt-4">
+    <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-3 mb-4">
+        <div>
+            <h3 class="text-lg font-semibold text-gray-900">
+                Attached Source Records
+            </h3>
+
+            <p class="text-sm text-gray-600 mt-1">
+                Digitized source records attached to this parcel for provenance, traceability, and review support.
+                These records do not automatically transfer land ownership or mutate Registry of Deeds records.
+            </p>
+        </div>
+    </div>
+
+    @if ($parcel->sourceRecordPackages->count() > 0)
+        <div class="mb-6">
+            <h4 class="font-semibold text-gray-800 mb-3">
+                Source Packages
+            </h4>
+
+            <div class="overflow-x-auto border rounded-lg">
+                <table class="min-w-full text-sm divide-y divide-gray-200">
+                    <thead class="bg-gray-50 text-xs uppercase text-gray-600">
+                        <tr>
+                            <th class="px-4 py-3 text-left">Package Code</th>
+                            <th class="px-4 py-3 text-left">Status</th>
+                            <th class="px-4 py-3 text-left">References</th>
+                            <th class="px-4 py-3 text-left">Source</th>
+                            <th class="px-4 py-3 text-left">Records</th>
+                            <th class="px-4 py-3 text-left">Action</th>
+                        </tr>
+                    </thead>
+
+                    <tbody class="divide-y divide-gray-100">
+                        @foreach ($parcel->sourceRecordPackages as $package)
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-4 py-3 font-semibold text-gray-900">
+                                    {{ $package->package_code }}
+                                </td>
+
+                                <td class="px-4 py-3 text-gray-700">
+                                    {{ $package->status_label }}
+                                </td>
+
+                                <td class="px-4 py-3 text-gray-700">
+                                    @if ($package->title_number)
+                                        <div><strong>Title:</strong> {{ $package->title_number }}</div>
+                                    @endif
+
+                                    @if ($package->landholding_reference_number)
+                                        <div><strong>Landholding:</strong> {{ $package->landholding_reference_number }}</div>
+                                    @endif
+
+                                    @if ($package->control_number)
+                                        <div><strong>Clearance:</strong> {{ $package->control_number }}</div>
+                                    @endif
+
+                                    @if (! $package->title_number && ! $package->landholding_reference_number && ! $package->control_number)
+                                        —
+                                    @endif
+                                </td>
+
+                                <td class="px-4 py-3 text-gray-700">
+                                    <div>{{ $package->source_book }}</div>
+                                    <div class="text-xs text-gray-500">
+                                        Page: {{ $package->page_number ?? '—' }}
+                                    </div>
+                                </td>
+
+                                <td class="px-4 py-3 text-gray-700">
+                                    {{ $package->records->count() }}
+                                </td>
+
+                                <td class="px-4 py-3">
+                                    <a href="{{ route('staff.source-record-packages.show', $package) }}"
+                                       class="inline-flex items-center px-3 py-1.5 bg-gray-900 text-white rounded-md text-xs font-semibold hover:bg-black">
+                                        View Package
+                                    </a>
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    @endif
+
+    @if ($parcel->legacyRecords->count() > 0)
+        <div>
+            <h4 class="font-semibold text-gray-800 mb-3">
+                Individual Source Records
+            </h4>
+
+            <div class="overflow-x-auto border rounded-lg">
+                <table class="min-w-full text-sm divide-y divide-gray-200">
+                    <thead class="bg-gray-50 text-xs uppercase text-gray-600">
+                        <tr>
+                            <th class="px-4 py-3 text-left">Type</th>
+                            <th class="px-4 py-3 text-left">Origin</th>
+                            <th class="px-4 py-3 text-left">References</th>
+                            <th class="px-4 py-3 text-left">Source</th>
+                            <th class="px-4 py-3 text-left">Package</th>
+                            <th class="px-4 py-3 text-left">Action</th>
+                        </tr>
+                    </thead>
+
+                    <tbody class="divide-y divide-gray-100">
+                        @foreach ($parcel->legacyRecords as $record)
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-4 py-3 font-semibold text-gray-900">
+                                    {{ $record->record_type_label }}
+                                </td>
+
+                                <td class="px-4 py-3">
+                                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold
+                                        @if ($record->origin === 'encoded') bg-blue-100 text-blue-800
+                                        @elseif ($record->origin === 'imported') bg-purple-100 text-purple-800
+                                        @else bg-gray-100 text-gray-700
+                                        @endif">
+                                        {{ $record->origin_label }}
+                                    </span>
+                                </td>
+
+                                <td class="px-4 py-3 text-gray-700">
+                                    @if ($record->title_number)
+                                        <div><strong>Title:</strong> {{ $record->title_number }}</div>
+                                    @endif
+
+                                    @if ($record->landholding_reference_number)
+                                        <div><strong>Landholding:</strong> {{ $record->landholding_reference_number }}</div>
+                                    @endif
+
+                                    @if ($record->control_number)
+                                        <div><strong>Clearance:</strong> {{ $record->control_number }}</div>
+                                    @endif
+
+                                    @if ($record->lot_number)
+                                        <div><strong>Lot:</strong> {{ $record->lot_number }}</div>
+                                    @endif
+
+                                    @if (! $record->title_number && ! $record->landholding_reference_number && ! $record->control_number && ! $record->lot_number)
+                                        —
+                                    @endif
+                                </td>
+
+                                <td class="px-4 py-3 text-gray-700">
+                                    <div>{{ $record->source_book }}</div>
+                                    <div class="text-xs text-gray-500">
+                                        Page: {{ $record->page_number ?? '—' }}
+                                    </div>
+                                </td>
+
+                                <td class="px-4 py-3 text-gray-700">
+                                    @if ($record->package)
+                                        <a href="{{ route('staff.source-record-packages.show', $record->package) }}"
+                                           class="text-green-700 font-semibold hover:underline">
+                                            {{ $record->package->package_code }}
+                                        </a>
+                                    @else
+                                        <span class="text-gray-400">No package</span>
+                                    @endif
+                                </td>
+
+                                <td class="px-4 py-3">
+                                    <a href="{{ route('staff.legacy-records.show', $record) }}"
+                                       class="inline-flex items-center px-3 py-1.5 bg-gray-900 text-white rounded-md text-xs font-semibold hover:bg-black">
+                                        View Record
+                                    </a>
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    @endif
+
+    @if ($parcel->sourceRecordPackages->count() === 0 && $parcel->legacyRecords->count() === 0)
+        <div class="border rounded-lg p-6 text-center text-gray-500">
+            No source records are currently attached to this parcel.
+        </div>
+    @endif
+</div>
     </div>
 </x-app-layout>

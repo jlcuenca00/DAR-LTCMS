@@ -147,14 +147,18 @@
                                     <th class="border px-3 py-2 text-left">Status</th>
                                     <th class="border px-3 py-2 text-left">Remarks</th>
                                     <th class="border px-3 py-2 text-left">Created</th>
+                                    <th class="border px-3 py-2 text-left">Action</th>
                                 </tr>
                             </thead>
 
                             <tbody>
                                 @foreach ($parcels as $parcel)
-                                    <tr class="align-top">
+                                    <tr class="align-top hover:bg-gray-50">
                                         <td class="border px-3 py-2 font-mono">
-                                            {{ $parcel->parcel_code }}
+                                            <a href="{{ route('staff.records.parcels.show', $parcel) }}"
+                                               class="text-green-700 font-semibold hover:underline">
+                                                {{ $parcel->parcel_code }}
+                                            </a>
                                         </td>
 
                                         <td class="border px-3 py-2">
@@ -198,6 +202,13 @@
 
                                         <td class="border px-3 py-2 whitespace-nowrap">
                                             {{ $parcel->created_at?->timezone('Asia/Manila')->format('M d, Y') ?? 'N/A' }}
+                                        </td>
+
+                                        <td class="border px-3 py-2 whitespace-nowrap">
+                                            <a href="{{ route('staff.records.parcels.show', $parcel) }}"
+                                               class="inline-flex items-center px-3 py-1.5 bg-gray-900 text-white rounded-md text-xs font-semibold hover:bg-black">
+                                                View
+                                            </a>
                                         </td>
                                     </tr>
                                 @endforeach

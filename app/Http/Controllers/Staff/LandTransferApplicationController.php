@@ -11,6 +11,8 @@ use App\Models\LandTransferApplication;
 use App\Models\RequiredDocument;
 use App\Models\AuditLog;
 use Illuminate\Http\Request;
+use App\Models\LegacyRecord;
+use App\Models\SourceRecordPackage;
 
 class LandTransferApplicationController extends Controller
 {
@@ -80,6 +82,111 @@ class LandTransferApplicationController extends Controller
             ->oldest()
             ->get();
 
+                    $applicationParcels = $application->applicationParcels
+            ->pluck('parcel')
+            ->filter();
+
+        $parcelIds = $applicationParcels
+            ->pluck('id')
+            ->filter()
+            ->unique()
+            ->values();
+
+        $parcelCodes = $applicationParcels
+            ->pluck('parcel_code')
+            ->filter()
+            ->unique()
+            ->values();
+
+        $titleNumbers = $applicationParcels
+            ->pluck('title_no')
+            ->filter()
+            ->unique()
+            ->values();
+
+        $transferorName = $application->transferorLandowner?->full_name;
+        $transfereeName = $application->transfereeLandowner?->full_name;
+
+        $hasPriorRecordSignals =
+            $parcelIds->isNotEmpty() ||
+            $parcelCodes->isNotEmpty() ||
+            $titleNumbers->isNotEmpty() ||
+            filled($transferorName) ||
+            filled($transfereeName);
+
+        $matchedSourceRecords = collect();
+        $matchedSourcePackages = collect();
+
+        if ($hasPriorRecordSignals) {
+            $matchedSourceRecords = LegacyRecord::query()
+                ->with(['parcel', 'package'])
+                ->where(function ($query) use (
+                    $parcelIds,
+                    $parcelCodes,
+                    $titleNumbers,
+                    $transferorName,
+                    $transfereeName
+                ) {
+                    if ($parcelIds->isNotEmpty()) {
+                        $query->orWhereIn('parcel_id', $parcelIds);
+                    }
+
+                    if ($parcelCodes->isNotEmpty()) {
+                        $query->orWhereIn('parcel_code', $parcelCodes);
+                    }
+
+                    if ($titleNumbers->isNotEmpty()) {
+                        $query->orWhereIn('title_number', $titleNumbers);
+                    }
+
+                    if (filled($transferorName)) {
+                        $query->orWhere('landowner_name', 'ILIKE', '%' . $transferorName . '%')
+                            ->orWhere('transferor_name', 'ILIKE', '%' . $transferorName . '%');
+                    }
+
+                    if (filled($transfereeName)) {
+                        $query->orWhere('transferee_name', 'ILIKE', '%' . $transfereeName . '%');
+                    }
+                })
+                ->latest()
+                ->limit(25)
+                ->get();
+
+            $matchedSourcePackages = SourceRecordPackage::query()
+                ->with(['parcel', 'records'])
+                ->where(function ($query) use (
+                    $parcelIds,
+                    $parcelCodes,
+                    $titleNumbers,
+                    $transferorName,
+                    $transfereeName
+                ) {
+                    if ($parcelIds->isNotEmpty()) {
+                        $query->orWhereIn('parcel_id', $parcelIds);
+                    }
+
+                    if ($parcelCodes->isNotEmpty()) {
+                        $query->orWhereIn('parcel_code', $parcelCodes);
+                    }
+
+                    if ($titleNumbers->isNotEmpty()) {
+                        $query->orWhereIn('title_number', $titleNumbers);
+                    }
+
+                    if (filled($transferorName)) {
+                        $query->orWhere('landowner_name', 'ILIKE', '%' . $transferorName . '%')
+                            ->orWhere('transferor_name', 'ILIKE', '%' . $transferorName . '%');
+                    }
+
+                    if (filled($transfereeName)) {
+                        $query->orWhere('transferee_name', 'ILIKE', '%' . $transfereeName . '%');
+                    }
+                })
+                ->latest()
+                ->limit(10)
+                ->get();
+        }
+
         return view('staff.applications.show', compact(
             'application',
             'transferorRequirements',
@@ -92,6 +199,8 @@ class LandTransferApplicationController extends Controller
             'projectedTotal',
             'exceedsFiveHectares',
             'applicationTimeline',
+            'matchedSourceRecords',
+            'matchedSourcePackages',
         ));
     }
     public function index(Request $request)

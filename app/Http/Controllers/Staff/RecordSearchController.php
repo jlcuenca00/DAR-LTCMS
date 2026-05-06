@@ -156,7 +156,10 @@ class RecordSearchController extends Controller
     $parcel->load([
         'landholdings.landowner',
         'landholdings.sourceApplication',
+        'legacyRecords.package',
+        'sourceRecordPackages.records',
     ]);
+    
 
     return view('staff.records.parcel-show', compact('parcel'));
 }

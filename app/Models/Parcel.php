@@ -32,4 +32,8 @@ class Parcel extends Model
 {
     return $this->hasMany(LegacyRecord::class);
 }
+public function sourceRecordPackages()
+{
+    return $this->hasMany(SourceRecordPackage::class);
+}
 }
