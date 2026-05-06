@@ -33,6 +33,11 @@
         Encode Source Package
     </a>
 
+    <a href="{{ route('staff.source-record-package-imports.create') }}"
+       class="inline-flex items-center px-4 py-2 bg-gray-900 text-white rounded-md text-sm font-semibold hover:bg-black">
+        Import Source Packages
+    </a>
+
     <a href="{{ route('staff.legacy-records.create', ['record_type' => 'historical_clearance']) }}"
        class="inline-flex items-center px-4 py-2 bg-gray-100 text-gray-700 rounded-md text-sm font-semibold hover:bg-gray-200">
         Encode Single Clearance

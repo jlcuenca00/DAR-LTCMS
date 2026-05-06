@@ -17,6 +17,7 @@ use App\Http\Controllers\Staff\RecordSearchController;
 use App\Http\Controllers\Staff\ParcelMapController;
 use App\Http\Controllers\Landowner\ParcelMapController as LandownerParcelMapController;
 use App\Http\Controllers\Staff\SourceRecordPackageController;
+use App\Http\Controllers\Staff\SourceRecordPackageImportController;
 
 Route::get('/', function () {
     return redirect()->route('login');
@@ -95,6 +96,21 @@ Route::post('/source-record-packages/{sourceRecordPackage}/link-parcel', [Source
 
 Route::post('/source-record-packages/{sourceRecordPackage}/create-parcel', [SourceRecordPackageController::class, 'createParcel'])
     ->name('source-record-packages.create-parcel');
+
+    Route::get('/source-record-package-imports/create', [SourceRecordPackageImportController::class, 'create'])
+    ->name('source-record-package-imports.create');
+
+Route::get('/source-record-package-imports/template', [SourceRecordPackageImportController::class, 'template'])
+    ->name('source-record-package-imports.template');
+
+Route::post('/source-record-package-imports/preview', [SourceRecordPackageImportController::class, 'preview'])
+    ->name('source-record-package-imports.preview.store');
+
+Route::get('/source-record-package-imports/{batch}/preview', [SourceRecordPackageImportController::class, 'showPreview'])
+    ->name('source-record-package-imports.preview');
+
+Route::post('/source-record-package-imports/{batch}/commit', [SourceRecordPackageImportController::class, 'commit'])
+    ->name('source-record-package-imports.commit');
 
         Route::get('/audit-logs', [AuditLogController::class, 'index'])
             ->name('audit-logs.index');
