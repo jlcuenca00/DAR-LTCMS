@@ -1,4 +1,8 @@
 <x-app-layout>
+    <x-system-scope-notice
+    title="Geodetic Access Scope"
+    variant="blue"
+/>
     <x-slot name="header">
         <h2 class="font-semibold text-xl text-gray-800 leading-tight">
             Geodetic Dashboard

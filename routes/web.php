@@ -17,7 +17,7 @@ use App\Http\Controllers\Staff\ParcelMapController;
 use App\Http\Controllers\Landowner\ParcelMapController as LandownerParcelMapController;
 
 Route::get('/', function () {
-    return view('welcome');
+    return redirect()->route('login');
 });
 
 Route::get('/dashboard', function () {

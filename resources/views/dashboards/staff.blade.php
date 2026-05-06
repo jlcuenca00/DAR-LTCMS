@@ -1,4 +1,8 @@
 <x-app-layout>
+    <x-system-scope-notice
+    title="DAR-LTCMS Scope Reminder"
+    variant="green"
+/>
     <x-slot name="header">
         <h2 class="font-semibold text-xl text-gray-800">
             Staff Dashboard
