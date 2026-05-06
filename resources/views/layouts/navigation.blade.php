@@ -25,6 +25,9 @@
     <x-nav-link :href="route('staff.parcel-map.index')" :active="request()->routeIs('staff.parcel-map.*')">
         Parcel Map
     </x-nav-link>
+    <x-nav-link :href="route('staff.legacy-records.index')" :active="request()->routeIs('staff.legacy-records.*')">
+    Legacy Records
+    </x-nav-link>
 @endif
 
                     @if($role === 'landowner')
@@ -120,6 +123,9 @@
 
     <x-responsive-nav-link :href="route('staff.parcel-map.index')" :active="request()->routeIs('staff.parcel-map.*')">
         Parcel Map
+    </x-responsive-nav-link>
+    <x-responsive-nav-link :href="route('staff.legacy-records.index')" :active="request()->routeIs('staff.legacy-records.*')">
+    Legacy Records
     </x-responsive-nav-link>
 @endif
 

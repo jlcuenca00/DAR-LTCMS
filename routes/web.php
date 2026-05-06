@@ -10,11 +10,13 @@ use App\Http\Controllers\Staff\ApplicationWorkflowController;
 use App\Http\Controllers\Staff\LandTransferApplicationController;
 use App\Http\Controllers\Staff\MonitoringReportController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Staff\LegacyRecordController;
 use App\Http\Controllers\Staff\AuditLogController;
 use App\Http\Controllers\Staff\UserManagementController;
 use App\Http\Controllers\Staff\RecordSearchController;
 use App\Http\Controllers\Staff\ParcelMapController;
 use App\Http\Controllers\Landowner\ParcelMapController as LandownerParcelMapController;
+use App\Http\Controllers\Staff\SourceRecordPackageController;
 
 Route::get('/', function () {
     return redirect()->route('login');
@@ -60,6 +62,39 @@ Route::middleware(['auth', 'role:staff'])
     ->prefix('staff')
     ->name('staff.')
     ->group(function () {
+
+        Route::get('/legacy-records', [LegacyRecordController::class, 'index'])
+    ->name('legacy-records.index');
+
+Route::get('/legacy-records/create', [LegacyRecordController::class, 'create'])
+    ->name('legacy-records.create');
+
+Route::post('/legacy-records', [LegacyRecordController::class, 'store'])
+    ->name('legacy-records.store');
+
+Route::get('/legacy-records/{legacyRecord}', [LegacyRecordController::class, 'show'])
+    ->name('legacy-records.show');
+
+Route::post('/legacy-records/{legacyRecord}/link-parcel', [LegacyRecordController::class, 'linkParcel'])
+    ->name('legacy-records.link-parcel');
+
+Route::post('/legacy-records/{legacyRecord}/create-parcel', [LegacyRecordController::class, 'createParcel'])
+    ->name('legacy-records.create-parcel');
+
+    Route::get('/source-record-packages/create', [SourceRecordPackageController::class, 'create'])
+    ->name('source-record-packages.create');
+
+Route::post('/source-record-packages', [SourceRecordPackageController::class, 'store'])
+    ->name('source-record-packages.store');
+
+Route::get('/source-record-packages/{sourceRecordPackage}', [SourceRecordPackageController::class, 'show'])
+    ->name('source-record-packages.show');
+
+Route::post('/source-record-packages/{sourceRecordPackage}/link-parcel', [SourceRecordPackageController::class, 'linkParcel'])
+    ->name('source-record-packages.link-parcel');
+
+Route::post('/source-record-packages/{sourceRecordPackage}/create-parcel', [SourceRecordPackageController::class, 'createParcel'])
+    ->name('source-record-packages.create-parcel');
 
         Route::get('/audit-logs', [AuditLogController::class, 'index'])
             ->name('audit-logs.index');

@@ -28,4 +28,8 @@ class Parcel extends Model
     {
         return $this->hasMany(Landholding::class);
     }
+    public function legacyRecords()
+{
+    return $this->hasMany(LegacyRecord::class);
+}
 }

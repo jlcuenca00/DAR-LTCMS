@@ -66,6 +66,15 @@
             and municipality-level monitoring summaries.
         </p>
     </a>
+    <a href="{{ route('staff.legacy-records.index') }}"
+   class="block border rounded-lg p-5 hover:bg-gray-50 transition">
+    <h4 class="font-semibold text-gray-900">
+        Legacy Records
+    </h4>
+    <p class="text-sm text-gray-600 mt-1">
+        Search, encode, and review historical title, landholding, and clearance reference records.
+    </p>
+</a>
 </div>
             </div>
 
