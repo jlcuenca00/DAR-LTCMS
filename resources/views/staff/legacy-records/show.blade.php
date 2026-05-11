@@ -1,12 +1,10 @@
-<x-app-layout>
-    <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800">
-            Source Record Details
-        </h2>
-    </x-slot>
-
-    <div class="py-6">
-        <div class="max-w-6xl mx-auto sm:px-6 lg:px-8 space-y-4">
+<x-staff-shell
+    title="Source Record Details"
+    subtitle="Staff-side administrative screen for DAR-LTCMS processing, records management, monitoring, and auditability."
+    active="source-records"
+>
+<div>
+        <div class="space-y-5">
 
             @if (session('success'))
                 <div class="bg-green-100 text-green-800 p-3 rounded border border-green-200">
@@ -415,4 +413,4 @@
 
         </div>
     </div>
-</x-app-layout>
+</x-staff-shell>

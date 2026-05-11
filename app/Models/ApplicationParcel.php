@@ -9,10 +9,13 @@ class ApplicationParcel extends Model
     protected $table = 'application_parcels';
 
     protected $fillable = [
-        'land_transfer_application_id',
-        'parcel_id',
-        'area_hectares',
-    ];
+    'land_transfer_application_id',
+    'parcel_id',
+    'area_hectares',
+    'parcel_code',
+    'title_no',
+    'tax_decl_no',
+];
 
     public function application()
     {

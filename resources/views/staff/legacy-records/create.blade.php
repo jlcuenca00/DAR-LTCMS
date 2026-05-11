@@ -1,11 +1,9 @@
-<x-app-layout>
-    <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800">
-            Encode Source Record
-        </h2>
-    </x-slot>
-
-    <div class="py-6">
+<x-staff-shell
+    title="Encode Source Record"
+    subtitle="Staff-side administrative screen for DAR-LTCMS processing, records management, monitoring, and auditability."
+    active="source-records"
+>
+<div>
         <div class="max-w-5xl mx-auto sm:px-6 lg:px-8 space-y-4">
 
             @if ($errors->any())
@@ -441,4 +439,4 @@
 
         </div>
     </div>
-</x-app-layout>
+</x-staff-shell>

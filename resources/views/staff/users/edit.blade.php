@@ -1,11 +1,9 @@
-    <x-app-layout>
-    <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            Edit User Account
-        </h2>
-    </x-slot>
-
-    <div class="py-6">
+<x-staff-shell
+    title="Edit User Account"
+    subtitle="Staff-side administrative screen for DAR-LTCMS processing, records management, monitoring, and auditability."
+    active="users"
+>
+<div>
         <div class="max-w-4xl mx-auto sm:px-6 lg:px-8 space-y-6">
 
             @if ($errors->any())
@@ -178,4 +176,4 @@
 
         </div>
     </div>
-</x-app-layout>
+</x-staff-shell>

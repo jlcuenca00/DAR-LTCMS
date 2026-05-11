@@ -13,6 +13,10 @@ use App\Models\AuditLog;
 use Illuminate\Http\Request;
 use App\Models\LegacyRecord;
 use App\Models\SourceRecordPackage;
+use App\Models\Parcel;
+use App\Services\AuditLogger;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class LandTransferApplicationController extends Controller
 {
@@ -282,5 +286,107 @@ class LandTransferApplicationController extends Controller
         'municipalities',
         'barangays'
     ));
+
+}
+public function create()
+{
+    $landowners = Landowner::query()
+        ->orderBy('last_name')
+        ->orderBy('first_name')
+        ->get();
+
+    $parcels = Parcel::query()
+        ->orderBy('parcel_code')
+        ->get();
+
+    return view('staff.applications.create', compact(
+        'landowners',
+        'parcels'
+    ));
+}
+
+public function store(Request $request)
+{
+    $validated = $request->validate([
+        'transferor_landowner_id' => ['nullable', 'exists:landowners,id'],
+        'transferee_landowner_id' => ['nullable', 'exists:landowners,id'],
+
+        'transferor_name' => ['required', 'string', 'max:255'],
+        'transferee_name' => ['required', 'string', 'max:255'],
+
+        'municipality' => ['nullable', 'string', 'max:255'],
+        'barangay' => ['nullable', 'string', 'max:255'],
+        'date_filed' => ['nullable', 'date'],
+        'date_of_transfer' => ['nullable', 'date'],
+        'remarks' => ['nullable', 'string'],
+
+        'parcel_id' => ['nullable', 'exists:parcels,id'],
+        'area_hectares' => ['nullable', 'numeric', 'min:0'],
+    ]);
+
+    $application = null;
+
+    DB::transaction(function () use ($validated, &$application) {
+        $application = LandTransferApplication::create([
+            'application_code' => $this->generateApplicationCode(),
+            'transferor_landowner_id' => $validated['transferor_landowner_id'] ?? null,
+            'transferee_landowner_id' => $validated['transferee_landowner_id'] ?? null,
+            'transferor_name' => $validated['transferor_name'],
+            'transferee_name' => $validated['transferee_name'],
+            'municipality' => $validated['municipality'] ?? null,
+            'barangay' => $validated['barangay'] ?? null,
+            'date_filed' => $validated['date_filed'] ?? null,
+            'date_of_transfer' => $validated['date_of_transfer'] ?? null,
+            'remarks' => $validated['remarks'] ?? null,
+            'status' => LandTransferApplication::STATUS_DRAFT,
+            'encoded_by' => Auth::id(),
+        ]);
+
+        if (! empty($validated['parcel_id'])) {
+            $parcel = Parcel::findOrFail($validated['parcel_id']);
+
+            $application->applicationParcels()->create([
+                'parcel_id' => $parcel->id,
+                'area_hectares' => $validated['area_hectares'] ?? $parcel->area_hectares,
+                'parcel_code' => $parcel->parcel_code,
+                'title_no' => $parcel->title_no,
+                'tax_decl_no' => $parcel->tax_decl_no,
+            ]);
+        }
+
+        AuditLogger::record(
+            'application_created',
+            $application,
+            $application,
+            [
+                'status' => $application->status,
+                'transferor_name' => $application->transferor_name,
+                'transferee_name' => $application->transferee_name,
+                'parcel_id' => $validated['parcel_id'] ?? null,
+                'scope_note' => 'Application encoding only. No ownership transfer or registry mutation was performed.',
+            ]
+        );
+    });
+
+    return redirect()
+        ->route('staff.applications.show', $application)
+        ->with('success', 'Application encoded successfully. It remains a draft until submitted for review.');
+}
+
+private function generateApplicationCode(): string
+{
+    $year = now()->format('Y');
+    $prefix = "APP-{$year}-";
+
+    $nextNumber = LandTransferApplication::query()
+        ->where('application_code', 'LIKE', $prefix . '%')
+        ->count() + 1;
+
+    do {
+        $code = $prefix . str_pad((string) $nextNumber, 4, '0', STR_PAD_LEFT);
+        $nextNumber++;
+    } while (LandTransferApplication::where('application_code', $code)->exists());
+
+    return $code;
 }
 }

@@ -1,17 +1,10 @@
-<x-app-layout>
-    <x-slot name="header">
-        <div>
-            <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-                Parcel Details
-            </h2>
-            <p class="text-sm text-gray-500 mt-1">
-                Read-only parcel record reference for clearance processing and monitoring.
-            </p>
-        </div>
-    </x-slot>
-
-    <div class="py-6">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
+<x-staff-shell
+    title="Parcel Details"
+    subtitle="Staff-side administrative screen for DAR-LTCMS processing, records management, monitoring, and auditability."
+    active="parcel-records"
+>
+<div>
+        <div class="space-y-5">
 
             <div class="bg-white shadow-sm sm:rounded-lg p-6 border">
                 <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
@@ -401,4 +394,4 @@
     @endif
 </div>
     </div>
-</x-app-layout>
+</x-staff-shell>

@@ -1,11 +1,9 @@
-<x-app-layout>
-    <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800">
-            Application Review
-        </h2>
-    </x-slot>
-
-    <div class="p-6 space-y-6">
+<x-staff-shell
+    title="Application Review"
+    subtitle="Staff-side administrative screen for DAR-LTCMS processing, records management, monitoring, and auditability."
+    active="applications"
+>
+<div class="p-6 space-y-6">
 
         @php
     $isFinal = $application->isFinalized();
@@ -862,4 +860,4 @@
 </div>
 
     </div>
-</x-app-layout>
+</x-staff-shell>

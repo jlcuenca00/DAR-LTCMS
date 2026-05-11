@@ -18,6 +18,9 @@ use App\Http\Controllers\Staff\ParcelMapController;
 use App\Http\Controllers\Landowner\ParcelMapController as LandownerParcelMapController;
 use App\Http\Controllers\Staff\SourceRecordPackageController;
 use App\Http\Controllers\Staff\SourceRecordPackageImportController;
+use App\Http\Controllers\Staff\StaffDashboardController;
+use App\Http\Controllers\Landowner\LandownerDashboardController;
+use App\Http\Controllers\Geodetic\GeodeticDashboardController;
 
 Route::get('/', function () {
     return redirect()->route('login');
@@ -40,17 +43,17 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
     // Dashboards
-    Route::view('/staff/dashboard', 'dashboards.staff')
-        ->middleware('role:staff')
-        ->name('staff.dashboard');
+   Route::get('/staff/dashboard', StaffDashboardController::class)
+    ->middleware('role:staff')
+    ->name('staff.dashboard');
 
-    Route::view('/landowner/dashboard', 'dashboards.landowner')
-        ->middleware('role:landowner')
-        ->name('landowner.dashboard');
+    Route::get('/landowner/dashboard', LandownerDashboardController::class)
+    ->middleware('role:landowner')
+    ->name('landowner.dashboard');
 
-    Route::view('/geodetic/dashboard', 'dashboards.geodetic')
-        ->middleware('role:geodetic')
-        ->name('geodetic.dashboard');
+    Route::get('/geodetic/dashboard', GeodeticDashboardController::class)
+    ->middleware('role:geodetic')
+    ->name('geodetic.dashboard');
 });
 
 /*
@@ -137,10 +140,16 @@ Route::post('/source-record-package-imports/{batch}/commit', [SourceRecordPackag
             ->name('parcel-map.index');
         
         Route::get('/applications', [LandTransferApplicationController::class, 'index'])
-            ->name('applications.index');
-            
-        Route::get('/applications/{application}', [LandTransferApplicationController::class, 'show'])
-            ->name('applications.show');
+    ->name('applications.index');
+
+Route::get('/applications/create', [LandTransferApplicationController::class, 'create'])
+    ->name('applications.create');
+
+Route::post('/applications', [LandTransferApplicationController::class, 'store'])
+    ->name('applications.store');
+    
+Route::get('/applications/{application}', [LandTransferApplicationController::class, 'show'])
+    ->name('applications.show');
 
         Route::post('/applications/{application}/documents/{requiredDocument}', [ApplicationDocumentController::class, 'store'])
             ->name('applications.documents.store');

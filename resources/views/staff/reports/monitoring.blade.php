@@ -1,256 +1,128 @@
-<x-app-layout>
-    <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            Monitoring and Reports
-        </h2>
-        <a href="{{ route('staff.reports.monitoring.print') }}"
-   target="_blank"
-   style="display:inline-block; background:#111827; color:#ffffff; padding:10px 14px; border-radius:6px; font-size:14px; font-weight:600; text-decoration:none; border:1px solid #111827;">
-    Print / Save as PDF
-</a>
+<x-staff-shell
+    title="Monitoring and Reports"
+    subtitle="Generate administrative monitoring summaries for clearance applications, clearance outputs, location totals, and recent decisions."
+    active="reports"
+>
+    <x-slot name="actions">
+        <a href="{{ route('staff.reports.monitoring.print') }}" target="_blank" class="staff-button staff-button-primary">
+            <i class="fa-solid fa-print"></i>
+            Print / Save as PDF
+        </a>
     </x-slot>
 
-    <div class="py-6">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
-
-            <div class="bg-white shadow-sm sm:rounded-lg p-6 border">
-                <h3 class="text-lg font-semibold text-gray-900">
-                    Land Transfer Clearance Monitoring Summary
-                </h3>
-
-                <p class="text-sm text-gray-600 mt-1">
-                    This report provides read-only monitoring information for DAR staff.
-                    It summarizes application status, generated clearances, and municipal distribution.
-                    It does not perform ownership transfer or registry mutation.
-                </p>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div class="bg-white shadow-sm rounded-lg p-5 border">
-                    <div class="text-sm text-gray-500">Total Applications</div>
-                    <div class="text-3xl font-bold text-gray-900 mt-2">
-                        {{ $totalApplications }}
-                    </div>
-                </div>
-
-                <div class="bg-white shadow-sm rounded-lg p-5 border">
-                    <div class="text-sm text-gray-500">Pending Review</div>
-                    <div class="text-3xl font-bold text-orange-600 mt-2">
-                        {{ $statusCounts->get('pending_review', 0) }}
-                    </div>
-                </div>
-
-                <div class="bg-white shadow-sm rounded-lg p-5 border">
-                    <div class="text-sm text-gray-500">Generated Clearances</div>
-                    <div class="text-3xl font-bold text-green-700 mt-2">
-                        {{ $totalClearances }}
-                    </div>
-                </div>
-
-                <div class="bg-white shadow-sm rounded-lg p-5 border">
-                    <div class="text-sm text-gray-500">Clearance Area</div>
-                    <div class="text-3xl font-bold text-gray-900 mt-2">
-                        {{ number_format((float) $totalClearanceArea, 4) }}
-                    </div>
-                    <div class="text-xs text-gray-500 mt-1">hectares</div>
-                </div>
-            </div>
-
-            <div class="bg-white shadow-sm rounded-lg p-6 border">
-                <h3 class="font-semibold text-gray-900 mb-4">
-                    Application Status Breakdown
-                </h3>
-
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm">
-                    <div class="border rounded p-4">
-                        <div class="text-gray-500">Draft</div>
-                        <div class="text-2xl font-bold mt-1">
-                            {{ $statusCounts->get('draft', 0) }}
-                        </div>
-                    </div>
-
-                    <div class="border rounded p-4">
-                        <div class="text-gray-500">Pending Review</div>
-                        <div class="text-2xl font-bold mt-1 text-orange-600">
-                            {{ $statusCounts->get('pending_review', 0) }}
-                        </div>
-                    </div>
-
-                    <div class="border rounded p-4">
-                        <div class="text-gray-500">Approved</div>
-                        <div class="text-2xl font-bold mt-1 text-green-700">
-                            {{ $statusCounts->get('approved', 0) }}
-                        </div>
-                    </div>
-
-                    <div class="border rounded p-4">
-                        <div class="text-gray-500">Not Approved</div>
-                        <div class="text-2xl font-bold mt-1 text-red-700">
-                            {{ $statusCounts->get('not_approved', 0) }}
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="bg-white shadow-sm rounded-lg p-6 border">
-                <h3 class="font-semibold text-gray-900 mb-4">
-                    Municipality Breakdown
-                </h3>
-
-                @if($municipalityBreakdown->isEmpty())
-                    <p class="text-sm text-gray-500">No municipality data available.</p>
-                @else
-                    <div class="overflow-x-auto">
-                        <table class="min-w-full border text-sm">
-                            <thead class="bg-gray-100">
-                                <tr>
-                                    <th class="border px-3 py-2 text-left">Municipality</th>
-                                    <th class="border px-3 py-2 text-left">Total</th>
-                                    <th class="border px-3 py-2 text-left">Draft</th>
-                                    <th class="border px-3 py-2 text-left">Pending</th>
-                                    <th class="border px-3 py-2 text-left">Approved</th>
-                                    <th class="border px-3 py-2 text-left">Not Approved</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach($municipalityBreakdown as $row)
-                                    <tr>
-                                        <td class="border px-3 py-2">
-                                            {{ $row['municipality'] }}
-                                        </td>
-                                        <td class="border px-3 py-2">
-                                            {{ $row['total'] }}
-                                        </td>
-                                        <td class="border px-3 py-2">
-                                            {{ $row['draft'] }}
-                                        </td>
-                                        <td class="border px-3 py-2">
-                                            {{ $row['pending_review'] }}
-                                        </td>
-                                        <td class="border px-3 py-2">
-                                            {{ $row['approved'] }}
-                                        </td>
-                                        <td class="border px-3 py-2">
-                                            {{ $row['not_approved'] }}
-                                        </td>
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                    </div>
-                @endif
-            </div>
-
-            <div class="bg-white shadow-sm rounded-lg p-6 border">
-                <h3 class="font-semibold text-gray-900 mb-4">
-                    Recent Applications
-                </h3>
-
-                @if($recentApplications->isEmpty())
-                    <p class="text-sm text-gray-500">No recent applications found.</p>
-                @else
-                    <div class="overflow-x-auto">
-                        <table class="min-w-full border text-sm">
-                            <thead class="bg-gray-100">
-                                <tr>
-                                    <th class="border px-3 py-2 text-left">Application Code</th>
-                                    <th class="border px-3 py-2 text-left">Transferor</th>
-                                    <th class="border px-3 py-2 text-left">Transferee</th>
-                                    <th class="border px-3 py-2 text-left">Municipality</th>
-                                    <th class="border px-3 py-2 text-left">Status</th>
-                                    <th class="border px-3 py-2 text-left">Clearance</th>
-                                    <th class="border px-3 py-2 text-left">Created</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach($recentApplications as $application)
-                                    <tr>
-                                        <td class="border px-3 py-2 font-mono">
-                                            {{ $application->application_code }}
-                                        </td>
-                                        <td class="border px-3 py-2">
-                                            {{ $application->transferorLandowner?->full_name ?? $application->transferor_name ?? 'N/A' }}
-                                        </td>
-                                        <td class="border px-3 py-2">
-                                            {{ $application->transfereeLandowner?->full_name ?? $application->transferee_name ?? 'N/A' }}
-                                        </td>
-                                        <td class="border px-3 py-2">
-                                            {{ $application->municipality ?? 'N/A' }}
-                                        </td>
-                                        <td class="border px-3 py-2">
-                                            {{ strtoupper($application->status) }}
-                                        </td>
-                                        <td class="border px-3 py-2">
-                                            @if($application->clearance)
-                                                {{ $application->clearance->clearance_number }}
-                                            @else
-                                                <span class="text-gray-500">None</span>
-                                            @endif
-                                        </td>
-                                        <td class="border px-3 py-2">
-                                            {{ $application->created_at?->format('M d, Y') ?? 'N/A' }}
-                                        </td>
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                    </div>
-                @endif
-            </div>
-
-            <div class="bg-white shadow-sm rounded-lg p-6 border">
-                <h3 class="font-semibold text-gray-900 mb-4">
-                    Recent Generated Clearances
-                </h3>
-
-                @if($recentClearances->isEmpty())
-                    <p class="text-sm text-gray-500">No generated clearances found.</p>
-                @else
-                    <div class="overflow-x-auto">
-                        <table class="min-w-full border text-sm">
-                            <thead class="bg-gray-100">
-                                <tr>
-                                    <th class="border px-3 py-2 text-left">Clearance No.</th>
-                                    <th class="border px-3 py-2 text-left">Application Code</th>
-                                    <th class="border px-3 py-2 text-left">Decision</th>
-                                    <th class="border px-3 py-2 text-left">Transferor</th>
-                                    <th class="border px-3 py-2 text-left">Transferee</th>
-                                    <th class="border px-3 py-2 text-left">Area</th>
-                                    <th class="border px-3 py-2 text-left">Generated</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach($recentClearances as $clearance)
-                                    <tr>
-                                        <td class="border px-3 py-2 font-mono">
-                                            {{ $clearance->clearance_number }}
-                                        </td>
-                                        <td class="border px-3 py-2 font-mono">
-                                            {{ $clearance->application_code }}
-                                        </td>
-                                        <td class="border px-3 py-2">
-                                            {{ strtoupper($clearance->decision_status) }}
-                                        </td>
-                                        <td class="border px-3 py-2">
-                                            {{ $clearance->transferor_name }}
-                                        </td>
-                                        <td class="border px-3 py-2">
-                                            {{ $clearance->transferee_name }}
-                                        </td>
-                                        <td class="border px-3 py-2">
-                                            {{ number_format((float) $clearance->total_area_hectares, 4) }} ha
-                                        </td>
-                                        <td class="border px-3 py-2">
-                                            {{ $clearance->generated_at?->format('M d, Y h:i A') ?? 'N/A' }}
-                                        </td>
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                    </div>
-                @endif
-            </div>
-
+    <section class="staff-scope-banner">
+        <div>
+            <h3>Scope Notice</h3>
+            <p>{{ $scopeNotice }}</p>
         </div>
-    </div>
-</x-app-layout>
+        <span class="staff-scope-pill">Administrative Report</span>
+    </section>
+
+    <section class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <div class="staff-panel staff-panel-pad">
+            <p class="text-xs font-black uppercase tracking-wider text-gray-500">Total Applications</p>
+            <p class="mt-3 font-heading text-3xl font-black text-gray-950">{{ number_format($totalApplications) }}</p>
+            <p class="mt-2 text-sm text-gray-500">All encoded clearance applications.</p>
+        </div>
+        <div class="staff-panel staff-panel-pad">
+            <p class="text-xs font-black uppercase tracking-wider text-gray-500">Pending Review</p>
+            <p class="mt-3 font-heading text-3xl font-black text-amber-700">{{ number_format($statusCounts['pending_review'] ?? 0) }}</p>
+            <p class="mt-2 text-sm text-gray-500">Applications awaiting staff action.</p>
+        </div>
+        <div class="staff-panel staff-panel-pad">
+            <p class="text-xs font-black uppercase tracking-wider text-gray-500">Generated Clearances</p>
+            <p class="mt-3 font-heading text-3xl font-black text-green-700">{{ number_format($totalClearances) }}</p>
+            <p class="mt-2 text-sm text-gray-500">Clearance outputs generated by the system.</p>
+        </div>
+        <div class="staff-panel staff-panel-pad">
+            <p class="text-xs font-black uppercase tracking-wider text-gray-500">Total Clearance Area</p>
+            <p class="mt-3 font-heading text-3xl font-black text-gray-950">{{ number_format((float) $totalClearanceArea, 4) }}</p>
+            <p class="mt-2 text-sm text-gray-500">Hectares recorded in generated clearances.</p>
+        </div>
+    </section>
+
+    <section class="grid grid-cols-1 gap-5 xl:grid-cols-2">
+        <div class="staff-panel staff-panel-pad">
+            <h2 class="staff-panel-title">Application Status Breakdown</h2>
+            <p class="staff-panel-subtitle">Current workflow count by application status.</p>
+            <div class="mt-5 space-y-3">
+                @forelse ($statusCounts as $status => $count)
+                    <div class="flex items-center justify-between rounded-lg border border-gray-200 bg-gray-50 px-4 py-3">
+                        <span class="font-semibold text-gray-700">{{ ucwords(str_replace('_', ' ', $status)) }}</span>
+                        <span class="staff-badge {{ $status === 'approved' ? 'staff-badge-green' : ($status === 'not_approved' ? 'staff-badge-red' : ($status === 'pending_review' ? 'staff-badge-amber' : 'staff-badge-slate')) }}">{{ number_format($count) }}</span>
+                    </div>
+                @empty
+                    <p class="text-sm text-gray-500">No application status data available.</p>
+                @endforelse
+            </div>
+        </div>
+
+        <div class="staff-panel staff-panel-pad">
+            <h2 class="staff-panel-title">Municipality Breakdown</h2>
+            <p class="staff-panel-subtitle">Applications grouped by recorded municipality.</p>
+            <div class="mt-5 space-y-3">
+                @forelse ($municipalityBreakdown as $row)
+                    <div class="flex items-center justify-between rounded-lg border border-gray-200 bg-gray-50 px-4 py-3">
+                        <span class="font-semibold text-gray-700">{{ $row->municipality }}</span>
+                        <span class="staff-badge staff-badge-blue">{{ number_format($row->total) }}</span>
+                    </div>
+                @empty
+                    <p class="text-sm text-gray-500">No municipality data available.</p>
+                @endforelse
+            </div>
+        </div>
+    </section>
+
+    <section class="grid grid-cols-1 gap-5 xl:grid-cols-2">
+        <div class="staff-panel overflow-hidden">
+            <div class="staff-panel-pad">
+                <h2 class="staff-panel-title">Recent Applications</h2>
+                <p class="staff-panel-subtitle">Latest clearance applications included in monitoring.</p>
+            </div>
+            <div class="staff-table-wrap">
+                <table class="staff-table">
+                    <thead><tr><th>Code</th><th>Parties</th><th>Status</th><th>Location</th></tr></thead>
+                    <tbody>
+                        @forelse ($recentApplications as $application)
+                            <tr>
+                                <td><a href="{{ route('staff.applications.show', $application) }}" class="staff-link">{{ $application->application_code }}</a></td>
+                                <td>
+                                    <div>{{ $application->transferor_name }}</div>
+                                    <div class="text-xs text-gray-500">To: {{ $application->transferee_name }}</div>
+                                </td>
+                                <td><span class="staff-badge">{{ ucwords(str_replace('_', ' ', $application->status)) }}</span></td>
+                                <td>{{ $application->municipality ?? 'N/A' }}</td>
+                            </tr>
+                        @empty
+                            <tr><td colspan="4" class="py-8 text-center text-gray-500">No recent applications.</td></tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="staff-panel overflow-hidden">
+            <div class="staff-panel-pad">
+                <h2 class="staff-panel-title">Recent Generated Clearances</h2>
+                <p class="staff-panel-subtitle">Latest generated clearance outputs. These are not automatic ownership transfers.</p>
+            </div>
+            <div class="staff-table-wrap">
+                <table class="staff-table">
+                    <thead><tr><th>Clearance No.</th><th>Decision</th><th>Area</th><th>Generated</th></tr></thead>
+                    <tbody>
+                        @forelse ($recentClearances as $clearance)
+                            <tr>
+                                <td class="font-bold text-gray-900">{{ $clearance->clearance_number }}</td>
+                                <td><span class="staff-badge {{ $clearance->decision_status === 'approved' ? 'staff-badge-green' : 'staff-badge-red' }}">{{ ucwords(str_replace('_', ' ', $clearance->decision_status)) }}</span></td>
+                                <td>{{ number_format((float) $clearance->total_area_hectares, 4) }} ha</td>
+                                <td>{{ $clearance->generated_at?->timezone('Asia/Manila')->format('M d, Y') ?? 'N/A' }}</td>
+                            </tr>
+                        @empty
+                            <tr><td colspan="4" class="py-8 text-center text-gray-500">No generated clearances yet.</td></tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+</x-staff-shell>

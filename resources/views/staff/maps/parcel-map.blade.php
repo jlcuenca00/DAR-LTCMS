@@ -1,26 +1,309 @@
-<x-app-layout>
-    @push('styles')
+@php
+    $mappedParcelCount = count($parcelGeoJson['features'] ?? []);
+@endphp
+
+<x-staff-shell title="Parcel Map Viewer" active="parcel-map">
+    <x-slot name="head">
         <link
             rel="stylesheet"
             href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
             integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
             crossorigin=""
         />
+    </x-slot>
 
+    <x-slot name="styles">
         <style>
-            .map-shell {
+            .hero-card {
+                background: #ffffff;
+                border: 1px solid var(--border);
+                border-radius: 14px;
+                box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+                overflow: hidden;
+            }
+
+            .hero-inner {
+                padding: 22px 24px;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 20px;
+                border-left: 5px solid #166534;
+            }
+
+            .hero-title-wrap {
+                min-width: 0;
+            }
+
+            .hero-kicker {
+                margin: 0;
+                font-size: 11px;
+                font-weight: 900;
+                letter-spacing: 0.15em;
+                color: #166534;
+                text-transform: uppercase;
+            }
+
+            .hero-title {
+                margin: 6px 0 0;
+                font-family: var(--heading-font);
+                font-size: 24px;
+                line-height: 1.15;
+                font-weight: 900;
+                color: #111827;
+            }
+
+            .hero-copy {
+                margin: 8px 0 0;
+                max-width: 900px;
+                font-size: 13px;
+                line-height: 1.65;
+                color: #4b5563;
+                font-weight: 600;
+            }
+
+            .mode-pill {
+                flex: 0 0 auto;
+                border: 1px solid #bbf7d0;
+                background: #f0fdf4;
+                color: #14532d;
+                border-radius: 12px;
+                padding: 12px 14px;
+                min-width: 170px;
+            }
+
+            .mode-pill span {
+                display: block;
+                font-size: 10px;
+                letter-spacing: 0.13em;
+                text-transform: uppercase;
+                font-weight: 900;
+            }
+
+            .mode-pill strong {
+                display: block;
+                margin-top: 4px;
+                font-size: 14px;
+                font-weight: 900;
+            }
+
+            .map-workspace {
                 display: grid;
-                grid-template-columns: 340px 1fr;
-                gap: 1rem;
+                grid-template-columns: 330px minmax(0, 1fr);
+                gap: 18px;
+                align-items: start;
+            }
+
+            .map-sidebar {
+                display: grid;
+                gap: 14px;
+            }
+
+            .panel-pad {
+                padding: 18px;
+            }
+
+            .panel-copy {
+                margin: 5px 0 0;
+                font-size: 12.5px;
+                line-height: 1.55;
+                color: #6b7280;
+            }
+
+            .tool-list {
+                margin-top: 14px;
+                display: grid;
+                gap: 10px;
+            }
+
+            .tool-button,
+            .tool-link {
+                width: 100%;
+                min-height: 42px;
+                border-radius: 10px;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                gap: 8px;
+                padding: 10px 12px;
+                font-size: 12px;
+                font-weight: 900;
+                text-transform: uppercase;
+                letter-spacing: 0.08em;
+                text-decoration: none;
+                cursor: pointer;
+                transition: 160ms ease;
+            }
+
+            .tool-button.primary {
+                border: 1px solid #166534;
+                background: #166534;
+                color: #ffffff;
+            }
+
+            .tool-button.primary:hover {
+                background: #14532d;
+            }
+
+            .tool-button.secondary,
+            .tool-link.secondary {
+                border: 1px solid #d1d5db;
+                background: #ffffff;
+                color: #374151;
+            }
+
+            .tool-button.secondary:hover,
+            .tool-link.secondary:hover {
+                border-color: #86efac;
+                background: #f0fdf4;
+                color: #14532d;
+            }
+
+            .legend-list,
+            .access-list {
+                margin-top: 14px;
+                display: grid;
+                gap: 11px;
+            }
+
+            .legend-item {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                font-size: 12.5px;
+                font-weight: 700;
+                color: #4b5563;
+            }
+
+            .legend-dot {
+                width: 11px;
+                height: 11px;
+                border-radius: 999px;
+                flex: 0 0 auto;
+                box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.06);
+            }
+
+            .scope-box {
+                background: #fffbeb;
+                border-color: #fde68a;
+            }
+
+            .scope-box .panel-title,
+            .scope-box .panel-copy {
+                color: #92400e;
+            }
+
+            .access-row {
+                display: flex;
+                justify-content: space-between;
+                gap: 12px;
+                border-bottom: 1px solid #eef2f7;
+                padding-bottom: 10px;
+                font-size: 12.5px;
+            }
+
+            .access-row:last-child {
+                border-bottom: 0;
+                padding-bottom: 0;
+            }
+
+            .access-label {
+                color: #6b7280;
+                font-weight: 700;
+            }
+
+            .access-value {
+                text-align: right;
+                color: #111827;
+                font-weight: 900;
+            }
+
+            .access-value.locked {
+                color: #b91c1c;
+            }
+
+            .map-panel {
+                min-width: 0;
+            }
+
+            .map-panel-header {
+                padding: 16px 18px;
+                border-bottom: 1px solid #e5e7eb;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 14px;
+                background: #ffffff;
+            }
+
+            .map-panel-title {
+                margin: 0;
+                font-family: var(--heading-font);
+                font-size: 16px;
+                font-weight: 900;
+            }
+
+            .map-panel-subtitle {
+                margin: 4px 0 0;
+                font-size: 12.5px;
+                color: #6b7280;
+                font-weight: 600;
+            }
+
+            .map-count {
+                display: inline-flex;
+                align-items: center;
+                gap: 8px;
+                border: 1px solid #bbf7d0;
+                background: #f0fdf4;
+                color: #14532d;
+                border-radius: 999px;
+                padding: 8px 12px;
+                font-size: 12px;
+                font-weight: 900;
+                white-space: nowrap;
+            }
+
+            .map-frame {
+                padding: 14px;
+                background: #ffffff;
             }
 
             #parcel-map {
-                height: 680px;
+                height: calc(100vh - 235px);
+                min-height: 590px;
                 width: 100%;
-                border-radius: 1rem;
+                border-radius: 12px;
                 border: 1px solid #d1d5db;
                 overflow: hidden;
-                box-shadow: 0 10px 25px rgba(15, 23, 42, 0.08);
+                box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.03);
+                background: #111827;
+            }
+
+            .leaflet-control-zoom a {
+                background: #111827 !important;
+                color: #f9fafb !important;
+                border-color: #374151 !important;
+            }
+
+            .leaflet-control-zoom a:hover {
+                background: #1f2937 !important;
+            }
+
+            .leaflet-control-attribution {
+                background: rgba(17, 24, 39, 0.85) !important;
+                color: #d1d5db !important;
+                border-radius: 0.5rem 0 0 0;
+            }
+
+            .leaflet-control-attribution a {
+                color: #86efac !important;
+            }
+
+            .leaflet-popup-content-wrapper,
+            .leaflet-popup-tip {
+                background: #111827;
+                color: #f9fafb;
             }
 
             .leaflet-popup-content-wrapper {
@@ -31,422 +314,417 @@
                 margin: 14px 16px;
                 font-family: inherit;
             }
-            .leaflet-control-zoom a {
-    background: #111827 !important;
-    color: #f9fafb !important;
-    border-color: #374151 !important;
-}
 
-.leaflet-control-zoom a:hover {
-    background: #1f2937 !important;
-}
-
-.leaflet-control-attribution {
-    background: rgba(17, 24, 39, 0.85) !important;
-    color: #d1d5db !important;
-    border-radius: 0.5rem 0 0 0;
-}
-
-.leaflet-control-attribution a {
-    color: #86efac !important;
-}
-
-.leaflet-popup-content-wrapper,
-.leaflet-popup-tip {
-    background: #111827;
-    color: #f9fafb;
-}
-
-.leaflet-popup-content p {
-    color: #d1d5db !important;
-}
-
-.parcel-tooltip {
-    background: rgba(17, 24, 39, 0.96);
-    color: #f9fafb;
-    border: 1px solid rgba(134, 239, 172, 0.7);
-    border-radius: 0.75rem;
-    padding: 0;
-    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.35);
-}
-
-.parcel-tooltip::before {
-    border-top-color: rgba(17, 24, 39, 0.96);
-}
-
-.parcel-tooltip-card {
-    min-width: 230px;
-    padding: 0.85rem;
-}
-
-.parcel-tooltip-title {
-    font-size: 0.85rem;
-    font-weight: 800;
-    color: #bbf7d0;
-    margin-bottom: 0.35rem;
-}
-
-.parcel-tooltip-row {
-    font-size: 0.75rem;
-    color: #d1d5db;
-    margin-top: 0.2rem;
-}
-
-.parcel-tooltip-label {
-    color: #9ca3af;
-}
-
-            .custom-parcel-marker {
-                width: 24px;
-                height: 24px;
-                border-radius: 9999px;
-                background: #166534;
-                border: 4px solid #dcfce7;
-                box-shadow: 0 0 0 3px rgba(22, 101, 52, 0.25);
+            .leaflet-popup-content p {
+                color: #d1d5db !important;
             }
 
-            .map-legend-dot {
-                display: inline-block;
-                width: 10px;
-                height: 10px;
-                border-radius: 9999px;
-                margin-right: 8px;
+            .parcel-tooltip {
+                background: rgba(17, 24, 39, 0.96);
+                color: #f9fafb;
+                border: 1px solid rgba(134, 239, 172, 0.7);
+                border-radius: 0.75rem;
+                padding: 0;
+                box-shadow: 0 15px 30px rgba(0, 0, 0, 0.35);
             }
 
-            @media (max-width: 1024px) {
-                .map-shell {
+            .parcel-tooltip::before {
+                border-top-color: rgba(17, 24, 39, 0.96);
+            }
+
+            .parcel-tooltip-card {
+                min-width: 230px;
+                padding: 0.85rem;
+            }
+
+            .parcel-tooltip-title {
+                font-size: 0.85rem;
+                font-weight: 800;
+                color: #bbf7d0;
+                margin-bottom: 0.35rem;
+            }
+
+            .parcel-tooltip-row {
+                font-size: 0.75rem;
+                color: #d1d5db;
+                margin-top: 0.2rem;
+            }
+
+            .parcel-tooltip-label {
+                color: #9ca3af;
+            }
+
+            @media (max-width: 1180px) {
+                .map-workspace {
                     grid-template-columns: 1fr;
                 }
 
+                .map-sidebar {
+                    grid-template-columns: repeat(2, minmax(0, 1fr));
+                }
+
+                .scope-box {
+                    grid-column: 1 / -1;
+                }
+
                 #parcel-map {
-                    height: 540px;
+                    height: 620px;
+                    min-height: 520px;
+                }
+            }
+
+            @media (max-width: 900px) {
+                .hero-inner {
+                    flex-direction: column;
+                    align-items: flex-start;
+                    padding: 18px;
+                }
+
+                .mode-pill {
+                    width: 100%;
+                }
+
+                .map-sidebar {
+                    grid-template-columns: 1fr;
+                }
+
+                .map-panel-header {
+                    flex-direction: column;
+                    align-items: flex-start;
+                }
+
+                #parcel-map {
+                    height: 520px;
+                    min-height: 460px;
+                }
+            }
+
+            @media (max-width: 560px) {
+                .hero-title {
+                    font-size: 20px;
+                }
+
+                #parcel-map {
+                    height: 440px;
+                    min-height: 400px;
                 }
             }
         </style>
-    @endpush
-
-    <x-slot name="header">
-        <div>
-            <h2 class="font-semibold text-xl text-gray-800">
-                Parcel Map Viewer
-            </h2>
-            <p class="text-sm text-gray-500 mt-1">
-                Read-only parcel/reference map for clearance processing and monitoring.
-            </p>
-        </div>
     </x-slot>
 
-    <div class="py-6">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-5">
+    <section class="hero-card">
+        <div class="hero-inner">
+            <div class="hero-title-wrap">
+                <p class="hero-kicker">Read-Only Parcel Visualization</p>
+                <h2 class="hero-title">Main Parcel Map Viewer</h2>
+                <p class="hero-copy">
+                    View mapped main parcel records for staff reference and monitoring. This map is for visualization and record review only;
+                    it does not edit ownership, execute land transfer, or mutate registry records.
+                </p>
+            </div>
 
-            <div class="bg-white border border-gray-200 shadow-sm sm:rounded-xl p-6">
-                <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-                    <div>
-                        <p class="text-xs font-semibold tracking-wide text-green-700 uppercase">
-                            DAR Negros Oriental Provincial Office
-                        </p>
+            <div class="mode-pill">
+                <span>Map Mode</span>
+                <strong>Reference Only</strong>
+            </div>
+        </div>
+    </section>
 
-                        <h3 class="text-2xl font-bold text-gray-900 mt-1">
-                            Parcel Reference Map
-                        </h3>
+    <section class="map-workspace">
+        <aside class="map-sidebar">
+            <div class="panel">
+                <div class="panel-pad">
+                    <h3 class="panel-title">Map Tools</h3>
+                    <p class="panel-copy">
+                        Reset the view or jump back to the provincial office reference area.
+                    </p>
 
-                        <p class="text-sm text-gray-600 mt-2 max-w-3xl">
-                            This map supports parcel viewing, reference checking, clearance processing,
-                            and monitoring only. It does not automatically transfer land ownership,
-                            mutate registry records, or finalize legal land transactions.
-                        </p>
-                    </div>
+                    <div class="tool-list">
+                        <button type="button" id="reset-map-view" class="tool-button primary">
+                            <i class="fa-solid fa-expand"></i>
+                            Reset View
+                        </button>
 
-                    <div class="bg-green-50 border border-green-200 rounded-xl px-4 py-3">
-                        <p class="text-xs text-green-700 font-semibold uppercase">
-                            Map Mode
-                        </p>
-                        <p class="text-sm text-green-900 font-bold">
-                            Read-only viewer
-                        </p>
+                        <button type="button" id="focus-dar-office" class="tool-button secondary">
+                            <i class="fa-solid fa-location-crosshairs"></i>
+                            Focus Area
+                        </button>
+
+                        <a href="{{ route('staff.records.parcels.index') }}" class="tool-link secondary">
+                            <i class="fa-solid fa-list"></i>
+                            Parcel List
+                        </a>
                     </div>
                 </div>
             </div>
 
-            <div class="map-shell">
+            <div class="panel">
+                <div class="panel-pad">
+                    <h3 class="panel-title">Legend</h3>
+                    <p class="panel-copy">
+                        Colors represent parcel record states used for monitoring display.
+                    </p>
 
-                <aside class="space-y-4">
+                    <div class="legend-list">
+                        <div class="legend-item">
+                            <span class="legend-dot" style="background:#22c55e;"></span>
+                            Active parcel record
+                        </div>
 
-                    <div class="bg-white border border-gray-200 shadow-sm rounded-xl p-5">
-                        <h4 class="font-semibold text-gray-900">
-                            Map Tools
-                        </h4>
+                        <div class="legend-item">
+                            <span class="legend-dot" style="background:#f59e0b;"></span>
+                            Pending review reference
+                        </div>
 
-                        <p class="text-sm text-gray-600 mt-1">
-                            These tools are for viewing and reference only.
-                        </p>
+                        <div class="legend-item">
+                            <span class="legend-dot" style="background:#2563eb;"></span>
+                            Linked to application
+                        </div>
 
-                        <div class="mt-4 space-y-3">
-                            <button
-                                type="button"
-                                id="reset-map-view"
-                                class="w-full inline-flex justify-center items-center px-4 py-2 bg-green-700 border border-transparent rounded-lg font-semibold text-xs text-white uppercase tracking-widest hover:bg-green-800 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
-                            >
-                                Reset to Negros Oriental
-                            </button>
-
-                            <button
-                                type="button"
-                                id="focus-dar-office"
-                                class="w-full inline-flex justify-center items-center px-4 py-2 bg-white border border-gray-300 rounded-lg font-semibold text-xs text-gray-700 uppercase tracking-widest hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
-                            >
-                                Focus Reference Point
-                            </button>
+                        <div class="legend-item">
+                            <span class="legend-dot" style="background:#dc2626;"></span>
+                            Flagged record
                         </div>
                     </div>
-
-                    <div class="bg-white border border-gray-200 shadow-sm rounded-xl p-5">
-                        <h4 class="font-semibold text-gray-900">
-                            Legend
-                        </h4>
-
-                        <div class="mt-4 space-y-3 text-sm text-gray-700">
-                            <p>
-                                <span class="map-legend-dot" style="background:#166534;"></span>
-                                Reference parcel/location point
-                            </p>
-
-                            <p>
-                                <span class="map-legend-dot" style="background:#f59e0b;"></span>
-                                Pending / for review parcel
-                            </p>
-
-                            <p>
-                                <span class="map-legend-dot" style="background:#2563eb;"></span>
-                                Linked clearance application
-                            </p>
-
-                            <p>
-                                <span class="map-legend-dot" style="background:#dc2626;"></span>
-                                Flagged reference issue
-                            </p>
-                        </div>
-                    </div>
-
-                    <div class="bg-amber-50 border border-amber-200 rounded-xl p-5">
-                        <h4 class="font-semibold text-amber-900">
-                            Scope Notice
-                        </h4>
-
-                        <p class="text-sm text-amber-800 mt-2">
-                            Approval of a clearance application does not mean ownership has already
-                            been legally transferred. This system only records, generates, monitors,
-                            and audits clearance-related actions.
-                        </p>
-                    </div>
-
-                    <div class="bg-white border border-gray-200 shadow-sm rounded-xl p-5">
-                        <h4 class="font-semibold text-gray-900">
-                            Current Viewer Access
-                        </h4>
-
-                        <dl class="mt-4 space-y-3 text-sm">
-                            <div>
-                                <dt class="text-gray-500">Role</dt>
-                                <dd class="font-semibold text-gray-900">DAR Staff</dd>
-                            </div>
-
-                            <div>
-                                <dt class="text-gray-500">Access Level</dt>
-                                <dd class="font-semibold text-gray-900">Broad parcel/reference viewing</dd>
-                            </div>
-
-                            <div>
-                                <dt class="text-gray-500">Editing</dt>
-                                <dd class="font-semibold text-red-700">Not allowed on map</dd>
-                            </div>
-                        </dl>
-                    </div>
-
-                </aside>
-
-                <section class="bg-white border border-gray-200 shadow-sm rounded-xl p-4">
-                    <div id="parcel-map"></div>
-                </section>
-
+                </div>
             </div>
-        </div>
-    </div>
 
-    @push('scripts')
-    <script
-        src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
-        crossorigin="">
-    </script>
+            <div class="panel scope-box">
+                <div class="panel-pad">
+                    <h3 class="panel-title">Scope Reminder</h3>
+                    <p class="panel-copy">
+                        Only main parcel records with encoded geometry are drawn here. Source records support documentation and provenance,
+                        but they do not appear as map parcels unless staff link or create a main parcel record through the approved workflow.
+                    </p>
+                </div>
+            </div>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            const negrosOrientalCenter = [9.3068, 123.3054];
-            const parcelGeoJson = @json($parcelGeoJson);
+            <div class="panel">
+                <div class="panel-pad">
+                    <h3 class="panel-title">Access Control</h3>
+                    <p class="panel-copy">
+                        Staff may review broad parcel references. The map itself remains non-mutating.
+                    </p>
 
-            const map = L.map('parcel-map', {
-                zoomControl: false,
-                scrollWheelZoom: true
-            }).setView(negrosOrientalCenter, 12);
-
-            L.control.zoom({
-                position: 'topright'
-            }).addTo(map);
-
-            L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-                subdomains: 'abcd',
-                maxZoom: 20,
-                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-            }).addTo(map);
-
-            
-
-            function getParcelColor(status) {
-                if (status === 'pending_review') {
-                    return '#f59e0b';
-                }
-
-                if (status === 'linked_application') {
-                    return '#2563eb';
-                }
-
-                if (status === 'flagged') {
-                    return '#dc2626';
-                }
-
-                return '#22c55e';
-            }
-
-            function getParcelStyle(feature) {
-                const color = getParcelColor(feature.properties.status);
-
-                return {
-                    color: color,
-                    weight: 2,
-                    opacity: 0.9,
-                    fillColor: color,
-                    fillOpacity: 0.28
-                };
-            }
-
-            function getParcelHoverStyle(feature) {
-                const color = getParcelColor(feature.properties.status);
-
-                return {
-                    color: '#ffffff',
-                    weight: 6,
-                    opacity: 1,
-                    fillColor: color,
-                    fillOpacity: 0.65
-                };
-            }
-
-            function buildTooltipContent(properties) {
-                return `
-                    <div class="parcel-tooltip-card">
-                        <div class="parcel-tooltip-title">
-                            ${properties.parcel_code}
+                    <div class="access-list">
+                        <div class="access-row">
+                            <span class="access-label">Role</span>
+                            <span class="access-value">Staff</span>
                         </div>
-
-                        <div class="parcel-tooltip-row">
-                            <span class="parcel-tooltip-label">Landowner:</span>
-                            ${properties.landowner}
+                        <div class="access-row">
+                            <span class="access-label">Access Level</span>
+                            <span class="access-value">Broad parcel viewing</span>
                         </div>
-
-                        <div class="parcel-tooltip-row">
-                            <span class="parcel-tooltip-label">Location:</span>
-                            ${properties.barangay}, ${properties.municipality}
-                        </div>
-
-                        <div class="parcel-tooltip-row">
-                            <span class="parcel-tooltip-label">Area:</span>
-                            ${properties.area_hectares} hectares
-                        </div>
-
-                        <div class="parcel-tooltip-row">
-                            <span class="parcel-tooltip-label">Title No.:</span>
-                            ${properties.title_no}
-                        </div>
-
-                        <div class="parcel-tooltip-row">
-                            <span class="parcel-tooltip-label">Tax Declaration:</span>
-                            ${properties.tax_decl_no}
-                        </div>
-
-                        <div class="parcel-tooltip-row">
-                            <span class="parcel-tooltip-label">Click:</span>
-                            open parcel record
+                        <div class="access-row">
+                            <span class="access-label">Editing</span>
+                            <span class="access-value locked">Not allowed on map</span>
                         </div>
                     </div>
-                `;
-            }
+                </div>
+            </div>
+        </aside>
 
-            let parcelLayer;
+        <section class="panel map-panel">
+            <div class="map-panel-header">
+                <div>
+                    <h3 class="map-panel-title">Mapped Main Parcel Records</h3>
+                    <p class="map-panel-subtitle">Click a parcel to open its staff parcel record. Source records do not appear unless linked to a main parcel record.</p>
+                </div>
 
-            function onEachParcel(feature, layer) {
-                layer.bindTooltip(buildTooltipContent(feature.properties), {
-                    sticky: true,
-                    direction: 'top',
-                    opacity: 1,
-                    className: 'parcel-tooltip'
+                <div class="map-count">
+                    <i class="fa-solid fa-draw-polygon"></i>
+                    {{ number_format($mappedParcelCount) }} mapped parcel{{ $mappedParcelCount === 1 ? '' : 's' }}
+                </div>
+            </div>
+
+            <div class="map-frame">
+                <div id="parcel-map"></div>
+            </div>
+        </section>
+    </section>
+
+    <x-slot name="scripts">
+        <script
+            src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+            integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+            crossorigin="">
+        </script>
+
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                const negrosOrientalCenter = [9.3068, 123.3054];
+                const parcelGeoJson = @json($parcelGeoJson);
+
+                const map = L.map('parcel-map', {
+                    zoomControl: false,
+                    scrollWheelZoom: true
+                }).setView(negrosOrientalCenter, 12);
+
+                L.control.zoom({
+                    position: 'topright'
+                }).addTo(map);
+
+                L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+                    subdomains: 'abcd',
+                    maxZoom: 20,
+                    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+                }).addTo(map);
+
+                function escapeHtml(value) {
+                    return String(value ?? '')
+                        .replace(/&/g, '&amp;')
+                        .replace(/</g, '&lt;')
+                        .replace(/>/g, '&gt;')
+                        .replace(/"/g, '&quot;')
+                        .replace(/'/g, '&#039;');
+                }
+
+                function getParcelColor(status) {
+                    if (status === 'pending_review') {
+                        return '#f59e0b';
+                    }
+
+                    if (status === 'linked_application') {
+                        return '#2563eb';
+                    }
+
+                    if (status === 'flagged') {
+                        return '#dc2626';
+                    }
+
+                    return '#22c55e';
+                }
+
+                function getParcelStyle(feature) {
+                    const color = getParcelColor(feature.properties.status);
+
+                    return {
+                        color: color,
+                        weight: 2,
+                        opacity: 0.9,
+                        fillColor: color,
+                        fillOpacity: 0.28
+                    };
+                }
+
+                function getParcelHoverStyle(feature) {
+                    const color = getParcelColor(feature.properties.status);
+
+                    return {
+                        color: '#ffffff',
+                        weight: 6,
+                        opacity: 1,
+                        fillColor: color,
+                        fillOpacity: 0.65
+                    };
+                }
+
+                function buildTooltipContent(properties) {
+                    return `
+                        <div class="parcel-tooltip-card">
+                            <div class="parcel-tooltip-title">
+                                ${escapeHtml(properties.parcel_code)}
+                            </div>
+
+                            <div class="parcel-tooltip-row">
+                                <span class="parcel-tooltip-label">Landowner:</span>
+                                ${escapeHtml(properties.landowner)}
+                            </div>
+
+                            <div class="parcel-tooltip-row">
+                                <span class="parcel-tooltip-label">Location:</span>
+                                ${escapeHtml(properties.barangay)}, ${escapeHtml(properties.municipality)}
+                            </div>
+
+                            <div class="parcel-tooltip-row">
+                                <span class="parcel-tooltip-label">Area:</span>
+                                ${escapeHtml(properties.area_hectares)} hectares
+                            </div>
+
+                            <div class="parcel-tooltip-row">
+                                <span class="parcel-tooltip-label">Title No.:</span>
+                                ${escapeHtml(properties.title_no)}
+                            </div>
+
+                            <div class="parcel-tooltip-row">
+                                <span class="parcel-tooltip-label">Tax Declaration:</span>
+                                ${escapeHtml(properties.tax_decl_no)}
+                            </div>
+
+                            <div class="parcel-tooltip-row">
+                                <span class="parcel-tooltip-label">Click:</span>
+                                open parcel record
+                            </div>
+                        </div>
+                    `;
+                }
+
+                let parcelLayer = null;
+
+                function onEachParcel(feature, layer) {
+                    layer.bindTooltip(buildTooltipContent(feature.properties), {
+                        sticky: true,
+                        direction: 'top',
+                        opacity: 1,
+                        className: 'parcel-tooltip'
+                    });
+
+                    layer.on({
+                        mouseover: function (event) {
+                            const hoveredLayer = event.target;
+                            hoveredLayer.setStyle(getParcelHoverStyle(feature));
+                            hoveredLayer.bringToFront();
+                            hoveredLayer.openTooltip();
+                        },
+
+                        mouseout: function (event) {
+                            if (parcelLayer) {
+                                parcelLayer.resetStyle(event.target);
+                            }
+                            event.target.closeTooltip();
+                        },
+
+                        click: function () {
+                            if (feature.properties.details_url) {
+                                window.location.href = feature.properties.details_url;
+                            }
+                        }
+                    });
+                }
+
+                if (parcelGeoJson.features && parcelGeoJson.features.length > 0) {
+                    parcelLayer = L.geoJSON(parcelGeoJson, {
+                        style: getParcelStyle,
+                        onEachFeature: onEachParcel
+                    }).addTo(map);
+
+                    map.fitBounds(parcelLayer.getBounds(), {
+                        padding: [40, 40]
+                    });
+                } else {
+                    L.popup()
+                        .setLatLng(negrosOrientalCenter)
+                        .setContent(`
+                            <strong>No mapped parcels yet.</strong><br>
+                            Encode parcel geometry to display parcels on this map.
+                        `)
+                        .openOn(map);
+                }
+
+                document.getElementById('reset-map-view').addEventListener('click', function () {
+                    if (parcelLayer) {
+                        map.fitBounds(parcelLayer.getBounds(), {
+                            padding: [40, 40]
+                        });
+                    } else {
+                        map.setView(negrosOrientalCenter, 12);
+                    }
                 });
 
-                layer.on({
-                    mouseover: function (event) {
-                        const hoveredLayer = event.target;
-
-                        hoveredLayer.setStyle(getParcelHoverStyle(feature));
-                        hoveredLayer.bringToFront();
-                        hoveredLayer.openTooltip();
-                    },
-
-                    mouseout: function (event) {
-                        parcelLayer.resetStyle(event.target);
-                        event.target.closeTooltip();
-                    },
-
-                    click: function () {
-    if (feature.properties.details_url) {
-        window.location.href = feature.properties.details_url;
-    }
-}
+                document.getElementById('focus-dar-office').addEventListener('click', function () {
+                    map.setView(negrosOrientalCenter, 14);
                 });
-            }
-
-            if (parcelGeoJson.features.length > 0) {
-    parcelLayer = L.geoJSON(parcelGeoJson, {
-        style: getParcelStyle,
-        onEachFeature: onEachParcel
-    }).addTo(map);
-
-    map.fitBounds(parcelLayer.getBounds(), {
-        padding: [40, 40]
-    });
-} else {
-    L.popup()
-        .setLatLng(negrosOrientalCenter)
-        .setContent(`
-            <strong>No mapped parcels yet.</strong><br>
-            Encode parcel geometry to display parcels on this map.
-        `)
-        .openOn(map);
-}
-
-            document.getElementById('reset-map-view').addEventListener('click', function () {
-    if (parcelLayer) {
-        map.fitBounds(parcelLayer.getBounds(), {
-            padding: [40, 40]
-        });
-    } else {
-        map.setView(negrosOrientalCenter, 12);
-    }
-});
-
-            document.getElementById('focus-dar-office').addEventListener('click', function () {
-                map.setView(negrosOrientalCenter, 14);
             });
-        });
-    </script>
-@endpush
-</x-app-layout>
+        </script>
+    </x-slot>
+</x-staff-shell>
