@@ -33,8 +33,8 @@
             <p class="text-sm font-bold text-gray-500">{{ $parcels->total() }} record(s)</p>
         </div>
 
-        <form method="GET" action="{{ route('staff.records.parcels.index') }}" class="mt-5 grid grid-cols-1 gap-4 md:grid-cols-4 xl:grid-cols-5">
-            <div class="xl:col-span-2">
+        <form method="GET" action="{{ route('staff.records.parcels.index') }}" class="mt-5 staff-filter-grid filter-grid-4">
+            <div class="staff-filter-field">
                 <label class="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">Search</label>
                 <input type="text" name="search" value="{{ $filters['search'] ?? '' }}" placeholder="Parcel code, title no., tax declaration no., remarks" class="w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-green-600 focus:ring-green-600">
             </div>
@@ -65,7 +65,7 @@
                     @endforeach
                 </select>
             </div>
-            <div class="md:col-span-4 xl:col-span-5 flex flex-wrap gap-2">
+            <div class="staff-filter-actions">
                 <button type="submit" class="staff-button staff-button-dark"><i class="fa-solid fa-filter"></i>Apply Filters</button>
                 <a href="{{ route('staff.records.parcels.index') }}" class="staff-button staff-button-light">Reset</a>
             </div>
@@ -118,6 +118,6 @@
                 </tbody>
             </table>
         </div>
-        <div class="border-t border-gray-200 px-5 py-4">{{ $parcels->withQueryString()->links() }}</div>
+        <div class="border-t border-gray-200 px-6 py-4">{{ $parcels->withQueryString()->links() }}</div>
     </section>
 </x-staff-shell>

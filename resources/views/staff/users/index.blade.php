@@ -33,7 +33,7 @@
             <p class="text-sm font-bold text-gray-500">{{ $users->total() }} account(s)</p>
         </div>
 
-        <form method="GET" action="{{ route('staff.users.index') }}" class="mt-5 grid grid-cols-1 gap-4 md:grid-cols-4">
+        <form method="GET" action="{{ route('staff.users.index') }}" class="mt-5 staff-filter-grid filter-grid-4">
             <div>
                 <label class="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">Search</label>
                 <input type="text" name="search" value="{{ $filters['search'] ?? '' }}" placeholder="Name or email" class="w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-green-600 focus:ring-green-600">
@@ -55,8 +55,8 @@
                     <option value="inactive" @selected(($filters['status'] ?? '') === 'inactive')>Inactive</option>
                 </select>
             </div>
-            <div class="flex items-end gap-2">
-                <button type="submit" class="staff-button staff-button-dark"><i class="fa-solid fa-filter"></i>Apply</button>
+            <div class="staff-filter-actions">
+                <button type="submit" class="staff-button staff-button-dark"><i class="fa-solid fa-filter"></i>Apply Filters</button>
                 <a href="{{ route('staff.users.index') }}" class="staff-button staff-button-light">Reset</a>
             </div>
         </form>
@@ -105,6 +105,6 @@
                 </tbody>
             </table>
         </div>
-        <div class="border-t border-gray-200 px-5 py-4">{{ $users->withQueryString()->links() }}</div>
+        <div class="border-t border-gray-200 px-6 py-4">{{ $users->withQueryString()->links() }}</div>
     </section>
 </x-staff-shell>

@@ -16,7 +16,7 @@
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Google+Sans:opsz,wght@17..18,400..700&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Google+Sans:opsz,wght@17..18,400..700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 
     @isset($head)
@@ -41,8 +41,8 @@
             --border: #d9dee5;
             --text: #111827;
             --muted: #6b7280;
-            --heading-font: 'Google Sans', 'Product Sans', 'Inter', ui-sans-serif, system-ui, sans-serif;
-            --body-font: 'Inter', ui-sans-serif, system-ui, sans-serif;
+            --heading-font: 'Google Sans';
+            --body-font: 'Google Sans';
         }
 
         * { box-sizing: border-box; }
@@ -280,17 +280,6 @@
             flex-wrap: wrap;
         }
 
-        .staff-updated-chip {
-            border: 1px solid #d1d5db;
-            background: #f9fafb;
-            border-radius: 999px;
-            padding: 8px 12px;
-            font-size: 12px;
-            font-weight: 700;
-            color: #4b5563;
-            white-space: nowrap;
-        }
-
         .staff-user-chip {
             display: flex;
             align-items: center;
@@ -313,7 +302,7 @@
         }
 
         .staff-content {
-            padding: 24px 28px 36px;
+            padding: 26px 32px 40px;
         }
 
         .staff-content-inner {
@@ -475,6 +464,176 @@
 
         .staff-muted { color: #6b7280; }
 
+
+
+        /* Consistent themed scrollbars across staff pages */
+        html,
+        .staff-table-wrap,
+        .report-table-wrap,
+        .table-wrap,
+        .source-table-wrap,
+        .timeline-table-wrap,
+        .staff-scrollbar {
+            scrollbar-color: #166534 #e5e7eb;
+            scrollbar-width: thin;
+        }
+
+        ::-webkit-scrollbar {
+            width: 10px;
+            height: 10px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #e5e7eb;
+            border-radius: 999px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #166534;
+            border: 2px solid #e5e7eb;
+            border-radius: 999px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #14532d;
+        }
+
+
+        /* Staff filter forms: consistent column grid, not full-width stacked rows. */
+        .staff-filter-grid,
+        .staff-content-inner form.staff-filter-grid,
+        .staff-content-inner section.staff-panel form[method="GET"] {
+            display: grid !important;
+            grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)) !important;
+            gap: 14px 16px !important;
+            align-items: end !important;
+        }
+
+        .staff-filter-field,
+        .staff-filter-field-wide,
+        .staff-content-inner section.staff-panel form[method="GET"] > div:not(.staff-filter-actions) {
+            width: 100% !important;
+            max-width: none !important;
+            grid-column: auto !important;
+        }
+
+        .staff-filter-actions,
+        .staff-content-inner section.staff-panel form[method="GET"] > .staff-filter-actions {
+            display: flex !important;
+            flex-wrap: wrap !important;
+            gap: 8px !important;
+            align-items: center !important;
+            justify-content: flex-start !important;
+            grid-column: 1 / -1 !important;
+            padding-top: 2px !important;
+        }
+
+        .staff-filter-actions .staff-button,
+        .staff-content-inner section.staff-panel form[method="GET"] .staff-button {
+            min-height: 40px !important;
+            height: 40px !important;
+            padding: 0 14px !important;
+        }
+
+        @media (min-width: 1280px) {
+            .staff-filter-grid.filter-grid-4,
+            .staff-content-inner section.staff-panel form.staff-filter-grid.filter-grid-4 {
+                grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+            }
+
+            .staff-filter-grid.filter-grid-5,
+            .staff-content-inner section.staff-panel form.staff-filter-grid.filter-grid-5 {
+                grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+            }
+        }
+
+        @media (max-width: 760px) {
+            .staff-filter-grid,
+            .staff-content-inner form.staff-filter-grid,
+            .staff-content-inner section.staff-panel form[method="GET"] {
+                grid-template-columns: 1fr !important;
+            }
+        }
+
+        /* Themed pagination: override Laravel/Tailwind dark button group styling. */
+        .staff-shell nav[role="navigation"],
+        .staff-shell nav[aria-label="Pagination Navigation"] {
+            display: flex !important;
+            justify-content: center !important;
+        }
+
+        .staff-shell nav[role="navigation"] a,
+        .staff-shell nav[role="navigation"] span,
+        .staff-shell nav[role="navigation"] button,
+        .staff-shell nav[aria-label="Pagination Navigation"] a,
+        .staff-shell nav[aria-label="Pagination Navigation"] span,
+        .staff-shell nav[aria-label="Pagination Navigation"] button,
+        .staff-shell [aria-label="Pagination Navigation"] *[class*="bg-gray"],
+        .staff-shell [aria-label="Pagination Navigation"] *[class*="bg-slate"],
+        .staff-shell [aria-label="Pagination Navigation"] *[class*="text-gray"],
+        .staff-shell [aria-label="Pagination Navigation"] *[class*="text-slate"] {
+            background-color: #ffffff !important;
+            color: #166534 !important;
+            border-color: #bbd7c4 !important;
+            box-shadow: none !important;
+        }
+
+        .staff-shell nav[role="navigation"] a:hover,
+        .staff-shell nav[role="navigation"] button:hover,
+        .staff-shell nav[aria-label="Pagination Navigation"] a:hover,
+        .staff-shell nav[aria-label="Pagination Navigation"] button:hover {
+            background-color: #f0fdf4 !important;
+            color: #14532d !important;
+            border-color: #86efac !important;
+        }
+
+        .staff-shell nav[role="navigation"] [aria-current="page"],
+        .staff-shell nav[role="navigation"] [aria-current="page"] *,
+        .staff-shell nav[aria-label="Pagination Navigation"] [aria-current="page"],
+        .staff-shell nav[aria-label="Pagination Navigation"] [aria-current="page"] *,
+        .staff-shell [aria-label="Pagination Navigation"] span[aria-current="page"],
+        .staff-shell [aria-label="Pagination Navigation"] span[aria-current="page"] * {
+            background-color: #166534 !important;
+            color: #ffffff !important;
+            border-color: #166534 !important;
+            font-weight: 900 !important;
+        }
+
+        .staff-shell nav[role="navigation"] svg,
+        .staff-shell nav[aria-label="Pagination Navigation"] svg {
+            color: currentColor !important;
+        }
+
+        .staff-shell nav[role="navigation"] [aria-disabled="true"],
+        .staff-shell nav[role="navigation"] [aria-disabled="true"] *,
+        .staff-shell nav[aria-label="Pagination Navigation"] [aria-disabled="true"],
+        .staff-shell nav[aria-label="Pagination Navigation"] [aria-disabled="true"] * {
+            background-color: #f8fafc !important;
+            color: #94a3b8 !important;
+            border-color: #e5e7eb !important;
+        }
+
+        /* Better scrollbar visibility without black/native-looking bars. */
+        .staff-shell * {
+            scrollbar-color: #166534 #eef2f7;
+            scrollbar-width: thin;
+        }
+
+        /* Better table internal alignment: first/last columns align with panel headers. */
+        .staff-table th:first-child,
+        .staff-table td:first-child {
+            padding-left: 24px !important;
+        }
+
+        .staff-table th:last-child,
+        .staff-table td:last-child {
+            padding-right: 24px !important;
+        }
+
+        .staff-table-wrap {
+            border-top: 1px solid #eef2f7;
+        }
+
         /* Staff UI consistency helpers. These normalize older Blade sections that still carry Breeze/Tailwind page wrappers. */
         .staff-content-inner > .py-6,
         .staff-content-inner > div[class*="bg-gray-100"][class*="min-h-screen"],
@@ -542,6 +701,60 @@
         .staff-content-inner h2,
         .staff-content-inner h3 {
             font-family: var(--heading-font) !important;
+        }
+
+
+
+        /* Font hierarchy: Google Sans only across the staff interface. */
+        .staff-brand-title,
+        .staff-side-label,
+        .staff-side-utility-label,
+        .staff-side-link,
+        .staff-logout-button,
+        .staff-page-eyebrow,
+        .staff-page-title,
+        .staff-panel-title,
+        .staff-scope-banner h3,
+        .staff-scope-pill,
+        .staff-button,
+        .staff-badge,
+        .staff-link,
+        .staff-table th,
+        .staff-content-inner h1,
+        .staff-content-inner h2,
+        .staff-content-inner h3,
+        .staff-content-inner h4,
+        .staff-content-inner h5,
+        .staff-content-inner h6,
+        .staff-content-inner label,
+        .staff-content-inner button,
+        .staff-content-inner a[class*="button"],
+        .staff-content-inner .font-bold,
+        .staff-content-inner .font-semibold,
+        .staff-content-inner .font-extrabold {
+            font-family: var(--heading-font) !important;
+        }
+
+        .staff-brand-subtitle,
+        .staff-page-subtitle,
+        .staff-panel-subtitle,
+        .staff-scope-banner p,
+        .staff-muted,
+        .staff-content-inner p,
+        .staff-content-inner td,
+        .staff-content-inner input,
+        .staff-content-inner select,
+        .staff-content-inner textarea,
+        .staff-content-inner small {
+            font-family: var(--body-font) !important;
+        }
+
+        .staff-page-title,
+        .staff-panel-title,
+        .staff-content-inner h1,
+        .staff-content-inner h2,
+        .staff-content-inner h3 {
+            letter-spacing: -0.015em;
         }
 
         @media (max-width: 1180px) {
@@ -654,16 +867,10 @@
                 <div>
                     <p class="staff-page-eyebrow">{{ $eyebrow }}</p>
                     <h1 class="staff-page-title">{{ $title }}</h1>
-                    @if ($subtitle)
-                        <p class="staff-page-subtitle">{{ $subtitle }}</p>
-                    @endif
                 </div>
 
                 <div class="staff-topbar-actions">
                     {{ $actions ?? '' }}
-                    <div class="staff-updated-chip">
-                        Last updated: {{ now()->timezone('Asia/Manila')->format('M d, Y h:i A') }}
-                    </div>
                     <div class="staff-user-chip">
                         <div class="staff-avatar">{{ strtoupper(substr(auth()->user()->name ?? 'S', 0, 1)) }}</div>
                         <span>{{ auth()->user()->name ?? 'Staff User' }}</span>

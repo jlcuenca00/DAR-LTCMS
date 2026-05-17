@@ -6,7 +6,7 @@
     <title>Login | DAR-LTCMS</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Google+Sans:opsz,wght@17..18,400..700&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Google+Sans:opsz,wght@17..18,400..700&display=swap" rel="stylesheet">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
     <style>
@@ -17,8 +17,8 @@
             --text-dark: #111827;
             --text-muted: #6b7280;
             --border-soft: #dfe5e2;
-            --font-body: 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-            --font-heading: 'Google Sans', 'Product Sans', 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            --font-body: 'Google Sans';
+            --font-heading: 'Google Sans';
         }
 
         * {
@@ -28,7 +28,7 @@
         body {
             margin: 0;
             min-height: 100vh;
-            font-family: "Inter", ui-sans-serif, system-ui, sans-serif !important;
+            font-family: 'Google Sans' !important;
             background: #f8faf9;
             overflow: hidden;
         }
@@ -118,7 +118,7 @@
         .login-title {
     margin: 0;
     text-align: center;
-    font-family: "Google Sans", ui-sans-serif, system-ui, sans-serif !important;
+    font-family: 'Google Sans' !important;
     font-size: 2.15rem;
     line-height: 1;
     font-weight: 800;
@@ -131,7 +131,7 @@
 
 .login-subtitle,
 .form-label, .login-office {
-    font-family: "Google Sans", ui-sans-serif, system-ui, sans-serif !important;
+    font-family: 'Google Sans' !important;
 }
         .login-subtitle {
             margin-top: 0.9rem;

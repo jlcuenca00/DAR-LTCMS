@@ -21,6 +21,7 @@ class SourceRecordPackage extends Model
         'status',
         'source_record_scope',
         'parcel_id',
+        'landowner_id',
         'encoded_by_user_id',
 
         'parcel_code',
@@ -66,6 +67,11 @@ class SourceRecordPackage extends Model
     public function parcel()
     {
         return $this->belongsTo(Parcel::class);
+    }
+
+    public function landowner()
+    {
+        return $this->belongsTo(Landowner::class);
     }
 
     public function encodedBy()

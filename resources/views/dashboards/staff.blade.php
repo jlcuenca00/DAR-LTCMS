@@ -15,9 +15,96 @@
     $notApprovedEnd = $approvedPct + $pendingPct + $notApprovedPct;
 @endphp
 
-<x-staff-shell title="Staff Operations Dashboard" active="dashboard">
+<x-staff-shell title="Staff Operations Dashboard" active="dashboard" maxWidth="max-w-none">
     <x-slot name="styles">
         <style>
+            .scope-notice {
+                display: flex;
+                justify-content: space-between;
+                gap: 18px;
+                align-items: flex-start;
+                border: 1px solid #bbf7d0;
+                background: #f0fdf4;
+                color: #14532d;
+                border-radius: 10px;
+                padding: 14px 18px;
+            }
+
+            .scope-notice h3 {
+                margin: 0;
+                font-family: var(--heading-font);
+                font-size: 14px;
+                font-weight: 900;
+            }
+
+            .scope-notice p {
+                margin: 5px 0 0;
+                max-width: 920px;
+                font-size: 12.5px;
+                line-height: 1.55;
+                font-weight: 600;
+            }
+
+            .scope-pill {
+                flex: 0 0 auto;
+                border: 1px solid #bbf7d0;
+                background: #dcfce7;
+                color: #14532d;
+                border-radius: 999px;
+                padding: 5px 11px;
+                font-size: 11px;
+                font-weight: 900;
+                white-space: nowrap;
+            }
+
+            .panel {
+                background: #ffffff;
+                border: 1px solid var(--border);
+                border-radius: 12px;
+                box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+                overflow: hidden;
+            }
+
+            .panel-header {
+                padding: 20px 22px 0;
+                display: flex;
+                justify-content: space-between;
+                align-items: flex-start;
+                gap: 16px;
+            }
+
+            .panel-title {
+                margin: 0;
+                font-family: var(--heading-font);
+                font-size: 17px;
+                font-weight: 900;
+                color: #111827;
+            }
+
+            .panel-subtitle {
+                margin: 5px 0 0;
+                font-size: 13px;
+                color: #6b7280;
+                line-height: 1.5;
+            }
+
+            .panel-link {
+                font-size: 13px;
+                font-weight: 900;
+                color: #166534;
+                text-decoration: none;
+                white-space: nowrap;
+            }
+
+            .panel-link:hover { text-decoration: underline; }
+
+            .empty-state {
+                padding: 28px;
+                text-align: center;
+                color: #6b7280;
+                font-size: 13px;
+            }
+
             .stats-grid {
                 display: grid;
                 grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -79,13 +166,67 @@
 
             .dashboard-grid {
                 display: grid;
-                grid-template-columns: minmax(0, 2fr) minmax(320px, 1fr);
+                grid-template-columns: minmax(0, 1.72fr) minmax(360px, 0.78fr);
                 gap: 20px;
+                align-items: stretch;
+            }
+
+            .dashboard-grid .panel {
+                min-width: 0;
+                height: 100%;
+                min-height: 398px;
+                display: flex;
+                flex-direction: column;
+            }
+
+            .dashboard-content-grid {
+                display: grid;
+                grid-template-columns: minmax(0, 1.72fr) minmax(360px, 0.78fr);
+                gap: 20px;
+                align-items: start;
+                margin-top: 0;
+            }
+
+            .dashboard-stack {
+                display: grid;
+                gap: 20px;
+                min-width: 0;
+                align-items: start;
+            }
+
+            .dashboard-side-stack {
+                display: grid;
+                gap: 16px;
+                min-width: 0;
+                align-items: start;
+            }
+
+            .dashboard-recent-panel {
+                height: auto !important;
+                align-self: start !important;
+            }
+
+            .dashboard-grid + .dashboard-content-grid {
+                margin-top: 0;
+            }
+
+            .dashboard-compact-panel .panel-header {
+                padding: 16px 20px 0;
+            }
+
+            .dashboard-compact-panel .panel-title {
+                font-size: 16px;
+            }
+
+            .dashboard-compact-panel .panel-subtitle {
+                font-size: 12.5px;
             }
 
             .bar-chart {
-                height: 305px;
-                padding: 26px 28px 24px;
+                flex: 1;
+                height: 292px;
+                min-height: 292px;
+                padding: 22px 26px 20px;
                 display: flex;
                 align-items: end;
                 gap: 18px;
@@ -101,7 +242,7 @@
             }
 
             .bar-track {
-                height: 215px;
+                height: 196px;
                 display: flex;
                 align-items: end;
                 border-left: 1px dashed #e5e7eb;
@@ -130,9 +271,12 @@
             }
 
             .donut-wrap {
-                padding: 28px 24px 24px;
-                display: grid;
-                place-items: center;
+                flex: 1;
+                padding: 18px 24px 22px;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
             }
 
             .donut {
@@ -163,9 +307,9 @@
 
             .legend {
                 width: 100%;
-                margin-top: 26px;
+                margin-top: 22px;
                 display: grid;
-                gap: 13px;
+                gap: 11px;
             }
 
             .legend-row {
@@ -196,21 +340,21 @@
             .dot.gray { background: #94a3b8; }
 
             .quick-list {
-                padding: 20px 22px 22px;
+                padding: 16px 20px 18px;
                 display: grid;
-                gap: 10px;
+                gap: 8px;
             }
 
             .quick-link {
-                min-height: 68px;
+                min-height: 58px;
                 display: flex;
                 justify-content: space-between;
-                gap: 16px;
+                gap: 14px;
                 align-items: center;
                 text-decoration: none;
                 border: 1px solid #dbe4dd;
                 border-radius: 10px;
-                padding: 14px 15px;
+                padding: 11px 14px;
                 background: #f8faf9;
                 transition: 160ms ease;
             }
@@ -228,8 +372,9 @@
             }
 
             .quick-desc {
-                margin: 3px 0 0;
-                font-size: 12px;
+                margin: 2px 0 0;
+                font-size: 11.5px;
+                line-height: 1.35;
                 color: #6b7280;
             }
 
@@ -241,8 +386,14 @@
             }
 
             .table-wrap {
-                padding: 16px 24px 24px;
+                padding: 12px 24px 16px;
                 overflow-x: auto;
+                scrollbar-color: #166534 #e5e7eb;
+                scrollbar-width: thin;
+            }
+
+            .dashboard-recent-panel .table-wrap {
+                padding-bottom: 14px;
             }
 
             .data-table {
@@ -262,10 +413,30 @@
             }
 
             .data-table td {
-                padding: 13px 10px;
+                padding: 11px 10px;
                 border-bottom: 1px solid #e5e7eb;
                 color: #374151;
+                vertical-align: top;
+            }
+
+            .data-table th,
+            .data-table td {
                 white-space: nowrap;
+            }
+
+            .data-table th:first-child,
+            .data-table td:first-child {
+                padding-left: 0;
+            }
+
+            .data-table th:last-child,
+            .data-table td:last-child {
+                padding-right: 0;
+            }
+
+            .date-col {
+                text-align: right;
+                width: 110px;
             }
 
             .code-link {
@@ -312,10 +483,10 @@
             }
 
             .mini-grid {
-                padding: 22px 24px 24px;
+                padding: 16px 20px 18px;
                 display: grid;
                 grid-template-columns: repeat(2, minmax(0, 1fr));
-                gap: 12px;
+                gap: 10px;
             }
 
             .mini-card {
@@ -343,9 +514,9 @@
             }
 
             .activity-list {
-                padding: 18px 24px 24px;
+                padding: 16px 20px 18px;
                 display: grid;
-                gap: 10px;
+                gap: 8px;
             }
 
             .activity-card {
@@ -368,13 +539,28 @@
                 color: #6b7280;
             }
 
+
+            .dashboard-chart-panel .panel-header {
+                min-height: 72px;
+            }
+
+            .dashboard-status-panel .panel-header {
+                min-height: 72px;
+            }
+
+            .dashboard-status-panel {
+                align-self: stretch;
+            }
+
             @media (max-width: 1180px) {
                 .stats-grid,
-                .dashboard-grid {
+                .dashboard-grid,
+                .dashboard-content-grid {
                     grid-template-columns: repeat(2, minmax(0, 1fr));
                 }
 
-                .dashboard-grid > .panel:first-child {
+                .dashboard-grid > .panel:first-child,
+                .dashboard-content-grid > .dashboard-stack:first-child {
                     grid-column: 1 / -1;
                 }
             }
@@ -382,6 +568,7 @@
             @media (max-width: 760px) {
                 .stats-grid,
                 .dashboard-grid,
+                .dashboard-content-grid,
                 .mini-grid {
                     grid-template-columns: 1fr;
                 }
@@ -449,7 +636,7 @@
     </section>
 
     <section class="dashboard-grid">
-        <div class="panel">
+        <div class="panel dashboard-chart-panel">
             <div class="panel-header">
                 <div>
                     <h2 class="panel-title">Monthly Application Submissions</h2>
@@ -483,7 +670,7 @@
             </div>
         </div>
 
-        <div class="panel">
+        <div class="panel dashboard-status-panel">
             <div class="panel-header">
                 <div>
                     <h2 class="panel-title">Application Status Distribution</h2>
@@ -531,200 +718,182 @@
         </div>
     </section>
 
-    <section class="dashboard-grid">
-        <div class="panel">
-            <div class="panel-header">
-                <div>
-                    <h2 class="panel-title">Recent Clearance Applications</h2>
-                    <p class="panel-subtitle">Latest encoded applications for staff monitoring.</p>
+    <section class="dashboard-content-grid">
+        <div class="dashboard-stack">
+            <div class="panel dashboard-recent-panel">
+                <div class="panel-header">
+                    <div>
+                        <h2 class="panel-title">Recent Clearance Applications</h2>
+                        <p class="panel-subtitle">Latest encoded applications.</p>
+                    </div>
+
+                    <a href="{{ route('staff.applications.index') }}" class="panel-link">
+                        View All Applications →
+                    </a>
                 </div>
 
-                <a href="{{ route('staff.applications.index') }}" class="panel-link">
-                    View All Applications →
-                </a>
-            </div>
-
-            <div class="table-wrap">
-                <table class="data-table">
-                    <thead>
-                        <tr>
-                            <th>Code</th>
-                            <th>Transferor</th>
-                            <th>Transferee</th>
-                            <th>Status</th>
-                            <th>Date</th>
-                        </tr>
-                    </thead>
-
-                    <tbody>
-                        @forelse ($recentApplications as $application)
+                <div class="table-wrap">
+                    <table class="data-table">
+                        <thead>
                             <tr>
-                                <td>
-                                    <a href="{{ route('staff.applications.show', $application) }}" class="code-link">
-                                        {{ $application->application_code }}
-                                    </a>
-                                </td>
-                                <td>{{ $application->transferor_name }}</td>
-                                <td>{{ $application->transferee_name }}</td>
-                                <td>
-                                    <span class="status-badge status-{{ $application->status }}">
-                                        {{ $application->status === 'approved'
-                                            ? 'Approved Clearance'
-                                            : ucwords(str_replace('_', ' ', $application->status)) }}
-                                    </span>
-                                </td>
-                                <td>{{ $application->created_at?->format('M d, Y') }}</td>
+                                <th>Code</th>
+                                <th>Transferor</th>
+                                <th>Transferee</th>
+                                <th>Status</th>
+                                <th class="date-col">Date</th>
                             </tr>
-                        @empty
-                            <tr>
-                                <td colspan="5">
-                                    <div class="empty-state">No clearance applications found yet.</div>
-                                </td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
-        </div>
+                        </thead>
 
-        <div class="panel">
-            <div class="panel-header">
-                <div>
-                    <h2 class="panel-title">Quick Actions</h2>
-                    <p class="panel-subtitle">Common staff-side modules for daily processing.</p>
+                        <tbody>
+                            @forelse ($recentApplications as $application)
+                                <tr>
+                                    <td>
+                                        <a href="{{ route('staff.applications.show', $application) }}" class="code-link">
+                                            {{ $application->application_code }}
+                                        </a>
+                                    </td>
+                                    <td>{{ $application->transferor_name }}</td>
+                                    <td>{{ $application->transferee_name }}</td>
+                                    <td>
+                                        <span class="status-badge status-{{ $application->status }}">
+                                            {{ $application->status === 'approved'
+                                                ? 'Approved Clearance'
+                                                : ucwords(str_replace('_', ' ', $application->status)) }}
+                                        </span>
+                                    </td>
+                                    <td class="date-col">{{ $application->created_at?->format('M d, Y') }}</td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="5">
+                                        <div class="empty-state">No clearance applications found yet.</div>
+                                    </td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
                 </div>
             </div>
 
-            <div class="quick-list">
-                <a href="{{ \Illuminate\Support\Facades\Route::has('staff.applications.create') ? route('staff.applications.create') : route('staff.applications.index') }}" class="quick-link">
+            <div class="panel dashboard-compact-panel">
+                <div class="panel-header">
                     <div>
-                        <p class="quick-title">Encode New Application</p>
-                        <p class="quick-desc">Create a new staff-encoded clearance application.</p>
+                        <h2 class="panel-title">Recent Audit Activity</h2>
+                        <p class="panel-subtitle">Latest trace records from important staff-side actions.</p>
                     </div>
-                    <i class="fa-solid fa-plus quick-action-icon"></i>
-                </a>
 
-                <a href="{{ route('staff.applications.index', ['status' => \App\Models\LandTransferApplication::STATUS_PENDING_REVIEW]) }}" class="quick-link">
-                    <div>
-                        <p class="quick-title">Review Pending Applications</p>
-                        <p class="quick-desc">Open applications awaiting staff review or decision.</p>
-                    </div>
-                    <i class="fa-solid fa-clock quick-action-icon"></i>
-                </a>
-
-                <a href="{{ route('staff.records.parcels.index') }}" class="quick-link">
-                    <div>
-                        <p class="quick-title">Search Parcel Records</p>
-                        <p class="quick-desc">Find main parcel records and mapped references.</p>
-                    </div>
-                    <i class="fa-solid fa-magnifying-glass-location quick-action-icon"></i>
-                </a>
-
-                <a href="{{ route('staff.legacy-records.index') }}" class="quick-link">
-                    <div>
-                        <p class="quick-title">Open Source Records Archive</p>
-                        <p class="quick-desc">Review encoded and imported documentary source records.</p>
-                    </div>
-                    <i class="fa-solid fa-box-archive quick-action-icon"></i>
-                </a>
-
-                <a href="{{ route('staff.reports.monitoring.index') }}" class="quick-link">
-                    <div>
-                        <p class="quick-title">Generate Monitoring Report</p>
-                        <p class="quick-desc">Open monitoring summaries and printable report outputs.</p>
-                    </div>
-                    <i class="fa-solid fa-chart-line quick-action-icon"></i>
-                </a>
-
-                <a href="{{ route('staff.audit-logs.index') }}" class="quick-link">
-                    <div>
-                        <p class="quick-title">View Audit Logs</p>
-                        <p class="quick-desc">Review timestamped activity and traceability records.</p>
-                    </div>
-                    <i class="fa-solid fa-clipboard-list quick-action-icon"></i>
-                </a>
-            </div>
-        </div>
-    </section>
-
-    <section class="dashboard-grid">
-        <div class="panel">
-            <div class="panel-header">
-                <div>
-                    <h2 class="panel-title">Records Summary</h2>
-                    <p class="panel-subtitle">Current administrative record totals.</p>
-                </div>
-            </div>
-
-            <div class="mini-grid">
-                <div class="mini-card">
-                    <p class="mini-label">Landowners</p>
-                    <p class="mini-value">{{ number_format($recordsSummary['landowners']) }}</p>
+                    <a href="{{ route('staff.audit-logs.index') }}" class="panel-link">
+                        View →
+                    </a>
                 </div>
 
-                <div class="mini-card">
-                    <p class="mini-label">Parcels</p>
-                    <p class="mini-value">{{ number_format($recordsSummary['parcels']) }}</p>
-                </div>
-
-                <div class="mini-card">
-                    <p class="mini-label">Source Packages</p>
-                    <p class="mini-value">{{ number_format($recordsSummary['source_packages']) }}</p>
-                </div>
-
-                <div class="mini-card">
-                    <p class="mini-label">Source Records</p>
-                    <p class="mini-value">{{ number_format($recordsSummary['legacy_records']) }}</p>
+                <div class="activity-list">
+                    @forelse ($recentAuditLogs as $log)
+                        <div class="activity-card">
+                            <p class="activity-action">
+                                {{ ucwords(str_replace('_', ' ', $log->action)) }}
+                            </p>
+                            <p class="activity-meta">
+                                {{ $log->actor?->name ?? 'System' }} · {{ $log->created_at?->format('M d, Y h:i A') }}
+                            </p>
+                        </div>
+                    @empty
+                        <div class="empty-state">No audit activity recorded yet.</div>
+                    @endforelse
                 </div>
             </div>
         </div>
 
-        <div class="panel">
-            <div class="panel-header">
-                <div>
-                    <h2 class="panel-title">Municipality Breakdown</h2>
-                    <p class="panel-subtitle">Top locations based on encoded applications.</p>
+        <aside class="dashboard-side-stack">
+            <div class="panel dashboard-compact-panel">
+                <div class="panel-header">
+                    <div>
+                        <h2 class="panel-title">Quick Actions</h2>
+                        <p class="panel-subtitle">Common staff-side modules.</p>
+                    </div>
+                </div>
+
+                <div class="quick-list">
+                    <a href="{{ \Illuminate\Support\Facades\Route::has('staff.applications.create') ? route('staff.applications.create') : route('staff.applications.index') }}" class="quick-link">
+                        <div>
+                            <p class="quick-title">Encode New Application</p>
+                            <p class="quick-desc">Create a staff-encoded clearance application.</p>
+                        </div>
+                        <i class="fa-solid fa-plus quick-action-icon"></i>
+                    </a>
+
+                    <a href="{{ route('staff.applications.index', ['status' => \App\Models\LandTransferApplication::STATUS_PENDING_REVIEW]) }}" class="quick-link">
+                        <div>
+                            <p class="quick-title">Review Pending Applications</p>
+                            <p class="quick-desc">Open applications awaiting decision.</p>
+                        </div>
+                        <i class="fa-solid fa-clock quick-action-icon"></i>
+                    </a>
+
+                    <a href="{{ route('staff.records.parcels.index') }}" class="quick-link">
+                        <div>
+                            <p class="quick-title">Search Parcel Records</p>
+                            <p class="quick-desc">Find main parcel records.</p>
+                        </div>
+                        <i class="fa-solid fa-magnifying-glass-location quick-action-icon"></i>
+                    </a>
+
+                    <a href="{{ route('staff.legacy-records.index') }}" class="quick-link">
+                        <div>
+                            <p class="quick-title">Open Source Records Archive</p>
+                            <p class="quick-desc">Review documentary source records.</p>
+                        </div>
+                        <i class="fa-solid fa-box-archive quick-action-icon"></i>
+                    </a>
+
+                    <a href="{{ route('staff.reports.monitoring.index') }}" class="quick-link">
+                        <div>
+                            <p class="quick-title">Generate Monitoring Report</p>
+                            <p class="quick-desc">Open printable monitoring outputs.</p>
+                        </div>
+                        <i class="fa-solid fa-chart-line quick-action-icon"></i>
+                    </a>
+
+                    <a href="{{ route('staff.audit-logs.index') }}" class="quick-link">
+                        <div>
+                            <p class="quick-title">View Audit Logs</p>
+                            <p class="quick-desc">Review traceability records.</p>
+                        </div>
+                        <i class="fa-solid fa-clipboard-list quick-action-icon"></i>
+                    </a>
                 </div>
             </div>
 
-            <div class="activity-list">
-                @forelse ($municipalityBreakdown as $row)
-                    <div class="activity-card">
-                        <p class="activity-action">{{ $row['municipality'] }}</p>
-                        <p class="activity-meta">{{ number_format($row['total']) }} application(s)</p>
+            <div class="panel dashboard-compact-panel">
+                <div class="panel-header">
+                    <div>
+                        <h2 class="panel-title">Records Summary</h2>
+                        <p class="panel-subtitle">Current administrative record totals.</p>
                     </div>
-                @empty
-                    <div class="empty-state">No municipality data available yet.</div>
-                @endforelse
-            </div>
-        </div>
-
-        <div class="panel">
-            <div class="panel-header">
-                <div>
-                    <h2 class="panel-title">Recent Audit Activity</h2>
-                    <p class="panel-subtitle">Latest trace records from important staff-side actions.</p>
                 </div>
 
-                <a href="{{ route('staff.audit-logs.index') }}" class="panel-link">
-                    View →
-                </a>
-            </div>
-
-            <div class="activity-list">
-                @forelse ($recentAuditLogs as $log)
-                    <div class="activity-card">
-                        <p class="activity-action">
-                            {{ ucwords(str_replace('_', ' ', $log->action)) }}
-                        </p>
-                        <p class="activity-meta">
-                            {{ $log->actor?->name ?? 'System' }} · {{ $log->created_at?->format('M d, Y h:i A') }}
-                        </p>
+                <div class="mini-grid">
+                    <div class="mini-card">
+                        <p class="mini-label">Landowners</p>
+                        <p class="mini-value">{{ number_format($recordsSummary['landowners']) }}</p>
                     </div>
-                @empty
-                    <div class="empty-state">No audit activity recorded yet.</div>
-                @endforelse
+
+                    <div class="mini-card">
+                        <p class="mini-label">Parcels</p>
+                        <p class="mini-value">{{ number_format($recordsSummary['parcels']) }}</p>
+                    </div>
+
+                    <div class="mini-card">
+                        <p class="mini-label">Source Packages</p>
+                        <p class="mini-value">{{ number_format($recordsSummary['source_packages']) }}</p>
+                    </div>
+
+                    <div class="mini-card">
+                        <p class="mini-label">Source Records</p>
+                        <p class="mini-value">{{ number_format($recordsSummary['legacy_records']) }}</p>
+                    </div>
+                </div>
             </div>
-        </div>
+        </aside>
     </section>
 </x-staff-shell>

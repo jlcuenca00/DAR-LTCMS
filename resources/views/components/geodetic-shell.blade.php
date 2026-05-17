@@ -15,7 +15,7 @@
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Google+Sans:opsz,wght@17..18,400..700&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Google+Sans:opsz,wght@17..18,400..700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
@@ -31,8 +31,8 @@
             --border: #d6ded8;
             --text: #111827;
             --muted: #6b7280;
-            --heading-font: 'Google Sans', 'Product Sans', 'Inter', ui-sans-serif, system-ui, sans-serif;
-            --body-font: 'Inter', ui-sans-serif, system-ui, sans-serif;
+            --heading-font: 'Google Sans';
+            --body-font: 'Google Sans';
         }
 
         * {

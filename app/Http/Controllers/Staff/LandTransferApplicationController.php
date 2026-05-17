@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Staff;
 use App\Http\Controllers\Controller;
 use App\Models\ApplicationDocument;
 use App\Models\ApplicationParcel;
-use App\Models\Landholding;
 use App\Models\Landowner;
 use App\Models\LandTransferApplication;
 use App\Models\RequiredDocument;
@@ -15,6 +14,7 @@ use App\Models\LegacyRecord;
 use App\Models\SourceRecordPackage;
 use App\Models\Parcel;
 use App\Services\AuditLogger;
+use App\Services\LandholdingAreaValidationService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
@@ -46,44 +46,19 @@ class LandTransferApplicationController extends Controller
             ->get()
             ->keyBy('required_document_id');
 
-        // 3) 5-hectare validation (assistive)
-        $transfereeOwner = null;
-        $currentApprovedTotal = 0;
-        $pendingIncomingTotal = 0;
-        $thisApplicationTotal = 0;
-        $projectedTotal = 0;
-        $exceedsFiveHectares = false;
-
-        if ($application->transferee_landowner_id) {
-            $transfereeOwner = Landowner::find($application->transferee_landowner_id);
-
-            // (1) Approved/active landholdings
-            $currentApprovedTotal = Landholding::where('landowner_id', $transfereeOwner->id)
-                ->where('status', 'active')
-                ->sum('area_hectares');
-
-            // (2) Pending incoming from OTHER applications (draft/pending_review)
-            $pendingIncomingTotal = ApplicationParcel::whereHas('application', function ($q) use ($transfereeOwner, $application) {
-                    $q->where('transferee_landowner_id', $transfereeOwner->id)
-                      ->where('id', '!=', $application->id)
-                      ->whereIn('status', ['draft', 'pending_review']);
-                })
-                ->sum('area_hectares');
-
-            // (3) Current application parcels total
-            $thisApplicationTotal = ApplicationParcel::where('land_transfer_application_id', $application->id)
-                ->sum('area_hectares');
-
-            $projectedTotal = (float) $currentApprovedTotal
-                            + (float) $pendingIncomingTotal
-                            + (float) $thisApplicationTotal;
-
-            $exceedsFiveHectares = $projectedTotal > 5.0000;
-        }
+        // 3) 5-hectare validation (assistive, centralized)
+        $transfereeOwner = $application->transfereeLandowner;
+        $fiveHectareValidation = app(LandholdingAreaValidationService::class)
+            ->forApplication($application);
+        $currentApprovedTotal = $fiveHectareValidation['current_active_total'];
+        $pendingIncomingTotal = $fiveHectareValidation['pending_incoming_total'];
+        $thisApplicationTotal = $fiveHectareValidation['this_application_total'];
+        $projectedTotal = $fiveHectareValidation['projected_total'];
+        $exceedsFiveHectares = $fiveHectareValidation['exceeds_limit'];
 
         $applicationTimeline = AuditLog::with('actor')
             ->where('land_transfer_application_id', $application->id)
-            ->oldest()
+            ->latest()
             ->get();
 
                     $applicationParcels = $application->applicationParcels
@@ -202,6 +177,7 @@ class LandTransferApplicationController extends Controller
             'thisApplicationTotal',
             'projectedTotal',
             'exceedsFiveHectares',
+            'fiveHectareValidation',
             'applicationTimeline',
             'matchedSourceRecords',
             'matchedSourcePackages',

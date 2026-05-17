@@ -44,6 +44,7 @@ class LegacyRecord extends Model
         'source_record_scope',
         'legacy_record_import_batch_id',
         'parcel_id',
+        'landowner_id',
         'encoded_by_user_id',
 
         'parcel_code',
@@ -102,6 +103,11 @@ class LegacyRecord extends Model
     public function parcel()
     {
         return $this->belongsTo(Parcel::class);
+    }
+
+    public function landowner()
+    {
+        return $this->belongsTo(Landowner::class);
     }
 
     public function getRecordTypeLabelAttribute(): string

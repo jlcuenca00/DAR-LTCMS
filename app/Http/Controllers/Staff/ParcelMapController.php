@@ -10,7 +10,7 @@ class ParcelMapController extends Controller
     public function index()
     {
         $parcelFeatures = Parcel::query()
-            ->with('landholdings.landowner')
+            ->with(['landholdings.landowner', 'legacyRecords.landowner', 'sourceRecordPackages.landowner'])
             ->whereNotNull('geometry_geojson')
             ->orderBy('municipality')
             ->orderBy('barangay')
@@ -27,12 +27,33 @@ class ParcelMapController extends Controller
                     return null;
                 }
 
-                $landownerNames = $parcel->landholdings
+                $activeLandholdingOwners = $parcel->landholdings
+                    ->filter(fn ($landholding) => strtolower((string) $landholding->status) === 'active')
                     ->map(fn ($landholding) => $landholding->landowner?->full_name)
                     ->filter()
                     ->unique()
-                    ->values()
-                    ->implode(', ');
+                    ->values();
+
+                $anyLandholdingOwners = $parcel->landholdings
+                    ->map(fn ($landholding) => $landholding->landowner?->full_name)
+                    ->filter()
+                    ->unique()
+                    ->values();
+
+                $sourceLinkedOwners = collect()
+                    ->merge($parcel->legacyRecords->map(fn ($record) => $record->landowner?->full_name))
+                    ->merge($parcel->sourceRecordPackages->map(fn ($package) => $package->landowner?->full_name))
+                    ->filter()
+                    ->unique()
+                    ->values();
+
+                $landownerNames = $activeLandholdingOwners->isNotEmpty()
+                    ? $activeLandholdingOwners->implode(', ')
+                    : ($anyLandholdingOwners->isNotEmpty()
+                        ? $anyLandholdingOwners->implode(', ') . ' (non-active landholding)'
+                        : ($sourceLinkedOwners->isNotEmpty()
+                            ? $sourceLinkedOwners->implode(', ') . ' (source-linked)'
+                            : 'No linked landowner record'));
 
                 return [
                     'type' => 'Feature',
@@ -42,7 +63,7 @@ class ParcelMapController extends Controller
                         'parcel_code' => $parcel->parcel_code,
                         'title_no' => $parcel->title_no ?: 'N/A',
                         'tax_decl_no' => $parcel->tax_decl_no ?: 'N/A',
-                        'landowner' => $landownerNames ?: 'No linked landowner record',
+                        'landowner' => $landownerNames,
                         'municipality' => $parcel->municipality ?: 'N/A',
                         'barangay' => $parcel->barangay ?: 'N/A',
                         'area_hectares' => $parcel->area_hectares ?: 'N/A',

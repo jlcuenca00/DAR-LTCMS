@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Staff;
 
 use App\Http\Controllers\Controller;
+use App\Models\Landholding;
 use App\Models\Landowner;
 use App\Models\Parcel;
 use Illuminate\Http\Request;
@@ -21,6 +22,12 @@ class RecordSearchController extends Controller
 
         $landownersQuery = Landowner::query()
             ->with('user')
+            ->withCount(['landholdings as active_landholding_count' => function ($query) {
+                $query->where('status', 'active');
+            }])
+            ->withSum(['landholdings as active_landholding_area_hectares' => function ($query) {
+                $query->where('status', 'active');
+            }], 'area_hectares')
             ->latest();
 
         if (! empty($filters['search'])) {
@@ -72,11 +79,19 @@ class RecordSearchController extends Controller
             ->orderBy('barangay')
             ->pluck('barangay');
 
+        $fiveHectareLimit = 5.0000;
+
+        $totalActiveLandholdingArea = Landholding::query()
+            ->where('status', 'active')
+            ->sum('area_hectares');
+
         return view('staff.records.landowners', compact(
             'landowners',
             'filters',
             'municipalities',
-            'barangays'
+            'barangays',
+            'fiveHectareLimit',
+            'totalActiveLandholdingArea'
         ));
     }
 

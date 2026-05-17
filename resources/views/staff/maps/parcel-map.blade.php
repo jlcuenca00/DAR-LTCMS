@@ -22,6 +22,24 @@
                 overflow: hidden;
             }
 
+            .map-card,
+            .map-workspace > .panel,
+            .map-sidebar > .panel {
+                background: #ffffff;
+                border: 1px solid var(--border);
+                border-radius: 14px;
+                box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+                overflow: hidden;
+            }
+
+            .map-sidebar > .panel {
+                min-width: 0;
+            }
+
+            .map-sidebar .panel + .panel {
+                margin-top: 0;
+            }
+
             .hero-inner {
                 padding: 22px 24px;
                 display: flex;
@@ -89,18 +107,19 @@
 
             .map-workspace {
                 display: grid;
-                grid-template-columns: 330px minmax(0, 1fr);
-                gap: 18px;
+                grid-template-columns: 320px minmax(0, 1fr);
+                gap: 20px;
                 align-items: start;
             }
 
             .map-sidebar {
                 display: grid;
                 gap: 14px;
+                min-width: 0;
             }
 
             .panel-pad {
-                padding: 18px;
+                padding: 18px 20px;
             }
 
             .panel-copy {
@@ -184,8 +203,8 @@
             }
 
             .scope-box {
-                background: #fffbeb;
-                border-color: #fde68a;
+                background: #fffbeb !important;
+                border-color: #fde68a !important;
             }
 
             .scope-box .panel-title,
@@ -227,7 +246,7 @@
             }
 
             .map-panel-header {
-                padding: 16px 18px;
+                padding: 18px 20px;
                 border-bottom: 1px solid #e5e7eb;
                 display: flex;
                 align-items: center;
@@ -265,45 +284,71 @@
             }
 
             .map-frame {
-                padding: 14px;
+                padding: 18px 20px 20px;
                 background: #ffffff;
             }
 
             #parcel-map {
-                height: calc(100vh - 235px);
-                min-height: 590px;
+                height: min(680px, calc(100vh - 250px));
+                min-height: 540px;
                 width: 100%;
                 border-radius: 12px;
                 border: 1px solid #d1d5db;
                 overflow: hidden;
                 box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.03);
-                background: #111827;
+                background: #ffffff;
+            }
+
+            .leaflet-container {
+                background: #ffffff;
+            }
+
+            /* Plain monochrome context map: keeps labels/landmarks readable, while non-parcel shapes stay visually secondary. */
+            .leaflet-tile-pane {
+                opacity: 0.66;
+                filter: grayscale(100%) saturate(0%) contrast(64%) brightness(122%);
+            }
+
+            .leaflet-tile.plain-context-tile {
+                mix-blend-mode: multiply;
+            }
+
+            .leaflet-control-zoom {
+                border: 1px solid #d1d5db !important;
+                border-radius: 10px !important;
+                overflow: hidden;
+                box-shadow: 0 8px 18px rgba(15, 23, 42, 0.10) !important;
             }
 
             .leaflet-control-zoom a {
-                background: #111827 !important;
-                color: #f9fafb !important;
-                border-color: #374151 !important;
+                background: #ffffff !important;
+                color: #14532d !important;
+                border-color: #e5e7eb !important;
+                font-weight: 900;
             }
 
             .leaflet-control-zoom a:hover {
-                background: #1f2937 !important;
+                background: #f0fdf4 !important;
+                color: #166534 !important;
             }
 
             .leaflet-control-attribution {
-                background: rgba(17, 24, 39, 0.85) !important;
-                color: #d1d5db !important;
+                background: rgba(255, 255, 255, 0.92) !important;
+                color: #6b7280 !important;
                 border-radius: 0.5rem 0 0 0;
+                box-shadow: 0 4px 12px rgba(15, 23, 42, 0.10);
             }
 
             .leaflet-control-attribution a {
-                color: #86efac !important;
+                color: #166534 !important;
             }
 
             .leaflet-popup-content-wrapper,
             .leaflet-popup-tip {
-                background: #111827;
-                color: #f9fafb;
+                background: #ffffff;
+                color: #111827;
+                border: 1px solid #d1d5db;
+                box-shadow: 0 14px 30px rgba(15, 23, 42, 0.16);
             }
 
             .leaflet-popup-content-wrapper {
@@ -316,20 +361,20 @@
             }
 
             .leaflet-popup-content p {
-                color: #d1d5db !important;
+                color: #4b5563 !important;
             }
 
             .parcel-tooltip {
-                background: rgba(17, 24, 39, 0.96);
-                color: #f9fafb;
-                border: 1px solid rgba(134, 239, 172, 0.7);
+                background: rgba(255, 255, 255, 0.98);
+                color: #111827;
+                border: 1px solid #bbf7d0;
                 border-radius: 0.75rem;
                 padding: 0;
-                box-shadow: 0 15px 30px rgba(0, 0, 0, 0.35);
+                box-shadow: 0 15px 30px rgba(15, 23, 42, 0.18);
             }
 
             .parcel-tooltip::before {
-                border-top-color: rgba(17, 24, 39, 0.96);
+                border-top-color: rgba(255, 255, 255, 0.98);
             }
 
             .parcel-tooltip-card {
@@ -340,18 +385,18 @@
             .parcel-tooltip-title {
                 font-size: 0.85rem;
                 font-weight: 800;
-                color: #bbf7d0;
+                color: #14532d;
                 margin-bottom: 0.35rem;
             }
 
             .parcel-tooltip-row {
                 font-size: 0.75rem;
-                color: #d1d5db;
+                color: #374151;
                 margin-top: 0.2rem;
             }
 
             .parcel-tooltip-label {
-                color: #9ca3af;
+                color: #6b7280;
             }
 
             @media (max-width: 1180px) {
@@ -432,11 +477,11 @@
 
     <section class="map-workspace">
         <aside class="map-sidebar">
-            <div class="panel">
+            <div class="panel map-card">
                 <div class="panel-pad">
                     <h3 class="panel-title">Map Tools</h3>
                     <p class="panel-copy">
-                        Reset the view or jump back to the provincial office reference area.
+                        Reset the map to the full Negros Oriental provincial view or open the parcel records list.
                     </p>
 
                     <div class="tool-list">
@@ -445,10 +490,6 @@
                             Reset View
                         </button>
 
-                        <button type="button" id="focus-dar-office" class="tool-button secondary">
-                            <i class="fa-solid fa-location-crosshairs"></i>
-                            Focus Area
-                        </button>
 
                         <a href="{{ route('staff.records.parcels.index') }}" class="tool-link secondary">
                             <i class="fa-solid fa-list"></i>
@@ -458,7 +499,7 @@
                 </div>
             </div>
 
-            <div class="panel">
+            <div class="panel map-card">
                 <div class="panel-pad">
                     <h3 class="panel-title">Legend</h3>
                     <p class="panel-copy">
@@ -489,7 +530,7 @@
                 </div>
             </div>
 
-            <div class="panel scope-box">
+            <div class="panel map-card scope-box">
                 <div class="panel-pad">
                     <h3 class="panel-title">Scope Reminder</h3>
                     <p class="panel-copy">
@@ -499,7 +540,7 @@
                 </div>
             </div>
 
-            <div class="panel">
+            <div class="panel map-card">
                 <div class="panel-pad">
                     <h3 class="panel-title">Access Control</h3>
                     <p class="panel-copy">
@@ -524,7 +565,7 @@
             </div>
         </aside>
 
-        <section class="panel map-panel">
+        <section class="panel map-card map-panel">
             <div class="map-panel-header">
                 <div>
                     <h3 class="map-panel-title">Mapped Main Parcel Records</h3>
@@ -552,22 +593,29 @@
 
         <script>
             document.addEventListener('DOMContentLoaded', function () {
-                const negrosOrientalCenter = [9.3068, 123.3054];
+                const negrosOrientalCenter = [9.65, 123.05];
+                const negrosOrientalProvinceBounds = L.latLngBounds(
+                    [9.02, 122.62],
+                    [10.20, 123.42]
+                );
                 const parcelGeoJson = @json($parcelGeoJson);
 
                 const map = L.map('parcel-map', {
                     zoomControl: false,
-                    scrollWheelZoom: true
-                }).setView(negrosOrientalCenter, 12);
+                    scrollWheelZoom: true,
+                    minZoom: 7,
+                    maxZoom: 20
+                }).fitBounds(negrosOrientalProvinceBounds, {
+                    padding: [24, 24]
+                });
 
                 L.control.zoom({
                     position: 'topright'
                 }).addTo(map);
-
-                L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-                    subdomains: 'abcd',
+                L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
                     maxZoom: 20,
-                    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+                    className: 'plain-context-tile',
+                    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                 }).addTo(map);
 
                 function escapeHtml(value) {
@@ -600,10 +648,10 @@
 
                     return {
                         color: color,
-                        weight: 2,
-                        opacity: 0.9,
+                        weight: 2.5,
+                        opacity: 0.98,
                         fillColor: color,
-                        fillOpacity: 0.28
+                        fillOpacity: 0.38
                     };
                 }
 
@@ -611,11 +659,11 @@
                     const color = getParcelColor(feature.properties.status);
 
                     return {
-                        color: '#ffffff',
-                        weight: 6,
+                        color: color,
+                        weight: 5,
                         opacity: 1,
                         fillColor: color,
-                        fillOpacity: 0.65
+                        fillOpacity: 0.68
                     };
                 }
 
@@ -658,7 +706,6 @@
                         </div>
                     `;
                 }
-
                 let parcelLayer = null;
 
                 function onEachParcel(feature, layer) {
@@ -673,6 +720,11 @@
                         mouseover: function (event) {
                             const hoveredLayer = event.target;
                             hoveredLayer.setStyle(getParcelHoverStyle(feature));
+
+                            if (hoveredLayer.setRadius) {
+                                hoveredLayer.setRadius(10);
+                            }
+
                             hoveredLayer.bringToFront();
                             hoveredLayer.openTooltip();
                         },
@@ -681,6 +733,11 @@
                             if (parcelLayer) {
                                 parcelLayer.resetStyle(event.target);
                             }
+
+                            if (event.target.setRadius) {
+                                event.target.setRadius(7);
+                            }
+
                             event.target.closeTooltip();
                         },
 
@@ -695,12 +752,23 @@
                 if (parcelGeoJson.features && parcelGeoJson.features.length > 0) {
                     parcelLayer = L.geoJSON(parcelGeoJson, {
                         style: getParcelStyle,
+                        pointToLayer: function (feature, latlng) {
+                            const color = getParcelColor(feature.properties.status);
+
+                            return L.circleMarker(latlng, {
+                                radius: 7,
+                                color: color,
+                                weight: 2.5,
+                                opacity: 1,
+                                fillColor: color,
+                                fillOpacity: 0.62
+                            });
+                        },
                         onEachFeature: onEachParcel
                     }).addTo(map);
 
-                    map.fitBounds(parcelLayer.getBounds(), {
-                        padding: [40, 40]
-                    });
+                    // Keep the initial view at the full Negros Oriental provincial frame.
+                    // Staff can zoom into parcels manually, while Reset View always returns to the province view.
                 } else {
                     L.popup()
                         .setLatLng(negrosOrientalCenter)
@@ -712,17 +780,9 @@
                 }
 
                 document.getElementById('reset-map-view').addEventListener('click', function () {
-                    if (parcelLayer) {
-                        map.fitBounds(parcelLayer.getBounds(), {
-                            padding: [40, 40]
-                        });
-                    } else {
-                        map.setView(negrosOrientalCenter, 12);
-                    }
-                });
-
-                document.getElementById('focus-dar-office').addEventListener('click', function () {
-                    map.setView(negrosOrientalCenter, 14);
+                    map.fitBounds(negrosOrientalProvinceBounds, {
+                        padding: [24, 24]
+                    });
                 });
             });
         </script>

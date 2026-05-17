@@ -2,348 +2,638 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>{{ $clearance->clearance_number }}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ $clearance->clearance_number }} | Clearance Output</title>
+
+    @php
+        $decisionLabel = $clearance->decision_status === 'approved'
+            ? 'Approved Clearance'
+            : ucwords(str_replace('_', ' ', $clearance->decision_status));
+        $decisionClass = $clearance->decision_status === 'approved' ? 'approved' : 'not-approved';
+        $reviewedAt = optional($clearance->reviewed_at)->timezone('Asia/Manila');
+        $generatedAt = optional($clearance->generated_at)->timezone('Asia/Manila');
+    @endphp
+
     <style>
-        body {
-            font-family: DejaVu Sans, Arial, sans-serif;
+        @page {
+            size: A4;
+            margin: 14mm;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html {
             background: #e5e7eb;
+        }
+
+        body {
             margin: 0;
-            padding: 24px;
+            background: #e5e7eb;
             color: #111827;
-        }
-
-        .toolbar {
-            max-width: 900px;
-            margin: 0 auto 16px auto;
-            display: flex;
-            gap: 12px;
-        }
-
-        .btn {
-            display: inline-block;
-            text-decoration: none;
-            padding: 10px 14px;
-            border-radius: 8px;
-            color: white;
-            font-weight: 600;
-            font-size: 14px;
-        }
-
-        .btn-dark { background: #111827; }
-        .btn-blue { background: #1d4ed8; }
-
-        .page {
-            max-width: 900px;
-            margin: 0 auto;
-            background: #ffffff;
-            border: 1px solid #9ca3af;
-            padding: 44px;
-            box-shadow: 0 10px 30px rgba(15, 23, 42, 0.12);
-        }
-
-        .official-header {
-            text-align: center;
-            border-bottom: 3px double #111827;
-            padding-bottom: 18px;
-            margin-bottom: 24px;
-        }
-
-        .official-header .small {
+            font-family: 'Google Sans';
             font-size: 13px;
-            margin: 3px 0;
-        }
-
-        .official-header .agency {
-            font-size: 16px;
-            font-weight: 700;
-            margin: 4px 0;
-            text-transform: uppercase;
-        }
-
-        .official-header .office {
-            font-size: 14px;
-            font-weight: 600;
-            margin: 4px 0;
-        }
-
-        .document-title {
-            text-align: center;
-            margin: 26px 0 18px 0;
-        }
-
-        .document-title h1 {
-            font-size: 22px;
-            margin: 0;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-        }
-
-        .document-title p {
-            margin: 8px 0 0 0;
-            font-size: 14px;
-            color: #374151;
-        }
-
-        .notice {
-            border: 1px solid #92400e;
-            background: #fffbeb;
-            color: #78350f;
-            padding: 14px;
-            border-radius: 8px;
-            font-size: 13px;
-            line-height: 1.6;
-            margin: 18px 0 24px 0;
-        }
-
-        .section {
-            margin-top: 24px;
-        }
-
-        .section-title {
-            font-weight: 700;
-            font-size: 14px;
-            text-transform: uppercase;
-            letter-spacing: 0.04em;
-            margin-bottom: 10px;
-            border-bottom: 1px solid #9ca3af;
-            padding-bottom: 6px;
-        }
-
-        .grid {
-            display: grid;
-            grid-template-columns: 230px 1fr;
-            gap: 8px 16px;
-            font-size: 14px;
-        }
-
-        .grid div {
             line-height: 1.5;
         }
 
-        .decision-box {
-            margin-top: 18px;
-            border: 2px solid #111827;
-            padding: 14px;
+        .toolbar {
+            position: sticky;
+            top: 0;
+            z-index: 20;
+            background: rgba(243, 244, 246, 0.96);
+            border-bottom: 1px solid #d1d5db;
+            backdrop-filter: blur(8px);
+        }
+
+        .toolbar-inner {
+            max-width: 980px;
+            margin: 0 auto;
+            min-height: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 10px 0;
+        }
+
+        .toolbar-left,
+        .toolbar-right {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .toolbar-title {
+            color: #374151;
+            font-size: 12px;
+            font-weight: 900;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .btn {
+            min-height: 38px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 7px;
+            padding: 0 14px;
+            border-radius: 9px;
+            border: 1px solid #d1d5db;
+            background: #ffffff;
+            color: #111827;
+            text-decoration: none;
+            font-family: 'Google Sans';
+            font-size: 12px;
+            font-weight: 900;
+            cursor: pointer;
+        }
+
+        .btn.primary {
+            border-color: #166534;
+            background: #166534;
+            color: #ffffff;
+        }
+
+        .btn.dark {
+            border-color: #111827;
+            background: #111827;
+            color: #ffffff;
+        }
+
+        .page-shell {
+            max-width: 980px;
+            margin: 20px auto 30px;
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            box-shadow: 0 18px 45px rgba(15, 23, 42, 0.16);
+        }
+
+        .page {
+            padding: 34px 42px 38px;
+        }
+
+        .official-header {
+            display: grid;
+            grid-template-columns: 56px 1fr 56px;
+            align-items: center;
             text-align: center;
+            border-bottom: 3px double #14532d;
+            padding-bottom: 15px;
+            margin-bottom: 18px;
+        }
+
+        .seal {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            border: 1px solid #bbf7d0;
+            background: #f0fdf4;
+            color: #14532d;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            font-weight: 900;
+        }
+
+        .republic {
+            margin: 0;
+            color: #374151;
+            font-size: 12px;
+        }
+
+        .agency {
+            margin: 2px 0 0;
+            font-size: 16px;
+            font-weight: 900;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+        }
+
+        .office {
+            margin: 2px 0 0;
+            color: #14532d;
+            font-size: 13px;
+            font-weight: 900;
+        }
+
+        .system-name {
+            margin: 2px 0 0;
+            color: #4b5563;
+            font-size: 11px;
+        }
+
+        .document-title-row {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 18px;
+            align-items: start;
+            margin-bottom: 16px;
+        }
+
+        .document-title h1 {
+            margin: 0;
+            color: #111827;
+            font-size: 24px;
+            font-weight: 900;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+        }
+
+        .document-title p {
+            margin: 7px 0 0;
+            color: #4b5563;
+            font-size: 13px;
+        }
+
+        .clearance-number-box {
+            border: 1px solid #d1d5db;
+            border-radius: 12px;
+            padding: 12px 14px;
+            min-width: 230px;
+            background: #f8fafc;
+        }
+
+        .box-label {
+            display: block;
+            margin-bottom: 4px;
+            color: #64748b;
+            font-size: 10px;
+            font-weight: 900;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+        }
+
+        .box-value {
+            color: #111827;
+            font-size: 16px;
+            font-weight: 900;
+        }
+
+        .scope-notice {
+            border: 1px solid #bbf7d0;
+            background: #f0fdf4;
+            color: #064e3b;
+            padding: 12px 14px;
+            margin: 14px 0 18px;
+            border-radius: 10px;
+            font-size: 12px;
+            line-height: 1.6;
+        }
+
+        .scope-notice strong {
+            color: #14532d;
+        }
+
+        .decision-panel {
+            display: grid;
+            grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+            gap: 14px;
+            margin: 16px 0 18px;
+        }
+
+        .decision-box {
+            border: 2px solid #14532d;
+            border-radius: 12px;
+            padding: 16px;
+            background: #f0fdf4;
+        }
+
+        .decision-box.not-approved {
+            border-color: #dc2626;
+            background: #fef2f2;
         }
 
         .decision-label {
-            font-size: 13px;
+            color: #475569;
+            font-size: 10px;
+            font-weight: 900;
+            letter-spacing: 0.12em;
             text-transform: uppercase;
-            letter-spacing: 0.08em;
-            color: #374151;
         }
 
         .decision-value {
-            font-size: 22px;
-            font-weight: 800;
             margin-top: 6px;
+            color: #14532d;
+            font-size: 26px;
+            font-weight: 900;
             text-transform: uppercase;
+        }
+
+        .decision-box.not-approved .decision-value {
+            color: #b91c1c;
+        }
+
+        .decision-note {
+            margin-top: 8px;
+            color: #4b5563;
+            font-size: 12px;
+        }
+
+        .info-card {
+            border: 1px solid #d1d5db;
+            border-radius: 12px;
+            background: #ffffff;
+            padding: 14px;
+        }
+
+        .info-card-title {
+            margin: 0 0 10px;
+            color: #111827;
+            font-size: 13px;
+            font-weight: 900;
+        }
+
+        .mini-meta {
+            display: grid;
+            gap: 7px;
+        }
+
+        .mini-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 16px;
+            border-bottom: 1px solid #e5e7eb;
+            padding-bottom: 6px;
+        }
+
+        .mini-row:last-child {
+            border-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .mini-row span:first-child {
+            color: #64748b;
+            font-weight: 800;
+        }
+
+        .mini-row span:last-child {
+            color: #111827;
+            font-weight: 900;
+            text-align: right;
+        }
+
+        .section {
+            margin-top: 18px;
+            page-break-inside: avoid;
+        }
+
+        .section-title {
+            margin: 0 0 9px;
+            padding-bottom: 6px;
+            border-bottom: 1px solid #cbd5e1;
+            color: #111827;
+            font-size: 12px;
+            font-weight: 900;
+            letter-spacing: 0.09em;
+            text-transform: uppercase;
+        }
+
+        .meta-grid {
+            display: grid;
+            grid-template-columns: 220px 1fr;
+            border: 1px solid #d1d5db;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .meta-grid .label,
+        .meta-grid .value {
+            padding: 9px 11px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .meta-grid .label {
+            background: #f8fafc;
+            color: #475569;
+            font-size: 11px;
+            font-weight: 900;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+        }
+
+        .meta-grid .value {
+            color: #111827;
+            font-weight: 800;
+        }
+
+        .meta-grid .label:nth-last-child(2),
+        .meta-grid .value:last-child {
+            border-bottom: 0;
         }
 
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 12px;
-            font-size: 13px;
+            margin-top: 8px;
+            font-size: 12px;
         }
 
-        th, td {
-            border: 1px solid #9ca3af;
-            padding: 9px;
+        th,
+        td {
+            border: 1px solid #d1d5db;
+            padding: 8px 9px;
             text-align: left;
             vertical-align: top;
         }
 
         th {
-            background: #f3f4f6;
-            font-weight: 700;
+            background: #f8fafc;
+            color: #475569;
+            font-size: 10px;
+            font-weight: 900;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .area-cell {
+            text-align: right;
+            white-space: nowrap;
+            font-weight: 900;
         }
 
         .certification {
-            font-size: 14px;
-            line-height: 1.7;
+            border: 1px solid #d1d5db;
+            border-radius: 12px;
+            padding: 14px;
+            background: #ffffff;
             text-align: justify;
+            font-size: 13px;
+            line-height: 1.7;
         }
 
-        .footer {
-            margin-top: 38px;
-            font-size: 13px;
-            color: #374151;
-            line-height: 1.6;
+        .muted {
+            margin-top: 8px;
+            color: #64748b;
+            font-size: 11px;
         }
 
         .signature-row {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 40px;
-            margin-top: 60px;
-            font-size: 14px;
+            gap: 44px;
+            margin-top: 48px;
         }
 
         .signature-line {
             border-top: 1px solid #111827;
-            padding-top: 8px;
+            padding-top: 7px;
             text-align: center;
+            font-weight: 900;
         }
 
-        .muted {
-            color: #6b7280;
-            font-size: 12px;
+        .signature-role {
+            margin-top: 2px;
+            text-align: center;
+            color: #64748b;
+            font-size: 11px;
+        }
+
+        .footer {
+            margin-top: 28px;
+            padding-top: 10px;
+            border-top: 1px solid #e5e7eb;
+            color: #475569;
+            font-size: 11px;
+            text-align: justify;
         }
 
         @media print {
+            html,
             body {
-                background: white;
-                padding: 0;
+                background: #ffffff;
             }
 
             .toolbar {
-                display: none;
+                display: none !important;
+            }
+
+            .page-shell {
+                max-width: none;
+                margin: 0;
+                border: 0;
+                box-shadow: none;
             }
 
             .page {
-                border: 0;
-                margin: 0;
-                max-width: none;
-                box-shadow: none;
-                padding: 24px;
+                padding: 0;
+            }
+        }
+
+        @media (max-width: 760px) {
+            .toolbar-inner,
+            .page-shell {
+                max-width: calc(100% - 24px);
+            }
+
+            .toolbar-inner,
+            .toolbar-left,
+            .toolbar-right,
+            .document-title-row,
+            .decision-panel,
+            .signature-row {
+                display: flex;
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .page {
+                padding: 22px;
+            }
+
+            .meta-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .meta-grid .label {
+                border-bottom: 0;
             }
         }
     </style>
 </head>
 <body>
     <div class="toolbar">
-        <a href="{{ route('staff.applications.show', $application) }}" class="btn btn-dark">Back to Application</a>
-        <a href="{{ route('staff.applications.clearance.pdf', $application) }}" class="btn btn-blue" target="_blank">Open PDF</a>
-        <a href="#" onclick="window.print(); return false;" class="btn btn-dark">Print</a>
-    </div>
-
-    <div class="page">
-        <div class="official-header">
-            <div class="small">Republic of the Philippines</div>
-            <div class="agency">Department of Agrarian Reform</div>
-            <div class="office">Provincial Office — Negros Oriental</div>
-            <div class="small">Land Transfer Clearance and Monitoring System</div>
-        </div>
-
-        <div class="document-title">
-            <h1>Clearance Decision Record</h1>
-            <p><strong>Clearance No.:</strong> {{ $clearance->clearance_number }}</p>
-        </div>
-
-        <div class="notice">
-            <strong>Scope Notice:</strong>
-            This system-generated clearance record documents the finalized processing decision recorded by DAR staff.
-            It does not automatically transfer land ownership, alter registry records, or replace separate legal and
-            administrative procedures required for actual land transfer or ownership mutation.
-        </div>
-
-        <div class="section">
-            <div class="section-title">Application Information</div>
-
-            <div class="grid">
-                <div><strong>Application Code</strong></div>
-                <div>{{ $clearance->application_code }}</div>
-
-                <div><strong>Transferor</strong></div>
-                <div>{{ $clearance->transferor_name }}</div>
-
-                <div><strong>Transferee</strong></div>
-                <div>{{ $clearance->transferee_name }}</div>
-
-                <div><strong>Location</strong></div>
-                <div>{{ $clearance->barangay ?? '—' }}, {{ $clearance->municipality ?? '—' }}</div>
-
-                <div><strong>Total Area Covered</strong></div>
-                <div>{{ number_format((float) $clearance->total_area_hectares, 4) }} hectares</div>
-
-                <div><strong>Reviewing Officer</strong></div>
-                <div>{{ $clearance->review_officer_name }}</div>
-
-                <div><strong>Decision Timestamp</strong></div>
-                <div>{{ optional($clearance->reviewed_at)->format('M d, Y h:i A') ?? '—' }}</div>
-
-                <div><strong>Generated Timestamp</strong></div>
-                <div>{{ optional($clearance->generated_at)->format('M d, Y h:i A') ?? '—' }}</div>
+        <div class="toolbar-inner">
+            <div class="toolbar-left">
+                <a href="{{ route('staff.applications.show', $application) }}" class="btn">Back to Application</a>
+                <span class="toolbar-title">Clearance Output Preview</span>
+            </div>
+            <div class="toolbar-right">
+                <a href="{{ route('staff.applications.clearance.pdf', $application) }}" class="btn primary" target="_blank">Open PDF Output</a>
+                <button type="button" onclick="window.print()" class="btn dark">Print / Save as PDF</button>
             </div>
         </div>
+    </div>
 
-        <div class="section">
-            <div class="section-title">Final Decision</div>
-
-            <div class="decision-box">
-                <div class="decision-label">Recorded Application Decision</div>
-                <div class="decision-value">
-                    {{ strtoupper(str_replace('_', ' ', $clearance->decision_status)) }}
+    <main class="page-shell">
+        <div class="page">
+            <header class="official-header">
+                <div class="seal">DAR</div>
+                <div>
+                    <p class="republic">Republic of the Philippines</p>
+                    <p class="agency">Department of Agrarian Reform</p>
+                    <p class="office">Negros Oriental Provincial Office</p>
+                    <p class="system-name">Land Transfer Clearance and Monitoring System</p>
                 </div>
+                <div></div>
+            </header>
+
+            <section class="document-title-row">
+                <div class="document-title">
+                    <h1>Clearance Decision Record</h1>
+                    <p>System-generated administrative record of the finalized clearance application decision.</p>
+                </div>
+                <div class="clearance-number-box">
+                    <span class="box-label">Clearance Number</span>
+                    <span class="box-value">{{ $clearance->clearance_number }}</span>
+                </div>
+            </section>
+
+            <div class="scope-notice">
+                <strong>Scope Notice:</strong>
+                This clearance output records the finalized processing decision only. It does not automatically transfer land ownership, alter registry records, assign landholdings, or replace separate legal and administrative procedures required for actual land transfer or ownership mutation.
             </div>
-        </div>
 
-        <div class="section">
-            <div class="section-title">Parcel Snapshot</div>
+            <section class="decision-panel">
+                <div class="decision-box {{ $decisionClass }}">
+                    <div class="decision-label">Recorded Application Decision</div>
+                    <div class="decision-value">{{ $decisionLabel }}</div>
+                    <div class="decision-note">Decision status is locked in the system for auditability and monitoring.</div>
+                </div>
+                <div class="info-card">
+                    <h2 class="info-card-title">Output Metadata</h2>
+                    <div class="mini-meta">
+                        <div class="mini-row">
+                            <span>Reviewed by</span>
+                            <span>{{ $clearance->review_officer_name }}</span>
+                        </div>
+                        <div class="mini-row">
+                            <span>Reviewed at</span>
+                            <span>{{ $reviewedAt?->format('M d, Y h:i A') ?? '—' }}</span>
+                        </div>
+                        <div class="mini-row">
+                            <span>Generated at</span>
+                            <span>{{ $generatedAt?->format('M d, Y h:i A') ?? '—' }}</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
 
-            <table>
-                <thead>
-                    <tr>
-                        <th>Parcel ID</th>
-                        <th>Parcel Number</th>
-                        <th>Lot Number</th>
-                        <th>Title Number</th>
-                        <th>Area (ha)</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @forelse ($clearance->parcel_snapshot as $parcel)
+            <section class="section">
+                <h2 class="section-title">Application Information</h2>
+                <div class="meta-grid">
+                    <div class="label">Application Code</div>
+                    <div class="value">{{ $clearance->application_code }}</div>
+
+                    <div class="label">Transferor</div>
+                    <div class="value">{{ $clearance->transferor_name }}</div>
+
+                    <div class="label">Transferee</div>
+                    <div class="value">{{ $clearance->transferee_name }}</div>
+
+                    <div class="label">Location</div>
+                    <div class="value">{{ $clearance->barangay ?? '—' }}, {{ $clearance->municipality ?? '—' }}</div>
+
+                    <div class="label">Total Area Covered</div>
+                    <div class="value">{{ number_format((float) $clearance->total_area_hectares, 4) }} hectares</div>
+                </div>
+            </section>
+
+            <section class="section">
+                <h2 class="section-title">Parcel Snapshot</h2>
+                <table>
+                    <thead>
                         <tr>
-                            <td>{{ $parcel['parcel_id'] ?? '—' }}</td>
-                            <td>{{ $parcel['parcel_number'] ?? '—' }}</td>
-                            <td>{{ $parcel['lot_number'] ?? '—' }}</td>
-                            <td>{{ $parcel['title_number'] ?? '—' }}</td>
-                            <td>
-                                {{ isset($parcel['area_hectares']) ? number_format((float) $parcel['area_hectares'], 4) : '0.0000' }}
-                            </td>
+                            <th>Parcel ID</th>
+                            <th>Parcel / Code</th>
+                            <th>Lot Number</th>
+                            <th>Title Number</th>
+                            <th>Area (ha)</th>
                         </tr>
-                    @empty
-                        <tr>
-                            <td colspan="5">No parcel snapshot recorded.</td>
-                        </tr>
-                    @endforelse
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        @forelse ($clearance->parcel_snapshot as $parcel)
+                            <tr>
+                                <td>{{ $parcel['parcel_id'] ?? '—' }}</td>
+                                <td>{{ $parcel['parcel_number'] ?? $parcel['parcel_code'] ?? '—' }}</td>
+                                <td>{{ $parcel['lot_number'] ?? '—' }}</td>
+                                <td>{{ $parcel['title_number'] ?? $parcel['title_no'] ?? '—' }}</td>
+                                <td class="area-cell">
+                                    {{ isset($parcel['area_hectares']) ? number_format((float) $parcel['area_hectares'], 4) : '0.0000' }}
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="5">No parcel snapshot recorded.</td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+                <p class="muted">Parcel information is a snapshot captured at clearance generation time for documentation and audit reference only.</p>
+            </section>
 
-            <p class="muted">
-                Parcel information is recorded as a snapshot at the time the clearance decision was generated.
-            </p>
+            <section class="section">
+                <h2 class="section-title">Certification Statement</h2>
+                <p class="certification">
+                    This document certifies that the above land transfer clearance application has been processed through the Department of Agrarian Reform Land Transfer Clearance and Monitoring System. The decision shown in this record reflects the finalized administrative decision stored in the system for monitoring, documentation, and audit reference only.
+                </p>
+            </section>
+
+            <section class="signature-row">
+                <div></div>
+                <div>
+                    <div class="signature-line">{{ $clearance->review_officer_name }}</div>
+                    <div class="signature-role">Reviewing Officer</div>
+                </div>
+            </section>
+
+            <footer class="footer">
+                Generated by DAR-LTCMS as an administrative clearance output. This document remains subject to applicable DAR procedures, official verification, and separate legal requirements. It is not an automatic land ownership transfer, parcel ownership mutation, or Registry of Deeds alteration.
+            </footer>
         </div>
-
-        <div class="section">
-            <div class="section-title">Certification Statement</div>
-
-            <p class="certification">
-                This document certifies that the above land transfer clearance application has been processed
-                through the Department of Agrarian Reform Land Transfer Clearance and Monitoring System and that
-                the decision shown in this record reflects the finalized decision stored in the system for
-                administrative monitoring, documentation, and audit reference.
-            </p>
-        </div>
-
-        <div class="signature-row">
-            <div></div>
-
-            <div class="signature-line">
-                <strong>{{ $clearance->review_officer_name }}</strong><br>
-                Reviewing Officer
-            </div>
-        </div>
-
-        <div class="footer">
-            <p>
-                Generated by the Department of Agrarian Reform Land Transfer Clearance and Monitoring System.
-                This document is valid as a system-generated administrative record only and remains subject to
-                applicable DAR procedures, official verification, and legal requirements.
-            </p>
-        </div>
-    </div>
+    </main>
 </body>
 </html>

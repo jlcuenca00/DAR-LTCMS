@@ -14,6 +14,8 @@ class ApplicationDocument extends Model
         'annex_reference',
         'remarks',
         'uploaded_by',
+        'source_record_id',
+        'source_record_package_id',
 
         'document_reference_number',
         'document_metadata',
@@ -25,12 +27,6 @@ class ApplicationDocument extends Model
         'document_metadata' => 'array',
         'metadata_encoded_at' => 'datetime',
     ];
-
-    /*
-    |--------------------------------------------------------------------------
-    | Relationships
-    |--------------------------------------------------------------------------
-    */
 
     public function application()
     {
@@ -50,5 +46,15 @@ class ApplicationDocument extends Model
     public function metadataEncoder()
     {
         return $this->belongsTo(User::class, 'metadata_encoded_by');
+    }
+
+    public function sourceRecord()
+    {
+        return $this->belongsTo(LegacyRecord::class, 'source_record_id');
+    }
+
+    public function sourceRecordPackage()
+    {
+        return $this->belongsTo(SourceRecordPackage::class, 'source_record_package_id');
     }
 }

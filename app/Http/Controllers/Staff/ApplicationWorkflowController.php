@@ -3,13 +3,11 @@
 namespace App\Http\Controllers\Staff;
 
 use App\Http\Controllers\Controller;
-use App\Models\ApplicationParcel;
-use App\Models\Landholding;
-use App\Models\Landowner;
 use App\Models\LandTransferApplication;
 use App\Models\RequiredDocument;
 use App\Services\ApplicationClearanceService;
 use App\Services\AuditLogger;
+use App\Services\LandholdingAreaValidationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -176,32 +174,8 @@ public function approve(Request $request, LandTransferApplication $application)
      */
     private function buildValidationSnapshot(LandTransferApplication $application): array
     {
-        $currentApprovedTotal = 0;
-        $pendingIncomingTotal = 0;
-        $thisApplicationTotal = 0;
-        $projectedTotal = 0;
-        $exceedsFive = false;
-
-        if ($application->transferee_landowner_id) {
-            $owner = Landowner::find($application->transferee_landowner_id);
-
-            $currentApprovedTotal = Landholding::where('landowner_id', $owner->id)
-                ->where('status', 'active')
-                ->sum('area_hectares');
-
-            $pendingIncomingTotal = ApplicationParcel::whereHas('application', function ($q) use ($owner, $application) {
-                    $q->where('transferee_landowner_id', $owner->id)
-                      ->where('id', '!=', $application->id)
-                      ->whereIn('status', ['draft', 'pending_review']);
-                })
-                ->sum('area_hectares');
-
-            $thisApplicationTotal = ApplicationParcel::where('land_transfer_application_id', $application->id)
-                ->sum('area_hectares');
-
-            $projectedTotal = (float) $currentApprovedTotal + (float) $pendingIncomingTotal + (float) $thisApplicationTotal;
-            $exceedsFive = $projectedTotal > 5.0000;
-        }
+        $hectareValidation = app(LandholdingAreaValidationService::class)
+            ->forApplication($application);
 
         $mandatoryIds = RequiredDocument::where('is_mandatory', true)->pluck('id')->all();
         $uploadedIds = $application->documents()->pluck('required_document_id')->all();
@@ -209,17 +183,19 @@ public function approve(Request $request, LandTransferApplication $application)
         $missingMandatory = array_values(array_diff($mandatoryIds, $uploadedIds));
         $missingMandatoryCount = count($missingMandatory);
 
-        $hasCriticalFailures = $exceedsFive || $missingMandatoryCount > 0;
+        $hasCriticalFailures = $hectareValidation['exceeds_limit'] || $missingMandatoryCount > 0;
 
         $snapshot = [
             'computed_at' => now()->toDateTimeString(),
             'five_hectare' => [
-                'current_approved_total' => (float) $currentApprovedTotal,
-                'pending_incoming_total' => (float) $pendingIncomingTotal,
-                'this_application_total' => (float) $thisApplicationTotal,
-                'projected_total' => (float) $projectedTotal,
-                'exceeds_limit' => $exceedsFive,
-                'limit' => 5.0000,
+                'current_approved_total' => (float) $hectareValidation['current_active_total'],
+                'pending_incoming_total' => (float) $hectareValidation['pending_incoming_total'],
+                'this_application_total' => (float) $hectareValidation['this_application_total'],
+                'projected_total' => (float) $hectareValidation['projected_total'],
+                'remaining_after_projection' => (float) $hectareValidation['remaining_after_projection'],
+                'exceeds_limit' => (bool) $hectareValidation['exceeds_limit'],
+                'limit' => (float) $hectareValidation['limit'],
+                'scope_note' => $hectareValidation['scope_note'],
             ],
             'documents' => [
                 'missing_mandatory_count' => $missingMandatoryCount,

@@ -28,7 +28,7 @@
         <div>
             <h3>Application Records</h3>
             <p>
-                Search and Filter Applications for administrative processing and monitoring only. Approval records the clearance result and does not automatically transfer land ownership or mutate registry records.
+                Search and filter applications for administrative processing and monitoring only. Approval records the clearance result and does not automatically transfer land ownership or mutate registry records.
             </p>
         </div>
         <span class="staff-scope-pill">Clearance Processing Only</span>
@@ -43,14 +43,26 @@
             <p class="text-sm font-bold text-gray-500">{{ $applications->total() }} record(s)</p>
         </div>
 
-        <form method="GET" action="{{ route('staff.applications.index') }}" class="mt-5 grid grid-cols-1 gap-4 md:grid-cols-3 xl:grid-cols-6">
-            <div class="xl:col-span-2">
-                <label class="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">Search</label>
-                <input type="text" name="search" value="{{ $filters['search'] ?? '' }}" placeholder="Application code, transferor, or transferee" class="w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-green-600 focus:ring-green-600">
+        <form method="GET" action="{{ route('staff.applications.index') }}" class="mt-5 staff-filter-grid filter-grid-5">
+            <div class="staff-filter-field">
+                <label for="application-search" class="staff-form-label">SEARCH</label>
+                <input
+                    id="application-search"
+                    type="text"
+                    name="search"
+                    value="{{ $filters['search'] ?? '' }}"
+                    placeholder="Application code, transferor, or transferee"
+                    class="w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-green-600 focus:ring-green-600"
+                >
             </div>
-            <div>
-                <label class="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">Status</label>
-                <select name="status" class="w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-green-600 focus:ring-green-600">
+
+            <div class="staff-filter-field">
+                <label for="application-status" class="staff-form-label">STATUS</label>
+                <select
+                    id="application-status"
+                    name="status"
+                    class="w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-green-600 focus:ring-green-600"
+                >
                     <option value="">All statuses</option>
                     @foreach ($statuses as $status)
                         <option value="{{ $status }}" @selected(($filters['status'] ?? '') === $status)>
@@ -59,31 +71,60 @@
                     @endforeach
                 </select>
             </div>
-            <div>
-                <label class="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">Municipality</label>
-                <select name="municipality" class="w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-green-600 focus:ring-green-600">
+
+            <div class="staff-filter-field">
+                <label for="application-municipality" class="staff-form-label">MUNICIPALITY</label>
+                <select
+                    id="application-municipality"
+                    name="municipality"
+                    class="w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-green-600 focus:ring-green-600"
+                >
                     <option value="">All municipalities</option>
                     @foreach ($municipalities as $municipality)
-                        <option value="{{ $municipality }}" @selected(($filters['municipality'] ?? '') === $municipality)>{{ $municipality }}</option>
+                        <option value="{{ $municipality }}" @selected(($filters['municipality'] ?? '') === $municipality)>
+                            {{ $municipality }}
+                        </option>
                     @endforeach
                 </select>
             </div>
-            <div>
-                <label class="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">Barangay</label>
-                <select name="barangay" class="w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-green-600 focus:ring-green-600">
+
+            <div class="staff-filter-field">
+                <label for="application-barangay" class="staff-form-label">BARANGAY</label>
+                <select
+                    id="application-barangay"
+                    name="barangay"
+                    class="w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-green-600 focus:ring-green-600"
+                >
                     <option value="">All barangays</option>
                     @foreach ($barangays as $barangay)
-                        <option value="{{ $barangay }}" @selected(($filters['barangay'] ?? '') === $barangay)>{{ $barangay }}</option>
+                        <option value="{{ $barangay }}" @selected(($filters['barangay'] ?? '') === $barangay)>
+                            {{ $barangay }}
+                        </option>
                     @endforeach
                 </select>
             </div>
-            <div>
-                <label class="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">Document Reference</label>
-                <input type="text" name="document_reference_number" value="{{ $filters['document_reference_number'] ?? '' }}" placeholder="Title / tax ref." class="w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-green-600 focus:ring-green-600">
+
+            <div class="staff-filter-field">
+                <label for="application-document-reference" class="staff-form-label">DOCUMENT REFERENCE</label>
+                <input
+                    id="application-document-reference"
+                    type="text"
+                    name="document_reference_number"
+                    value="{{ $filters['document_reference_number'] ?? '' }}"
+                    placeholder="Title / tax ref."
+                    class="w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-green-600 focus:ring-green-600"
+                >
             </div>
-            <div class="md:col-span-3 xl:col-span-6 flex flex-wrap gap-2">
-                <button type="submit" class="staff-button staff-button-dark"><i class="fa-solid fa-filter"></i>Apply Filters</button>
-                <a href="{{ route('staff.applications.index') }}" class="staff-button staff-button-light">Reset</a>
+
+            <div class="staff-filter-actions">
+                <button type="submit" class="staff-button staff-button-dark">
+                    <i class="fa-solid fa-filter"></i>
+                    Apply Filters
+                </button>
+
+                <a href="{{ route('staff.applications.index') }}" class="staff-button staff-button-light">
+                    Reset
+                </a>
             </div>
         </form>
     </section>

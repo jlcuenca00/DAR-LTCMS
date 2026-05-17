@@ -208,6 +208,181 @@
                 </div>
             </div>
 
+
+            @php
+                $sourceLandownerName = $package->landowner_name ?: ($package->transferor_name ?: $package->transferee_name);
+                $nameParts = $sourceLandownerName ? preg_split('/\s+/', trim($sourceLandownerName)) : [];
+                $suggestedFirstName = $nameParts[0] ?? '';
+                $suggestedLastName = count($nameParts) > 1 ? implode(' ', array_slice($nameParts, 1)) : '';
+            @endphp
+
+            <div class="bg-white border shadow-sm rounded-lg overflow-hidden">
+                <div class="px-5 py-4 border-b bg-green-50/70 flex flex-col lg:flex-row lg:items-start lg:justify-between gap-3">
+                    <div>
+                        <p class="text-xs uppercase tracking-wide text-green-700 font-semibold">
+                            Landowner Record Linkage
+                        </p>
+                        <h4 class="text-lg font-bold text-gray-900 mt-1">
+                            Source Party to Main Landowner Record
+                        </h4>
+                        <p class="text-sm text-gray-600 mt-1 max-w-4xl">
+                            Use this when a source package identifies a landowner or party that should be represented in the main
+                            Landowner Records module. This is a staff-confirmed administrative link only; it does not verify ownership,
+                            transfer land, or mutate registry records.
+                        </p>
+                    </div>
+
+                    @if ($package->landowner)
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800 border border-green-200">
+                            Linked
+                        </span>
+                    @else
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-yellow-50 text-yellow-800 border border-yellow-200">
+                            Not linked
+                        </span>
+                    @endif
+                </div>
+
+                <div class="p-5 grid grid-cols-1 xl:grid-cols-3 gap-5">
+                    <div class="rounded-lg border border-gray-200 bg-gray-50 p-4">
+                        <h5 class="font-semibold text-gray-900">Source Name Reference</h5>
+                        <dl class="mt-3 space-y-2 text-sm">
+                            <div>
+                                <dt class="text-gray-500">Encoded landowner / owner name</dt>
+                                <dd class="font-semibold text-gray-900">{{ $package->landowner_name ?? '—' }}</dd>
+                            </div>
+                            <div>
+                                <dt class="text-gray-500">Transferor</dt>
+                                <dd class="font-semibold text-gray-900">{{ $package->transferor_name ?? '—' }}</dd>
+                            </div>
+                            <div>
+                                <dt class="text-gray-500">Transferee</dt>
+                                <dd class="font-semibold text-gray-900">{{ $package->transferee_name ?? '—' }}</dd>
+                            </div>
+                        </dl>
+
+                        @if ($package->landowner)
+                            <div class="mt-4 rounded-md border border-green-200 bg-white p-3 text-sm">
+                                <p class="text-gray-500">Currently linked to</p>
+                                <p class="mt-1 font-bold text-green-800">{{ $package->landowner->full_name }}</p>
+                                <p class="text-gray-600">{{ $package->landowner->barangay ?? 'N/A' }}, {{ $package->landowner->municipality ?? 'N/A' }}</p>
+                            </div>
+                        @endif
+                    </div>
+
+                    <div class="rounded-lg border border-gray-200 p-4">
+                        <h5 class="font-semibold text-gray-900">Link Existing Landowner</h5>
+                        <p class="text-sm text-gray-600 mt-1">
+                            Use this if the correct person already exists in Landowner Records.
+                        </p>
+
+                        <form method="POST"
+                              action="{{ route('staff.source-record-packages.link-landowner', $package) }}"
+                              class="mt-4 space-y-3">
+                            @csrf
+
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700">Existing Landowner Record</label>
+                                <select name="landowner_id" required class="mt-1 w-full border-gray-300 rounded-md shadow-sm">
+                                    <option value="">Select landowner</option>
+                                    @foreach ($landowners as $landowner)
+                                        <option value="{{ $landowner->id }}" @selected($package->landowner_id === $landowner->id)>
+                                            {{ $landowner->full_name }}
+                                            @if ($landowner->barangay || $landowner->municipality)
+                                                — {{ $landowner->barangay ?? 'N/A' }}, {{ $landowner->municipality ?? 'N/A' }}
+                                            @endif
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+
+                            <button type="submit"
+                                    class="inline-flex items-center justify-center px-4 py-2 bg-green-700 text-white rounded-md text-sm font-semibold hover:bg-green-800">
+                                Link Existing Landowner
+                            </button>
+                        </form>
+                    </div>
+
+                    <div class="rounded-lg border border-gray-200 p-4">
+                        <h5 class="font-semibold text-gray-900">Create Landowner From Source</h5>
+                        <p class="text-sm text-gray-600 mt-1">
+                            Use this if no matching Landowner Record exists yet. Staff must review the source details first.
+                        </p>
+
+                        <details class="mt-4 group">
+                            <summary class="cursor-pointer inline-flex items-center text-sm font-semibold text-green-800 hover:text-green-950">
+                                Open creation form
+                            </summary>
+
+                            <form method="POST"
+                                  action="{{ route('staff.source-record-packages.create-landowner', $package) }}"
+                                  class="mt-4 space-y-3">
+                                @csrf
+
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                    <div>
+                                        <label class="block text-sm font-semibold text-gray-700">First Name *</label>
+                                        <input name="first_name" required value="{{ old('first_name', $suggestedFirstName) }}" class="mt-1 w-full border-gray-300 rounded-md shadow-sm">
+                                    </div>
+
+                                    <div>
+                                        <label class="block text-sm font-semibold text-gray-700">Last Name *</label>
+                                        <input name="last_name" required value="{{ old('last_name', $suggestedLastName) }}" class="mt-1 w-full border-gray-300 rounded-md shadow-sm">
+                                    </div>
+
+                                    <div>
+                                        <label class="block text-sm font-semibold text-gray-700">Middle Name</label>
+                                        <input name="middle_name" value="{{ old('middle_name') }}" class="mt-1 w-full border-gray-300 rounded-md shadow-sm">
+                                    </div>
+
+                                    <div>
+                                        <label class="block text-sm font-semibold text-gray-700">Suffix</label>
+                                        <input name="suffix" value="{{ old('suffix') }}" class="mt-1 w-full border-gray-300 rounded-md shadow-sm">
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700">Address Line</label>
+                                    <input name="address_line" value="{{ old('address_line') }}" class="mt-1 w-full border-gray-300 rounded-md shadow-sm">
+                                </div>
+
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                    <div>
+                                        <label class="block text-sm font-semibold text-gray-700">Barangay</label>
+                                        <input name="barangay" value="{{ old('barangay', $package->barangay) }}" class="mt-1 w-full border-gray-300 rounded-md shadow-sm">
+                                    </div>
+
+                                    <div>
+                                        <label class="block text-sm font-semibold text-gray-700">Municipality</label>
+                                        <input name="municipality" value="{{ old('municipality', $package->municipality) }}" class="mt-1 w-full border-gray-300 rounded-md shadow-sm">
+                                    </div>
+
+                                    <div>
+                                        <label class="block text-sm font-semibold text-gray-700">Province</label>
+                                        <input name="province" value="{{ old('province', $package->province ?? 'Negros Oriental') }}" class="mt-1 w-full border-gray-300 rounded-md shadow-sm">
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700">Contact Number</label>
+                                    <input name="contact_number" value="{{ old('contact_number') }}" class="mt-1 w-full border-gray-300 rounded-md shadow-sm">
+                                </div>
+
+                                <div class="rounded-md border border-yellow-200 bg-yellow-50 p-3 text-xs text-yellow-900 leading-relaxed">
+                                    This creates a main Landowner Record for administrative use only. It does not certify legal ownership,
+                                    execute transfer, or alter registry records.
+                                </div>
+
+                                <button type="submit"
+                                        class="inline-flex items-center justify-center px-4 py-2 bg-gray-900 text-white rounded-md text-sm font-semibold hover:bg-black">
+                                    Create and Link Landowner
+                                </button>
+                            </form>
+                        </details>
+                    </div>
+                </div>
+            </div>
+
             <div class="bg-white border shadow-sm rounded-lg p-5">
                 <h4 class="font-semibold text-gray-900 mb-4">
                     Source Records Created From This Package

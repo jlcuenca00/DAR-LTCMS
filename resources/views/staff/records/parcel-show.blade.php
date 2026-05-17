@@ -1,397 +1,622 @@
 <x-staff-shell
     title="Parcel Details"
-    subtitle="Staff-side administrative screen for DAR-LTCMS processing, records management, monitoring, and auditability."
     active="parcel-records"
 >
-<div>
-        <div class="space-y-5">
+    <x-slot name="actions">
+        <a href="{{ route('staff.parcel-map.index') }}" class="staff-button staff-button-primary">
+            <i class="fa-solid fa-map-location-dot"></i>
+            Back to Map
+        </a>
 
-            <div class="bg-white shadow-sm sm:rounded-lg p-6 border">
-                <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
-                    <div>
-                        <p class="text-xs font-semibold uppercase tracking-wide text-green-700">
-                            DAR Negros Oriental Provincial Office
-                        </p>
+        <a href="{{ route('staff.records.parcels.index') }}" class="staff-button staff-button-light">
+            <i class="fa-solid fa-arrow-left"></i>
+            Back to Parcel Records
+        </a>
+    </x-slot>
 
-                        <h3 class="text-2xl font-bold text-gray-900 mt-1">
-                            {{ $parcel->parcel_code }}
-                        </h3>
+    <x-slot name="styles">
+        <style>
+            .parcel-hero {
+                display: grid;
+                grid-template-columns: minmax(0, 1fr) auto;
+                gap: 18px;
+                align-items: start;
+            }
 
-                        <p class="text-sm text-gray-600 mt-2">
-                            This page is for parcel record viewing only. It does not transfer ownership,
-                            mutate registry records, or finalize legal land transactions.
-                        </p>
-                    </div>
+            .parcel-code-title {
+                margin: 4px 0 0;
+                font-size: clamp(24px, 3vw, 34px);
+                line-height: 1.05;
+                font-weight: 900;
+                letter-spacing: -0.03em;
+                color: #0f172a;
+            }
 
-                    <div class="flex flex-wrap gap-2">
-                        <a href="{{ route('staff.parcel-map.index') }}"
-                           class="inline-flex items-center px-4 py-2 bg-green-700 text-white rounded-md text-sm font-semibold hover:bg-green-800">
-                            Back to Map
-                        </a>
+            .parcel-meta-grid {
+                display: grid;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 12px;
+            }
 
-                        <a href="{{ route('staff.records.parcels.index') }}"
-                           class="inline-flex items-center px-4 py-2 bg-gray-900 text-white rounded-md text-sm font-semibold hover:bg-gray-800">
-                            Back to Parcel Records
-                        </a>
-                    </div>
-                </div>
-            </div>
+            .parcel-meta-card {
+                border: 1px solid #e5e7eb;
+                background: #f9fafb;
+                border-radius: 11px;
+                padding: 14px 15px;
+                min-height: 76px;
+            }
 
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            .parcel-meta-label,
+            .parcel-section-label {
+                margin: 0 0 6px;
+                font-size: 10.5px;
+                font-weight: 900;
+                letter-spacing: 0.13em;
+                text-transform: uppercase;
+                color: #64748b;
+            }
 
-                <div class="lg:col-span-2 bg-white shadow-sm sm:rounded-lg p-6 border">
-                    <h3 class="font-semibold text-gray-900 mb-4">
-                        Parcel Reference Information
-                    </h3>
+            .parcel-meta-value {
+                margin: 0;
+                font-size: 14px;
+                font-weight: 800;
+                color: #111827;
+                line-height: 1.35;
+                word-break: break-word;
+            }
 
-                    <dl class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                        <div>
-                            <dt class="text-gray-500">Parcel Code</dt>
-                            <dd class="font-semibold text-gray-900">{{ $parcel->parcel_code }}</dd>
-                        </div>
+            .parcel-meta-subvalue {
+                margin-top: 3px;
+                font-size: 12.5px;
+                color: #6b7280;
+                line-height: 1.35;
+            }
 
-                        <div>
-                            <dt class="text-gray-500">Status</dt>
-                            <dd class="font-semibold text-gray-900">
-                                {{ $parcel->status ? ucwords(str_replace('_', ' ', $parcel->status)) : 'N/A' }}
-                            </dd>
-                        </div>
+            .parcel-side-card {
+                border-radius: 12px;
+                border: 1px solid #facc15;
+                background: #fffbeb;
+                padding: 18px;
+            }
 
-                        <div>
-                            <dt class="text-gray-500">Title Number</dt>
-                            <dd class="font-semibold text-gray-900">{{ $parcel->title_no ?? 'N/A' }}</dd>
-                        </div>
+            .parcel-side-title {
+                margin: 0;
+                font-size: 15px;
+                font-weight: 900;
+                color: #92400e;
+            }
 
-                        <div>
-                            <dt class="text-gray-500">Tax Declaration Number</dt>
-                            <dd class="font-semibold text-gray-900">{{ $parcel->tax_decl_no ?? 'N/A' }}</dd>
-                        </div>
+            .parcel-side-copy {
+                margin: 8px 0 0;
+                font-size: 13px;
+                line-height: 1.65;
+                color: #92400e;
+            }
 
-                        <div>
-                            <dt class="text-gray-500">Area</dt>
-                            <dd class="font-semibold text-gray-900">
-                                {{ number_format((float) $parcel->area_hectares, 4) }} hectares
-                            </dd>
-                        </div>
+            .parcel-geometry-card {
+                display: grid;
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+                gap: 12px;
+            }
 
-                        <div>
-                            <dt class="text-gray-500">Province</dt>
-                            <dd class="font-semibold text-gray-900">{{ $parcel->province ?? 'N/A' }}</dd>
-                        </div>
+            .parcel-code-box {
+                margin-top: 14px;
+                border: 1px solid #d1d5db;
+                border-radius: 10px;
+                overflow: hidden;
+                background: #f8fafc;
+            }
 
-                        <div>
-                            <dt class="text-gray-500">Municipality</dt>
-                            <dd class="font-semibold text-gray-900">{{ $parcel->municipality ?? 'N/A' }}</dd>
-                        </div>
+            .parcel-code-box summary {
+                cursor: pointer;
+                padding: 13px 15px;
+                font-size: 13px;
+                font-weight: 900;
+                color: #14532d;
+                list-style: none;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 12px;
+            }
 
-                        <div>
-                            <dt class="text-gray-500">Barangay</dt>
-                            <dd class="font-semibold text-gray-900">{{ $parcel->barangay ?? 'N/A' }}</dd>
-                        </div>
-                    </dl>
+            .parcel-code-box summary::-webkit-details-marker { display: none; }
 
-                    <div class="mt-6">
-                        <h4 class="font-semibold text-gray-900">
-                            Remarks
-                        </h4>
+            .parcel-code-box pre {
+                margin: 0;
+                max-height: 340px;
+                overflow: auto;
+                border-top: 1px solid #e5e7eb;
+                background: #0f172a;
+                color: #dbeafe;
+                padding: 16px;
+                font-size: 12px;
+                line-height: 1.65;
+                white-space: pre-wrap;
+                word-break: break-word;
+            }
 
-                        <p class="text-sm text-gray-700 mt-2">
-                            {{ $parcel->remarks ?? 'No remarks recorded.' }}
-                        </p>
-                    </div>
-                </div>
+            .parcel-empty-state {
+                border: 1px dashed #cbd5e1;
+                border-radius: 11px;
+                padding: 18px;
+                color: #64748b;
+                background: #f8fafc;
+                font-size: 13px;
+            }
 
-                <div class="bg-amber-50 border border-amber-200 rounded-lg p-6">
-                    <h3 class="font-semibold text-amber-900">
-                        Scope Notice
-                    </h3>
+            .parcel-source-summary {
+                display: grid;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 12px;
+                margin-top: 14px;
+            }
 
-                    <p class="text-sm text-amber-800 mt-2">
-                        This parcel record may be used as reference when processing land transfer
-                        clearance applications. Approval of a clearance application does not mean
-                        ownership has already been legally transferred.
-                    </p>
+            .parcel-source-count-card {
+                border: 1px solid #e5e7eb;
+                border-radius: 10px;
+                padding: 14px;
+                background: #ffffff;
+            }
 
-                    <div class="mt-5 border-t border-amber-200 pt-4">
-                        <p class="text-xs uppercase tracking-wide font-semibold text-amber-700">
-                            Map Geometry
-                        </p>
+            .parcel-source-count-card strong {
+                display: block;
+                margin-top: 4px;
+                font-size: 24px;
+                line-height: 1;
+                color: #111827;
+            }
 
-                        <p class="text-sm font-semibold text-amber-900 mt-1">
-                            {{ $parcel->geometry_geojson ? 'Available' : 'Not yet encoded' }}
-                        </p>
-                    </div>
-                </div>
+            .parcel-record-chip {
+                display: inline-flex;
+                align-items: center;
+                gap: 6px;
+                border-radius: 999px;
+                padding: 5px 9px;
+                font-size: 11px;
+                font-weight: 900;
+                border: 1px solid #cbd5e1;
+                background: #f8fafc;
+                color: #475569;
+            }
 
-            </div>
+            @media (max-width: 1024px) {
+                .parcel-hero,
+                .parcel-main-grid {
+                    grid-template-columns: 1fr !important;
+                }
+            }
 
-            <div class="bg-white shadow-sm sm:rounded-lg p-6 border">
-                <div class="flex items-center justify-between mb-4">
-                    <h3 class="font-semibold text-gray-900">
-                        Linked Landholding Records
-                    </h3>
+            @media (max-width: 760px) {
+                .parcel-meta-grid,
+                .parcel-geometry-card,
+                .parcel-source-summary {
+                    grid-template-columns: 1fr;
+                }
+            }
+        </style>
+    </x-slot>
 
-                    <span class="text-sm text-gray-500">
-                        {{ $parcel->landholdings->count() }} linked record(s)
-                    </span>
-                </div>
+    @php
+        $geometryData = $parcel->geometry_geojson;
 
-                @if ($parcel->landholdings->isEmpty())
-                    <p class="text-sm text-gray-500">
-                        No landholding records are currently linked to this parcel.
-                    </p>
-                @else
-                    <div class="overflow-x-auto">
-                        <table class="min-w-full border text-sm">
-                            <thead class="bg-gray-100">
-                                <tr>
-                                    <th class="border px-3 py-2 text-left">Landowner</th>
-                                    <th class="border px-3 py-2 text-left">Area</th>
-                                    <th class="border px-3 py-2 text-left">Status</th>
-                                    <th class="border px-3 py-2 text-left">Date Acquired</th>
-                                    <th class="border px-3 py-2 text-left">Source Application</th>
-                                    <th class="border px-3 py-2 text-left">Remarks</th>
-                                </tr>
-                            </thead>
+        if (is_string($geometryData)) {
+            $decodedGeometry = json_decode($geometryData, true);
+            $geometryData = json_last_error() === JSON_ERROR_NONE ? $decodedGeometry : $geometryData;
+        }
 
-                            <tbody>
-                                @foreach ($parcel->landholdings as $landholding)
-                                    <tr class="align-top">
-                                        <td class="border px-3 py-2">
-                                            {{ $landholding->landowner?->full_name ?? 'N/A' }}
-                                        </td>
+        $geometryType = is_array($geometryData) ? ($geometryData['type'] ?? 'Encoded geometry') : 'Encoded geometry';
+        $geometryText = $parcel->geometry_geojson
+            ? json_encode($geometryData, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)
+            : null;
 
-                                        <td class="border px-3 py-2">
-                                            {{ number_format((float) $landholding->area_hectares, 4) }} ha
-                                        </td>
+        $landholdings = $parcel->landholdings ?? collect();
+        $activeLandholdings = $landholdings->where('status', 'active');
+        $activeArea = $activeLandholdings->sum(fn ($item) => (float) $item->area_hectares);
+        $sourcePackages = $parcel->sourceRecordPackages ?? collect();
+        $legacyRecords = $parcel->legacyRecords ?? collect();
+    @endphp
 
-                                        <td class="border px-3 py-2">
-                                            {{ $landholding->status ? ucwords(str_replace('_', ' ', $landholding->status)) : 'N/A' }}
-                                        </td>
-
-                                        <td class="border px-3 py-2">
-                                            {{ $landholding->date_acquired ?? 'N/A' }}
-                                        </td>
-
-                                        <td class="border px-3 py-2">
-                                            @if ($landholding->sourceApplication)
-                                                <a href="{{ route('staff.applications.show', $landholding->sourceApplication) }}"
-                                                   class="text-green-700 font-semibold hover:underline">
-                                                    {{ $landholding->sourceApplication->application_code }}
-                                                </a>
-                                            @else
-                                                N/A
-                                            @endif
-                                        </td>
-
-                                        <td class="border px-3 py-2">
-                                            {{ $landholding->remarks ?? 'N/A' }}
-                                        </td>
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                    </div>
-                @endif
-            </div>
-
-            <div class="bg-white shadow-sm sm:rounded-lg p-6 border">
-                <h3 class="font-semibold text-gray-900 mb-3">
-                    Geometry Reference
-                </h3>
-
-                @if ($parcel->geometry_geojson)
-                    <pre class="text-xs bg-gray-900 text-gray-100 rounded-lg p-4 overflow-x-auto">{{ json_encode($parcel->geometry_geojson, JSON_PRETTY_PRINT) }}</pre>
-                @else
-                    <p class="text-sm text-gray-500">
-                        No geometry data has been encoded for this parcel.
-                    </p>
-                @endif
-            </div>
-
-        </div>
-        <div class="bg-white border shadow-sm rounded-lg p-5 mt-4">
-    <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-3 mb-4">
+    <section class="staff-scope-banner">
         <div>
-            <h3 class="text-lg font-semibold text-gray-900">
-                Attached Source Records
-            </h3>
-
-            <p class="text-sm text-gray-600 mt-1">
-                Digitized source records attached to this parcel for provenance, traceability, and review support.
-                These records do not automatically transfer land ownership or mutate Registry of Deeds records.
+            <h3>Parcel Record Scope</h3>
+            <p>
+                This page displays a main parcel reference record for staff review, mapping, and clearance processing support only.
+                It does not transfer ownership, mutate registry records, or finalize any legal land transaction.
             </p>
         </div>
-    </div>
+        <span class="staff-scope-pill">Reference Record Only</span>
+    </section>
 
-    @if ($parcel->sourceRecordPackages->count() > 0)
-        <div class="mb-6">
-            <h4 class="font-semibold text-gray-800 mb-3">
-                Source Packages
-            </h4>
+    <section class="staff-panel staff-panel-pad">
+        <div class="parcel-hero">
+            <div>
+                <p class="parcel-section-label">Main Parcel Record</p>
+                <h2 class="parcel-code-title">{{ $parcel->parcel_code }}</h2>
+                <p class="staff-panel-subtitle">
+                    Record ID: {{ $parcel->id }} ·
+                    {{ $parcel->municipality ?? 'No municipality' }}{{ $parcel->barangay ? ', '.$parcel->barangay : '' }}
+                </p>
+            </div>
 
-            <div class="overflow-x-auto border rounded-lg">
-                <table class="min-w-full text-sm divide-y divide-gray-200">
-                    <thead class="bg-gray-50 text-xs uppercase text-gray-600">
-                        <tr>
-                            <th class="px-4 py-3 text-left">Package Code</th>
-                            <th class="px-4 py-3 text-left">Status</th>
-                            <th class="px-4 py-3 text-left">References</th>
-                            <th class="px-4 py-3 text-left">Source</th>
-                            <th class="px-4 py-3 text-left">Records</th>
-                            <th class="px-4 py-3 text-left">Action</th>
-                        </tr>
-                    </thead>
+            <div class="flex flex-wrap gap-2 justify-start lg:justify-end">
+                <span class="staff-badge
+                    @if ($parcel->status === 'active') staff-badge-green
+                    @elseif ($parcel->status === 'linked_application') staff-badge-blue
+                    @elseif ($parcel->status === 'flagged') staff-badge-red
+                    @else staff-badge-slate
+                    @endif">
+                    {{ $parcel->status ? ucwords(str_replace('_', ' ', $parcel->status)) : 'Status N/A' }}
+                </span>
 
-                    <tbody class="divide-y divide-gray-100">
-                        @foreach ($parcel->sourceRecordPackages as $package)
-                            <tr class="hover:bg-gray-50">
-                                <td class="px-4 py-3 font-semibold text-gray-900">
-                                    {{ $package->package_code }}
-                                </td>
-
-                                <td class="px-4 py-3 text-gray-700">
-                                    {{ $package->status_label }}
-                                </td>
-
-                                <td class="px-4 py-3 text-gray-700">
-                                    @if ($package->title_number)
-                                        <div><strong>Title:</strong> {{ $package->title_number }}</div>
-                                    @endif
-
-                                    @if ($package->landholding_reference_number)
-                                        <div><strong>Landholding:</strong> {{ $package->landholding_reference_number }}</div>
-                                    @endif
-
-                                    @if ($package->control_number)
-                                        <div><strong>Clearance:</strong> {{ $package->control_number }}</div>
-                                    @endif
-
-                                    @if (! $package->title_number && ! $package->landholding_reference_number && ! $package->control_number)
-                                        —
-                                    @endif
-                                </td>
-
-                                <td class="px-4 py-3 text-gray-700">
-                                    <div>{{ $package->source_book }}</div>
-                                    <div class="text-xs text-gray-500">
-                                        Page: {{ $package->page_number ?? '—' }}
-                                    </div>
-                                </td>
-
-                                <td class="px-4 py-3 text-gray-700">
-                                    {{ $package->records->count() }}
-                                </td>
-
-                                <td class="px-4 py-3">
-                                    <a href="{{ route('staff.source-record-packages.show', $package) }}"
-                                       class="inline-flex items-center px-3 py-1.5 bg-gray-900 text-white rounded-md text-xs font-semibold hover:bg-black">
-                                        View Package
-                                    </a>
-                                </td>
-                            </tr>
-                        @endforeach
-                    </tbody>
-                </table>
+                <span class="staff-badge {{ $parcel->geometry_geojson ? 'staff-badge-green' : 'staff-badge-slate' }}">
+                    {{ $parcel->geometry_geojson ? 'Mapped Geometry' : 'No Geometry' }}
+                </span>
             </div>
         </div>
-    @endif
+    </section>
 
-    @if ($parcel->legacyRecords->count() > 0)
-        <div>
-            <h4 class="font-semibold text-gray-800 mb-3">
-                Individual Source Records
-            </h4>
+    <div class="grid grid-cols-1 xl:grid-cols-3 gap-5 parcel-main-grid">
+        <section class="staff-panel staff-panel-pad xl:col-span-2">
+            <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-3 mb-5">
+                <div>
+                    <h3 class="staff-panel-title">Parcel Reference Information</h3>
+                    <p class="staff-panel-subtitle">Core encoded reference values used for application review and map display.</p>
+                </div>
+            </div>
 
-            <div class="overflow-x-auto border rounded-lg">
-                <table class="min-w-full text-sm divide-y divide-gray-200">
-                    <thead class="bg-gray-50 text-xs uppercase text-gray-600">
+            <div class="parcel-meta-grid">
+                <div class="parcel-meta-card">
+                    <p class="parcel-meta-label">Title Number</p>
+                    <p class="parcel-meta-value">{{ $parcel->title_no ?? 'N/A' }}</p>
+                </div>
+
+                <div class="parcel-meta-card">
+                    <p class="parcel-meta-label">Tax Declaration Number</p>
+                    <p class="parcel-meta-value">{{ $parcel->tax_decl_no ?? 'N/A' }}</p>
+                </div>
+
+                <div class="parcel-meta-card">
+                    <p class="parcel-meta-label">Area</p>
+                    <p class="parcel-meta-value">{{ number_format((float) $parcel->area_hectares, 4) }} hectares</p>
+                </div>
+
+                <div class="parcel-meta-card">
+                    <p class="parcel-meta-label">Province</p>
+                    <p class="parcel-meta-value">{{ $parcel->province ?? 'N/A' }}</p>
+                </div>
+
+                <div class="parcel-meta-card">
+                    <p class="parcel-meta-label">Municipality</p>
+                    <p class="parcel-meta-value">{{ $parcel->municipality ?? 'N/A' }}</p>
+                </div>
+
+                <div class="parcel-meta-card">
+                    <p class="parcel-meta-label">Barangay</p>
+                    <p class="parcel-meta-value">{{ $parcel->barangay ?? 'N/A' }}</p>
+                </div>
+            </div>
+
+            <div class="mt-5 border border-slate-200 rounded-xl p-4 bg-white">
+                <p class="parcel-meta-label">Remarks</p>
+                <p class="text-sm text-slate-700 leading-relaxed">
+                    {{ $parcel->remarks ?? 'No remarks recorded.' }}
+                </p>
+            </div>
+        </section>
+
+        <aside class="staff-panel staff-panel-pad">
+            <h3 class="staff-panel-title">Review Summary</h3>
+            <p class="staff-panel-subtitle">Quick reference for staff checking and traceability.</p>
+
+            <div class="mt-4 space-y-3">
+                <div class="parcel-meta-card bg-green-50 border-green-200">
+                    <p class="parcel-meta-label text-green-800">Linked Active Area</p>
+                    <p class="parcel-meta-value text-green-950">{{ number_format($activeArea, 4) }} ha</p>
+                    <p class="parcel-meta-subvalue">From active landholding records linked to this parcel.</p>
+                </div>
+
+                <div class="parcel-meta-card">
+                    <p class="parcel-meta-label">Landholding Records</p>
+                    <p class="parcel-meta-value">{{ $landholdings->count() }} linked record(s)</p>
+                    <p class="parcel-meta-subvalue">{{ $activeLandholdings->count() }} active record(s)</p>
+                </div>
+
+                <div class="parcel-meta-card">
+                    <p class="parcel-meta-label">Attached Source Records</p>
+                    <p class="parcel-meta-value">{{ $sourcePackages->count() + $legacyRecords->count() }} attached</p>
+                    <p class="parcel-meta-subvalue">Packages and individual source records.</p>
+                </div>
+            </div>
+        </aside>
+    </div>
+
+    <section class="staff-panel staff-panel-pad">
+        <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-3 mb-4">
+            <div>
+                <h3 class="staff-panel-title">Linked Landholding Records</h3>
+                <p class="staff-panel-subtitle">
+                    Administrative landholding references linked to this parcel. These records support hectare monitoring only.
+                </p>
+            </div>
+
+            <span class="staff-badge {{ $activeLandholdings->count() > 0 ? 'staff-badge-green' : 'staff-badge-slate' }}">
+                {{ $activeLandholdings->count() }} active
+            </span>
+        </div>
+
+        @if ($landholdings->isEmpty())
+            <div class="parcel-empty-state">
+                No landholding records are currently linked to this parcel.
+            </div>
+        @else
+            <div class="staff-table-wrap">
+                <table class="staff-table">
+                    <thead>
                         <tr>
-                            <th class="px-4 py-3 text-left">Type</th>
-                            <th class="px-4 py-3 text-left">Origin</th>
-                            <th class="px-4 py-3 text-left">References</th>
-                            <th class="px-4 py-3 text-left">Source</th>
-                            <th class="px-4 py-3 text-left">Package</th>
-                            <th class="px-4 py-3 text-left">Action</th>
+                            <th>Landowner</th>
+                            <th>Area</th>
+                            <th>Status</th>
+                            <th>Dates</th>
+                            <th>Reference</th>
+                            <th>Remarks</th>
                         </tr>
                     </thead>
-
-                    <tbody class="divide-y divide-gray-100">
-                        @foreach ($parcel->legacyRecords as $record)
-                            <tr class="hover:bg-gray-50">
-                                <td class="px-4 py-3 font-semibold text-gray-900">
-                                    {{ $record->record_type_label }}
+                    <tbody>
+                        @foreach ($landholdings as $landholding)
+                            <tr>
+                                <td>
+                                    @if ($landholding->landowner)
+                                        @if (\Illuminate\Support\Facades\Route::has('staff.records.landowners.show'))
+                                            <a href="{{ route('staff.records.landowners.show', $landholding->landowner) }}" class="staff-link">
+                                                {{ $landholding->landowner->full_name }}
+                                            </a>
+                                        @else
+                                            <span class="font-bold text-slate-900">{{ $landholding->landowner->full_name }}</span>
+                                        @endif
+                                    @else
+                                        <span class="text-slate-400">No landowner linked</span>
+                                    @endif
                                 </td>
-
-                                <td class="px-4 py-3">
-                                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold
-                                        @if ($record->origin === 'encoded') bg-blue-100 text-blue-800
-                                        @elseif ($record->origin === 'imported') bg-purple-100 text-purple-800
-                                        @else bg-gray-100 text-gray-700
+                                <td class="font-bold text-slate-900">
+                                    {{ number_format((float) $landholding->area_hectares, 4) }} ha
+                                </td>
+                                <td>
+                                    <span class="staff-badge
+                                        @if ($landholding->status === 'active') staff-badge-green
+                                        @elseif ($landholding->status === 'historical') staff-badge-amber
+                                        @elseif ($landholding->status === 'inactive') staff-badge-slate
+                                        @else staff-badge-slate
                                         @endif">
-                                        {{ $record->origin_label }}
+                                        {{ $landholding->status ? ucwords(str_replace('_', ' ', $landholding->status)) : 'N/A' }}
                                     </span>
                                 </td>
-
-                                <td class="px-4 py-3 text-gray-700">
-                                    @if ($record->title_number)
-                                        <div><strong>Title:</strong> {{ $record->title_number }}</div>
-                                    @endif
-
-                                    @if ($record->landholding_reference_number)
-                                        <div><strong>Landholding:</strong> {{ $record->landholding_reference_number }}</div>
-                                    @endif
-
-                                    @if ($record->control_number)
-                                        <div><strong>Clearance:</strong> {{ $record->control_number }}</div>
-                                    @endif
-
-                                    @if ($record->lot_number)
-                                        <div><strong>Lot:</strong> {{ $record->lot_number }}</div>
-                                    @endif
-
-                                    @if (! $record->title_number && ! $record->landholding_reference_number && ! $record->control_number && ! $record->lot_number)
-                                        —
-                                    @endif
+                                <td>
+                                    <div><span class="text-slate-500">Acquired:</span> {{ $landholding->date_acquired ? \Illuminate\Support\Carbon::parse($landholding->date_acquired)->format('M d, Y') : 'N/A' }}</div>
+                                    <div><span class="text-slate-500">Transferred:</span> {{ $landholding->date_transferred ? \Illuminate\Support\Carbon::parse($landholding->date_transferred)->format('M d, Y') : 'N/A' }}</div>
                                 </td>
-
-                                <td class="px-4 py-3 text-gray-700">
-                                    <div>{{ $record->source_book }}</div>
-                                    <div class="text-xs text-gray-500">
-                                        Page: {{ $record->page_number ?? '—' }}
-                                    </div>
-                                </td>
-
-                                <td class="px-4 py-3 text-gray-700">
-                                    @if ($record->package)
-                                        <a href="{{ route('staff.source-record-packages.show', $record->package) }}"
-                                           class="text-green-700 font-semibold hover:underline">
-                                            {{ $record->package->package_code }}
+                                <td>
+                                    @if ($landholding->sourceApplication)
+                                        <a href="{{ route('staff.applications.show', $landholding->sourceApplication) }}" class="staff-link">
+                                            {{ $landholding->sourceApplication->application_code }}
                                         </a>
+                                    @elseif ($landholding->source_reference_no ?? false)
+                                        {{ $landholding->source_reference_no }}
                                     @else
-                                        <span class="text-gray-400">No package</span>
+                                        <span class="text-slate-400">N/A</span>
                                     @endif
                                 </td>
-
-                                <td class="px-4 py-3">
-                                    <a href="{{ route('staff.legacy-records.show', $record) }}"
-                                       class="inline-flex items-center px-3 py-1.5 bg-gray-900 text-white rounded-md text-xs font-semibold hover:bg-black">
-                                        View Record
-                                    </a>
-                                </td>
+                                <td>{{ $landholding->remarks ?? 'N/A' }}</td>
                             </tr>
                         @endforeach
                     </tbody>
                 </table>
             </div>
-        </div>
-    @endif
+        @endif
+    </section>
 
-    @if ($parcel->sourceRecordPackages->count() === 0 && $parcel->legacyRecords->count() === 0)
-        <div class="border rounded-lg p-6 text-center text-gray-500">
-            No source records are currently attached to this parcel.
+    <section class="staff-panel staff-panel-pad">
+        <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-3">
+            <div>
+                <h3 class="staff-panel-title">Geometry Reference</h3>
+                <p class="staff-panel-subtitle">
+                    Stored map geometry for visualization and parcel reference checking. This is not a registry mutation record.
+                </p>
+            </div>
+
+            <span class="staff-badge {{ $parcel->geometry_geojson ? 'staff-badge-green' : 'staff-badge-slate' }}">
+                {{ $parcel->geometry_geojson ? $geometryType : 'Not encoded' }}
+            </span>
         </div>
-    @endif
-</div>
-    </div>
+
+        @if ($parcel->geometry_geojson)
+            <div class="parcel-geometry-card mt-4">
+                <div class="parcel-meta-card">
+                    <p class="parcel-meta-label">Geometry Type</p>
+                    <p class="parcel-meta-value">{{ $geometryType }}</p>
+                </div>
+                <div class="parcel-meta-card">
+                    <p class="parcel-meta-label">Map Display</p>
+                    <p class="parcel-meta-value">Available</p>
+                </div>
+                <div class="parcel-meta-card">
+                    <p class="parcel-meta-label">Action</p>
+                    <a href="{{ route('staff.parcel-map.index') }}" class="staff-link">Open Parcel Map →</a>
+                </div>
+            </div>
+
+            <details class="parcel-code-box">
+                <summary>
+                    <span><i class="fa-solid fa-code mr-2"></i>View raw GeoJSON</span>
+                    <span class="text-xs text-slate-500">Developer/reference data</span>
+                </summary>
+                <pre>{{ $geometryText }}</pre>
+            </details>
+        @else
+            <div class="parcel-empty-state mt-4">
+                No geometry data has been encoded for this parcel.
+            </div>
+        @endif
+    </section>
+
+    <section class="staff-panel staff-panel-pad">
+        <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-3 mb-4">
+            <div>
+                <h3 class="staff-panel-title">Attached Source Records</h3>
+                <p class="staff-panel-subtitle">
+                    Digitized source records attached to this parcel for provenance, traceability, and review support only.
+                </p>
+            </div>
+
+            <span class="staff-badge staff-badge-slate">
+                {{ $sourcePackages->count() }} package(s) · {{ $legacyRecords->count() }} individual record(s)
+            </span>
+        </div>
+
+        @if ($sourcePackages->count() === 0 && $legacyRecords->count() === 0)
+            <div class="parcel-empty-state">
+                No source records are currently attached to this parcel.
+            </div>
+        @else
+            <div class="parcel-source-summary">
+                <div class="parcel-source-count-card">
+                    <p class="parcel-meta-label">Source Packages</p>
+                    <strong>{{ $sourcePackages->count() }}</strong>
+                </div>
+                <div class="parcel-source-count-card">
+                    <p class="parcel-meta-label">Individual Source Records</p>
+                    <strong>{{ $legacyRecords->count() }}</strong>
+                </div>
+            </div>
+        @endif
+
+        @if ($sourcePackages->count() > 0)
+            <div class="mt-5">
+                <h4 class="staff-panel-title text-base">Source Packages</h4>
+                <div class="staff-table-wrap mt-3">
+                    <table class="staff-table">
+                        <thead>
+                            <tr>
+                                <th>Package Code</th>
+                                <th>Status</th>
+                                <th>References</th>
+                                <th>Source</th>
+                                <th>Records</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach ($sourcePackages as $package)
+                                <tr>
+                                    <td>
+                                        <a href="{{ route('staff.source-record-packages.show', $package) }}" class="staff-link">
+                                            {{ $package->package_code }}
+                                        </a>
+                                    </td>
+                                    <td>
+                                        <span class="staff-badge staff-badge-slate">{{ $package->status_label }}</span>
+                                    </td>
+                                    <td>
+                                        @if ($package->title_number)
+                                            <div><strong>Title:</strong> {{ $package->title_number }}</div>
+                                        @endif
+                                        @if ($package->landholding_reference_number)
+                                            <div><strong>Landholding:</strong> {{ $package->landholding_reference_number }}</div>
+                                        @endif
+                                        @if ($package->control_number)
+                                            <div><strong>Clearance:</strong> {{ $package->control_number }}</div>
+                                        @endif
+                                        @if (! $package->title_number && ! $package->landholding_reference_number && ! $package->control_number)
+                                            <span class="text-slate-400">N/A</span>
+                                        @endif
+                                    </td>
+                                    <td>
+                                        <div>{{ $package->source_book ?? 'N/A' }}</div>
+                                        <div class="text-xs text-slate-500">Page: {{ $package->page_number ?? 'N/A' }}</div>
+                                    </td>
+                                    <td>{{ $package->records->count() }}</td>
+                                    <td>
+                                        <a href="{{ route('staff.source-record-packages.show', $package) }}" class="staff-button staff-button-light">
+                                            View Package
+                                        </a>
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        @endif
+
+        @if ($legacyRecords->count() > 0)
+            <div class="mt-5">
+                <h4 class="staff-panel-title text-base">Individual Source Records</h4>
+                <div class="staff-table-wrap mt-3">
+                    <table class="staff-table">
+                        <thead>
+                            <tr>
+                                <th>Type</th>
+                                <th>Origin</th>
+                                <th>References</th>
+                                <th>Source</th>
+                                <th>Package</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach ($legacyRecords as $record)
+                                <tr>
+                                    <td class="font-bold text-slate-900">{{ $record->record_type_label }}</td>
+                                    <td>
+                                        <span class="staff-badge
+                                            @if ($record->origin === 'encoded') staff-badge-blue
+                                            @elseif ($record->origin === 'imported') staff-badge-amber
+                                            @else staff-badge-slate
+                                            @endif">
+                                            {{ $record->origin_label }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        @if ($record->title_number)
+                                            <div><strong>Title:</strong> {{ $record->title_number }}</div>
+                                        @endif
+                                        @if ($record->landholding_reference_number)
+                                            <div><strong>Landholding:</strong> {{ $record->landholding_reference_number }}</div>
+                                        @endif
+                                        @if ($record->control_number)
+                                            <div><strong>Clearance:</strong> {{ $record->control_number }}</div>
+                                        @endif
+                                        @if ($record->lot_number)
+                                            <div><strong>Lot:</strong> {{ $record->lot_number }}</div>
+                                        @endif
+                                        @if (! $record->title_number && ! $record->landholding_reference_number && ! $record->control_number && ! $record->lot_number)
+                                            <span class="text-slate-400">N/A</span>
+                                        @endif
+                                    </td>
+                                    <td>
+                                        <div>{{ $record->source_book ?? 'N/A' }}</div>
+                                        <div class="text-xs text-slate-500">Page: {{ $record->page_number ?? 'N/A' }}</div>
+                                    </td>
+                                    <td>
+                                        @if ($record->package)
+                                            <a href="{{ route('staff.source-record-packages.show', $record->package) }}" class="staff-link">
+                                                {{ $record->package->package_code }}
+                                            </a>
+                                        @else
+                                            <span class="text-slate-400">No package</span>
+                                        @endif
+                                    </td>
+                                    <td>
+                                        <a href="{{ route('staff.legacy-records.show', $record) }}" class="staff-button staff-button-light">
+                                            View Record
+                                        </a>
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        @endif
+    </section>
 </x-staff-shell>
