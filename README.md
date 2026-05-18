@@ -1,6 +1,6 @@
 # Department of Agrarian Reform Land Transfer Clearance and Monitoring System
 
-A web-based clearance generation, application processing, monitoring, parcel/reference review, and records-management system for the **Department of Agrarian Reform Negros Oriental Provincial Office**.
+A web-based clearance generation, application processing, monitoring, parcel/reference review, notification, and records-management system for the **Department of Agrarian Reform Negros Oriental Provincial Office**.
 
 ## System scope
 
@@ -15,6 +15,7 @@ The system covers:
 - supporting document upload, metadata indexing, and review
 - application status monitoring
 - role-based access control
+- in-app notifications
 - audit logging
 - parcel/reference map review
 - monitoring and report generation
@@ -26,7 +27,7 @@ This system does **not** automatically transfer land ownership.
 
 This system does **not** automatically mutate Registry of Deeds records.
 
-Approval of a clearance application only means the system may record the final decision, generate the clearance result, lock/finalize the application record, support monitoring/reporting, and audit log the action. Any actual transfer of ownership, registry alteration, title mutation, or legal land transfer remains outside the automatic operational scope of this system and is subject to separate legal and administrative procedures.
+Approval of a clearance application only means the system may record the final decision, generate the clearance result, lock/finalize the application record, support monitoring/reporting, notify authorized users, and audit log the action. Any actual transfer of ownership, registry alteration, title mutation, or legal land transfer remains outside the automatic operational scope of this system and is subject to separate legal and administrative procedures.
 
 ## Technology stack
 
@@ -54,6 +55,7 @@ DAR Staff users are the main system operators. They may:
 - generate monitoring reports
 - view audit logs
 - manage user accounts and roles
+- receive role-based in-app notifications
 
 ### Landowner
 
@@ -62,6 +64,7 @@ Landowner users are restricted stakeholders. They may:
 - view only their own parcel records
 - view only their own clearance application status
 - view finalized decision output/PDF only for their own linked applications
+- receive notifications related only to their own application/status/final decision records
 
 Landowners do **not** create applications themselves and must never access records belonging to other landowners.
 
@@ -72,6 +75,7 @@ Geodetic users have limited, read-only review access. They may:
 - review parcel records
 - review parcel/reference map information
 - open parcel detail views for review
+- receive limited parcel/source/reference review notifications
 
 Geodetic users cannot approve applications, cannot view clearance applications, cannot upload documents, cannot generate clearance decisions, and cannot broadly edit ownership/application records.
 
@@ -106,6 +110,27 @@ Allowed values:
 
 This classification supports record organization, filtering, review, and reporting. It is **not** an automatic approval gate, not a land transfer mechanism, and not a reason by itself to mutate ownership records. The system name and normal UI labels remain centered on **Land Transfer Clearance**, not “Agricultural Land Transfer Clearance.”
 
+## In-app notifications
+
+The system includes role-based in-app notifications with a topbar notification bell and recent notification dropdown.
+
+Staff notification triggers:
+
+- clearance application created/encoded
+- application submitted for review
+- application approved
+- application marked not approved
+
+Excluded staff notification triggers:
+
+- supporting document upload
+- document metadata/indexing update
+- clearance output generated
+
+Clearance output generation is treated as part of the final decision process and does not need a separate staff notification.
+
+Landowner notifications are limited to the landowner's own application status/final decision/output availability. Geodetic notifications are limited to parcel/source/reference review availability or updates. Notifications are user-specific and do not override role-based access control.
+
 ## Main modules
 
 ### Staff modules
@@ -125,6 +150,7 @@ This classification supports record organization, filtering, review, and reporti
 - Monitoring Reports
 - Audit Log Viewer
 - User / Role Management
+- In-App Notifications
 - Profile Settings
 
 ### Landowner modules
@@ -134,6 +160,7 @@ This classification supports record organization, filtering, review, and reporti
 - Own Application Status
 - Own Finalized Decision Output / PDF
 - Privacy-filtered Parcel Map Viewer
+- In-App Notifications
 - Profile Settings
 
 ### Geodetic modules
@@ -142,6 +169,7 @@ This classification supports record organization, filtering, review, and reporti
 - Read-only Parcel Records
 - Read-only Parcel Details
 - Read-only Parcel Map Viewer
+- In-App Notifications
 - Profile Settings
 
 ## Setup notes
@@ -182,7 +210,7 @@ DB_USERNAME=postgres
 DB_PASSWORD=123
 ```
 
-### 4. Run migrations and base seeders
+### 4. Run normal base setup
 
 ```bash
 php artisan migrate:fresh --seed
@@ -190,16 +218,48 @@ php artisan migrate:fresh --seed
 
 The default `DatabaseSeeder` seeds the required clearance document list.
 
-### 5. Optional demo seeders
+### 5. Run barebones tester setup
 
-Use these only for demo/manual testing data.
+Use this when preparing a clean system for testers who will encode their own data through the UI.
+
+```bash
+php artisan migrate:fresh --seeder=BarebonesTesterSeeder
+```
+
+This produces a clean tester-ready state:
+
+- one active staff account
+- required document reference records
+- no demo landowners
+- no demo geodetic users
+- no demo parcels
+- no demo landholdings
+- no demo source records
+- no demo clearance applications
+- no demo uploaded documents
+- no demo notifications
+- no demo audit logs
+
+Starting account:
+
+```text
+Email: staff.tester@dar-ltcms.local
+Password: password
+Role: Staff
+```
+
+The tester should then create records through the system interface.
+
+### 6. Optional demo seeders
+
+Use these only for demo/manual privacy or map testing. Do not run them for barebones tester handoff.
 
 ```bash
 php artisan db:seed --class=LandownerPrivacyDemoSeeder
 php artisan db:seed --class=ParcelMapDemoSeeder
 ```
 
-### 6. Build frontend assets
+### 7. Build frontend assets
 
 For development:
 
@@ -213,124 +273,46 @@ For final build:
 npm run build
 ```
 
-### 7. Run the application
+### 8. Run the application
 
 ```bash
 php artisan serve
 ```
 
-Open the local Laravel URL shown in the terminal.
+## Barebones tester workflow
 
-## Demo accounts
+After logging in as the starting staff account, the tester should fill the system through the UI:
 
-The `LandownerPrivacyDemoSeeder` creates these manual testing accounts:
-
-| Role | Email | Password | Purpose |
-| --- | --- | --- | --- |
-| Staff | `staff.demo@test.com` | `password` | Staff encoder account for privacy/demo records |
-| Landowner | `landowner.a@test.com` | `password` | Alpha demo landowner |
-| Landowner | `landowner.b@test.com` | `password` | Bravo demo landowner |
-
-Privacy test expectation:
-
-- Landowner A must only see Alpha-linked parcels/applications.
-- Landowner B must only see Bravo-linked parcels/applications.
-- Neither landowner must access the other landowner’s parcel, application, map, or decision output records.
-
-The seeder is for manual testing only. It does not transfer land ownership and does not mutate registry records.
-
-## Useful commands
-
-### Run all tests
-
-```bash
-php artisan test
-```
-
-### Run targeted tests
-
-```bash
-php artisan test --filter=LandownerPrivacyTest
-php artisan test --filter=GeodeticReadOnlyTest
-php artisan test --filter=FinalDecisionLockTest
-php artisan test --filter=AuditLoggingTest
-php artisan test --filter=MonitoringReportTest
-php artisan test --filter=ParcelAgriculturalStatusTest
-php artisan test --filter=ParcelAgriculturalStatusRoleVisibilityTest
-```
-
-### Search files without grep
-
-PowerShell example:
-
-```powershell
-Select-String -Path resources/views/**/*.blade.php -Pattern "Agricultural Classification" -Context 3,3
-```
-
-## Database export commands
-
-### Full PostgreSQL export
-
-PowerShell:
-
-```powershell
-$env:PGPASSWORD="123"
-pg_dump -h 127.0.0.1 -p 5432 -U postgres -d dar_iland --clean --if-exists --no-owner --no-privileges -F p -f "dar_iland_v0_25_ui_polish_finalization_full_export.sql"
-Remove-Item Env:\PGPASSWORD
-```
-
-Git Bash:
-
-```bash
-PGPASSWORD="123" pg_dump -h 127.0.0.1 -p 5432 -U postgres -d dar_iland --clean --if-exists --no-owner --no-privileges -F p -f "dar_iland_v0_25_ui_polish_finalization_full_export.sql"
-```
-
-### Schema-only export, optional
-
-PowerShell:
-
-```powershell
-$env:PGPASSWORD="123"
-pg_dump -h 127.0.0.1 -p 5432 -U postgres -d dar_iland --schema-only --clean --if-exists --no-owner --no-privileges -F p -f "dar_iland_v0_25_schema_only.sql"
-Remove-Item Env:\PGPASSWORD
-```
-
-Schema-only export is optional because the Laravel migrations already document the schema structure. Keep it only if your adviser/panel requires a separate database schema file.
-
-### Restore full export
-
-PowerShell:
-
-```powershell
-$env:PGPASSWORD="123"
-psql -h 127.0.0.1 -p 5432 -U postgres -d dar_iland -f "dar_iland_v0_25_ui_polish_finalization_full_export.sql"
-Remove-Item Env:\PGPASSWORD
-```
-
-Git Bash:
-
-```bash
-PGPASSWORD="123" psql -h 127.0.0.1 -p 5432 -U postgres -d dar_iland -f "dar_iland_v0_25_ui_polish_finalization_full_export.sql"
-```
-
-## Final defense checklist
+1. Create needed users through User / Role Management.
+2. Create landowner records.
+3. Link landowner user accounts to landowner records when landowner portal testing is needed.
+4. Create parcel records.
+5. Create/link landholding records.
+6. Optionally encode source record packages/reference records.
+7. Encode clearance applications manually as staff.
+8. Upload supporting documents and encode document metadata/indexing fields.
+9. Submit applications for review.
+10. Test approved and not-approved decision behavior.
+11. Confirm final decision locking.
+12. Confirm audit log entries.
+13. Confirm notification dropdown behavior.
+14. Confirm landowner privacy restrictions.
+15. Confirm geodetic read-only access.
+16. Confirm monitoring reports and parcel map views.
 
 See:
 
-- `docs/final-manual-testing-checklist.md`
-- `docs/final-defense-screenshot-checklist.md`
-- `docs/thesis-documentation-alignment.md`
+- `docs/barebones-tester-handoff.md`
+- `docs/tester-data-entry-guide.md`
+- `docs/final-barebones-release-checklist.md`
 
-## Thesis wording reminder
+## Final database export
 
-Always describe this system as:
+For barebones tester handoff:
 
-- an administrative processing and monitoring system
-- a decision-support and records-management platform
-- a clearance generation system
+```bash
+mkdir final_exports
+pg_dump -U postgres -h 127.0.0.1 -p 5432 -d dar_iland -f final_exports/dar_iland_barebones_tester_database.sql
+```
 
-Do not describe it as:
-
-- an automatic ownership transfer system
-- a registry mutation engine
-- a replacement for official DAR legal/administrative decision-making
+For a populated demo export, use a different file name to avoid confusing demo data with the barebones tester database.
