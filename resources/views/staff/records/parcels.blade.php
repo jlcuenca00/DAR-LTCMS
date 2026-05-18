@@ -3,6 +3,8 @@
     subtitle="Search and review main parcel records used for clearance reference checking, monitoring, and map display."
     active="parcel-records"
 >
+    @php($agriculturalStatuses = $agriculturalStatuses ?? \App\Models\Parcel::agriculturalStatusOptions())
+
     <x-slot name="actions">
         <a href="{{ route('staff.parcel-map.index') }}" class="staff-button staff-button-primary">
             <i class="fa-solid fa-map"></i>
@@ -64,6 +66,14 @@
                         <option value="{{ $status }}" @selected(($filters['status'] ?? '') === $status)>{{ ucwords(str_replace('_', ' ', $status)) }}</option>
                     @endforeach
                 </select>
+            </div>            <div>
+                <label class="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">Agricultural Status</label>
+                <select name="agricultural_status" class="w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-green-600 focus:ring-green-600">
+                    <option value="">All classifications</option>
+                    @foreach ($agriculturalStatuses as $value => $label)
+                        <option value="{{ $value }}" @selected(($filters['agricultural_status'] ?? '') === $value)>{{ $label }}</option>
+                    @endforeach
+                </select>
             </div>
             <div class="staff-filter-actions">
                 <button type="submit" class="staff-button staff-button-dark"><i class="fa-solid fa-filter"></i>Apply Filters</button>
@@ -108,9 +118,19 @@
                                 <div class="text-xs text-gray-500">{{ $parcel->barangay ?? 'N/A' }}</div>
                             </td>
                             <td class="whitespace-nowrap">{{ $parcel->area_hectares ? number_format((float) $parcel->area_hectares, 4) . ' ha' : 'N/A' }}</td>
-                            <td><span class="staff-badge {{ $parcel->status === 'active' ? 'staff-badge-green' : 'staff-badge-slate' }}">{{ ucwords($parcel->status ?? 'Unspecified') }}</span></td>
+                            <td>
+                                <span class="staff-badge {{ $parcel->status === 'active' ? 'staff-badge-green' : 'staff-badge-slate' }}">{{ ucwords(str_replace('_', ' ', $parcel->status ?? 'Unspecified')) }}</span>
+                                <div class="mt-1">
+                                    <span class="staff-badge staff-badge-slate">{{ $parcel->agricultural_status_label }}</span>
+                                </div>
+                            </td>
                             <td><span class="staff-badge {{ $parcel->geometry_geojson ? 'staff-badge-blue' : 'staff-badge-slate' }}">{{ $parcel->geometry_geojson ? 'Mapped' : 'No Geometry' }}</span></td>
-                            <td class="text-right"><a href="{{ route('staff.records.parcels.show', $parcel) }}" class="staff-button staff-button-light">View</a></td>
+                            <td class="text-right">
+                                <div class="flex flex-wrap justify-end gap-2">
+                                    <a href="{{ route('staff.records.parcels.show', $parcel) }}" class="staff-button staff-button-light">View</a>
+                                    <a href="{{ route('staff.records.parcels.edit', $parcel) }}" class="staff-button staff-button-light">Edit</a>
+                                </div>
+                            </td>
                         </tr>
                     @empty
                         <tr><td colspan="7" class="py-8 text-center text-gray-500">No parcel records found.</td></tr>

@@ -1278,6 +1278,14 @@
             ->orderBy('first_name')
             ->limit(500)
             ->get();
+
+        $applicationAgriculturalStatusLabels = $application->applicationParcels
+            ->pluck('parcel')
+            ->filter()
+            ->map(fn ($parcel) => $parcel->agricultural_status_label)
+            ->filter()
+            ->unique()
+            ->values();
     @endphp
 
     <div class="application-review-page">
@@ -1439,6 +1447,17 @@
                             <p class="summary-label">Municipality</p>
                             <p class="summary-value">{{ $application->municipality ?? '—' }}</p>
                         </div>
+
+                        @if ($applicationAgriculturalStatusLabels->isNotEmpty())
+                            <div class="summary-item">
+                                <p class="summary-label">Linked Parcel Agricultural Status</p>
+                                <div class="summary-value flex flex-wrap gap-2">
+                                    @foreach ($applicationAgriculturalStatusLabels as $agriculturalStatusLabel)
+                                        <span class="staff-badge staff-badge-slate">{{ $agriculturalStatusLabel }}</span>
+                                    @endforeach
+                                </div>
+                            </div>
+                        @endif
                     </div>
                 </div>
             </div>

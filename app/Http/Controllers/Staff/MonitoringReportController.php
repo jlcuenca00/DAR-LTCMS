@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Staff;
 use App\Http\Controllers\Controller;
 use App\Models\ApplicationClearance;
 use App\Models\LandTransferApplication;
+use App\Models\Parcel;
 use Illuminate\Support\Facades\Auth;
 
 class MonitoringReportController extends Controller
@@ -57,6 +58,14 @@ class MonitoringReportController extends Controller
             ->limit(10)
             ->get();
 
+        $agriculturalStatusOptions = Parcel::agriculturalStatusOptions();
+
+        $agriculturalStatusBreakdown = Parcel::query()
+            ->selectRaw("COALESCE(agricultural_status, 'not_yet_determined') as agricultural_status, COUNT(*) as total")
+            ->groupByRaw("COALESCE(agricultural_status, 'not_yet_determined')")
+            ->orderByRaw("COALESCE(agricultural_status, 'not_yet_determined')")
+            ->pluck('total', 'agricultural_status');
+
         return [
             'statusCounts' => $statusCounts,
             'clearanceCounts' => $clearanceCounts,
@@ -66,6 +75,8 @@ class MonitoringReportController extends Controller
             'municipalityBreakdown' => $municipalityBreakdown,
             'recentApplications' => $recentApplications,
             'recentClearances' => $recentClearances,
+            'agriculturalStatusOptions' => $agriculturalStatusOptions,
+            'agriculturalStatusBreakdown' => $agriculturalStatusBreakdown,
             'generatedAt' => now(),
             'generatedBy' => Auth::user(),
             'scopeNotice' => 'This report is generated for administrative monitoring and decision-support purposes only. Clearance approval or report inclusion does not automatically transfer land ownership, mutate parcel ownership records, or replace separate legal and administrative procedures.',

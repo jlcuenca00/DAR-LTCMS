@@ -90,7 +90,7 @@
             .lo-table {
                 width: 100%;
                 border-collapse: collapse;
-                min-width: 860px;
+                min-width: 980px;
                 font-size: 13px;
             }
 
@@ -215,6 +215,7 @@
                                     <th>Tax Declaration</th>
                                     <th>Location</th>
                                     <th>Area</th>
+                                    <th>Agricultural Status</th>
                                     <th>Status</th>
                                     <th>Map</th>
                                 </tr>
@@ -236,6 +237,11 @@
                                         <td>{{ $parcel?->tax_decl_no ?? 'N/A' }}</td>
                                         <td>{{ $parcel?->barangay ?? 'N/A' }}, {{ $parcel?->municipality ?? 'N/A' }}</td>
                                         <td>{{ number_format((float) $holding->area_hectares, 4) }} ha</td>
+                                        <td>
+                                            <span class="lo-status-pill neutral">
+                                                {{ $parcel?->agricultural_status_label ?? 'Not Yet Determined' }}
+                                            </span>
+                                        </td>
                                         <td>
                                             <span class="lo-status-pill">
                                                 {{ $holding->status ? ucwords(str_replace('_', ' ', $holding->status)) : 'N/A' }}

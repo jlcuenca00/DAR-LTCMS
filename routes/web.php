@@ -78,6 +78,10 @@ Route::middleware(['auth', 'role:staff'])
 
         Route::get('/records/parcels', [RecordSearchController::class, 'parcels'])
             ->name('records.parcels.index');
+        Route::get('/records/parcels/{parcel}/edit', [RecordSearchController::class, 'editParcel'])
+            ->name('records.parcels.edit');
+        Route::patch('/records/parcels/{parcel}', [RecordSearchController::class, 'updateParcel'])
+            ->name('records.parcels.update');
         Route::get('/records/parcels/{parcel}', [RecordSearchController::class, 'showParcel'])
             ->name('records.parcels.show');
 

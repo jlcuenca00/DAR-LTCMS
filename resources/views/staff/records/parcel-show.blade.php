@@ -8,6 +8,11 @@
             Back to Map
         </a>
 
+        <a href="{{ route('staff.records.parcels.edit', $parcel) }}" class="staff-button staff-button-primary">
+            <i class="fa-solid fa-pen-to-square"></i>
+            Edit Record
+        </a>
+
         <a href="{{ route('staff.records.parcels.index') }}" class="staff-button staff-button-light">
             <i class="fa-solid fa-arrow-left"></i>
             Back to Parcel Records
@@ -144,6 +149,11 @@
                 font-size: 12.5px;
                 color: #6b7280;
                 line-height: 1.4;
+            }
+
+            .parcel-meta-card.is-agricultural-status {
+                border-color: #d1fae5;
+                background: #f7fef9;
             }
 
             .parcel-remarks-box {
@@ -456,6 +466,8 @@
         $sourcePackages = $parcel->sourceRecordPackages ?? collect();
         $legacyRecords = $parcel->legacyRecords ?? collect();
         $attachedSourceCount = $sourcePackages->count() + $legacyRecords->count();
+        $agriculturalStatusLabel = $parcel->agricultural_status_label
+            ?? \App\Models\Parcel::agriculturalStatusLabel($parcel->agricultural_status ?? null);
     @endphp
 
     <div class="parcel-page-stack">
@@ -492,6 +504,10 @@
 
                         <span class="staff-badge {{ $parcel->geometry_geojson ? 'staff-badge-green' : 'staff-badge-slate' }}">
                             {{ $parcel->geometry_geojson ? 'Mapped Geometry' : 'No Geometry' }}
+                        </span>
+
+                        <span data-agricultural-status-display class="staff-badge staff-badge-slate">
+                            Agricultural: {{ $agriculturalStatusLabel }}
                         </span>
                     </div>
                 </div>
@@ -541,6 +557,12 @@
                     <div class="parcel-meta-card">
                         <p class="parcel-meta-label">Area</p>
                         <p class="parcel-meta-value">{{ number_format((float) $parcel->area_hectares, 4) }} hectares</p>
+                    </div>
+
+                    <div class="parcel-meta-card is-agricultural-status">
+                        <p class="parcel-meta-label">Agricultural Status</p>
+                        <p class="parcel-meta-value">{{ $agriculturalStatusLabel }}</p>
+                        <p class="parcel-meta-subvalue">DAR record classification only.</p>
                     </div>
 
                     <div class="parcel-meta-card">

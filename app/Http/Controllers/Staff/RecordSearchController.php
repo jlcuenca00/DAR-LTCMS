@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Landholding;
 use App\Models\Landowner;
 use App\Models\Parcel;
+use App\Services\AuditLogger;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
@@ -102,6 +103,7 @@ class RecordSearchController extends Controller
             'municipality' => ['nullable', 'string', 'max:255'],
             'barangay' => ['nullable', 'string', 'max:255'],
             'status' => ['nullable', 'string', 'max:50'],
+            'agricultural_status' => ['nullable', 'string', Rule::in(array_keys(Parcel::agriculturalStatusOptions()))],
         ]);
 
         $parcelsQuery = Parcel::query()
@@ -128,6 +130,10 @@ class RecordSearchController extends Controller
 
         if (! empty($filters['status'])) {
             $parcelsQuery->where('status', $filters['status']);
+        }
+
+        if (! empty($filters['agricultural_status'])) {
+            $parcelsQuery->where('agricultural_status', $filters['agricultural_status']);
         }
 
         $parcels = $parcelsQuery
@@ -158,12 +164,15 @@ class RecordSearchController extends Controller
             ->orderBy('status')
             ->pluck('status');
 
+        $agriculturalStatuses = Parcel::agriculturalStatusOptions();
+
         return view('staff.records.parcels', compact(
             'parcels',
             'filters',
             'municipalities',
             'barangays',
-            'statuses'
+            'statuses',
+            'agriculturalStatuses'
         ));
     }
     public function showParcel(Parcel $parcel)
@@ -178,4 +187,62 @@ class RecordSearchController extends Controller
 
     return view('staff.records.parcel-show', compact('parcel'));
 }
+    public function editParcel(Parcel $parcel)
+    {
+        return view('staff.records.parcel-edit', [
+            'parcel' => $parcel,
+            'agriculturalStatuses' => Parcel::agriculturalStatusOptions(),
+            'parcelStatuses' => [
+                'active' => 'Active',
+                'inactive' => 'Inactive',
+                'linked_application' => 'Linked to Application',
+                'flagged' => 'Flagged for Review',
+            ],
+        ]);
+    }
+
+    public function updateParcel(Request $request, Parcel $parcel)
+    {
+        $data = $request->validate([
+            'parcel_code' => ['required', 'string', 'max:255', Rule::unique('parcels', 'parcel_code')->ignore($parcel->id)],
+            'title_no' => ['nullable', 'string', 'max:255'],
+            'tax_decl_no' => ['nullable', 'string', 'max:255'],
+            'province' => ['nullable', 'string', 'max:255'],
+            'municipality' => ['nullable', 'string', 'max:255'],
+            'barangay' => ['nullable', 'string', 'max:255'],
+            'area_hectares' => ['nullable', 'numeric', 'min:0', 'max:999999.9999'],
+            'status' => ['required', Rule::in(['active', 'inactive', 'linked_application', 'flagged'])],
+            'agricultural_status' => ['required', Rule::in(array_keys(Parcel::agriculturalStatusOptions()))],
+            'remarks' => ['nullable', 'string', 'max:5000'],
+        ]);
+
+        $oldAgriculturalStatus = $parcel->agricultural_status ?: 'not_yet_determined';
+
+        $parcel->fill($data);
+        $agriculturalStatusChanged = $parcel->isDirty('agricultural_status');
+        $parcel->save();
+
+        if ($agriculturalStatusChanged) {
+            AuditLogger::record(
+                'parcel_agricultural_status_updated',
+                null,
+                $parcel,
+                [
+                    'parcel_id' => $parcel->id,
+                    'parcel_code' => $parcel->parcel_code,
+                    'old_agricultural_status' => $oldAgriculturalStatus,
+                    'old_agricultural_status_label' => Parcel::agriculturalStatusLabel($oldAgriculturalStatus),
+                    'new_agricultural_status' => $parcel->agricultural_status,
+                    'new_agricultural_status_label' => $parcel->agricultural_status_label,
+                    'actor_user_id' => $request->user()?->id,
+                    'actor_name' => $request->user()?->name,
+                ]
+            );
+        }
+
+        return redirect()
+            ->route('staff.records.parcels.show', $parcel)
+            ->with('success', 'Parcel record updated successfully.');
+    }
+
 }

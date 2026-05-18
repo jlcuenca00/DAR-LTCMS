@@ -1,6 +1,5 @@
 <x-geodetic-shell
     title="Parcel Reference Details"
-    subtitle="Read-only parcel, geometry, and landholding reference view."
     active="parcels"
 >
     <style>
@@ -334,6 +333,9 @@
                 <span class="geo-badge {{ $parcel->geometry_geojson ? 'geo-badge-green' : 'geo-badge-gray' }}">
                     {{ $parcel->geometry_geojson ? 'Mapped Geometry' : 'No Geometry' }}
                 </span>
+                <span class="geo-badge geo-badge-gray">
+                    Agricultural Status: {{ $parcel->agricultural_status_label }}
+                </span>
             </div>
 
             <div class="geo-header-actions">
@@ -386,6 +388,11 @@
                     <div class="geo-field">
                         <dt class="geo-field-label">Area</dt>
                         <dd class="geo-field-value">{{ number_format((float) $parcel->area_hectares, 4) }} hectares</dd>
+                    </div>
+
+                    <div class="geo-field">
+                        <dt class="geo-field-label">Agricultural Status</dt>
+                        <dd class="geo-field-value">{{ $parcel->agricultural_status_label }}</dd>
                     </div>
 
                     <div class="geo-field">

@@ -316,6 +316,14 @@
             'pending_review' => 'Pending Review',
             'draft' => 'Draft',
         ];
+
+        $normalizedAgriculturalStatusBreakdown = collect($agriculturalStatusBreakdown ?? []);
+        $agriculturalStatusOptions = $agriculturalStatusOptions ?? \App\Models\Parcel::agriculturalStatusOptions();
+        $agriculturalStatusRows = collect($agriculturalStatusOptions)->map(fn ($label, $key) => [
+            'key' => $key,
+            'label' => $label,
+            'count' => (int) ($normalizedAgriculturalStatusBreakdown[$key] ?? 0),
+        ]);
     @endphp
 
     <div class="reports-page">
@@ -403,6 +411,25 @@
                     @empty
                         <div class="report-empty">No municipality data available.</div>
                     @endforelse
+                </div>
+            </article>
+
+            <article class="report-panel">
+                <div class="report-panel-header">
+                    <div>
+                        <h2 class="report-panel-title">Agricultural Status Summary</h2>
+                        <p class="report-panel-subtitle">Parcel classification context for DAR record monitoring.</p>
+                    </div>
+                    <span class="report-panel-count">Parcel records</span>
+                </div>
+
+                <div class="report-list">
+                    @foreach ($agriculturalStatusRows as $row)
+                        <div class="report-list-row">
+                            <span class="report-list-label">{{ $row['label'] }}</span>
+                            <span class="staff-badge staff-badge-slate">{{ number_format($row['count']) }}</span>
+                        </div>
+                    @endforeach
                 </div>
             </article>
         </section>

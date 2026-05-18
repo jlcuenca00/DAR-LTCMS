@@ -1,6 +1,5 @@
 <x-geodetic-shell
     title="Parcel References"
-    subtitle="Read-only parcel and landholding records for technical review."
     active="parcels"
 >
     <style>
@@ -170,6 +169,7 @@
                             <th>Landowner</th>
                             <th>Location</th>
                             <th>Area</th>
+                            <th>Agricultural Status</th>
                             <th>Status</th>
                             <th>Geometry</th>
                         </tr>
@@ -197,6 +197,11 @@
                                 </td>
                                 <td>
                                     <strong>{{ number_format((float) $holding->area_hectares, 4) }} ha</strong>
+                                </td>
+                                <td>
+                                    <span class="geo-badge geo-badge-muted">
+                                        {{ $holding->parcel?->agricultural_status_label ?? 'Not Yet Determined' }}
+                                    </span>
                                 </td>
                                 <td>
                                     <span class="geo-badge {{ $holding->status === 'active' ? 'geo-badge-active' : 'geo-badge-muted' }}">
