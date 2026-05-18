@@ -129,6 +129,18 @@
                 color: #6b7280;
             }
 
+            .map-sidebar .panel-title {
+                margin: 0;
+                font-family: var(--heading-font);
+                font-size: 16px;
+                font-weight: 900;
+                color: #111827;
+            }
+
+            .map-sidebar .legend-item {
+                font-weight: 800;
+            }
+
             .tool-list {
                 margin-top: 14px;
                 display: grid;
@@ -296,21 +308,16 @@
                 border: 1px solid #d1d5db;
                 overflow: hidden;
                 box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.03);
-                background: #ffffff;
+                background: #eef2f0;
             }
 
             .leaflet-container {
-                background: #ffffff;
+                background: #eef2f0;
             }
 
-            /* Plain monochrome context map: keeps labels/landmarks readable, while non-parcel shapes stay visually secondary. */
+            /* Neutral CARTO basemap keeps landmarks readable without heavy water/boundary lines. */
             .leaflet-tile-pane {
-                opacity: 0.66;
-                filter: grayscale(100%) saturate(0%) contrast(64%) brightness(122%);
-            }
-
-            .leaflet-tile.plain-context-tile {
-                mix-blend-mode: multiply;
+                opacity: 0.92;
             }
 
             .leaflet-control-zoom {
@@ -593,11 +600,7 @@
 
         <script>
             document.addEventListener('DOMContentLoaded', function () {
-                const negrosOrientalCenter = [9.65, 123.05];
-                const negrosOrientalProvinceBounds = L.latLngBounds(
-                    [9.02, 122.62],
-                    [10.20, 123.42]
-                );
+                const negrosOrientalCenter = [9.3068, 123.3054];
                 const parcelGeoJson = @json($parcelGeoJson);
 
                 const map = L.map('parcel-map', {
@@ -605,17 +608,15 @@
                     scrollWheelZoom: true,
                     minZoom: 7,
                     maxZoom: 20
-                }).fitBounds(negrosOrientalProvinceBounds, {
-                    padding: [24, 24]
-                });
+                }).setView(negrosOrientalCenter, 12);
 
                 L.control.zoom({
                     position: 'topright'
                 }).addTo(map);
-                L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+                    subdomains: 'abcd',
                     maxZoom: 20,
-                    className: 'plain-context-tile',
-                    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
                 }).addTo(map);
 
                 function escapeHtml(value) {
@@ -767,8 +768,14 @@
                         onEachFeature: onEachParcel
                     }).addTo(map);
 
-                    // Keep the initial view at the full Negros Oriental provincial frame.
-                    // Staff can zoom into parcels manually, while Reset View always returns to the province view.
+                    setTimeout(function () {
+                        map.invalidateSize();
+                        map.fitBounds(parcelLayer.getBounds(), {
+                            padding: [40, 40],
+                            animate: true,
+                            duration: 0.75
+                        });
+                    }, 120);
                 } else {
                     L.popup()
                         .setLatLng(negrosOrientalCenter)
@@ -780,9 +787,15 @@
                 }
 
                 document.getElementById('reset-map-view').addEventListener('click', function () {
-                    map.fitBounds(negrosOrientalProvinceBounds, {
-                        padding: [24, 24]
-                    });
+                    if (parcelLayer) {
+                        map.fitBounds(parcelLayer.getBounds(), {
+                            padding: [40, 40],
+                            animate: true,
+                            duration: 0.65
+                        });
+                    } else {
+                        map.setView(negrosOrientalCenter, 12);
+                    }
                 });
             });
         </script>

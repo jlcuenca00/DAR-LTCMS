@@ -2,10 +2,8 @@
 
 namespace Tests\Feature;
 
-use App\Models\ApplicationParcel;
 use App\Models\Landholding;
 use App\Models\Landowner;
-use App\Models\LandTransferApplication;
 use App\Models\Parcel;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -54,65 +52,30 @@ class GeodeticReadOnlyTest extends TestCase
         $response->assertSee('Geo Reference');
     }
 
-    public function test_geodetic_user_can_view_read_only_application_reference_page(): void
+    public function test_geodetic_user_cannot_access_clearance_application_reference_page(): void
     {
-        $staffUser = User::factory()->create([
-            'role' => 'staff',
-        ]);
-
         $geodeticUser = User::factory()->create([
             'role' => 'geodetic',
         ]);
 
-        $transferor = Landowner::create([
-            'first_name' => 'Transferor',
-            'last_name' => 'Owner',
-            'province' => 'Negros Oriental',
-        ]);
+        $response = $this->actingAs($geodeticUser)
+            ->get('/geodetic/applications');
 
-        $transferee = Landowner::create([
-            'first_name' => 'Transferee',
-            'last_name' => 'Owner',
-            'province' => 'Negros Oriental',
-        ]);
+        $response->assertNotFound();
+    }
 
-        $parcel = Parcel::create([
-            'parcel_code' => 'GEO-APP-PARCEL-001',
-            'title_no' => 'GEO-APP-TITLE-001',
-            'tax_decl_no' => 'GEO-APP-TD-001',
-            'municipality' => 'Dumaguete City',
-            'barangay' => 'Bantayan',
-            'province' => 'Negros Oriental',
-            'area_hectares' => 2.0000,
-            'status' => 'active',
-        ]);
-
-        $application = LandTransferApplication::create([
-            'application_code' => 'GEO-APP-001',
-            'transferor_name' => 'Transferor Owner',
-            'transferee_name' => 'Transferee Owner',
-            'transferor_landowner_id' => $transferor->id,
-            'transferee_landowner_id' => $transferee->id,
-            'municipality' => 'Dumaguete City',
-            'barangay' => 'Bantayan',
-            'status' => 'pending_review',
-            'encoded_by' => $staffUser->id,
-        ]);
-
-        ApplicationParcel::create([
-            'land_transfer_application_id' => $application->id,
-            'parcel_id' => $parcel->id,
-            'area_hectares' => 2.0000,
+    public function test_geodetic_dashboard_does_not_show_clearance_application_links(): void
+    {
+        $geodeticUser = User::factory()->create([
+            'role' => 'geodetic',
         ]);
 
         $response = $this->actingAs($geodeticUser)
-            ->get(route('geodetic.applications.index'));
+            ->get(route('geodetic.dashboard'));
 
         $response->assertOk();
-        $response->assertSee('GEO-APP-001');
-        $response->assertSee('Transferor Owner');
-        $response->assertSee('Transferee Owner');
-        $response->assertSee('GEO-APP-PARCEL-001');
+        $response->assertDontSee('Clearance Applications');
+        $response->assertDontSee('/geodetic/applications');
     }
 
     public function test_geodetic_user_cannot_access_staff_application_review_page(): void
@@ -125,7 +88,7 @@ class GeodeticReadOnlyTest extends TestCase
             'role' => 'geodetic',
         ]);
 
-        $application = LandTransferApplication::create([
+        $application = \App\Models\LandTransferApplication::create([
             'application_code' => 'GEO-BLOCKED-001',
             'transferor_name' => 'Blocked Transferor',
             'transferee_name' => 'Blocked Transferee',
@@ -151,7 +114,7 @@ class GeodeticReadOnlyTest extends TestCase
             'role' => 'geodetic',
         ]);
 
-        $application = LandTransferApplication::create([
+        $application = \App\Models\LandTransferApplication::create([
             'application_code' => 'GEO-WORKFLOW-BLOCKED-001',
             'transferor_name' => 'Workflow Transferor',
             'transferee_name' => 'Workflow Transferee',
@@ -189,7 +152,7 @@ class GeodeticReadOnlyTest extends TestCase
             'role' => 'geodetic',
         ]);
 
-        $application = LandTransferApplication::create([
+        $application = \App\Models\LandTransferApplication::create([
             'application_code' => 'GEO-CLEARANCE-BLOCKED-001',
             'transferor_name' => 'Clearance Transferor',
             'transferee_name' => 'Clearance Transferee',

@@ -1,0 +1,6 @@
+resources/views/components/system-scope-notice.blade.php
+resources/views/landholdings/index.blade.php
+resources/views/profile/partials/delete-user-form.blade.php
+resources/views/profile/partials/update-password-form.blade.php
+resources/views/profile/partials/update-profile-information-form.blade.php
+resources/views/welcome.blade.php

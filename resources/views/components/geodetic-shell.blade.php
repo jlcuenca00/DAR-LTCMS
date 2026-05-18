@@ -1,6 +1,6 @@
 @props([
     'title' => 'Geodetic Dashboard',
-    'subtitle' => 'Read-only parcel, map, and application reference workspace.',
+    'subtitle' => null,
     'active' => 'dashboard',
 ])
 
@@ -23,66 +23,75 @@
 
     <style>
         :root {
-            --geo-green: #14532d;
-            --geo-green-soft: #dcfce7;
-            --geo-blue: #0f766e;
-            --page-bg: #f3f6f4;
-            --panel: #ffffff;
-            --border: #d6ded8;
-            --text: #111827;
-            --muted: #6b7280;
-            --heading-font: 'Google Sans';
-            --body-font: 'Google Sans';
+            --geo-green-950: #052e16;
+            --geo-green-900: #14532d;
+            --geo-green-800: #166534;
+            --geo-green-700: #15803d;
+            --geo-green-100: #dcfce7;
+            --geo-green-50: #f0fdf4;
+            --geo-ink: #07111f;
+            --geo-text: #1f2937;
+            --geo-muted: #667085;
+            --geo-line: #d7ded9;
+            --geo-soft-line: #e5e7eb;
+            --geo-panel: #ffffff;
+            --geo-bg: #f3f5f4;
+            --heading-font: 'Google Sans', 'Product Sans', Arial, sans-serif;
+            --body-font: 'Google Sans', 'Product Sans', Arial, sans-serif;
         }
 
-        * {
-            box-sizing: border-box;
-        }
+        * { box-sizing: border-box; }
+
+        html { min-height: 100%; }
 
         body {
             margin: 0;
+            min-height: 100vh;
             font-family: var(--body-font);
-            background: var(--page-bg);
-            color: var(--text);
+            background: var(--geo-bg);
+            color: var(--geo-text);
+            text-rendering: optimizeLegibility;
         }
+
+        a { color: inherit; }
 
         .geo-shell {
             min-height: 100vh;
             display: grid;
-            grid-template-columns: 258px 1fr;
+            grid-template-columns: 250px minmax(0, 1fr);
+            background: var(--geo-bg);
         }
 
         .geo-sidebar {
             position: sticky;
             top: 0;
             height: 100vh;
-            background: #14532d;
-            color: #dcfce7;
+            background: #0f4b25;
+            color: #ecfdf5;
             display: flex;
             flex-direction: column;
             border-right: 1px solid rgba(255, 255, 255, 0.08);
         }
 
         .geo-brand {
-            min-height: 74px;
+            min-height: 72px;
             display: flex;
             align-items: center;
             gap: 12px;
-            padding: 0 20px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 0 18px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.09);
         }
 
         .geo-brand-mark {
-            height: 44px;
-            width: 44px;
-            border-radius: 12px;
+            width: 42px;
+            height: 42px;
+            border-radius: 11px;
             background: #ffffff;
             display: grid;
             place-items: center;
             padding: 6px;
-            border: 1px solid rgba(255, 255, 255, 0.24);
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
             flex: 0 0 auto;
+            box-shadow: 0 10px 22px rgba(0, 0, 0, 0.16);
         }
 
         .geo-brand-logo {
@@ -93,17 +102,16 @@
         }
 
         .geo-brand-fallback {
-            font-family: var(--heading-font);
             font-size: 10px;
-            font-weight: 800;
-            color: #14532d;
+            font-weight: 900;
+            color: var(--geo-green-900);
         }
 
         .geo-brand-title {
             margin: 0;
             font-family: var(--heading-font);
             font-size: 14px;
-            font-weight: 800;
+            font-weight: 900;
             letter-spacing: 0.01em;
             color: #ffffff;
         }
@@ -115,14 +123,20 @@
         }
 
         .geo-side-section {
-            padding: 18px 14px;
+            padding: 18px 14px 8px;
+        }
+
+        .geo-side-section.account {
+            margin-top: auto;
+            padding-top: 12px;
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
         }
 
         .geo-side-label {
             padding: 0 10px;
             margin-bottom: 10px;
             font-size: 10px;
-            font-weight: 700;
+            font-weight: 900;
             letter-spacing: 0.16em;
             text-transform: uppercase;
             color: #86efac;
@@ -155,33 +169,17 @@
         .geo-nav-link.active {
             background: rgba(255, 255, 255, 0.16);
             color: #ffffff;
-            font-weight: 650;
+            font-weight: 500;
         }
 
         .geo-nav-link i {
             width: 20px;
             text-align: center;
-            font-size: 15px;
+            font-size: 14px;
             opacity: 0.95;
         }
 
-        .geo-sidebar-note {
-            margin: 12px 14px 0;
-            border: 1px solid rgba(187, 247, 208, 0.26);
-            background: rgba(255, 255, 255, 0.08);
-            border-radius: 12px;
-            padding: 12px;
-        }
-
-        .geo-sidebar-note p {
-            margin: 0;
-            font-size: 11.5px;
-            line-height: 1.55;
-            color: #dcfce7;
-        }
-
         .geo-sidebar-footer {
-            margin-top: auto;
             padding: 16px 14px;
             border-top: 1px solid rgba(255, 255, 255, 0.08);
         }
@@ -217,51 +215,51 @@
         .geo-topbar {
             min-height: 74px;
             background: #ffffff;
-            border-bottom: 1px solid var(--border);
+            border-bottom: 1px solid var(--geo-line);
             display: flex;
             align-items: center;
             justify-content: space-between;
             gap: 20px;
-            padding: 0 28px;
+            padding: 16px 28px;
         }
 
         .geo-eyebrow {
             margin: 0;
             font-size: 11px;
             font-weight: 900;
-            letter-spacing: 0.15em;
+            letter-spacing: 0.18em;
             text-transform: uppercase;
-            color: #0f766e;
+            color: var(--geo-green-800);
         }
 
         .geo-page-title {
-            margin: 4px 0 0;
+            margin: 3px 0 0;
             font-family: var(--heading-font);
             font-size: 22px;
+            line-height: 1.15;
             font-weight: 900;
-            color: #111827;
+            color: var(--geo-ink);
         }
 
-        .geo-page-subtitle {
-            margin: 4px 0 0;
-            font-size: 13px;
-            color: #6b7280;
+        .geo-topbar > div:first-child {
+            min-width: 0;
         }
 
         .geo-topbar-right {
             display: flex;
             align-items: center;
-            gap: 14px;
+            gap: 16px;
+            flex: 0 0 auto;
         }
 
         .geo-access-chip {
-            border: 1px solid #99f6e4;
-            background: #f0fdfa;
-            color: #0f766e;
+            border: 1px solid #bbf7d0;
+            background: var(--geo-green-50);
+            color: var(--geo-green-800);
             border-radius: 999px;
-            padding: 8px 12px;
+            padding: 6px 11px;
             font-size: 12px;
-            font-weight: 800;
+            font-weight: 900;
             white-space: nowrap;
         }
 
@@ -279,7 +277,7 @@
             width: 36px;
             height: 36px;
             border-radius: 999px;
-            background: #0f766e;
+            background: var(--geo-green-800);
             color: white;
             display: grid;
             place-items: center;
@@ -287,7 +285,7 @@
         }
 
         .geo-content {
-            padding: 24px 28px 36px;
+            padding: 26px 32px 38px;
             display: grid;
             gap: 20px;
         }
@@ -297,11 +295,11 @@
             justify-content: space-between;
             gap: 22px;
             align-items: flex-start;
-            border: 1px solid #99f6e4;
-            background: #f0fdfa;
+            border: 1px solid #bbf7d0;
+            background: #effaf2;
             border-radius: 10px;
             padding: 14px 18px;
-            color: #0f766e;
+            color: #064e3b;
         }
 
         .geo-scope-notice h3 {
@@ -313,44 +311,70 @@
 
         .geo-scope-notice p {
             margin: 5px 0 0;
-            max-width: 920px;
+            max-width: 980px;
             font-size: 12.5px;
             line-height: 1.55;
-            font-weight: 600;
+            font-weight: 700;
         }
 
         .geo-scope-pill {
             flex: 0 0 auto;
-            border: 1px solid #99f6e4;
-            background: #ccfbf1;
-            color: #0f766e;
+            border: 1px solid #bbf7d0;
+            background: #dcfce7;
+            color: var(--geo-green-800);
             border-radius: 999px;
             padding: 5px 11px;
             font-size: 11px;
             font-weight: 900;
+            white-space: nowrap;
         }
 
-        @media (max-width: 1050px) {
-            .geo-shell {
-                grid-template-columns: 1fr;
-            }
+        .geo-panel {
+            background: #ffffff;
+            border: 1px solid var(--geo-line);
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+            overflow: hidden;
+        }
 
-            .geo-sidebar {
-                position: static;
-                height: auto;
-            }
+        .geo-button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            min-height: 38px;
+            border-radius: 8px;
+            padding: 0 14px;
+            border: 1px solid var(--geo-line);
+            background: #ffffff;
+            color: #111827;
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 900;
+            transition: 160ms ease;
+        }
 
-            .geo-side-section {
-                padding: 12px;
-            }
+        .geo-button:hover {
+            background: #f8faf9;
+            border-color: #c7d2cc;
+        }
 
-            .geo-nav {
-                grid-template-columns: repeat(2, minmax(0, 1fr));
-            }
+        .geo-button-primary {
+            background: var(--geo-green-800);
+            border-color: var(--geo-green-800);
+            color: #ffffff;
+        }
 
-            .geo-sidebar-note {
-                margin-bottom: 12px;
-            }
+        .geo-button-primary:hover {
+            background: var(--geo-green-900);
+            border-color: var(--geo-green-900);
+        }
+
+        @media (max-width: 1100px) {
+            .geo-shell { grid-template-columns: 1fr; }
+            .geo-sidebar { position: static; height: auto; }
+            .geo-nav { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .geo-side-section.account { margin-top: 0; }
         }
 
         @media (max-width: 760px) {
@@ -368,17 +392,10 @@
                 flex-wrap: wrap;
             }
 
-            .geo-content {
-                padding: 18px;
-            }
-
-            .geo-nav {
-                grid-template-columns: 1fr;
-            }
-
-            .geo-scope-notice {
-                flex-direction: column;
-            }
+            .geo-content { padding: 18px; }
+            .geo-nav { grid-template-columns: 1fr; }
+            .geo-scope-notice { flex-direction: column; }
+            .geo-scope-pill { align-self: flex-start; }
         }
     </style>
 </head>
@@ -409,30 +426,30 @@
                 <nav class="geo-nav">
                     <a href="{{ route('geodetic.dashboard') }}" class="geo-nav-link {{ $active === 'dashboard' ? 'active' : '' }}">
                         <i class="fa-solid fa-gauge-high"></i>
-                        Geodetic Dashboard
+                        Dashboard
                     </a>
 
                     <a href="{{ route('geodetic.parcel-map.index') }}" class="geo-nav-link {{ $active === 'parcel-map' ? 'active' : '' }}">
-                        <i class="fa-solid fa-map"></i>
-                        Parcel Map Viewer
+                        <i class="fa-solid fa-map-location-dot"></i>
+                        Parcel Map
                     </a>
 
                     <a href="{{ route('geodetic.parcels.index') }}" class="geo-nav-link {{ $active === 'parcels' ? 'active' : '' }}">
-                        <i class="fa-solid fa-map-location-dot"></i>
+                        <i class="fa-solid fa-draw-polygon"></i>
                         Parcel References
-                    </a>
-
-                    <a href="{{ route('geodetic.applications.index') }}" class="geo-nav-link {{ $active === 'applications' ? 'active' : '' }}">
-                        <i class="fa-solid fa-file-lines"></i>
-                        Application References
                     </a>
                 </nav>
             </div>
 
-            <div class="geo-sidebar-note">
-                <p>
-                    Geodetic access is limited to read-only technical reference review. Editing, approval, document upload, clearance generation, and registry mutation are not available to this role.
-                </p>
+            <div class="geo-side-section account">
+                <div class="geo-side-label">Account</div>
+
+                <nav class="geo-nav" aria-label="Account navigation">
+                    <a href="{{ route('profile.edit') }}" class="geo-nav-link {{ $active === 'profile' ? 'active' : '' }}">
+                        <i class="fa-solid fa-user-gear"></i>
+                        Profile Settings
+                    </a>
+                </nav>
             </div>
 
             <div class="geo-sidebar-footer">
@@ -451,9 +468,6 @@
                 <div>
                     <p class="geo-eyebrow">DAR Negros Oriental Provincial Office</p>
                     <h1 class="geo-page-title">{{ $title }}</h1>
-                    @if ($subtitle)
-                        <p class="geo-page-subtitle">{{ $subtitle }}</p>
-                    @endif
                 </div>
 
                 <div class="geo-topbar-right">
@@ -475,7 +489,7 @@
                     <div>
                         <h3>Geodetic Access Scope</h3>
                         <p>
-                            This portal is for read-only parcel, landholding, map, and clearance application reference review. Geodetic personnel cannot approve applications, upload documents, edit ownership records, generate clearances, or perform registry mutation.
+                            This portal is for read-only parcel, landholding, and map reference review. It does not edit ownership records, update parcel records, generate clearance outputs, or mutate registry records.
                         </p>
                     </div>
 

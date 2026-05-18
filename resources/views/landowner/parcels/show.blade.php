@@ -1,199 +1,434 @@
-<x-app-layout>
-    <x-slot name="header">
-        <div>
-            <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-                My Parcel Details
-            </h2>
-            <p class="text-sm text-gray-500 mt-1">
-                Read-only parcel and landholding record linked to your landowner account.
-            </p>
-        </div>
-    </x-slot>
+<x-landowner-shell
+    title="My Parcel Details"
+    active="parcels"
+>
+    @push('styles')
+        <style>
+            .lo-detail-stack {
+                display: grid;
+                gap: 18px;
+            }
 
-    <div class="py-6">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
+            .lo-hero-card {
+                background: #ffffff;
+                border: 1px solid var(--lo-line);
+                border-radius: 12px;
+                box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+                padding: 24px;
+                display: grid;
+                grid-template-columns: minmax(0, 1fr) minmax(320px, 0.8fr);
+                gap: 22px;
+                align-items: stretch;
+            }
 
-            <div class="bg-white shadow-sm sm:rounded-lg p-6 border">
-                <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
-                    <div>
-                        <p class="text-xs font-semibold uppercase tracking-wide text-green-700">
-                            DAR Negros Oriental Provincial Office
-                        </p>
+            .lo-eyebrow-small {
+                margin: 0;
+                font-size: 11px;
+                font-weight: 900;
+                letter-spacing: 0.16em;
+                text-transform: uppercase;
+                color: #667085;
+            }
 
-                        <h3 class="text-2xl font-bold text-gray-900 mt-1">
-                            {{ $parcel->parcel_code }}
-                        </h3>
+            .lo-parcel-code {
+                margin: 8px 0 0;
+                font-size: clamp(2rem, 4vw, 3rem);
+                line-height: 1;
+                font-weight: 900;
+                color: var(--lo-ink);
+                letter-spacing: 0.06em;
+            }
 
-                        <p class="text-sm text-gray-600 mt-2">
-                            This page only displays parcel and landholding records linked to your account.
-                            It does not allow editing, clearance approval, ownership transfer, or registry mutation.
-                        </p>
-                    </div>
+            .lo-parcel-meta {
+                margin: 10px 0 0;
+                color: var(--lo-muted);
+                font-size: 13px;
+            }
 
-                    <div class="flex flex-wrap gap-2">
-                        <a href="{{ route('landowner.parcel-map.index') }}"
-                           class="inline-flex items-center px-4 py-2 bg-green-700 text-white rounded-md text-sm font-semibold hover:bg-green-800">
-                            Back to Map
-                        </a>
+            .lo-badge-row {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 8px;
+                margin-top: 18px;
+            }
 
-                        <a href="{{ route('landowner.parcels.index') }}"
-                           class="inline-flex items-center px-4 py-2 bg-gray-900 text-white rounded-md text-sm font-semibold hover:bg-gray-800">
-                            Back to My Parcels
-                        </a>
-                    </div>
+            .lo-pill {
+                display: inline-flex;
+                align-items: center;
+                border-radius: 999px;
+                border: 1px solid #bbf7d0;
+                background: #dcfce7;
+                color: var(--lo-green-800);
+                min-height: 28px;
+                padding: 0 11px;
+                font-size: 12px;
+                font-weight: 900;
+            }
+
+            .lo-pill.neutral {
+                background: #f1f5f9;
+                border-color: #e2e8f0;
+                color: #334155;
+            }
+
+            .lo-actions {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 10px;
+                margin-top: 20px;
+            }
+
+            .lo-review-grid {
+                display: grid;
+                gap: 10px;
+                align-content: start;
+            }
+
+            .lo-review-card {
+                border: 1px solid #edf0ee;
+                background: #fbfcfb;
+                border-radius: 10px;
+                padding: 14px;
+            }
+
+            .lo-review-card.highlight {
+                border-color: #bbf7d0;
+                background: #effaf2;
+            }
+
+            .lo-review-label {
+                margin: 0;
+                font-size: 10px;
+                font-weight: 900;
+                letter-spacing: 0.14em;
+                text-transform: uppercase;
+                color: #667085;
+            }
+
+            .lo-review-value {
+                margin: 6px 0 0;
+                font-size: 18px;
+                font-weight: 900;
+                color: var(--lo-ink);
+            }
+
+            .lo-review-help {
+                margin: 4px 0 0;
+                color: var(--lo-muted);
+                font-size: 12px;
+                line-height: 1.45;
+            }
+
+            .lo-grid-main {
+                display: grid;
+                grid-template-columns: minmax(0, 2fr) minmax(330px, 0.78fr);
+                gap: 18px;
+                align-items: start;
+            }
+
+            .lo-panel {
+                background: #ffffff;
+                border: 1px solid var(--lo-line);
+                border-radius: 12px;
+                box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+                overflow: hidden;
+            }
+
+            .lo-panel-header {
+                padding: 20px 22px 0;
+                display: flex;
+                justify-content: space-between;
+                align-items: flex-start;
+                gap: 16px;
+            }
+
+            .lo-panel-title {
+                margin: 0;
+                font-size: 18px;
+                font-weight: 900;
+                color: var(--lo-ink);
+            }
+
+            .lo-panel-subtitle {
+                margin: 5px 0 0;
+                font-size: 13px;
+                color: var(--lo-muted);
+                line-height: 1.45;
+            }
+
+            .lo-panel-body { padding: 18px 22px 22px; }
+
+            .lo-info-grid {
+                display: grid;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 12px;
+            }
+
+            .lo-info-box {
+                border: 1px solid #edf0ee;
+                background: #fbfcfb;
+                border-radius: 10px;
+                padding: 14px;
+                min-height: 76px;
+            }
+
+            .lo-info-label {
+                margin: 0;
+                font-size: 10px;
+                font-weight: 900;
+                letter-spacing: 0.14em;
+                text-transform: uppercase;
+                color: #667085;
+            }
+
+            .lo-info-value {
+                margin: 7px 0 0;
+                color: #111827;
+                font-size: 14px;
+                line-height: 1.45;
+                font-weight: 900;
+            }
+
+            .lo-info-box.full { grid-column: 1 / -1; }
+
+            .lo-geometry-action {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 12px;
+                border: 1px solid #bbf7d0;
+                background: #effaf2;
+                color: var(--lo-green-900);
+                text-decoration: none;
+                border-radius: 10px;
+                padding: 14px;
+                font-size: 14px;
+                font-weight: 900;
+            }
+
+            .lo-table-wrap { overflow-x: auto; }
+
+            .lo-table {
+                width: 100%;
+                border-collapse: collapse;
+                min-width: 760px;
+                font-size: 13px;
+            }
+
+            .lo-table thead {
+                background: #f8faf9;
+                border-bottom: 1px solid var(--lo-line);
+            }
+
+            .lo-table th {
+                padding: 12px 14px;
+                text-align: left;
+                color: #667085;
+                font-size: 10px;
+                font-weight: 900;
+                letter-spacing: 0.14em;
+                text-transform: uppercase;
+                white-space: nowrap;
+            }
+
+            .lo-table td {
+                padding: 14px;
+                border-bottom: 1px solid #edf0ee;
+                color: #344054;
+                vertical-align: top;
+            }
+
+            .lo-table tbody tr:last-child td { border-bottom: 0; }
+
+            .lo-remarks {
+                max-width: 420px;
+                white-space: normal;
+                line-height: 1.45;
+            }
+
+            @media (max-width: 1100px) {
+                .lo-hero-card,
+                .lo-grid-main { grid-template-columns: 1fr; }
+            }
+
+            @media (max-width: 640px) {
+                .lo-info-grid { grid-template-columns: 1fr; }
+                .lo-parcel-code { font-size: 2rem; }
+            }
+        </style>
+    @endpush
+
+    <section class="lo-detail-stack">
+        <article class="lo-hero-card">
+            <div>
+                <p class="lo-eyebrow-small">Linked Parcel Reference</p>
+                <h2 class="lo-parcel-code">{{ $parcel->parcel_code }}</h2>
+                <p class="lo-parcel-meta">
+                    Record ID: {{ $parcel->id }} · {{ $parcel->municipality ?? 'N/A' }}, {{ $parcel->barangay ?? 'N/A' }}
+                </p>
+
+                <div class="lo-badge-row">
+                    <span class="lo-pill">{{ $parcel->status ? ucwords(str_replace('_', ' ', $parcel->status)) : 'Reference Record' }}</span>
+                    <span class="lo-pill neutral">{{ $parcel->geometry_geojson ? 'Mapped Geometry' : 'No Geometry' }}</span>
+                    <span class="lo-pill neutral">Viewing Only</span>
+                </div>
+
+                <div class="lo-actions">
+                    <a href="{{ route('landowner.parcel-map.index') }}" class="lo-button lo-button-primary">
+                        <i class="fa-solid fa-map-location-dot"></i>
+                        Back to Map
+                    </a>
+
+                    <a href="{{ route('landowner.parcels.index') }}" class="lo-button">
+                        <i class="fa-solid fa-arrow-left"></i>
+                        Back to My Parcels
+                    </a>
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-                <div class="lg:col-span-2 bg-white shadow-sm sm:rounded-lg p-6 border">
-                    <h3 class="font-semibold text-gray-900 mb-4">
-                        Parcel Reference Information
-                    </h3>
-
-                    <dl class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                        <div>
-                            <dt class="text-gray-500">Parcel Code</dt>
-                            <dd class="font-semibold text-gray-900">{{ $parcel->parcel_code }}</dd>
-                        </div>
-
-                        <div>
-                            <dt class="text-gray-500">Status</dt>
-                            <dd class="font-semibold text-gray-900">
-                                {{ $parcel->status ? ucwords(str_replace('_', ' ', $parcel->status)) : 'N/A' }}
-                            </dd>
-                        </div>
-
-                        <div>
-                            <dt class="text-gray-500">Title Number</dt>
-                            <dd class="font-semibold text-gray-900">{{ $parcel->title_no ?? 'N/A' }}</dd>
-                        </div>
-
-                        <div>
-                            <dt class="text-gray-500">Tax Declaration Number</dt>
-                            <dd class="font-semibold text-gray-900">{{ $parcel->tax_decl_no ?? 'N/A' }}</dd>
-                        </div>
-
-                        <div>
-                            <dt class="text-gray-500">Parcel Area</dt>
-                            <dd class="font-semibold text-gray-900">
-                                {{ $parcel->area_hectares ? number_format((float) $parcel->area_hectares, 4) . ' hectares' : 'N/A' }}
-                            </dd>
-                        </div>
-
-                        <div>
-                            <dt class="text-gray-500">Province</dt>
-                            <dd class="font-semibold text-gray-900">{{ $parcel->province ?? 'N/A' }}</dd>
-                        </div>
-
-                        <div>
-                            <dt class="text-gray-500">Municipality</dt>
-                            <dd class="font-semibold text-gray-900">{{ $parcel->municipality ?? 'N/A' }}</dd>
-                        </div>
-
-                        <div>
-                            <dt class="text-gray-500">Barangay</dt>
-                            <dd class="font-semibold text-gray-900">{{ $parcel->barangay ?? 'N/A' }}</dd>
-                        </div>
-                    </dl>
-
-                    <div class="mt-6">
-                        <h4 class="font-semibold text-gray-900">
-                            Remarks
-                        </h4>
-
-                        <p class="text-sm text-gray-700 mt-2">
-                            {{ $parcel->remarks ?? 'No remarks recorded.' }}
-                        </p>
-                    </div>
-                </div>
-
-                <div class="bg-amber-50 border border-amber-200 rounded-lg p-6">
-                    <h3 class="font-semibold text-amber-900">
-                        Landowner Access Notice
-                    </h3>
-
-                    <p class="text-sm text-amber-800 mt-2">
-                        You may only view parcel and application information linked to your own landowner account.
-                        Other landowner records are not accessible from this portal.
+            <div class="lo-review-grid">
+                <div class="lo-review-card highlight">
+                    <p class="lo-review-label">Linked Area</p>
+                    <p class="lo-review-value">
+                        {{ number_format((float) $landholdings->sum('area_hectares'), 4) }} ha
                     </p>
+                    <p class="lo-review-help">Computed from your linked landholding record(s) for this parcel.</p>
+                </div>
 
-                    <div class="mt-5 border-t border-amber-200 pt-4">
-                        <p class="text-xs uppercase tracking-wide font-semibold text-amber-700">
-                            Map Geometry
-                        </p>
+                <div class="lo-review-card">
+                    <p class="lo-review-label">Landholding Records</p>
+                    <p class="lo-review-value">{{ $landholdings->count() }} linked</p>
+                    <p class="lo-review-help">Only records connected to your landowner account are shown.</p>
+                </div>
+            </div>
+        </article>
 
-                        <p class="text-sm font-semibold text-amber-900 mt-1">
-                            {{ $parcel->geometry_geojson ? 'Available' : 'Not yet encoded' }}
-                        </p>
+        <section class="lo-grid-main">
+            <article class="lo-panel">
+                <div class="lo-panel-header">
+                    <div>
+                        <h2 class="lo-panel-title">Parcel Reference Information</h2>
+                        <p class="lo-panel-subtitle">Core encoded parcel reference values used for viewing and monitoring.</p>
                     </div>
                 </div>
 
-            </div>
+                <div class="lo-panel-body">
+                    <div class="lo-info-grid">
+                        <div class="lo-info-box">
+                            <p class="lo-info-label">Title Number</p>
+                            <p class="lo-info-value">{{ $parcel->title_no ?? 'N/A' }}</p>
+                        </div>
 
-            <div class="bg-white shadow-sm sm:rounded-lg p-6 border">
-                <div class="flex items-center justify-between mb-4">
-                    <h3 class="font-semibold text-gray-900">
-                        My Linked Landholding Record(s)
-                    </h3>
+                        <div class="lo-info-box">
+                            <p class="lo-info-label">Tax Declaration Number</p>
+                            <p class="lo-info-value">{{ $parcel->tax_decl_no ?? 'N/A' }}</p>
+                        </div>
 
-                    <span class="text-sm text-gray-500">
-                        {{ $landholdings->count() }} linked record(s)
-                    </span>
+                        <div class="lo-info-box">
+                            <p class="lo-info-label">Parcel Area</p>
+                            <p class="lo-info-value">
+                                {{ $parcel->area_hectares ? number_format((float) $parcel->area_hectares, 4) . ' hectares' : 'N/A' }}
+                            </p>
+                        </div>
+
+                        <div class="lo-info-box">
+                            <p class="lo-info-label">Province</p>
+                            <p class="lo-info-value">{{ $parcel->province ?? 'N/A' }}</p>
+                        </div>
+
+                        <div class="lo-info-box">
+                            <p class="lo-info-label">Municipality</p>
+                            <p class="lo-info-value">{{ $parcel->municipality ?? 'N/A' }}</p>
+                        </div>
+
+                        <div class="lo-info-box">
+                            <p class="lo-info-label">Barangay</p>
+                            <p class="lo-info-value">{{ $parcel->barangay ?? 'N/A' }}</p>
+                        </div>
+
+                        <div class="lo-info-box full">
+                            <p class="lo-info-label">Remarks</p>
+                            <p class="lo-info-value">{{ $parcel->remarks ?? 'No remarks recorded.' }}</p>
+                        </div>
+                    </div>
+                </div>
+            </article>
+
+            <article class="lo-panel">
+                <div class="lo-panel-header">
+                    <div>
+                        <h2 class="lo-panel-title">Geometry Reference</h2>
+                        <p class="lo-panel-subtitle">Map geometry is for visualization and parcel reference checking only.</p>
+                    </div>
+
+                    <span class="lo-pill">{{ $parcel->geometry_geojson ? 'Available' : 'Not mapped' }}</span>
                 </div>
 
-                <div class="overflow-x-auto">
-                    <table class="min-w-full border text-sm">
-                        <thead class="bg-gray-100">
+                <div class="lo-panel-body">
+                    <div class="lo-info-grid" style="grid-template-columns: 1fr;">
+                        <div class="lo-info-box">
+                            <p class="lo-info-label">Map Display</p>
+                            <p class="lo-info-value">{{ $parcel->geometry_geojson ? 'Available' : 'Not yet encoded' }}</p>
+                        </div>
+
+                        <a href="{{ route('landowner.parcel-map.index') }}" class="lo-geometry-action">
+                            <span>
+                                <i class="fa-solid fa-map-location-dot"></i>
+                                Open Parcel Map
+                            </span>
+                            <i class="fa-solid fa-arrow-right"></i>
+                        </a>
+                    </div>
+                </div>
+            </article>
+        </section>
+
+        <article class="lo-panel">
+            <div class="lo-panel-header">
+                <div>
+                    <h2 class="lo-panel-title">My Linked Landholding Records</h2>
+                    <p class="lo-panel-subtitle">Administrative landholding references connected to this parcel and your account.</p>
+                </div>
+
+                <span class="lo-pill neutral">{{ $landholdings->count() }} linked</span>
+            </div>
+
+            <div class="lo-panel-body">
+                <div class="lo-table-wrap">
+                    <table class="lo-table">
+                        <thead>
                             <tr>
-                                <th class="border px-3 py-2 text-left">Landowner</th>
-                                <th class="border px-3 py-2 text-left">Area</th>
-                                <th class="border px-3 py-2 text-left">Status</th>
-                                <th class="border px-3 py-2 text-left">Date Acquired</th>
-                                <th class="border px-3 py-2 text-left">Remarks</th>
+                                <th>Landowner</th>
+                                <th>Area</th>
+                                <th>Status</th>
+                                <th>Dates</th>
+                                <th>Reference</th>
+                                <th>Remarks</th>
                             </tr>
                         </thead>
 
                         <tbody>
                             @foreach ($landholdings as $landholding)
-                                <tr class="align-top">
-                                    <td class="border px-3 py-2">
-                                        {{ $landowner->full_name }}
+                                <tr>
+                                    <td><strong>{{ $landowner->full_name }}</strong></td>
+                                    <td><strong>{{ number_format((float) $landholding->area_hectares, 4) }} ha</strong></td>
+                                    <td>
+                                        <span class="lo-pill">
+                                            {{ $landholding->status ? ucwords(str_replace('_', ' ', $landholding->status)) : 'N/A' }}
+                                        </span>
                                     </td>
-
-                                    <td class="border px-3 py-2">
-                                        {{ number_format((float) $landholding->area_hectares, 4) }} ha
+                                    <td>
+                                        Acquired: {{ $landholding->date_acquired?->format('M d, Y') ?? 'N/A' }}<br>
+                                        Transferred: {{ $landholding->date_transferred?->format('M d, Y') ?? 'N/A' }}
                                     </td>
-
-                                    <td class="border px-3 py-2">
-                                        {{ $landholding->status ? ucwords(str_replace('_', ' ', $landholding->status)) : 'N/A' }}
-                                    </td>
-
-                                    <td class="border px-3 py-2">
-                                        {{ $landholding->date_acquired ?? 'N/A' }}
-                                    </td>
-
-                                    <td class="border px-3 py-2">
-                                        {{ $landholding->remarks ?? 'N/A' }}
-                                    </td>
+                                    <td>{{ $landholding->source_reference_number ?? 'N/A' }}</td>
+                                    <td class="lo-remarks">{{ $landholding->remarks ?? 'N/A' }}</td>
                                 </tr>
                             @endforeach
                         </tbody>
                     </table>
                 </div>
             </div>
-
-            <div class="bg-white shadow-sm sm:rounded-lg p-6 border">
-                <h3 class="font-semibold text-gray-900">
-                    Scope Reminder
-                </h3>
-
-                <p class="text-sm text-gray-600 mt-2">
-                    This system supports clearance processing, generation, monitoring, and record viewing only.
-                    Approval of a clearance application does not automatically transfer ownership or mutate registry records.
-                </p>
-            </div>
-
-        </div>
-    </div>
-</x-app-layout>
+        </article>
+    </section>
+</x-landowner-shell>

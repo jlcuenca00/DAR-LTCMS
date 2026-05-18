@@ -3,6 +3,7 @@
 use App\Http\Controllers\Geodetic\GeodeticDashboardController;
 use App\Http\Controllers\Geodetic\GeodeticPortalController;
 use App\Http\Controllers\Geodetic\ParcelMapController as GeodeticParcelMapController;
+use App\Http\Controllers\Landowner\ApplicationClearanceController as LandownerApplicationClearanceController;
 use App\Http\Controllers\Landowner\LandownerDashboardController;
 use App\Http\Controllers\Landowner\LandownerPortalController;
 use App\Http\Controllers\Landowner\ParcelMapController as LandownerParcelMapController;
@@ -173,6 +174,10 @@ Route::middleware(['auth', 'role:landowner'])
             ->name('parcels.show');
         Route::get('/applications', [LandownerPortalController::class, 'applications'])
             ->name('applications.index');
+        Route::get('/applications/{application}/decision-output', [LandownerApplicationClearanceController::class, 'show'])
+            ->name('applications.clearance.show');
+        Route::get('/applications/{application}/decision-output/pdf', [LandownerApplicationClearanceController::class, 'pdf'])
+            ->name('applications.clearance.pdf');
     });
 
 Route::middleware(['auth', 'role:geodetic'])
@@ -181,8 +186,6 @@ Route::middleware(['auth', 'role:geodetic'])
     ->group(function () {
         Route::get('/parcels', [GeodeticPortalController::class, 'parcels'])
             ->name('parcels.index');
-        Route::get('/applications', [GeodeticPortalController::class, 'applications'])
-            ->name('applications.index');
         Route::get('/parcel-map', [GeodeticParcelMapController::class, 'index'])
             ->name('parcel-map.index');
         Route::get('/parcels/{parcel}', [GeodeticParcelMapController::class, 'show'])

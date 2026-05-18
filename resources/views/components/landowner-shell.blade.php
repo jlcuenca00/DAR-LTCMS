@@ -1,6 +1,5 @@
 @props([
     'title' => 'Landowner Portal',
-    'eyebrow' => 'DAR Negros Oriental Provincial Office',
     'active' => 'dashboard',
 ])
 
@@ -18,39 +17,39 @@
     <link href="https://fonts.googleapis.com/css2?family=Google+Sans:opsz,wght@17..18,400..700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 
-    @isset($head)
-        {{ $head }}
-    @endisset
-
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @stack('styles')
 
     <style>
         :root {
-            --dar-green: #14532d;
-            --dar-green-dark: #0f3f23;
-            --dar-green-soft: #166534;
-            --page-bg: #f3f4f6;
-            --panel: #ffffff;
-            --border: #d9dee5;
-            --text: #111827;
-            --muted: #6b7280;
-            --heading-font: 'Google Sans';
-            --body-font: 'Google Sans';
+            --lo-green-950: #052e16;
+            --lo-green-900: #14532d;
+            --lo-green-800: #166534;
+            --lo-green-700: #15803d;
+            --lo-green-100: #dcfce7;
+            --lo-green-50: #f0fdf4;
+            --lo-ink: #07111f;
+            --lo-text: #1f2937;
+            --lo-muted: #667085;
+            --lo-line: #d7ded9;
+            --lo-soft-line: #e5e7eb;
+            --lo-panel: #ffffff;
+            --lo-bg: #f3f5f4;
+            --heading-font: 'Google Sans', 'Product Sans', Arial, sans-serif;
+            --body-font: 'Google Sans', 'Product Sans', Arial, sans-serif;
         }
 
-        * {
-            box-sizing: border-box;
-        }
+        * { box-sizing: border-box; }
 
-        html {
-            min-width: 320px;
-        }
+        html { min-height: 100%; }
 
         body {
             margin: 0;
+            min-height: 100vh;
             font-family: var(--body-font);
-            background: var(--page-bg);
-            color: var(--text);
+            background: var(--lo-bg);
+            color: var(--lo-text);
+            text-rendering: optimizeLegibility;
         }
 
         a,
@@ -61,18 +60,21 @@
             font-family: inherit;
         }
 
-        .portal-shell {
+        a { color: inherit; }
+
+        .lo-shell {
             min-height: 100vh;
             display: grid;
-            grid-template-columns: 260px minmax(0, 1fr);
+            grid-template-columns: 250px minmax(0, 1fr);
+            background: var(--lo-bg);
         }
 
-        .sidebar {
+        .lo-sidebar {
             position: sticky;
             top: 0;
             height: 100vh;
-            background: var(--dar-green);
-            color: #d9fbe6;
+            background: #0f4b25;
+            color: #ecfdf5;
             display: flex;
             flex-direction: column;
             border-right: 1px solid rgba(255, 255, 255, 0.08);
@@ -80,93 +82,88 @@
             z-index: 30;
         }
 
-        .brand {
-            min-height: 82px;
+        .lo-brand {
+            min-height: 72px;
             display: flex;
             align-items: center;
             gap: 12px;
             padding: 0 18px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.09);
         }
 
-        .brand-mark {
-            width: 52px;
-            height: 52px;
-            flex: 0 0 52px;
+        .lo-brand-mark {
+            width: 42px;
+            height: 42px;
+            border-radius: 11px;
+            background: #ffffff;
             display: grid;
             place-items: center;
-            border-radius: 14px;
-            background: #ffffff;
-            border: 1px solid rgba(255, 255, 255, 0.28);
-            box-shadow: 0 10px 24px rgba(0, 0, 0, 0.16);
             padding: 6px;
-            overflow: hidden;
+            flex: 0 0 auto;
+            box-shadow: 0 10px 22px rgba(0, 0, 0, 0.16);
         }
 
-        .brand-logo {
+        .lo-brand-logo {
             width: 100%;
             height: 100%;
             object-fit: contain;
             display: block;
         }
 
-        .brand-fallback {
-            font-family: var(--heading-font);
-            font-weight: 800;
+        .lo-brand-fallback {
             font-size: 10px;
-            color: var(--dar-green);
+            font-weight: 900;
+            color: var(--lo-green-900);
         }
 
-        .brand-title {
+        .lo-brand-title {
             margin: 0;
             font-family: var(--heading-font);
             font-size: 14px;
-            font-weight: 800;
+            font-weight: 900;
             letter-spacing: 0.01em;
             color: #ffffff;
-            line-height: 1.1;
         }
 
-        .brand-subtitle {
-            margin: 4px 0 0;
+        .lo-brand-subtitle {
+            margin: 3px 0 0;
             font-size: 11px;
-            font-weight: 600;
             color: #bbf7d0;
         }
 
-        .side-section {
-            padding: 18px 14px;
+        .lo-side-section {
+            padding: 18px 14px 8px;
         }
 
-        .side-section.secondary {
+        .lo-side-section.account {
             margin-top: auto;
+            padding-top: 12px;
             border-top: 1px solid rgba(255, 255, 255, 0.08);
-            padding-top: 14px;
         }
 
-        .side-label {
+        .lo-side-label {
             padding: 0 10px;
             margin-bottom: 10px;
             font-size: 10px;
-            font-weight: 700;
+            font-weight: 900;
             letter-spacing: 0.16em;
             text-transform: uppercase;
             color: #86efac;
         }
 
-        .side-nav {
+        .lo-nav {
             display: grid;
             gap: 5px;
         }
 
-        .side-link {
+        .lo-nav-link {
             display: flex;
             align-items: center;
             gap: 12px;
             min-height: 42px;
             padding: 10px 12px;
             border-radius: 9px;
-            color: #d9fbe6;
+            color: #dcfce7;
             text-decoration: none;
             font-size: 14px;
             font-weight: 500;
@@ -174,106 +171,109 @@
             transition: 160ms ease;
         }
 
-        .side-link:hover {
+        .lo-nav-link:hover {
             background: rgba(255, 255, 255, 0.10);
             color: #ffffff;
         }
 
-        .side-link.active {
+        .lo-nav-link.active {
             background: rgba(255, 255, 255, 0.16);
             color: #ffffff;
-            font-weight: 650;
+            font-weight: 500;
         }
 
-        .side-icon {
+        .lo-nav-link i {
             width: 20px;
             text-align: center;
-            font-size: 15px;
+            font-size: 14px;
             opacity: 0.95;
         }
 
-        .sidebar-footer {
-            padding: 14px;
+        .lo-sidebar-footer {
+            padding: 16px 14px;
             border-top: 1px solid rgba(255, 255, 255, 0.08);
         }
 
-        .logout-button {
+        .lo-logout-button {
             width: 100%;
-            min-height: 42px;
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 10px;
             border: 0;
             background: transparent;
-            color: #d9fbe6;
+            color: #dcfce7;
             padding: 10px 12px;
             border-radius: 9px;
             font: inherit;
             font-size: 14px;
-            font-weight: 500;
+            font-weight: 600;
             cursor: pointer;
             text-align: left;
         }
 
-        .logout-button:hover {
+        .lo-logout-button:hover {
             background: rgba(255, 255, 255, 0.10);
             color: #ffffff;
         }
 
-        .main-area {
+        .lo-main {
             min-width: 0;
             display: flex;
             flex-direction: column;
         }
 
-        .topbar {
+        .lo-topbar {
             min-height: 74px;
             background: #ffffff;
-            border-bottom: 1px solid var(--border);
+            border-bottom: 1px solid var(--lo-line);
             display: flex;
             align-items: center;
             justify-content: space-between;
             gap: 20px;
-            padding: 0 28px;
+            padding: 16px 28px;
         }
 
-        .page-eyebrow {
+        .lo-eyebrow {
             margin: 0;
             font-size: 11px;
             font-weight: 900;
-            letter-spacing: 0.15em;
+            letter-spacing: 0.18em;
             text-transform: uppercase;
-            color: #166534;
+            color: var(--lo-green-800);
         }
 
-        .page-title {
-            margin: 4px 0 0;
+        .lo-page-title {
+            margin: 3px 0 0;
             font-family: var(--heading-font);
             font-size: 22px;
+            line-height: 1.15;
             font-weight: 900;
-            color: #111827;
-            line-height: 1.2;
+            color: var(--lo-ink);
         }
 
-        .topbar-right {
-            display: flex;
-            align-items: center;
-            gap: 14px;
+        .lo-topbar > div:first-child {
             min-width: 0;
         }
 
-        .access-chip {
+        .lo-topbar-right {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex: 0 0 auto;
+        }
+
+        .lo-access-chip {
             border: 1px solid #bbf7d0;
-            background: #f0fdf4;
-            color: #166534;
+            background: var(--lo-green-50);
+            color: var(--lo-green-800);
             border-radius: 999px;
-            padding: 8px 12px;
+            padding: 6px 11px;
             font-size: 12px;
-            font-weight: 800;
+            font-weight: 900;
             white-space: nowrap;
         }
 
-        .user-chip {
+        .lo-user-chip {
             display: flex;
             align-items: center;
             gap: 10px;
@@ -284,193 +284,245 @@
             min-width: 0;
         }
 
-        .avatar {
+        .lo-avatar {
             width: 36px;
             height: 36px;
-            flex: 0 0 36px;
             border-radius: 999px;
-            background: #166534;
+            background: var(--lo-green-800);
             color: white;
             display: grid;
             place-items: center;
             font-weight: 900;
+            flex: 0 0 auto;
         }
 
-        .user-name {
+        .lo-user-name {
             overflow: hidden;
             text-overflow: ellipsis;
         }
 
-        .content {
-            padding: 24px 28px 36px;
+        .lo-content {
+            padding: 26px 32px 38px;
             display: grid;
-            gap: 22px;
+            gap: 20px;
         }
 
-        @media (max-width: 980px) {
-            .portal-shell {
-                grid-template-columns: 1fr;
-            }
+        .lo-scope-notice {
+            display: flex;
+            justify-content: space-between;
+            gap: 22px;
+            align-items: flex-start;
+            border: 1px solid #bbf7d0;
+            background: #effaf2;
+            border-radius: 10px;
+            padding: 14px 18px;
+            color: #064e3b;
+        }
 
-            .sidebar {
-                position: static;
+        .lo-scope-notice h3 {
+            margin: 0;
+            font-family: var(--heading-font);
+            font-size: 14px;
+            font-weight: 900;
+        }
+
+        .lo-scope-notice p {
+            margin: 5px 0 0;
+            max-width: 980px;
+            font-size: 12.5px;
+            line-height: 1.55;
+            font-weight: 700;
+        }
+
+        .lo-scope-pill {
+            flex: 0 0 auto;
+            border: 1px solid #bbf7d0;
+            background: #dcfce7;
+            color: var(--lo-green-800);
+            border-radius: 999px;
+            padding: 5px 11px;
+            font-size: 11px;
+            font-weight: 900;
+            white-space: nowrap;
+        }
+
+        .lo-panel {
+            background: #ffffff;
+            border: 1px solid var(--lo-line);
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+            overflow: hidden;
+        }
+
+        .lo-button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            min-height: 38px;
+            border-radius: 8px;
+            padding: 0 14px;
+            border: 1px solid var(--lo-line);
+            background: #ffffff;
+            color: #111827;
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 900;
+            transition: 160ms ease;
+        }
+
+        .lo-button:hover {
+            background: #f8faf9;
+            border-color: #c7d2cc;
+        }
+
+        .lo-button-primary {
+            background: var(--lo-green-800);
+            border-color: var(--lo-green-800);
+            color: #ffffff;
+        }
+
+        .lo-button-primary:hover {
+            background: var(--lo-green-900);
+            border-color: var(--lo-green-900);
+        }
+
+        @media (max-width: 1100px) {
+            .lo-shell { grid-template-columns: 1fr; }
+            .lo-sidebar { position: static; height: auto; }
+            .lo-nav { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .lo-side-section.account { margin-top: 0; }
+        }
+
+        @media (max-width: 760px) {
+            .lo-topbar {
                 height: auto;
-            }
-
-            .side-section {
-                padding: 12px;
-            }
-
-            .side-nav {
-                grid-template-columns: repeat(2, minmax(0, 1fr));
-            }
-
-            .side-section.secondary {
-                margin-top: 0;
-            }
-
-            .sidebar-footer {
-                padding: 12px;
-            }
-
-            .topbar {
-                min-height: auto;
-                padding: 18px;
                 align-items: flex-start;
                 flex-direction: column;
+                padding: 18px;
             }
 
-            .topbar-right {
+            .lo-topbar-right {
                 width: 100%;
                 justify-content: space-between;
-            }
-
-            .content {
-                padding: 18px;
-            }
-        }
-
-        @media (max-width: 560px) {
-            .brand {
-                min-height: 72px;
-            }
-
-            .brand-mark {
-                width: 44px;
-                height: 44px;
-                flex-basis: 44px;
-            }
-
-            .side-nav {
-                grid-template-columns: 1fr;
-            }
-
-            .topbar-right {
                 align-items: flex-start;
-                flex-direction: column;
-                gap: 10px;
+                flex-wrap: wrap;
             }
 
-            .access-chip {
-                white-space: normal;
-            }
+            .lo-content { padding: 18px; }
+            .lo-nav { grid-template-columns: 1fr; }
+            .lo-scope-notice { flex-direction: column; }
+            .lo-scope-pill { align-self: flex-start; }
         }
     </style>
 </head>
+
 <body>
-    <div class="portal-shell">
-        <aside class="sidebar">
-            <div class="brand">
-                <div class="brand-mark">
+    <div class="lo-shell">
+        <aside class="lo-sidebar">
+            <div class="lo-brand">
+                <div class="lo-brand-mark">
                     @if (file_exists(public_path('images/dar-logo.png')))
-                        <img src="{{ asset('images/dar-logo.png') }}" alt="Department of Agrarian Reform Logo" class="brand-logo">
+                        <img src="{{ asset('images/dar-logo.png') }}" alt="Department of Agrarian Reform Logo" class="lo-brand-logo">
                     @elseif (file_exists(public_path('images/dar-logo.svg')))
-                        <img src="{{ asset('images/dar-logo.svg') }}" alt="Department of Agrarian Reform Logo" class="brand-logo">
+                        <img src="{{ asset('images/dar-logo.svg') }}" alt="Department of Agrarian Reform Logo" class="lo-brand-logo">
                     @else
-                        <span class="brand-fallback">DAR</span>
+                        <span class="lo-brand-fallback">DAR</span>
                     @endif
                 </div>
 
                 <div>
-                    <p class="brand-title">DAR LTCMS</p>
-                    <p class="brand-subtitle">Landowner Portal</p>
+                    <p class="lo-brand-title">DAR LTCMS</p>
+                    <p class="lo-brand-subtitle">Landowner Portal</p>
                 </div>
             </div>
 
-            <div class="side-section">
-                <div class="side-label">My Workspace</div>
+            <div class="lo-side-section">
+                <div class="lo-side-label">My Workspace</div>
 
-                <nav class="side-nav" aria-label="Landowner portal navigation">
-                    <a href="{{ route('landowner.dashboard') }}" class="side-link {{ $active === 'dashboard' ? 'active' : '' }}">
-                        <i class="fa-solid fa-gauge-high side-icon"></i>
+                <nav class="lo-nav" aria-label="Landowner portal navigation">
+                    <a href="{{ route('landowner.dashboard') }}" class="lo-nav-link {{ $active === 'dashboard' ? 'active' : '' }}">
+                        <i class="fa-solid fa-gauge-high"></i>
                         Dashboard
                     </a>
 
-                    <a href="{{ route('landowner.parcel-map.index') }}" class="side-link {{ $active === 'parcel-map' ? 'active' : '' }}">
-                        <i class="fa-solid fa-map side-icon"></i>
+                    <a href="{{ route('landowner.parcel-map.index') }}" class="lo-nav-link {{ $active === 'parcel-map' ? 'active' : '' }}">
+                        <i class="fa-solid fa-map-location-dot"></i>
                         My Parcel Map
                     </a>
 
-                    <a href="{{ route('landowner.parcels.index') }}" class="side-link {{ $active === 'parcels' ? 'active' : '' }}">
-                        <i class="fa-solid fa-map-location-dot side-icon"></i>
-                        My Parcels
+                    <a href="{{ route('landowner.parcels.index') }}" class="lo-nav-link {{ $active === 'parcels' ? 'active' : '' }}">
+                        <i class="fa-solid fa-draw-polygon"></i>
+                        My Parcel Records
                     </a>
 
-                    <a href="{{ route('landowner.applications.index') }}" class="side-link {{ $active === 'applications' ? 'active' : '' }}">
-                        <i class="fa-solid fa-file-lines side-icon"></i>
+                    <a href="{{ route('landowner.applications.index') }}" class="lo-nav-link {{ $active === 'applications' ? 'active' : '' }}">
+                        <i class="fa-solid fa-file-lines"></i>
                         My Applications
                     </a>
                 </nav>
             </div>
 
-            <div class="side-section secondary">
-                <div class="side-label">Account</div>
+            <div class="lo-side-section account">
+                <div class="lo-side-label">Account</div>
 
-                <nav class="side-nav" aria-label="Account navigation">
-                    <a href="{{ route('profile.edit') }}" class="side-link {{ $active === 'profile' ? 'active' : '' }}">
-                        <i class="fa-solid fa-user-gear side-icon"></i>
+                <nav class="lo-nav" aria-label="Account navigation">
+                    <a href="{{ route('profile.edit') }}" class="lo-nav-link {{ $active === 'profile' ? 'active' : '' }}">
+                        <i class="fa-solid fa-user-gear"></i>
                         Profile Settings
                     </a>
                 </nav>
             </div>
 
-            <div class="sidebar-footer">
+            <div class="lo-sidebar-footer">
                 <form method="POST" action="{{ route('logout') }}">
                     @csrf
-                    <button type="submit" class="logout-button">
-                        <i class="fa-solid fa-arrow-right-from-bracket side-icon"></i>
+                    <button type="submit" class="lo-logout-button">
+                        <i class="fa-solid fa-arrow-right-from-bracket"></i>
                         Logout
                     </button>
                 </form>
             </div>
         </aside>
 
-        <main class="main-area">
-            <header class="topbar">
+        <main class="lo-main">
+            <header class="lo-topbar">
                 <div>
-                    <p class="page-eyebrow">{{ $eyebrow }}</p>
-                    <h1 class="page-title">{{ $title }}</h1>
+                    <p class="lo-eyebrow">DAR Negros Oriental Provincial Office</p>
+                    <h1 class="lo-page-title">{{ $title }}</h1>
                 </div>
 
-                <div class="topbar-right">
-                    <div class="access-chip">
-                        <i class="fa-solid fa-lock"></i>
-                        Own linked records only
+                <div class="lo-topbar-right">
+                    <div class="lo-access-chip">
+                        Own Records Only
                     </div>
 
-                    <div class="user-chip">
-                        <div class="avatar">
+                    <div class="lo-user-chip">
+                        <div class="lo-avatar">
                             {{ strtoupper(substr(auth()->user()->name, 0, 1)) }}
                         </div>
-                        <span class="user-name">{{ auth()->user()->name }}</span>
+                        <span class="lo-user-name">{{ auth()->user()->name }}</span>
                     </div>
                 </div>
             </header>
 
-            <div class="content">
+            <div class="lo-content">
+                <section class="lo-scope-notice">
+                    <div>
+                        <h3>Landowner Access Scope</h3>
+                        <p>
+                            This portal displays only parcel, landholding, map, and clearance application records linked to your landowner account. It does not allow record editing, clearance approval, ownership transfer, or registry mutation.
+                        </p>
+                    </div>
+
+                    <span class="lo-scope-pill">Viewing Only</span>
+                </section>
+
                 {{ $slot }}
             </div>
         </main>
     </div>
+
+    @stack('scripts')
 </body>
 </html>

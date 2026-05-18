@@ -1,4 +1,7 @@
-<x-app-layout>
+<x-geodetic-shell
+    title="Parcel Map Viewer"
+    active="parcel-map"
+>
     @push('styles')
         <link
             rel="stylesheet"
@@ -8,445 +11,476 @@
         />
 
         <style>
-            .map-shell {
+            .geo-map-layout {
                 display: grid;
-                grid-template-columns: 340px 1fr;
-                gap: 1rem;
+                grid-template-columns: 320px minmax(0, 1fr);
+                gap: 18px;
+                align-items: stretch;
+            }
+
+            .geo-map-sidebar {
+                display: grid;
+                gap: 14px;
+                align-content: start;
+            }
+
+            .geo-map-card {
+                background: #ffffff;
+                border: 1px solid var(--geo-line);
+                border-radius: 12px;
+                box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+                padding: 18px;
+            }
+
+            .geo-map-title {
+                margin: 0;
+                font-size: 17px;
+                font-weight: 900;
+                color: var(--geo-ink);
+            }
+
+            .geo-map-subtitle {
+                margin: 6px 0 0;
+                font-size: 13px;
+                color: var(--geo-muted);
+                line-height: 1.45;
+            }
+
+            .geo-map-tools {
+                margin-top: 14px;
+                display: grid;
+                gap: 10px;
+            }
+
+            .geo-map-button {
+                width: 100%;
+                min-height: 42px;
+                border: 1px solid var(--geo-line);
+                border-radius: 10px;
+                background: #ffffff;
+                color: #374151;
+                font: inherit;
+                font-size: 12px;
+                font-weight: 900;
+                letter-spacing: 0.08em;
+                text-transform: uppercase;
+                text-decoration: none;
+                cursor: pointer;
+                display: inline-flex;
+                justify-content: center;
+                align-items: center;
+                gap: 8px;
+                padding: 10px 12px;
+                transition: 160ms ease;
+            }
+
+            .geo-map-button:hover {
+                background: #f8faf9;
+                border-color: #c7d2cc;
+            }
+
+            .geo-map-button.primary {
+                background: var(--geo-green-800);
+                border-color: var(--geo-green-800);
+                color: #ffffff;
+            }
+
+            .geo-map-button.primary:hover {
+                background: var(--geo-green-900);
+                border-color: var(--geo-green-900);
+            }
+
+            .geo-legend-list {
+                margin-top: 14px;
+                display: grid;
+                gap: 10px;
+                color: #344054;
+                font-size: 13px;
+            }
+
+            .geo-legend-row {
+                display: flex;
+                align-items: center;
+                gap: 9px;
+                line-height: 1.35;
+            }
+
+            .geo-legend-dot {
+                width: 11px;
+                height: 11px;
+                border-radius: 999px;
+                flex: 0 0 auto;
+            }
+
+            .geo-access-list {
+                margin-top: 14px;
+                display: grid;
+                gap: 10px;
+                font-size: 13px;
+            }
+
+            .geo-access-row {
+                display: flex;
+                justify-content: space-between;
+                gap: 12px;
+                border-bottom: 1px solid #edf0ee;
+                padding-bottom: 8px;
+            }
+
+            .geo-access-row:last-child {
+                border-bottom: 0;
+                padding-bottom: 0;
+            }
+
+            .geo-access-label {
+                color: var(--geo-muted);
+            }
+
+            .geo-access-value {
+                color: var(--geo-ink);
+                font-weight: 900;
+                text-align: right;
+            }
+
+            .geo-map-panel {
+                background: #ffffff;
+                border: 1px solid var(--geo-line);
+                border-radius: 12px;
+                box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+                padding: 12px;
+                min-width: 0;
             }
 
             #parcel-map {
-                height: 680px;
+                height: calc(100vh - 212px);
+                min-height: 590px;
                 width: 100%;
-                border-radius: 1rem;
-                border: 1px solid #d1d5db;
+                border-radius: 10px;
+                border: 1px solid #d7ded9;
                 overflow: hidden;
-                box-shadow: 0 10px 25px rgba(15, 23, 42, 0.08);
+                background: #eef2f0;
             }
 
-            .leaflet-popup-content-wrapper {
-                border-radius: 0.9rem;
+            .leaflet-control-zoom a {
+                background: #ffffff !important;
+                color: var(--geo-green-900) !important;
+                border-color: #d7ded9 !important;
+                box-shadow: 0 1px 3px rgba(15, 23, 42, 0.12);
+            }
+
+            .leaflet-control-zoom a:hover {
+                background: var(--geo-green-50) !important;
+            }
+
+            .leaflet-control-attribution {
+                background: rgba(255, 255, 255, 0.92) !important;
+                color: #475569 !important;
+                border-radius: 0.5rem 0 0 0;
+            }
+
+            .leaflet-control-attribution a {
+                color: var(--geo-green-800) !important;
+            }
+
+            .leaflet-popup-content-wrapper,
+            .leaflet-popup-tip {
+                background: #ffffff;
+                color: #111827;
+                border: 1px solid #d7ded9;
+                box-shadow: 0 18px 40px rgba(15, 23, 42, 0.18);
             }
 
             .leaflet-popup-content {
                 margin: 14px 16px;
                 font-family: inherit;
             }
-            .leaflet-control-zoom a {
-    background: #111827 !important;
-    color: #f9fafb !important;
-    border-color: #374151 !important;
-}
 
-.leaflet-control-zoom a:hover {
-    background: #1f2937 !important;
-}
-
-.leaflet-control-attribution {
-    background: rgba(17, 24, 39, 0.85) !important;
-    color: #d1d5db !important;
-    border-radius: 0.5rem 0 0 0;
-}
-
-.leaflet-control-attribution a {
-    color: #86efac !important;
-}
-
-.leaflet-popup-content-wrapper,
-.leaflet-popup-tip {
-    background: #111827;
-    color: #f9fafb;
-}
-
-.leaflet-popup-content p {
-    color: #d1d5db !important;
-}
-
-.parcel-tooltip {
-    background: rgba(17, 24, 39, 0.96);
-    color: #f9fafb;
-    border: 1px solid rgba(134, 239, 172, 0.7);
-    border-radius: 0.75rem;
-    padding: 0;
-    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.35);
-}
-
-.parcel-tooltip::before {
-    border-top-color: rgba(17, 24, 39, 0.96);
-}
-
-.parcel-tooltip-card {
-    min-width: 230px;
-    padding: 0.85rem;
-}
-
-.parcel-tooltip-title {
-    font-size: 0.85rem;
-    font-weight: 800;
-    color: #bbf7d0;
-    margin-bottom: 0.35rem;
-}
-
-.parcel-tooltip-row {
-    font-size: 0.75rem;
-    color: #d1d5db;
-    margin-top: 0.2rem;
-}
-
-.parcel-tooltip-label {
-    color: #9ca3af;
-}
-
-            .custom-parcel-marker {
-                width: 24px;
-                height: 24px;
-                border-radius: 9999px;
-                background: #166534;
-                border: 4px solid #dcfce7;
-                box-shadow: 0 0 0 3px rgba(22, 101, 52, 0.25);
+            .parcel-tooltip {
+                background: rgba(255, 255, 255, 0.98);
+                color: #111827;
+                border: 1px solid #bbf7d0;
+                border-radius: 0.75rem;
+                padding: 0;
+                box-shadow: 0 15px 30px rgba(15, 23, 42, 0.18);
             }
 
-            .map-legend-dot {
-                display: inline-block;
-                width: 10px;
-                height: 10px;
-                border-radius: 9999px;
-                margin-right: 8px;
+            .parcel-tooltip::before {
+                border-top-color: #ffffff;
             }
 
-            @media (max-width: 1024px) {
-                .map-shell {
+            .parcel-tooltip-card {
+                min-width: 240px;
+                padding: 0.85rem;
+            }
+
+            .parcel-tooltip-title {
+                font-size: 0.86rem;
+                font-weight: 900;
+                color: var(--geo-green-900);
+                margin-bottom: 0.4rem;
+            }
+
+            .parcel-tooltip-row {
+                font-size: 0.76rem;
+                color: #344054;
+                margin-top: 0.24rem;
+                line-height: 1.4;
+            }
+
+            .parcel-tooltip-label {
+                color: #667085;
+                font-weight: 800;
+            }
+
+            @media (max-width: 1100px) {
+                .geo-map-layout {
                     grid-template-columns: 1fr;
                 }
 
                 #parcel-map {
-                    height: 540px;
+                    height: 580px;
+                    min-height: 480px;
                 }
             }
         </style>
     @endpush
 
-    <x-slot name="header">
-        <div>
-            <h2 class="font-semibold text-xl text-gray-800">
-                Parcel Map Viewer
-            </h2>
-            <p class="text-sm text-gray-500 mt-1">
-                Read-only parcel/reference map for clearance processing and monitoring.
-            </p>
-        </div>
-    </x-slot>
+    <section class="geo-map-layout">
+        <aside class="geo-map-sidebar">
+            <article class="geo-map-card">
+                <h2 class="geo-map-title">Map Tools</h2>
+                <p class="geo-map-subtitle">Reset the map to the full Negros Oriental provincial view or open the parcel records list.</p>
 
-    <div class="py-6">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-5">
+                <div class="geo-map-tools">
+                    <button type="button" id="reset-map-view" class="geo-map-button primary">
+                        <i class="fa-solid fa-expand"></i>
+                        Reset View
+                    </button>
 
-            <div class="bg-white border border-gray-200 shadow-sm sm:rounded-xl p-6">
-                <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-                    <div>
-                        <p class="text-xs font-semibold tracking-wide text-green-700 uppercase">
-                            DAR Negros Oriental Provincial Office
-                        </p>
+                    <a href="{{ route('geodetic.parcels.index') }}" class="geo-map-button">
+                        <i class="fa-solid fa-list"></i>
+                        Parcel List
+                    </a>
+                </div>
+            </article>
 
-                        <h3 class="text-2xl font-bold text-gray-900 mt-1">
-                            Geodetic Parcel Reference Map
-                        </h3>
+            <article class="geo-map-card">
+                <h2 class="geo-map-title">Legend</h2>
+                <p class="geo-map-subtitle">Colors represent parcel record states used for monitoring display.</p>
 
-                        <p class="text-sm text-gray-600 mt-2 max-w-3xl">
-                            This map supports parcel viewing, reference checking, clearance processing,
-                            and monitoring only. It does not automatically transfer land ownership,
-                            mutate registry records, or finalize legal land transactions.
-                        </p>
+                <div class="geo-legend-list">
+                    <div class="geo-legend-row">
+                        <span class="geo-legend-dot" style="background:#22c55e;"></span>
+                        <strong>Active parcel record</strong>
                     </div>
-
-                    <div class="bg-green-50 border border-green-200 rounded-xl px-4 py-3">
-                        <p class="text-xs text-green-700 font-semibold uppercase">
-                            Map Mode
-                        </p>
-                        <p class="text-sm text-green-900 font-bold">
-                            Read-only viewer
-                        </p>
+                    <div class="geo-legend-row">
+                        <span class="geo-legend-dot" style="background:#f59e0b;"></span>
+                        <strong>Pending review reference</strong>
+                    </div>
+                    <div class="geo-legend-row">
+                        <span class="geo-legend-dot" style="background:#2563eb;"></span>
+                        <strong>Linked to application</strong>
+                    </div>
+                    <div class="geo-legend-row">
+                        <span class="geo-legend-dot" style="background:#dc2626;"></span>
+                        <strong>Flagged record</strong>
                     </div>
                 </div>
-            </div>
+            </article>
 
-            <div class="map-shell">
-
-                <aside class="space-y-4">
-
-                    <div class="bg-white border border-gray-200 shadow-sm rounded-xl p-5">
-                        <h4 class="font-semibold text-gray-900">
-                            Map Tools
-                        </h4>
-
-                        <p class="text-sm text-gray-600 mt-1">
-                            These tools are for viewing and reference only.
-                        </p>
-
-                        <div class="mt-4 space-y-3">
-                            <button
-                                type="button"
-                                id="reset-map-view"
-                                class="w-full inline-flex justify-center items-center px-4 py-2 bg-green-700 border border-transparent rounded-lg font-semibold text-xs text-white uppercase tracking-widest hover:bg-green-800 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
-                            >
-                                Reset to Negros Oriental
-                            </button>
-
-                            <button
-                                type="button"
-                                id="focus-dar-office"
-                                class="w-full inline-flex justify-center items-center px-4 py-2 bg-white border border-gray-300 rounded-lg font-semibold text-xs text-gray-700 uppercase tracking-widest hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
-                            >
-                                Focus Reference Point
-                            </button>
-                        </div>
+            <article class="geo-map-card">
+                <h2 class="geo-map-title">Current Viewer Access</h2>
+                <div class="geo-access-list">
+                    <div class="geo-access-row">
+                        <span class="geo-access-label">Role</span>
+                        <span class="geo-access-value">Geodetic Personnel</span>
                     </div>
-
-                    <div class="bg-white border border-gray-200 shadow-sm rounded-xl p-5">
-                        <h4 class="font-semibold text-gray-900">
-                            Legend
-                        </h4>
-
-                        <div class="mt-4 space-y-3 text-sm text-gray-700">
-                            <p>
-                                <span class="map-legend-dot" style="background:#166534;"></span>
-                                Reference parcel/location point
-                            </p>
-
-                            <p>
-                                <span class="map-legend-dot" style="background:#f59e0b;"></span>
-                                Pending / for review parcel
-                            </p>
-
-                            <p>
-                                <span class="map-legend-dot" style="background:#2563eb;"></span>
-                                Linked clearance application
-                            </p>
-
-                            <p>
-                                <span class="map-legend-dot" style="background:#dc2626;"></span>
-                                Flagged reference issue
-                            </p>
-                        </div>
+                    <div class="geo-access-row">
+                        <span class="geo-access-label">Access Level</span>
+                        <span class="geo-access-value">Read-only</span>
                     </div>
-
-                    <div class="bg-amber-50 border border-amber-200 rounded-xl p-5">
-                        <h4 class="font-semibold text-amber-900">
-                            Scope Notice
-                        </h4>
-
-                        <p class="text-sm text-amber-800 mt-2">
-                            Approval of a clearance application does not mean ownership has already
-                            been legally transferred. This system only records, generates, monitors,
-                            and audits clearance-related actions.
-                        </p>
+                    <div class="geo-access-row">
+                        <span class="geo-access-label">Record Editing</span>
+                        <span class="geo-access-value">Not allowed</span>
                     </div>
-
-                    <div class="bg-white border border-gray-200 shadow-sm rounded-xl p-5">
-                        <h4 class="font-semibold text-gray-900">
-                            Current Viewer Access
-                        </h4>
-
-                        <dl class="mt-4 space-y-3 text-sm">
-                            <div>
-                                <dt class="text-gray-500">Role</dt>
-                                <dd class="font-semibold text-gray-900">Geodetic Personnel</dd>
-                            </div>
-
-                            <div>
-                                <dt class="text-gray-500">Access Level</dt>
-                                <dd class="font-semibold text-gray-900">Read-only parcel/reference review</dd>
-                            </div>
-
-                            <div>
-                                <dt class="text-gray-500">Editing</dt>
-                                <dd class="font-semibold text-red-700">Not allowed on map</dd>
-                            </div>
-                        </dl>
+                    <div class="geo-access-row">
+                        <span class="geo-access-label">Registry Mutation</span>
+                        <span class="geo-access-value">Outside scope</span>
                     </div>
+                </div>
+            </article>
+        </aside>
 
-                </aside>
-
-                <section class="bg-white border border-gray-200 shadow-sm rounded-xl p-4">
-                    <div id="parcel-map"></div>
-                </section>
-
-            </div>
-        </div>
-    </div>
+        <section class="geo-map-panel">
+            <div id="parcel-map"></div>
+        </section>
+    </section>
 
     @push('scripts')
-    <script
-        src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
-        crossorigin="">
-    </script>
+        <script
+            src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+            integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+            crossorigin="">
+        </script>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            const negrosOrientalCenter = [9.3068, 123.3054];
-            const parcelGeoJson = @json($parcelGeoJson);
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                const negrosOrientalCenter = [9.3068, 123.3054];
+                const parcelGeoJson = @json($parcelGeoJson);
 
-            const map = L.map('parcel-map', {
-                zoomControl: false,
-                scrollWheelZoom: true
-            }).setView(negrosOrientalCenter, 12);
+                const map = L.map('parcel-map', {
+                    zoomControl: false,
+                    scrollWheelZoom: true
+                }).setView(negrosOrientalCenter, 12);
 
-            L.control.zoom({
-                position: 'topright'
-            }).addTo(map);
+                L.control.zoom({ position: 'topright' }).addTo(map);
 
-            L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-                subdomains: 'abcd',
-                maxZoom: 20,
-                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-            }).addTo(map);
+                L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+                    subdomains: 'abcd',
+                    maxZoom: 20,
+                    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+                }).addTo(map);
 
-            
+                function getParcelColor(status) {
+                    if (status === 'pending_review') {
+                        return '#ea580c';
+                    }
 
-            function getParcelColor(status) {
-                if (status === 'pending_review') {
-                    return '#f59e0b';
+                    if (status === 'linked_reference') {
+                        return '#334155';
+                    }
+
+                    if (status === 'flagged') {
+                        return '#dc2626';
+                    }
+
+                    return '#15803d';
                 }
 
-                if (status === 'linked_application') {
-                    return '#2563eb';
+                function getParcelStyle(feature) {
+                    const color = getParcelColor(feature.properties.status);
+
+                    return {
+                        color: color,
+                        weight: 2,
+                        opacity: 0.95,
+                        fillColor: color,
+                        fillOpacity: 0.34
+                    };
                 }
 
-                if (status === 'flagged') {
-                    return '#dc2626';
+                function getParcelHoverStyle(feature) {
+                    const color = getParcelColor(feature.properties.status);
+
+                    return {
+                        color: color,
+                        weight: 5,
+                        opacity: 1,
+                        fillColor: color,
+                        fillOpacity: 0.62
+                    };
                 }
 
-                return '#22c55e';
-            }
-
-            function getParcelStyle(feature) {
-                const color = getParcelColor(feature.properties.status);
-
-                return {
-                    color: color,
-                    weight: 2,
-                    opacity: 0.9,
-                    fillColor: color,
-                    fillOpacity: 0.28
-                };
-            }
-
-            function getParcelHoverStyle(feature) {
-                const color = getParcelColor(feature.properties.status);
-
-                return {
-                    color: '#ffffff',
-                    weight: 6,
-                    opacity: 1,
-                    fillColor: color,
-                    fillOpacity: 0.65
-                };
-            }
-
-            function buildTooltipContent(properties) {
-                return `
-                    <div class="parcel-tooltip-card">
-                        <div class="parcel-tooltip-title">
-                            ${properties.parcel_code}
+                function buildTooltipContent(properties) {
+                    return `
+                        <div class="parcel-tooltip-card">
+                            <div class="parcel-tooltip-title">${properties.parcel_code}</div>
+                            <div class="parcel-tooltip-row"><span class="parcel-tooltip-label">Landowner:</span> ${properties.landowner}</div>
+                            <div class="parcel-tooltip-row"><span class="parcel-tooltip-label">Location:</span> ${properties.barangay}, ${properties.municipality}</div>
+                            <div class="parcel-tooltip-row"><span class="parcel-tooltip-label">Area:</span> ${properties.area_hectares} hectares</div>
+                            <div class="parcel-tooltip-row"><span class="parcel-tooltip-label">Title No.:</span> ${properties.title_no}</div>
+                            <div class="parcel-tooltip-row"><span class="parcel-tooltip-label">Tax Declaration:</span> ${properties.tax_decl_no}</div>
+                            <div class="parcel-tooltip-row"><span class="parcel-tooltip-label">Click:</span> open parcel reference</div>
                         </div>
+                    `;
+                }
 
-                        <div class="parcel-tooltip-row">
-                            <span class="parcel-tooltip-label">Landowner:</span>
-                            ${properties.landowner}
-                        </div>
+                let parcelLayer = null;
 
-                        <div class="parcel-tooltip-row">
-                            <span class="parcel-tooltip-label">Location:</span>
-                            ${properties.barangay}, ${properties.municipality}
-                        </div>
+                function onEachParcel(feature, layer) {
+                    layer.bindTooltip(buildTooltipContent(feature.properties), {
+                        sticky: true,
+                        direction: 'top',
+                        opacity: 1,
+                        className: 'parcel-tooltip'
+                    });
 
-                        <div class="parcel-tooltip-row">
-                            <span class="parcel-tooltip-label">Area:</span>
-                            ${properties.area_hectares} hectares
-                        </div>
+                    layer.on({
+                        mouseover: function (event) {
+                            const hoveredLayer = event.target;
+                            hoveredLayer.setStyle(getParcelHoverStyle(feature));
 
-                        <div class="parcel-tooltip-row">
-                            <span class="parcel-tooltip-label">Title No.:</span>
-                            ${properties.title_no}
-                        </div>
+                            if (hoveredLayer.setRadius) {
+                                hoveredLayer.setRadius(10);
+                            }
 
-                        <div class="parcel-tooltip-row">
-                            <span class="parcel-tooltip-label">Tax Declaration:</span>
-                            ${properties.tax_decl_no}
-                        </div>
+                            hoveredLayer.bringToFront();
+                            hoveredLayer.openTooltip();
+                        },
+                        mouseout: function (event) {
+                            if (parcelLayer) {
+                                parcelLayer.resetStyle(event.target);
+                            }
 
-                        <div class="parcel-tooltip-row">
-                            <span class="parcel-tooltip-label">Click:</span>
-                            open parcel record
-                        </div>
-                    </div>
-                `;
-            }
+                            if (event.target.setRadius) {
+                                event.target.setRadius(7);
+                            }
 
-            let parcelLayer;
+                            event.target.closeTooltip();
+                        },
+                        click: function () {
+                            if (feature.properties.details_url) {
+                                window.location.href = feature.properties.details_url;
+                            }
+                        }
+                    });
+                }
 
-            function onEachParcel(feature, layer) {
-                layer.bindTooltip(buildTooltipContent(feature.properties), {
-                    sticky: true,
-                    direction: 'top',
-                    opacity: 1,
-                    className: 'parcel-tooltip'
+                if (parcelGeoJson.features.length > 0) {
+                    parcelLayer = L.geoJSON(parcelGeoJson, {
+                        style: getParcelStyle,
+                        pointToLayer: function (feature, latlng) {
+                            const color = getParcelColor(feature.properties.status);
+
+                            return L.circleMarker(latlng, {
+                                radius: 7,
+                                color: color,
+                                weight: 2,
+                                opacity: 1,
+                                fillColor: color,
+                                fillOpacity: 0.56
+                            });
+                        },
+                        onEachFeature: onEachParcel
+                    }).addTo(map);
+
+                    setTimeout(function () {
+                        map.invalidateSize();
+                        map.fitBounds(parcelLayer.getBounds(), {
+                            padding: [40, 40],
+                            animate: true,
+                            duration: 0.75
+                        });
+                    }, 120);
+                } else {
+                    L.popup()
+                        .setLatLng(negrosOrientalCenter)
+                        .setContent('<strong>No mapped parcels yet.</strong><br>Encode parcel geometry from staff-side records to display parcels on this map.')
+                        .openOn(map);
+                }
+
+                document.getElementById('reset-map-view').addEventListener('click', function () {
+                    if (parcelLayer) {
+                        map.fitBounds(parcelLayer.getBounds(), {
+                            padding: [40, 40],
+                            animate: true,
+                            duration: 0.65
+                        });
+                    } else {
+                        map.setView(negrosOrientalCenter, 12);
+                    }
                 });
-
-                layer.on({
-                    mouseover: function (event) {
-                        const hoveredLayer = event.target;
-
-                        hoveredLayer.setStyle(getParcelHoverStyle(feature));
-                        hoveredLayer.bringToFront();
-                        hoveredLayer.openTooltip();
-                    },
-
-                    mouseout: function (event) {
-                        parcelLayer.resetStyle(event.target);
-                        event.target.closeTooltip();
-                    },
-
-                    click: function () {
-    if (feature.properties.details_url) {
-        window.location.href = feature.properties.details_url;
-    }
-}
-                });
-            }
-
-            if (parcelGeoJson.features.length > 0) {
-    parcelLayer = L.geoJSON(parcelGeoJson, {
-        style: getParcelStyle,
-        onEachFeature: onEachParcel
-    }).addTo(map);
-
-    map.fitBounds(parcelLayer.getBounds(), {
-        padding: [40, 40]
-    });
-} else {
-    L.popup()
-        .setLatLng(negrosOrientalCenter)
-        .setContent(`
-            <strong>No mapped parcels yet.</strong><br>
-            Encode parcel geometry to display parcels on this map.
-        `)
-        .openOn(map);
-}
-
-            document.getElementById('reset-map-view').addEventListener('click', function () {
-    if (parcelLayer) {
-        map.fitBounds(parcelLayer.getBounds(), {
-            padding: [40, 40]
-        });
-    } else {
-        map.setView(negrosOrientalCenter, 12);
-    }
-});
-
-            document.getElementById('focus-dar-office').addEventListener('click', function () {
-                map.setView(negrosOrientalCenter, 14);
             });
-        });
-    </script>
-@endpush
-</x-app-layout>
+        </script>
+    @endpush
+</x-geodetic-shell>

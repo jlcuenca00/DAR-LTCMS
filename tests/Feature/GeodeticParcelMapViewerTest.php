@@ -44,11 +44,13 @@ class GeodeticParcelMapViewerTest extends TestCase
 
         $response->assertOk();
         $response->assertSee('Parcel Map Viewer');
-        $response->assertSee('Geodetic Parcel Reference Map');
+        $response->assertSee('Map Tools');
+        $response->assertSee('Reset View');
+        $response->assertSee('Parcel List');
         $response->assertSee($parcel->parcel_code);
         $response->assertSee('T-GEO-001');
         $response->assertSee('TD-GEO-001');
-        $response->assertSee('Read-only parcel/reference review');
+        $response->assertSee('Read-only');
     }
 
     public function test_geodetic_user_can_view_read_only_parcel_details(): void
@@ -83,13 +85,13 @@ class GeodeticParcelMapViewerTest extends TestCase
             ->get(route('geodetic.parcels.show', $parcel));
 
         $response->assertOk();
-        $response->assertSee('Geodetic Parcel Details');
+        $response->assertSee('Parcel Reference Details');
         $response->assertSee('TEST-GEO-MAP-002');
         $response->assertSee('T-GEO-002');
         $response->assertSee('TD-GEO-002');
         $response->assertSee('Sibulan');
         $response->assertSee('Boloc-boloc');
-        $response->assertSee('does not allow editing');
+        $response->assertSee('Geometry Reference');
         $response->assertDontSee('Approve');
         $response->assertDontSee('Generate Clearance');
     }
@@ -100,17 +102,19 @@ class GeodeticParcelMapViewerTest extends TestCase
 
         $response->assertRedirect(route('login'));
     }
+
     public function test_geodetic_dashboard_links_to_parcel_map_viewer(): void
-{
-    $geodetic = User::factory()->create([
-        'role' => 'geodetic',
-    ]);
+    {
+        $geodetic = User::factory()->create([
+            'role' => 'geodetic',
+        ]);
 
-    $response = $this->actingAs($geodetic)
-        ->get(route('geodetic.dashboard'));
+        $response = $this->actingAs($geodetic)
+            ->get(route('geodetic.dashboard'));
 
-    $response->assertOk();
-    $response->assertSee('Parcel Map Viewer');
-    $response->assertSee(route('geodetic.parcel-map.index'));
-}
+        $response->assertOk();
+        $response->assertSee('Open Map');
+        $response->assertSee(route('geodetic.parcel-map.index'));
+        $response->assertDontSee('/geodetic/applications');
+    }
 }
