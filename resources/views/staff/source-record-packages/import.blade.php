@@ -7,36 +7,172 @@
             <i class="fa-solid fa-arrow-left"></i>
             Back to Archive
         </a>
-        <a href="{{ route('staff.source-record-package-imports.template') }}" class="staff-button staff-button-dark">
-            <i class="fa-solid fa-download"></i>
-            Download CSV Template
-        </a>
     </x-slot>
-
 
     <x-slot name="styles">
         <style>
+            .source-import-page {
+                display: grid;
+                gap: 18px;
+            }
+
+            .source-import-grid {
+                display: grid;
+                grid-template-columns: minmax(0, 1.65fr) minmax(340px, .85fr);
+                gap: 18px;
+                align-items: start;
+            }
+
+            .source-import-hero {
+                display: grid;
+                grid-template-columns: 48px minmax(0, 1fr);
+                gap: 14px;
+                align-items: start;
+            }
+
+            .source-import-hero-icon {
+                width: 48px;
+                height: 48px;
+                border-radius: 16px;
+                border: 1px solid #bbf7d0;
+                background: linear-gradient(180deg, #f0fdf4 0%, #dcfce7 100%);
+                color: #166534;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                box-shadow: inset 0 1px 0 rgba(255, 255, 255, .65);
+            }
+
+            .source-template-card {
+                margin-top: 18px;
+                border: 1px solid #e5e7eb;
+                border-radius: 16px;
+                background: #ffffff;
+                padding: 14px 16px;
+                display: grid;
+                grid-template-columns: 40px minmax(0, 1fr) auto;
+                gap: 12px;
+                align-items: center;
+                box-shadow: 0 1px 0 rgba(17, 24, 39, .03);
+            }
+
+            .source-template-icon {
+                width: 40px;
+                height: 40px;
+                border-radius: 13px;
+                border: 1px solid #bbf7d0;
+                background: #f0fdf4;
+                color: #166534;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .source-template-title {
+                margin: 0;
+                color: #111827;
+                font-size: 13px;
+                font-weight: 900;
+            }
+
+            .source-template-copy {
+                margin: 3px 0 0;
+                color: #6b7280;
+                font-size: 12px;
+                line-height: 1.5;
+            }
+
+            .source-template-card .staff-button {
+                height: 40px;
+                min-height: 40px;
+                padding: 0 14px;
+                white-space: nowrap;
+            }
+
+            .source-import-upload-box {
+                margin-top: 22px;
+                border: 1px dashed #d1d5db;
+                border-radius: 18px;
+                background: #fafafa;
+                padding: 18px;
+                transition: border-color .18s ease, background .18s ease, box-shadow .18s ease;
+            }
+
+            .source-import-upload-box:focus-within {
+                border-color: #16a34a;
+                background: #fafffb;
+                box-shadow: 0 0 0 4px rgba(22, 163, 74, .08);
+            }
+
+            .source-import-file-input {
+                margin-top: 10px;
+                display: block;
+                width: 100%;
+                border-radius: 12px;
+                border: 1px solid #d1d5db;
+                background: #ffffff;
+                padding: 11px 12px;
+                color: #374151;
+                font-size: 13px;
+            }
+
+            .source-import-file-input::file-selector-button {
+                margin-right: 12px;
+                border: 0;
+                border-radius: 9px;
+                background: #0f172a;
+                color: #ffffff;
+                padding: 8px 12px;
+                font-size: 12px;
+                font-weight: 800;
+                cursor: pointer;
+            }
+
+            .source-import-help-row {
+                margin-top: 10px;
+                display: flex;
+                flex-wrap: wrap;
+                gap: 8px;
+                color: #6b7280;
+                font-size: 12px;
+                line-height: 1.5;
+            }
+
+            .source-import-help-pill {
+                display: inline-flex;
+                align-items: center;
+                gap: 6px;
+                border-radius: 999px;
+                border: 1px solid #e5e7eb;
+                background: #ffffff;
+                padding: 5px 9px;
+                font-weight: 700;
+                color: #374151;
+            }
+
             .source-submit-footer {
-                border-top: 1px solid #e5e7eb;
-                background: #f8fafc;
-                padding: 18px 24px;
+                margin-top: 18px;
+                border: 1px solid #e5e7eb;
+                border-radius: 16px;
+                background: #ffffff;
+                padding: 16px;
                 display: grid;
                 grid-template-columns: minmax(0, 1fr) auto;
-                gap: 20px;
+                gap: 18px;
                 align-items: center;
             }
 
             .source-submit-note {
                 display: grid;
-                grid-template-columns: 40px minmax(0, 1fr);
+                grid-template-columns: 38px minmax(0, 1fr);
                 gap: 12px;
                 align-items: start;
                 min-width: 0;
             }
 
             .source-submit-icon {
-                width: 40px;
-                height: 40px;
+                width: 38px;
+                height: 38px;
                 border-radius: 12px;
                 border: 1px solid #bbf7d0;
                 background: #ecfdf5;
@@ -55,11 +191,11 @@
             }
 
             .source-submit-copy {
-                margin: 4px 0 0;
-                max-width: 820px;
-                color: #64748b;
-                font-size: 13px;
-                line-height: 1.55;
+                margin: 3px 0 0;
+                max-width: 740px;
+                color: #6b7280;
+                font-size: 12.5px;
+                line-height: 1.5;
             }
 
             .source-submit-actions {
@@ -73,8 +209,8 @@
             .source-submit-actions .staff-button {
                 height: 42px;
                 min-height: 42px;
-                min-width: 158px;
-                padding: 0 18px;
+                min-width: 142px;
+                padding: 0 16px;
                 display: inline-flex;
                 align-items: center;
                 justify-content: center;
@@ -83,13 +219,89 @@
             }
 
             .source-submit-actions .staff-button-primary {
-                min-width: 190px;
+                min-width: 184px;
+            }
+
+            .source-flow-card {
+                position: sticky;
+                top: 18px;
+            }
+
+            .source-flow-list {
+                margin-top: 16px;
+                display: grid;
+                gap: 12px;
+            }
+
+            .source-flow-item {
+                display: grid;
+                grid-template-columns: 34px minmax(0, 1fr);
+                gap: 12px;
+                align-items: start;
+                border: 1px solid #e5e7eb;
+                border-radius: 16px;
+                background: #ffffff;
+                padding: 14px;
+            }
+
+            .source-flow-number {
+                width: 34px;
+                height: 34px;
+                border-radius: 12px;
+                background: #f0fdf4;
+                border: 1px solid #bbf7d0;
+                color: #166534;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 13px;
+                font-weight: 900;
+            }
+
+            .source-flow-title {
+                margin: 0;
+                color: #111827;
+                font-size: 13px;
+                font-weight: 900;
+            }
+
+            .source-flow-copy {
+                margin: 4px 0 0;
+                color: #6b7280;
+                font-size: 12px;
+                line-height: 1.55;
+            }
+
+
+            .source-import-error {
+                margin-top: 9px;
+                display: flex;
+                align-items: flex-start;
+                gap: 7px;
+                color: #b91c1c;
+                font-size: 12px;
+                font-weight: 700;
+            }
+
+            @media (max-width: 1180px) {
+                .source-import-grid {
+                    grid-template-columns: 1fr;
+                }
+
+                .source-flow-card {
+                    position: static;
+                }
             }
 
             @media (max-width: 820px) {
-                .source-submit-footer {
+                .source-submit-footer,
+                .source-template-card {
                     grid-template-columns: 1fr;
-                    padding: 16px;
+                    padding: 14px;
+                }
+
+                .source-template-card .staff-button {
+                    justify-self: start;
                 }
 
                 .source-submit-actions {
@@ -102,8 +314,10 @@
                 }
             }
 
-            @media (max-width: 520px) {
-                .source-submit-note {
+            @media (max-width: 560px) {
+                .source-import-hero,
+                .source-submit-note,
+                .source-flow-item {
                     grid-template-columns: 1fr;
                 }
 
@@ -119,95 +333,146 @@
         </style>
     </x-slot>
 
-    @if (session('success'))
-        <div class="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm font-semibold text-green-800">{{ session('success') }}</div>
-    @endif
+    <div class="source-import-page">
+        @if (session('success'))
+            <div class="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm font-semibold text-green-800">{{ session('success') }}</div>
+        @endif
 
-    @if ($errors->any())
-        <div class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
-            <div class="font-bold mb-1">Please correct the following:</div>
-            <ul class="list-disc pl-5 space-y-1">
-                @foreach ($errors->all() as $error)
-                    <li>{{ $error }}</li>
-                @endforeach
-            </ul>
-        </div>
-    @endif
-
-    <section class="staff-scope-banner">
-        <div>
-            <h3>Bulk Source Package Import</h3>
-            <p>
-                Importing source packages creates documentary/provenance records only after staff preview and commit. Imported rows do not automatically transfer ownership, mutate registry records, or appear as parcels on the map.
-            </p>
-        </div>
-        <span class="staff-scope-pill">Preview Before Commit</span>
-    </section>
-
-    <section class="grid grid-cols-1 gap-5 xl:grid-cols-3">
-        <div class="staff-panel staff-panel-pad xl:col-span-2">
-            <div class="flex items-start gap-4">
-                <span class="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-green-700 text-white">
-                    <i class="fa-solid fa-file-import"></i>
-                </span>
-                <div>
-                    <h2 class="staff-panel-title">Upload Completed CSV Template</h2>
-                    <p class="staff-panel-subtitle">Use the official template and keep the header row unchanged. The system will show valid rows, blocked rows, and possible duplicates before saving anything.</p>
-                </div>
+        <section class="staff-scope-banner">
+            <div>
+                <h3>Bulk Source Package Import</h3>
+                <p>
+                    Importing source packages creates documentary/provenance records only after staff preview and commit. Imported rows do not automatically transfer ownership, mutate registry records, or appear as parcels on the map.
+                </p>
             </div>
+            <span class="staff-scope-pill">Preview Before Commit</span>
+        </section>
 
-            <form method="POST" action="{{ route('staff.source-record-package-imports.preview.store') }}" enctype="multipart/form-data" class="mt-6 space-y-5">
-                @csrf
-
-                <div class="rounded-xl border border-dashed border-gray-300 bg-gray-50 p-5">
-                    <label class="staff-form-label">COMPLETED CSV FILE *</label>
-                    <input type="file" name="import_file" accept=".csv,.txt" class="mt-2 block w-full rounded-lg border border-gray-300 bg-white p-3 text-sm text-gray-700">
-                    <p class="mt-2 text-xs text-gray-500">Accepted: CSV or TXT. GeoJSON values must remain valid JSON text inside the CSV cell.</p>
+        <section class="source-import-grid">
+            <div class="staff-panel staff-panel-pad">
+                <div class="source-import-hero">
+                    <span class="source-import-hero-icon">
+                        <i class="fa-solid fa-file-arrow-up"></i>
+                    </span>
+                    <div>
+                        <h2 class="staff-panel-title">Upload Completed CSV Template</h2>
+                        <p class="staff-panel-subtitle">
+                            Upload the official completed template. The system will preview valid rows, blocked rows, and possible duplicates before saving anything to the source archive.
+                        </p>
+                    </div>
                 </div>
 
-                <div class="source-submit-footer">
-                    <div class="source-submit-note">
-                        <span class="source-submit-icon" aria-hidden="true">
-                            <i class="fa-solid fa-table-list"></i>
-                        </span>
+                <div class="source-template-card">
+                    <span class="source-template-icon" aria-hidden="true">
+                        <i class="fa-solid fa-download"></i>
+                    </span>
+                    <div>
+                        <p class="source-template-title">Start with the official CSV template</p>
+                        <p class="source-template-copy">
+                            Download the template first and keep the column headers unchanged before uploading the completed file.
+                        </p>
+                    </div>
+                    <a href="{{ route('staff.source-record-package-imports.template') }}" class="staff-button staff-button-dark">
+                        <i class="fa-solid fa-file-arrow-down"></i>
+                        Download CSV Template
+                    </a>
+                </div>
 
-                        <div>
-                            <p class="source-submit-title">Ready to preview import rows</p>
-                            <p class="source-submit-copy">
-                                The next screen checks valid rows, errors, and possible duplicates before anything is committed to the archive.
+                <form method="POST" action="{{ route('staff.source-record-package-imports.preview.store') }}" enctype="multipart/form-data" class="mt-4">
+                    @csrf
+
+                    <div class="source-import-upload-box">
+                        <label for="import_file" class="staff-form-label">COMPLETED CSV FILE *</label>
+                        <input
+                            id="import_file"
+                            type="file"
+                            name="import_file"
+                            accept=".csv,.txt"
+                            class="source-import-file-input {{ $errors->has('import_file') ? 'border-red-300 bg-red-50' : '' }}"
+                        >
+
+                        @error('import_file')
+                            <p class="source-import-error">
+                                <i class="fa-solid fa-circle-exclamation mt-0.5"></i>
+                                <span>{{ $message }}</span>
                             </p>
+                        @enderror
+
+                        <div class="source-import-help-row">
+                            <span class="source-import-help-pill">
+                                <i class="fa-solid fa-file-csv"></i>
+                                CSV or TXT only
+                            </span>
+                            <span class="source-import-help-pill">
+                                <i class="fa-solid fa-code"></i>
+                                Keep GeoJSON valid inside cells
+                            </span>
+                            <span class="source-import-help-pill">
+                                <i class="fa-solid fa-table-columns"></i>
+                                Do not rename headers
+                            </span>
                         </div>
                     </div>
 
-                    <div class="source-submit-actions">
-                        <a href="{{ route('staff.legacy-records.index') }}" class="staff-button staff-button-light">
-                            Cancel
-                        </a>
-                        <button type="submit" class="staff-button staff-button-primary">
-                            <i class="fa-solid fa-magnifying-glass-chart"></i>
-                            Upload and Preview
-                        </button>
+                    <div class="source-submit-footer">
+                        <div class="source-submit-note">
+                            <span class="source-submit-icon" aria-hidden="true">
+                                <i class="fa-solid fa-table-list"></i>
+                            </span>
+
+                            <div>
+                                <p class="source-submit-title">Ready to review import rows</p>
+                                <p class="source-submit-copy">
+                                    The next screen checks row validity, missing fields, and possible duplicates before staff commits selected records.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="source-submit-actions">
+                            <a href="{{ route('staff.legacy-records.index') }}" class="staff-button staff-button-light">
+                                Cancel
+                            </a>
+                            <button type="submit" class="staff-button staff-button-primary">
+                                <i class="fa-solid fa-magnifying-glass-chart"></i>
+                                Upload and Preview
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <aside class="staff-panel staff-panel-pad source-flow-card">
+                <h2 class="staff-panel-title">Import Flow</h2>
+                <p class="staff-panel-subtitle">
+                    A controlled staff workflow for documentary source records. Nothing is committed until after preview.
+                </p>
+
+                <div class="source-flow-list">
+                    <div class="source-flow-item">
+                        <span class="source-flow-number">1</span>
+                        <div>
+                            <p class="source-flow-title">Download template</p>
+                            <p class="source-flow-copy">Use the official columns so required source and provenance fields stay consistent.</p>
+                        </div>
+                    </div>
+
+                    <div class="source-flow-item">
+                        <span class="source-flow-number">2</span>
+                        <div>
+                            <p class="source-flow-title">Upload and preview</p>
+                            <p class="source-flow-copy">Review valid rows, blocked rows, and possible duplicates before saving anything.</p>
+                        </div>
+                    </div>
+
+                    <div class="source-flow-item">
+                        <span class="source-flow-number">3</span>
+                        <div>
+                            <p class="source-flow-title">Commit selected rows</p>
+                            <p class="source-flow-copy">Only staff-selected valid rows become imported documentary source packages.</p>
+                        </div>
                     </div>
                 </div>
-            </form>
-        </div>
-
-        <aside class="staff-panel staff-panel-pad">
-            <h2 class="staff-panel-title">Import Flow</h2>
-            <div class="mt-4 space-y-3 text-sm text-gray-700">
-                <div class="rounded-lg border border-gray-200 p-3">
-                    <div class="font-black text-gray-900">1. Download template</div>
-                    <p class="mt-1 text-xs leading-relaxed text-gray-600">Use the provided columns to avoid missing required source fields.</p>
-                </div>
-                <div class="rounded-lg border border-gray-200 p-3">
-                    <div class="font-black text-gray-900">2. Upload and preview</div>
-                    <p class="mt-1 text-xs leading-relaxed text-gray-600">Review valid rows, errors, and possible duplicates before committing.</p>
-                </div>
-                <div class="rounded-lg border border-gray-200 p-3">
-                    <div class="font-black text-gray-900">3. Commit selected rows</div>
-                    <p class="mt-1 text-xs leading-relaxed text-gray-600">Only selected valid rows become imported source packages.</p>
-                </div>
-            </div>
-        </aside>
-    </section>
+            </aside>
+        </section>
+    </div>
 </x-staff-shell>

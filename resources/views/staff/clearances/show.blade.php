@@ -9,9 +9,25 @@
         $decisionLabel = $clearance->decision_status === 'approved'
             ? 'Approved Clearance'
             : ucwords(str_replace('_', ' ', $clearance->decision_status));
-        $decisionClass = $clearance->decision_status === 'approved' ? 'approved' : 'not-approved';
+        $decisionClass = strtolower((string) $clearance->decision_status) === 'approved' ? 'approved' : 'not-approved';
         $reviewedAt = optional($clearance->reviewed_at)->timezone('Asia/Manila');
         $generatedAt = optional($clearance->generated_at)->timezone('Asia/Manila');
+
+        $darLogoDataUri = null;
+        foreach (['images/dar-logo.png', 'images/dar-logo.svg', 'images/dar-logo.jpg', 'images/dar-logo.jpeg'] as $logoCandidate) {
+            $logoPath = public_path($logoCandidate);
+
+            if (file_exists($logoPath)) {
+                $extension = strtolower(pathinfo($logoPath, PATHINFO_EXTENSION));
+                $mime = match ($extension) {
+                    'svg' => 'image/svg+xml',
+                    'jpg', 'jpeg' => 'image/jpeg',
+                    default => 'image/png',
+                };
+                $darLogoDataUri = 'data:' . $mime . ';base64,' . base64_encode(file_get_contents($logoPath));
+                break;
+            }
+        }
     @endphp
 
     <style>
@@ -20,8 +36,13 @@
             margin: 14mm;
         }
 
+        :root {
+            --font-ui: 'Google Sans', 'Product Sans', Arial, Helvetica, sans-serif;
+        }
+
         * {
             box-sizing: border-box;
+            font-family: var(--font-ui) !important;
         }
 
         html {
@@ -32,7 +53,7 @@
             margin: 0;
             background: #e5e7eb;
             color: #111827;
-            font-family: 'Google Sans';
+            font-family: var(--font-ui);
             font-size: 13px;
             line-height: 1.5;
         }
@@ -85,7 +106,7 @@
             background: #ffffff;
             color: #111827;
             text-decoration: none;
-            font-family: 'Google Sans';
+            font-family: var(--font-ui);
             font-size: 12px;
             font-weight: 900;
             cursor: pointer;
@@ -117,7 +138,7 @@
 
         .official-header {
             display: grid;
-            grid-template-columns: 56px 1fr 56px;
+            grid-template-columns: 64px 1fr 64px;
             align-items: center;
             text-align: center;
             border-bottom: 3px double #14532d;
@@ -126,6 +147,21 @@
         }
 
         .seal {
+            width: 54px;
+            height: 54px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .seal-logo {
+            width: 54px;
+            height: 54px;
+            object-fit: contain;
+            display: block;
+        }
+
+        .seal-fallback {
             width: 44px;
             height: 44px;
             border-radius: 12px;
@@ -247,6 +283,10 @@
             background: #fef2f2;
         }
 
+        .decision-box.not-approved .decision-label {
+            color: #991b1b;
+        }
+
         .decision-label {
             color: #475569;
             font-size: 10px;
@@ -265,6 +305,10 @@
 
         .decision-box.not-approved .decision-value {
             color: #b91c1c;
+        }
+
+        .decision-box.not-approved .decision-note {
+            color: #7f1d1d;
         }
 
         .decision-note {
@@ -511,7 +555,13 @@
     <main class="page-shell">
         <div class="page">
             <header class="official-header">
-                <div class="seal">DAR</div>
+                <div class="seal">
+                    @if ($darLogoDataUri)
+                        <img src="{{ $darLogoDataUri }}" alt="Department of Agrarian Reform Logo" class="seal-logo">
+                    @else
+                        <div class="seal-fallback">DAR</div>
+                    @endif
+                </div>
                 <div>
                     <p class="republic">Republic of the Philippines</p>
                     <p class="agency">Department of Agrarian Reform</p>

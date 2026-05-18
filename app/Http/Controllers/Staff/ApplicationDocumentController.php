@@ -16,6 +16,30 @@ use Illuminate\Validation\ValidationException;
 
 class ApplicationDocumentController extends Controller
 {
+    public function show(LandTransferApplication $application, RequiredDocument $requiredDocument)
+    {
+        $document = ApplicationDocument::where('land_transfer_application_id', $application->id)
+            ->where('required_document_id', $requiredDocument->id)
+            ->firstOrFail();
+
+        if (! $document->file_path || ! Storage::exists($document->file_path)) {
+            abort(404, 'Uploaded document file not found.');
+        }
+
+        $filename = $document->original_filename ?: basename($document->file_path);
+        $mimeType = Storage::mimeType($document->file_path) ?: 'application/octet-stream';
+
+        return Storage::response(
+            $document->file_path,
+            $filename,
+            [
+                'Content-Type' => $mimeType,
+                'X-Content-Type-Options' => 'nosniff',
+            ],
+            'inline'
+        );
+    }
+
     public function store(Request $request, LandTransferApplication $application, RequiredDocument $requiredDocument)
     {
         if ($application->isFinalized()) {

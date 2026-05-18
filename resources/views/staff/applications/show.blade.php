@@ -543,6 +543,112 @@
                 padding: 10px 12px;
             }
 
+            .document-file-review {
+                margin-top: 12px;
+                border: 1px solid #dbe4dd;
+                background: #ffffff;
+                border-radius: 12px;
+                padding: 12px;
+                display: grid;
+                grid-template-columns: 220px minmax(0, 1fr);
+                gap: 14px;
+                align-items: stretch;
+            }
+
+            .document-file-preview {
+                border: 1px solid #e5e7eb;
+                background: #f8fafc;
+                border-radius: 10px;
+                min-height: 150px;
+                overflow: hidden;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .document-file-preview img {
+                width: 100%;
+                height: 100%;
+                max-height: 180px;
+                object-fit: cover;
+                display: block;
+            }
+
+            .document-file-icon {
+                width: 52px;
+                height: 52px;
+                border-radius: 14px;
+                background: #ecfdf5;
+                color: #166534;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 22px;
+            }
+
+            .document-file-info {
+                min-width: 0;
+                display: grid;
+                gap: 10px;
+                align-content: center;
+            }
+
+            .document-file-label {
+                margin: 0;
+                font-size: 11px;
+                font-weight: 900;
+                letter-spacing: 0.1em;
+                text-transform: uppercase;
+                color: #64748b;
+            }
+
+            .document-file-name {
+                margin: 3px 0 0;
+                font-size: 14px;
+                font-weight: 850;
+                color: #111827;
+                line-height: 1.4;
+                word-break: break-word;
+            }
+
+            .document-file-meta {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 6px;
+            }
+
+            .document-file-chip {
+                display: inline-flex;
+                align-items: center;
+                gap: 6px;
+                border: 1px solid #dbe4dd;
+                background: #f8faf9;
+                color: #166534;
+                border-radius: 999px;
+                padding: 5px 8px;
+                font-size: 11px;
+                font-weight: 850;
+            }
+
+            .document-file-actions {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 8px;
+                align-items: center;
+            }
+
+            .document-file-missing {
+                margin-top: 12px;
+                border: 1px solid #fecaca;
+                background: #fef2f2;
+                color: #991b1b;
+                border-radius: 10px;
+                padding: 11px 12px;
+                font-size: 12px;
+                font-weight: 800;
+                line-height: 1.45;
+            }
+
             .metadata-box {
                 margin-top: 10px;
                 border: 1px solid #dbe4dd;
@@ -1071,6 +1177,7 @@
                 .landowner-link-select-row,
                 .upload-grid,
                 .document-detail-grid,
+                .document-file-review,
                 .document-workflow-grid,
                 .validation-grid,
                 .final-lock-grid,
@@ -1503,6 +1610,13 @@
                             $doc = $uploaded->get($req->id);
                             $isUploaded = ! is_null($doc);
                             $editPanelId = 'document-edit-panel-' . $req->id;
+                            $documentExists = $isUploaded && $doc->file_path && \Illuminate\Support\Facades\Storage::exists($doc->file_path);
+                            $documentMime = $documentExists ? (\Illuminate\Support\Facades\Storage::mimeType($doc->file_path) ?: null) : null;
+                            $isImageDocument = $documentMime && str_starts_with((string) $documentMime, 'image/');
+                            $isPdfDocument = $documentMime === 'application/pdf';
+                            $documentViewUrl = $documentExists
+                                ? route('staff.applications.documents.show', ['application' => $application->id, 'requiredDocument' => $req->id])
+                                : null;
                         @endphp
 
                         <article id="required-document-{{ $req->id }}" class="requirement-card">
@@ -1568,6 +1682,60 @@
                                             </div>
 
                                         </div>
+
+                                        @if ($documentExists)
+                                            <div class="document-file-review">
+                                                <a href="{{ $documentViewUrl }}"
+                                                   target="_blank"
+                                                   rel="noopener"
+                                                   class="document-file-preview"
+                                                   aria-label="Open uploaded document">
+                                                    @if ($isImageDocument)
+                                                        <img src="{{ $documentViewUrl }}" alt="Preview of {{ $doc->original_filename }}">
+                                                    @else
+                                                        <span class="document-file-icon" aria-hidden="true">
+                                                            <i class="fa-solid {{ $isPdfDocument ? 'fa-file-pdf' : 'fa-file-lines' }}"></i>
+                                                        </span>
+                                                    @endif
+                                                </a>
+
+                                                <div class="document-file-info">
+                                                    <div>
+                                                        <p class="document-file-label">Staff File Review</p>
+                                                        <p class="document-file-name">{{ $doc->original_filename }}</p>
+                                                    </div>
+
+                                                    <div class="document-file-meta">
+                                                        <span class="document-file-chip">
+                                                            <i class="fa-solid fa-eye"></i>
+                                                            {{ $isImageDocument ? 'Image Preview' : ($isPdfDocument ? 'PDF Output' : 'Uploaded File') }}
+                                                        </span>
+                                                        @if ($documentMime)
+                                                            <span class="document-file-chip">
+                                                                <i class="fa-solid fa-file-shield"></i>
+                                                                {{ $documentMime }}
+                                                            </span>
+                                                        @endif
+                                                    </div>
+
+                                                    <div class="document-file-actions">
+                                                        <a href="{{ $documentViewUrl }}"
+                                                           target="_blank"
+                                                           rel="noopener"
+                                                           class="staff-button staff-button-light">
+                                                            <i class="fa-solid {{ $isImageDocument ? 'fa-image' : ($isPdfDocument ? 'fa-file-pdf' : 'fa-arrow-up-right-from-square') }}"></i>
+                                                            {{ $isImageDocument ? 'View Image' : ($isPdfDocument ? 'Open PDF' : 'Open File') }}
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        @else
+                                            <div class="document-file-missing">
+                                                <i class="fa-solid fa-triangle-exclamation"></i>
+                                                Uploaded file record found, but the stored file could not be located. Check storage/app and the file path before review.
+                                            </div>
+                                        @endif
+
 
                                         <div class="document-current-summary">
                                             <p class="document-current-summary-title">
@@ -1648,7 +1816,7 @@
                                                     <div>
                                                         <p class="document-edit-panel-title">Edit Uploaded Document</p>
                                                         <p class="document-edit-panel-copy">
-                                                            Update the indexing details below. Choose a replacement file only when the uploaded file itself needs to be changed. These fields support staff review only and do not verify ownership or execute land transfer.
+                                                            Update the file or indexing details below. Choose a replacement file only when the uploaded file itself needs to be changed.
                                                         </p>
                                                     </div>
                                                     <span class="document-indexing-label">
@@ -1688,27 +1856,12 @@
                                                         </div>
                                                     </div>
 
-                                                    <div class="document-indexing-panel">
-                                                        <div class="document-indexing-header">
-                                                            <div>
-                                                                <p class="document-form-title">Document Indexing / Metadata Capture</p>
-                                                                <p class="document-form-copy">
-                                                                    Encode only reference details needed for review, validation support, monitoring, and auditability.
-                                                                </p>
-                                                            </div>
-                                                            <span class="document-indexing-label">
-                                                                <i class="fa-solid fa-circle-info"></i>
-                                                                Review Aid
-                                                            </span>
-                                                        </div>
-
-                                                        @include('staff.applications.partials.document-metadata-fields', [
-                                                            'req' => $req,
-                                                            'doc' => $doc,
-                                                            'isFinal' => $isFinal,
-                                                            'lockMsg' => $lockMsg,
-                                                        ])
-                                                    </div>
+                                                    @include('staff.applications.partials.document-metadata-fields', [
+                                                        'req' => $req,
+                                                        'doc' => $doc,
+                                                        'isFinal' => $isFinal,
+                                                        'lockMsg' => $lockMsg,
+                                                    ])
 
                                                     <div class="document-action-row">
                                                         <button type="submit" class="staff-button staff-button-primary">
@@ -1745,7 +1898,7 @@
                                                     Upload Document
                                                 </p>
                                                 <p class="document-form-copy">
-                                                    Upload the required file and capture selected indexing details for review and traceability.
+                                                    Upload the required file for staff review and traceability.
                                                 </p>
                                             </div>
                                             <span class="document-indexing-label">
@@ -1787,27 +1940,12 @@
                                                 </div>
                                             </div>
 
-                                            <div class="document-indexing-panel">
-                                                <div class="document-indexing-header">
-                                                    <div>
-                                                        <p class="document-form-title">Document Indexing / Metadata Capture</p>
-                                                        <p class="document-form-copy">
-                                                            Encode only reference details needed for review, validation support, monitoring, and auditability.
-                                                        </p>
-                                                    </div>
-                                                    <span class="document-indexing-label">
-                                                        <i class="fa-solid fa-circle-info"></i>
-                                                        Review Aid
-                                                    </span>
-                                                </div>
-
-                                                @include('staff.applications.partials.document-metadata-fields', [
-                                                    'req' => $req,
-                                                    'doc' => null,
-                                                    'isFinal' => $isFinal,
-                                                    'lockMsg' => $lockMsg,
-                                                ])
-                                            </div>
+                                            @include('staff.applications.partials.document-metadata-fields', [
+                                                'req' => $req,
+                                                'doc' => null,
+                                                'isFinal' => $isFinal,
+                                                'lockMsg' => $lockMsg,
+                                            ])
 
                                             <div class="document-action-row">
                                                 <button type="submit"

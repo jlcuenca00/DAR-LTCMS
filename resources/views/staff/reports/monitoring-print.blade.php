@@ -11,6 +11,22 @@
         $decisionLabel = fn ($value) => (string) $value === 'approved'
             ? 'Approved Clearance'
             : ucwords(str_replace('_', ' ', (string) $value));
+
+        $darLogoDataUri = null;
+        foreach (['images/dar-logo.png', 'images/dar-logo.svg', 'images/dar-logo.jpg', 'images/dar-logo.jpeg'] as $logoCandidate) {
+            $logoPath = public_path($logoCandidate);
+
+            if (file_exists($logoPath)) {
+                $extension = strtolower(pathinfo($logoPath, PATHINFO_EXTENSION));
+                $mime = match ($extension) {
+                    'svg' => 'image/svg+xml',
+                    'jpg', 'jpeg' => 'image/jpeg',
+                    default => 'image/png',
+                };
+                $darLogoDataUri = 'data:' . $mime . ';base64,' . base64_encode(file_get_contents($logoPath));
+                break;
+            }
+        }
     @endphp
 
     <style>
@@ -19,8 +35,13 @@
             margin: 15mm 14mm 16mm;
         }
 
+        :root {
+            --font-ui: 'Google Sans', 'Product Sans', Arial, Helvetica, sans-serif;
+        }
+
         * {
             box-sizing: border-box;
+            font-family: var(--font-ui) !important;
         }
 
         html {
@@ -30,7 +51,7 @@
         body {
             margin: 0;
             color: #111827;
-            font-family: 'Google Sans';
+            font-family: var(--font-ui);
             font-size: 12px;
             line-height: 1.45;
             background: #e5e7eb;
@@ -71,7 +92,7 @@
             background: #ffffff;
             color: #111827;
             text-decoration: none;
-            font-family: 'Google Sans';
+            font-family: var(--font-ui);
             font-size: 12px;
             font-weight: 800;
             cursor: pointer;
@@ -104,11 +125,26 @@
 
         .seal-cell {
             display: table-cell;
-            width: 54px;
+            width: 62px;
             vertical-align: middle;
         }
 
         .seal {
+            width: 52px;
+            height: 52px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .seal-logo {
+            width: 52px;
+            height: 52px;
+            object-fit: contain;
+            display: block;
+        }
+
+        .seal-fallback {
             width: 44px;
             height: 44px;
             border-radius: 12px;
@@ -127,7 +163,7 @@
             display: table-cell;
             vertical-align: middle;
             text-align: center;
-            padding-right: 54px;
+            padding-right: 62px;
         }
 
         .republic {
@@ -456,7 +492,13 @@
     <main class="document-page">
         <header class="document-header">
             <div class="seal-cell">
-                <div class="seal">DAR</div>
+                <div class="seal">
+                    @if ($darLogoDataUri)
+                        <img src="{{ $darLogoDataUri }}" alt="Department of Agrarian Reform Logo" class="seal-logo">
+                    @else
+                        <div class="seal-fallback">DAR</div>
+                    @endif
+                </div>
             </div>
             <div class="agency-cell">
                 <p class="republic">Republic of the Philippines</p>

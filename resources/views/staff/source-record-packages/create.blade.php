@@ -14,18 +14,19 @@
         <style>
             .source-package-page {
                 display: grid;
-                gap: 18px;
+                gap: 14px;
             }
 
             .source-form-panel {
                 overflow: hidden;
+                border-radius: 16px;
             }
 
             .source-form-section {
-                padding: 22px 24px;
+                padding: 18px 22px;
                 border-bottom: 1px solid #e5e7eb;
                 display: grid;
-                gap: 16px;
+                gap: 14px;
                 background: #ffffff;
                 position: relative;
             }
@@ -42,19 +43,43 @@
                 align-items: flex-start;
             }
 
+            .source-section-heading {
+                display: flex;
+                align-items: flex-start;
+                gap: 11px;
+                min-width: 0;
+            }
+
+            .source-step-number {
+                width: 30px;
+                height: 30px;
+                border-radius: 10px;
+                border: 1px solid #bbf7d0;
+                background: #ecfdf5;
+                color: #166534;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 13px;
+                font-weight: 900;
+                flex: 0 0 auto;
+                margin-top: -1px;
+            }
+
             .source-section-title {
                 margin: 0;
-                font-size: 17px;
+                font-size: 16px;
+                line-height: 1.25;
                 font-weight: 900;
                 color: #111827;
             }
 
             .source-section-copy {
-                margin: 5px 0 0;
+                margin: 3px 0 0;
                 color: #64748b;
-                font-size: 13px;
-                line-height: 1.55;
-                max-width: 860px;
+                font-size: 12.5px;
+                line-height: 1.45;
+                max-width: 820px;
             }
 
             .source-section-chip {
@@ -63,8 +88,8 @@
                 background: #f0fdf4;
                 color: #166534;
                 border-radius: 999px;
-                padding: 6px 10px;
-                font-size: 11px;
+                padding: 5px 10px;
+                font-size: 10.5px;
                 font-weight: 900;
                 white-space: nowrap;
             }
@@ -72,7 +97,7 @@
             .source-option-grid {
                 display: grid;
                 grid-template-columns: repeat(4, minmax(0, 1fr));
-                gap: 10px;
+                gap: 9px;
             }
 
             .source-option-card {
@@ -82,7 +107,7 @@
                 border: 1px solid #dbe4dd;
                 background: #f8faf9;
                 border-radius: 10px;
-                padding: 13px 14px;
+                padding: 11px 13px;
                 cursor: pointer;
                 transition: 150ms ease;
             }
@@ -92,10 +117,43 @@
                 background: #f0fdf4;
             }
 
-            .source-option-card input {
+            .source-option-card input[type="checkbox"] {
                 width: 16px;
                 height: 16px;
-                accent-color: #166534;
+                flex: 0 0 auto;
+                appearance: none;
+                -webkit-appearance: none;
+                border: 1.5px solid #9ca3af;
+                border-radius: 3px;
+                background: #ffffff;
+                display: grid;
+                place-content: center;
+                cursor: pointer;
+                transition: 150ms ease;
+            }
+
+            .source-option-card input[type="checkbox"]::before {
+                content: "";
+                width: 9px;
+                height: 9px;
+                transform: scale(0);
+                transition: 120ms ease-in-out;
+                background: #ffffff;
+                clip-path: polygon(14% 44%, 0 58%, 38% 96%, 100% 22%, 86% 8%, 36% 66%);
+            }
+
+            .source-option-card input[type="checkbox"]:checked {
+                border-color: #15803d;
+                background: #15803d;
+            }
+
+            .source-option-card input[type="checkbox"]:checked::before {
+                transform: scale(1);
+            }
+
+            .source-option-card input[type="checkbox"]:focus-visible {
+                outline: 2px solid rgba(22, 101, 52, 0.25);
+                outline-offset: 2px;
             }
 
             .source-option-card span {
@@ -107,7 +165,7 @@
             .source-field-grid {
                 display: grid;
                 grid-template-columns: repeat(3, minmax(0, 1fr));
-                gap: 14px;
+                gap: 12px 14px;
             }
 
             .source-field-grid.two {
@@ -117,7 +175,7 @@
             .source-field,
             .source-field-wide {
                 display: grid;
-                gap: 6px;
+                gap: 5px;
             }
 
             .source-field-wide {
@@ -126,11 +184,26 @@
 
             .source-field label,
             .source-field-wide label {
-                font-size: 11px !important;
+                font-size: 10.5px !important;
                 font-weight: 900 !important;
-                letter-spacing: 0.09em;
+                letter-spacing: 0.085em;
                 text-transform: uppercase;
                 color: #374151 !important;
+            }
+
+            .source-field input,
+            .source-field select,
+            .source-field textarea,
+            .source-field-wide input,
+            .source-field-wide select,
+            .source-field-wide textarea {
+                border-color: #cbd5e1;
+                min-height: 40px;
+            }
+
+            .source-field textarea,
+            .source-field-wide textarea {
+                resize: vertical;
             }
 
             .source-help-box {
@@ -138,17 +211,17 @@
                 background: #f8faf9;
                 color: #14532d;
                 border-radius: 10px;
-                padding: 12px 14px;
-                font-size: 12.5px;
-                line-height: 1.55;
+                padding: 9px 11px;
+                font-size: 12px;
+                line-height: 1.45;
             }
 
             .source-footer-actions {
-                padding: 18px 24px;
+                padding: 14px 22px;
                 display: flex;
                 justify-content: space-between;
                 align-items: center;
-                gap: 18px;
+                gap: 16px;
                 background: #f8fafc;
                 border-top: 1px solid #e5e7eb;
             }
@@ -162,9 +235,9 @@
             }
 
             .source-footer-icon {
-                width: 38px;
-                height: 38px;
-                border-radius: 11px;
+                width: 34px;
+                height: 34px;
+                border-radius: 10px;
                 background: #ecfdf5;
                 border: 1px solid #bbf7d0;
                 color: #166534;
@@ -176,16 +249,16 @@
 
             .source-footer-title {
                 margin: 0;
-                font-size: 13px;
+                font-size: 12.5px;
                 font-weight: 900;
                 color: #111827;
             }
 
             .source-footer-note {
-                margin: 4px 0 0;
+                margin: 3px 0 0;
                 color: #64748b;
-                font-size: 12.5px;
-                line-height: 1.55;
+                font-size: 12px;
+                line-height: 1.45;
             }
 
             .source-footer-buttons {
@@ -197,16 +270,16 @@
             }
 
             .source-footer-buttons .staff-button {
-                height: 42px;
-                min-height: 42px;
-                min-width: 158px;
-                padding: 0 18px;
+                height: 40px;
+                min-height: 40px;
+                min-width: 150px;
+                padding: 0 16px;
                 justify-content: center;
                 white-space: nowrap;
             }
 
             .source-footer-buttons .staff-button-primary {
-                min-width: 190px;
+                min-width: 184px;
             }
 
 
@@ -297,9 +370,14 @@
                 }
 
                 .source-section-header,
+                .source-section-heading,
                 .source-footer-actions {
                     flex-direction: column;
                     align-items: stretch;
+                }
+
+                .source-step-number {
+                    margin-top: 0;
                 }
 
                 .source-footer-note-wrap {
@@ -342,11 +420,14 @@
 
             <section class="source-form-section">
                 <div class="source-section-header">
-                    <div>
-                        <h2 class="source-section-title">Step 1. Choose Included Source Sections</h2>
-                        <p class="source-section-copy">
+                    <div class="source-section-heading">
+                        <span class="source-step-number">1</span>
+                        <div>
+                            <h2 class="source-section-title">Choose Included Source Sections</h2>
+                            <p class="source-section-copy">
                             Select only the sections present in the physical/digital source file. The system will create connected source records under one package for traceability.
-                        </p>
+                            </p>
+                        </div>
                     </div>
                     <span class="source-section-chip">At least one required</span>
                 </div>
@@ -376,11 +457,14 @@
 
             <section class="source-form-section">
                 <div class="source-section-header">
-                    <div>
-                        <h2 class="source-section-title">Step 2. Core Party and Parcel Details</h2>
-                        <p class="source-section-copy">
+                    <div class="source-section-heading">
+                        <span class="source-step-number">2</span>
+                        <div>
+                            <h2 class="source-section-title">Core Party and Parcel Details</h2>
+                            <p class="source-section-copy">
                             Encode shared reference values once. These are indexing fields for review and monitoring, not automatic legal verification fields.
-                        </p>
+                            </p>
+                        </div>
                     </div>
                 </div>
 
@@ -444,11 +528,14 @@
 
             <section class="source-form-section">
                 <div class="source-section-header">
-                    <div>
-                        <h2 class="source-section-title">Step 3. Historical Clearance Details</h2>
-                        <p class="source-section-copy">
+                    <div class="source-section-heading">
+                        <span class="source-step-number">3</span>
+                        <div>
+                            <h2 class="source-section-title">Historical Clearance Details</h2>
+                            <p class="source-section-copy">
                             Fill this only when the package includes an old or current clearance reference.
-                        </p>
+                            </p>
+                        </div>
                     </div>
                     <span class="source-section-chip">Optional</span>
                 </div>
@@ -473,11 +560,14 @@
 
             <section class="source-form-section">
                 <div class="source-section-header">
-                    <div>
-                        <h2 class="source-section-title">Step 4. Scope, Parcel Link, and Geometry</h2>
-                        <p class="source-section-copy">
+                    <div class="source-section-heading">
+                        <span class="source-step-number">4</span>
+                        <div>
+                            <h2 class="source-section-title">Scope, Parcel Link, and Geometry</h2>
+                            <p class="source-section-copy">
                             Link to an existing main Parcel Record when applicable. Source geometry is stored as reference data and does not appear on the map by itself.
-                        </p>
+                            </p>
+                        </div>
                     </div>
                 </div>
 
@@ -507,12 +597,12 @@
 
                     <div class="source-field-wide">
                         <label for="boundary_description">Boundary / Technical Description Notes</label>
-                        <textarea id="boundary_description" name="boundary_description" rows="3" class="w-full rounded-lg border-gray-300 text-sm">{{ old('boundary_description') }}</textarea>
+                        <textarea id="boundary_description" name="boundary_description" rows="2" class="w-full rounded-lg border-gray-300 text-sm">{{ old('boundary_description') }}</textarea>
                     </div>
 
                     <div class="source-field-wide">
                         <label for="source_geometry_geojson">Source GeoJSON Geometry</label>
-                        <textarea id="source_geometry_geojson" name="source_geometry_geojson" rows="6" placeholder='Example polygon: {"type":"Polygon","coordinates":[[[123.3048,9.3064],[123.3058,9.3064],[123.3058,9.3072],[123.3048,9.3072],[123.3048,9.3064]]]}' class="w-full rounded-lg border-gray-300 text-xs">{{ old('source_geometry_geojson') }}</textarea>
+                        <textarea id="source_geometry_geojson" name="source_geometry_geojson" rows="4" placeholder='Example polygon: {"type":"Polygon","coordinates":[[[123.3048,9.3064],[123.3058,9.3064],[123.3058,9.3072],[123.3048,9.3072],[123.3048,9.3064]]]}' class="w-full rounded-lg border-gray-300 text-xs">{{ old('source_geometry_geojson') }}</textarea>
                         <p class="source-help-box mt-2">
                             Geometry entered here is documentary/reference geometry only. Staff may later copy it into a main Parcel Record through a confirmed parcel creation/linking action.
                         </p>
@@ -522,11 +612,14 @@
 
             <section class="source-form-section">
                 <div class="source-section-header">
-                    <div>
-                        <h2 class="source-section-title">Step 5. Provenance and Encoding Details</h2>
-                        <p class="source-section-copy">
+                    <div class="source-section-heading">
+                        <span class="source-step-number">5</span>
+                        <div>
+                            <h2 class="source-section-title">Provenance and Encoding Details</h2>
+                            <p class="source-section-copy">
                             Record where the information came from so the source package remains traceable and auditable.
-                        </p>
+                            </p>
+                        </div>
                     </div>
                 </div>
 
@@ -551,14 +644,14 @@
                         <input id="transcription_date" type="date" name="transcription_date" value="{{ old('transcription_date', now()->toDateString()) }}" class="w-full rounded-lg border-gray-300 text-sm" required>
                     </div>
 
-                    <div class="source-field-wide">
+                    <div class="source-field">
                         <label for="remarks">Remarks</label>
-                        <textarea id="remarks" name="remarks" rows="3" class="w-full rounded-lg border-gray-300 text-sm">{{ old('remarks') }}</textarea>
+                        <textarea id="remarks" name="remarks" rows="2" class="w-full rounded-lg border-gray-300 text-sm">{{ old('remarks') }}</textarea>
                     </div>
 
-                    <div class="source-field-wide">
+                    <div class="source-field">
                         <label for="source_notes">Source Notes</label>
-                        <textarea id="source_notes" name="source_notes" rows="3" class="w-full rounded-lg border-gray-300 text-sm">{{ old('source_notes') }}</textarea>
+                        <textarea id="source_notes" name="source_notes" rows="2" class="w-full rounded-lg border-gray-300 text-sm">{{ old('source_notes') }}</textarea>
                     </div>
                 </div>
             </section>

@@ -30,12 +30,11 @@
 
 <div style="margin-top:12px; margin-bottom:10px; padding:12px; border:1px solid #e5e7eb; border-radius:8px; background:#f9fafb;">
     <div style="font-weight:600; color:#111827; margin-bottom:4px;">
-        Document Metadata / Indexing
+        Indexing details
     </div>
 
     <div style="font-size:12px; color:#6b7280; margin-bottom:10px;">
-        Encode selected reference details only. This is for indexing, review, monitoring, and auditability.
-        It is not full transcription and not final legal verification.
+        Encode selected reference details for staff review and auditability only. This is not full transcription or final legal verification.
     </div>
 
     <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:10px;">

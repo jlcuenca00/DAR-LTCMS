@@ -143,6 +143,8 @@ Route::middleware(['auth', 'role:staff'])
             ->name('applications.landowner-records.create');
         Route::get('/applications/{application}', [LandTransferApplicationController::class, 'show'])
             ->name('applications.show');
+        Route::get('/applications/{application}/documents/{requiredDocument}', [ApplicationDocumentController::class, 'show'])
+            ->name('applications.documents.show');
         Route::post('/applications/{application}/documents/{requiredDocument}', [ApplicationDocumentController::class, 'store'])
             ->name('applications.documents.store');
         Route::delete('/applications/{application}/documents/{requiredDocument}', [ApplicationDocumentController::class, 'destroy'])

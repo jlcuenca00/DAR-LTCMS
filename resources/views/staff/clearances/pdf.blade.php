@@ -8,8 +8,25 @@
         $decisionLabel = $clearance->decision_status === 'approved'
             ? 'Approved Clearance'
             : ucwords(str_replace('_', ' ', $clearance->decision_status));
+        $decisionClass = strtolower((string) $clearance->decision_status) === 'approved' ? 'approved' : 'not-approved';
         $reviewedAt = optional($clearance->reviewed_at)->timezone('Asia/Manila');
         $generatedAt = optional($clearance->generated_at)->timezone('Asia/Manila');
+
+        $darLogoDataUri = null;
+        foreach (['images/dar-logo.png', 'images/dar-logo.svg', 'images/dar-logo.jpg', 'images/dar-logo.jpeg'] as $logoCandidate) {
+            $logoPath = public_path($logoCandidate);
+
+            if (file_exists($logoPath)) {
+                $extension = strtolower(pathinfo($logoPath, PATHINFO_EXTENSION));
+                $mime = match ($extension) {
+                    'svg' => 'image/svg+xml',
+                    'jpg', 'jpeg' => 'image/jpeg',
+                    default => 'image/png',
+                };
+                $darLogoDataUri = 'data:' . $mime . ';base64,' . base64_encode(file_get_contents($logoPath));
+                break;
+            }
+        }
     @endphp
 
     <style>
@@ -18,10 +35,18 @@
             margin: 13mm 14mm 15mm;
         }
 
+        :root {
+            --font-ui: 'Google Sans', 'Product Sans', Arial, Helvetica, sans-serif;
+        }
+
+        * {
+            font-family: var(--font-ui) !important;
+        }
+
         body {
             margin: 0;
             color: #111827;
-            font-family: 'Google Sans';
+            font-family: var(--font-ui);
             font-size: 11px;
             line-height: 1.42;
         }
@@ -34,11 +59,22 @@
         }
 
         .seal-cell {
-            width: 52px;
+            width: 58px;
             vertical-align: middle;
         }
 
         .seal {
+            width: 48px;
+            height: 48px;
+            text-align: center;
+        }
+
+        .seal-logo {
+            width: 48px;
+            height: 48px;
+        }
+
+        .seal-fallback {
             width: 40px;
             height: 40px;
             line-height: 40px;
@@ -53,7 +89,7 @@
 
         .header-text {
             text-align: center;
-            padding-right: 52px;
+            padding-right: 58px;
         }
 
         .republic {
@@ -153,12 +189,21 @@
             vertical-align: top;
         }
 
+        .decision-cell.not-approved {
+            border-color: #dc2626;
+            background: #fef2f2;
+        }
+
         .decision-label {
             color: #475569;
             font-size: 8.5px;
             font-weight: bold;
             letter-spacing: 0.8px;
             text-transform: uppercase;
+        }
+
+        .decision-cell.not-approved .decision-label {
+            color: #991b1b;
         }
 
         .decision-value {
@@ -169,10 +214,18 @@
             text-transform: uppercase;
         }
 
+        .decision-cell.not-approved .decision-value {
+            color: #b91c1c;
+        }
+
         .decision-note {
             margin-top: 5px;
             color: #4b5563;
             font-size: 9.5px;
+        }
+
+        .decision-cell.not-approved .decision-note {
+            color: #7f1d1d;
         }
 
         .metadata-cell {
@@ -326,7 +379,15 @@
 <body>
     <table class="official-header">
         <tr>
-            <td class="seal-cell"><div class="seal">DAR</div></td>
+            <td class="seal-cell">
+                <div class="seal">
+                    @if ($darLogoDataUri)
+                        <img src="{{ $darLogoDataUri }}" alt="Department of Agrarian Reform Logo" class="seal-logo">
+                    @else
+                        <div class="seal-fallback">DAR</div>
+                    @endif
+                </div>
+            </td>
             <td class="header-text">
                 <div class="republic">Republic of the Philippines</div>
                 <div class="agency">Department of Agrarian Reform</div>
@@ -356,7 +417,7 @@
 
     <table class="decision-table">
         <tr>
-            <td class="decision-cell">
+            <td class="decision-cell {{ $decisionClass }}">
                 <div class="decision-label">Recorded Application Decision</div>
                 <div class="decision-value">{{ $decisionLabel }}</div>
                 <div class="decision-note">Decision status is locked in the system for auditability and monitoring.</div>

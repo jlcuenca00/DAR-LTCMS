@@ -1,20 +1,3 @@
-@php
-    $approved = $statusDistribution->firstWhere('status', \App\Models\LandTransferApplication::STATUS_APPROVED)['count'] ?? 0;
-    $pending = $statusDistribution->firstWhere('status', \App\Models\LandTransferApplication::STATUS_PENDING_REVIEW)['count'] ?? 0;
-    $notApproved = $statusDistribution->firstWhere('status', \App\Models\LandTransferApplication::STATUS_NOT_APPROVED)['count'] ?? 0;
-    $draft = $statusDistribution->firstWhere('status', \App\Models\LandTransferApplication::STATUS_DRAFT)['count'] ?? 0;
-
-    $distributionTotal = max($approved + $pending + $notApproved + $draft, 0);
-
-    $approvedPct = $distributionTotal > 0 ? round(($approved / $distributionTotal) * 100, 2) : 0;
-    $pendingPct = $distributionTotal > 0 ? round(($pending / $distributionTotal) * 100, 2) : 0;
-    $notApprovedPct = $distributionTotal > 0 ? round(($notApproved / $distributionTotal) * 100, 2) : 0;
-
-    $approvedEnd = $approvedPct;
-    $pendingEnd = $approvedPct + $pendingPct;
-    $notApprovedEnd = $approvedPct + $pendingPct + $notApprovedPct;
-@endphp
-
 <x-staff-shell title="Staff Operations Dashboard" active="dashboard" maxWidth="max-w-none">
     <x-slot name="styles">
         <style>
@@ -164,50 +147,33 @@
             .icon-green { background: #16a34a; }
             .icon-red { background: #dc2626; }
 
-            .dashboard-grid {
+            .dashboard-layout {
                 display: grid;
-                grid-template-columns: minmax(0, 1.72fr) minmax(360px, 0.78fr);
+                grid-template-columns: minmax(0, 1.68fr) minmax(340px, 0.82fr);
                 gap: 20px;
-                align-items: stretch;
+                align-items: start;
             }
 
-            .dashboard-grid .panel {
+            .dashboard-main-stack,
+            .dashboard-side-stack {
+                display: grid;
+                gap: 20px;
                 min-width: 0;
-                height: 100%;
-                min-height: 398px;
+                align-items: start;
+            }
+
+            .dashboard-chart-panel {
+                min-height: 360px;
                 display: flex;
                 flex-direction: column;
             }
 
-            .dashboard-content-grid {
-                display: grid;
-                grid-template-columns: minmax(0, 1.72fr) minmax(360px, 0.78fr);
-                gap: 20px;
-                align-items: start;
-                margin-top: 0;
-            }
-
-            .dashboard-stack {
-                display: grid;
-                gap: 20px;
-                min-width: 0;
-                align-items: start;
-            }
-
-            .dashboard-side-stack {
-                display: grid;
-                gap: 16px;
-                min-width: 0;
-                align-items: start;
+            .dashboard-chart-panel .panel-header {
+                min-height: 72px;
             }
 
             .dashboard-recent-panel {
-                height: auto !important;
-                align-self: start !important;
-            }
-
-            .dashboard-grid + .dashboard-content-grid {
-                margin-top: 0;
+                align-self: start;
             }
 
             .dashboard-compact-panel .panel-header {
@@ -224,9 +190,9 @@
 
             .bar-chart {
                 flex: 1;
-                height: 292px;
-                min-height: 292px;
-                padding: 22px 26px 20px;
+                height: 250px;
+                min-height: 250px;
+                padding: 18px 24px 18px;
                 display: flex;
                 align-items: end;
                 gap: 18px;
@@ -242,7 +208,7 @@
             }
 
             .bar-track {
-                height: 196px;
+                height: 168px;
                 display: flex;
                 align-items: end;
                 border-left: 1px dashed #e5e7eb;
@@ -269,75 +235,6 @@
                 font-size: 11px;
                 color: #6b7280;
             }
-
-            .donut-wrap {
-                flex: 1;
-                padding: 18px 24px 22px;
-                display: flex;
-                flex-direction: column;
-                justify-content: center;
-                align-items: center;
-            }
-
-            .donut {
-                width: 152px;
-                height: 152px;
-                border-radius: 999px;
-                background:
-                    @if ($distributionTotal > 0)
-                        conic-gradient(
-                            #16a34a 0 {{ $approvedEnd }}%,
-                            #ea580c {{ $approvedEnd }}% {{ $pendingEnd }}%,
-                            #dc2626 {{ $pendingEnd }}% {{ $notApprovedEnd }}%,
-                            #94a3b8 {{ $notApprovedEnd }}% 100%
-                        );
-                    @else
-                        #e5e7eb;
-                    @endif
-                position: relative;
-            }
-
-            .donut::after {
-                content: "";
-                position: absolute;
-                inset: 32px;
-                background: #ffffff;
-                border-radius: 999px;
-            }
-
-            .legend {
-                width: 100%;
-                margin-top: 22px;
-                display: grid;
-                gap: 11px;
-            }
-
-            .legend-row {
-                display: flex;
-                justify-content: space-between;
-                gap: 16px;
-                align-items: center;
-                font-size: 13px;
-            }
-
-            .legend-left {
-                display: flex;
-                align-items: center;
-                gap: 9px;
-                color: #64748b;
-                font-weight: 700;
-            }
-
-            .dot {
-                width: 11px;
-                height: 11px;
-                border-radius: 999px;
-            }
-
-            .dot.green { background: #16a34a; }
-            .dot.orange { background: #ea580c; }
-            .dot.red { background: #dc2626; }
-            .dot.gray { background: #94a3b8; }
 
             .quick-list {
                 padding: 16px 20px 18px;
@@ -383,6 +280,63 @@
                 text-align: center;
                 color: #166534;
                 font-size: 15px;
+            }
+
+            .dashboard-primary-actions {
+                align-self: start;
+                height: auto !important;
+                min-height: 0 !important;
+            }
+
+            .dashboard-primary-actions .quick-list {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 8px;
+                padding: 12px 16px 16px;
+            }
+
+            .dashboard-primary-actions .quick-link {
+                min-height: 54px;
+                align-items: center;
+                justify-content: flex-start;
+                flex-direction: row;
+                gap: 10px;
+                padding: 9px 11px;
+                background: #ffffff;
+            }
+
+            .dashboard-primary-actions .quick-link:hover {
+                transform: translateY(-1px);
+                box-shadow: 0 8px 18px rgba(22, 101, 52, 0.08);
+            }
+
+            .dashboard-primary-actions .quick-title {
+                font-size: 12.5px;
+                line-height: 1.18;
+                letter-spacing: 0.01em;
+            }
+
+            .dashboard-primary-actions .quick-desc {
+                display: none;
+            }
+
+            .dashboard-primary-actions .quick-action-icon {
+                order: -1;
+                width: 28px;
+                height: 28px;
+                border: 1px solid #bbf7d0;
+                border-radius: 9px;
+                display: grid;
+                place-items: center;
+                align-self: center;
+                flex: 0 0 auto;
+                margin-top: 0;
+                background: #ecfdf5;
+                color: #166534;
+                font-size: 12px;
+            }
+
+            .dashboard-primary-actions .quick-link:hover .quick-action-icon {
+                background: #dcfce7;
             }
 
             .table-wrap {
@@ -540,35 +494,19 @@
             }
 
 
-            .dashboard-chart-panel .panel-header {
-                min-height: 72px;
-            }
-
-            .dashboard-status-panel .panel-header {
-                min-height: 72px;
-            }
-
-            .dashboard-status-panel {
-                align-self: stretch;
-            }
-
             @media (max-width: 1180px) {
-                .stats-grid,
-                .dashboard-grid,
-                .dashboard-content-grid {
+                .stats-grid {
                     grid-template-columns: repeat(2, minmax(0, 1fr));
                 }
 
-                .dashboard-grid > .panel:first-child,
-                .dashboard-content-grid > .dashboard-stack:first-child {
-                    grid-column: 1 / -1;
+                .dashboard-layout {
+                    grid-template-columns: 1fr;
                 }
             }
 
             @media (max-width: 760px) {
                 .stats-grid,
-                .dashboard-grid,
-                .dashboard-content-grid,
+                .dashboard-layout,
                 .mini-grid {
                     grid-template-columns: 1fr;
                 }
@@ -586,6 +524,20 @@
 
                 .stat-card {
                     min-height: auto;
+                }
+
+                .dashboard-primary-actions .quick-list {
+                    grid-template-columns: 1fr;
+                }
+
+                .dashboard-primary-actions .quick-link {
+                    min-height: 58px;
+                    flex-direction: row;
+                    align-items: center;
+                }
+
+                .dashboard-primary-actions .quick-desc {
+                    display: block;
                 }
             }
         </style>
@@ -635,91 +587,42 @@
         @endforeach
     </section>
 
-    <section class="dashboard-grid">
-        <div class="panel dashboard-chart-panel">
-            <div class="panel-header">
-                <div>
-                    <h2 class="panel-title">Monthly Application Submissions</h2>
-                    <p class="panel-subtitle">Encoded clearance applications during the last six months.</p>
+    <section class="dashboard-layout">
+        <div class="dashboard-main-stack">
+            <div class="panel dashboard-chart-panel">
+                <div class="panel-header">
+                    <div>
+                        <h2 class="panel-title">Monthly Application Submissions</h2>
+                        <p class="panel-subtitle">Encoded clearance applications during the last six months.</p>
+                    </div>
+
+                    <a href="{{ route('staff.applications.index') }}" class="panel-link">
+                        View Applications →
+                    </a>
                 </div>
 
-                <a href="{{ route('staff.applications.index') }}" class="panel-link">
-                    View Applications →
-                </a>
-            </div>
+                <div class="bar-chart">
+                    @foreach ($monthlyApplications as $month)
+                        @php
+                            $height = max(6, round(($month['count'] / $maxMonthlyCount) * 100));
+                        @endphp
 
-            <div class="bar-chart">
-                @foreach ($monthlyApplications as $month)
-                    @php
-                        $height = max(6, round(($month['count'] / $maxMonthlyCount) * 100));
-                    @endphp
+                        <div class="bar-item">
+                            <div class="bar-track">
+                                <div
+                                    class="bar-fill"
+                                    style="height: {{ $height }}%;"
+                                    title="{{ $month['count'] }} application(s)"
+                                ></div>
+                            </div>
 
-                    <div class="bar-item">
-                        <div class="bar-track">
-                            <div
-                                class="bar-fill"
-                                style="height: {{ $height }}%;"
-                                title="{{ $month['count'] }} application(s)"
-                            ></div>
+                            <p class="bar-label">{{ $month['label'] }}</p>
+                            <p class="bar-count">{{ $month['count'] }}</p>
                         </div>
-
-                        <p class="bar-label">{{ $month['label'] }}</p>
-                        <p class="bar-count">{{ $month['count'] }}</p>
-                    </div>
-                @endforeach
-            </div>
-        </div>
-
-        <div class="panel dashboard-status-panel">
-            <div class="panel-header">
-                <div>
-                    <h2 class="panel-title">Application Status Distribution</h2>
-                    <p class="panel-subtitle">Current workflow status totals.</p>
+                    @endforeach
                 </div>
             </div>
 
-            <div class="donut-wrap">
-                <div class="donut" aria-label="Application status distribution chart"></div>
-
-                <div class="legend">
-                    <div class="legend-row">
-                        <div class="legend-left">
-                            <span class="dot green"></span>
-                            Approved Clearances
-                        </div>
-                        <strong>{{ number_format($approved) }}</strong>
-                    </div>
-
-                    <div class="legend-row">
-                        <div class="legend-left">
-                            <span class="dot orange"></span>
-                            Pending Review
-                        </div>
-                        <strong>{{ number_format($pending) }}</strong>
-                    </div>
-
-                    <div class="legend-row">
-                        <div class="legend-left">
-                            <span class="dot red"></span>
-                            Not Approved
-                        </div>
-                        <strong>{{ number_format($notApproved) }}</strong>
-                    </div>
-
-                    <div class="legend-row">
-                        <div class="legend-left">
-                            <span class="dot gray"></span>
-                            Draft
-                        </div>
-                        <strong>{{ number_format($draft) }}</strong>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <section class="dashboard-content-grid">
-        <div class="dashboard-stack">
             <div class="panel dashboard-recent-panel">
                 <div class="panel-header">
                     <div>
@@ -774,38 +677,10 @@
                     </table>
                 </div>
             </div>
-
-            <div class="panel dashboard-compact-panel">
-                <div class="panel-header">
-                    <div>
-                        <h2 class="panel-title">Recent Audit Activity</h2>
-                        <p class="panel-subtitle">Latest trace records from important staff-side actions.</p>
-                    </div>
-
-                    <a href="{{ route('staff.audit-logs.index') }}" class="panel-link">
-                        View →
-                    </a>
-                </div>
-
-                <div class="activity-list">
-                    @forelse ($recentAuditLogs as $log)
-                        <div class="activity-card">
-                            <p class="activity-action">
-                                {{ ucwords(str_replace('_', ' ', $log->action)) }}
-                            </p>
-                            <p class="activity-meta">
-                                {{ $log->actor?->name ?? 'System' }} · {{ $log->created_at?->format('M d, Y h:i A') }}
-                            </p>
-                        </div>
-                    @empty
-                        <div class="empty-state">No audit activity recorded yet.</div>
-                    @endforelse
-                </div>
-            </div>
         </div>
 
         <aside class="dashboard-side-stack">
-            <div class="panel dashboard-compact-panel">
+            <div class="panel dashboard-compact-panel dashboard-primary-actions">
                 <div class="panel-header">
                     <div>
                         <h2 class="panel-title">Quick Actions</h2>
@@ -816,7 +691,7 @@
                 <div class="quick-list">
                     <a href="{{ \Illuminate\Support\Facades\Route::has('staff.applications.create') ? route('staff.applications.create') : route('staff.applications.index') }}" class="quick-link">
                         <div>
-                            <p class="quick-title">Encode New Application</p>
+                            <p class="quick-title">New Application</p>
                             <p class="quick-desc">Create a staff-encoded clearance application.</p>
                         </div>
                         <i class="fa-solid fa-plus quick-action-icon"></i>
@@ -824,7 +699,7 @@
 
                     <a href="{{ route('staff.applications.index', ['status' => \App\Models\LandTransferApplication::STATUS_PENDING_REVIEW]) }}" class="quick-link">
                         <div>
-                            <p class="quick-title">Review Pending Applications</p>
+                            <p class="quick-title">Pending Review</p>
                             <p class="quick-desc">Open applications awaiting decision.</p>
                         </div>
                         <i class="fa-solid fa-clock quick-action-icon"></i>
@@ -832,7 +707,7 @@
 
                     <a href="{{ route('staff.records.parcels.index') }}" class="quick-link">
                         <div>
-                            <p class="quick-title">Search Parcel Records</p>
+                            <p class="quick-title">Parcel Search</p>
                             <p class="quick-desc">Find main parcel records.</p>
                         </div>
                         <i class="fa-solid fa-magnifying-glass-location quick-action-icon"></i>
@@ -840,7 +715,7 @@
 
                     <a href="{{ route('staff.legacy-records.index') }}" class="quick-link">
                         <div>
-                            <p class="quick-title">Open Source Records Archive</p>
+                            <p class="quick-title">Source Archive</p>
                             <p class="quick-desc">Review documentary source records.</p>
                         </div>
                         <i class="fa-solid fa-box-archive quick-action-icon"></i>
@@ -848,7 +723,7 @@
 
                     <a href="{{ route('staff.reports.monitoring.index') }}" class="quick-link">
                         <div>
-                            <p class="quick-title">Generate Monitoring Report</p>
+                            <p class="quick-title">Monitoring Report</p>
                             <p class="quick-desc">Open printable monitoring outputs.</p>
                         </div>
                         <i class="fa-solid fa-chart-line quick-action-icon"></i>
@@ -856,7 +731,7 @@
 
                     <a href="{{ route('staff.audit-logs.index') }}" class="quick-link">
                         <div>
-                            <p class="quick-title">View Audit Logs</p>
+                            <p class="quick-title">Audit Logs</p>
                             <p class="quick-desc">Review traceability records.</p>
                         </div>
                         <i class="fa-solid fa-clipboard-list quick-action-icon"></i>
@@ -892,6 +767,34 @@
                         <p class="mini-label">Source Records</p>
                         <p class="mini-value">{{ number_format($recordsSummary['legacy_records']) }}</p>
                     </div>
+                </div>
+            </div>
+
+            <div class="panel dashboard-compact-panel">
+                <div class="panel-header">
+                    <div>
+                        <h2 class="panel-title">Recent Audit Activity</h2>
+                        <p class="panel-subtitle">Latest trace records from important staff-side actions.</p>
+                    </div>
+
+                    <a href="{{ route('staff.audit-logs.index') }}" class="panel-link">
+                        View →
+                    </a>
+                </div>
+
+                <div class="activity-list">
+                    @forelse ($recentAuditLogs as $log)
+                        <div class="activity-card">
+                            <p class="activity-action">
+                                {{ ucwords(str_replace('_', ' ', $log->action)) }}
+                            </p>
+                            <p class="activity-meta">
+                                {{ $log->actor?->name ?? 'System' }} · {{ $log->created_at?->format('M d, Y h:i A') }}
+                            </p>
+                        </div>
+                    @empty
+                        <div class="empty-state">No audit activity recorded yet.</div>
+                    @endforelse
                 </div>
             </div>
         </aside>
