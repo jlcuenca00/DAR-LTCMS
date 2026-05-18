@@ -4,7 +4,10 @@
     active="landowner-records"
 >
     <x-slot name="actions">
-        <a href="{{ route('staff.records.parcels.index') }}" class="staff-button staff-button-light">
+        <a href="{{ route('staff.records.landowners.create') }}" class="staff-button staff-button-primary">
+            <i class="fa-solid fa-user-plus"></i>
+            Add Landowner
+        </a>        <a href="{{ route('staff.records.parcels.index') }}" class="staff-button staff-button-light">
             <i class="fa-solid fa-map-location-dot"></i>
             View Parcel Records
         </a>

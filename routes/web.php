@@ -71,6 +71,10 @@ Route::middleware(['auth', 'role:staff'])
 
         Route::get('/records/landowners', [RecordSearchController::class, 'landowners'])
             ->name('records.landowners.index');
+        Route::get('/records/landowners/create', [LandownerRecordController::class, 'create'])
+            ->name('records.landowners.create');
+        Route::post('/records/landowners', [LandownerRecordController::class, 'store'])
+            ->name('records.landowners.store');
         Route::get('/records/landowners/{landowner}', [LandownerRecordController::class, 'show'])
             ->name('records.landowners.show');
         Route::get('/records/landowners/{landowner}/edit', [LandownerRecordController::class, 'edit'])

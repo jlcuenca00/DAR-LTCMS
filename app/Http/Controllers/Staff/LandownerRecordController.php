@@ -93,4 +93,50 @@ class LandownerRecordController extends Controller
             ->route('staff.records.landowners.show', $landowner)
             ->with('success', 'Landowner record updated successfully. Current hectares remain computed from active landholding records.');
     }
+    public function create()
+    {
+        $landownerUsers = User::query()
+            ->where('role', 'landowner')
+            ->whereDoesntHave('landowner')
+            ->orderBy('name')
+            ->get();
+
+        return view('staff.records.landowner-create', compact('landownerUsers'));
+    }
+
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'first_name' => ['required', 'string', 'max:255'],
+            'middle_name' => ['nullable', 'string', 'max:255'],
+            'last_name' => ['required', 'string', 'max:255'],
+            'suffix' => ['nullable', 'string', 'max:50'],
+            'contact_number' => ['nullable', 'string', 'max:100'],
+            'address_line' => ['nullable', 'string', 'max:255'],
+            'barangay' => ['nullable', 'string', 'max:255'],
+            'municipality' => ['nullable', 'string', 'max:255'],
+            'province' => ['nullable', 'string', 'max:255'],
+            'user_id' => [
+                'nullable',
+                'exists:users,id',
+                Rule::unique('landowners', 'user_id'),
+            ],
+        ]);
+
+        $landowner = Landowner::create($validated);
+
+        AuditLogger::record(
+            'landowner_record_created',
+            null,
+            $landowner,
+            [
+                'new_values' => $landowner->only(array_keys($validated)),
+                'scope_note' => 'Administrative landowner/person record creation only. Landholding and parcel linkage must be encoded separately.',
+            ]
+        );
+
+        return redirect()
+            ->route('staff.records.landowners.show', $landowner)
+            ->with('success', 'Landowner record created successfully. Add landholding records separately when needed.');
+    }
 }
