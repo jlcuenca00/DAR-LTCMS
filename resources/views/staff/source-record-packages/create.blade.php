@@ -505,8 +505,24 @@
                     </div>
 
                     <div class="source-field">
-                        <label for="crop_or_land_use">Crop / Land Use</label>
-                        <input id="crop_or_land_use" name="crop_or_land_use" value="{{ old('crop_or_land_use') }}" class="w-full rounded-lg border-gray-300 text-sm">
+                        <label for="crop_or_land_use">Agricultural Classification</label>
+                        @php
+    $agriculturalClassificationOptions = [
+        'Private Agricultural Land',
+        'Awarded CLOA Land',
+        'Emancipation Patent Land',
+        'CARP-Covered Land',
+        'Not Yet Determined',
+        'Non-Agricultural / Reference Only',
+    ];
+@endphp
+<select id="crop_or_land_use" name="crop_or_land_use" class="w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-green-600 focus:ring-green-600">
+    <option value="">Select classification</option>
+    @foreach ($agriculturalClassificationOptions as $classification)
+        <option value="{{ $classification }}" @selected(old('crop_or_land_use') === $classification)>{{ $classification }}</option>
+    @endforeach
+</select>
+<p class="mt-1 text-xs text-gray-500">Use the classification indicated by the source document, if available.</p>
                     </div>
 
                     <div class="source-field">

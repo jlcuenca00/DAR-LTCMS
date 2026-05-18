@@ -637,7 +637,7 @@
                         <input id="area_hectares" type="number" step="0.0001" min="0" name="area_hectares" value="{{ old('area_hectares') }}" class="w-full rounded-lg border-gray-300 text-sm">
                     </div>
                     <div class="source-field">
-                        <label for="crop_or_land_use">Crop / Land Use</label>
+                        <label for="crop_or_land_use">Agricultural Classification</label>
                         <input id="crop_or_land_use" name="crop_or_land_use" value="{{ old('crop_or_land_use') }}" class="w-full rounded-lg border-gray-300 text-sm">
                     </div>
                     <div class="source-field">

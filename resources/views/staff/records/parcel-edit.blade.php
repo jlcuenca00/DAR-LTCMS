@@ -296,18 +296,7 @@
                                 <input id="area_hectares" type="number" step="0.0001" min="0" name="area_hectares" value="{{ old('area_hectares', $parcel->area_hectares) }}" class="parcel-edit-input">
                                 @error('area_hectares')<p class="parcel-edit-error">{{ $message }}</p>@enderror
                             </div>
-
-                            <div class="parcel-edit-field">
-                                <label for="agricultural_status">Agricultural Status</label>
-                                <select id="agricultural_status" name="agricultural_status" required class="parcel-edit-input">
-                                    @foreach ($agriculturalStatuses as $value => $label)
-                                        <option value="{{ $value }}" @selected(old('agricultural_status', $parcel->agricultural_status ?? 'not_yet_determined') === $value)>{{ $label }}</option>
-                                    @endforeach
-                                </select>
-                                <p class="parcel-edit-helper">Used for DAR record classification and monitoring. This does not transfer ownership or mutate registry records.</p>
-                                @error('agricultural_status')<p class="parcel-edit-error">{{ $message }}</p>@enderror
-                            </div>
-                        </div>
+</div>
                     </div>
                 </section>
 

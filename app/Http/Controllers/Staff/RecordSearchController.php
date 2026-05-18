@@ -103,7 +103,7 @@ class RecordSearchController extends Controller
             'municipality' => ['nullable', 'string', 'max:255'],
             'barangay' => ['nullable', 'string', 'max:255'],
             'status' => ['nullable', 'string', 'max:50'],
-            'agricultural_status' => ['nullable', 'string', Rule::in(array_keys(Parcel::agriculturalStatusOptions()))],
+            'agricultural_status' => ['nullable', 'string', Rule::in(array_keys(Parcel::AGRICULTURAL_STATUSES))],
         ]);
 
         $parcelsQuery = Parcel::query()
@@ -134,6 +134,10 @@ class RecordSearchController extends Controller
 
         if (! empty($filters['agricultural_status'])) {
             $parcelsQuery->where('agricultural_status', $filters['agricultural_status']);
+        }
+
+        if (($filters['agricultural_status'] ?? null) !== null && $filters['agricultural_status'] !== '') {
+            $parcelsQuery->where('agricultural_status', $filters['agricultural_status']); // automatic agricultural status index filter
         }
 
         $parcels = $parcelsQuery
@@ -212,9 +216,10 @@ class RecordSearchController extends Controller
             'barangay' => ['nullable', 'string', 'max:255'],
             'area_hectares' => ['nullable', 'numeric', 'min:0', 'max:999999.9999'],
             'status' => ['required', Rule::in(['active', 'inactive', 'linked_application', 'flagged'])],
-            'agricultural_status' => ['required', Rule::in(array_keys(Parcel::agriculturalStatusOptions()))],
             'remarks' => ['nullable', 'string', 'max:5000'],
         ]);
+
+        $data['agricultural_status'] = $data['agricultural_status'] ?? 'private_agricultural'; // automatic agricultural default after form removal
 
         $oldAgriculturalStatus = $parcel->agricultural_status ?: 'not_yet_determined';
 

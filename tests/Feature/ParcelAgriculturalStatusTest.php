@@ -12,7 +12,7 @@ class ParcelAgriculturalStatusTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_staff_can_update_parcel_agricultural_status_and_audit_log_is_created(): void
+    public function test_staff_update_defaults_parcel_to_private_agricultural_when_land_type_field_is_not_on_form_and_audit_log_is_created(): void
     {
         $staffUser = User::factory()->create([
             'role' => User::ROLE_STAFF,
@@ -42,15 +42,14 @@ class ParcelAgriculturalStatusTest extends TestCase
                 'barangay' => 'Banga',
                 'area_hectares' => '2.4000',
                 'status' => 'active',
-                'agricultural_status' => 'carp_covered',
-                'remarks' => 'Updated agricultural classification test parcel.',
+                'remarks' => 'Updated parcel without visible land type selector.',
             ]);
 
         $response->assertRedirect(route('staff.records.parcels.show', $parcel));
 
         $this->assertDatabaseHas('parcels', [
             'id' => $parcel->id,
-            'agricultural_status' => 'carp_covered',
+            'agricultural_status' => 'private_agricultural',
         ]);
 
         $this->assertDatabaseHas('audit_logs', [
@@ -65,7 +64,7 @@ class ParcelAgriculturalStatusTest extends TestCase
             ->firstOrFail();
 
         $this->assertSame('not_yet_determined', $auditLog->metadata['old_agricultural_status']);
-        $this->assertSame('carp_covered', $auditLog->metadata['new_agricultural_status']);
+        $this->assertSame('private_agricultural', $auditLog->metadata['new_agricultural_status']);
     }
 
     public function test_staff_parcel_details_display_agricultural_status_label(): void

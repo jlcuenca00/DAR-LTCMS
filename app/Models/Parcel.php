@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Parcel extends Model
 {
+    public const DEFAULT_AGRICULTURAL_STATUS = 'private_agricultural';
         public const AGRICULTURAL_STATUSES = [
         'private_agricultural' => 'Private Agricultural Land',
         'awarded_cloa' => 'Awarded CLOA Land',

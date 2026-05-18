@@ -24,7 +24,7 @@
             ['label' => 'Lot / Survey', 'value' => trim(($record->lot_number ?? '—') . ' / ' . ($record->survey_number ?? '—'))],
             ['label' => 'Landowner / Owner Name', 'value' => $record->landowner_name ?? '—'],
             ['label' => 'Transfer Parties', 'value' => 'Transferor: ' . ($record->transferor_name ?? '—') . ' | Transferee: ' . ($record->transferee_name ?? '—')],
-            ['label' => 'Area / Land Use', 'value' => ($record->area_hectares ? $record->area_hectares . ' ha' : '—') . ' | ' . ($record->crop_or_land_use ?? 'No land use recorded')],
+            ['label' => 'Area / Agricultural Classification', 'value' => ($record->area_hectares ? $record->area_hectares . ' ha' : '—') . ' | ' . ($record->crop_or_land_use ?? 'No agricultural classification recorded')],
             ['label' => 'Location', 'value' => ($record->municipality ?? '—') . ', ' . ($record->barangay ?? '—') . ', ' . ($record->province ?? 'Negros Oriental')],
             ['label' => 'Clearance / Application Ref.', 'value' => ($record->control_number ?? '—') . ' | Application: ' . ($record->application_reference_number ?? '—')],
             ['label' => 'Record Date / Status', 'value' => ($record->record_date?->format('M d, Y') ?? '—') . ' | ' . ($record->decision_status ?? '—')],
