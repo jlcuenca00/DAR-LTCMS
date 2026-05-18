@@ -16,15 +16,7 @@
         </a>
     </x-slot>
 
-    <section class="staff-scope-banner">
-        <div>
-            <h3>Staff Parcel Record Search</h3>
-            <p>
-                Only main Parcel Records are treated as mappable parcel entities. Source records may support or link to parcels, but they do not become map parcels by themselves and no ownership mutation is performed here.
-            </p>
-        </div>
-        <span class="staff-scope-pill">Main Parcel Records Only</span>
-    </section>
+    <span class="sr-only">Staff Parcel Record Search</span>
 
     <section class="staff-panel staff-panel-pad">
         <div class="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">

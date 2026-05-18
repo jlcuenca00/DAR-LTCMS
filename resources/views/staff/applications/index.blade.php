@@ -24,16 +24,6 @@
         </div>
     @endif
 
-    <section class="staff-scope-banner">
-        <div>
-            <h3>Application Records</h3>
-            <p>
-                Search and filter applications for administrative processing and monitoring only. Approval records the clearance result and does not automatically transfer land ownership or mutate registry records.
-            </p>
-        </div>
-        <span class="staff-scope-pill">Clearance Processing Only</span>
-    </section>
-
     <section class="staff-panel staff-panel-pad">
         <div class="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
             <div>

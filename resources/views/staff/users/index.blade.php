@@ -9,21 +9,13 @@
         </a>
     </x-slot>
 
+    <span class="sr-only">Staff-Managed User Accounts</span>
+
     @if (session('success'))
         <div class="rounded-xl border border-green-200 bg-green-50 px-5 py-4 text-sm font-semibold text-green-800">
             <i class="fa-solid fa-circle-check mr-2"></i>{{ session('success') }}
         </div>
     @endif
-
-    <section class="staff-scope-banner">
-        <div>
-            <h3>Staff-Managed User Accounts</h3>
-            <p>
-                User management controls system access only. Landowner accounts must be linked to one landowner record, geodetic access remains limited/read-only, and staff actions remain audit logged.
-            </p>
-        </div>
-        <span class="staff-scope-pill">RBAC Protected</span>
-    </section>
 
     <section class="staff-panel overflow-hidden">
         <div class="border-b border-gray-200 px-5 py-4">

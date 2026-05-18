@@ -398,15 +398,6 @@
     </x-slot>
 
     <div class="single-source-page">
-        <section class="staff-scope-banner">
-            <div>
-                <h3>Single Source Record Encoding</h3>
-                <p>
-                    Use this page only when the source file represents one clear record type. If one file contains connected title, landholding, parcel source, and clearance details, encode it as a Source Package instead. Saving here does not transfer land ownership or mutate registry records.
-                </p>
-            </div>
-            <span class="staff-scope-pill">Indexing Only</span>
-        </section>
 
         <section class="staff-panel source-form-panel">
             <div class="source-form-section">

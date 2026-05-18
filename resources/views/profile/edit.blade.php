@@ -7,7 +7,7 @@
         $isLandownerProfile => [
             'portal' => 'Landowner Portal',
             'badge' => 'Own Records Account',
-            'note' => 'Manage your login profile and password. This does not allow parcel editing, clearance processing, ownership transfer, or registry mutation.',
+            'note' => 'Manage your login profile and password.',
         ],
         $isGeodeticProfile => [
             'portal' => 'Geodetic Portal',

@@ -134,16 +134,6 @@
         </div>
     @endif
 
-    <section class="staff-scope-banner">
-        <div>
-            <h3>Review Import Before Commit</h3>
-            <p>
-                Rows shown here are not final records until staff commits selected valid rows. This preview protects data quality and prevents accidental creation of source records from error rows.
-            </p>
-        </div>
-        <span class="staff-scope-pill">{{ ucfirst($batch->status) }}</span>
-    </section>
-
     <section class="staff-panel staff-panel-pad">
         <div class="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
             <div>

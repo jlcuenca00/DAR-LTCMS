@@ -103,16 +103,6 @@
         </div>
     @endif
 
-    <section class="staff-scope-banner">
-        <div>
-            <h3>Source Records Archive</h3>
-            <p>
-                This archive stores documentary and provenance references used during clearance review. Source records may support staff review, record matching, and traceability, but they do not automatically create landowner records, become mappable parcels, transfer ownership, or mutate registry records.
-            </p>
-        </div>
-        <span class="staff-scope-pill">Documentary Records Only</span>
-    </section>
-
     <section class="source-action-grid">
         <a href="{{ route('staff.source-record-packages.create') }}" class="source-action-card staff-panel staff-panel-pad block transition">
             <div class="flex items-start gap-4">

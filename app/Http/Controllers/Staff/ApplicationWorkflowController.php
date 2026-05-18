@@ -8,6 +8,7 @@ use App\Models\RequiredDocument;
 use App\Services\ApplicationClearanceService;
 use App\Services\AuditLogger;
 use App\Services\LandholdingAreaValidationService;
+use App\Services\NotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -42,6 +43,9 @@ class ApplicationWorkflowController extends Controller
                 'new_status' => $application->status,
             ]
         );
+
+        app(NotificationService::class)->notifyStaffApplicationSubmitted($application);
+        app(NotificationService::class)->notifyLinkedLandownersStatusChanged($application, 'submitted for review');
 
         return back()->with('success', 'Application submitted for review.');
     }
@@ -111,6 +115,9 @@ public function approve(Request $request, LandTransferApplication $application)
             );
 
             app(ApplicationClearanceService::class)->generateForDecision($application, Auth::id());
+
+            app(NotificationService::class)->notifyStaffApplicationApproved($application);
+            app(NotificationService::class)->notifyLinkedLandownersFinalDecision($application);
         });
     } catch (\Throwable $e) {
         return back()->with('error', 'Approval failed: ' . $e->getMessage());
@@ -160,6 +167,9 @@ public function approve(Request $request, LandTransferApplication $application)
                 );
 
                 app(ApplicationClearanceService::class)->generateForDecision($application, Auth::id());
+
+                app(NotificationService::class)->notifyStaffApplicationNotApproved($application);
+                app(NotificationService::class)->notifyLinkedLandownersFinalDecision($application);
             });
         } catch (\Throwable $e) {
             return back()->with('error', 'Not Approved decision failed: ' . $e->getMessage());

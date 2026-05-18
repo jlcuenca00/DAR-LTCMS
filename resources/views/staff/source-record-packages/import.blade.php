@@ -338,16 +338,6 @@
             <div class="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm font-semibold text-green-800">{{ session('success') }}</div>
         @endif
 
-        <section class="staff-scope-banner">
-            <div>
-                <h3>Bulk Source Package Import</h3>
-                <p>
-                    Importing source packages creates documentary/provenance records only after staff preview and commit. Imported rows do not automatically transfer ownership, mutate registry records, or appear as parcels on the map.
-                </p>
-            </div>
-            <span class="staff-scope-pill">Preview Before Commit</span>
-        </section>
-
         <section class="source-import-grid">
             <div class="staff-panel staff-panel-pad">
                 <div class="source-import-hero">

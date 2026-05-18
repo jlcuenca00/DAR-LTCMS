@@ -249,16 +249,6 @@
             </div>
         @endif
 
-        <section class="staff-scope-banner">
-            <div>
-                <h3>Source Record Scope</h3>
-                <p>
-                    This screen stores documentary/provenance data for staff review and record matching only. Linking this record does not verify ownership, transfer land, create a legal parcel mutation, or alter registry records.
-                </p>
-            </div>
-            <span class="staff-scope-pill">Reference Record Only</span>
-        </section>
-
         <section class="staff-panel overflow-hidden">
             <div class="staff-panel-pad border-b border-gray-200 source-hero">
                 <div>

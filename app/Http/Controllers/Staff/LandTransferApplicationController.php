@@ -15,6 +15,7 @@ use App\Models\SourceRecordPackage;
 use App\Models\Parcel;
 use App\Services\AuditLogger;
 use App\Services\LandholdingAreaValidationService;
+use App\Services\NotificationService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
@@ -342,6 +343,8 @@ public function store(Request $request)
                 'scope_note' => 'Application encoding only. No ownership transfer or registry mutation was performed.',
             ]
         );
+
+        app(NotificationService::class)->notifyStaffApplicationEncoded($application);
     });
 
     return redirect()

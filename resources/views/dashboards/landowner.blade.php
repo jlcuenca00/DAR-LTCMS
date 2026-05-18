@@ -504,26 +504,6 @@
                     </div>
                 </div>
             </article>
-
-            <article class="lo-panel">
-                <div class="lo-panel-header">
-                    <div>
-                        <h2 class="lo-panel-title">Decision Scope</h2>
-                        <p class="lo-panel-subtitle">Finalized clearances are records of a decision only.</p>
-                    </div>
-                </div>
-
-                <div class="lo-panel-body">
-                    <div class="lo-summary-row">
-                        <span class="lo-summary-label">Final decision records</span>
-                        <span class="lo-summary-count">{{ $finalDecisionCount }}</span>
-                    </div>
-
-                    <p class="lo-panel-subtitle" style="margin-top: 12px;">
-                        Approved clearance records do not automatically transfer land ownership or update registry records.
-                    </p>
-                </div>
-            </article>
         </aside>
     </section>
 </x-landowner-shell>

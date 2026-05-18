@@ -327,13 +327,6 @@
     @endphp
 
     <div class="reports-page">
-        <section class="reports-scope">
-            <div>
-                <h2>Monitoring Report Scope</h2>
-                <p>{{ $scopeNotice }}</p>
-            </div>
-            <span class="scope-pill">Administrative Report</span>
-        </section>
 
         <section class="report-metric-grid" aria-label="Monitoring report summary cards">
             <article class="report-metric-card">

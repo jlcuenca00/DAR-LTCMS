@@ -9,6 +9,7 @@ use App\Models\LegacyRecord;
 use App\Models\Parcel;
 use App\Models\SourceRecordPackage;
 use App\Services\AuditLogger;
+use App\Services\NotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -123,6 +124,8 @@ class SourceRecordPackageController extends Controller
                 ]
             );
 
+            app(NotificationService::class)->notifyGeodeticSourcePackageAvailable($package);
+
             return $package;
         });
 
@@ -199,6 +202,9 @@ class SourceRecordPackageController extends Controller
                 ]
             );
         });
+
+
+        app(NotificationService::class)->notifyGeodeticSourcePackageAvailable($sourceRecordPackage->refresh());
 
         return back()->with('success', 'Source record package linked to parcel successfully.');
     }
@@ -281,6 +287,9 @@ class SourceRecordPackageController extends Controller
                 ]
             );
         });
+
+
+        app(NotificationService::class)->notifyGeodeticSourcePackageAvailable($sourceRecordPackage->refresh());
 
         return redirect()
             ->route('staff.source-record-packages.show', $sourceRecordPackage)

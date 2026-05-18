@@ -29,7 +29,6 @@
 
                         <p class="text-sm text-gray-600 mb-6">
                             Access staff tools for application processing, monitoring, reporting, account management, record lookup, and audit review.
-                            This system supports clearance generation and monitoring only, and does not automatically transfer land ownership.
                         </p>
 
                         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">

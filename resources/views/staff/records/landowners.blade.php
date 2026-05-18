@@ -10,15 +10,7 @@
         </a>
     </x-slot>
 
-    <section class="staff-scope-banner">
-        <div>
-            <h3>Staff Landowner Record Search</h3>
-            <p>
-                This page is for administrative record lookup only. It supports staff encoding and monitoring while protecting landowner privacy. It does not transfer ownership or mutate registry records.
-            </p>
-        </div>
-        <span class="staff-scope-pill">Privacy-Controlled Records</span>
-    </section>
+    <span class="sr-only">Staff Landowner Record Search</span>
 
     <section class="staff-panel staff-panel-pad">
         <div class="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">

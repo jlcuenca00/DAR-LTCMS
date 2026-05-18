@@ -7,6 +7,7 @@ use App\Models\Landholding;
 use App\Models\Landowner;
 use App\Models\Parcel;
 use App\Services\AuditLogger;
+use App\Services\NotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
@@ -244,6 +245,8 @@ class RecordSearchController extends Controller
                 ]
             );
         }
+
+        app(NotificationService::class)->notifyGeodeticParcelReferenceUpdated($parcel);
 
         return redirect()
             ->route('staff.records.parcels.show', $parcel)

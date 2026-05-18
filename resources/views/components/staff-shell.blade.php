@@ -13,6 +13,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ $title }} | DAR-LTCMS</title>
+    <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -278,6 +279,259 @@
             justify-content: flex-end;
             gap: 12px;
             flex-wrap: wrap;
+        }
+
+
+        .notification-bell-link {
+            position: relative;
+            width: 38px;
+            height: 38px;
+            border-radius: 999px;
+            border: 1px solid #bbd7c4;
+            background: #f0fdf4;
+            color: #166534;
+            display: inline-grid;
+            place-items: center;
+            text-decoration: none;
+            font-size: 15px;
+        }
+
+        .notification-bell-link:hover {
+            background: #dcfce7;
+            color: #14532d;
+        }
+
+        .notification-badge {
+            position: absolute;
+            top: -6px;
+            right: -6px;
+            min-width: 18px;
+            height: 18px;
+            padding: 0 5px;
+            border-radius: 999px;
+            background: #dc2626;
+            color: #ffffff;
+            border: 2px solid #ffffff;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: 900;
+            line-height: 1;
+        }
+
+
+        .notification-dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .notification-dropdown > summary {
+            list-style: none;
+            cursor: pointer;
+        }
+
+        .notification-dropdown > summary::-webkit-details-marker {
+            display: none;
+        }
+
+        .notification-dropdown[open] .notification-bell-link {
+            background: #dcfce7;
+            color: #14532d;
+            box-shadow: 0 0 0 3px rgba(22, 101, 52, 0.12);
+        }
+
+        .notification-dropdown-panel {
+            position: absolute;
+            top: calc(100% + 12px);
+            right: 0;
+            z-index: 80;
+            width: min(380px, calc(100vw - 32px));
+            overflow: hidden;
+            border-radius: 18px;
+            border: 1px solid #d9dee5;
+            background: #ffffff;
+            box-shadow: 0 24px 60px rgba(15, 23, 42, 0.18);
+        }
+
+        .notification-dropdown-panel::before {
+            content: '';
+            position: absolute;
+            top: -7px;
+            right: 18px;
+            width: 14px;
+            height: 14px;
+            transform: rotate(45deg);
+            border-left: 1px solid #d9dee5;
+            border-top: 1px solid #d9dee5;
+            background: #ffffff;
+        }
+
+        .notification-dropdown-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 16px 16px 13px;
+            border-bottom: 1px solid #eef2f7;
+            background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+        }
+
+        .notification-dropdown-kicker {
+            margin: 0 0 3px;
+            font-size: 10px;
+            font-weight: 900;
+            letter-spacing: 0.16em;
+            text-transform: uppercase;
+            color: #15803d;
+        }
+
+        .notification-dropdown-header h2 {
+            margin: 0;
+            font-size: 15px;
+            font-weight: 900;
+            color: #111827;
+        }
+
+        .notification-dropdown-count {
+            flex: 0 0 auto;
+            border-radius: 999px;
+            background: #dcfce7;
+            padding: 5px 9px;
+            font-size: 11px;
+            font-weight: 900;
+            color: #166534;
+        }
+
+        .notification-dropdown-count.is-clear {
+            background: #f1f5f9;
+            color: #64748b;
+        }
+
+        .notification-dropdown-list {
+            max-height: 310px;
+            overflow-y: auto;
+            background: #ffffff;
+        }
+
+        .notification-dropdown-item {
+            display: grid;
+            grid-template-columns: 10px minmax(0, 1fr);
+            gap: 11px;
+            padding: 13px 16px;
+            border-bottom: 1px solid #f1f5f9;
+            color: inherit;
+            text-decoration: none;
+            transition: 150ms ease;
+        }
+
+        .notification-dropdown-item:hover {
+            background: #f8fafc;
+        }
+
+        .notification-dropdown-item.is-unread {
+            background: #f0fdf4;
+        }
+
+        .notification-dropdown-item.is-unread:hover {
+            background: #dcfce7;
+        }
+
+        .notification-dropdown-dot {
+            width: 8px;
+            height: 8px;
+            margin-top: 6px;
+            border-radius: 999px;
+            background: #cbd5e1;
+        }
+
+        .notification-dropdown-item.is-unread .notification-dropdown-dot {
+            background: #16a34a;
+            box-shadow: 0 0 0 4px rgba(22, 163, 74, 0.12);
+        }
+
+        .notification-dropdown-copy {
+            min-width: 0;
+        }
+
+        .notification-dropdown-title-row {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        .notification-dropdown-title-row strong {
+            color: #0f172a;
+            font-size: 13px;
+            font-weight: 900;
+            line-height: 1.3;
+        }
+
+        .notification-dropdown-title-row i {
+            margin-top: 2px;
+            color: #94a3b8;
+            font-size: 11px;
+        }
+
+        .notification-dropdown-copy p {
+            margin: 4px 0 0;
+            color: #475569;
+            font-size: 12px;
+            font-weight: 650;
+            line-height: 1.45;
+        }
+
+        .notification-dropdown-copy span {
+            display: block;
+            margin-top: 6px;
+            color: #94a3b8;
+            font-size: 11px;
+            font-weight: 800;
+        }
+
+        .notification-dropdown-empty {
+            display: grid;
+            place-items: center;
+            gap: 5px;
+            padding: 26px 18px;
+            text-align: center;
+            color: #64748b;
+        }
+
+        .notification-dropdown-empty i {
+            font-size: 20px;
+            color: #15803d;
+        }
+
+        .notification-dropdown-empty strong {
+            color: #0f172a;
+            font-size: 13px;
+            font-weight: 900;
+        }
+
+        .notification-dropdown-empty span {
+            font-size: 12px;
+            font-weight: 650;
+        }
+
+        .notification-see-all {
+            display: flex;
+            min-height: 44px;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            border-top: 1px solid #eef2f7;
+            background: #ffffff;
+            color: #166534;
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 900;
+        }
+
+        .notification-see-all:hover {
+            background: #f0fdf4;
+            color: #14532d;
         }
 
         .staff-user-chip {
@@ -801,6 +1055,10 @@
         $utilityItems = [
             ['active' => 'users', 'route' => 'staff.users.index', 'icon' => 'fa-user-gear', 'label' => 'User Management'],
         ];
+
+        $notificationUser = auth()->user();
+        $notificationUnreadCount = $notificationUser?->unreadSystemNotifications()->count() ?? 0;
+        $recentSystemNotifications = $notificationUser?->systemNotifications()->latest()->limit(5)->get() ?? collect();
     @endphp
 
     <div class="staff-shell">
@@ -870,6 +1128,22 @@
                 </div>
 
                 <div class="staff-topbar-actions">
+
+                    @if (\Illuminate\Support\Facades\Route::has('notifications.index'))
+                        <details class="notification-dropdown">
+                            <summary class="notification-bell-link" aria-label="Open recent notifications">
+                                <i class="fa-solid fa-bell"></i>
+                                @if ($notificationUnreadCount > 0)
+                                    <span class="notification-badge">{{ $notificationUnreadCount > 99 ? '99+' : $notificationUnreadCount }}</span>
+                                @endif
+                            </summary>
+
+                            @include('notifications.partials.panel', [
+                                'notifications' => $recentSystemNotifications,
+                                'unreadCount' => $notificationUnreadCount,
+                            ])
+                        </details>
+                    @endif
                     {{ $actions ?? '' }}
                     <div class="staff-user-chip">
                         <div class="staff-avatar">{{ strtoupper(substr(auth()->user()->name ?? 'S', 0, 1)) }}</div>
@@ -885,6 +1159,24 @@
             </div>
         </main>
     </div>
+
+    <script>
+        document.addEventListener('click', function (event) {
+            document.querySelectorAll('.notification-dropdown[open]').forEach(function (dropdown) {
+                if (!dropdown.contains(event.target)) {
+                    dropdown.removeAttribute('open');
+                }
+            });
+        });
+
+        document.addEventListener('keydown', function (event) {
+            if (event.key === 'Escape') {
+                document.querySelectorAll('.notification-dropdown[open]').forEach(function (dropdown) {
+                    dropdown.removeAttribute('open');
+                });
+            }
+        });
+    </script>
 
     @isset($scripts)
         {{ $scripts }}

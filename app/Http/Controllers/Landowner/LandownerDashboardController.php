@@ -57,10 +57,6 @@ class LandownerDashboardController extends Controller
         $landholdingCount = (clone $landholdingsQuery)->count();
         $applicationCount = (clone $applicationQuery)->count();
 
-        $finalDecisionCount = (clone $applicationQuery)
-            ->whereIn('status', LandTransferApplication::FINAL_STATUSES)
-            ->count();
-
         $statusSummary = collect([
             LandTransferApplication::STATUS_DRAFT => 'Draft',
             LandTransferApplication::STATUS_PENDING_REVIEW => 'Pending Review',
@@ -120,8 +116,7 @@ class LandownerDashboardController extends Controller
             'dashboardCards',
             'statusSummary',
             'recentApplications',
-            'recentLandholdings',
-            'finalDecisionCount'
+            'recentLandholdings'
         ));
     }
 }

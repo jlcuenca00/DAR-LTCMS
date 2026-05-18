@@ -405,16 +405,6 @@
 
     <div class="source-package-page">
 
-        <section class="staff-scope-banner">
-            <div>
-                <h3>Source Package Encoding Scope</h3>
-                <p>
-                    Encode connected documentary/provenance records from official DAR files. These records support review, indexing, and parcel reference work only. They do not automatically transfer ownership, create legal landholding ownership, or mutate Registry of Deeds records.
-                </p>
-            </div>
-            <span class="staff-scope-pill">Documentary Encoding Only</span>
-        </section>
-
         <form method="POST" action="{{ route('staff.source-record-packages.store') }}" class="staff-panel source-form-panel" data-source-validation-form>
             @csrf
 

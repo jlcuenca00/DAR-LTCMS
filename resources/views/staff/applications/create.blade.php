@@ -253,16 +253,6 @@
     </x-slot>
 
     <div class="application-create-page">
-        <section class="staff-scope-banner">
-            <div>
-                <h3>Application Encoding Scope</h3>
-                <p>
-                    This page creates a staff-encoded clearance application record only. It does not approve the application,
-                    transfer land ownership, or mutate registry records.
-                </p>
-            </div>
-            <span class="staff-scope-pill">Draft Encoding Only</span>
-        </section>
 
         @if ($errors->any())
             <div class="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">

@@ -237,15 +237,6 @@
     @endphp
 
     <div class="parcel-edit-page">
-        <section class="staff-scope-banner">
-            <div>
-                <h3>Parcel Record Update</h3>
-                <p>
-                    Update encoded parcel reference information used for DAR review, monitoring, and map display. This does not transfer ownership or mutate registry records.
-                </p>
-            </div>
-            <span class="staff-scope-pill">Reference Data Only</span>
-        </section>
 
         <form method="POST" action="{{ route('staff.records.parcels.update', $parcel) }}" class="parcel-edit-layout">
             @csrf

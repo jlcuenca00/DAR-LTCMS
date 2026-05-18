@@ -1312,17 +1312,6 @@
             </div>
         @endif
 
-        <section class="staff-scope-banner">
-            <div>
-                <h3>Application Processing Scope</h3>
-                <p>
-                    This screen supports administrative review, document indexing, clearance decision recording, and monitoring only.
-                    Approval does not automatically transfer land ownership, mutate registry records, or finalize legal land transfer.
-                </p>
-            </div>
-            <span class="staff-scope-pill">Clearance Review Only</span>
-        </section>
-
         @if ($isFinal)
             <section class="review-panel" style="border-color:#fcd34d; background:#fffbeb;">
                 <div class="review-panel-body">

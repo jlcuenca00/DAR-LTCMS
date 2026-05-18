@@ -8,6 +8,7 @@ use App\Http\Controllers\Landowner\LandownerDashboardController;
 use App\Http\Controllers\Landowner\LandownerPortalController;
 use App\Http\Controllers\Landowner\ParcelMapController as LandownerParcelMapController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\Staff\ApplicationClearanceController;
 use App\Http\Controllers\Staff\ApplicationDocumentController;
 use App\Http\Controllers\Staff\ApplicationLandownerLinkController;
@@ -39,6 +40,11 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+    Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
+    Route::get('/notifications/{notification}/open', [NotificationController::class, 'open'])->name('notifications.open');
+    Route::patch('/notifications/{notification}/read', [NotificationController::class, 'markAsRead'])->name('notifications.read');
+    Route::patch('/notifications/read-all', [NotificationController::class, 'markAllAsRead'])->name('notifications.read-all');
 
     Route::get('/staff/dashboard', StaffDashboardController::class)
         ->middleware('role:staff')

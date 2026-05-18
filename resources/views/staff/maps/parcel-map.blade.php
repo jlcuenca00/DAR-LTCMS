@@ -2,7 +2,7 @@
     $mappedParcelCount = count($parcelGeoJson['features'] ?? []);
 @endphp
 
-<x-staff-shell title="Parcel Map Viewer" active="parcel-map">
+<x-staff-shell title="Parcel Map Viewer" active="parcel-map" maxWidth="">
     <x-slot name="head">
         <link
             rel="stylesheet"
@@ -14,14 +14,6 @@
 
     <x-slot name="styles">
         <style>
-            .hero-card {
-                background: #ffffff;
-                border: 1px solid var(--border);
-                border-radius: 14px;
-                box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
-                overflow: hidden;
-            }
-
             .map-card,
             .map-workspace > .panel,
             .map-sidebar > .panel {
@@ -40,81 +32,17 @@
                 margin-top: 0;
             }
 
-            .hero-inner {
-                padding: 22px 24px;
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-                gap: 20px;
-                border-left: 5px solid #166534;
-            }
-
-            .hero-title-wrap {
-                min-width: 0;
-            }
-
-            .hero-kicker {
-                margin: 0;
-                font-size: 11px;
-                font-weight: 900;
-                letter-spacing: 0.15em;
-                color: #166534;
-                text-transform: uppercase;
-            }
-
-            .hero-title {
-                margin: 6px 0 0;
-                font-family: var(--heading-font);
-                font-size: 24px;
-                line-height: 1.15;
-                font-weight: 900;
-                color: #111827;
-            }
-
-            .hero-copy {
-                margin: 8px 0 0;
-                max-width: 900px;
-                font-size: 13px;
-                line-height: 1.65;
-                color: #4b5563;
-                font-weight: 600;
-            }
-
-            .mode-pill {
-                flex: 0 0 auto;
-                border: 1px solid #bbf7d0;
-                background: #f0fdf4;
-                color: #14532d;
-                border-radius: 12px;
-                padding: 12px 14px;
-                min-width: 170px;
-            }
-
-            .mode-pill span {
-                display: block;
-                font-size: 10px;
-                letter-spacing: 0.13em;
-                text-transform: uppercase;
-                font-weight: 900;
-            }
-
-            .mode-pill strong {
-                display: block;
-                margin-top: 4px;
-                font-size: 14px;
-                font-weight: 900;
-            }
-
             .map-workspace {
                 display: grid;
                 grid-template-columns: 320px minmax(0, 1fr);
-                gap: 20px;
-                align-items: start;
+                gap: 18px;
+                align-items: stretch;
             }
 
             .map-sidebar {
                 display: grid;
                 gap: 14px;
+                align-content: start;
                 min-width: 0;
             }
 
@@ -214,15 +142,6 @@
                 box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.06);
             }
 
-            .scope-box {
-                background: #fffbeb !important;
-                border-color: #fde68a !important;
-            }
-
-            .scope-box .panel-title,
-            .scope-box .panel-copy {
-                color: #92400e;
-            }
 
             .access-row {
                 display: flex;
@@ -296,13 +215,13 @@
             }
 
             .map-frame {
-                padding: 18px 20px 20px;
+                padding: 12px;
                 background: #ffffff;
             }
 
             #parcel-map {
-                height: min(680px, calc(100vh - 250px));
-                min-height: 540px;
+                height: calc(100vh - 212px);
+                min-height: 590px;
                 width: 100%;
                 border-radius: 12px;
                 border: 1px solid #d1d5db;
@@ -415,9 +334,6 @@
                     grid-template-columns: repeat(2, minmax(0, 1fr));
                 }
 
-                .scope-box {
-                    grid-column: 1 / -1;
-                }
 
                 #parcel-map {
                     height: 620px;
@@ -426,16 +342,6 @@
             }
 
             @media (max-width: 900px) {
-                .hero-inner {
-                    flex-direction: column;
-                    align-items: flex-start;
-                    padding: 18px;
-                }
-
-                .mode-pill {
-                    width: 100%;
-                }
-
                 .map-sidebar {
                     grid-template-columns: 1fr;
                 }
@@ -452,10 +358,6 @@
             }
 
             @media (max-width: 560px) {
-                .hero-title {
-                    font-size: 20px;
-                }
-
                 #parcel-map {
                     height: 440px;
                     min-height: 400px;
@@ -463,24 +365,6 @@
             }
         </style>
     </x-slot>
-
-    <section class="hero-card">
-        <div class="hero-inner">
-            <div class="hero-title-wrap">
-                <p class="hero-kicker">Read-Only Parcel Visualization</p>
-                <h2 class="hero-title">Main Parcel Map Viewer</h2>
-                <p class="hero-copy">
-                    View mapped main parcel records for staff reference and monitoring. This map is for visualization and record review only;
-                    it does not edit ownership, execute land transfer, or mutate registry records.
-                </p>
-            </div>
-
-            <div class="mode-pill">
-                <span>Map Mode</span>
-                <strong>Reference Only</strong>
-            </div>
-        </div>
-    </section>
 
     <section class="map-workspace">
         <aside class="map-sidebar">
@@ -534,16 +418,6 @@
                             Flagged record
                         </div>
                     </div>
-                </div>
-            </div>
-
-            <div class="panel map-card scope-box">
-                <div class="panel-pad">
-                    <h3 class="panel-title">Scope Reminder</h3>
-                    <p class="panel-copy">
-                        Only main parcel records with encoded geometry are drawn here. Source records support documentation and provenance,
-                        but they do not appear as map parcels unless staff link or create a main parcel record through the approved workflow.
-                    </p>
                 </div>
             </div>
 

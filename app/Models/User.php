@@ -64,6 +64,16 @@ class User extends Authenticatable
         return $this->hasOne(Landowner::class);
     }
 
+    public function systemNotifications()
+    {
+        return $this->hasMany(SystemNotification::class);
+    }
+
+    public function unreadSystemNotifications()
+    {
+        return $this->systemNotifications()->whereNull('read_at');
+    }
+
     public function isStaff(): bool
     {
         return $this->role === self::ROLE_STAFF;

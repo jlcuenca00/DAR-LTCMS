@@ -543,18 +543,6 @@
         </style>
     </x-slot>
 
-    <section class="scope-notice">
-        <div>
-            <h3>DAR-LTCMS Scope Reminder</h3>
-            <p>
-                Clearance approval records and generates the clearance result only. The system does not automatically transfer land ownership,
-                mutate registry records, or finalize legal land transfer.
-            </p>
-        </div>
-
-        <span class="scope-pill">Clearance System Only</span>
-    </section>
-
     <section class="stats-grid">
         @foreach ($statusCards as $index => $card)
             @php

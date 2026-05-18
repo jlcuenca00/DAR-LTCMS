@@ -298,12 +298,39 @@
         }
 
         .user-native-checkbox {
+            appearance: none;
+            -webkit-appearance: none;
+            display: inline-grid;
+            place-content: center;
             width: 1.05rem;
             height: 1.05rem;
             margin: 0;
             flex: 0 0 auto;
             cursor: pointer;
+            border: 1.5px solid #86efac;
+            border-radius: .3rem;
+            background: #ffffff;
+            transition: background-color .14s ease, border-color .14s ease, box-shadow .14s ease;
+        }
+
+        .user-native-checkbox::before {
+            content: '';
+            width: .58rem;
+            height: .58rem;
+            transform: scale(0);
+            transition: transform .12s ease-in-out;
+            clip-path: polygon(14% 44%, 0 58%, 38% 96%, 100% 22%, 86% 8%, 36% 68%);
+            background: #ffffff;
+        }
+
+        .user-native-checkbox:checked {
+            background: #15803d !important;
+            border-color: #15803d !important;
             accent-color: #15803d !important;
+        }
+
+        .user-native-checkbox:checked::before {
+            transform: scale(1);
         }
 
         .user-native-checkbox:focus {
@@ -535,15 +562,6 @@
     @endif
 
     <div class="user-editor-wrap space-y-6">
-        <section class="staff-scope-banner">
-            <div>
-                <h3>Staff-Managed User Account</h3>
-                <p>
-                    Update login identity, role assignment, account availability, and landowner linkage for system access only. These changes do not transfer ownership or mutate registry records.
-                </p>
-            </div>
-            <span class="staff-scope-pill">Audit Logged</span>
-        </section>
 
         <form method="POST" action="{{ route('staff.users.update', $user) }}" class="space-y-5">
             @csrf

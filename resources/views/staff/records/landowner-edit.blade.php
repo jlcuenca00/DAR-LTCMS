@@ -9,16 +9,6 @@
         </a>
     </x-slot>
 
-    <section class="staff-scope-banner">
-        <div>
-            <h3>Administrative Details Only</h3>
-            <p>
-                Edit identity, contact, address, and optional portal account linkage only. Current hectares are not directly editable here because they are computed from active landholding records.
-            </p>
-        </div>
-        <span class="staff-scope-pill">No Ownership Mutation</span>
-    </section>
-
     @if ($errors->any())
         <div class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
             <p class="font-black">Please correct the following:</p>

@@ -426,6 +426,129 @@
                 color: #475569;
             }
 
+            .parcel-landholding-card-list {
+                display: grid;
+                gap: 12px;
+            }
+
+            .parcel-landholding-card {
+                border: 1px solid #e2e8f0;
+                border-radius: 14px;
+                background: #ffffff;
+                padding: 14px;
+                box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+            }
+
+            .parcel-landholding-card-head {
+                display: flex;
+                justify-content: space-between;
+                align-items: flex-start;
+                gap: 12px;
+                padding-bottom: 12px;
+                border-bottom: 1px solid #edf2f7;
+            }
+
+            .parcel-landholding-owner {
+                margin: 0;
+                color: #0f172a;
+                font-size: 15px;
+                line-height: 1.25;
+                font-weight: 950;
+            }
+
+            .parcel-landholding-owner-meta {
+                margin: 3px 0 0;
+                color: #64748b;
+                font-size: 12.5px;
+                line-height: 1.4;
+            }
+
+            .parcel-landholding-detail-grid {
+                display: grid;
+                grid-template-columns: repeat(4, minmax(0, 1fr));
+                gap: 10px;
+                margin-top: 12px;
+            }
+
+            .parcel-landholding-detail-card {
+                border: 1px solid #edf2f7;
+                border-radius: 12px;
+                background: #f8fafc;
+                padding: 10px 11px;
+                min-width: 0;
+            }
+
+            .parcel-landholding-detail-card.is-wide {
+                grid-column: span 2;
+            }
+
+            .parcel-landholding-detail-label {
+                margin: 0;
+                font-size: 10px;
+                font-weight: 900;
+                letter-spacing: 0.11em;
+                text-transform: uppercase;
+                color: #64748b;
+            }
+
+            .parcel-landholding-detail-value {
+                margin: 4px 0 0;
+                font-size: 13px;
+                font-weight: 850;
+                line-height: 1.45;
+                color: #111827;
+                overflow-wrap: anywhere;
+            }
+
+            .parcel-source-card-grid {
+                display: grid;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 12px;
+                margin-top: 14px;
+            }
+
+            .parcel-source-card {
+                border: 1px solid #e2e8f0;
+                border-radius: 14px;
+                background: #ffffff;
+                padding: 14px;
+                box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+            }
+
+            .parcel-source-card-title {
+                margin: 0;
+                color: #0f172a;
+                font-size: 14px;
+                font-weight: 950;
+            }
+
+            .parcel-source-card-meta {
+                margin: 5px 0 0;
+                color: #64748b;
+                font-size: 12px;
+                line-height: 1.45;
+            }
+
+            .parcel-source-card-row {
+                display: grid;
+                grid-template-columns: 90px minmax(0, 1fr);
+                gap: 8px;
+                margin-top: 10px;
+                font-size: 12.5px;
+                line-height: 1.45;
+            }
+
+            .parcel-source-card-row span:first-child {
+                color: #64748b;
+                font-weight: 800;
+            }
+
+            .parcel-source-card-actions {
+                margin-top: 12px;
+                display: flex;
+                justify-content: flex-end;
+            }
+
             @media (max-width: 1180px) {
                 .parcel-grid-two {
                     grid-template-columns: 1fr;
@@ -440,8 +563,14 @@
                 .parcel-meta-grid,
                 .parcel-source-summary,
                 .parcel-summary-grid,
-                .parcel-geometry-summary-grid {
+                .parcel-geometry-summary-grid,
+                .parcel-landholding-detail-grid,
+                .parcel-source-card-grid {
                     grid-template-columns: 1fr;
+                }
+
+                .parcel-landholding-detail-card.is-wide {
+                    grid-column: 1 / -1;
                 }
             }
         </style>
@@ -471,16 +600,6 @@
     @endphp
 
     <div class="parcel-page-stack">
-        <section class="staff-scope-banner">
-            <div>
-                <h3>Parcel Record Scope</h3>
-                <p>
-                    This page displays a main parcel reference record for staff review, mapping, and clearance processing support only.
-                    It does not transfer ownership, mutate registry records, or finalize any legal land transaction.
-                </p>
-            </div>
-            <span class="staff-scope-pill">Reference Record Only</span>
-        </section>
 
         <section class="parcel-hero-card">
             <div class="parcel-hero-main">
@@ -539,7 +658,7 @@
                 <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-3 mb-5">
                     <div>
                         <h3 class="staff-panel-title">Parcel Reference Information</h3>
-                        <p class="staff-panel-subtitle">Core encoded reference values used for application review and map display.</p>
+                        <p class="staff-panel-subtitle">Core encoded reference values used for application review, source matching, and map display.</p>
                     </div>
                 </div>
 
@@ -562,7 +681,7 @@
                     <div class="parcel-meta-card is-agricultural-status">
                         <p class="parcel-meta-label">Agricultural Status</p>
                         <p class="parcel-meta-value">{{ $agriculturalStatusLabel }}</p>
-                        <p class="parcel-meta-subvalue">DAR record classification only.</p>
+                        <p class="parcel-meta-subvalue">DAR record classification.</p>
                     </div>
 
                     <div class="parcel-meta-card">
@@ -616,7 +735,7 @@
 
                             <div class="parcel-geometry-mini-card is-wide">
                                 <p class="parcel-meta-label">Reference Note</p>
-                                <p class="parcel-geometry-note">Stored for visualization and parcel checking only. This is not a registry mutation record.</p>
+                                <p class="parcel-geometry-note">Stored for visualization and parcel checking.</p>
                             </div>
                         </div>
 
@@ -660,7 +779,7 @@
                 <div>
                     <h3 class="staff-panel-title">Linked Landholding Records</h3>
                     <p class="staff-panel-subtitle">
-                        Administrative landholding references linked to this parcel. These records support hectare monitoring only.
+                        Administrative landholding references linked to this parcel for hectare monitoring and record traceability.
                     </p>
                 </div>
 
@@ -674,73 +793,69 @@
                     No landholding records are currently linked to this parcel.
                 </div>
             @else
-                <div class="staff-table-wrap parcel-table-scroll">
-                    <table class="staff-table parcel-landholding-table">
-                        <thead>
-                            <tr>
-                                <th>Landowner</th>
-                                <th>Area</th>
-                                <th>Status</th>
-                                <th>Dates</th>
-                                <th>Reference</th>
-                                <th>Remarks</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach ($landholdings as $landholding)
-                                <tr>
-                                    <td>
+                <div class="parcel-landholding-card-list">
+                    @foreach ($landholdings as $landholding)
+                        <article class="parcel-landholding-card">
+                            <div class="parcel-landholding-card-head">
+                                <div>
+                                    <p class="parcel-landholding-owner">
                                         @if ($landholding->landowner)
                                             @if (\Illuminate\Support\Facades\Route::has('staff.records.landowners.show'))
                                                 <a href="{{ route('staff.records.landowners.show', $landholding->landowner) }}" class="staff-link">
                                                     {{ $landholding->landowner->full_name }}
                                                 </a>
                                             @else
-                                                <span class="font-bold text-slate-900">{{ $landholding->landowner->full_name }}</span>
+                                                {{ $landholding->landowner->full_name }}
                                             @endif
                                         @else
-                                            <span class="text-slate-400">No landowner linked</span>
+                                            No landowner linked
                                         @endif
-                                    </td>
-                                    <td class="font-bold text-slate-900">
-                                        {{ number_format((float) $landholding->area_hectares, 4) }} ha
-                                    </td>
-                                    <td>
-                                        <span class="staff-badge
-                                            @if ($landholding->status === 'active') staff-badge-green
-                                            @elseif ($landholding->status === 'historical') staff-badge-amber
-                                            @elseif ($landholding->status === 'inactive') staff-badge-slate
-                                            @else staff-badge-slate
-                                            @endif">
-                                            {{ $landholding->status ? ucwords(str_replace('_', ' ', $landholding->status)) : 'N/A' }}
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <div><span class="text-slate-500">Acquired:</span> {{ $landholding->date_acquired ? \Illuminate\Support\Carbon::parse($landholding->date_acquired)->format('M d, Y') : 'N/A' }}</div>
-                                        <div><span class="text-slate-500">Transferred:</span> {{ $landholding->date_transferred ? \Illuminate\Support\Carbon::parse($landholding->date_transferred)->format('M d, Y') : 'N/A' }}</div>
-                                    </td>
-                                    <td>
+                                    </p>
+                                    <p class="parcel-landholding-owner-meta">Landholding reference linked to {{ $parcel->parcel_code }}</p>
+                                </div>
+                                <span class="staff-badge
+                                    @if ($landholding->status === 'active') staff-badge-green
+                                    @elseif ($landholding->status === 'historical') staff-badge-amber
+                                    @else staff-badge-slate
+                                    @endif">
+                                    {{ $landholding->status ? ucwords(str_replace('_', ' ', $landholding->status)) : 'N/A' }}
+                                </span>
+                            </div>
+
+                            <div class="parcel-landholding-detail-grid">
+                                <div class="parcel-landholding-detail-card">
+                                    <p class="parcel-landholding-detail-label">Area</p>
+                                    <p class="parcel-landholding-detail-value">{{ number_format((float) $landholding->area_hectares, 4) }} ha</p>
+                                </div>
+                                <div class="parcel-landholding-detail-card">
+                                    <p class="parcel-landholding-detail-label">Date Acquired</p>
+                                    <p class="parcel-landholding-detail-value">{{ $landholding->date_acquired ? \Illuminate\Support\Carbon::parse($landholding->date_acquired)->format('M d, Y') : 'N/A' }}</p>
+                                </div>
+                                <div class="parcel-landholding-detail-card">
+                                    <p class="parcel-landholding-detail-label">Date Transferred</p>
+                                    <p class="parcel-landholding-detail-value">{{ $landholding->date_transferred ? \Illuminate\Support\Carbon::parse($landholding->date_transferred)->format('M d, Y') : 'N/A' }}</p>
+                                </div>
+                                <div class="parcel-landholding-detail-card">
+                                    <p class="parcel-landholding-detail-label">Reference</p>
+                                    <p class="parcel-landholding-detail-value">
                                         @if ($landholding->sourceApplication)
                                             <a href="{{ route('staff.applications.show', $landholding->sourceApplication) }}" class="staff-link">
                                                 {{ $landholding->sourceApplication->application_code }}
                                             </a>
-                                        @elseif ($landholding->source_reference_no ?? false)
-                                            {{ $landholding->source_reference_no }}
+                                        @elseif ($landholding->source_reference_number ?? false)
+                                            {{ $landholding->source_reference_number }}
                                         @else
-                                            <span class="text-slate-400">N/A</span>
+                                            N/A
                                         @endif
-                                    </td>
-                                    <td>
-                                        @if (filled($landholding->remarks))
-                                            <span class="parcel-remarks-text">{{ $landholding->remarks }}</span>
-                                        @else
-                                            <span class="text-slate-400">N/A</span>
-                                        @endif
-                                    </td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
+                                    </p>
+                                </div>
+                                <div class="parcel-landholding-detail-card is-wide">
+                                    <p class="parcel-landholding-detail-label">Remarks</p>
+                                    <p class="parcel-landholding-detail-value">{{ filled($landholding->remarks) ? $landholding->remarks : 'N/A' }}</p>
+                                </div>
+                            </div>
+                        </article>
+                    @endforeach
                 </div>
             @endif
         </section>
@@ -750,7 +865,7 @@
                 <div>
                     <h3 class="staff-panel-title">Attached Source Records</h3>
                     <p class="staff-panel-subtitle">
-                        Digitized source records attached to this parcel for provenance, traceability, and review support only.
+                        Digitized source records attached to this parcel for provenance, traceability, and review support.
                     </p>
                 </div>
 
@@ -779,57 +894,56 @@
             @if ($sourcePackages->count() > 0)
                 <div class="mt-5">
                     <h4 class="staff-panel-title text-base">Source Packages</h4>
-                    <div class="staff-table-wrap parcel-table-scroll mt-3">
-                        <table class="staff-table">
-                            <thead>
-                                <tr>
-                                    <th>Package Code</th>
-                                    <th>Status</th>
-                                    <th>References</th>
-                                    <th>Source</th>
-                                    <th>Records</th>
-                                    <th>Action</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach ($sourcePackages as $package)
-                                    <tr>
-                                        <td>
+                    <div class="parcel-source-card-grid">
+                        @foreach ($sourcePackages as $package)
+                            <article class="parcel-source-card">
+                                <div class="flex items-start justify-between gap-3">
+                                    <div>
+                                        <p class="parcel-source-card-title">
                                             <a href="{{ route('staff.source-record-packages.show', $package) }}" class="staff-link">
                                                 {{ $package->package_code }}
                                             </a>
-                                        </td>
-                                        <td>
-                                            <span class="staff-badge staff-badge-slate">{{ $package->status_label }}</span>
-                                        </td>
-                                        <td>
-                                            @if ($package->title_number)
-                                                <div><strong>Title:</strong> {{ $package->title_number }}</div>
-                                            @endif
-                                            @if ($package->landholding_reference_number)
-                                                <div><strong>Landholding:</strong> {{ $package->landholding_reference_number }}</div>
-                                            @endif
-                                            @if ($package->control_number)
-                                                <div><strong>Clearance:</strong> {{ $package->control_number }}</div>
-                                            @endif
-                                            @if (! $package->title_number && ! $package->landholding_reference_number && ! $package->control_number)
-                                                <span class="text-slate-400">N/A</span>
-                                            @endif
-                                        </td>
-                                        <td>
-                                            <div>{{ $package->source_book ?? 'N/A' }}</div>
-                                            <div class="text-xs text-slate-500">Page: {{ $package->page_number ?? 'N/A' }}</div>
-                                        </td>
-                                        <td>{{ $package->records->count() }}</td>
-                                        <td>
-                                            <a href="{{ route('staff.source-record-packages.show', $package) }}" class="staff-button staff-button-light">
-                                                View Package
-                                            </a>
-                                        </td>
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
+                                        </p>
+                                        <p class="parcel-source-card-meta">{{ $package->source_record_scope_label ?? 'Source package' }}</p>
+                                    </div>
+                                    <span class="staff-badge staff-badge-slate">{{ $package->status_label }}</span>
+                                </div>
+
+                                <div class="parcel-source-card-row">
+                                    <span>Reference</span>
+                                    <div>
+                                        @if ($package->title_number)
+                                            <div><strong>Title:</strong> {{ $package->title_number }}</div>
+                                        @endif
+                                        @if ($package->landholding_reference_number)
+                                            <div><strong>Landholding:</strong> {{ $package->landholding_reference_number }}</div>
+                                        @endif
+                                        @if ($package->control_number)
+                                            <div><strong>Clearance:</strong> {{ $package->control_number }}</div>
+                                        @endif
+                                        @if (! $package->title_number && ! $package->landholding_reference_number && ! $package->control_number)
+                                            N/A
+                                        @endif
+                                    </div>
+                                </div>
+
+                                <div class="parcel-source-card-row">
+                                    <span>Source</span>
+                                    <div>{{ $package->source_book ?? 'N/A' }} · Page {{ $package->page_number ?? 'N/A' }}</div>
+                                </div>
+
+                                <div class="parcel-source-card-row">
+                                    <span>Records</span>
+                                    <div>{{ $package->records->count() }} created record(s)</div>
+                                </div>
+
+                                <div class="parcel-source-card-actions">
+                                    <a href="{{ route('staff.source-record-packages.show', $package) }}" class="staff-button staff-button-light">
+                                        View Package
+                                    </a>
+                                </div>
+                            </article>
+                        @endforeach
                     </div>
                 </div>
             @endif
@@ -837,70 +951,64 @@
             @if ($legacyRecords->count() > 0)
                 <div class="mt-5">
                     <h4 class="staff-panel-title text-base">Individual Source Records</h4>
-                    <div class="staff-table-wrap parcel-table-scroll mt-3">
-                        <table class="staff-table">
-                            <thead>
-                                <tr>
-                                    <th>Type</th>
-                                    <th>Origin</th>
-                                    <th>References</th>
-                                    <th>Source</th>
-                                    <th>Package</th>
-                                    <th>Action</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach ($legacyRecords as $record)
-                                    <tr>
-                                        <td class="font-bold text-slate-900">{{ $record->record_type_label }}</td>
-                                        <td>
-                                            <span class="staff-badge
-                                                @if ($record->origin === 'encoded') staff-badge-blue
-                                                @elseif ($record->origin === 'imported') staff-badge-amber
-                                                @else staff-badge-slate
-                                                @endif">
-                                                {{ $record->origin_label }}
-                                            </span>
-                                        </td>
-                                        <td>
-                                            @if ($record->title_number)
-                                                <div><strong>Title:</strong> {{ $record->title_number }}</div>
-                                            @endif
-                                            @if ($record->landholding_reference_number)
-                                                <div><strong>Landholding:</strong> {{ $record->landholding_reference_number }}</div>
-                                            @endif
-                                            @if ($record->control_number)
-                                                <div><strong>Clearance:</strong> {{ $record->control_number }}</div>
-                                            @endif
-                                            @if ($record->lot_number)
-                                                <div><strong>Lot:</strong> {{ $record->lot_number }}</div>
-                                            @endif
-                                            @if (! $record->title_number && ! $record->landholding_reference_number && ! $record->control_number && ! $record->lot_number)
-                                                <span class="text-slate-400">N/A</span>
-                                            @endif
-                                        </td>
-                                        <td>
-                                            <div>{{ $record->source_book ?? 'N/A' }}</div>
-                                            <div class="text-xs text-slate-500">Page: {{ $record->page_number ?? 'N/A' }}</div>
-                                        </td>
-                                        <td>
-                                            @if ($record->package)
-                                                <a href="{{ route('staff.source-record-packages.show', $record->package) }}" class="staff-link">
-                                                    {{ $record->package->package_code }}
-                                                </a>
-                                            @else
-                                                <span class="text-slate-400">No package</span>
-                                            @endif
-                                        </td>
-                                        <td>
-                                            <a href="{{ route('staff.legacy-records.show', $record) }}" class="staff-button staff-button-light">
-                                                View Record
+                    <div class="parcel-source-card-grid">
+                        @foreach ($legacyRecords as $record)
+                            <article class="parcel-source-card">
+                                <div class="flex items-start justify-between gap-3">
+                                    <div>
+                                        <p class="parcel-source-card-title">{{ $record->record_type_label }}</p>
+                                        <p class="parcel-source-card-meta">{{ $record->source_book ?? 'N/A' }} · Page {{ $record->page_number ?? 'N/A' }}</p>
+                                    </div>
+                                    <span class="staff-badge
+                                        @if ($record->origin === 'encoded') staff-badge-blue
+                                        @elseif ($record->origin === 'imported') staff-badge-amber
+                                        @else staff-badge-slate
+                                        @endif">
+                                        {{ $record->origin_label }}
+                                    </span>
+                                </div>
+
+                                <div class="parcel-source-card-row">
+                                    <span>Reference</span>
+                                    <div>
+                                        @if ($record->title_number)
+                                            <div><strong>Title:</strong> {{ $record->title_number }}</div>
+                                        @endif
+                                        @if ($record->landholding_reference_number)
+                                            <div><strong>Landholding:</strong> {{ $record->landholding_reference_number }}</div>
+                                        @endif
+                                        @if ($record->control_number)
+                                            <div><strong>Clearance:</strong> {{ $record->control_number }}</div>
+                                        @endif
+                                        @if ($record->lot_number)
+                                            <div><strong>Lot:</strong> {{ $record->lot_number }}</div>
+                                        @endif
+                                        @if (! $record->title_number && ! $record->landholding_reference_number && ! $record->control_number && ! $record->lot_number)
+                                            N/A
+                                        @endif
+                                    </div>
+                                </div>
+
+                                <div class="parcel-source-card-row">
+                                    <span>Package</span>
+                                    <div>
+                                        @if ($record->package)
+                                            <a href="{{ route('staff.source-record-packages.show', $record->package) }}" class="staff-link">
+                                                {{ $record->package->package_code }}
                                             </a>
-                                        </td>
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
+                                        @else
+                                            No package
+                                        @endif
+                                    </div>
+                                </div>
+
+                                <div class="parcel-source-card-actions">
+                                    <a href="{{ route('staff.legacy-records.show', $record) }}" class="staff-button staff-button-light">
+                                        View Record
+                                    </a>
+                                </div>
+                            </article>
+                        @endforeach
                     </div>
                 </div>
             @endif
