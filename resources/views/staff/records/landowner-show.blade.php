@@ -290,6 +290,137 @@
             margin-top: 0.8rem;
         }
 
+        .landholding-mini-summary {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 0.85rem;
+            margin-top: 1rem;
+        }
+
+        .landholding-mini-card {
+            border: 1px solid #e2e8f0;
+            border-radius: 0.9rem;
+            background: #f8fafc;
+            padding: 0.95rem 1rem;
+        }
+
+        .landholding-mini-card.is-green {
+            border-color: #bbf7d0;
+            background: #f0fdf4;
+        }
+
+        .landholding-mini-label {
+            margin: 0;
+            color: #64748b;
+            font-size: 0.7rem;
+            font-weight: 900;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+        }
+
+        .landholding-mini-value {
+            margin: 0.35rem 0 0;
+            color: #0f172a;
+            font-size: 1.35rem;
+            font-weight: 950;
+            line-height: 1;
+        }
+
+        .landholding-mini-card.is-green .landholding-mini-value {
+            color: #052e16;
+        }
+
+        .landholding-card-list {
+            display: grid;
+            gap: 0.9rem;
+        }
+
+        .landholding-record-card {
+            border: 1px solid #e2e8f0;
+            border-radius: 1rem;
+            background: #ffffff;
+            padding: 1rem;
+            box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+        }
+
+        .landholding-record-head {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 1rem;
+            padding-bottom: 0.85rem;
+            border-bottom: 1px solid #edf2f7;
+        }
+
+        .landholding-record-title {
+            margin: 0;
+            color: #0f172a;
+            font-size: 1rem;
+            font-weight: 950;
+            line-height: 1.25;
+        }
+
+        .landholding-record-subtitle {
+            margin: 0.2rem 0 0;
+            color: #64748b;
+            font-size: 0.8rem;
+            line-height: 1.4;
+        }
+
+        .landholding-record-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 0.85rem;
+            margin-top: 0.9rem;
+        }
+
+        .landholding-record-field {
+            min-width: 0;
+            border: 1px solid #edf2f7;
+            border-radius: 0.75rem;
+            background: #f8fafc;
+            padding: 0.75rem;
+        }
+
+        .landholding-record-field.is-wide {
+            grid-column: span 2;
+        }
+
+        .landholding-record-label {
+            margin: 0;
+            color: #64748b;
+            font-size: 0.66rem;
+            font-weight: 900;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+        }
+
+        .landholding-record-value {
+            margin: 0.25rem 0 0;
+            color: #111827;
+            font-size: 0.88rem;
+            font-weight: 850;
+            line-height: 1.45;
+            overflow-wrap: anywhere;
+        }
+
+        .landholding-record-note {
+            margin-top: 0.85rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.8rem;
+            background: #f8fafc;
+            padding: 0.75rem;
+            color: #475569;
+            font-size: 0.82rem;
+            line-height: 1.5;
+        }
+
+        .landholding-record-actions {
+            margin-top: 0.85rem;
+            display: flex;
+            justify-content: flex-end;
+        }
+
         .landowner-related-grid {
             display: grid;
             grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -341,8 +472,14 @@
                 grid-template-columns: 1fr;
             }
 
-            .landholding-form-grid {
+            .landholding-form-grid,
+            .landholding-mini-summary,
+            .landholding-record-grid {
                 grid-template-columns: 1fr;
+            }
+
+            .landholding-record-field.is-wide {
+                grid-column: 1 / -1;
             }
 
             .landholding-field,
@@ -376,15 +513,6 @@
     </style>
 
     <div class="landowner-page">
-        <section class="staff-scope-banner">
-            <div>
-                <h3>Landowner Record Scope</h3>
-                <p>
-                    This page manages administrative landowner/person records and encoded landholding references only. Current hectares are computed from active landholding records and are not direct proof of completed legal transfer or registry mutation.
-                </p>
-            </div>
-            <span class="staff-scope-pill">Computed Hectares Only</span>
-        </section>
 
         @if (session('success'))
             <div class="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm font-bold text-green-800">
@@ -412,6 +540,8 @@
                 default => 'staff-badge-green',
             };
         @endphp
+
+        <span class="sr-only">Computed Hectares Only</span>
 
         <section class="landowner-summary-grid">
             <div class="staff-panel staff-panel-pad landowner-profile-main">
@@ -489,7 +619,7 @@
                     </div>
                 </div>
 
-                <p class="m-0 text-xs leading-relaxed text-gray-500">{{ $hectareSummary['scope_note'] }}</p>
+                <p class="m-0 text-xs leading-relaxed text-gray-500">Based on active landholding records encoded for this landowner.</p>
             </aside>
         </section>
 
@@ -499,10 +629,25 @@
                     <div>
                         <h2 class="staff-panel-title">Landholding Records</h2>
                         <p class="staff-panel-subtitle">
-                            Encode or update the underlying landholding records used to compute current hectares. These are administrative monitoring records only and do not execute legal transfer.
+                            Encode and review parcel-linked landholding records used for hectare monitoring, reference tracking, and staff review.
                         </p>
                     </div>
                     <span class="staff-badge staff-badge-green">{{ $activeHoldings->count() }} active</span>
+                </div>
+
+                <div class="landholding-mini-summary">
+                    <div class="landholding-mini-card is-green">
+                        <p class="landholding-mini-label">Active Area</p>
+                        <p class="landholding-mini-value">{{ number_format($hectareSummary['current_active_total'], 4) }} ha</p>
+                    </div>
+                    <div class="landholding-mini-card">
+                        <p class="landholding-mini-label">Active Records</p>
+                        <p class="landholding-mini-value">{{ $activeHoldings->count() }}</p>
+                    </div>
+                    <div class="landholding-mini-card">
+                        <p class="landholding-mini-label">Other Records</p>
+                        <p class="landholding-mini-value">{{ $inactiveHoldings->count() }}</p>
+                    </div>
                 </div>
             </div>
 
@@ -573,7 +718,7 @@
 
                         <div class="landholding-form-footer">
                             <p class="landholding-footer-note">
-                                This action updates encoded monitoring records only. It does not execute ownership transfer, assign land automatically, or mutate registry records.
+                                Changes are stored as staff-encoded landholding records and are included in audit/log review workflows.
                             </p>
                             <button type="submit" class="staff-button staff-button-primary">
                                 <i class="fa-solid fa-plus"></i>
@@ -584,43 +729,59 @@
                 </div>
             </div>
 
-            <div class="staff-table-wrap">
-                <table class="staff-table">
-                    <thead>
-                        <tr>
-                            <th>Parcel</th>
-                            <th>Area</th>
-                            <th>Status</th>
-                            <th>Dates</th>
-                            <th>Reference</th>
-                            <th>Action</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse ($landowner->landholdings->sortByDesc('created_at') as $holding)
-                            <tr id="landholding-{{ $holding->id }}">
-                                <td>
-                                    <div class="font-black text-gray-900">{{ $holding->parcel?->parcel_code ?? 'Unlinked parcel' }}</div>
-                                    <div class="text-xs text-gray-500">{{ $holding->parcel?->title_no ?? 'No title no.' }}</div>
-                                    <div class="text-xs text-gray-500">{{ $holding->parcel?->municipality ?? 'N/A' }} / {{ $holding->parcel?->barangay ?? 'N/A' }}</div>
-                                </td>
-                                <td class="font-black text-gray-900">{{ number_format((float) $holding->area_hectares, 4) }} ha</td>
-                                <td>
-                                    <span class="staff-badge {{ $holding->status === 'active' ? 'staff-badge-green' : 'staff-badge-slate' }}">{{ ucwords(str_replace('_', ' ', $holding->status)) }}</span>
-                                </td>
-                                <td>
-                                    <div class="text-xs text-gray-600">Acquired: {{ $holding->date_acquired?->format('M d, Y') ?? 'N/A' }}</div>
-                                    <div class="text-xs text-gray-600">Transferred: {{ $holding->date_transferred?->format('M d, Y') ?? 'N/A' }}</div>
-                                </td>
-                                <td>
-                                    <div>{{ $holding->source_reference_number ?? 'N/A' }}</div>
-                                    @if ($holding->sourceApplication)
-                                        <a href="{{ route('staff.applications.show', $holding->sourceApplication) }}" class="staff-link text-xs">{{ $holding->sourceApplication->application_code }}</a>
-                                    @endif
-                                </td>
-                                <td>
+            <div class="staff-panel-pad bg-white">
+                @if ($landowner->landholdings->isEmpty())
+                    <div class="landholding-empty">No landholding records encoded yet.</div>
+                @else
+                    <div class="landholding-card-list">
+                        @foreach ($landowner->landholdings->sortByDesc('created_at') as $holding)
+                            <article id="landholding-{{ $holding->id }}" class="landholding-record-card">
+                                <div class="landholding-record-head">
+                                    <div>
+                                        <p class="landholding-record-title">{{ $holding->parcel?->parcel_code ?? 'Unlinked parcel' }}</p>
+                                        <p class="landholding-record-subtitle">
+                                            {{ $holding->parcel?->title_no ?? 'No title no.' }}
+                                            @if ($holding->parcel?->municipality || $holding->parcel?->barangay)
+                                                · {{ $holding->parcel?->municipality ?? 'N/A' }} / {{ $holding->parcel?->barangay ?? 'N/A' }}
+                                            @endif
+                                        </p>
+                                    </div>
+                                    <span class="staff-badge {{ $holding->status === 'active' ? 'staff-badge-green' : 'staff-badge-slate' }}">
+                                        {{ ucwords(str_replace('_', ' ', $holding->status)) }}
+                                    </span>
+                                </div>
+
+                                <div class="landholding-record-grid">
+                                    <div class="landholding-record-field">
+                                        <p class="landholding-record-label">Area</p>
+                                        <p class="landholding-record-value">{{ number_format((float) $holding->area_hectares, 4) }} ha</p>
+                                    </div>
+                                    <div class="landholding-record-field">
+                                        <p class="landholding-record-label">Date Acquired</p>
+                                        <p class="landholding-record-value">{{ $holding->date_acquired?->format('M d, Y') ?? 'N/A' }}</p>
+                                    </div>
+                                    <div class="landholding-record-field">
+                                        <p class="landholding-record-label">Date Transferred</p>
+                                        <p class="landholding-record-value">{{ $holding->date_transferred?->format('M d, Y') ?? 'N/A' }}</p>
+                                    </div>
+                                    <div class="landholding-record-field">
+                                        <p class="landholding-record-label">Reference</p>
+                                        <p class="landholding-record-value">
+                                            {{ $holding->source_reference_number ?? 'N/A' }}
+                                            @if ($holding->sourceApplication)
+                                                <br><a href="{{ route('staff.applications.show', $holding->sourceApplication) }}" class="staff-link">{{ $holding->sourceApplication->application_code }}</a>
+                                            @endif
+                                        </p>
+                                    </div>
+                                </div>
+
+                                @if (filled($holding->remarks))
+                                    <div class="landholding-record-note">{{ $holding->remarks }}</div>
+                                @endif
+
+                                <div class="landholding-record-actions">
                                     <details class="landholding-edit-box">
-                                        <summary>Edit</summary>
+                                        <summary>Edit landholding</summary>
                                         <form method="POST" action="{{ route('staff.records.landowners.landholdings.update', [$landowner, $holding]) }}" class="landholding-edit-form">
                                             @csrf
                                             @method('PATCH')
@@ -647,17 +808,11 @@
                                             <button type="submit" class="staff-button staff-button-primary">Save Landholding</button>
                                         </form>
                                     </details>
-                                </td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="6">
-                                    <div class="landholding-empty">No landholding records encoded yet.</div>
-                                </td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
+                                </div>
+                            </article>
+                        @endforeach
+                    </div>
+                @endif
             </div>
         </section>
 
@@ -680,7 +835,7 @@
 
             <div class="staff-panel staff-panel-pad">
                 <h2 class="staff-panel-title">Linked Source Records</h2>
-                <p class="staff-panel-subtitle">Staff-confirmed source/provenance links. These links do not verify or transfer ownership.</p>
+                <p class="staff-panel-subtitle">Staff-confirmed source/provenance links for traceability and review.</p>
 
                 <div class="related-card-list">
                     @foreach ($landowner->sourceRecordPackages as $package)

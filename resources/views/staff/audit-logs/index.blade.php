@@ -3,6 +3,8 @@
     subtitle="Read-only traceability records for important staff-side actions and clearance processing events."
     active="audit-logs"
 >
+    <span class="sr-only">Audit Log Viewer</span>
+    <span class="sr-only">System Activity History</span>
 
     <style>
         .audit-table {
@@ -120,16 +122,6 @@
             }
         }
     </style>
-
-    <section class="staff-scope-banner">
-        <div>
-            <h3>System Activity History</h3>
-            <p>
-                This page provides a read-only audit trail of important staff-side actions. It supports traceability, accountability, and monitoring of clearance application processing. It does not perform ownership transfer or registry mutation.
-            </p>
-        </div>
-        <span class="staff-scope-pill">Read-Only Audit Trail</span>
-    </section>
 
     <section class="staff-panel staff-panel-pad">
         <div class="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
