@@ -932,9 +932,11 @@
                 border: 1px solid #dbe4dd;
                 background: #ffffff;
                 border-radius: 14px;
-                padding: 16px;
+                padding: 14px;
                 display: grid;
-                gap: 13px;
+                gap: 11px;
+                align-content: start;
+                min-height: 118px;
             }
 
             .landowner-create-title {
@@ -973,6 +975,17 @@
                 color: #92400e;
             }
 
+            .landowner-create-card-disabled {
+                border-color: #e5e7eb;
+                background: #f8fafc;
+                color: #64748b;
+            }
+
+            .landowner-create-card-disabled .staff-button {
+                pointer-events: none;
+                opacity: 0.65;
+            }
+
             .landowner-link-tip {
                 margin: 12px 0 0;
                 border: 1px solid #dbe4dd;
@@ -982,6 +995,22 @@
                 color: #475569;
                 font-size: 12.5px;
                 line-height: 1.55;
+            }
+
+            .landowner-create-card-disabled {
+                display: grid;
+                grid-template-columns: minmax(0, 1fr) auto;
+                align-items: center;
+            }
+
+            .landowner-create-card-disabled .landowner-create-note {
+                margin-top: 0.25rem;
+            }
+
+            @media (max-width: 760px) {
+                .landowner-create-card-disabled {
+                    grid-template-columns: 1fr;
+                }
             }
 
             .workflow-bottom-panel {
@@ -1480,7 +1509,7 @@
                 <div>
                     <h2 class="review-panel-title">Landowner Record Links</h2>
                     <p class="review-panel-subtitle">
-                        Connect the typed transferor/transferee names to main Landowner Records for validation, monitoring, and auditability only.
+                        Link each typed party name to an encoded Landowner Record before final decision checking.
                     </p>
                 </div>
                 <span class="staff-badge {{ ($application->transferor_landowner_id && $application->transferee_landowner_id) ? 'staff-badge-green' : 'staff-badge-amber' }}">
@@ -1498,7 +1527,7 @@
                             <div class="landowner-link-heading">
                                 <div>
                                     <h3 class="landowner-link-title">Transferor Link</h3>
-                                    <p class="landowner-link-copy">Match the typed transferor name with an existing Landowner Record.</p>
+                                    <p class="landowner-link-copy">Select the matching record for the transferor.</p>
                                 </div>
                                 <span class="staff-badge {{ $application->transferor_landowner_id ? 'staff-badge-green' : 'staff-badge-amber' }}">
                                     {{ $application->transferor_landowner_id ? 'Linked' : 'Needs Link' }}
@@ -1533,7 +1562,7 @@
                             <div class="landowner-link-heading">
                                 <div>
                                     <h3 class="landowner-link-title">Transferee Link</h3>
-                                    <p class="landowner-link-copy">For first-time recipients, create a person record below, then link it here.</p>
+                                    <p class="landowner-link-copy">Select or create the transferee record for review checks.</p>
                                 </div>
                                 <span class="staff-badge {{ $application->transferee_landowner_id ? 'staff-badge-green' : 'staff-badge-amber' }}">
                                     {{ $application->transferee_landowner_id ? 'Linked' : 'Needs Link' }}
@@ -1567,7 +1596,7 @@
 
                     <div class="landowner-link-save-row">
                         <p class="landowner-link-save-note">
-                            Saving these links only connects this application to landowner/person records for processing. It does not assign parcels, transfer ownership, or mutate registry records.
+                            These links are for processing and auditability only; they do not transfer ownership or change registry records.
                         </p>
 
                         <button type="submit" class="staff-button staff-button-primary" @disabled($isFinal)>
@@ -1577,8 +1606,7 @@
                     </div>
                 </form>
 
-                @if (! $isFinal && (! $application->transferor_landowner_id || ! $application->transferee_landowner_id))
-                    <p class="landowner-link-tip">Create missing party records here when the typed transferor/transferee name does not yet exist in Landowner Records. Created records are automatically linked to this application for validation and traceability only.</p>
+                @if (! $isFinal)
                     <div class="landowner-create-grid">
                         @if (! $application->transferor_landowner_id)
                             <form method="POST" action="{{ route('staff.applications.landowner-records.create', $application) }}" class="landowner-create-card landowner-create-card-highlight">
@@ -1586,13 +1614,24 @@
                                 <input type="hidden" name="party" value="transferor">
                                 <div>
                                     <h3 class="landowner-create-title">Create Transferor Record</h3>
-                                    <p class="landowner-create-note">Use this only if the transferor does not yet exist in the Landowner Records list.</p>
+                                    <p class="landowner-create-note">Use only if the transferor is missing from Landowner Records.</p>
                                 </div>
                                 <button type="submit" class="staff-button staff-button-light">
                                     <i class="fa-solid fa-user-plus"></i>
                                     Create & auto-link from “{{ $application->transferor_name ?: 'Transferor Name' }}”
                                 </button>
                             </form>
+                        @else
+                            <div class="landowner-create-card landowner-create-card-disabled">
+                                <div>
+                                    <h3 class="landowner-create-title">Transferor Record Linked</h3>
+                                    <p class="landowner-create-note">{{ $application->transferorLandowner?->full_name ?? 'Transferor' }} is already connected.</p>
+                                </div>
+                                <span class="staff-button staff-button-light">
+                                    <i class="fa-solid fa-check"></i>
+                                    No creation needed
+                                </span>
+                            </div>
                         @endif
 
                         @if (! $application->transferee_landowner_id)
@@ -1601,13 +1640,24 @@
                                 <input type="hidden" name="party" value="transferee">
                                 <div>
                                     <h3 class="landowner-create-title">Create Transferee Record</h3>
-                                    <p class="landowner-create-note">Use this for first-time recipients so decision checks can identify the transferee without implying transfer completion.</p>
+                                    <p class="landowner-create-note">Create and auto-link the recipient record for review checks.</p>
                                 </div>
                                 <button type="submit" class="staff-button staff-button-light">
                                     <i class="fa-solid fa-user-plus"></i>
                                     Create & auto-link from “{{ $application->transferee_name ?: 'Transferee Name' }}”
                                 </button>
                             </form>
+                        @else
+                            <div class="landowner-create-card landowner-create-card-disabled">
+                                <div>
+                                    <h3 class="landowner-create-title">Transferee Record Linked</h3>
+                                    <p class="landowner-create-note">{{ $application->transfereeLandowner?->full_name ?? 'Transferee' }} is already connected.</p>
+                                </div>
+                                <span class="staff-button staff-button-light">
+                                    <i class="fa-solid fa-check"></i>
+                                    No creation needed
+                                </span>
+                            </div>
                         @endif
                     </div>
                 @endif

@@ -298,7 +298,7 @@
                                 <select id="transferor_landowner_id" name="transferor_landowner_id" class="staff-select">
                                     <option value="">No linked landowner record</option>
                                     @foreach ($landowners as $landowner)
-                                        <option value="{{ $landowner->id }}" @selected(old('transferor_landowner_id') == $landowner->id)>
+                                        <option value="{{ $landowner->id }}" data-name="{{ $landowner->full_name }}" @selected(old('transferor_landowner_id') == $landowner->id)>
                                             {{ $landowner->full_name }} — {{ $landowner->municipality ?? 'No municipality' }}
                                         </option>
                                     @endforeach
@@ -322,7 +322,7 @@
                                 <select id="transferee_landowner_id" name="transferee_landowner_id" class="staff-select">
                                     <option value="">No linked landowner record</option>
                                     @foreach ($landowners as $landowner)
-                                        <option value="{{ $landowner->id }}" @selected(old('transferee_landowner_id') == $landowner->id)>
+                                        <option value="{{ $landowner->id }}" data-name="{{ $landowner->full_name }}" @selected(old('transferee_landowner_id') == $landowner->id)>
                                             {{ $landowner->full_name }} — {{ $landowner->municipality ?? 'No municipality' }}
                                         </option>
                                     @endforeach
@@ -393,7 +393,7 @@
                         <select id="parcel_id" name="parcel_id" class="staff-select">
                             <option value="">No parcel linked yet</option>
                             @foreach ($parcels as $parcel)
-                                <option value="{{ $parcel->id }}" @selected(old('parcel_id') == $parcel->id)>
+                                <option value="{{ $parcel->id }}" data-area="{{ $parcel->area_hectares }}" @selected(old('parcel_id') == $parcel->id)>
                                     {{ $parcel->parcel_code }}
                                     @if ($parcel->title_no)
                                         — {{ $parcel->title_no }}
@@ -444,4 +444,40 @@
             </div>
         </form>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            function wireNameAutofill(selectId, inputId) {
+                const select = document.getElementById(selectId);
+                const input = document.getElementById(inputId);
+                if (!select || !input) return;
+
+                select.addEventListener('change', function () {
+                    const selected = select.options[select.selectedIndex];
+                    const name = selected ? selected.dataset.name : '';
+                    if (name) input.value = name;
+                });
+
+                const selected = select.options[select.selectedIndex];
+                if (selected && selected.dataset.name && !input.value) {
+                    input.value = selected.dataset.name;
+                }
+            }
+
+            wireNameAutofill('transferor_landowner_id', 'transferor_name');
+            wireNameAutofill('transferee_landowner_id', 'transferee_name');
+
+            const parcelSelect = document.getElementById('parcel_id');
+            const areaInput = document.getElementById('area_hectares');
+            if (parcelSelect && areaInput) {
+                parcelSelect.addEventListener('change', function () {
+                    const selected = parcelSelect.options[parcelSelect.selectedIndex];
+                    if (selected && selected.dataset.area && !areaInput.value) {
+                        areaInput.value = parseFloat(selected.dataset.area).toFixed(4);
+                    }
+                });
+            }
+        });
+    </script>
+
 </x-staff-shell>

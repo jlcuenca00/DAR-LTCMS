@@ -3,15 +3,6 @@
     subtitle="Search, filter, review, and monitor staff-encoded clearance application records."
     active="applications"
 >
-    <x-slot name="actions">
-        @if (\Illuminate\Support\Facades\Route::has('staff.applications.create'))
-            <a href="{{ route('staff.applications.create') }}" class="staff-button staff-button-primary">
-                <i class="fa-solid fa-plus"></i>
-                Encode New Application
-            </a>
-        @endif
-    </x-slot>
-
     @if (session('success'))
         <div class="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm font-semibold text-green-800">
             {{ session('success') }}
@@ -120,10 +111,18 @@
     </section>
 
     <section class="staff-panel overflow-hidden">
-        <div class="staff-panel-pad flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+        <div class="staff-panel-pad flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
             <div>
                 <h2 class="staff-panel-title">Application List</h2>
                 <p class="staff-panel-subtitle">Showing {{ $applications->count() }} of {{ $applications->total() }} application record(s).</p>
+            </div>
+            <div class="flex flex-wrap items-center gap-2 lg:justify-end" data-main-card-actions-moved>
+                @if (\Illuminate\Support\Facades\Route::has('staff.applications.create'))
+                    <a href="{{ route('staff.applications.create') }}" class="staff-button staff-button-primary">
+                        <i class="fa-solid fa-plus"></i>
+                        Encode New Application
+                    </a>
+                @endif
             </div>
         </div>
 
