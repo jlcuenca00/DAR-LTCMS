@@ -1354,12 +1354,27 @@
 
         @if ($errors->any())
             <div class="review-alert review-alert-error">
-                <div class="font-bold mb-2">Upload failed:</div>
-                <ul class="list-disc pl-5 space-y-1">
-                    @foreach ($errors->all() as $error)
-                        <li>{{ $error }}</li>
-                    @endforeach
-                </ul>
+                <div class="font-bold mb-1">Approval blocked</div>
+
+                @if ($errors->has('validation'))
+                    <p class="mb-2" style="font-weight:600; color:#7f1d1d;">
+                        {{ $errors->first('validation') }}
+                    </p>
+                @endif
+
+                @php
+                    $approvalErrorMessages = collect($errors->getMessages())
+                        ->except('validation')
+                        ->flatten();
+                @endphp
+
+                @if ($approvalErrorMessages->isNotEmpty())
+                    <ul class="list-disc pl-5 space-y-1">
+                        @foreach ($approvalErrorMessages as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                @endif
             </div>
         @endif
 
@@ -1424,7 +1439,7 @@
                                     </div>
                                     <div class="summary-item">
                                         <p class="summary-label">Generated At</p>
-                                        <p class="summary-value">{{ optional($application->clearance->generated_at)->format('M d, Y h:i A') ?? '—' }}</p>
+                                        <p class="summary-value">{{ optional($application->clearance->generated_at)->format('M d, Y h:i A') ?? 'â€”' }}</p>
                                     </div>
                                 </div>
 
@@ -1481,11 +1496,11 @@
                         </div>
                         <div class="summary-item">
                             <p class="summary-label">Barangay</p>
-                            <p class="summary-value">{{ $application->barangay ?? '—' }}</p>
+                            <p class="summary-value">{{ $application->barangay ?? 'â€”' }}</p>
                         </div>
                         <div class="summary-item">
                             <p class="summary-label">Municipality</p>
-                            <p class="summary-value">{{ $application->municipality ?? '—' }}</p>
+                            <p class="summary-value">{{ $application->municipality ?? 'â€”' }}</p>
                         </div>
 
                         @if ($applicationAgriculturalStatusLabels->isNotEmpty())
@@ -1536,11 +1551,11 @@
 
                             <div class="landowner-link-name">
                                 <strong>Typed Application Name</strong>
-                                <p class="landowner-link-name-value">{{ $application->transferor_name ?: '—' }}</p>
+                                <p class="landowner-link-name-value">{{ $application->transferor_name ?: 'â€”' }}</p>
                                 @if ($application->transferorLandowner)
                                     <div class="landowner-linked-note">
                                         <i class="fa-solid fa-link"></i>
-                                        Linked to {{ $application->transferorLandowner->full_name }} · ID {{ $application->transferorLandowner->id }}
+                                        Linked to {{ $application->transferorLandowner->full_name }} Â· ID {{ $application->transferorLandowner->id }}
                                     </div>
                                 @endif
                             </div>
@@ -1551,7 +1566,7 @@
                                     <option value="">No linked landowner record</option>
                                     @foreach ($landownerOptions as $landowner)
                                         <option value="{{ $landowner->id }}" @selected((int) old('transferor_landowner_id', $application->transferor_landowner_id) === (int) $landowner->id)>
-                                            {{ $landowner->full_name }} — {{ $landowner->municipality ?? 'No municipality' }}
+                                            {{ $landowner->full_name }} â€” {{ $landowner->municipality ?? 'No municipality' }}
                                         </option>
                                     @endforeach
                                 </select>
@@ -1571,11 +1586,11 @@
 
                             <div class="landowner-link-name">
                                 <strong>Typed Application Name</strong>
-                                <p class="landowner-link-name-value">{{ $application->transferee_name ?: '—' }}</p>
+                                <p class="landowner-link-name-value">{{ $application->transferee_name ?: 'â€”' }}</p>
                                 @if ($application->transfereeLandowner)
                                     <div class="landowner-linked-note">
                                         <i class="fa-solid fa-link"></i>
-                                        Linked to {{ $application->transfereeLandowner->full_name }} · ID {{ $application->transfereeLandowner->id }}
+                                        Linked to {{ $application->transfereeLandowner->full_name }} Â· ID {{ $application->transfereeLandowner->id }}
                                     </div>
                                 @endif
                             </div>
@@ -1586,7 +1601,7 @@
                                     <option value="">No linked landowner record</option>
                                     @foreach ($landownerOptions as $landowner)
                                         <option value="{{ $landowner->id }}" @selected((int) old('transferee_landowner_id', $application->transferee_landowner_id) === (int) $landowner->id)>
-                                            {{ $landowner->full_name }} — {{ $landowner->municipality ?? 'No municipality' }}
+                                            {{ $landowner->full_name }} â€” {{ $landowner->municipality ?? 'No municipality' }}
                                         </option>
                                     @endforeach
                                 </select>
@@ -1618,7 +1633,7 @@
                                 </div>
                                 <button type="submit" class="staff-button staff-button-light">
                                     <i class="fa-solid fa-user-plus"></i>
-                                    Create & auto-link from “{{ $application->transferor_name ?: 'Transferor Name' }}”
+                                    Create & auto-link from â€œ{{ $application->transferor_name ?: 'Transferor Name' }}â€
                                 </button>
                             </form>
                         @else
@@ -1644,7 +1659,7 @@
                                 </div>
                                 <button type="submit" class="staff-button staff-button-light">
                                     <i class="fa-solid fa-user-plus"></i>
-                                    Create & auto-link from “{{ $application->transferee_name ?: 'Transferee Name' }}”
+                                    Create & auto-link from â€œ{{ $application->transferee_name ?: 'Transferee Name' }}â€
                                 </button>
                             </form>
                         @else
@@ -1749,17 +1764,17 @@
 
                                             <div class="document-detail-item">
                                                 <strong>Annex Reference</strong>
-                                                <div class="mt-1">{{ $doc->annex_reference ?: '—' }}</div>
+                                                <div class="mt-1">{{ $doc->annex_reference ?: 'â€”' }}</div>
                                             </div>
 
                                             <div class="document-detail-item">
                                                 <strong>Reference No.</strong>
-                                                <div class="mt-1">{{ $doc->document_reference_number ?: '—' }}</div>
+                                                <div class="mt-1">{{ $doc->document_reference_number ?: 'â€”' }}</div>
                                             </div>
 
                                             <div class="document-detail-item">
                                                 <strong>Remarks</strong>
-                                                <div class="mt-1">{{ $doc->remarks ?: '—' }}</div>
+                                                <div class="mt-1">{{ $doc->remarks ?: 'â€”' }}</div>
                                             </div>
 
                                         </div>
@@ -2205,7 +2220,7 @@
                 <div>
                     <h2 class="review-panel-title">Prior / Source Records</h2>
                     <p class="review-panel-subtitle">
-                        Matched digitized source records and source packages related to this application’s parcel, title, transferor, or transferee.
+                        Matched digitized source records and source packages related to this applicationâ€™s parcel, title, transferor, or transferee.
                         These records support review and traceability only. They do not automatically transfer land ownership or mutate Registry of Deeds records.
                     </p>
                 </div>
@@ -2288,11 +2303,11 @@
                                                 @if ($record->parcel_code)<div><strong>Parcel Ref:</strong> {{ $record->parcel_code }}</div>@endif
                                                 @if ($record->landholding_reference_number)<div><strong>Landholding:</strong> {{ $record->landholding_reference_number }}</div>@endif
                                                 @if ($record->control_number)<div><strong>Clearance:</strong> {{ $record->control_number }}</div>@endif
-                                                @if (! $record->title_number && ! $record->parcel_code && ! $record->landholding_reference_number && ! $record->control_number) — @endif
+                                                @if (! $record->title_number && ! $record->parcel_code && ! $record->landholding_reference_number && ! $record->control_number) â€” @endif
                                             </td>
                                             <td>
                                                 <div>{{ $record->source_book }}</div>
-                                                <div class="text-xs text-gray-500">Page: {{ $record->page_number ?? '—' }}</div>
+                                                <div class="text-xs text-gray-500">Page: {{ $record->page_number ?? 'â€”' }}</div>
                                             </td>
                                             <td>
                                                 @if ($record->parcel)
@@ -2437,3 +2452,4 @@
         });
     </script>
 </x-staff-shell>
+
