@@ -1156,6 +1156,112 @@
                 color: #991b1b;
             }
 
+
+
+            .decision-modal-backdrop {
+                position: fixed;
+                inset: 0;
+                z-index: 80;
+                display: none;
+                align-items: center;
+                justify-content: center;
+                padding: 24px;
+                background: rgba(15, 23, 42, 0.68);
+                backdrop-filter: blur(3px);
+            }
+
+            .decision-modal-backdrop.is-open {
+                display: flex;
+            }
+
+            .decision-modal-card {
+                width: min(520px, 100%);
+                border: 1px solid #dbe4dd;
+                border-radius: 18px;
+                background: #ffffff;
+                box-shadow: 0 24px 70px rgba(15, 23, 42, 0.28);
+                overflow: hidden;
+                transform: translateY(8px) scale(0.98);
+                opacity: 0;
+                transition: 160ms ease;
+            }
+
+            .decision-modal-backdrop.is-open .decision-modal-card {
+                transform: translateY(0) scale(1);
+                opacity: 1;
+            }
+
+            .decision-modal-header {
+                display: flex;
+                gap: 14px;
+                align-items: flex-start;
+                padding: 22px 24px 16px;
+                border-bottom: 1px solid #e5e7eb;
+                background: linear-gradient(90deg, #f8faf9 0%, #ffffff 82%);
+            }
+
+            .decision-modal-icon {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                width: 42px;
+                height: 42px;
+                border-radius: 13px;
+                flex: 0 0 auto;
+                background: #dcfce7;
+                color: #166534;
+            }
+
+            .decision-modal-icon.danger {
+                background: #fee2e2;
+                color: #b91c1c;
+            }
+
+            .decision-modal-title {
+                margin: 0;
+                font-family: var(--heading-font) !important;
+                font-size: 18px;
+                font-weight: 900;
+                color: #111827;
+                line-height: 1.25;
+            }
+
+            .decision-modal-copy {
+                margin: 6px 0 0;
+                font-size: 13px;
+                line-height: 1.55;
+                color: #64748b;
+            }
+
+            .decision-modal-body {
+                padding: 18px 24px;
+            }
+
+            .decision-modal-warning {
+                border: 1px solid #fed7aa;
+                background: #fffbeb;
+                color: #92400e;
+                border-radius: 12px;
+                padding: 12px 14px;
+                font-size: 12.5px;
+                line-height: 1.55;
+                font-weight: 750;
+            }
+
+            .decision-modal-actions {
+                display: flex;
+                justify-content: flex-end;
+                gap: 10px;
+                padding: 16px 24px 22px;
+                border-top: 1px solid #e5e7eb;
+                background: #f8fafc;
+            }
+
+            .decision-modal-actions .staff-button {
+                min-width: 132px;
+                justify-content: center;
+            }
+
             .timeline-collapsible { overflow: hidden; }
             .timeline-collapsible > summary { list-style: none; cursor: pointer; }
             .timeline-collapsible > summary::-webkit-details-marker { display: none; }
@@ -1354,27 +1460,12 @@
 
         @if ($errors->any())
             <div class="review-alert review-alert-error">
-                <div class="font-bold mb-1">Approval blocked</div>
-
-                @if ($errors->has('validation'))
-                    <p class="mb-2" style="font-weight:600; color:#7f1d1d;">
-                        {{ $errors->first('validation') }}
-                    </p>
-                @endif
-
-                @php
-                    $approvalErrorMessages = collect($errors->getMessages())
-                        ->except('validation')
-                        ->flatten();
-                @endphp
-
-                @if ($approvalErrorMessages->isNotEmpty())
-                    <ul class="list-disc pl-5 space-y-1">
-                        @foreach ($approvalErrorMessages as $error)
-                            <li>{{ $error }}</li>
-                        @endforeach
-                    </ul>
-                @endif
+                <div class="font-bold mb-2">Approval blocked</div>
+                <ul class="list-disc pl-5 space-y-1">
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
             </div>
         @endif
 
@@ -2105,7 +2196,7 @@
                     </div>
                 @elseif ($application->status === 'pending_review')
                     <div class="workflow-decision-grid">
-                        <form method="POST" action="{{ route('staff.applications.approve', $application) }}" class="workflow-decision-card approve-card">
+                        <form method="POST" action="{{ route('staff.applications.approve', $application) }}" class="workflow-decision-card approve-card" data-decision-confirm="approve">
                             @csrf
 
                             <div class="workflow-decision-heading">
@@ -2138,7 +2229,7 @@
                             </button>
                         </form>
 
-                        <form method="POST" action="{{ route('staff.applications.not_approved', $application) }}" class="workflow-decision-card not-approved-card">
+                        <form method="POST" action="{{ route('staff.applications.not_approved', $application) }}" class="workflow-decision-card not-approved-card" data-decision-confirm="not-approved">
                             @csrf
 
                             <div class="workflow-decision-heading">
@@ -2405,6 +2496,40 @@
         </details>
     </div>
 
+
+
+        <div id="decision-confirm-modal" class="decision-modal-backdrop" aria-hidden="true">
+            <div class="decision-modal-card" role="dialog" aria-modal="true" aria-labelledby="decision-confirm-title" aria-describedby="decision-confirm-copy">
+                <div class="decision-modal-header">
+                    <span id="decision-confirm-icon" class="decision-modal-icon" aria-hidden="true">
+                        <i class="fa-solid fa-check"></i>
+                    </span>
+                    <div>
+                        <h2 id="decision-confirm-title" class="decision-modal-title">Confirm final decision</h2>
+                        <p id="decision-confirm-copy" class="decision-modal-copy">
+                            This action will finalize the application record.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="decision-modal-body">
+                    <div id="decision-confirm-warning" class="decision-modal-warning">
+                        Finalized applications lock further edits and document uploads for audit integrity.
+                    </div>
+                </div>
+
+                <div class="decision-modal-actions">
+                    <button type="button" class="staff-button staff-button-light" id="decision-confirm-cancel">
+                        Cancel
+                    </button>
+                    <button type="button" class="staff-button staff-button-primary" id="decision-confirm-submit">
+                        Confirm
+                    </button>
+                </div>
+            </div>
+        </div>
+
+
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             const scrollKey = 'dar_ltcms_application_review_scroll';
@@ -2449,6 +2574,96 @@
                     // Ignore corrupted scroll state.
                 }
             }
+
+
+            const decisionModal = document.getElementById('decision-confirm-modal');
+            const decisionModalIcon = document.getElementById('decision-confirm-icon');
+            const decisionModalTitle = document.getElementById('decision-confirm-title');
+            const decisionModalCopy = document.getElementById('decision-confirm-copy');
+            const decisionModalWarning = document.getElementById('decision-confirm-warning');
+            const decisionModalSubmit = document.getElementById('decision-confirm-submit');
+            const decisionModalCancel = document.getElementById('decision-confirm-cancel');
+            let pendingDecisionForm = null;
+
+            const decisionMessages = {
+                approve: {
+                    icon: 'fa-check',
+                    danger: false,
+                    buttonClass: 'staff-button staff-button-primary',
+                    buttonText: 'Approve Clearance',
+                    title: 'Approve this clearance?',
+                    copy: 'This will generate and record an approved clearance result for this application.',
+                    warning: 'Approval records the clearance result only. It does not automatically transfer land ownership or mutate Registry of Deeds records.'
+                },
+                'not-approved': {
+                    icon: 'fa-xmark',
+                    danger: true,
+                    buttonClass: 'staff-button staff-button-danger',
+                    buttonText: 'Mark Not Approved',
+                    title: 'Mark this application as not approved?',
+                    copy: 'This will record a final non-approval decision for this application.',
+                    warning: 'This finalizes the application and locks further editing or document uploads for audit integrity.'
+                }
+            };
+
+            function openDecisionModal(form, type) {
+                const config = decisionMessages[type] || decisionMessages.approve;
+                pendingDecisionForm = form;
+
+                decisionModalIcon.className = 'decision-modal-icon' + (config.danger ? ' danger' : '');
+                decisionModalIcon.innerHTML = '<i class="fa-solid ' + config.icon + '"></i>';
+                decisionModalTitle.textContent = config.title;
+                decisionModalCopy.textContent = config.copy;
+                decisionModalWarning.textContent = config.warning;
+                decisionModalSubmit.className = config.buttonClass;
+                decisionModalSubmit.textContent = config.buttonText;
+
+                decisionModal.classList.add('is-open');
+                decisionModal.setAttribute('aria-hidden', 'false');
+                document.body.style.overflow = 'hidden';
+                decisionModalSubmit.focus();
+            }
+
+            function closeDecisionModal() {
+                decisionModal.classList.remove('is-open');
+                decisionModal.setAttribute('aria-hidden', 'true');
+                document.body.style.overflow = '';
+                pendingDecisionForm = null;
+            }
+
+            document.querySelectorAll('form[data-decision-confirm]').forEach(function (form) {
+                form.addEventListener('submit', function (event) {
+                    event.preventDefault();
+                    openDecisionModal(form, form.getAttribute('data-decision-confirm'));
+                });
+            });
+
+            decisionModalCancel.addEventListener('click', closeDecisionModal);
+
+            decisionModal.addEventListener('click', function (event) {
+                if (event.target === decisionModal) {
+                    closeDecisionModal();
+                }
+            });
+
+            document.addEventListener('keydown', function (event) {
+                if (event.key === 'Escape' && decisionModal.classList.contains('is-open')) {
+                    closeDecisionModal();
+                }
+            });
+
+            decisionModalSubmit.addEventListener('click', function () {
+                if (! pendingDecisionForm) {
+                    return;
+                }
+
+                const form = pendingDecisionForm;
+                pendingDecisionForm = null;
+                decisionModal.classList.remove('is-open');
+                decisionModal.setAttribute('aria-hidden', 'true');
+                document.body.style.overflow = '';
+                form.submit();
+            });
         });
     </script>
 </x-staff-shell>

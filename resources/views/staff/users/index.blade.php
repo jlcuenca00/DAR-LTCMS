@@ -2,12 +2,6 @@
     title="User / Role Management"
     active="users"
 >
-    <x-slot name="actions">
-        <a href="{{ route('staff.users.create') }}" class="staff-button staff-button-primary">
-            <i class="fa-solid fa-user-plus"></i>
-            Create User
-        </a>
-    </x-slot>
 
     <span class="sr-only">Staff-Managed User Accounts</span>
 
@@ -19,12 +13,18 @@
 
     <section class="staff-panel overflow-hidden">
         <div class="border-b border-gray-200 px-5 py-4">
-            <div class="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+            <div class="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
                 <div>
-                    <h2 class="staff-panel-title">Search and Filter Users</h2>
-                    <p class="staff-panel-subtitle">Filter user accounts by name, email, role, or active status.</p>
+                    <h2 class="staff-panel-title">User Accounts</h2>
+                    <p class="staff-panel-subtitle">Search, filter, create, and manage staff, landowner, and geodetic accounts.</p>
                 </div>
-                <span class="staff-badge staff-badge-green self-start xl:self-auto">{{ $users->total() }} account(s)</span>
+                <div class="flex flex-wrap items-center gap-2 xl:justify-end xl:ml-auto">
+                    <span class="staff-badge staff-badge-green">{{ $users->total() }} account(s)</span>
+                    <a href="{{ route('staff.users.create') }}" class="staff-button staff-button-primary">
+                        <i class="fa-solid fa-user-plus"></i>
+                        Create User
+                    </a>
+                </div>
             </div>
 
             <form method="GET" action="{{ route('staff.users.index') }}" class="mt-5 grid gap-3 lg:grid-cols-[minmax(240px,1fr)_180px_180px_auto] lg:items-end">
