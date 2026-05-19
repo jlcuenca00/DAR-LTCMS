@@ -74,7 +74,7 @@ public function approve(Request $request, LandTransferApplication $application)
 
     if ($hasCriticalFailures) {
         return back()->withErrors([
-            'validation' => 'Approval blocked: critical validation failures detected. Mark as Not Approved or resolve issues.'
+            'validation' => 'Critical validation failures detected. Mark as Not Approved or resolve issues.'
         ]);
     }
 
