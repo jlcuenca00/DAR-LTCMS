@@ -53,19 +53,20 @@
     </section>
 
     <section class="staff-panel overflow-hidden">
-        <div class="staff-panel-pad flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-            <div>
+        <div class="staff-panel-pad" style="display:flex; align-items:center; justify-content:space-between; gap:1rem; flex-wrap:wrap;">
+            <div style="min-width:0;">
                 <h2 class="staff-panel-title">Landowner List</h2>
-                <p class="staff-panel-subtitle">Showing {{ $landowners->count() }} of {{ $landowners->total() }} landowner record(s). Current hectares are computed from active landholding records only; source records and pending applications are not counted until staff encodes them as active landholding records.</p>
+                <p class="staff-panel-subtitle">Showing {{ $landowners->count() }} of {{ $landowners->total() }} landowner record(s).</p>
             </div>
-            <div class="flex flex-wrap gap-2" data-main-card-actions-moved>
+            <div style="display:flex; align-items:center; justify-content:flex-end; gap:0.5rem; flex-wrap:wrap; margin-left:auto;" data-main-card-actions-moved>
                 <a href="{{ route('staff.records.landowners.create') }}" class="staff-button staff-button-primary">
-                            <i class="fa-solid fa-user-plus"></i>
-                            Add Landowner
-                        </a>        <a href="{{ route('staff.records.parcels.index') }}" class="staff-button staff-button-light">
-                            <i class="fa-solid fa-map-location-dot"></i>
-                            View Parcel Records
-                        </a>
+                    <i class="fa-solid fa-user-plus"></i>
+                    Add Landowner
+                </a>
+                <a href="{{ route('staff.records.parcels.index') }}" class="staff-button staff-button-light">
+                    <i class="fa-solid fa-map-location-dot"></i>
+                    View Parcel Records
+                </a>
             </div>
         </div>
 

@@ -270,24 +270,76 @@
         }
 
         .landholding-edit-box {
-            min-width: 18rem;
+            width: 100%;
+            min-width: 0;
             border: 1px solid #dbe4dd;
-            border-radius: 0.75rem;
-            background: #ffffff;
-            padding: 0.75rem;
+            border-radius: 0.9rem;
+            background: #f8fafc;
+            overflow: hidden;
         }
 
         .landholding-edit-box summary {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
             color: #166534;
             cursor: pointer;
-            font-size: 0.88rem;
+            font-size: 0.9rem;
+            font-weight: 950;
+            list-style: none;
+            padding: 0.85rem 1rem;
+            background: #ffffff;
+            border: 1px solid #dbe4dd;
+            border-radius: 0.85rem;
+        }
+
+        .landholding-edit-box summary::-webkit-details-marker {
+            display: none;
+        }
+
+        .landholding-edit-box summary::after {
+            content: 'Open edit panel';
+            margin-left: auto;
+            color: #64748b;
+            font-size: 0.72rem;
             font-weight: 900;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .landholding-edit-box[open] summary {
+            border-bottom: 0;
+            border-bottom-left-radius: 0;
+            border-bottom-right-radius: 0;
+        }
+
+        .landholding-edit-box[open] summary::after {
+            content: 'Close panel';
         }
 
         .landholding-edit-form {
             display: grid;
-            gap: 0.65rem;
-            margin-top: 0.8rem;
+            grid-template-columns: repeat(12, minmax(0, 1fr));
+            gap: 0.85rem;
+            margin-top: 0;
+            padding: 1rem;
+        }
+
+        .landholding-edit-field {
+            min-width: 0;
+        }
+
+        .landholding-edit-field.span-2 { grid-column: span 2; }
+        .landholding-edit-field.span-3 { grid-column: span 3; }
+        .landholding-edit-field.span-4 { grid-column: span 4; }
+        .landholding-edit-field.span-6 { grid-column: span 6; }
+        .landholding-edit-field.span-12 { grid-column: 1 / -1; }
+
+        .landholding-edit-actions {
+            display: flex;
+            justify-content: flex-end;
+            grid-column: 1 / -1;
+            padding-top: 0.15rem;
         }
 
         .landholding-mini-summary {
@@ -332,13 +384,13 @@
 
         .landholding-card-list {
             display: grid;
-            gap: 0.9rem;
+            gap: 0.85rem;
         }
 
         .landholding-record-card {
-            border: 1px solid #e2e8f0;
+            border: 1px solid #dbe4dd;
             border-radius: 1rem;
-            background: #ffffff;
+            background: linear-gradient(180deg, #ffffff 0%, #fbfdfb 100%);
             padding: 1rem;
             box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
         }
@@ -348,8 +400,16 @@
             align-items: flex-start;
             justify-content: space-between;
             gap: 1rem;
-            padding-bottom: 0.85rem;
+            padding-bottom: 0.75rem;
             border-bottom: 1px solid #edf2f7;
+        }
+
+        .landholding-record-head-actions {
+            display: flex;
+            align-items: center;
+            gap: 0.65rem;
+            flex-wrap: wrap;
+            justify-content: flex-end;
         }
 
         .landholding-record-title {
@@ -369,9 +429,9 @@
 
         .landholding-record-grid {
             display: grid;
-            grid-template-columns: repeat(4, minmax(0, 1fr));
-            gap: 0.85rem;
-            margin-top: 0.9rem;
+            grid-template-columns: repeat(5, minmax(0, 1fr));
+            gap: 0.75rem;
+            margin-top: 0.8rem;
         }
 
         .landholding-record-field {
@@ -379,7 +439,7 @@
             border: 1px solid #edf2f7;
             border-radius: 0.75rem;
             background: #f8fafc;
-            padding: 0.75rem;
+            padding: 0.72rem;
         }
 
         .landholding-record-field.is-wide {
@@ -417,8 +477,69 @@
 
         .landholding-record-actions {
             margin-top: 0.85rem;
+            display: block;
+            width: 100% !important;
+            max-width: none !important;
+            clear: both;
+        }
+
+        .landholding-record-actions .landholding-edit-box {
+            display: block !important;
+            width: 100% !important;
+            max-width: none !important;
+        }
+
+        .landholding-edit-shell {
+            border: 1px solid #dbe4dd;
+            border-radius: 0.95rem;
+            background: #ffffff;
+            overflow: hidden;
+        }
+
+        .landholding-edit-intro {
             display: flex;
-            justify-content: flex-end;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 1rem;
+            border-bottom: 1px solid #e2e8f0;
+            background: #f8fafc;
+            padding: 0.85rem 1rem;
+        }
+
+        .landholding-edit-intro p {
+            margin: 0.2rem 0 0;
+            color: #64748b;
+            font-size: 0.78rem;
+            line-height: 1.45;
+        }
+
+        .landholding-photo-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            color: #166534;
+            font-weight: 900;
+            text-decoration: none;
+        }
+
+        .landholding-photo-link:hover {
+            text-decoration: underline;
+        }
+
+        .landholding-photo-preview {
+            display: flex;
+            align-items: center;
+            gap: 0.65rem;
+        }
+
+        .landholding-photo-thumb {
+            width: 42px;
+            height: 42px;
+            border-radius: 0.65rem;
+            border: 1px solid #dbe4dd;
+            object-fit: cover;
+            background: #ffffff;
+            flex: 0 0 auto;
         }
 
         .landowner-related-grid {
@@ -426,6 +547,13 @@
             grid-template-columns: repeat(2, minmax(0, 1fr));
             gap: 1.25rem;
         }
+
+        @media (max-width: 1100px) {
+            .landholding-record-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+
 
         .related-card-list {
             display: grid;
@@ -490,7 +618,13 @@
             .landholding-field.span-6,
             .landholding-field.span-7,
             .landholding-field.span-8,
-            .landholding-field.span-12 {
+            .landholding-field.span-12,
+            .landholding-edit-field,
+            .landholding-edit-field.span-2,
+            .landholding-edit-field.span-3,
+            .landholding-edit-field.span-4,
+            .landholding-edit-field.span-6,
+            .landholding-edit-field.span-12 {
                 grid-column: 1 / -1;
             }
 
@@ -753,9 +887,11 @@
                                             @endif
                                         </p>
                                     </div>
-                                    <span class="staff-badge {{ $holding->status === 'active' ? 'staff-badge-green' : 'staff-badge-slate' }}">
-                                        {{ ucwords(str_replace('_', ' ', $holding->status)) }}
-                                    </span>
+                                    <div class="landholding-record-head-actions">
+                                        <span class="staff-badge {{ $holding->status === 'active' ? 'staff-badge-green' : 'staff-badge-slate' }}">
+                                            {{ ucwords(str_replace('_', ' ', $holding->status)) }}
+                                        </span>
+                                    </div>
                                 </div>
 
                                 <div class="landholding-record-grid">
@@ -780,6 +916,21 @@
                                             @endif
                                         </p>
                                     </div>
+                                    <div class="landholding-record-field">
+                                        <p class="landholding-record-label">Reference Photo / Scan</p>
+                                        <div class="landholding-record-value">
+                                            @if ($holding->reference_photo_path)
+                                                <div class="landholding-photo-preview">
+                                                    <img src="{{ asset('storage/' . $holding->reference_photo_path) }}" alt="Landholding reference photo" class="landholding-photo-thumb">
+                                                    <a href="{{ asset('storage/' . $holding->reference_photo_path) }}" target="_blank" rel="noopener" class="landholding-photo-link">
+                                                        Open reference
+                                                    </a>
+                                                </div>
+                                            @else
+                                                N/A
+                                            @endif
+                                        </div>
+                                    </div>
                                 </div>
 
                                 @if (filled($holding->remarks))
@@ -788,33 +939,76 @@
 
                                 <div class="landholding-record-actions">
                                     <details class="landholding-edit-box">
-                                        <summary>Edit landholding</summary>
-                                        <form method="POST" action="{{ route('staff.records.landowners.landholdings.update', [$landowner, $holding]) }}" class="landholding-edit-form" enctype="multipart/form-data" data-landholding-form>
-                                            @csrf
-                                            @method('PATCH')
+                                        <summary><i class="fa-solid fa-pen-to-square"></i> Edit landholding</summary>
+                                        <div class="landholding-edit-shell">
+                                            <div class="landholding-edit-intro">
+                                                <div>
+                                                    <strong class="text-sm text-gray-950">Update encoded landholding reference</strong>
+                                                    <p>Changes update the staff-encoded landholding record and may affect computed hectares when status is Active.</p>
+                                                </div>
+                                                <span class="staff-badge staff-badge-slate">Record editing</span>
+                                            </div>
+                                            <form method="POST" action="{{ route('staff.records.landowners.landholdings.update', [$landowner, $holding]) }}" class="landholding-edit-form" enctype="multipart/form-data" data-landholding-form>
+                                                @csrf
+                                                @method('PATCH')
 
-                                            <select name="parcel_id" class="landholding-input" required data-parcel-autofill>
-                                                @foreach ($parcels as $parcel)
-                                                    @php($parcelReferenceText = collect([filled($parcel->title_no) ? 'Title: '.$parcel->title_no : null, filled($parcel->tax_decl_no) ? 'Tax Declaration: '.$parcel->tax_decl_no : null])->filter()->implode(' / '))
-                                                    <option value="{{ $parcel->id }}" data-area="{{ $parcel->area_hectares }}" data-reference="{{ $parcelReferenceText }}" @selected((int) $holding->parcel_id === (int) $parcel->id)>{{ $parcel->parcel_code }} @if($parcel->title_no) — {{ $parcel->title_no }} @endif</option>
-                                                @endforeach
-                                            </select>
+                                            <div class="landholding-edit-field span-6">
+                                                <label class="landholding-field-label">Parcel</label>
+                                                <select name="parcel_id" class="landholding-input" required data-parcel-autofill>
+                                                    @foreach ($parcels as $parcel)
+                                                        @php($parcelReferenceText = collect([filled($parcel->title_no) ? 'Title: '.$parcel->title_no : null, filled($parcel->tax_decl_no) ? 'Tax Declaration: '.$parcel->tax_decl_no : null])->filter()->implode(' / '))
+                                                        <option value="{{ $parcel->id }}" data-area="{{ $parcel->area_hectares }}" data-reference="{{ $parcelReferenceText }}" @selected((int) $holding->parcel_id === (int) $parcel->id)>{{ $parcel->parcel_code }} @if($parcel->title_no) — {{ $parcel->title_no }} @endif</option>
+                                                    @endforeach
+                                                </select>
+                                            </div>
 
-                                            <input type="number" step="0.0001" min="0.0001" name="area_hectares" value="{{ $holding->area_hectares }}" class="landholding-input" required data-area-field>
+                                            <div class="landholding-edit-field span-3">
+                                                <label class="landholding-field-label">Area hectares</label>
+                                                <input type="number" step="0.0001" min="0.0001" name="area_hectares" value="{{ $holding->area_hectares }}" class="landholding-input" required data-area-field>
+                                            </div>
 
-                                            <select name="status" class="landholding-input" required>
-                                                @foreach (\App\Models\Landholding::STATUSES as $status)
-                                                    <option value="{{ $status }}" @selected($holding->status === $status)>{{ ucwords(str_replace('_', ' ', $status)) }}</option>
-                                                @endforeach
-                                            </select>
+                                            <div class="landholding-edit-field span-3">
+                                                <label class="landholding-field-label">Status</label>
+                                                <select name="status" class="landholding-input" required>
+                                                    @foreach (\App\Models\Landholding::STATUSES as $status)
+                                                        <option value="{{ $status }}" @selected($holding->status === $status)>{{ ucwords(str_replace('_', ' ', $status)) }}</option>
+                                                    @endforeach
+                                                </select>
+                                            </div>
 
-                                            <input type="date" name="date_acquired" value="{{ $holding->date_acquired?->format('Y-m-d') }}" class="landholding-input">
-                                            <input type="date" name="date_transferred" value="{{ $holding->date_transferred?->format('Y-m-d') }}" class="landholding-input">
-                                            <input type="text" name="source_reference_number" value="{{ $holding->source_reference_number }}" class="landholding-input" placeholder="Source/reference no." data-reference-field>
-                                            <textarea name="remarks" rows="2" class="landholding-input" placeholder="Remarks">{{ $holding->remarks }}</textarea>
+                                            <div class="landholding-edit-field span-3">
+                                                <label class="landholding-field-label">Date acquired</label>
+                                                <input type="date" name="date_acquired" value="{{ $holding->date_acquired?->format('Y-m-d') }}" class="landholding-input">
+                                            </div>
 
-                                            <button type="submit" class="staff-button staff-button-primary">Save Landholding</button>
-                                        </form>
+                                            <div class="landholding-edit-field span-3">
+                                                <label class="landholding-field-label">Date transferred</label>
+                                                <input type="date" name="date_transferred" value="{{ $holding->date_transferred?->format('Y-m-d') }}" class="landholding-input">
+                                            </div>
+
+                                            <div class="landholding-edit-field span-6">
+                                                <label class="landholding-field-label">Source/reference no.</label>
+                                                <input type="text" name="source_reference_number" value="{{ $holding->source_reference_number }}" class="landholding-input" placeholder="Source/reference no." data-reference-field>
+                                            </div>
+
+                                            <div class="landholding-edit-field span-6">
+                                                <label class="landholding-field-label">Replace reference photo / scan</label>
+                                                <input type="file" name="reference_photo" accept="image/*" class="landholding-input">
+                                                @if ($holding->reference_photo_path)
+                                                    <p class="mt-1 text-xs text-gray-500">Current uploaded reference remains available unless replaced.</p>
+                                                @endif
+                                            </div>
+
+                                            <div class="landholding-edit-field span-12">
+                                                <label class="landholding-field-label">Remarks</label>
+                                                <textarea name="remarks" rows="2" class="landholding-input" placeholder="Remarks">{{ $holding->remarks }}</textarea>
+                                            </div>
+
+                                            <div class="landholding-edit-actions">
+                                                <button type="submit" class="staff-button staff-button-primary">Save Landholding</button>
+                                            </div>
+                                            </form>
+                                        </div>
                                     </details>
                                 </div>
                             </article>
