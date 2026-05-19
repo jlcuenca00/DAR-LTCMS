@@ -45,6 +45,12 @@ class SourceRecordPackage extends Model
         'source_geometry_geojson',
         'boundary_description',
 
+        'source_file_path',
+        'source_file_original_filename',
+        'source_file_mime_type',
+        'source_file_uploaded_by_user_id',
+        'source_file_uploaded_at',
+
         'source_book',
         'page_number',
         'transcribed_by',
@@ -57,6 +63,7 @@ class SourceRecordPackage extends Model
         'area_hectares' => 'decimal:4',
         'source_geometry_geojson' => 'array',
         'transcription_date' => 'date',
+        'source_file_uploaded_at' => 'datetime',
     ];
 
     public function records()
@@ -77,6 +84,28 @@ class SourceRecordPackage extends Model
     public function encodedBy()
     {
         return $this->belongsTo(User::class, 'encoded_by_user_id');
+    }
+
+
+
+    public function sourceFileUploadedBy()
+    {
+        return $this->belongsTo(User::class, 'source_file_uploaded_by_user_id');
+    }
+
+    public function getHasSourceFileAttribute(): bool
+    {
+        return ! empty($this->source_file_path);
+    }
+
+    public function getSourceFileStatusLabelAttribute(): string
+    {
+        return $this->has_source_file ? 'Source File Attached' : 'Needs Source File';
+    }
+
+    public function getSourceFileStatusClassAttribute(): string
+    {
+        return $this->has_source_file ? 'staff-badge-green' : 'staff-badge-amber';
     }
 
     public function getStatusLabelAttribute(): string

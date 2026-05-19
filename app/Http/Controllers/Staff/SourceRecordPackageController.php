@@ -12,6 +12,8 @@ use App\Services\AuditLogger;
 use App\Services\NotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Database\UniqueConstraintViolationException;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
@@ -85,7 +87,16 @@ class SourceRecordPackageController extends Controller
             $data['parcel_code'] = $linkedParcel?->parcel_code;
         }
 
-        $package = DB::transaction(function () use ($request, $data) {
+        $this->assertNoConflictingSourceRecords($request, $data);
+
+        unset($data['source_file']);
+
+        if ($request->hasFile('source_file')) {
+            $data = array_merge($data, $this->storeSourceFile($request));
+        }
+
+        try {
+            $package = DB::transaction(function () use ($request, $data) {
             $package = SourceRecordPackage::create(array_merge($data, [
                 'package_code' => $this->generatePackageCode(),
                 'status' => ! empty($data['parcel_id'])
@@ -121,13 +132,19 @@ class SourceRecordPackageController extends Controller
                     'parcel_id' => $package->parcel_id,
                     'parcel_code' => $package->parcel_code,
                     'records_created' => $package->records()->count(),
+                    'source_file_attached' => $package->has_source_file,
                 ]
             );
 
             app(NotificationService::class)->notifyGeodeticSourcePackageAvailable($package);
 
-            return $package;
-        });
+                return $package;
+            });
+        } catch (UniqueConstraintViolationException $e) {
+            throw ValidationException::withMessages([
+                'source_record_conflict' => 'A matching source record already exists. Change the duplicate title, landholding reference, parcel reference, or clearance control number before saving this package.',
+            ]);
+        }
 
         return redirect()
             ->route('staff.source-record-packages.show', $package)
@@ -136,7 +153,7 @@ class SourceRecordPackageController extends Controller
 
     public function show(SourceRecordPackage $sourceRecordPackage)
     {
-        $sourceRecordPackage->load(['records', 'parcel']);
+        $sourceRecordPackage->load(['records', 'parcel', 'landowner', 'sourceFileUploadedBy']);
 
         $parcels = Parcel::query()
             ->orderBy('parcel_code')
@@ -296,6 +313,112 @@ class SourceRecordPackageController extends Controller
             ->with('success', 'Parcel record created from source package and linked successfully.');
     }
 
+    public function uploadSourceFile(Request $request, SourceRecordPackage $sourceRecordPackage)
+    {
+        $request->validate([
+            'source_file' => ['required', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:10240'],
+        ]);
+
+        $fileData = $this->storeSourceFile($request, $sourceRecordPackage);
+
+        $sourceRecordPackage->update($fileData);
+
+        AuditLogger::record(
+            'source_record_package_source_file_uploaded',
+            null,
+            $sourceRecordPackage,
+            [
+                'package_code' => $sourceRecordPackage->package_code,
+                'source_file_original_filename' => $fileData['source_file_original_filename'] ?? null,
+                'source_file_mime_type' => $fileData['source_file_mime_type'] ?? null,
+            ]
+        );
+
+        app(NotificationService::class)->notifyGeodeticSourcePackageAvailable($sourceRecordPackage->refresh());
+
+        return back()->with('success', 'Source file attached to source package successfully.');
+    }
+
+    public function removeSourceFile(SourceRecordPackage $sourceRecordPackage)
+    {
+        if ($sourceRecordPackage->source_file_path) {
+            Storage::disk('public')->delete($sourceRecordPackage->source_file_path);
+        }
+
+        $sourceRecordPackage->update([
+            'source_file_path' => null,
+            'source_file_original_filename' => null,
+            'source_file_mime_type' => null,
+            'source_file_uploaded_by_user_id' => null,
+            'source_file_uploaded_at' => null,
+        ]);
+
+        AuditLogger::record(
+            'source_record_package_source_file_removed',
+            null,
+            $sourceRecordPackage,
+            [
+                'package_code' => $sourceRecordPackage->package_code,
+            ]
+        );
+
+        return back()->with('success', 'Source file removed from source package.');
+    }
+
+
+    private function assertNoConflictingSourceRecords(Request $request, array $data): void
+    {
+        $errors = [];
+
+        if ($request->boolean('include_title') && ! empty($data['title_number'])) {
+            $exists = LegacyRecord::query()
+                ->where('record_type', LegacyRecord::TYPE_TITLE)
+                ->whereRaw('LOWER(title_number) = ?', [Str::lower($data['title_number'])])
+                ->exists();
+
+            if ($exists) {
+                $errors['title_number'] = 'A title source record with this title number already exists. Use a different title number or open the existing source record instead.';
+            }
+        }
+
+        if ($request->boolean('include_landholding') && ! empty($data['landholding_reference_number'])) {
+            $exists = LegacyRecord::query()
+                ->where('record_type', LegacyRecord::TYPE_LANDHOLDING)
+                ->whereRaw('LOWER(landholding_reference_number) = ?', [Str::lower($data['landholding_reference_number'])])
+                ->exists();
+
+            if ($exists) {
+                $errors['landholding_reference_number'] = 'A landholding source record with this reference number already exists. Use a different reference number or open the existing source record instead.';
+            }
+        }
+
+        if ($request->boolean('include_parcel_source') && ! empty($data['parcel_code'])) {
+            $exists = LegacyRecord::query()
+                ->where('record_type', LegacyRecord::TYPE_PARCEL_SOURCE)
+                ->whereRaw('LOWER(parcel_code) = ?', [Str::lower($data['parcel_code'])])
+                ->exists();
+
+            if ($exists) {
+                $errors['parcel_code'] = 'A parcel source record with this parcel reference code already exists. Use a different parcel reference code or open the existing source record instead.';
+            }
+        }
+
+        if ($request->boolean('include_historical_clearance') && ! empty($data['control_number'])) {
+            $exists = LegacyRecord::query()
+                ->where('record_type', LegacyRecord::TYPE_HISTORICAL_CLEARANCE)
+                ->whereRaw('LOWER(control_number) = ?', [Str::lower($data['control_number'])])
+                ->exists();
+
+            if ($exists) {
+                $errors['control_number'] = 'A historical clearance source record with this control number already exists. Use a different control number or open the existing source record instead.';
+            }
+        }
+
+        if (! empty($errors)) {
+            throw ValidationException::withMessages($errors);
+        }
+    }
+
     private function createRecordFromPackage(SourceRecordPackage $package, string $recordType, int $userId): LegacyRecord
     {
         return LegacyRecord::create([
@@ -387,6 +510,31 @@ class SourceRecordPackageController extends Controller
             'remarks' => ['nullable', 'string', 'max:5000'],
 
             'date_acquired' => ['nullable', 'date', 'after_or_equal:1900-01-01', 'before_or_equal:today'],
+
+            'source_file' => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:10240'],
+        ];
+    }
+
+    private function storeSourceFile(Request $request, ?SourceRecordPackage $package = null): array
+    {
+        $file = $request->file('source_file');
+
+        if (! $file) {
+            return [];
+        }
+
+        if ($package?->source_file_path) {
+            Storage::disk('public')->delete($package->source_file_path);
+        }
+
+        $path = $file->store('source-record-packages', 'public');
+
+        return [
+            'source_file_path' => $path,
+            'source_file_original_filename' => $file->getClientOriginalName(),
+            'source_file_mime_type' => $file->getClientMimeType(),
+            'source_file_uploaded_by_user_id' => $request->user()->id,
+            'source_file_uploaded_at' => now(),
         ];
     }
 

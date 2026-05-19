@@ -14,8 +14,8 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ $title }} | DAR-LTCMS</title>
     <link rel="icon" type="image/png" href="{{ asset('images/favicon.png') }}">
-        <link rel="shortcut icon" type="image/png" href="{{ asset('images/favicon.png') }}">
-        <link rel="apple-touch-icon" href="{{ asset('images/favicon.png') }}">
+    <link rel="shortcut icon" type="image/png" href="{{ asset('images/favicon.png') }}">
+    <link rel="apple-touch-icon" href="{{ asset('images/favicon.png') }}">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1132,7 +1132,7 @@
                 <div class="staff-topbar-actions">
 
                     @if (\Illuminate\Support\Facades\Route::has('notifications.index'))
-                        <details class="notification-dropdown">
+                        <details class="notification-dropdown" data-notification-dropdown data-read-all-url="{{ route('notifications.read-all') }}" data-csrf-token="{{ csrf_token() }}">
                             <summary class="notification-bell-link" aria-label="Open recent notifications">
                                 <i class="fa-solid fa-bell"></i>
                                 @if ($notificationUnreadCount > 0)
@@ -1163,21 +1163,72 @@
     </div>
 
     <script>
-        document.addEventListener('click', function (event) {
-            document.querySelectorAll('.notification-dropdown[open]').forEach(function (dropdown) {
-                if (!dropdown.contains(event.target)) {
-                    dropdown.removeAttribute('open');
-                }
-            });
-        });
+        (function () {
+            function markDropdownAsRead(dropdown) {
+                if (!dropdown || dropdown.dataset.readTriggered === 'true') return;
 
-        document.addEventListener('keydown', function (event) {
-            if (event.key === 'Escape') {
-                document.querySelectorAll('.notification-dropdown[open]').forEach(function (dropdown) {
-                    dropdown.removeAttribute('open');
+                const hasUnread = dropdown.querySelector('.notification-badge') || dropdown.querySelector('.notification-dropdown-item.is-unread');
+                if (!hasUnread) return;
+
+                dropdown.dataset.readTriggered = 'true';
+
+                dropdown.querySelectorAll('.notification-badge').forEach(function (badge) {
+                    badge.remove();
+                });
+
+                dropdown.querySelectorAll('.notification-dropdown-count').forEach(function (count) {
+                    count.textContent = 'All caught up';
+                    count.classList.add('is-clear');
+                });
+
+                dropdown.querySelectorAll('.notification-dropdown-item.is-unread').forEach(function (item) {
+                    item.classList.remove('is-unread');
+                });
+
+                const url = dropdown.dataset.readAllUrl;
+                const token = dropdown.dataset.csrfToken;
+
+                if (!url || !token) return;
+
+                fetch(url, {
+                    method: 'PATCH',
+                    headers: {
+                        'X-CSRF-TOKEN': token,
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    credentials: 'same-origin'
+                }).catch(function () {
+                    // If this fails, the next page load restores the actual unread count.
                 });
             }
-        });
+
+            document.querySelectorAll('[data-notification-dropdown]').forEach(function (dropdown) {
+                dropdown.addEventListener('toggle', function () {
+                    // Keep new notifications visibly highlighted while the panel is open.
+                    // Treat them as read only after the user closes the panel.
+                    if (!dropdown.open) {
+                        markDropdownAsRead(dropdown);
+                    }
+                });
+            });
+
+            document.addEventListener('click', function (event) {
+                document.querySelectorAll('.notification-dropdown[open]').forEach(function (dropdown) {
+                    if (!dropdown.contains(event.target)) {
+                        dropdown.removeAttribute('open');
+                    }
+                });
+            });
+
+            document.addEventListener('keydown', function (event) {
+                if (event.key === 'Escape') {
+                    document.querySelectorAll('.notification-dropdown[open]').forEach(function (dropdown) {
+                        dropdown.removeAttribute('open');
+                    });
+                }
+            });
+        })();
     </script>
 
     @isset($scripts)

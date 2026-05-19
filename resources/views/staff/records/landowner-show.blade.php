@@ -797,7 +797,7 @@
                         <span class="staff-badge staff-badge-slate">Records Management Only</span>
                     </div>
 
-                    <form method="POST" action="{{ route('staff.records.landowners.landholdings.store', $landowner) }}" enctype="multipart/form-data" data-landholding-form>
+                    <form method="POST" action="{{ route('staff.records.landowners.landholdings.store', $landowner) }}" enctype="multipart/form-data" data-landholding-form data-autosave-key="landholding-create-{{ $landowner->id }}" data-autosave-label="new landholding record">
                         @csrf
 
                         <div class="landholding-form-body">
@@ -948,7 +948,7 @@
                                                 </div>
                                                 <span class="staff-badge staff-badge-slate">Record editing</span>
                                             </div>
-                                            <form method="POST" action="{{ route('staff.records.landowners.landholdings.update', [$landowner, $holding]) }}" class="landholding-edit-form" enctype="multipart/form-data" data-landholding-form>
+                                            <form method="POST" action="{{ route('staff.records.landowners.landholdings.update', [$landowner, $holding]) }}" class="landholding-edit-form" enctype="multipart/form-data" data-landholding-form data-autosave-key="landholding-edit-{{ $holding->id }}" data-autosave-label="landholding edit">
                                                 @csrf
                                                 @method('PATCH')
 
@@ -1079,5 +1079,7 @@
             });
         });
     </script>
+
+    @include('staff.partials.form-autosave')
 
 </x-staff-shell>

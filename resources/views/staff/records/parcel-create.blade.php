@@ -164,7 +164,7 @@
         ];
     @endphp
 
-    <form method="POST" enctype="multipart/form-data" action="{{ route('staff.records.parcels.store') }}" class="parcel-create-layout">
+    <form method="POST" enctype="multipart/form-data" action="{{ route('staff.records.parcels.store') }}" class="parcel-create-layout" data-autosave-key="parcel-record-create" data-autosave-label="parcel record draft">
         @csrf
 
         <main class="parcel-create-main">
@@ -306,4 +306,6 @@
             </div>
         </aside>
     </form>
+    @include('staff.partials.form-autosave')
+
 </x-staff-shell>

@@ -206,6 +206,101 @@
                 resize: vertical;
             }
 
+
+            .source-file-card {
+                border: 1px solid #bbf7d0;
+                background: linear-gradient(180deg, #f0fdf4 0%, #ffffff 100%);
+                border-radius: 16px;
+                padding: 16px;
+                display: grid;
+                grid-template-columns: minmax(0, 1.08fr) minmax(280px, 0.92fr);
+                gap: 16px;
+                align-items: stretch;
+            }
+
+            .source-file-upload-box {
+                border: 1px dashed #86efac;
+                background: #ffffff;
+                border-radius: 14px;
+                padding: 16px;
+                display: grid;
+                gap: 10px;
+                align-content: start;
+            }
+
+            .source-file-upload-box label {
+                font-size: 10.5px !important;
+                font-weight: 900 !important;
+                letter-spacing: 0.1em;
+                text-transform: uppercase;
+                color: #14532d !important;
+            }
+
+            .source-file-upload-box input[type="file"] {
+                width: 100%;
+                color: #475569;
+                font-size: 13px;
+                cursor: pointer;
+            }
+
+            .source-file-upload-box input[type="file"]::file-selector-button {
+                margin-right: 12px;
+                border: 1px solid #166534;
+                border-radius: 9px;
+                background: #166534;
+                color: #ffffff;
+                padding: 9px 13px;
+                font-size: 12px;
+                font-weight: 900;
+                cursor: pointer;
+                transition: 150ms ease;
+            }
+
+            .source-file-upload-box input[type="file"]::file-selector-button:hover {
+                background: #14532d;
+                border-color: #14532d;
+            }
+
+            .source-file-note {
+                border: 1px solid #dbe4dd;
+                background: #f8faf9;
+                color: #14532d;
+                border-radius: 14px;
+                padding: 16px;
+                font-size: 12.5px;
+                line-height: 1.55;
+                display: grid;
+                grid-template-columns: auto minmax(0, 1fr);
+                gap: 11px;
+                align-items: flex-start;
+            }
+
+            .source-file-note i {
+                margin-top: 2px;
+                color: #166534;
+            }
+
+            .source-file-note strong {
+                display: block;
+                margin-bottom: 4px;
+                font-family: var(--heading-font);
+                font-size: 13px;
+                color: #064e3b;
+            }
+
+            .source-file-help {
+                margin: 0;
+                color: #64748b;
+                font-size: 11.5px;
+                line-height: 1.45;
+            }
+
+            @media (max-width: 900px) {
+                .source-file-card {
+                    grid-template-columns: 1fr;
+                }
+            }
+
             .source-help-box {
                 border: 1px solid #dbe4dd;
                 background: #f8faf9;
@@ -415,7 +510,7 @@
 
     <div class="source-package-page">
 
-        <form method="POST" action="{{ route('staff.source-record-packages.store') }}" class="staff-panel source-form-panel" data-source-validation-form>
+        <form method="POST" action="{{ route('staff.source-record-packages.store') }}" enctype="multipart/form-data" class="staff-panel source-form-panel" data-source-validation-form data-autosave-key="source-package-create" data-autosave-label="source package encoding">
             @csrf
 
             <section class="source-form-section">
@@ -672,6 +767,38 @@
                 </div>
             </section>
 
+            <section class="source-form-section">
+                <div class="source-section-header">
+                    <div class="source-section-heading">
+                        <span class="source-step-number">6</span>
+                        <div>
+                            <h2 class="source-section-title">Source Scan / Reference File</h2>
+                            <p class="source-section-copy">
+                                Attach the scanned source document, PDF, or image that supports this encoded package. This makes the package traceable as part of the office digitization workflow.
+                            </p>
+                        </div>
+                    </div>
+                    <span class="source-section-chip">Recommended</span>
+                </div>
+
+                <div class="source-file-card">
+                    <div class="source-file-upload-box">
+                        <label for="source_file">Upload source file</label>
+                        <input id="source_file" type="file" name="source_file" accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png">
+                        <p class="source-file-help">Accepted files: PDF, JPG, JPEG, PNG. Maximum file size: 10 MB.</p>
+                        <p class="source-file-help">This can be left blank during encoding. The source file can still be attached later from the Source Package Details page.</p>
+                    </div>
+
+                    <div class="source-file-note">
+                        <i class="fa-solid fa-circle-info"></i>
+                        <div>
+                            <strong>Digitization reference only</strong>
+                            Attach the scanned source document when available. This supports traceability, but does not legally verify the record, transfer ownership, or mutate registry records.
+                        </div>
+                    </div>
+                </div>
+            </section>
+
             <section class="source-form-section source-footer-actions">
                 <div class="source-footer-note-wrap">
                     <span class="source-footer-icon" aria-hidden="true">
@@ -789,5 +916,7 @@
             });
         </script>
     @endif
+
+    @include('staff.partials.form-autosave')
 
 </x-staff-shell>

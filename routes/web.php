@@ -132,6 +132,10 @@ Route::middleware(['auth', 'role:staff'])
             ->name('source-record-packages.show');
         Route::post('/source-record-packages/{sourceRecordPackage}/link-parcel', [SourceRecordPackageController::class, 'linkParcel'])
             ->name('source-record-packages.link-parcel');
+        Route::post('/source-record-packages/{sourceRecordPackage}/source-file', [SourceRecordPackageController::class, 'uploadSourceFile'])
+            ->name('source-record-packages.source-file.store');
+        Route::delete('/source-record-packages/{sourceRecordPackage}/source-file', [SourceRecordPackageController::class, 'removeSourceFile'])
+            ->name('source-record-packages.source-file.destroy');
         Route::post('/source-record-packages/{sourceRecordPackage}/create-parcel', [SourceRecordPackageController::class, 'createParcel'])
             ->name('source-record-packages.create-parcel');
         Route::post('/source-record-packages/{sourceRecordPackage}/link-landowner', [SourceRecordLandownerLinkController::class, 'linkSourceRecordPackage'])

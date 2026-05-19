@@ -20,7 +20,7 @@
         </div>
     @endif
 
-    <form method="POST" action="{{ route('staff.records.landowners.store') }}" class="staff-panel overflow-hidden">
+    <form method="POST" action="{{ route('staff.records.landowners.store') }}" class="staff-panel overflow-hidden" data-autosave-key="landowner-record-create" data-autosave-label="landowner record draft">
         @csrf
 
         <div class="staff-panel-pad border-b border-gray-200">
@@ -84,4 +84,6 @@
             </button>
         </div>
     </form>
+    @include('staff.partials.form-autosave')
+
 </x-staff-shell>

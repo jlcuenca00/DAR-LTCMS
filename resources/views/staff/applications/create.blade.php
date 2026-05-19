@@ -265,7 +265,7 @@
             </div>
         @endif
 
-        <form method="POST" action="{{ route('staff.applications.store') }}" class="form-shell">
+        <form method="POST" action="{{ route('staff.applications.store') }}" class="form-shell" data-autosave-key="clearance-application-create" data-autosave-label="clearance application draft">
             @csrf
 
             <div class="form-header">
@@ -479,5 +479,7 @@
             }
         });
     </script>
+
+    @include('staff.partials.form-autosave')
 
 </x-staff-shell>

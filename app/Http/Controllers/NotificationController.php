@@ -49,6 +49,10 @@ class NotificationController extends Controller
             ->whereNull('read_at')
             ->update(['read_at' => now()]);
 
+        if ($request->expectsJson()) {
+            return response()->json(['ok' => true, 'unread_count' => 0]);
+        }
+
         return back()->with('success', 'All notifications marked as read.');
     }
 }
