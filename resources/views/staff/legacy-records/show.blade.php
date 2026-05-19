@@ -360,6 +360,21 @@
                     </div>
 
                     <div class="source-side-card">
+                        <h3 class="staff-panel-title">Source Package</h3>
+                        @if ($record->package)
+                            <p class="mt-2 text-sm leading-relaxed text-gray-600">
+                                This source record was generated from a digitized source package.
+                            </p>
+                            <a href="{{ route('staff.source-record-packages.show', $record->package) }}" class="mt-4 flex items-center justify-between rounded-xl border border-green-200 bg-green-50 p-4 text-green-900 hover:bg-green-100">
+                                <span class="font-black">{{ $record->package->package_code }}</span>
+                                <i class="fa-solid fa-box-open"></i>
+                            </a>
+                        @else
+                            <p class="mt-2 text-sm leading-relaxed text-gray-600">No source package is attached to this individual record.</p>
+                        @endif
+                    </div>
+
+                    <div class="source-side-card">
                         <h3 class="staff-panel-title">Linked Parcel</h3>
                         @if ($record->parcel)
                             <p class="mt-2 text-sm leading-relaxed text-gray-600">

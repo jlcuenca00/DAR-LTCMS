@@ -14,6 +14,8 @@
             .source-detail-page {
                 display: grid;
                 gap: 18px;
+                max-width: 1280px;
+                margin: 0 auto;
             }
 
             .source-detail-hero {
@@ -101,7 +103,7 @@
 
             .source-detail-grid {
                 display: grid;
-                grid-template-columns: minmax(0, 1.12fr) minmax(430px, 0.88fr);
+                grid-template-columns: minmax(0, 1.15fr) minmax(360px, 0.85fr);
                 gap: 18px;
                 align-items: start;
             }
@@ -327,6 +329,60 @@
                 min-height: 42px;
             }
 
+
+
+            .source-link-card.is-reference {
+                align-self: start;
+            }
+
+            .source-link-action-grid {
+                display: grid;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 14px;
+                align-items: start;
+            }
+
+            .source-link-action-grid .source-link-card {
+                height: 100%;
+            }
+
+            .source-parcel-summary {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 12px;
+                border: 1px solid #bbf7d0;
+                background: #f0fdf4;
+                color: #14532d;
+                border-radius: 12px;
+                padding: 12px 14px;
+                cursor: pointer;
+                font-size: 13px;
+                font-weight: 950;
+            }
+
+            .source-parcel-summary::-webkit-details-marker {
+                display: none;
+            }
+
+            .source-parcel-summary::after {
+                content: '\f078';
+                font-family: 'Font Awesome 6 Free';
+                font-weight: 900;
+                font-size: 11px;
+                transition: transform 160ms ease;
+            }
+
+            details[open] > .source-parcel-summary::after {
+                transform: rotate(180deg);
+            }
+
+            .source-parcel-create-panel {
+                margin-top: 14px;
+                border-top: 1px solid #e5e7eb;
+                padding-top: 14px;
+            }
+
             @media (max-width: 1100px) {
                 .source-detail-grid,
                 .source-file-body-grid {
@@ -353,7 +409,7 @@
 
             .source-linkage-grid {
                 display: grid;
-                grid-template-columns: minmax(280px, 0.8fr) minmax(0, 1.2fr);
+                grid-template-columns: minmax(260px, 0.7fr) minmax(0, 1.3fr);
                 gap: 16px;
                 align-items: start;
             }
@@ -586,6 +642,185 @@
                     flex-direction: column;
                 }
             }
+
+
+            /* Cleaner guided linkage/workflow sections */
+            .source-guided-panel .source-detail-panel-header {
+                background: #ffffff;
+            }
+
+            .source-guided-body {
+                display: grid;
+                gap: 16px;
+            }
+
+            .source-link-overview-grid {
+                display: grid;
+                grid-template-columns: minmax(260px, 0.82fr) minmax(0, 1.18fr);
+                gap: 16px;
+                align-items: start;
+            }
+
+            .source-reference-card,
+            .source-action-card,
+            .source-linked-card {
+                border: 1px solid #e5e7eb;
+                border-radius: 16px;
+                background: #ffffff;
+                padding: 16px;
+                min-width: 0;
+            }
+
+            .source-reference-card {
+                background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);
+            }
+
+            .source-reference-row {
+                display: grid;
+                gap: 12px;
+            }
+
+            .source-reference-item {
+                border: 1px solid #e5e7eb;
+                background: #f8fafc;
+                border-radius: 12px;
+                padding: 12px 13px;
+            }
+
+            .source-action-grid-clean {
+                display: grid;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 14px;
+                align-items: stretch;
+            }
+
+            .source-action-card {
+                display: grid;
+                align-content: start;
+                gap: 12px;
+                background: #ffffff;
+            }
+
+            .source-action-card.recommended {
+                border-color: #bbf7d0;
+                background: linear-gradient(180deg, #f8fffb 0%, #ffffff 78%);
+            }
+
+            .source-action-card.create {
+                border-color: #dbe4dd;
+                background: linear-gradient(180deg, #fbfdfb 0%, #ffffff 78%);
+            }
+
+            .source-link-step-title {
+                margin: 0;
+                color: #0f172a;
+                font-size: 15px;
+                line-height: 1.3;
+                font-weight: 950;
+            }
+
+            .source-link-step-copy {
+                margin: 5px 0 0;
+                color: #64748b;
+                font-size: 12.5px;
+                line-height: 1.5;
+            }
+
+            .source-action-card .source-detail-form {
+                margin-top: 0;
+            }
+
+            .source-open-summary-clean {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 12px;
+                min-height: 44px;
+                border: 1px solid #dbe4dd;
+                background: #f8faf9;
+                color: #14532d;
+                border-radius: 12px;
+                padding: 10px 12px;
+                cursor: pointer;
+                font-size: 13px;
+                font-weight: 950;
+            }
+
+            .source-open-summary-clean::-webkit-details-marker { display: none; }
+
+            .source-open-summary-clean::after {
+                content: '\f078';
+                font-family: 'Font Awesome 6 Free';
+                font-weight: 900;
+                font-size: 11px;
+                transition: transform 160ms ease;
+            }
+
+            details[open] > .source-open-summary-clean::after { transform: rotate(180deg); }
+
+            .source-form-panel-clean {
+                margin-top: 12px;
+                border-top: 1px solid #e5e7eb;
+                padding-top: 12px;
+            }
+
+            .source-linked-card {
+                border-color: #bbf7d0;
+                background: #f0fdf4;
+                color: #14532d;
+                display: flex;
+                align-items: flex-start;
+                justify-content: space-between;
+                gap: 14px;
+            }
+
+            .source-linked-card strong {
+                display: block;
+                color: #052e16;
+                font-weight: 950;
+            }
+
+            .source-link-guidance {
+                border: 1px solid #dbe4dd;
+                background: #f8faf9;
+                border-radius: 14px;
+                padding: 13px 14px;
+                color: #475569;
+                font-size: 12.5px;
+                line-height: 1.55;
+            }
+
+            .source-package-flow-list {
+                display: grid;
+                grid-template-columns: repeat(4, minmax(0, 1fr));
+                gap: 10px;
+            }
+
+            .source-package-flow-item {
+                border: 1px solid #e5e7eb;
+                background: #f8fafc;
+                border-radius: 13px;
+                padding: 12px;
+                min-height: 76px;
+            }
+
+            .source-package-flow-item.is-done {
+                border-color: #bbf7d0;
+                background: #f0fdf4;
+            }
+
+            .source-package-flow-item.is-needed {
+                border-color: #fed7aa;
+                background: #fff7ed;
+            }
+
+            @media (max-width: 980px) {
+                .source-link-overview-grid,
+                .source-action-grid-clean,
+                .source-package-flow-list {
+                    grid-template-columns: 1fr;
+                }
+            }
         </style>
     </x-slot>
 
@@ -749,130 +984,169 @@
                     </div>
                 </section>
 
-                <section class="source-detail-panel">
+                <section class="source-detail-panel source-guided-panel">
                     <div class="source-detail-panel-header">
                         <div>
                             <p class="source-detail-eyebrow">Landowner Record Linkage</p>
-                            <h3 class="source-detail-title">Source Party to Main Landowner Record</h3>
-                            <p class="source-detail-help">Choose an existing landowner, or create one from the encoded source name when no match exists. This is an administrative reference link only.</p>
+                            <h3 class="source-detail-title">Connect Source Party to Landowner Record</h3>
+                            <p class="source-detail-help">Use this only after staff confirms that the encoded source party should be represented in the main Landowner Records module.</p>
                         </div>
                         <span class="staff-badge {{ $package->landowner ? 'staff-badge-green' : 'staff-badge-slate' }}">
                             {{ $package->landowner ? 'Linked' : 'Not Linked' }}
                         </span>
                     </div>
-                    <div class="source-detail-body">
-                        <div class="source-linkage-grid">
-                            <div class="source-link-card is-reference">
-                                <h4 class="source-mini-title">Source Name Reference</h4>
-                                <div class="source-detail-info-grid mt-3" style="grid-template-columns: 1fr;">
-                                    <div>
+
+                    <div class="source-detail-body source-guided-body">
+                        <div class="source-package-flow-list">
+                            <div class="source-package-flow-item is-done">
+                                <p class="source-detail-label">Step 1</p>
+                                <p class="source-detail-info-value">Review source name</p>
+                            </div>
+                            <div class="source-package-flow-item {{ $package->landowner ? 'is-done' : 'is-needed' }}">
+                                <p class="source-detail-label">Step 2</p>
+                                <p class="source-detail-info-value">{{ $package->landowner ? 'Landowner linked' : 'Link or create landowner' }}</p>
+                            </div>
+                            <div class="source-package-flow-item {{ $package->parcel ? 'is-done' : 'is-needed' }}">
+                                <p class="source-detail-label">Step 3</p>
+                                <p class="source-detail-info-value">{{ $package->parcel ? 'Parcel linked' : 'Link parcel later' }}</p>
+                            </div>
+                            <div class="source-package-flow-item {{ $package->has_source_file ? 'is-done' : 'is-needed' }}">
+                                <p class="source-detail-label">Step 4</p>
+                                <p class="source-detail-info-value">{{ $package->has_source_file ? 'Source file attached' : 'Attach proof file' }}</p>
+                            </div>
+                        </div>
+
+                        <div class="source-link-overview-grid">
+                            <div class="source-reference-card">
+                                <h4 class="source-link-step-title">Source Name Reference</h4>
+                                <p class="source-link-step-copy">These are the names typed from the source document. They are not automatically treated as official system landowner records.</p>
+
+                                <div class="source-reference-row mt-3">
+                                    <div class="source-reference-item">
                                         <p class="source-detail-label">Encoded Owner</p>
                                         <p class="source-detail-info-value">{{ $package->landowner_name ?? 'N/A' }}</p>
                                     </div>
-                                    <div>
+                                    <div class="source-reference-item">
                                         <p class="source-detail-label">Transferor</p>
                                         <p class="source-detail-info-value">{{ $package->transferor_name ?? 'N/A' }}</p>
                                     </div>
-                                    <div>
+                                    <div class="source-reference-item">
                                         <p class="source-detail-label">Transferee</p>
                                         <p class="source-detail-info-value">{{ $package->transferee_name ?? 'N/A' }}</p>
                                     </div>
                                 </div>
+                            </div>
 
+                            <div class="source-action-grid-clean">
                                 @if ($package->landowner)
-                                    <div class="mt-4 rounded-lg border border-green-200 bg-white p-3 text-sm">
-                                        <p class="source-detail-label">Currently Linked To</p>
-                                        <p class="mt-1 font-black text-green-800">{{ $package->landowner->full_name }}</p>
-                                        <p class="text-gray-600">{{ $package->landowner->barangay ?? 'N/A' }}, {{ $package->landowner->municipality ?? 'N/A' }}</p>
+                                    <div class="source-linked-card" style="grid-column: 1 / -1;">
+                                        <div>
+                                            <p class="source-detail-label">Currently Linked Landowner</p>
+                                            <strong>{{ $package->landowner->full_name }}</strong>
+                                            <span>{{ $package->landowner->barangay ?? 'N/A' }}, {{ $package->landowner->municipality ?? 'N/A' }}</span>
+                                        </div>
+                                        <span class="staff-badge staff-badge-green">Linked</span>
                                     </div>
                                 @endif
-                            </div>
 
-                            <div class="source-link-action-stack">
-                                <div class="source-link-card is-form">
-                                    <h4 class="source-mini-title">Link Existing Landowner</h4>
-                                    <p class="source-mini-copy">Use this when the correct person already exists in Landowner Records.</p>
-
-                                <form method="POST" action="{{ route('staff.source-record-packages.link-landowner', $package) }}" class="source-detail-form">
-                                    @csrf
-                                    <div class="source-form-field">
-                                        <label>Existing Landowner Record</label>
-                                        <select name="landowner_id" required class="source-input">
-                                            <option value="">Select landowner</option>
-                                            @foreach ($landowners as $landowner)
-                                                <option value="{{ $landowner->id }}" @selected($package->landowner_id === $landowner->id)>
-                                                    {{ $landowner->full_name }}
-                                                    @if ($landowner->barangay || $landowner->municipality)
-                                                        — {{ $landowner->barangay ?? 'N/A' }}, {{ $landowner->municipality ?? 'N/A' }}
-                                                    @endif
-                                                </option>
-                                            @endforeach
-                                        </select>
+                                <div class="source-action-card recommended">
+                                    <div>
+                                        <h4 class="source-link-step-title">Link Existing Landowner</h4>
+                                        <p class="source-link-step-copy">Use this when the person already exists in Landowner Records.</p>
                                     </div>
-                                    <button type="submit" class="staff-button staff-button-primary justify-center">
-                                        Link Existing Landowner
-                                    </button>
-                                </form>
-                            </div>
 
-                            <div class="source-link-card is-form source-create-card">
-                                <h4 class="source-mini-title">Create Landowner From Source</h4>
-                                <p class="source-mini-copy">Use this only when no matching Landowner Record exists yet. The created record is linked for review and traceability.</p>
-
-                                <details class="mt-4">
-                                    <summary class="source-create-summary"><span><i class="fa-solid fa-user-plus mr-2"></i> Open creation form</span></summary>
-                                    <form method="POST" action="{{ route('staff.source-record-packages.create-landowner', $package) }}" class="source-detail-form">
+                                    <form method="POST" action="{{ route('staff.source-record-packages.link-landowner', $package) }}" class="source-detail-form">
                                         @csrf
-                                        <div class="source-form-grid">
-                                            <div class="source-form-field">
-                                                <label>First Name *</label>
-                                                <input name="first_name" required value="{{ old('first_name', $suggestedFirstName) }}" class="source-input">
-                                            </div>
-                                            <div class="source-form-field">
-                                                <label>Last Name *</label>
-                                                <input name="last_name" required value="{{ old('last_name', $suggestedLastName) }}" class="source-input">
-                                            </div>
-                                            <div class="source-form-field">
-                                                <label>Middle Name</label>
-                                                <input name="middle_name" value="{{ old('middle_name') }}" class="source-input">
-                                            </div>
-                                            <div class="source-form-field">
-                                                <label>Suffix</label>
-                                                <input name="suffix" value="{{ old('suffix') }}" class="source-input">
-                                            </div>
-                                            <div class="source-form-field full">
-                                                <label>Address Line</label>
-                                                <input name="address_line" value="{{ old('address_line') }}" class="source-input">
-                                            </div>
-                                        </div>
-                                        <div class="source-form-grid three">
-                                            <div class="source-form-field">
-                                                <label>Barangay</label>
-                                                <input name="barangay" value="{{ old('barangay', $package->barangay) }}" class="source-input">
-                                            </div>
-                                            <div class="source-form-field">
-                                                <label>Municipality</label>
-                                                <input name="municipality" value="{{ old('municipality', $package->municipality) }}" class="source-input">
-                                            </div>
-                                            <div class="source-form-field">
-                                                <label>Province</label>
-                                                <input name="province" value="{{ old('province', $package->province ?? 'Negros Oriental') }}" class="source-input">
-                                            </div>
-                                        </div>
                                         <div class="source-form-field">
-                                            <label>Contact Number</label>
-                                            <input name="contact_number" value="{{ old('contact_number') }}" class="source-input">
+                                            <label>Existing Landowner Record</label>
+                                            <select name="landowner_id" required class="source-input">
+                                                <option value="">Select landowner</option>
+                                                @foreach ($landowners as $landowner)
+                                                    <option value="{{ $landowner->id }}" @selected($package->landowner_id === $landowner->id)>
+                                                        {{ $landowner->full_name }}
+                                                        @if ($landowner->barangay || $landowner->municipality)
+                                                            — {{ $landowner->barangay ?? 'N/A' }}, {{ $landowner->municipality ?? 'N/A' }}
+                                                        @endif
+                                                    </option>
+                                                @endforeach
+                                            </select>
                                         </div>
-                                        <button type="submit" class="staff-button staff-button-dark justify-center">
-                                            Create and Link Landowner
+                                        <button type="submit" class="staff-button staff-button-primary justify-center">
+                                            <i class="fa-solid fa-link"></i>
+                                            Link Existing Landowner
                                         </button>
                                     </form>
-                                </details>
+                                </div>
+
+                                <div class="source-action-card create">
+                                    <div>
+                                        <h4 class="source-link-step-title">Create Landowner From Source</h4>
+                                        <p class="source-link-step-copy">Use only when no matching Landowner Record exists yet.</p>
+                                    </div>
+
+                                    <details>
+                                        <summary class="source-open-summary-clean">
+                                            <span><i class="fa-solid fa-user-plus mr-2"></i> Open creation form</span>
+                                        </summary>
+
+                                        <form method="POST" action="{{ route('staff.source-record-packages.create-landowner', $package) }}" class="source-detail-form source-form-panel-clean">
+                                            @csrf
+                                            <div class="source-form-grid">
+                                                <div class="source-form-field">
+                                                    <label>First Name *</label>
+                                                    <input name="first_name" required value="{{ old('first_name', $suggestedFirstName) }}" class="source-input">
+                                                </div>
+                                                <div class="source-form-field">
+                                                    <label>Last Name *</label>
+                                                    <input name="last_name" required value="{{ old('last_name', $suggestedLastName) }}" class="source-input">
+                                                </div>
+                                                <div class="source-form-field">
+                                                    <label>Middle Name</label>
+                                                    <input name="middle_name" value="{{ old('middle_name') }}" class="source-input">
+                                                </div>
+                                                <div class="source-form-field">
+                                                    <label>Suffix</label>
+                                                    <input name="suffix" value="{{ old('suffix') }}" class="source-input">
+                                                </div>
+                                                <div class="source-form-field full">
+                                                    <label>Address Line</label>
+                                                    <input name="address_line" value="{{ old('address_line') }}" class="source-input">
+                                                </div>
+                                            </div>
+                                            <div class="source-form-grid three">
+                                                <div class="source-form-field">
+                                                    <label>Barangay</label>
+                                                    <input name="barangay" value="{{ old('barangay', $package->barangay) }}" class="source-input">
+                                                </div>
+                                                <div class="source-form-field">
+                                                    <label>Municipality</label>
+                                                    <input name="municipality" value="{{ old('municipality', $package->municipality) }}" class="source-input">
+                                                </div>
+                                                <div class="source-form-field">
+                                                    <label>Province</label>
+                                                    <input name="province" value="{{ old('province', $package->province ?? 'Negros Oriental') }}" class="source-input">
+                                                </div>
+                                            </div>
+                                            <div class="source-form-field">
+                                                <label>Contact Number</label>
+                                                <input name="contact_number" value="{{ old('contact_number') }}" class="source-input">
+                                            </div>
+                                            <button type="submit" class="staff-button staff-button-dark justify-center">
+                                                <i class="fa-solid fa-user-plus"></i>
+                                                Create and Link Landowner
+                                            </button>
+                                        </form>
+                                    </details>
                                 </div>
                             </div>
                         </div>
+
+                        <div class="source-link-guidance">
+                            <strong>Note:</strong> Linking a source party only connects this digitized source package to a landowner record for traceability. It does not transfer ownership or mutate registry records.
+                        </div>
                     </div>
                 </section>
+
 
                 <section class="source-detail-panel">
                     <div class="source-detail-panel-header">
@@ -920,46 +1194,85 @@
                     </div>
                 </section>
 
-                @if (! $package->parcel)
-                    <section class="source-detail-panel">
-                        <div class="source-detail-panel-header">
-                            <div>
-                                <h3 class="source-detail-title">Parcel Record Linkage</h3>
-                                <p class="source-detail-help">Connect this source package to an existing parcel or create a new main parcel record from reviewed source values.</p>
-                            </div>
+                <section class="source-detail-panel source-guided-panel">
+                    <div class="source-detail-panel-header">
+                        <div>
+                            <p class="source-detail-eyebrow">Parcel Record Linkage</p>
+                            <h3 class="source-detail-title">Connect Source to Main Parcel Record</h3>
+                            <p class="source-detail-help">Link an existing parcel when available. Create a new main Parcel Record only after staff confirms the source package should become a parcel entry.</p>
                         </div>
-                        <div class="source-detail-body">
-                            <div class="source-parcel-actions">
-                                <div class="source-link-card is-form">
-                                    <h4 class="source-mini-title">Link Existing Parcel</h4>
-                                    <p class="source-mini-copy">Use this if the parcel already exists in the main Parcel Records module.</p>
+                        <span class="staff-badge {{ $package->parcel ? 'staff-badge-green' : 'staff-badge-slate' }}">
+                            {{ $package->parcel ? 'Linked Parcel' : 'Not Linked' }}
+                        </span>
+                    </div>
 
-                                    <form method="POST" action="{{ route('staff.source-record-packages.link-parcel', $package) }}" class="source-detail-form">
-                                        @csrf
-                                        <div class="source-form-field">
-                                            <label>Existing Parcel</label>
-                                            <select name="parcel_id" class="source-input">
-                                                <option value="">Select parcel</option>
-                                                @foreach ($parcels as $parcel)
-                                                    <option value="{{ $parcel->id }}">
-                                                        {{ $parcel->parcel_code }}
-                                                        @if ($parcel->title_no) — {{ $parcel->title_no }} @endif
-                                                        @if ($parcel->barangay || $parcel->municipality) — {{ $parcel->barangay ?? 'N/A' }}, {{ $parcel->municipality ?? 'N/A' }} @endif
-                                                    </option>
-                                                @endforeach
-                                            </select>
-                                        </div>
-                                        <button type="submit" class="staff-button staff-button-primary justify-center">
-                                            Link Package
-                                        </button>
-                                    </form>
+                    <div class="source-detail-body source-guided-body">
+                        @if ($package->parcel)
+                            <div class="source-linked-card">
+                                <div>
+                                    <p class="source-detail-label">Currently Linked Parcel</p>
+                                    <strong>{{ $package->parcel->parcel_code }}</strong>
+                                    <span>
+                                        {{ $package->parcel->title_no ?? 'No title number' }}
+                                        @if ($package->parcel->barangay || $package->parcel->municipality)
+                                            · {{ $package->parcel->barangay ?? 'N/A' }}, {{ $package->parcel->municipality ?? 'N/A' }}
+                                        @endif
+                                    </span>
+                                </div>
+                                <a href="{{ route('staff.records.parcels.show', $package->parcel) }}" class="staff-button staff-button-light">
+                                    <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                                    Open Parcel
+                                </a>
+                            </div>
+                        @endif
+
+                        <div class="source-action-grid-clean">
+                            <div class="source-action-card recommended">
+                                <div>
+                                    <h4 class="source-link-step-title">Link Existing Parcel</h4>
+                                    <p class="source-link-step-copy">Use this if the parcel already exists in the main Parcel Records module.</p>
                                 </div>
 
-                                <div class="source-link-card is-form">
-                                    <h4 class="source-mini-title">Create Main Parcel Record From Package</h4>
-                                    <p class="source-mini-copy">Use this after staff confirms that the source package should become a main Parcel Record entry.</p>
+                                <form method="POST" action="{{ route('staff.source-record-packages.link-parcel', $package) }}" class="source-detail-form">
+                                    @csrf
+                                    <div class="source-form-field">
+                                        <label>Existing Parcel</label>
+                                        <select name="parcel_id" class="source-input">
+                                            <option value="">Select parcel</option>
+                                            @foreach ($parcels as $parcel)
+                                                <option value="{{ $parcel->id }}" @selected(optional($package->parcel)->id === $parcel->id)>
+                                                    {{ $parcel->parcel_code }}
+                                                    @if ($parcel->title_no) — {{ $parcel->title_no }} @endif
+                                                    @if ($parcel->barangay || $parcel->municipality) — {{ $parcel->barangay ?? 'N/A' }}, {{ $parcel->municipality ?? 'N/A' }} @endif
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    <button type="submit" class="staff-button staff-button-primary justify-center">
+                                        <i class="fa-solid fa-link"></i>
+                                        {{ $package->parcel ? 'Update Linked Parcel' : 'Link Source Package' }}
+                                    </button>
+                                </form>
+                            </div>
 
-                                    <form method="POST" action="{{ route('staff.source-record-packages.create-parcel', $package) }}" class="source-detail-form">
+                            <div class="source-action-card create">
+                                <div>
+                                    <h4 class="source-link-step-title">Create Main Parcel Record From Package</h4>
+                                    <p class="source-link-step-copy">Use this only when this source package represents a parcel that is not yet in Parcel Records.</p>
+                                </div>
+
+                                @if ($package->parcel)
+                                    <div class="source-link-guidance">
+                                        This package is already linked to a main parcel. Create another parcel only if staff confirms the current link is wrong or incomplete.
+                                    </div>
+                                @endif
+
+                                <details>
+                                    <summary class="source-open-summary-clean">
+                                        <span><i class="fa-solid fa-map-location-dot mr-2"></i> Open parcel creation form</span>
+                                    </summary>
+
+                                    <form method="POST" action="{{ route('staff.source-record-packages.create-parcel', $package) }}" class="source-detail-form source-form-panel-clean">
                                         @csrf
                                         <div class="source-form-grid">
                                             <div class="source-form-field">
@@ -977,8 +1290,9 @@
                                             <div class="source-form-field">
                                                 <label>Status *</label>
                                                 <select name="status" class="source-input">
-                                                    <option value="active">Active</option>
-                                                    <option value="inactive">Inactive</option>
+                                                    <option value="active" @selected(old('status', 'active') === 'active')>Active</option>
+                                                    <option value="pending_review" @selected(old('status') === 'pending_review')>Pending Review</option>
+                                                    <option value="archived" @selected(old('status') === 'archived')>Archived</option>
                                                 </select>
                                             </div>
                                             <div class="source-form-field">
@@ -989,8 +1303,16 @@
                                                 <label>Municipality</label>
                                                 <input name="municipality" value="{{ old('municipality', $package->municipality) }}" class="source-input">
                                             </div>
+                                            <div class="source-form-field">
+                                                <label>Province</label>
+                                                <input name="province" value="{{ old('province', $package->province ?? 'Negros Oriental') }}" class="source-input">
+                                            </div>
+                                            <div class="source-form-field">
+                                                <label>Date Acquired</label>
+                                                <input type="date" name="date_acquired" value="{{ old('date_acquired') }}" class="source-input">
+                                            </div>
                                             <div class="source-form-field full">
-                                                <label>Link Existing Landowner as Active Landholding</label>
+                                                <label>Link Existing Landowner As Active Landholding</label>
                                                 <select name="landowner_id" class="source-input">
                                                     <option value="">Do not link landowner yet</option>
                                                     @foreach ($landowners as $landowner)
@@ -1004,17 +1326,9 @@
                                                 </select>
                                                 <p class="source-mini-copy">The map displays owner names through active landholding records.</p>
                                             </div>
-                                            <div class="source-form-field">
-                                                <label>Date Acquired</label>
-                                                <input type="date" name="date_acquired" value="{{ old('date_acquired') }}" class="source-input">
-                                            </div>
-                                            <div class="source-form-field">
-                                                <label>Province</label>
-                                                <input name="province" value="{{ old('province', $package->province ?? 'Negros Oriental') }}" class="source-input">
-                                            </div>
                                             <div class="source-form-field full">
                                                 <label>Parcel GeoJSON Geometry</label>
-                                                <textarea name="geometry_geojson" rows="6" class="source-input font-mono text-xs">{{ old('geometry_geojson', $package->source_geometry_geojson ? json_encode($package->source_geometry_geojson) : '') }}</textarea>
+                                                <textarea name="geometry_geojson" rows="5" class="source-input font-mono text-xs">{{ old('geometry_geojson', $package->source_geometry_geojson ? json_encode($package->source_geometry_geojson) : '') }}</textarea>
                                                 <p class="source-mini-copy">Only main Parcel Records with saved geometry appear on the Parcel Map Viewer.</p>
                                             </div>
                                             <div class="source-form-field full">
@@ -1023,14 +1337,21 @@
                                             </div>
                                         </div>
                                         <button type="submit" class="staff-button staff-button-dark justify-center">
+                                            <i class="fa-solid fa-map-location-dot"></i>
                                             Create Parcel Record
                                         </button>
                                     </form>
-                                </div>
+                                </details>
                             </div>
                         </div>
-                    </section>
-                @endif
+
+                        <div class="source-link-guidance">
+                            <strong>Map note:</strong> Source geometry is documentary/reference geometry. The Parcel Map displays main Parcel Records with saved geometry, not every source package automatically.
+                        </div>
+                    </div>
+                </section>
+
+
             </main>
 
             <aside class="source-detail-stack">

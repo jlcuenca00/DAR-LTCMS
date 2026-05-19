@@ -18,6 +18,8 @@ class LegacyRecordController extends Controller
 {
     public function index(Request $request)
     {
+        $archiveView = $request->query('view') === 'packages' ? 'packages' : 'individual';
+
         $sourcePackages = SourceRecordPackage::query()
             ->with(['parcel', 'landowner'])
             ->withCount('records')
@@ -41,7 +43,7 @@ class LegacyRecordController extends Controller
                 });
             })
             ->latest()
-            ->limit(12)
+            ->limit($archiveView === 'packages' ? 60 : 6)
             ->get();
 
         $records = LegacyRecord::query()
@@ -79,6 +81,7 @@ class LegacyRecordController extends Controller
         return view('staff.legacy-records.index', [
             'records' => $records,
             'sourcePackages' => $sourcePackages,
+            'archiveView' => $archiveView,
             'recordTypes' => LegacyRecord::RECORD_TYPES,
             'origins' => LegacyRecord::ORIGINS,
         ]);
@@ -157,7 +160,7 @@ class LegacyRecordController extends Controller
 
     public function show(LegacyRecord $legacyRecord)
     {
-        $legacyRecord->load('parcel');
+        $legacyRecord->load(['parcel', 'package']);
 
         $parcels = Parcel::query()
             ->orderBy('parcel_code')
