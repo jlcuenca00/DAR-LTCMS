@@ -7,6 +7,7 @@ use App\Models\Landholding;
 use App\Models\Landowner;
 use App\Models\LegacyRecord;
 use App\Models\Parcel;
+use App\Models\SourceRecordPackage;
 use App\Services\AuditLogger;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -17,6 +18,32 @@ class LegacyRecordController extends Controller
 {
     public function index(Request $request)
     {
+        $sourcePackages = SourceRecordPackage::query()
+            ->with(['parcel', 'landowner'])
+            ->withCount('records')
+            ->when($request->filled('municipality'), function ($query) use ($request) {
+                $query->where('municipality', 'ILIKE', '%' . $request->municipality . '%');
+            })
+            ->when($request->filled('search'), function ($query) use ($request) {
+                $search = '%' . $request->search . '%';
+
+                $query->where(function ($inner) use ($search) {
+                    $inner->where('package_code', 'ILIKE', $search)
+                        ->orWhere('title_number', 'ILIKE', $search)
+                        ->orWhere('control_number', 'ILIKE', $search)
+                        ->orWhere('parcel_code', 'ILIKE', $search)
+                        ->orWhere('lot_number', 'ILIKE', $search)
+                        ->orWhere('survey_number', 'ILIKE', $search)
+                        ->orWhere('landowner_name', 'ILIKE', $search)
+                        ->orWhere('transferor_name', 'ILIKE', $search)
+                        ->orWhere('transferee_name', 'ILIKE', $search)
+                        ->orWhere('landholding_reference_number', 'ILIKE', $search);
+                });
+            })
+            ->latest()
+            ->limit(12)
+            ->get();
+
         $records = LegacyRecord::query()
             ->with('parcel')
             ->when($request->filled('record_type'), function ($query) use ($request) {
@@ -51,6 +78,7 @@ class LegacyRecordController extends Controller
 
         return view('staff.legacy-records.index', [
             'records' => $records,
+            'sourcePackages' => $sourcePackages,
             'recordTypes' => LegacyRecord::RECORD_TYPES,
             'origins' => LegacyRecord::ORIGINS,
         ]);

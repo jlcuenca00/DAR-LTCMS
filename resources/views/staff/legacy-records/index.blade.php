@@ -86,8 +86,94 @@
             text-decoration: underline;
         }
 
+
+
+        .source-package-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 1rem;
+        }
+
+        .source-package-card {
+            border: 1px solid #dbe4dd;
+            border-radius: 1rem;
+            background: #ffffff;
+            padding: 1rem;
+            display: grid;
+            gap: 0.9rem;
+            min-height: 100%;
+            transition: 160ms ease;
+        }
+
+        .source-package-card:hover {
+            border-color: #86efac;
+            box-shadow: 0 10px 25px rgba(15, 23, 42, 0.08);
+        }
+
+        .source-package-card-top {
+            display: flex;
+            justify-content: space-between;
+            gap: 0.75rem;
+            align-items: flex-start;
+        }
+
+        .source-package-code {
+            margin: 0;
+            font-size: 0.95rem;
+            font-weight: 950;
+            color: #064e3b;
+            line-height: 1.25;
+            overflow-wrap: anywhere;
+        }
+
+        .source-package-meta {
+            margin-top: 0.25rem;
+            color: #64748b;
+            font-size: 0.78rem;
+            line-height: 1.4;
+        }
+
+        .source-package-facts {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 0.55rem;
+        }
+
+        .source-package-fact {
+            border: 1px solid #e5e7eb;
+            border-radius: 0.75rem;
+            background: #f8fafc;
+            padding: 0.7rem;
+            min-width: 0;
+        }
+
+        .source-package-fact-label {
+            margin: 0 0 0.25rem;
+            color: #64748b;
+            font-size: 0.64rem;
+            font-weight: 900;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+        }
+
+        .source-package-fact-value {
+            margin: 0;
+            color: #0f172a;
+            font-size: 0.82rem;
+            font-weight: 850;
+            line-height: 1.35;
+            overflow-wrap: anywhere;
+        }
+
+        .source-package-actions {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 0.5rem;
+        }
+
         @media (max-width: 1100px) {
-            .source-action-grid {
+            .source-action-grid,
+            .source-package-grid {
                 grid-template-columns: 1fr;
             }
 
@@ -102,6 +188,16 @@
             {{ session('success') }}
         </div>
     @endif
+
+    <section class="staff-scope-banner">
+        <div>
+            <h3>Source Records Archive</h3>
+            <p>
+                This archive stores documentary and provenance references used during clearance review. Source records may support staff review, record matching, and traceability, but they do not automatically create landowner records, become mappable parcels, transfer ownership, or mutate registry records.
+            </p>
+        </div>
+        <span class="staff-scope-pill">Documentary Records Only</span>
+    </section>
 
     <section class="source-action-grid">
         <a href="{{ route('staff.source-record-packages.create') }}" class="source-action-card staff-panel staff-panel-pad block transition">
@@ -189,6 +285,70 @@
                 <a href="{{ route('staff.legacy-records.index') }}" class="staff-button staff-button-light">Reset</a>
             </div>
         </form>
+    </section>
+
+
+
+    <section class="staff-panel overflow-hidden">
+        <div class="staff-panel-pad flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <div>
+                <h2 class="staff-panel-title">Source Package List</h2>
+                <p class="staff-panel-subtitle">Open the full digitized source package view. Generated source records remain listed separately below.</p>
+            </div>
+            <span class="staff-badge staff-badge-green">{{ $sourcePackages->count() }} package(s)</span>
+        </div>
+
+        <div class="border-t border-gray-200 p-5">
+            @if ($sourcePackages->isEmpty())
+                <div class="rounded-xl border border-dashed border-gray-300 bg-gray-50 p-6 text-center text-sm font-semibold text-gray-500">
+                    No source packages found for the current search/filter.
+                </div>
+            @else
+                <div class="source-package-grid">
+                    @foreach ($sourcePackages as $package)
+                        <article class="source-package-card">
+                            <div class="source-package-card-top">
+                                <div>
+                                    <p class="source-package-code">{{ $package->package_code }}</p>
+                                    <p class="source-package-meta">
+                                        {{ $package->source_record_scope_label }} · {{ $package->records_count }} generated record(s)
+                                    </p>
+                                </div>
+                                <span class="staff-badge {{ $package->source_file_status_class }}">
+                                    {{ $package->source_file_status_label }}
+                                </span>
+                            </div>
+
+                            <div class="source-package-facts">
+                                <div class="source-package-fact">
+                                    <p class="source-package-fact-label">Party</p>
+                                    <p class="source-package-fact-value">{{ $package->landowner_name ?? $package->transferor_name ?? 'N/A' }}</p>
+                                </div>
+                                <div class="source-package-fact">
+                                    <p class="source-package-fact-label">Parcel Ref</p>
+                                    <p class="source-package-fact-value">{{ $package->parcel_code ?? 'N/A' }}</p>
+                                </div>
+                                <div class="source-package-fact">
+                                    <p class="source-package-fact-label">Location</p>
+                                    <p class="source-package-fact-value">{{ $package->barangay ?? 'N/A' }}, {{ $package->municipality ?? 'N/A' }}</p>
+                                </div>
+                                <div class="source-package-fact">
+                                    <p class="source-package-fact-label">Status</p>
+                                    <p class="source-package-fact-value">{{ $package->status_label }}</p>
+                                </div>
+                            </div>
+
+                            <div class="source-package-actions">
+                                <a href="{{ route('staff.source-record-packages.show', $package) }}" class="staff-button staff-button-primary justify-center">
+                                    <i class="fa-solid fa-box-open"></i>
+                                    Open Full Source Package
+                                </a>
+                            </div>
+                        </article>
+                    @endforeach
+                </div>
+            @endif
+        </div>
     </section>
 
     <section class="staff-panel overflow-hidden">

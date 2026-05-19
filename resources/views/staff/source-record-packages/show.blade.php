@@ -101,7 +101,7 @@
 
             .source-detail-grid {
                 display: grid;
-                grid-template-columns: minmax(0, 1.45fr) minmax(340px, 0.55fr);
+                grid-template-columns: minmax(0, 1.12fr) minmax(430px, 0.88fr);
                 gap: 18px;
                 align-items: start;
             }
@@ -180,6 +180,166 @@
                 overflow-wrap: anywhere;
             }
 
+
+
+            .source-file-proof-card {
+                border: 1px solid #bbf7d0;
+                background: linear-gradient(180deg, #f0fdf4 0%, #ffffff 100%);
+                border-radius: 16px;
+                padding: 16px;
+                display: grid;
+                gap: 16px;
+            }
+
+            .source-file-proof-card.is-missing {
+                border-color: #fed7aa;
+                background: linear-gradient(180deg, #fff7ed 0%, #ffffff 100%);
+            }
+
+            .source-file-proof-top {
+                display: flex;
+                justify-content: space-between;
+                gap: 14px;
+                align-items: flex-start;
+            }
+
+            .source-file-proof-subtitle {
+                margin-top: 5px;
+                color: #64748b;
+                font-size: 12.5px;
+                line-height: 1.55;
+                max-width: 560px;
+            }
+
+            .source-file-body-grid {
+                display: grid;
+                grid-template-columns: minmax(0, 1.1fr) minmax(300px, 0.9fr);
+                gap: 16px;
+                align-items: stretch;
+            }
+
+            .source-file-missing-box {
+                border: 1px dashed #fdba74;
+                background: #fff7ed;
+                color: #92400e;
+                border-radius: 13px;
+                padding: 14px;
+                font-size: 12.5px;
+                line-height: 1.55;
+                display: flex;
+                gap: 10px;
+                align-items: flex-start;
+            }
+
+            .source-file-missing-box i {
+                margin-top: 2px;
+            }
+
+            .source-file-preview {
+                width: 100%;
+                min-height: 220px;
+                border: 1px solid #dbe4dd;
+                background: #ffffff;
+                border-radius: 14px;
+                overflow: hidden;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: #166534;
+                text-decoration: none;
+            }
+
+            .source-file-preview img {
+                display: block;
+                width: 100%;
+                height: 100%;
+                max-height: 280px;
+                object-fit: cover;
+            }
+
+            .source-file-icon {
+                width: 72px;
+                height: 72px;
+                border-radius: 20px;
+                background: #ecfdf5;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 30px;
+                box-shadow: inset 0 0 0 1px #bbf7d0;
+            }
+
+            .source-file-upload-box {
+                border: 1px dashed #86efac;
+                border-radius: 14px;
+                background: #ffffff;
+                padding: 15px;
+                display: grid;
+                gap: 9px;
+            }
+
+            .source-file-upload-box label {
+                color: #14532d;
+            }
+
+            .source-file-upload-box input[type="file"] {
+                width: 100%;
+                font-size: 13px;
+                color: #475569;
+                cursor: pointer;
+            }
+
+            .source-file-upload-box input[type="file"]::file-selector-button {
+                margin-right: 12px;
+                border: 1px solid #166534;
+                border-radius: 9px;
+                background: #166534;
+                color: #ffffff;
+                padding: 9px 13px;
+                font-size: 12px;
+                font-weight: 900;
+                cursor: pointer;
+                transition: 150ms ease;
+            }
+
+            .source-file-upload-box input[type="file"]::file-selector-button:hover {
+                background: #14532d;
+                border-color: #14532d;
+            }
+
+            .source-file-actions-grid {
+                display: grid;
+                gap: 9px;
+                align-content: start;
+            }
+
+            .source-file-actions-row {
+                display: grid;
+                grid-template-columns: 1fr;
+                gap: 8px;
+            }
+
+            .source-file-actions-row form {
+                margin: 0;
+            }
+
+            .source-file-proof-card .staff-button {
+                min-height: 42px;
+            }
+
+            @media (max-width: 1100px) {
+                .source-detail-grid,
+                .source-file-body-grid {
+                    grid-template-columns: 1fr;
+                }
+            }
+
+            @media (max-width: 640px) {
+                .source-file-actions-row {
+                    grid-template-columns: 1fr;
+                }
+            }
+
             .source-detail-text-box {
                 border: 1px solid #e5e7eb;
                 border-radius: 12px;
@@ -193,20 +353,91 @@
 
             .source-linkage-grid {
                 display: grid;
-                grid-template-columns: minmax(0, 0.85fr) minmax(0, 1fr) minmax(0, 1.15fr);
+                grid-template-columns: minmax(280px, 0.8fr) minmax(0, 1.2fr);
+                gap: 16px;
+                align-items: start;
+            }
+
+            .source-link-action-stack {
+                display: grid;
                 gap: 14px;
+                min-width: 0;
             }
 
             .source-link-card {
                 border: 1px solid #e5e7eb;
-                border-radius: 14px;
+                border-radius: 16px;
                 background: #f8fafc;
-                padding: 15px;
+                padding: 16px;
                 min-width: 0;
             }
 
             .source-link-card.is-form {
                 background: #ffffff;
+            }
+
+            .source-link-card.is-reference {
+                background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);
+            }
+
+            .source-create-card {
+                background: linear-gradient(180deg, #f8fffb 0%, #ffffff 100%);
+                border-color: #bbf7d0;
+            }
+
+            .source-create-card .source-detail-form {
+                margin-top: 14px;
+                padding-top: 14px;
+                border-top: 1px solid #e5e7eb;
+            }
+
+            .source-create-card .source-form-grid,
+            .source-create-card .source-form-grid.three {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .source-create-card .source-form-field.full {
+                grid-column: 1 / -1;
+            }
+
+            .source-create-summary {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 12px;
+                min-height: 44px;
+                border: 1px solid #bbf7d0;
+                background: #f0fdf4;
+                color: #14532d;
+                border-radius: 12px;
+                padding: 10px 12px;
+                cursor: pointer;
+                font-size: 13px;
+                font-weight: 950;
+            }
+
+            .source-create-summary::-webkit-details-marker {
+                display: none;
+            }
+
+            .source-create-summary::after {
+                content: '\f078';
+                font-family: 'Font Awesome 6 Free';
+                font-weight: 900;
+                font-size: 11px;
+                transition: transform 160ms ease;
+            }
+
+            details[open] > .source-create-summary::after {
+                transform: rotate(180deg);
+            }
+
+            .source-file-actions-grid .source-detail-info-card {
+                background: #f8fafc;
+            }
+
+            .source-file-actions-grid .source-detail-help {
+                overflow-wrap: anywhere;
             }
 
             .source-mini-title {
@@ -339,6 +570,8 @@
                 .source-detail-info-grid,
                 .source-form-grid,
                 .source-form-grid.three,
+                .source-create-card .source-form-grid,
+                .source-create-card .source-form-grid.three,
                 .source-detail-hero-metrics,
                 .source-detail-record-card {
                     grid-template-columns: 1fr;
@@ -362,6 +595,11 @@
         $suggestedFirstName = $nameParts[0] ?? '';
         $suggestedLastName = count($nameParts) > 1 ? implode(' ', array_slice($nameParts, 1)) : '';
         $recordCount = $package->records->count();
+        $sourceFileExists = $package->source_file_path && \Illuminate\Support\Facades\Storage::disk('public')->exists($package->source_file_path);
+        $sourceFileUrl = $sourceFileExists ? \Illuminate\Support\Facades\Storage::disk('public')->url($package->source_file_path) : null;
+        $sourceFileMime = $package->source_file_mime_type;
+        $sourceFileIsImage = $sourceFileMime && str_starts_with((string) $sourceFileMime, 'image/');
+        $sourceFileIsPdf = $sourceFileMime === 'application/pdf';
     @endphp
 
     <div class="source-detail-page">
@@ -396,6 +634,9 @@
                         <span class="staff-badge {{ $package->parcel ? 'staff-badge-green' : 'staff-badge-slate' }}">
                             {{ $package->parcel ? 'Linked Parcel' : 'Unlinked Parcel' }}
                         </span>
+                        <span class="staff-badge {{ $package->source_file_status_class }}">
+                            {{ $package->source_file_status_label }}
+                        </span>
                     </div>
                 </div>
 
@@ -415,6 +656,10 @@
                     <div class="source-detail-metric">
                         <p class="source-detail-label">Source</p>
                         <p class="source-detail-value">{{ $package->source_book ?? 'N/A' }}</p>
+                    </div>
+                    <div class="source-detail-metric">
+                        <p class="source-detail-label">Digitization</p>
+                        <p class="source-detail-value">{{ $package->has_source_file ? 'File Attached' : 'Needs File' }}</p>
                     </div>
                 </div>
             </div>
@@ -509,7 +754,7 @@
                         <div>
                             <p class="source-detail-eyebrow">Landowner Record Linkage</p>
                             <h3 class="source-detail-title">Source Party to Main Landowner Record</h3>
-                            <p class="source-detail-help">Use this area to connect the source party name to an existing or newly encoded landowner record.</p>
+                            <p class="source-detail-help">Choose an existing landowner, or create one from the encoded source name when no match exists. This is an administrative reference link only.</p>
                         </div>
                         <span class="staff-badge {{ $package->landowner ? 'staff-badge-green' : 'staff-badge-slate' }}">
                             {{ $package->landowner ? 'Linked' : 'Not Linked' }}
@@ -517,7 +762,7 @@
                     </div>
                     <div class="source-detail-body">
                         <div class="source-linkage-grid">
-                            <div class="source-link-card">
+                            <div class="source-link-card is-reference">
                                 <h4 class="source-mini-title">Source Name Reference</h4>
                                 <div class="source-detail-info-grid mt-3" style="grid-template-columns: 1fr;">
                                     <div>
@@ -543,9 +788,10 @@
                                 @endif
                             </div>
 
-                            <div class="source-link-card is-form">
-                                <h4 class="source-mini-title">Link Existing Landowner</h4>
-                                <p class="source-mini-copy">Use this when the correct person already exists in Landowner Records.</p>
+                            <div class="source-link-action-stack">
+                                <div class="source-link-card is-form">
+                                    <h4 class="source-mini-title">Link Existing Landowner</h4>
+                                    <p class="source-mini-copy">Use this when the correct person already exists in Landowner Records.</p>
 
                                 <form method="POST" action="{{ route('staff.source-record-packages.link-landowner', $package) }}" class="source-detail-form">
                                     @csrf
@@ -569,12 +815,12 @@
                                 </form>
                             </div>
 
-                            <div class="source-link-card is-form">
+                            <div class="source-link-card is-form source-create-card">
                                 <h4 class="source-mini-title">Create Landowner From Source</h4>
-                                <p class="source-mini-copy">Use this when no matching Landowner Record exists yet.</p>
+                                <p class="source-mini-copy">Use this only when no matching Landowner Record exists yet. The created record is linked for review and traceability.</p>
 
                                 <details class="mt-4">
-                                    <summary class="cursor-pointer text-sm font-black text-green-800">Open creation form</summary>
+                                    <summary class="source-create-summary"><span><i class="fa-solid fa-user-plus mr-2"></i> Open creation form</span></summary>
                                     <form method="POST" action="{{ route('staff.source-record-packages.create-landowner', $package) }}" class="source-detail-form">
                                         @csrf
                                         <div class="source-form-grid">
@@ -622,6 +868,7 @@
                                         </button>
                                     </form>
                                 </details>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -813,7 +1060,93 @@
                                 <p class="source-detail-info-value">{{ $package->transcription_date?->format('F d, Y') ?? 'N/A' }}</p>
                             </div>
                         </div>
-                    </div>
+
+                        <div class="mt-4 source-file-proof-card {{ $package->has_source_file ? '' : 'is-missing' }}">
+                            <div class="source-file-proof-top">
+                                <div>
+                                    <p class="source-detail-label">Source Scan / Reference File</p>
+                                    <p class="source-detail-info-value">{{ $package->has_source_file ? ($package->source_file_original_filename ?? 'Attached source file') : 'No source file attached yet' }}</p>
+                                    <p class="source-file-proof-subtitle">
+                                        Attach or replace the scanned document, PDF, or image used as the basis of this source package. This supports traceability but does not legally verify ownership or mutate registry records.
+                                    </p>
+                                </div>
+                                <span class="staff-badge {{ $package->source_file_status_class }}">{{ $package->source_file_status_label }}</span>
+                            </div>
+
+                            @if ($sourceFileExists)
+                                <div class="source-file-body-grid">
+                                    <a href="{{ $sourceFileUrl }}" target="_blank" rel="noopener" class="source-file-preview" aria-label="Open source file">
+                                        @if ($sourceFileIsImage)
+                                            <img src="{{ $sourceFileUrl }}" alt="Preview of {{ $package->source_file_original_filename }}">
+                                        @else
+                                            <span class="source-file-icon">
+                                                <i class="fa-solid {{ $sourceFileIsPdf ? 'fa-file-pdf' : 'fa-file-lines' }}"></i>
+                                            </span>
+                                        @endif
+                                    </a>
+
+                                    <div class="source-file-actions-grid">
+                                        <div class="source-detail-info-card">
+                                            <p class="source-detail-label">File Details</p>
+                                            <p class="source-detail-help mt-1">
+                                                <strong>Type:</strong> {{ $package->source_file_mime_type ?? 'Unknown file type' }}<br>
+                                                <strong>Uploaded by:</strong> {{ optional($package->sourceFileUploadedBy)->name ?? 'Unknown user' }}<br>
+                                                <strong>Uploaded at:</strong> {{ $package->source_file_uploaded_at?->format('M d, Y h:i A') ?? 'N/A' }}
+                                            </p>
+                                        </div>
+
+                                        <div class="source-file-actions-row">
+                                            <a href="{{ $sourceFileUrl }}" target="_blank" rel="noopener" class="staff-button staff-button-light justify-center">
+                                                <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                                                Open Source File
+                                            </a>
+
+                                            <form method="POST" action="{{ route('staff.source-record-packages.source-file.destroy', $package) }}" onsubmit="return confirm('Remove the attached source file from this package?');">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="staff-button staff-button-danger w-full justify-center">
+                                                    <i class="fa-solid fa-trash"></i>
+                                                    Remove File
+                                                </button>
+                                            </form>
+                                        </div>
+
+                                        <form method="POST" action="{{ route('staff.source-record-packages.source-file.store', $package) }}" enctype="multipart/form-data" class="source-detail-form">
+                                            @csrf
+                                            <div class="source-file-upload-box">
+                                                <label class="block text-xs font-black uppercase tracking-wide">Replace source file</label>
+                                                <input type="file" name="source_file" required accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png">
+                                                <p class="mt-1 text-xs text-gray-500">Accepted files: PDF, JPG, JPEG, PNG. Maximum file size: 10 MB.</p>
+                                            </div>
+                                            <button type="submit" class="staff-button staff-button-primary justify-center">
+                                                <i class="fa-solid fa-upload"></i>
+                                                Replace Source File
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            @else
+                                <div class="source-file-missing-box">
+                                    <i class="fa-solid fa-triangle-exclamation"></i>
+                                    <div>
+                                        This package is encoded as metadata, but it is not yet supported by a source scan. Attach the scanned document, PDF, or image when available.
+                                    </div>
+                                </div>
+
+                                <form method="POST" action="{{ route('staff.source-record-packages.source-file.store', $package) }}" enctype="multipart/form-data" class="source-detail-form">
+                                    @csrf
+                                    <div class="source-file-upload-box">
+                                        <label class="block text-xs font-black uppercase tracking-wide">Upload source file</label>
+                                        <input type="file" name="source_file" required accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png">
+                                        <p class="mt-1 text-xs text-gray-500">Accepted files: PDF, JPG, JPEG, PNG. Maximum file size: 10 MB.</p>
+                                    </div>
+                                    <button type="submit" class="staff-button staff-button-primary justify-center">
+                                        <i class="fa-solid fa-upload"></i>
+                                        Attach Source File
+                                    </button>
+                                </form>
+                            @endif
+                        </div>                    </div>
                 </section>
 
                 <section class="source-detail-panel">
