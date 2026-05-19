@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -16,7 +15,7 @@ class BarebonesTesterSeeder extends Seeder
      * Result:
      * - clears demo/transactional records
      * - re-seeds the required document reference list
-     * - keeps only one active staff account for the tester to start encoding data
+     * - keeps only the beta tester staff accounts
      *
      * This does not create landowner, geodetic, parcel, landholding,
      * source record, application, clearance, notification, or audit demo data.
@@ -27,14 +26,30 @@ class BarebonesTesterSeeder extends Seeder
 
         $this->call(RequiredDocumentSeeder::class);
 
-        User::create([
-            'name' => 'DAR Staff Tester',
-            'email' => 'staff.tester@dar-ltcms.local',
-            'email_verified_at' => now(),
-            'password' => Hash::make('password'),
-            'role' => 'staff',
-            'is_active' => true,
-        ]);
+        $now = now();
+        $password = Hash::make('password');
+
+        $users = [
+            ['name' => 'DAR Staff Tester', 'email' => 'staff.tester@dar-ltcms.local'],
+            ['name' => 'Jay', 'email' => 'jay.staff@dar-ltcms.local'],
+            ['name' => 'Miles', 'email' => 'miles.staff@dar-ltcms.local'],
+            ['name' => 'Vea', 'email' => 'vea.staff@dar-ltcms.local'],
+            ['name' => 'Lloyd', 'email' => 'lloyd.staff@dar-ltcms.local'],
+        ];
+
+        foreach ($users as $user) {
+            DB::table('users')->insert([
+                'name' => $user['name'],
+                'email' => $user['email'],
+                'email_verified_at' => $now,
+                'password' => $password,
+                'role' => 'staff',
+                'is_active' => true,
+                'remember_token' => null,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ]);
+        }
     }
 
     private function truncateApplicationData(): void
