@@ -356,6 +356,16 @@
                 flex: 0 0 auto;
             }
 
+            .source-field-grid.core-party-grid {
+                grid-template-columns: repeat(12, minmax(0, 1fr));
+                gap: 12px 16px;
+                align-items: start;
+            }
+
+            .source-field-grid.core-party-grid .source-field { grid-column: span 4; }
+            .source-field-grid.core-party-grid .source-field:nth-child(10),
+            .source-field-grid.core-party-grid .source-field:nth-child(11) { grid-column: span 6; }
+
             @media (max-width: 1100px) {
                 .source-option-grid,
                 .source-field-grid,
@@ -458,7 +468,7 @@
                     </div>
                 </div>
 
-                <div class="source-field-grid">
+                <div class="source-field-grid core-party-grid">
                     <div class="source-field">
                         <label for="landowner_name">Landowner / Owner Name *</label>
                         <input id="landowner_name" name="landowner_name" value="{{ old('landowner_name') }}" class="w-full rounded-lg border-gray-300 text-sm" required>
@@ -589,10 +599,10 @@
 
                     <div class="source-field">
                         <label for="parcel_id">Link to Existing Parcel</label>
-                        <select id="parcel_id" name="parcel_id" class="w-full rounded-lg border-gray-300 text-sm">
+                        <select id="parcel_id" name="parcel_id" class="w-full rounded-lg border-gray-300 text-sm" data-source-parcel-autofill>
                             <option value="">Not linked yet</option>
                             @foreach ($parcels as $parcel)
-                                <option value="{{ $parcel->id }}" @selected((string) old('parcel_id') === (string) $parcel->id)>
+                                <option value="{{ $parcel->id }}" data-parcel-code="{{ $parcel->parcel_code }}" data-title="{{ $parcel->title_no }}" data-area="{{ $parcel->area_hectares }}" data-province="{{ $parcel->province }}" data-municipality="{{ $parcel->municipality }}" data-barangay="{{ $parcel->barangay }}" @selected((string) old('parcel_id') === (string) $parcel->id)>
                                     {{ $parcel->parcel_code }}
                                     @if ($parcel->title_no) — {{ $parcel->title_no }} @endif
                                     @if ($parcel->barangay || $parcel->municipality) — {{ $parcel->barangay ?? 'N/A' }}, {{ $parcel->municipality ?? 'N/A' }} @endif
@@ -687,6 +697,29 @@
                 </div>
             </section>
         </form>
+
+
+        <script data-source-parcel-autofill-script>
+            document.addEventListener('DOMContentLoaded', function () {
+                const select = document.querySelector('[data-source-parcel-autofill]');
+                if (!select) return;
+                const fillIfBlank = function (id, value) {
+                    const field = document.getElementById(id);
+                    if (field && value && !field.value) field.value = value;
+                };
+                select.addEventListener('change', function () {
+                    const option = select.options[select.selectedIndex];
+                    if (!option) return;
+                    fillIfBlank('parcel_code', option.dataset.parcelCode || '');
+                    fillIfBlank('title_number', option.dataset.title || '');
+                    fillIfBlank('area_hectares', option.dataset.area ? parseFloat(option.dataset.area).toFixed(4) : '');
+                    fillIfBlank('province', option.dataset.province || 'Negros Oriental');
+                    fillIfBlank('municipality', option.dataset.municipality || '');
+                    fillIfBlank('barangay', option.dataset.barangay || '');
+                });
+            });
+        </script>
+
     </div>
 
 

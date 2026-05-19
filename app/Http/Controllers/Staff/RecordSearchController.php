@@ -180,6 +180,72 @@ class RecordSearchController extends Controller
             'agriculturalStatuses'
         ));
     }
+
+    public function createParcel()
+    {
+        return view('staff.records.parcel-create', [
+            'agriculturalStatuses' => Parcel::agriculturalStatusOptions(),
+            'parcelStatuses' => [
+                'active' => 'Active',
+                'inactive' => 'Inactive',
+                'linked_application' => 'Linked to Application',
+                'flagged' => 'Flagged for Review',
+            ],
+        ]);
+    }
+
+    public function storeParcel(Request $request)
+    {
+        $data = $request->validate([
+            'parcel_code' => ['required', 'string', 'max:255', Rule::unique('parcels', 'parcel_code')],
+            'title_no' => ['nullable', 'string', 'max:255'],
+            'tax_decl_no' => ['nullable', 'string', 'max:255'],
+            'province' => ['nullable', 'string', 'max:255'],
+            'municipality' => ['nullable', 'string', 'max:255'],
+            'barangay' => ['nullable', 'string', 'max:255'],
+            'area_hectares' => ['nullable', 'numeric', 'min:0', 'max:999999.9999'],
+            'status' => ['required', Rule::in(['active', 'inactive', 'linked_application', 'flagged'])],
+            'agricultural_status' => ['nullable', Rule::in(array_keys(Parcel::AGRICULTURAL_STATUSES))],
+            'geometry_geojson' => ['nullable', 'json'],
+            'remarks' => ['nullable', 'string', 'max:5000'],
+            'reference_photo' => ['nullable', 'image', 'max:5120'],
+        ]);
+
+        $data['province'] = $data['province'] ?: 'Negros Oriental';
+        $data['agricultural_status'] = $data['agricultural_status'] ?: Parcel::DEFAULT_AGRICULTURAL_STATUS;
+        $data['geometry_geojson'] = filled($data['geometry_geojson'] ?? null)
+            ? json_decode($data['geometry_geojson'], true)
+            : null;
+
+        unset($data['reference_photo']);
+        if ($request->hasFile('reference_photo')) {
+            $data['reference_photo_path'] = $request->file('reference_photo')->store('reference-photos/parcels', 'public');
+        }
+
+        $parcel = Parcel::create($data);
+
+        AuditLogger::record(
+            'parcel_created',
+            null,
+            $parcel,
+            [
+                'parcel_id' => $parcel->id,
+                'parcel_code' => $parcel->parcel_code,
+                'municipality' => $parcel->municipality,
+                'barangay' => $parcel->barangay,
+                'area_hectares' => $parcel->area_hectares,
+                'agricultural_status' => $parcel->agricultural_status,
+                'agricultural_status_label' => $parcel->agricultural_status_label,
+                'has_geometry' => ! empty($parcel->geometry_geojson),
+                'actor_user_id' => $request->user()?->id,
+                'actor_name' => $request->user()?->name,
+            ]
+        );
+
+        return redirect()
+            ->route('staff.records.parcels.show', $parcel)
+            ->with('success', 'Parcel record created successfully.');
+    }
     public function showParcel(Parcel $parcel)
 {
     $parcel->load([
@@ -218,9 +284,15 @@ class RecordSearchController extends Controller
             'area_hectares' => ['nullable', 'numeric', 'min:0', 'max:999999.9999'],
             'status' => ['required', Rule::in(['active', 'inactive', 'linked_application', 'flagged'])],
             'remarks' => ['nullable', 'string', 'max:5000'],
+            'reference_photo' => ['nullable', 'image', 'max:5120'],
         ]);
 
         $data['agricultural_status'] = $data['agricultural_status'] ?? 'private_agricultural'; // automatic agricultural default after form removal
+
+        unset($data['reference_photo']);
+        if ($request->hasFile('reference_photo')) {
+            $data['reference_photo_path'] = $request->file('reference_photo')->store('reference-photos/parcels', 'public');
+        }
 
         $oldAgriculturalStatus = $parcel->agricultural_status ?: 'not_yet_determined';
 

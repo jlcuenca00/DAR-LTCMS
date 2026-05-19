@@ -663,17 +663,18 @@
                         <span class="staff-badge staff-badge-slate">Records Management Only</span>
                     </div>
 
-                    <form method="POST" action="{{ route('staff.records.landowners.landholdings.store', $landowner) }}">
+                    <form method="POST" action="{{ route('staff.records.landowners.landholdings.store', $landowner) }}" enctype="multipart/form-data" data-landholding-form>
                         @csrf
 
                         <div class="landholding-form-body">
                             <div class="landholding-form-grid">
                                 <div class="landholding-field span-6">
                                     <label class="landholding-field-label">Parcel</label>
-                                    <select name="parcel_id" class="landholding-input" required>
+                                    <select name="parcel_id" class="landholding-input" required data-parcel-autofill>
                                         <option value="">Select parcel record</option>
                                         @foreach ($parcels as $parcel)
-                                            <option value="{{ $parcel->id }}" @selected(old('parcel_id') == $parcel->id)>
+                                            @php($parcelReferenceText = collect([filled($parcel->title_no) ? 'Title: '.$parcel->title_no : null, filled($parcel->tax_decl_no) ? 'Tax Declaration: '.$parcel->tax_decl_no : null])->filter()->implode(' / '))
+                                            <option value="{{ $parcel->id }}" data-area="{{ $parcel->area_hectares }}" data-reference="{{ $parcelReferenceText }}" @selected(old('parcel_id') == $parcel->id)>
                                                 {{ $parcel->parcel_code }} @if($parcel->title_no) — {{ $parcel->title_no }} @endif @if($parcel->municipality) — {{ $parcel->municipality }} @endif
                                             </option>
                                         @endforeach
@@ -682,7 +683,7 @@
 
                                 <div class="landholding-field span-3">
                                     <label class="landholding-field-label">Area hectares</label>
-                                    <input type="number" step="0.0001" min="0.0001" name="area_hectares" value="{{ old('area_hectares') }}" class="landholding-input" required>
+                                    <input type="number" step="0.0001" min="0.0001" name="area_hectares" value="{{ old('area_hectares') }}" class="landholding-input" required data-area-field>
                                 </div>
 
                                 <div class="landholding-field span-3">
@@ -706,7 +707,13 @@
 
                                 <div class="landholding-field span-6">
                                     <label class="landholding-field-label">Source/reference no.</label>
-                                    <input type="text" name="source_reference_number" value="{{ old('source_reference_number') }}" class="landholding-input" placeholder="Title, tax declaration, clearance, or source reference">
+                                    <input type="text" name="source_reference_number" value="{{ old('source_reference_number') }}" class="landholding-input" placeholder="Title, tax declaration, clearance, or source reference" data-reference-field>
+                                </div>
+
+                                <div class="landholding-field span-6">
+                                    <label class="landholding-field-label">Reference photo / scan</label>
+                                    <input type="file" name="reference_photo" accept="image/*" class="landholding-input">
+                                    <p class="mt-1 text-xs leading-relaxed text-gray-500">Optional photo or scan of the source page/card used as encoding basis.</p>
                                 </div>
 
                                 <div class="landholding-field span-12">
@@ -782,17 +789,18 @@
                                 <div class="landholding-record-actions">
                                     <details class="landholding-edit-box">
                                         <summary>Edit landholding</summary>
-                                        <form method="POST" action="{{ route('staff.records.landowners.landholdings.update', [$landowner, $holding]) }}" class="landholding-edit-form">
+                                        <form method="POST" action="{{ route('staff.records.landowners.landholdings.update', [$landowner, $holding]) }}" class="landholding-edit-form" enctype="multipart/form-data" data-landholding-form>
                                             @csrf
                                             @method('PATCH')
 
-                                            <select name="parcel_id" class="landholding-input" required>
+                                            <select name="parcel_id" class="landholding-input" required data-parcel-autofill>
                                                 @foreach ($parcels as $parcel)
-                                                    <option value="{{ $parcel->id }}" @selected((int) $holding->parcel_id === (int) $parcel->id)>{{ $parcel->parcel_code }} @if($parcel->title_no) — {{ $parcel->title_no }} @endif</option>
+                                                    @php($parcelReferenceText = collect([filled($parcel->title_no) ? 'Title: '.$parcel->title_no : null, filled($parcel->tax_decl_no) ? 'Tax Declaration: '.$parcel->tax_decl_no : null])->filter()->implode(' / '))
+                                                    <option value="{{ $parcel->id }}" data-area="{{ $parcel->area_hectares }}" data-reference="{{ $parcelReferenceText }}" @selected((int) $holding->parcel_id === (int) $parcel->id)>{{ $parcel->parcel_code }} @if($parcel->title_no) — {{ $parcel->title_no }} @endif</option>
                                                 @endforeach
                                             </select>
 
-                                            <input type="number" step="0.0001" min="0.0001" name="area_hectares" value="{{ $holding->area_hectares }}" class="landholding-input" required>
+                                            <input type="number" step="0.0001" min="0.0001" name="area_hectares" value="{{ $holding->area_hectares }}" class="landholding-input" required data-area-field>
 
                                             <select name="status" class="landholding-input" required>
                                                 @foreach (\App\Models\Landholding::STATUSES as $status)
@@ -802,7 +810,7 @@
 
                                             <input type="date" name="date_acquired" value="{{ $holding->date_acquired?->format('Y-m-d') }}" class="landholding-input">
                                             <input type="date" name="date_transferred" value="{{ $holding->date_transferred?->format('Y-m-d') }}" class="landholding-input">
-                                            <input type="text" name="source_reference_number" value="{{ $holding->source_reference_number }}" class="landholding-input" placeholder="Source/reference no.">
+                                            <input type="text" name="source_reference_number" value="{{ $holding->source_reference_number }}" class="landholding-input" placeholder="Source/reference no." data-reference-field>
                                             <textarea name="remarks" rows="2" class="landholding-input" placeholder="Remarks">{{ $holding->remarks }}</textarea>
 
                                             <button type="submit" class="staff-button staff-button-primary">Save Landholding</button>
@@ -859,4 +867,23 @@
             </div>
         </section>
     </div>
+
+
+    <script data-landholding-autofill-script>
+        document.addEventListener('DOMContentLoaded', function () {
+            document.querySelectorAll('[data-landholding-form]').forEach(function (form) {
+                const parcelSelect = form.querySelector('[data-parcel-autofill]');
+                const areaField = form.querySelector('[data-area-field]');
+                const referenceField = form.querySelector('[data-reference-field]');
+                if (!parcelSelect) return;
+                parcelSelect.addEventListener('change', function () {
+                    const option = parcelSelect.options[parcelSelect.selectedIndex];
+                    if (!option) return;
+                    if (areaField && option.dataset.area && !areaField.value) areaField.value = parseFloat(option.dataset.area).toFixed(4);
+                    if (referenceField && option.dataset.reference && !referenceField.value) referenceField.value = option.dataset.reference;
+                });
+            });
+        });
+    </script>
+
 </x-staff-shell>

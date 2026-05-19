@@ -929,7 +929,7 @@
             }
 
             .landowner-create-card {
-                border: 1px dashed #cbd5d1;
+                border: 1px solid #dbe4dd;
                 background: #ffffff;
                 border-radius: 14px;
                 padding: 16px;
@@ -960,6 +960,28 @@
             .landowner-create-card .staff-button,
             .landowner-link-save-row .staff-button {
                 min-height: 42px;
+                justify-content: center;
+            }
+
+            .landowner-create-card-highlight {
+                border-style: solid;
+                border-color: #fed7aa;
+                background: linear-gradient(180deg, #fffbeb 0%, #ffffff 74%);
+            }
+
+            .landowner-create-card-highlight .landowner-create-title {
+                color: #92400e;
+            }
+
+            .landowner-link-tip {
+                margin: 12px 0 0;
+                border: 1px solid #dbe4dd;
+                background: #f8faf9;
+                border-radius: 12px;
+                padding: 12px 14px;
+                color: #475569;
+                font-size: 12.5px;
+                line-height: 1.55;
             }
 
             .workflow-bottom-panel {
@@ -1556,9 +1578,10 @@
                 </form>
 
                 @if (! $isFinal && (! $application->transferor_landowner_id || ! $application->transferee_landowner_id))
+                    <p class="landowner-link-tip">Create missing party records here when the typed transferor/transferee name does not yet exist in Landowner Records. Created records are automatically linked to this application for validation and traceability only.</p>
                     <div class="landowner-create-grid">
                         @if (! $application->transferor_landowner_id)
-                            <form method="POST" action="{{ route('staff.applications.landowner-records.create', $application) }}" class="landowner-create-card">
+                            <form method="POST" action="{{ route('staff.applications.landowner-records.create', $application) }}" class="landowner-create-card landowner-create-card-highlight">
                                 @csrf
                                 <input type="hidden" name="party" value="transferor">
                                 <div>
@@ -1567,13 +1590,13 @@
                                 </div>
                                 <button type="submit" class="staff-button staff-button-light">
                                     <i class="fa-solid fa-user-plus"></i>
-                                    Create from “{{ $application->transferor_name ?: 'Transferor Name' }}”
+                                    Create & auto-link from “{{ $application->transferor_name ?: 'Transferor Name' }}”
                                 </button>
                             </form>
                         @endif
 
                         @if (! $application->transferee_landowner_id)
-                            <form method="POST" action="{{ route('staff.applications.landowner-records.create', $application) }}" class="landowner-create-card">
+                            <form method="POST" action="{{ route('staff.applications.landowner-records.create', $application) }}" class="landowner-create-card landowner-create-card-highlight">
                                 @csrf
                                 <input type="hidden" name="party" value="transferee">
                                 <div>
@@ -1582,7 +1605,7 @@
                                 </div>
                                 <button type="submit" class="staff-button staff-button-light">
                                     <i class="fa-solid fa-user-plus"></i>
-                                    Create from “{{ $application->transferee_name ?: 'Transferee Name' }}”
+                                    Create & auto-link from “{{ $application->transferee_name ?: 'Transferee Name' }}”
                                 </button>
                             </form>
                         @endif

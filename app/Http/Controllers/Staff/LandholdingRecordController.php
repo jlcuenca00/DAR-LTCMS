@@ -14,6 +14,7 @@ class LandholdingRecordController extends Controller
     public function store(Request $request, Landowner $landowner)
     {
         $validated = $this->validatedData($request);
+        $validated = $this->storeReferencePhoto($request, $validated, 'reference-photos/landholdings');
 
         $landholding = $landowner->landholdings()->create($validated);
 
@@ -39,6 +40,7 @@ class LandholdingRecordController extends Controller
         abort_unless((int) $landholding->landowner_id === (int) $landowner->id, 404);
 
         $validated = $this->validatedData($request);
+        $validated = $this->storeReferencePhoto($request, $validated, 'reference-photos/landholdings');
         $oldValues = $landholding->only(array_keys($validated));
 
         $landholding->update($validated);
@@ -60,6 +62,17 @@ class LandholdingRecordController extends Controller
             ->with('success', 'Landholding record updated. Current hectares were recalculated from active landholding records.');
     }
 
+    private function storeReferencePhoto(Request $request, array $validated, string $directory): array
+    {
+        unset($validated['reference_photo']);
+
+        if ($request->hasFile('reference_photo')) {
+            $validated['reference_photo_path'] = $request->file('reference_photo')->store($directory, 'public');
+        }
+
+        return $validated;
+    }
+
     private function validatedData(Request $request): array
     {
         return $request->validate([
@@ -71,6 +84,7 @@ class LandholdingRecordController extends Controller
             'source_application_id' => ['nullable', 'exists:land_transfer_applications,id'],
             'source_reference_number' => ['nullable', 'string', 'max:255'],
             'remarks' => ['nullable', 'string', 'max:2000'],
+            'reference_photo' => ['nullable', 'image', 'max:5120'],
         ]);
     }
 }

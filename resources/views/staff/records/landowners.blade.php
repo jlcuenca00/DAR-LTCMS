@@ -3,17 +3,7 @@
     subtitle="Search and review landowner records used for clearance application processing and privacy-filtered landowner access."
     active="landowner-records"
 >
-    <x-slot name="actions">
-        <a href="{{ route('staff.records.landowners.create') }}" class="staff-button staff-button-primary">
-            <i class="fa-solid fa-user-plus"></i>
-            Add Landowner
-        </a>        <a href="{{ route('staff.records.parcels.index') }}" class="staff-button staff-button-light">
-            <i class="fa-solid fa-map-location-dot"></i>
-            View Parcel Records
-        </a>
-    </x-slot>
-
-    <span class="sr-only">Staff Landowner Record Search</span>
+<span class="sr-only">Staff Landowner Record Search</span>
 
     <section class="staff-panel staff-panel-pad">
         <div class="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
@@ -67,6 +57,15 @@
             <div>
                 <h2 class="staff-panel-title">Landowner List</h2>
                 <p class="staff-panel-subtitle">Showing {{ $landowners->count() }} of {{ $landowners->total() }} landowner record(s). Current hectares are computed from active landholding records only; source records and pending applications are not counted until staff encodes them as active landholding records.</p>
+            </div>
+            <div class="flex flex-wrap gap-2" data-main-card-actions-moved>
+                <a href="{{ route('staff.records.landowners.create') }}" class="staff-button staff-button-primary">
+                            <i class="fa-solid fa-user-plus"></i>
+                            Add Landowner
+                        </a>        <a href="{{ route('staff.records.parcels.index') }}" class="staff-button staff-button-light">
+                            <i class="fa-solid fa-map-location-dot"></i>
+                            View Parcel Records
+                        </a>
             </div>
         </div>
 

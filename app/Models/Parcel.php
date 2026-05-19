@@ -42,6 +42,7 @@ protected $fillable = [
         'status',
         'agricultural_status',
         'remarks',
+        'reference_photo_path',
     ];
 
     protected $casts = [

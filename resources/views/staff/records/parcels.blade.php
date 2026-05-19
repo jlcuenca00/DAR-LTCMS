@@ -4,19 +4,7 @@
     active="parcel-records"
 >
     @php($agriculturalStatuses = $agriculturalStatuses ?? \App\Models\Parcel::agriculturalStatusOptions())
-
-    <x-slot name="actions">
-        <a href="{{ route('staff.parcel-map.index') }}" class="staff-button staff-button-primary">
-            <i class="fa-solid fa-map"></i>
-            Open Parcel Map
-        </a>
-        <a href="{{ route('staff.records.landowners.index') }}" class="staff-button staff-button-light">
-            <i class="fa-solid fa-users"></i>
-            Landowner Records
-        </a>
-    </x-slot>
-
-    <span class="sr-only">Staff Parcel Record Search</span>
+<span class="sr-only">Staff Parcel Record Search</span>
 
     <section class="staff-panel staff-panel-pad">
         <div class="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
@@ -79,6 +67,20 @@
             <div>
                 <h2 class="staff-panel-title">Parcel List</h2>
                 <p class="staff-panel-subtitle">Showing {{ $parcels->count() }} of {{ $parcels->total() }} parcel record(s).</p>
+            </div>
+            <div class="flex flex-wrap gap-2" data-main-card-actions-moved>
+                <a href="{{ route('staff.records.parcels.create') }}" class="staff-button staff-button-primary">
+                            <i class="fa-solid fa-plus"></i>
+                            Add Parcel
+                        </a>
+                        <a href="{{ route('staff.parcel-map.index') }}" class="staff-button staff-button-light">
+                            <i class="fa-solid fa-map"></i>
+                            Open Parcel Map
+                        </a>
+                        <a href="{{ route('staff.records.landowners.index') }}" class="staff-button staff-button-light">
+                            <i class="fa-solid fa-users"></i>
+                            Landowner Records
+                        </a>
             </div>
         </div>
         <div class="staff-table-wrap">

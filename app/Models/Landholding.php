@@ -29,6 +29,7 @@ class Landholding extends Model
         'source_application_id',
         'source_reference_number',
         'remarks',
+        'reference_photo_path',
     ];
 
     protected $casts = [

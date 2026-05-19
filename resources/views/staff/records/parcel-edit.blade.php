@@ -238,7 +238,7 @@
 
     <div class="parcel-edit-page">
 
-        <form method="POST" action="{{ route('staff.records.parcels.update', $parcel) }}" class="parcel-edit-layout">
+        <form method="POST" enctype="multipart/form-data" action="{{ route('staff.records.parcels.update', $parcel) }}" class="parcel-edit-layout">
             @csrf
             @method('PATCH')
 
@@ -331,7 +331,13 @@
                     </div>
 
                     <div class="parcel-edit-body">
-                        <textarea name="remarks" rows="4" class="parcel-edit-input">{{ old('remarks', $parcel->remarks) }}</textarea>
+                        <div class="parcel-create-field">
+                        <label for="reference_photo">Reference Photo / Scan</label>
+                        <input id="reference_photo" type="file" name="reference_photo" accept="image/*" class="parcel-create-input">
+                        <p class="mt-1 text-xs leading-relaxed text-gray-500">Optional photo/scan of the title, tax declaration, sketch, or reference sheet used for encoding.</p>
+                    </div>
+
+                    <textarea name="remarks" rows="4" class="parcel-edit-input">{{ old('remarks', $parcel->remarks) }}</textarea>
                         @error('remarks')<p class="parcel-edit-error">{{ $message }}</p>@enderror
                     </div>
                 </section>
