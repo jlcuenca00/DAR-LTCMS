@@ -304,8 +304,8 @@
                         <span class="lo-access-value">Not allowed</span>
                     </div>
                     <div class="lo-access-row">
-                        <span class="lo-access-label">Registry Mutation</span>
-                        <span class="lo-access-value">Outside scope</span>
+                        <span class="lo-access-label">Ownership / Registry Changes</span>
+                        <span class="lo-access-value">Not performed by system</span>
                     </div>
                 </div>
             </article>
