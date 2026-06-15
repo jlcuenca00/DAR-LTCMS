@@ -414,14 +414,14 @@
             }
 
             .status-released,
-            .status-approved {
+            .status-released {
                 background: #dcfce7;
                 border-color: #bbf7d0;
                 color: #166534;
             }
 
             .status-pending_legal_review,
-            .status-pending_review {
+            .status-pending-legal-review {
                 background: #ffedd5;
                 border-color: #fed7aa;
                 color: #c2410c;
@@ -437,13 +437,13 @@
             }
 
             .status-denied,
-            .status-not_approved {
+            .status-denied {
                 background: #fee2e2;
                 border-color: #fecaca;
                 color: #b91c1c;
             }
 
-            .status-draft {
+            .status-pending-legal-review {
                 background: #f1f5f9;
                 border-color: #cbd5e1;
                 color: #475569;
@@ -664,9 +664,9 @@
                                         <span class="status-badge status-{{ $application->status }}">
                                             {{ method_exists($application, 'statusLabel')
                                                 ? $application->statusLabel()
-                                                : ($application->status === 'approved'
+                                                : ($application->status === 'released'
                                                     ? 'Released'
-                                                    : ($application->status === 'not_approved'
+                                                    : ($application->status === 'denied'
                                                         ? 'Denied'
                                                         : ucwords(str_replace('_', ' ', $application->status)))) }}
                                         </span>

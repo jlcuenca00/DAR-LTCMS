@@ -332,8 +332,8 @@
 
         $decisionLabelFor = function (?string $status): string {
             return match ($status) {
-                'released', 'approved' => 'Released Clearance',
-                'denied', 'not_approved' => 'Denied',
+                'released' => 'Released',
+                'denied' => 'Denied',
                 default => $status ? ucwords(str_replace('_', ' ', $status)) : 'Recorded',
             };
         };

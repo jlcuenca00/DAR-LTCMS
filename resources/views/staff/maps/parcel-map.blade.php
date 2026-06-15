@@ -503,7 +503,7 @@
                 }
 
                 function getParcelColor(status) {
-                    if (status === 'pending_review') {
+                    if (status === 'pending_legal_review') {
                         return '#f59e0b';
                     }
 

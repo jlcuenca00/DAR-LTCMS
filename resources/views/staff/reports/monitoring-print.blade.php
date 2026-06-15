@@ -14,8 +14,8 @@
                 'endorsed_chief_legal' => 'Endorsed to Chief Legal',
                 'endorsed_parpo' => 'Endorsed to PARPO II',
                 'for_releasing' => 'For Releasing',
-                'approved', 'released' => 'Released',
-                'not_approved', 'denied' => 'Denied',
+                'released' => 'Released',
+                'denied' => 'Denied',
                 default => ucwords(str_replace('_', ' ', (string) $value)),
             };
         };
@@ -33,8 +33,8 @@
 
         $decisionLabel = function ($value) {
             return match ((string) $value) {
-                'approved', 'released' => 'Released Clearance',
-                'not_approved', 'denied' => 'Denied',
+                'released' => 'Released',
+                'denied' => 'Denied',
                 default => ucwords(str_replace('_', ' ', (string) $value)),
             };
         };

@@ -342,7 +342,7 @@
                 }).addTo(map);
 
                 function getParcelColor(status) {
-                    if (status === 'pending_review') {
+                    if (status === 'pending_legal_review') {
                         return '#ea580c';
                     }
 

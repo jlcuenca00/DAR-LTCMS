@@ -1439,10 +1439,10 @@
                 'for_releasing',
             ], true);
         $statusBadgeClass = match ($application->status) {
-            'released', 'approved' => 'staff-badge-green',
-            'pending_legal_review', 'endorsed_lti', 'endorsed_chief_legal', 'endorsed_parpo', 'for_releasing', 'pending_review' => 'staff-badge-amber',
-            'denied', 'not_approved' => 'staff-badge-red',
-            'draft' => 'staff-badge-slate',
+            'released' => 'staff-badge-green',
+            'pending_legal_review', 'endorsed_lti', 'endorsed_chief_legal', 'endorsed_parpo', 'for_releasing' => 'staff-badge-amber',
+            'denied' => 'staff-badge-red',
+            
             default => 'staff-badge-slate',
         };
         $allRequirements = $transferorRequirements->concat($transfereeRequirements);
@@ -1557,8 +1557,8 @@
                                         <h2 class="review-panel-title">Generated Decision Output</h2>
                                         <p class="review-panel-subtitle">Decision output generated from the final application result. This is not an ownership transfer record.</p>
                                     </div>
-                                    <span class="staff-badge {{ in_array($application->clearance->decision_status, ['released', 'approved'], true) ? 'staff-badge-green' : 'staff-badge-red' }}">
-                                        {{ in_array($application->clearance->decision_status, ['released', 'approved'], true) ? 'Clearance Released' : 'Denied' }}
+                                    <span class="staff-badge {{ $application->clearance->decision_status === 'released' ? 'staff-badge-green' : 'staff-badge-red' }}">
+                                        {{ $application->clearance->decision_status === 'released' ? 'APPROVED' : 'DENIED' }}
                                     </span>
                                 </div>
 
@@ -2743,7 +2743,7 @@
                     buttonClass: 'staff-button staff-button-primary',
                     buttonText: 'Release Clearance',
                     title: 'Release this clearance?',
-                    copy: 'This will generate and record a released clearance result for this application.',
+                    copy: 'This will generate and record the approved LTC Form No. 5 result for this application.',
                     warning: 'Release records the clearance result only. It does not automatically transfer land ownership or mutate Registry of Deeds records.'
                 },
                 deny: {

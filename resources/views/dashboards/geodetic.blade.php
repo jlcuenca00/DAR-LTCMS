@@ -248,10 +248,10 @@
             white-space: nowrap;
         }
 
-        .geo-badge-approved { background: #dcfce7; border-color: #bbf7d0; color: #166534; }
+        .geo-badge-has-geometry { background: #dcfce7; border-color: #bbf7d0; color: #166534; }
         .geo-badge-pending { background: #ffedd5; border-color: #fed7aa; color: #c2410c; }
         .geo-badge-not { background: #fee2e2; border-color: #fecaca; color: #b91c1c; }
-        .geo-badge-draft { background: #f1f5f9; border-color: #e2e8f0; color: #475569; }
+        .geo-badge-needs-geometry { background: #f1f5f9; border-color: #e2e8f0; color: #475569; }
 
         .geo-empty {
             padding: 22px;
@@ -323,7 +323,7 @@
                                         <td>{{ $parcel->barangay ?? 'N/A' }}, {{ $parcel->municipality ?? 'N/A' }}</td>
                                         <td>{{ number_format((float) $parcel->area_hectares, 4) }} ha</td>
                                         <td>
-                                            <span class="geo-badge {{ $parcel->geometry_geojson ? 'geo-badge-approved' : 'geo-badge-draft' }}">
+                                            <span class="geo-badge {{ $parcel->geometry_geojson ? 'geo-badge-has-geometry' : 'geo-badge-needs-geometry' }}">
                                                 {{ $parcel->geometry_geojson ? 'Mapped' : 'No Geometry' }}
                                             </span>
                                         </td>

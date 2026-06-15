@@ -139,7 +139,7 @@ class LandownerPrivacyDemoSeeder extends Seeder
                 'transferee_name' => 'Alpha Demo Landowner',
                 'barangay' => 'Barangay Alpha',
                 'municipality' => 'Dumaguete City',
-                'status' => 'pending_review',
+                'status' => \App\Models\LandTransferApplication::STATUS_PENDING_LEGAL_REVIEW,
                 'encoded_by' => $staffUser->id,
                 'remarks' => 'Demo application for Landowner A privacy test.',
             ]
@@ -154,7 +154,7 @@ class LandownerPrivacyDemoSeeder extends Seeder
                 'transferee_name' => 'Bravo Demo Landowner',
                 'barangay' => 'Barangay Bravo',
                 'municipality' => 'Bais City',
-                'status' => 'pending_review',
+                'status' => \App\Models\LandTransferApplication::STATUS_PENDING_LEGAL_REVIEW,
                 'encoded_by' => $staffUser->id,
                 'remarks' => 'Demo application for Landowner B privacy test.',
             ]

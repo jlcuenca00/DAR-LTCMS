@@ -39,7 +39,7 @@ class ParcelMapDemoSeeder extends Seeder
                 'barangay' => 'Bantayan',
                 'province' => 'Negros Oriental',
                 'area_hectares' => 2.4000,
-                'status' => 'pending_review',
+                'status' => \App\Models\LandTransferApplication::STATUS_PENDING_LEGAL_REVIEW,
                 'remarks' => 'Demo mapped parcel for parcel map viewer testing.',
                 'geometry_geojson' => [
                     'type' => 'Polygon',
