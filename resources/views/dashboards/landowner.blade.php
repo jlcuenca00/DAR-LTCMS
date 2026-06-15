@@ -11,10 +11,8 @@
             LandTransferApplication::STATUS_ENDORSED_PARPO => 'Endorsed to PARPO II',
             LandTransferApplication::STATUS_FOR_RELEASING => 'For Releasing',
             LandTransferApplication::STATUS_RELEASED,
-            LandTransferApplication::STATUS_APPROVED => 'Released',
-            LandTransferApplication::STATUS_DENIED,
-            LandTransferApplication::STATUS_NOT_APPROVED => 'Denied',
-            LandTransferApplication::STATUS_PENDING_REVIEW,
+                LandTransferApplication::STATUS_DENIED,
+                LandTransferApplication::STATUS_PENDING_REVIEW,
             LandTransferApplication::STATUS_DRAFT => 'Pending Review by Legal Officer',
             default => $status ? str($status)->replace('_', ' ')->title()->toString() : 'N/A',
         };
@@ -23,10 +21,8 @@
     $statusClass = function (?string $status): string {
         return match ($status) {
             LandTransferApplication::STATUS_RELEASED,
-            LandTransferApplication::STATUS_APPROVED => 'status-released',
-            LandTransferApplication::STATUS_DENIED,
-            LandTransferApplication::STATUS_NOT_APPROVED => 'status-denied',
-            LandTransferApplication::STATUS_ENDORSED_LTI,
+                LandTransferApplication::STATUS_DENIED,
+                LandTransferApplication::STATUS_ENDORSED_LTI,
             LandTransferApplication::STATUS_ENDORSED_CHIEF_LEGAL,
             LandTransferApplication::STATUS_ENDORSED_PARPO => 'status-endorsed',
             LandTransferApplication::STATUS_FOR_RELEASING => 'status-releasing',
@@ -243,7 +239,7 @@
             }
 
             .status-released,
-            .status-approved {
+            .status-released {
                 background: #dcfce7;
                 border: 1px solid #bbf7d0;
                 color: #166534;
@@ -273,7 +269,7 @@
                 color: #6d28d9;
             }
 
-            .status-draft {
+            .status-pending {
                 background: #f1f5f9;
                 border: 1px solid #e2e8f0;
                 color: #334155;
@@ -463,7 +459,7 @@
                                             </p>
                                         </div>
 
-                                        <span class="lo-status-pill status-approved">
+                                        <span class="lo-status-pill status-released">
                                             {{ $landholding->status ? ucwords(str_replace('_', ' ', $landholding->status)) : 'N/A' }}
                                         </span>
                                     </div>

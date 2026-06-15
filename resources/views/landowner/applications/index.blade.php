@@ -4,11 +4,9 @@
     $statusClass = function (?string $status): string {
         return match ($status) {
             LandTransferApplication::STATUS_RELEASED,
-            LandTransferApplication::STATUS_APPROVED => 'status-released',
-
+        
             LandTransferApplication::STATUS_DENIED,
-            LandTransferApplication::STATUS_NOT_APPROVED => 'status-denied',
-
+        
             LandTransferApplication::STATUS_ENDORSED_LTI,
             LandTransferApplication::STATUS_ENDORSED_CHIEF_LEGAL,
             LandTransferApplication::STATUS_ENDORSED_PARPO => 'status-endorsed',
