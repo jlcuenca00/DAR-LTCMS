@@ -24,7 +24,7 @@ class LandTransferApplicationController extends Controller
     public function show(LandTransferApplication $application)
     {
         $application->load([
-            'documents',
+            'documents.requiredDocument',
             'applicationParcels.parcel',
             'transferorLandowner',
             'transfereeLandowner',
