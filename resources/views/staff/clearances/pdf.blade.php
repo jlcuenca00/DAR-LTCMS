@@ -27,8 +27,15 @@
         $location = $location !== '' ? $location : '__________';
         $areaHectares = number_format((float) $clearance->total_area_hectares, 4);
 
-        $applicationCode = $clearance->application_code ?? '__________';
-        $applicantName = $clearance->transferor_name ?: '__________';
+        $applicationCode = $application->application_code ?? $clearance->application_code ?? '__________';
+        $applicantName = $application->applicant_name ?: ($clearance->transferor_name ?: '__________');
+        $applicantRoleLabel = match ($application->applicant_type ?? null) {
+            'transferor' => 'Transferor',
+            'transferee' => 'Transferee',
+            'authorized_representative' => 'Authorized Representative',
+            default => 'Applicant / Requesting Party',
+        };
+        $authorizedRepresentativeName = $application->authorized_representative_name ?: null;
         $province = 'Negros Oriental';
         $region = 'VII';
     @endphp
@@ -211,9 +218,29 @@
             <td>{{ $applicationCode }}</td>
         </tr>
         <tr>
+            <td class="label">Applicant Role</td>
+            <td>{{ $applicantRoleLabel }}</td>
+        </tr>
+        @if ($authorizedRepresentativeName)
+            <tr>
+                <td class="label">Authorized Representative</td>
+                <td>{{ $authorizedRepresentativeName }}</td>
+            </tr>
+        @endif
+        <tr>
             <td class="label">System Result No.</td>
             <td>{{ $clearance->clearance_number }}</td>
         </tr>
+        @if ($application->or_number || $application->or_date || $application->amount_paid)
+            <tr>
+                <td class="label">Payment Reference</td>
+                <td>
+                    OR Number: {{ $application->or_number ?: '—' }};
+                    OR Date: {{ optional($application->or_date)->format('M d, Y') ?? '—' }};
+                    Amount Paid: {{ $application->amount_paid ? '₱' . number_format((float) $application->amount_paid, 2) : '—' }}
+                </td>
+            </tr>
+        @endif
     </table>
 
     <div class="title">
@@ -223,7 +250,7 @@
 
     <p class="body-text">
         This is to certify that the application/request for Issuance of Land Transfer Clearance (LTC)
-        filed to this Office in the name of <strong>{{ $applicantName }}</strong>, covered by
+        filed to this Office in the name of <strong>{{ $applicantName }}</strong>, as {{ strtolower($applicantRoleLabel) }}, covered by
         {{ $titleType ?: 'OCT/TCT' }} No. <strong>{{ $titleNo }}</strong>, with Lot No.
         <strong>{{ $lotNo }}</strong>, Approved Survey No. <strong>{{ $surveyNo }}</strong>,
         with an area of <strong>{{ $areaHectares }}</strong> hectares, more or less, and located at
