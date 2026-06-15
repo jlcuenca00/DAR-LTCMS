@@ -166,6 +166,8 @@ Route::middleware(['auth', 'role:staff'])
             ->name('applications.landowner-records.create');
         Route::get('/applications/{application}', [LandTransferApplicationController::class, 'show'])
             ->name('applications.show');
+        Route::get('/applications/{application}/acknowledgement/pdf', [ApplicationClearanceController::class, 'acknowledgementPdf'])
+            ->name('applications.acknowledgement.pdf');
         Route::patch('/applications/{application}/form-4-review', [LandTransferApplicationController::class, 'updateForm4Review'])
             ->name('applications.form4.update');
         Route::get('/applications/{application}/documents/{requiredDocument}', [ApplicationDocumentController::class, 'show'])

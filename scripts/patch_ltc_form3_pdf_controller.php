@@ -1,52 +1,33 @@
 <?php
 
-namespace App\Http\Controllers\Staff;
+$path = __DIR__ . '/../app/Http/Controllers/Staff/ApplicationClearanceController.php';
 
-use App\Http\Controllers\Controller;
-use App\Models\LandTransferApplication;
-use App\Models\RequiredDocument;
-use App\Models\ApplicationDocument;
-use Barryvdh\DomPDF\Facade\Pdf;
+if (! file_exists($path)) {
+    fwrite(STDERR, "Cannot find app/Http/Controllers/Staff/ApplicationClearanceController.php\n");
+    exit(1);
+}
 
-class ApplicationClearanceController extends Controller
-{
-    public function show(LandTransferApplication $application)
-    {
-        $application->load('clearance');
+$content = file_get_contents($path);
 
-        if (! $application->isFinalized()) {
-            return back()->with('error', 'Decision output is only available for released or denied applications.');
-        }
+$imports = [
+    "use App\\Models\\ApplicationDocument;\n",
+    "use App\\Models\\RequiredDocument;\n",
+];
 
-        if (! $application->clearance) {
-            return back()->with('error', 'Decision output record not found for this application.');
-        }
-
-        return view('staff.clearances.show', [
-            'application' => $application,
-            'clearance' => $application->clearance,
-        ]);
+foreach ($imports as $import) {
+    if (! str_contains($content, $import)) {
+        $content = preg_replace('/use App\\\\Models\\\\LandTransferApplication;\n/', "use App\\Models\\LandTransferApplication;\n" . $import, $content, 1);
     }
+}
 
-    public function pdf(LandTransferApplication $application)
-    {
-        $application->load('clearance');
+if (str_contains($content, "public function acknowledgementPdf(")) {
+    file_put_contents($path, $content);
+    echo "Acknowledgement PDF method already exists. Imports verified.\n";
+    exit(0);
+}
 
-        if (! $application->isFinalized()) {
-            return back()->with('error', 'Decision output is only available for released or denied applications.');
-        }
+$method = <<<'PHP'
 
-        if (! $application->clearance) {
-            return back()->with('error', 'Decision output record not found for this application.');
-        }
-
-        $pdf = Pdf::loadView('staff.clearances.pdf', [
-            'application' => $application,
-            'clearance' => $application->clearance,
-        ])->setPaper('a4');
-
-        return $pdf->stream($application->clearance->clearance_number . '.pdf');
-    }
     public function acknowledgementPdf(LandTransferApplication $application)
     {
         $application->load([
@@ -90,5 +71,16 @@ class ApplicationClearanceController extends Controller
 
         return $pdf->stream('LTC-Form-No-3-' . $safeApplicationCode . '.pdf');
     }
+PHP;
 
+$lastBrace = strrpos($content, "\n}");
+if ($lastBrace === false) {
+    fwrite(STDERR, "Could not find final class closing brace.\n");
+    exit(1);
 }
+
+$content = substr_replace($content, $method . "\n", $lastBrace, 0);
+
+file_put_contents($path, $content);
+
+echo "Added LTC Form No. 3 acknowledgementPdf method to ApplicationClearanceController.\n";

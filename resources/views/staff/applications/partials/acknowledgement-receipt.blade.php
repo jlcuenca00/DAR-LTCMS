@@ -48,10 +48,19 @@
             </p>
         </div>
 
-        <button type="button" class="staff-button staff-button-light" onclick="window.print()">
-            <i class="fa-solid fa-print"></i>
-            Print Page
-        </button>
+        <div style="display:flex; flex-wrap:wrap; gap:8px;">
+            <a href="{{ route('staff.applications.acknowledgement.pdf', $application) }}"
+               class="staff-button staff-button-primary"
+               target="_blank">
+                <i class="fa-solid fa-file-pdf"></i>
+                Open Form No. 3 PDF
+            </a>
+
+            <button type="button" class="staff-button staff-button-light" onclick="window.print()">
+                <i class="fa-solid fa-print"></i>
+                Print Page
+            </button>
+        </div>
     </div>
 
     <div class="review-panel-body">
