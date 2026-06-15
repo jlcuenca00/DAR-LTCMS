@@ -9,8 +9,8 @@
         $rawDecisionStatus = strtolower((string) $clearance->decision_status);
 
         $decisionLabel = match ($rawDecisionStatus) {
-            'released', 'approved' => 'Released Clearance',
-            'denied', 'not_approved' => 'Denied',
+            'released', 'approved' => 'APPROVED',
+            'denied', 'not_approved' => 'DENIED',
             default => ucwords(str_replace('_', ' ', $rawDecisionStatus)),
         };
 
@@ -554,7 +554,7 @@
                 <span class="toolbar-title">Decision Output Preview</span>
             </div>
             <div class="toolbar-right">
-                <a href="{{ route('landowner.applications.clearance.pdf', $application) }}" class="btn primary" target="_blank">Open PDF Output</a>
+                <a href="{{ route('landowner.applications.clearance.pdf', $application) }}" class="btn primary" target="_blank">Open LTC Form No. 5 PDF</a>
                 <button type="button" onclick="window.print()" class="btn dark">Print / Save as PDF</button>
             </div>
         </div>
@@ -581,8 +581,8 @@
 
             <section class="document-title-row">
                 <div class="document-title">
-                    <h1>Clearance Decision Record</h1>
-                    <p>System-generated administrative record of the finalized clearance application decision.</p>
+                    <h1>LTC Form No. 5 Decision Preview</h1>
+                    <p>System preview of the finalized Land Transfer Clearance form decision.</p>
                 </div>
                 <div class="clearance-number-box">
                     <span class="box-label">Clearance Number</span>
@@ -597,7 +597,7 @@
 
             <section class="decision-panel">
                 <div class="decision-box {{ $decisionClass }}">
-                    <div class="decision-label">Recorded Application Decision</div>
+                    <div class="decision-label">Official Form Decision</div>
                     <div class="decision-value">{{ $decisionLabel }}</div>
                     <div class="decision-note">Release/denial result is locked in the system for auditability and monitoring.</div>
                 </div>
