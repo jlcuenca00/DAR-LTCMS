@@ -241,9 +241,9 @@ class ApplicationWorkflowController extends Controller
             ->forApplication($application);
 
         $mandatoryDocuments = RequiredDocument::query()
-            ->where('is_mandatory', true)
+            ->acceptanceBlocking()
             ->orderBy('id')
-            ->get(['id', 'name', 'applies_to']);
+            ->get(['id', 'name', 'applies_to', 'requirement_classification', 'blocks_acceptance']);
 
         $uploadedIds = $application->documents()
             ->whereNotNull('file_path')
@@ -272,7 +272,7 @@ class ApplicationWorkflowController extends Controller
 
         foreach ($missingMandatoryDocuments as $document) {
             $partyLabel = ucfirst((string) $document->applies_to);
-            $validationMessages['missing_document_' . $document->id] = "Missing {$partyLabel} document: {$document->name}.";
+            $validationMessages['missing_document_' . $document->id] = "Missing required {$partyLabel} document: {$document->name}.";
         }
 
         $missingMandatoryByParty = $missingMandatoryDocuments
@@ -302,6 +302,7 @@ class ApplicationWorkflowController extends Controller
                 'scope_note' => $hectareValidation['scope_note'],
             ],
             'documents' => [
+                'classification_scope' => 'Only acceptance/release-blocking documents are counted as critical blockers. Case-dependent and reference-only documents remain visible for manual review.',
                 'missing_mandatory_count' => $missingMandatoryCount,
                 'missing_mandatory_ids' => $missingMandatoryDocuments->pluck('id')->map(fn ($id) => (int) $id)->values()->all(),
                 'missing_mandatory_by_party' => $missingMandatoryByParty,

@@ -681,7 +681,7 @@
             <div class="staff-panel staff-panel-pad landowner-profile-main">
                 <div class="landowner-profile-head">
                     <div>
-                        <p class="landowner-eyebrow">Landowner / Person Record</p>
+                        <p class="landowner-eyebrow">Registered Owner / Person Record</p>
                         <h2 class="landowner-name">{{ $landowner->full_name }}</h2>
                         <p class="landowner-record-id">Record ID: {{ $landowner->id }}</p>
                     </div>
@@ -699,6 +699,17 @@
                 </div>
 
                 <div class="landowner-info-grid">
+                    <div class="landowner-info-card">
+                        <p class="landowner-info-label">Registered Owner Status</p>
+                        <p class="landowner-info-value">{{ $landowner->registered_owner_status_label }}</p>
+                    </div>
+
+                    <div class="landowner-info-card">
+                        <p class="landowner-info-label">Name of Spouse</p>
+                        <p class="landowner-info-value">{{ $landowner->registered_owner_status === \App\Models\Landowner::STATUS_MARRIED ? ($landowner->spouse_name ?? 'Required but not encoded') : 'Not applicable' }}</p>
+                        <p class="landowner-info-subvalue">Shown only as applicable when status is Married.</p>
+                    </div>
+
                     <div class="landowner-info-card">
                         <p class="landowner-info-label">Contact</p>
                         <p class="landowner-info-value">{{ $landowner->contact_number ?? 'N/A' }}</p>

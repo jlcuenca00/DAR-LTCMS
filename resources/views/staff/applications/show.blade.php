@@ -1445,7 +1445,15 @@
             'draft' => 'staff-badge-slate',
             default => 'staff-badge-slate',
         };
-        $totalReq = $transferorRequirements->count() + $transfereeRequirements->count();
+        $allRequirements = $transferorRequirements->concat($transfereeRequirements);
+        $blockingRequirements = $allRequirements->filter(fn ($requirement) => method_exists($requirement, 'blocksAcceptance') ? $requirement->blocksAcceptance() : (bool) $requirement->is_mandatory);
+        $blockingRequirementIds = $blockingRequirements->pluck('id')->map(fn ($id) => (int) $id)->all();
+        $blockingTotal = $blockingRequirements->count();
+        $blockingUploadedCount = $uploaded->keys()
+            ->map(fn ($id) => (int) $id)
+            ->filter(fn ($id) => in_array($id, $blockingRequirementIds, true))
+            ->count();
+        $totalReq = $allRequirements->count();
         $uploadedCount = $uploaded->count();
 
         $requirementGroups = [
@@ -1834,10 +1842,10 @@
                 <div>
                     <h2 class="review-panel-title">Checklist Completion</h2>
                     <p class="review-panel-subtitle">
-                        {{ $uploadedCount }} / {{ $totalReq }} uploaded. Incomplete requirements can still be saved, but will be flagged during review.
+                        {{ $blockingUploadedCount }} / {{ $blockingTotal }} required acceptance documents uploaded. Case-dependent and reference-only documents remain visible for manual review.
                     </p>
                 </div>
-                <div class="completion-number">{{ $uploadedCount }} / {{ $totalReq }}</div>
+                <div class="completion-number">{{ $blockingUploadedCount }} / {{ $blockingTotal }}</div>
             </div>
         </section>
 
@@ -1863,6 +1871,15 @@
                             $documentViewUrl = $documentExists
                                 ? route('staff.applications.documents.show', ['application' => $application->id, 'requiredDocument' => $req->id])
                                 : null;
+                            $classificationLabel = method_exists($req, 'classificationLabel')
+                                ? $req->classificationLabel()
+                                : ($req->is_mandatory ? 'Required before acceptance/release' : 'Case-dependent');
+                            $classificationBadgeClass = method_exists($req, 'classificationBadgeClass')
+                                ? $req->classificationBadgeClass()
+                                : ($req->is_mandatory ? 'staff-badge-red' : 'staff-badge-amber');
+                            $blocksAcceptance = method_exists($req, 'blocksAcceptance')
+                                ? $req->blocksAcceptance()
+                                : (bool) $req->is_mandatory;
                         @endphp
 
                         <article id="required-document-{{ $req->id }}" class="requirement-card">
@@ -1878,13 +1895,11 @@
 
                                             <h3 class="requirement-title">
                                                 {{ $req->name }}
-                                                @if (! $req->is_mandatory)
-                                                    <span class="staff-badge staff-badge-amber ml-2">If applicable</span>
-                                                @endif
+                                                <span class="staff-badge {{ $classificationBadgeClass }} ml-2">{{ $classificationLabel }}</span>
                                             </h3>
 
                                             <p class="requirement-note">
-                                                Upload files and encode only the necessary reference details for review, indexing, monitoring, and auditability.
+                                                Upload files and encode only the necessary reference details for review, indexing, monitoring, and auditability. Required acceptance documents block release when missing; case-dependent/reference documents support manual review.
                                             </p>
                                         </div>
                                     </div>
@@ -1892,7 +1907,7 @@
                                     @if ($isUploaded)
                                         <span class="staff-badge staff-badge-green">Uploaded</span>
                                     @else
-                                        <span class="staff-badge staff-badge-red">Not uploaded</span>
+                                        <span class="staff-badge {{ $blocksAcceptance ? 'staff-badge-red' : 'staff-badge-slate' }}">{{ $blocksAcceptance ? 'Required file missing' : 'No file attached' }}</span>
                                     @endif
                                 </div>
 

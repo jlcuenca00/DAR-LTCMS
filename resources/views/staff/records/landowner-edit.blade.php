@@ -26,7 +26,7 @@
 
         <div class="staff-panel-pad border-b border-gray-200">
             <h2 class="staff-panel-title">Landowner / Person Information</h2>
-            <p class="staff-panel-subtitle">These fields support records management, account linking, and privacy-controlled access.</p>
+            <p class="staff-panel-subtitle">These fields support registered-owner matching for clearance review. Spouse name is required only when the status is Married.</p>
         </div>
 
         <div class="staff-panel-pad grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -45,6 +45,21 @@
             <div>
                 <label class="mb-1 block text-xs font-black uppercase tracking-wider text-gray-600">Suffix</label>
                 <input type="text" name="suffix" value="{{ old('suffix', $landowner->suffix) }}" class="w-full rounded-lg border-gray-300 text-sm">
+            </div>
+            <div>
+                <label class="mb-1 block text-xs font-black uppercase tracking-wider text-gray-600">Registered owner status</label>
+                <select name="registered_owner_status" class="w-full rounded-lg border-gray-300 text-sm">
+                    <option value="">Not specified</option>
+                    @foreach ($registeredOwnerStatusOptions as $value => $label)
+                        <option value="{{ $value }}" @selected(old('registered_owner_status', $landowner->registered_owner_status) === $value)>{{ $label }}</option>
+                    @endforeach
+                </select>
+                <p class="mt-1 text-xs text-gray-500">Used to match the registered owner as shown on the title.</p>
+            </div>
+            <div>
+                <label class="mb-1 block text-xs font-black uppercase tracking-wider text-gray-600">Name of spouse <span class="normal-case text-gray-400">if married</span></label>
+                <input type="text" name="spouse_name" value="{{ old('spouse_name', $landowner->spouse_name) }}" class="w-full rounded-lg border-gray-300 text-sm" placeholder="Required only when status is Married">
+                <p class="mt-1 text-xs text-gray-500">This field is cleared when the registered owner status is not Married.</p>
             </div>
             <div>
                 <label class="mb-1 block text-xs font-black uppercase tracking-wider text-gray-600">Contact number</label>

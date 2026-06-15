@@ -39,6 +39,8 @@ class RecordSearchController extends Controller
                 $query->whereRaw('LOWER(first_name) LIKE ?', ["%{$search}%"])
                     ->orWhereRaw('LOWER(middle_name) LIKE ?', ["%{$search}%"])
                     ->orWhereRaw('LOWER(last_name) LIKE ?', ["%{$search}%"])
+                    ->orWhereRaw('LOWER(registered_owner_status) LIKE ?', ["%{$search}%"])
+                    ->orWhereRaw('LOWER(spouse_name) LIKE ?', ["%{$search}%"])
                     ->orWhereRaw('LOWER(contact_number) LIKE ?', ["%{$search}%"])
                     ->orWhereRaw('LOWER(address_line) LIKE ?', ["%{$search}%"]);
             });

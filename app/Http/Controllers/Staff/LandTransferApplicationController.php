@@ -33,12 +33,14 @@ class LandTransferApplicationController extends Controller
 
         // 1) Required documents (checklist)
         $transferorRequirements = RequiredDocument::where('applies_to', 'transferor')
-            ->orderBy('is_mandatory', 'desc')
+            ->orderBy('blocks_acceptance', 'desc')
+            ->orderBy('requirement_classification')
             ->orderBy('name')
             ->get();
 
         $transfereeRequirements = RequiredDocument::where('applies_to', 'transferee')
-            ->orderBy('is_mandatory', 'desc')
+            ->orderBy('blocks_acceptance', 'desc')
+            ->orderBy('requirement_classification')
             ->orderBy('name')
             ->get();
 

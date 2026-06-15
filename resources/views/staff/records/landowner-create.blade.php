@@ -25,7 +25,7 @@
 
         <div class="staff-panel-pad border-b border-gray-200">
             <h2 class="staff-panel-title">Landowner / Person Information</h2>
-            <p class="staff-panel-subtitle">Create the administrative landowner record first, then add landholdings from the landowner detail page.</p>
+            <p class="staff-panel-subtitle">Create the registered-owner reference record first, including spouse name only when the owner status is Married.</p>
         </div>
 
         <div class="staff-panel-pad grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -44,6 +44,21 @@
             <div>
                 <label class="mb-1 block text-xs font-black uppercase tracking-wider text-gray-600">Suffix</label>
                 <input type="text" name="suffix" value="{{ old('suffix') }}" class="w-full rounded-lg border-gray-300 text-sm focus:border-green-600 focus:ring-green-600">
+            </div>
+            <div>
+                <label class="mb-1 block text-xs font-black uppercase tracking-wider text-gray-600">Registered owner status</label>
+                <select name="registered_owner_status" class="w-full rounded-lg border-gray-300 text-sm focus:border-green-600 focus:ring-green-600">
+                    <option value="">Not specified</option>
+                    @foreach ($registeredOwnerStatusOptions as $value => $label)
+                        <option value="{{ $value }}" @selected(old('registered_owner_status') === $value)>{{ $label }}</option>
+                    @endforeach
+                </select>
+                <p class="mt-1 text-xs text-gray-500">Used to match the registered owner as shown on the title.</p>
+            </div>
+            <div>
+                <label class="mb-1 block text-xs font-black uppercase tracking-wider text-gray-600">Name of spouse <span class="normal-case text-gray-400">if married</span></label>
+                <input type="text" name="spouse_name" value="{{ old('spouse_name') }}" class="w-full rounded-lg border-gray-300 text-sm focus:border-green-600 focus:ring-green-600" placeholder="Required only when status is Married">
+                <p class="mt-1 text-xs text-gray-500">Leave blank when the registered owner is not married or when not applicable.</p>
             </div>
             <div>
                 <label class="mb-1 block text-xs font-black uppercase tracking-wider text-gray-600">Contact number</label>
