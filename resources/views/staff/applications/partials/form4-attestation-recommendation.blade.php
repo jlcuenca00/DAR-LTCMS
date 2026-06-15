@@ -34,7 +34,7 @@
             <h2 class="review-panel-title">LTC Form No. 4 — Certification, Attestation and Recommendation</h2>
             <p class="review-panel-subtitle">
                 Encode LTI/Legal review findings and recommendation details. This is decision-support context only;
-                final release or denial remains subject to authorized review and does not transfer ownership.
+                final release or denial remains subject to authorized review.
             </p>
         </div>
 

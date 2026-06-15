@@ -16,7 +16,7 @@
                 <h2 class="review-panel-title">LTC Form No. 2 — MARPO Certification Summary</h2>
                 <p class="review-panel-subtitle">
                     Summary of encoded MARPO Certification metadata from uploaded supporting documents.
-                    This is review context only and does not approve the clearance, transfer ownership, or mutate registry records.
+                    This is supporting review context from the uploaded MARPO certification.
                 </p>
             </div>
         </div>
@@ -83,7 +83,7 @@
                     </div>
 
                     <div style="margin-top:10px; font-size:12px; color:#6b7280;">
-                        Form No. 2 remains a supporting certification/reference document. It does not independently release or deny the application.
+                        Form No. 2 remains a supporting certification/reference document.
                     </div>
                 </article>
             @endforeach

@@ -245,6 +245,133 @@
                 white-space: nowrap;
             }
 
+            .checklist-compact-card {
+                display: grid;
+                gap: 12px;
+            }
+
+            .checklist-compact-top {
+                display: grid;
+                grid-template-columns: minmax(0, 1fr) auto;
+                gap: 14px;
+                align-items: start;
+            }
+
+            .checklist-compact-title {
+                margin: 0;
+                color: #0f172a;
+                font-size: 18px;
+                font-weight: 900;
+            }
+
+            .checklist-compact-subtitle {
+                margin: 3px 0 0;
+                color: #64748b;
+                font-size: 12.5px;
+                line-height: 1.45;
+            }
+
+            .checklist-compact-score {
+                text-align: right;
+                min-width: 120px;
+            }
+
+            .checklist-compact-score strong {
+                display: block;
+                color: #14532d;
+                font-size: 28px;
+                font-family: var(--heading-font);
+                line-height: 1;
+            }
+
+            .checklist-compact-score span {
+                display: block;
+                margin-top: 4px;
+                color: #64748b;
+                font-size: 11px;
+                font-weight: 800;
+                text-transform: uppercase;
+                letter-spacing: .05em;
+            }
+
+            .checklist-progress-track {
+                height: 8px;
+                overflow: hidden;
+                border-radius: 999px;
+                background: #e5e7eb;
+            }
+
+            .checklist-progress-bar {
+                height: 100%;
+                border-radius: inherit;
+                background: linear-gradient(90deg, #16a34a, #65a30d);
+            }
+
+            .checklist-mini-stats {
+                display: grid;
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+                gap: 8px;
+            }
+
+            .checklist-mini-stat {
+                border: 1px solid #e5e7eb;
+                border-radius: 10px;
+                background: #f8fafc;
+                padding: 9px 10px;
+            }
+
+            .checklist-mini-stat b {
+                display: block;
+                color: #111827;
+                font-size: 15px;
+                font-weight: 900;
+            }
+
+            .checklist-mini-stat span {
+                display: block;
+                margin-top: 2px;
+                color: #64748b;
+                font-size: 11px;
+                font-weight: 800;
+                text-transform: uppercase;
+                letter-spacing: .04em;
+            }
+
+            .checklist-compact-details {
+                border: 1px solid #e5e7eb;
+                border-radius: 10px;
+                background: #ffffff;
+                overflow: hidden;
+            }
+
+            .checklist-compact-details summary {
+                cursor: pointer;
+                padding: 10px 12px;
+                color: #334155;
+                font-size: 12.5px;
+                font-weight: 900;
+                list-style: none;
+            }
+
+            .checklist-compact-details summary::-webkit-details-marker {
+                display: none;
+            }
+
+            .checklist-compact-list {
+                display: grid;
+                gap: 6px;
+                margin: 0;
+                padding: 0 12px 12px 26px;
+                color: #334155;
+                font-size: 12.5px;
+                line-height: 1.35;
+            }
+
+            .checklist-compact-list .danger {
+                color: #991b1b;
+                font-weight: 800;
+            }
+
             .requirements-section {
                 display: grid;
                 gap: 14px;
@@ -1385,8 +1512,14 @@
                 }
 
                 .workflow-submit-card,
-                .workflow-decision-card {
+                .workflow-decision-card,
+                .checklist-compact-top,
+                .checklist-mini-stats {
                     grid-template-columns: 1fr;
+                }
+
+                .checklist-compact-score {
+                    text-align: left;
                 }
 
                 .workflow-submit-form {
@@ -1455,6 +1588,30 @@
             ->count();
         $totalReq = $allRequirements->count();
         $uploadedCount = $uploaded->count();
+
+        $blockingUploadedDocuments = $blockingRequirements
+            ->filter(function ($requirement) use ($uploaded) {
+                $document = $uploaded->get($requirement->id);
+
+                return $document && filled($document->file_path);
+            })
+            ->values();
+
+        $blockingMissingDocuments = $blockingRequirements
+            ->reject(function ($requirement) use ($uploaded) {
+                $document = $uploaded->get($requirement->id);
+
+                return $document && filled($document->file_path);
+            })
+            ->values();
+
+        $metadataOnlyCount = $uploaded
+            ->filter(fn ($document) => blank($document->file_path))
+            ->count();
+
+        $blockingProgressPercent = $blockingTotal > 0
+            ? min(100, round(($blockingUploadedDocuments->count() / max(1, $blockingTotal)) * 100))
+            : 100;
 
         $requirementGroups = [
             [
@@ -1555,7 +1712,7 @@
                                 <div class="final-clearance-title-row">
                                     <div>
                                         <h2 class="review-panel-title">Generated Decision Output</h2>
-                                        <p class="review-panel-subtitle">Decision output generated from the final application result. This is not an ownership transfer record.</p>
+                                        <p class="review-panel-subtitle">Decision output generated from the final application result.</p>
                                     </div>
                                     <span class="staff-badge {{ $application->clearance->decision_status === 'released' ? 'staff-badge-green' : 'staff-badge-red' }}">
                                         {{ $application->clearance->decision_status === 'released' ? 'APPROVED' : 'DENIED' }}
@@ -1637,7 +1794,7 @@
                             <p class="summary-value">{{ $application->or_date?->format('M d, Y') ?? '—' }}</p>
                         </div>
                         <div class="summary-item">
-                            <p class="summary-label">Amount Paid</p>
+                            <p class="summary-label">Amount Paid (PHP)</p>
                             <p class="summary-value">{{ $application->amount_paid !== null ? '₱' . number_format((float) $application->amount_paid, 2) : '—' }}</p>
                         </div>
                         <div class="summary-item">
@@ -1838,14 +1995,75 @@
         </section>
 
         <section class="review-panel">
-            <div class="review-panel-body completion-card">
-                <div>
-                    <h2 class="review-panel-title">Checklist Completion</h2>
-                    <p class="review-panel-subtitle">
-                        {{ $blockingUploadedCount }} / {{ $blockingTotal }} required acceptance documents uploaded. Case-dependent and reference-only documents remain visible for manual review.
-                    </p>
+            <div class="review-panel-body checklist-compact-card">
+                <div class="checklist-compact-top">
+                    <div>
+                        <h2 class="checklist-compact-title">Checklist Completion</h2>
+                        <p class="checklist-compact-subtitle">
+                            Required acceptance files are checked here. Case-dependent and reference-only items stay in the document cards below.
+                        </p>
+                    </div>
+
+                    <div class="checklist-compact-score">
+                        <strong>{{ $blockingUploadedDocuments->count() }} / {{ $blockingTotal }}</strong>
+                        <span>Required files</span>
+                    </div>
                 </div>
-                <div class="completion-number">{{ $blockingUploadedCount }} / {{ $blockingTotal }}</div>
+
+                <div class="checklist-progress-track" aria-hidden="true">
+                    <div class="checklist-progress-bar" style="width: {{ $blockingProgressPercent }}%;"></div>
+                </div>
+
+                <div class="checklist-mini-stats">
+                    <div class="checklist-mini-stat">
+                        <b>{{ $blockingUploadedDocuments->count() }}</b>
+                        <span>Attached</span>
+                    </div>
+                    <div class="checklist-mini-stat">
+                        <b>{{ $blockingMissingDocuments->count() }}</b>
+                        <span>Still blocking</span>
+                    </div>
+                    <div class="checklist-mini-stat">
+                        <b>{{ $uploadedCount }}</b>
+                        <span>Saved records</span>
+                    </div>
+                </div>
+
+                @if ($blockingMissingDocuments->isNotEmpty())
+                    <details class="checklist-compact-details" open>
+                        <summary>Missing required files ({{ $blockingMissingDocuments->count() }})</summary>
+                        <ul class="checklist-compact-list">
+                            @foreach ($blockingMissingDocuments->take(5) as $requirement)
+                                <li>
+                                    <span class="danger">{{ $requirement->name }}</span>
+                                    @if ($requirement->party)
+                                        <span>({{ ucfirst($requirement->party) }})</span>
+                                    @endif
+                                </li>
+                            @endforeach
+
+                            @if ($blockingMissingDocuments->count() > 5)
+                                <li>+ {{ $blockingMissingDocuments->count() - 5 }} more required file(s)</li>
+                            @endif
+                        </ul>
+                    </details>
+                @else
+                    <details class="checklist-compact-details">
+                        <summary>Required checklist complete</summary>
+                        <ul class="checklist-compact-list">
+                            <li>All required acceptance files are attached.</li>
+                        </ul>
+                    </details>
+                @endif
+
+                @if ($metadataOnlyCount > 0)
+                    <details class="checklist-compact-details">
+                        <summary>{{ $metadataOnlyCount }} document record(s) saved without an attached file</summary>
+                        <ul class="checklist-compact-list">
+                            <li>Open the related document card below to attach the missing file when needed.</li>
+                        </ul>
+                    </details>
+                @endif
             </div>
         </section>
         @include('staff.applications.partials.acknowledgement-receipt')
@@ -2304,7 +2522,7 @@
                                     <div>
                                         <p class="workflow-action-title">Advance to {{ $nextWorkflowStatusLabel }}</p>
                                         <p class="workflow-action-copy">
-                                            Move this application to the next DAR office workflow stage. This does not approve, release, transfer ownership, or mutate registry records.
+                                            Move this application to the next DAR office workflow stage.
                                         </p>
                                     </div>
                                 </div>
@@ -2334,7 +2552,7 @@
                                     <div>
                                         <p class="workflow-action-title">Release clearance</p>
                                         <p class="workflow-action-copy">
-                                            Generate and record the released clearance result. This does not automatically transfer land ownership or mutate registry records.
+                                            Generate and record the approved LTC Form No. 5 result.
                                         </p>
                                     </div>
                                 </div>
@@ -2446,9 +2664,9 @@
                         @if (($fiveHectareValidation['retention_certificate_missing'] ?? false))
                             Retention Certificate is marked as required, but no reference was recorded. Release is blocked until the reference is encoded or the requirement is revised.
                         @elseif ($exceedsFiveHectares && $application->is_succession_case)
-                            Projected total exceeds the 5-hectare reference limit, but succession/inheritance context has been noted for manual review. This is not an automatic approval and does not decide legal ownership.
+                            Projected total exceeds the 5-hectare reference limit, but succession/inheritance context has been noted for manual review.
                         @elseif ($exceedsFiveHectares)
-                            Projected total exceeds the 5-hectare reference limit based on encoded records. Release is blocked until records are resolved, an applicable exception/reference is encoded, or the application is marked Denied. This does not automatically decide legal ownership.
+                            Projected total exceeds the 5-hectare reference limit based on encoded records. Release is blocked until records are resolved, an applicable exception/reference is encoded, or the application is marked Denied.
                         @else
                             Projected total is within the 5-hectare reference limit based on encoded system records.
                         @endif
@@ -2597,7 +2815,7 @@
 
             <div class="review-panel-body">
                 <div class="review-note-box mb-4">
-                    Timeline records are based on audit logs. They support traceability only and do not indicate automatic land ownership transfer or registry mutation.
+                    Timeline records are based on audit logs for traceability.
                 </div>
                 @if ($applicationTimeline->isEmpty())
                     <div class="review-note-box text-center">No timeline records found yet.</div>
@@ -2744,7 +2962,7 @@
                     buttonText: 'Release Clearance',
                     title: 'Release this clearance?',
                     copy: 'This will generate and record the approved LTC Form No. 5 result for this application.',
-                    warning: 'Release records the clearance result only. It does not automatically transfer land ownership or mutate Registry of Deeds records.'
+                    warning: 'This will record the final clearance result.'
                 },
                 deny: {
                     icon: 'fa-xmark',

@@ -47,7 +47,7 @@
     </div>
 
     <div style="font-size:12px; color:#6b7280; margin-bottom:10px;">
-        Encode selected reference details for staff review and auditability only. This is not full transcription, final legal verification, ownership transfer, or registry mutation.
+        Encode selected reference details for staff review and auditability.
     </div>
 
     <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:10px;">
@@ -189,7 +189,7 @@
             </div>
 
             <div style="font-size:12px; color:#6b7280; margin-bottom:10px;">
-                Encode only the checkbox findings and reference details shown in the submitted MARPO Certification. This is review context only and does not automatically approve, deny, transfer ownership, or mutate registry records.
+                Encode only the checkbox findings and reference details shown in the submitted MARPO Certification.
             </div>
 
             <div style="display:grid; gap:8px; margin-bottom:12px;">

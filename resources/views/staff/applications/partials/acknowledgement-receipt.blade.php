@@ -44,7 +44,7 @@
             <h2 class="review-panel-title">LTC Form No. 3 — Acknowledgement Receipt</h2>
             <p class="review-panel-subtitle">
                 System preview of the acknowledgement receipt checklist based on uploaded required documents.
-                This supports intake tracking only and does not transfer ownership or mutate registry records.
+                This supports intake tracking and checklist review.
             </p>
         </div>
 

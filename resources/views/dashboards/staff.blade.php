@@ -706,8 +706,8 @@
 
                     <a href="{{ route('staff.applications.index', ['status' => \App\Models\LandTransferApplication::STATUS_PENDING_LEGAL_REVIEW]) }}" class="quick-link">
                         <div>
-                            <p class="quick-title">Legal Review</p>
-                            <p class="quick-desc">Open applications pending Legal Officer review.</p>
+                            <p class="quick-title">Review Applications</p>
+                            <p class="quick-desc">Open applications that need staff review action.</p>
                         </div>
                         <i class="fa-solid fa-clock quick-action-icon"></i>
                     </a>

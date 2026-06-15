@@ -237,7 +237,7 @@
                 <td>
                     OR Number: {{ $application->or_number ?: '—' }};
                     OR Date: {{ optional($application->or_date)->format('M d, Y') ?? '—' }};
-                    Amount Paid: {{ $application->amount_paid ? '₱' . number_format((float) $application->amount_paid, 2) : '—' }}
+                    Amount Paid (PHP): {{ $application->amount_paid ? '₱' . number_format((float) $application->amount_paid, 2) : '—' }}
                 </td>
             </tr>
         @endif

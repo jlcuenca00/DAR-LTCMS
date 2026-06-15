@@ -336,7 +336,7 @@
                     </div>
 
                     <div class="field-group">
-                        <label for="amount_paid" class="field-label">Amount Paid</label>
+                        <label for="amount_paid" class="field-label">Amount Paid (PHP)</label>
                         <input id="amount_paid" type="number" step="0.01" min="0" name="amount_paid" value="{{ old('amount_paid') }}" class="staff-input" placeholder="0.00">
                     </div>
                 </div>
