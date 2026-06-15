@@ -50,6 +50,14 @@ class LandTransferApplication extends Model
 
     protected $fillable = [
         'application_code',
+        'applicant_name',
+        'applicant_type',
+        'authorized_representative_name',
+        'has_special_power_of_attorney',
+        'or_number',
+        'or_date',
+        'amount_paid',
+        'date_of_application',
         'transferor_name',
         'transferee_name',
         'barangay',
@@ -71,6 +79,10 @@ class LandTransferApplication extends Model
 
     protected $casts = [
         'reviewed_at' => 'datetime',
+        'date_of_application' => 'date',
+        'or_date' => 'date',
+        'amount_paid' => 'decimal:2',
+        'has_special_power_of_attorney' => 'boolean',
         'validated_at' => 'datetime',
         'registry_mutated_at' => 'datetime',
         'validation_snapshot' => 'array',

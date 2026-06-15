@@ -1609,6 +1609,34 @@
                             <p class="summary-value">{{ $statusLabel }}</p>
                         </div>
                         <div class="summary-item">
+                            <p class="summary-label">Applicant</p>
+                            <p class="summary-value">{{ $application->applicant_name ?? '—' }}</p>
+                        </div>
+                        <div class="summary-item">
+                            <p class="summary-label">Applicant Type</p>
+                            <p class="summary-value">{{ $application->applicant_type ? str($application->applicant_type)->replace('_', ' ')->title() : '—' }}</p>
+                        </div>
+                        <div class="summary-item">
+                            <p class="summary-label">Date of Application</p>
+                            <p class="summary-value">{{ $application->date_of_application?->format('M d, Y') ?? '—' }}</p>
+                        </div>
+                        <div class="summary-item">
+                            <p class="summary-label">OR Number</p>
+                            <p class="summary-value">{{ $application->or_number ?? '—' }}</p>
+                        </div>
+                        <div class="summary-item">
+                            <p class="summary-label">OR Date</p>
+                            <p class="summary-value">{{ $application->or_date?->format('M d, Y') ?? '—' }}</p>
+                        </div>
+                        <div class="summary-item">
+                            <p class="summary-label">Amount Paid</p>
+                            <p class="summary-value">{{ $application->amount_paid !== null ? '₱' . number_format((float) $application->amount_paid, 2) : '—' }}</p>
+                        </div>
+                        <div class="summary-item">
+                            <p class="summary-label">Authorized Representative</p>
+                            <p class="summary-value">{{ $application->authorized_representative_name ?? '—' }}{{ $application->has_special_power_of_attorney ? ' (SPA indicated)' : '' }}</p>
+                        </div>
+                        <div class="summary-item">
                             <p class="summary-label">Transferor</p>
                             <p class="summary-value">{{ $application->transferor_name }}</p>
                         </div>

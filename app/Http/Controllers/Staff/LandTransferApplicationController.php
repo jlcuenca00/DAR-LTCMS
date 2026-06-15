@@ -288,6 +288,15 @@ public function store(Request $request)
         'transferor_landowner_id' => ['nullable', 'exists:landowners,id'],
         'transferee_landowner_id' => ['nullable', 'exists:landowners,id'],
 
+        'applicant_name' => ['nullable', 'string', 'max:255'],
+        'applicant_type' => ['nullable', 'string', 'in:transferor,transferee,authorized_representative,other'],
+        'authorized_representative_name' => ['nullable', 'string', 'max:255'],
+        'has_special_power_of_attorney' => ['nullable', 'boolean'],
+        'or_number' => ['nullable', 'string', 'max:100'],
+        'or_date' => ['nullable', 'date'],
+        'amount_paid' => ['nullable', 'numeric', 'min:0', 'max:999999999.99'],
+        'date_of_application' => ['nullable', 'date'],
+
         'transferor_name' => ['required', 'string', 'max:255'],
         'transferee_name' => ['required', 'string', 'max:255'],
 
@@ -302,17 +311,38 @@ public function store(Request $request)
     ]);
 
     $application = null;
+    $hasSpecialPowerOfAttorney = $request->boolean('has_special_power_of_attorney');
 
-    DB::transaction(function () use ($validated, &$application) {
+    DB::transaction(function () use ($validated, $hasSpecialPowerOfAttorney, &$application) {
+        $applicantType = $validated['applicant_type'] ?? null;
+        $applicantName = $validated['applicant_name'] ?? null;
+
+        if (! filled($applicantName)) {
+            $applicantName = match ($applicantType) {
+                'transferee' => $validated['transferee_name'],
+                default => $validated['transferor_name'],
+            };
+        }
+
+        $applicationDate = $validated['date_of_application'] ?? $validated['date_filed'] ?? now()->toDateString();
+
         $application = LandTransferApplication::create([
             'application_code' => $this->generateApplicationCode(),
+            'applicant_name' => $applicantName,
+            'applicant_type' => $applicantType,
+            'authorized_representative_name' => $validated['authorized_representative_name'] ?? null,
+            'has_special_power_of_attorney' => $hasSpecialPowerOfAttorney,
+            'or_number' => $validated['or_number'] ?? null,
+            'or_date' => $validated['or_date'] ?? null,
+            'amount_paid' => $validated['amount_paid'] ?? null,
+            'date_of_application' => $applicationDate,
             'transferor_landowner_id' => $validated['transferor_landowner_id'] ?? null,
             'transferee_landowner_id' => $validated['transferee_landowner_id'] ?? null,
             'transferor_name' => $validated['transferor_name'],
             'transferee_name' => $validated['transferee_name'],
             'municipality' => $validated['municipality'] ?? null,
             'barangay' => $validated['barangay'] ?? null,
-            'date_filed' => $validated['date_filed'] ?? null,
+            'date_filed' => $validated['date_filed'] ?? $applicationDate,
             'date_of_transfer' => $validated['date_of_transfer'] ?? null,
             'remarks' => $validated['remarks'] ?? null,
             'status' => LandTransferApplication::STATUS_PENDING_LEGAL_REVIEW,
@@ -337,6 +367,9 @@ public function store(Request $request)
             $application,
             [
                 'status' => $application->status,
+                'applicant_name' => $application->applicant_name,
+                'applicant_type' => $application->applicant_type,
+                'or_number' => $application->or_number,
                 'transferor_name' => $application->transferor_name,
                 'transferee_name' => $application->transferee_name,
                 'parcel_id' => $validated['parcel_id'] ?? null,

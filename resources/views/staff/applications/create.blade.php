@@ -284,6 +284,67 @@
             <section class="form-section">
                 <div class="section-head">
                     <div>
+                        <h3 class="section-title">Application Intake and Payment Details</h3>
+                        <p class="section-copy">Record the applicant, official receipt, and application date used for DAR clearance processing.</p>
+                    </div>
+                </div>
+
+                <div class="field-grid">
+                    <div class="field-group">
+                        <label for="applicant_type" class="field-label">Applicant Type</label>
+                        <select id="applicant_type" name="applicant_type" class="staff-select">
+                            <option value="" @selected(old('applicant_type') === null)>Not specified</option>
+                            <option value="transferor" @selected(old('applicant_type') === 'transferor')>Transferor</option>
+                            <option value="transferee" @selected(old('applicant_type') === 'transferee')>Transferee</option>
+                            <option value="authorized_representative" @selected(old('applicant_type') === 'authorized_representative')>Authorized Representative</option>
+                            <option value="other" @selected(old('applicant_type') === 'other')>Other</option>
+                        </select>
+                    </div>
+
+                    <div class="field-group">
+                        <label for="applicant_name" class="field-label">Applicant Name</label>
+                        <input id="applicant_name" type="text" name="applicant_name" value="{{ old('applicant_name') }}" class="staff-input" placeholder="Name of person filing the application">
+                        <p class="field-help">Leave blank to use the transferor name as the applicant.</p>
+                    </div>
+
+                    <div class="field-group">
+                        <label for="authorized_representative_name" class="field-label">Authorized Representative Name</label>
+                        <input id="authorized_representative_name" type="text" name="authorized_representative_name" value="{{ old('authorized_representative_name') }}" class="staff-input" placeholder="Required only when applicable">
+                    </div>
+
+                    <div class="field-group">
+                        <label for="has_special_power_of_attorney" class="field-label">Special Power of Attorney</label>
+                        <select id="has_special_power_of_attorney" name="has_special_power_of_attorney" class="staff-select">
+                            <option value="0" @selected(! old('has_special_power_of_attorney'))>Not applicable / Not indicated</option>
+                            <option value="1" @selected(old('has_special_power_of_attorney'))>SPA presented / indicated</option>
+                        </select>
+                    </div>
+
+                    <div class="field-group">
+                        <label for="date_of_application" class="field-label">Date of Application</label>
+                        <input id="date_of_application" type="date" name="date_of_application" value="{{ old('date_of_application', now()->toDateString()) }}" class="staff-input">
+                    </div>
+
+                    <div class="field-group">
+                        <label for="or_number" class="field-label">OR Number</label>
+                        <input id="or_number" type="text" name="or_number" value="{{ old('or_number') }}" class="staff-input" placeholder="Official Receipt number">
+                    </div>
+
+                    <div class="field-group">
+                        <label for="or_date" class="field-label">OR Date</label>
+                        <input id="or_date" type="date" name="or_date" value="{{ old('or_date') }}" class="staff-input">
+                    </div>
+
+                    <div class="field-group">
+                        <label for="amount_paid" class="field-label">Amount Paid</label>
+                        <input id="amount_paid" type="number" step="0.01" min="0" name="amount_paid" value="{{ old('amount_paid') }}" class="staff-input" placeholder="0.00">
+                    </div>
+                </div>
+            </section>
+
+            <section class="form-section">
+                <div class="section-head">
+                    <div>
                         <h3 class="section-title">Party Records</h3>
                         <p class="section-copy">Link existing landowner records when available, then encode the names used in the application.</p>
                     </div>
@@ -357,11 +418,6 @@
                     <div class="field-group">
                         <label for="barangay" class="field-label">Barangay</label>
                         <input id="barangay" type="text" name="barangay" value="{{ old('barangay') }}" class="staff-input" placeholder="Example: Barangay Alpha">
-                    </div>
-
-                    <div class="field-group">
-                        <label for="date_filed" class="field-label">Date Filed</label>
-                        <input id="date_filed" type="date" name="date_filed" value="{{ old('date_filed', now()->toDateString()) }}" class="staff-input">
                     </div>
 
                     <div class="field-group">
