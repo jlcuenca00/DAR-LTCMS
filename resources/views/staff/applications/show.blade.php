@@ -2030,6 +2030,43 @@
                                                     <div><strong>Reference Lot/Parcel:</strong> {{ data_get($doc->document_metadata, 'reference_lot_or_parcel') }}</div>
                                                 @endif
 
+                                                @if (data_get($doc->document_metadata, 'transfer_document_title'))
+                                                    <div><strong>Transfer Document:</strong> {{ data_get($doc->document_metadata, 'transfer_document_title') }}</div>
+                                                @endif
+
+                                                @if (data_get($doc->document_metadata, 'transferor_names'))
+                                                    <div><strong>Transferor(s):</strong> {{ data_get($doc->document_metadata, 'transferor_names') }}</div>
+                                                @endif
+
+                                                @if (data_get($doc->document_metadata, 'transferee_names'))
+                                                    <div><strong>Transferee(s):</strong> {{ data_get($doc->document_metadata, 'transferee_names') }}</div>
+                                                @endif
+
+                                                @if (data_get($doc->document_metadata, 'transfer_area'))
+                                                    <div><strong>Transfer Area:</strong> {{ data_get($doc->document_metadata, 'transfer_area') }}</div>
+                                                @endif
+
+                                                @if (data_get($doc->document_metadata, 'transfer_lot_number'))
+                                                    <div><strong>Lot No. in Instrument:</strong> {{ data_get($doc->document_metadata, 'transfer_lot_number') }}</div>
+                                                @endif
+
+                                                @if (data_get($doc->document_metadata, 'notarization_date'))
+                                                    <div><strong>Notarization Date:</strong> {{ data_get($doc->document_metadata, 'notarization_date') }}</div>
+                                                @endif
+
+                                                @if (data_get($doc->document_metadata, 'notary_public'))
+                                                    <div><strong>Notary Public:</strong> {{ data_get($doc->document_metadata, 'notary_public') }}</div>
+                                                @endif
+
+                                                @if (data_get($doc->document_metadata, 'notarial_page_number') || data_get($doc->document_metadata, 'notarial_book_number') || data_get($doc->document_metadata, 'notarial_document_number') || data_get($doc->document_metadata, 'notarial_series'))
+                                                    <div><strong>Notarial Info:</strong>
+                                                        Page {{ data_get($doc->document_metadata, 'notarial_page_number', '—') }},
+                                                        Book {{ data_get($doc->document_metadata, 'notarial_book_number', '—') }},
+                                                        Doc. No. {{ data_get($doc->document_metadata, 'notarial_document_number', '—') }},
+                                                        Series {{ data_get($doc->document_metadata, 'notarial_series', '—') }}
+                                                    </div>
+                                                @endif
+
                                                 @if (data_get($doc->document_metadata, 'verification_notes'))
                                                     <div><strong>Verification Notes:</strong> {{ data_get($doc->document_metadata, 'verification_notes') }}</div>
                                                 @endif
