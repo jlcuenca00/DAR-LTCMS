@@ -27,10 +27,7 @@
             \App\Models\LandTransferApplication::STATUS_PENDING_LEGAL_REVIEW => 'staff-badge-amber',
 
             // Temporary legacy compatibility during the phased flow revision.
-            \App\Models\LandTransferApplication::STATUS_APPROVED => 'staff-badge-green',
-            \App\Models\LandTransferApplication::STATUS_NOT_APPROVED => 'staff-badge-red',
-            \App\Models\LandTransferApplication::STATUS_PENDING_REVIEW => 'staff-badge-amber',
-        ];
+                    ];
     @endphp
 
     <section class="staff-panel staff-panel-pad">
