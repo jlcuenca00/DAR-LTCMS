@@ -13,7 +13,7 @@ class ParcelAgriculturalStatusRoleVisibilityTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_landowner_can_view_agricultural_status_only_for_own_parcel(): void
+    public function test_landowner_can_view_clearance_scope_only_for_own_parcel(): void
     {
         $userA = User::factory()->create([
             'role' => User::ROLE_LANDOWNER,
@@ -81,18 +81,21 @@ class ParcelAgriculturalStatusRoleVisibilityTest extends TestCase
 
         $indexResponse->assertOk();
         $indexResponse->assertSee('LANDOWNER-AGRI-OWN');
-        $indexResponse->assertSee('Private Agricultural Land');
+        $indexResponse->assertSee('Clearance Scope');
+        $indexResponse->assertSee('Agricultural land record');
         $indexResponse->assertDontSee('LANDOWNER-AGRI-OTHER');
         $indexResponse->assertDontSee('Non-Agricultural / Reference Only');
 
         $detailsResponse = $this->actingAs($userA)->get(route('landowner.parcels.show', $ownParcel));
 
         $detailsResponse->assertOk();
-        $detailsResponse->assertSee('Agricultural Status');
-        $detailsResponse->assertSee('Private Agricultural Land');
+        $detailsResponse->assertSee('DAR Clearance Scope');
+        $detailsResponse->assertSee('Agricultural land record');
+        $detailsResponse->assertDontSee('Agricultural Status');
+        $detailsResponse->assertDontSee('Private Agricultural Land');
     }
 
-    public function test_landowner_cannot_view_other_landowners_parcel_agricultural_status(): void
+    public function test_landowner_cannot_view_other_landowners_parcel_clearance_scope(): void
     {
         $userA = User::factory()->create([
             'role' => User::ROLE_LANDOWNER,
@@ -142,7 +145,7 @@ class ParcelAgriculturalStatusRoleVisibilityTest extends TestCase
         $response->assertForbidden();
     }
 
-    public function test_geodetic_can_view_agricultural_status_but_cannot_edit_parcels(): void
+    public function test_geodetic_can_view_clearance_scope_but_cannot_edit_parcels(): void
     {
         $geodetic = User::factory()->create([
             'role' => User::ROLE_GEODETIC,
@@ -178,13 +181,17 @@ class ParcelAgriculturalStatusRoleVisibilityTest extends TestCase
 
         $indexResponse->assertOk();
         $indexResponse->assertSee('GEODETIC-AGRI-READONLY');
-        $indexResponse->assertSee('CARP-Covered Land');
+        $indexResponse->assertSee('Clearance Scope');
+        $indexResponse->assertSee('Agricultural land record');
+        $indexResponse->assertDontSee('CARP-Covered Land');
 
         $detailsResponse = $this->actingAs($geodetic)->get(route('geodetic.parcels.show', $parcel));
 
         $detailsResponse->assertOk();
-        $detailsResponse->assertSee('Agricultural Status');
-        $detailsResponse->assertSee('CARP-Covered Land');
+        $detailsResponse->assertSee('DAR Clearance Scope');
+        $detailsResponse->assertSee('Agricultural land record');
+        $detailsResponse->assertDontSee('Agricultural Status');
+        $detailsResponse->assertDontSee('CARP-Covered Land');
         $detailsResponse->assertDontSee('Save Parcel Record');
 
         $editResponse = $this->actingAs($geodetic)->get(route('staff.records.parcels.edit', $parcel));

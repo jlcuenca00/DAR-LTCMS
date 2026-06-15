@@ -270,7 +270,7 @@
                 <div class="lo-badge-row">
                     <span class="lo-pill">{{ $parcel->status ? ucwords(str_replace('_', ' ', $parcel->status)) : 'Reference Record' }}</span>
                     <span class="lo-pill neutral">{{ $parcel->geometry_geojson ? 'Mapped Geometry' : 'No Geometry' }}</span>
-                    <span class="lo-pill neutral">Agricultural Status: {{ $parcel->agricultural_status_label }}</span>
+                    <span class="lo-pill neutral">DAR Clearance Scope: Agricultural land record</span>
                     <span class="lo-pill neutral">Viewing Only</span>
                 </div>
 
@@ -309,7 +309,7 @@
                 <div class="lo-panel-header">
                     <div>
                         <h2 class="lo-panel-title">Parcel Reference Information</h2>
-                        <p class="lo-panel-subtitle">Core encoded parcel reference values used for viewing and monitoring.</p>
+                        <p class="lo-panel-subtitle">Core encoded parcel reference values used for viewing, clearance context, monitoring, source matching, and map display. This view does not verify ownership or perform registry changes.</p>
                     </div>
                 </div>
 
@@ -330,11 +330,6 @@
                             <p class="lo-info-value">
                                 {{ $parcel->area_hectares ? number_format((float) $parcel->area_hectares, 4) . ' hectares' : 'N/A' }}
                             </p>
-                        </div>
-
-                        <div class="lo-info-box">
-                            <p class="lo-info-label">Agricultural Status</p>
-                            <p class="lo-info-value">{{ $parcel->agricultural_status_label }}</p>
                         </div>
 
                         <div class="lo-info-box">
