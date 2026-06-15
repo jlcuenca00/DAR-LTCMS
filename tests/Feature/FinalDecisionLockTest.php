@@ -3,6 +3,10 @@
 namespace Tests\Feature;
 
 use App\Models\ApplicationDocument;
+use App\Models\Parcel;
+use App\Models\Landowner;
+use App\Models\Landholding;
+use App\Models\ApplicationParcel;
 use App\Models\LandTransferApplication;
 use App\Models\RequiredDocument;
 use App\Models\User;
@@ -242,4 +246,180 @@ class FinalDecisionLockTest extends TestCase
         $this->assertTrue($notApprovedApplication->isFinalized());
         $this->assertFalse($notApprovedApplication->isEditable());
     }
+    public function test_releasing_clearance_does_not_mutate_landholding_ownership(): void
+    {
+        $staffUser = User::factory()->create([
+            'role' => 'staff',
+        ]);
+
+        $transferor = Landowner::create([
+            'first_name' => 'Original',
+            'last_name' => 'Owner',
+            'province' => 'Negros Oriental',
+        ]);
+
+        $transferee = Landowner::create([
+            'first_name' => 'Proposed',
+            'last_name' => 'Buyer',
+            'province' => 'Negros Oriental',
+        ]);
+
+        $parcel = Parcel::create([
+            'parcel_code' => 'NO-MUTATION-PARCEL-001',
+            'title_no' => 'T-NO-MUTATION-001',
+            'lot_number' => 'LOT-NO-MUTATION-001',
+            'municipality' => 'Dumaguete City',
+            'barangay' => 'Bantayan',
+            'area_hectares' => 1.2500,
+            'status' => 'active',
+        ]);
+
+        $existingLandholding = Landholding::create([
+            'landowner_id' => $transferor->id,
+            'parcel_id' => $parcel->id,
+            'area_hectares' => 1.2500,
+            'status' => Landholding::STATUS_ACTIVE,
+            'remarks' => 'Original active landholding before clearance release.',
+        ]);
+
+        $application = LandTransferApplication::create([
+            'application_code' => 'NO-MUTATION-RELEASE-001',
+            'transferor_name' => 'Original Owner',
+            'transferee_name' => 'Proposed Buyer',
+            'transferor_landowner_id' => $transferor->id,
+            'transferee_landowner_id' => $transferee->id,
+            'municipality' => 'Dumaguete City',
+            'barangay' => 'Bantayan',
+            'status' => LandTransferApplication::STATUS_FOR_RELEASING,
+            'encoded_by' => $staffUser->id,
+        ]);
+
+        ApplicationParcel::create([
+            'land_transfer_application_id' => $application->id,
+            'parcel_id' => $parcel->id,
+            'parcel_code' => $parcel->parcel_code,
+            'title_no' => $parcel->title_no,
+            'lot_number' => $parcel->lot_number,
+            'area_hectares' => 1.2500,
+        ]);
+
+        $this->actingAs($staffUser)
+            ->post(route('staff.applications.approve', $application), [
+                'decision_reason' => 'Release clearance only.',
+                'decision_notes' => 'Regression test: release must not mutate ownership records.',
+            ])
+            ->assertSessionHas('success');
+
+        $application->refresh();
+        $existingLandholding->refresh();
+
+        $this->assertSame(LandTransferApplication::STATUS_RELEASED, $application->status);
+
+        $this->assertDatabaseHas('landholdings', [
+            'id' => $existingLandholding->id,
+            'landowner_id' => $transferor->id,
+            'parcel_id' => $parcel->id,
+            'status' => Landholding::STATUS_ACTIVE,
+        ]);
+
+        $this->assertDatabaseMissing('landholdings', [
+            'landowner_id' => $transferee->id,
+            'parcel_id' => $parcel->id,
+            'source_application_id' => $application->id,
+        ]);
+
+        $this->assertDatabaseMissing('landholdings', [
+            'id' => $existingLandholding->id,
+            'status' => Landholding::STATUS_TRANSFERRED,
+        ]);
+    }
+
+    public function test_denying_clearance_does_not_mutate_landholding_ownership(): void
+    {
+        $staffUser = User::factory()->create([
+            'role' => 'staff',
+        ]);
+
+        $transferor = Landowner::create([
+            'first_name' => 'Denied',
+            'last_name' => 'Owner',
+            'province' => 'Negros Oriental',
+        ]);
+
+        $transferee = Landowner::create([
+            'first_name' => 'Denied',
+            'last_name' => 'Transferee',
+            'province' => 'Negros Oriental',
+        ]);
+
+        $parcel = Parcel::create([
+            'parcel_code' => 'NO-MUTATION-PARCEL-002',
+            'title_no' => 'T-NO-MUTATION-002',
+            'lot_number' => 'LOT-NO-MUTATION-002',
+            'municipality' => 'Dumaguete City',
+            'barangay' => 'Bantayan',
+            'area_hectares' => 1.0000,
+            'status' => 'active',
+        ]);
+
+        $existingLandholding = Landholding::create([
+            'landowner_id' => $transferor->id,
+            'parcel_id' => $parcel->id,
+            'area_hectares' => 1.0000,
+            'status' => Landholding::STATUS_ACTIVE,
+            'remarks' => 'Original active landholding before denial.',
+        ]);
+
+        $application = LandTransferApplication::create([
+            'application_code' => 'NO-MUTATION-DENIED-001',
+            'transferor_name' => 'Denied Owner',
+            'transferee_name' => 'Denied Transferee',
+            'transferor_landowner_id' => $transferor->id,
+            'transferee_landowner_id' => $transferee->id,
+            'municipality' => 'Dumaguete City',
+            'barangay' => 'Bantayan',
+            'status' => LandTransferApplication::STATUS_FOR_RELEASING,
+            'encoded_by' => $staffUser->id,
+        ]);
+
+        ApplicationParcel::create([
+            'land_transfer_application_id' => $application->id,
+            'parcel_id' => $parcel->id,
+            'parcel_code' => $parcel->parcel_code,
+            'title_no' => $parcel->title_no,
+            'lot_number' => $parcel->lot_number,
+            'area_hectares' => 1.0000,
+        ]);
+
+        $this->actingAs($staffUser)
+            ->post(route('staff.applications.not_approved', $application), [
+                'decision_reason' => 'Denied clearance only.',
+                'decision_notes' => 'Regression test: denial must not mutate ownership records.',
+            ])
+            ->assertSessionHas('success');
+
+        $application->refresh();
+        $existingLandholding->refresh();
+
+        $this->assertSame(LandTransferApplication::STATUS_DENIED, $application->status);
+
+        $this->assertDatabaseHas('landholdings', [
+            'id' => $existingLandholding->id,
+            'landowner_id' => $transferor->id,
+            'parcel_id' => $parcel->id,
+            'status' => Landholding::STATUS_ACTIVE,
+        ]);
+
+        $this->assertDatabaseMissing('landholdings', [
+            'landowner_id' => $transferee->id,
+            'parcel_id' => $parcel->id,
+            'source_application_id' => $application->id,
+        ]);
+
+        $this->assertDatabaseMissing('landholdings', [
+            'id' => $existingLandholding->id,
+            'status' => Landholding::STATUS_TRANSFERRED,
+        ]);
+    }
+
 }
