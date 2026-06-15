@@ -1848,6 +1848,8 @@
                 <div class="completion-number">{{ $blockingUploadedCount }} / {{ $blockingTotal }}</div>
             </div>
         </section>
+        @include('staff.applications.partials.acknowledgement-receipt')
+
 
         @foreach ($requirementGroups as $group)
             <section class="review-panel">
