@@ -600,24 +600,23 @@
                     </div>
 
                     <div class="source-field">
-                        <label for="crop_or_land_use">Agricultural Classification</label>
+                        <label for="crop_or_land_use">Land Use / Title Reference Notation</label>
                         @php
-    $agriculturalClassificationOptions = [
-        'Private Agricultural Land',
-        'Awarded CLOA Land',
-        'Emancipation Patent Land',
-        'CARP-Covered Land',
-        'Not Yet Determined',
-        'Non-Agricultural / Reference Only',
+    $landUseReferenceOptions = [
+        'Private agricultural land reference',
+        'CLOA title reference',
+        'Emancipation patent title reference',
+        'CARP program reference',
+        'Classification not yet verified from source',
     ];
 @endphp
 <select id="crop_or_land_use" name="crop_or_land_use" class="w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-green-600 focus:ring-green-600">
-    <option value="">Select classification</option>
-    @foreach ($agriculturalClassificationOptions as $classification)
+    <option value="">Select reference notation</option>
+    @foreach ($landUseReferenceOptions as $classification)
         <option value="{{ $classification }}" @selected(old('crop_or_land_use') === $classification)>{{ $classification }}</option>
     @endforeach
 </select>
-<p class="mt-1 text-xs text-gray-500">Use the classification indicated by the source document, if available.</p>
+<p class="mt-1 text-xs text-gray-500">Use only as source/reference notation. This does not classify the parcel for approval, prove ownership, or mutate registry records.</p>
                     </div>
 
                     <div class="source-field">

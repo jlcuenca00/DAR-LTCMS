@@ -628,8 +628,9 @@
                         <input id="area_hectares" type="number" step="0.0001" min="0" name="area_hectares" value="{{ old('area_hectares') }}" class="w-full rounded-lg border-gray-300 text-sm">
                     </div>
                     <div class="source-field">
-                        <label for="crop_or_land_use">Agricultural Classification</label>
-                        <input id="crop_or_land_use" name="crop_or_land_use" value="{{ old('crop_or_land_use') }}" class="w-full rounded-lg border-gray-300 text-sm">
+                        <label for="crop_or_land_use">Land Use / Title Reference Notation</label>
+                        <input id="crop_or_land_use" name="crop_or_land_use" value="{{ old('crop_or_land_use') }}" placeholder="e.g. private agricultural land reference, CLOA reference, EP reference" class="w-full rounded-lg border-gray-300 text-sm">
+                        <p class="mt-1 text-xs text-gray-500">Reference notation only. This does not classify the parcel for approval, prove ownership, or mutate registry records.</p>
                     </div>
                     <div class="source-field">
                         <label for="province">Province</label>
