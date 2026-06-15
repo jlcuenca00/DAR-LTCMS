@@ -116,6 +116,9 @@ class RecordSearchController extends Controller
                 $query->whereRaw('LOWER(parcel_code) LIKE ?', ["%{$search}%"])
                     ->orWhereRaw('LOWER(title_no) LIKE ?', ["%{$search}%"])
                     ->orWhereRaw('LOWER(tax_decl_no) LIKE ?', ["%{$search}%"])
+                    ->orWhereRaw('LOWER(lot_number) LIKE ?', ["%{$search}%"])
+                    ->orWhereRaw('LOWER(survey_plan_number) LIKE ?', ["%{$search}%"])
+                    ->orWhereRaw('LOWER(rod_office) LIKE ?', ["%{$search}%"])
                     ->orWhereRaw('LOWER(remarks) LIKE ?', ["%{$search}%"]);
             });
         }
@@ -179,6 +182,8 @@ class RecordSearchController extends Controller
                 'linked_application' => 'Linked to Application',
                 'flagged' => 'Flagged for Review',
             ],
+            'titleTypes' => Parcel::titleTypeOptions(),
+            'rodOffices' => Parcel::rodOfficeOptions(),
         ]);
     }
 
@@ -188,10 +193,15 @@ class RecordSearchController extends Controller
             'parcel_code' => ['required', 'string', 'max:255', Rule::unique('parcels', 'parcel_code')],
             'title_no' => ['nullable', 'string', 'max:255'],
             'tax_decl_no' => ['nullable', 'string', 'max:255'],
+            'lot_number' => ['nullable', 'string', 'max:255'],
+            'survey_plan_number' => ['nullable', 'string', 'max:255'],
+            'title_type' => ['nullable', Rule::in(array_keys(Parcel::titleTypeOptions()))],
+            'rod_office' => ['nullable', Rule::in(array_keys(Parcel::rodOfficeOptions()))],
             'province' => ['nullable', 'string', 'max:255'],
             'municipality' => ['nullable', 'string', 'max:255'],
             'barangay' => ['nullable', 'string', 'max:255'],
             'area_hectares' => ['nullable', 'numeric', 'min:0', 'max:999999.9999'],
+            'area_square_meters' => ['nullable', 'numeric', 'min:0', 'max:999999999.99'],
             'status' => ['required', Rule::in(['active', 'inactive', 'linked_application', 'flagged'])],
             'geometry_geojson' => ['nullable', 'json'],
             'remarks' => ['nullable', 'string', 'max:5000'],
@@ -199,6 +209,7 @@ class RecordSearchController extends Controller
         ]);
 
         $data['province'] = $data['province'] ?: 'Negros Oriental';
+        $data = $this->normalizeParcelRegistrationData($data);
         // DAR clearance workflow is limited to agricultural land records.
         // Classification is not a reviewer decision field here; keep the internal default only.
         $data['agricultural_status'] = Parcel::DEFAULT_AGRICULTURAL_STATUS;
@@ -256,6 +267,8 @@ class RecordSearchController extends Controller
                 'linked_application' => 'Linked to Application',
                 'flagged' => 'Flagged for Review',
             ],
+            'titleTypes' => Parcel::titleTypeOptions(),
+            'rodOffices' => Parcel::rodOfficeOptions(),
         ]);
     }
 
@@ -265,14 +278,22 @@ class RecordSearchController extends Controller
             'parcel_code' => ['required', 'string', 'max:255', Rule::unique('parcels', 'parcel_code')->ignore($parcel->id)],
             'title_no' => ['nullable', 'string', 'max:255'],
             'tax_decl_no' => ['nullable', 'string', 'max:255'],
+            'lot_number' => ['nullable', 'string', 'max:255'],
+            'survey_plan_number' => ['nullable', 'string', 'max:255'],
+            'title_type' => ['nullable', Rule::in(array_keys(Parcel::titleTypeOptions()))],
+            'rod_office' => ['nullable', Rule::in(array_keys(Parcel::rodOfficeOptions()))],
             'province' => ['nullable', 'string', 'max:255'],
             'municipality' => ['nullable', 'string', 'max:255'],
             'barangay' => ['nullable', 'string', 'max:255'],
             'area_hectares' => ['nullable', 'numeric', 'min:0', 'max:999999.9999'],
+            'area_square_meters' => ['nullable', 'numeric', 'min:0', 'max:999999999.99'],
             'status' => ['required', Rule::in(['active', 'inactive', 'linked_application', 'flagged'])],
             'remarks' => ['nullable', 'string', 'max:5000'],
             'reference_photo' => ['nullable', 'image', 'max:5120'],
         ]);
+
+        $data['province'] = $data['province'] ?: 'Negros Oriental';
+        $data = $this->normalizeParcelRegistrationData($data);
 
         // Keep the existing internal classification value. Staff no longer edits this as a clearance workflow field.
         $data['agricultural_status'] = $parcel->agricultural_status ?: Parcel::DEFAULT_AGRICULTURAL_STATUS;
@@ -290,6 +311,27 @@ class RecordSearchController extends Controller
         return redirect()
             ->route('staff.records.parcels.show', $parcel)
             ->with('success', 'Parcel record updated successfully.');
+    }
+
+    private function normalizeParcelRegistrationData(array $data): array
+    {
+        if (array_key_exists('area_square_meters', $data) && filled($data['area_square_meters'])) {
+            $data['area_square_meters'] = round((float) $data['area_square_meters'], 2);
+
+            if (empty($data['area_hectares'])) {
+                $data['area_hectares'] = round($data['area_square_meters'] / 10000, 4);
+            }
+        }
+
+        if (array_key_exists('area_hectares', $data) && filled($data['area_hectares'])) {
+            $data['area_hectares'] = round((float) $data['area_hectares'], 4);
+
+            if (empty($data['area_square_meters'])) {
+                $data['area_square_meters'] = round($data['area_hectares'] * 10000, 2);
+            }
+        }
+
+        return $data;
     }
 
 }

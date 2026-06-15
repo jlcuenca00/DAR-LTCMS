@@ -161,6 +161,9 @@
             'linked_application' => 'Linked to Application',
             'flagged' => 'Flagged for Review',
         ];
+
+        $titleTypes = $titleTypes ?? \App\Models\Parcel::titleTypeOptions();
+        $rodOffices = $rodOffices ?? \App\Models\Parcel::rodOfficeOptions();
     @endphp
 
     <form method="POST" enctype="multipart/form-data" action="{{ route('staff.records.parcels.store') }}" class="parcel-create-layout" data-autosave-key="parcel-record-create" data-autosave-label="parcel record draft">
@@ -198,14 +201,56 @@
                         </div>
 
                         <div class="parcel-create-field">
+                            <label for="lot_number">Lot Number</label>
+                            <input id="lot_number" type="text" name="lot_number" value="{{ old('lot_number') }}" class="parcel-create-input" placeholder="Lot 1234">
+                            @error('lot_number')<p class="parcel-create-error">{{ $message }}</p>@enderror
+                        </div>
+
+                        <div class="parcel-create-field">
+                            <label for="survey_plan_number">Survey Plan Number</label>
+                            <input id="survey_plan_number" type="text" name="survey_plan_number" value="{{ old('survey_plan_number') }}" class="parcel-create-input" placeholder="PSD-07-000000">
+                            @error('survey_plan_number')<p class="parcel-create-error">{{ $message }}</p>@enderror
+                        </div>
+
+                        <div class="parcel-create-field">
+                            <label for="title_type">Title / Reference Type</label>
+                            <select id="title_type" name="title_type" class="parcel-create-input">
+                                <option value="">Select title/reference type</option>
+                                @foreach ($titleTypes as $value => $label)
+                                    <option value="{{ $value }}" @selected(old('title_type') === $value)>{{ $label }}</option>
+                                @endforeach
+                            </select>
+                            @error('title_type')<p class="parcel-create-error">{{ $message }}</p>@enderror
+                        </div>
+
+                        <div class="parcel-create-field">
+                            <label for="rod_office">Register of Deeds Office</label>
+                            <select id="rod_office" name="rod_office" class="parcel-create-input">
+                                <option value="">Select ROD office</option>
+                                @foreach ($rodOffices as $value => $label)
+                                    <option value="{{ $value }}" @selected(old('rod_office') === $value)>{{ $label }}</option>
+                                @endforeach
+                            </select>
+                            @error('rod_office')<p class="parcel-create-error">{{ $message }}</p>@enderror
+                        </div>
+
+                        <div class="parcel-create-field">
                             <label for="tax_decl_no">Tax Declaration Number</label>
                             <input id="tax_decl_no" type="text" name="tax_decl_no" value="{{ old('tax_decl_no') }}" class="parcel-create-input" placeholder="TD-2026-0001">
                             @error('tax_decl_no')<p class="parcel-create-error">{{ $message }}</p>@enderror
                         </div>
 
                         <div class="parcel-create-field">
+                            <label for="area_square_meters">Total Area / Square Meters</label>
+                            <input id="area_square_meters" type="number" step="0.01" min="0" name="area_square_meters" value="{{ old('area_square_meters') }}" class="parcel-create-input" placeholder="24000.00">
+                            <p class="parcel-create-helper">Land registration commonly records area in square meters. Hectares may be computed for 5-hectare monitoring.</p>
+                            @error('area_square_meters')<p class="parcel-create-error">{{ $message }}</p>@enderror
+                        </div>
+
+                        <div class="parcel-create-field">
                             <label for="area_hectares">Area / Hectares</label>
                             <input id="area_hectares" type="number" step="0.0001" min="0" name="area_hectares" value="{{ old('area_hectares') }}" class="parcel-create-input" placeholder="2.4000">
+                            <p class="parcel-create-helper">Optional. Leave blank if square meters are encoded; the system computes it.</p>
                             @error('area_hectares')<p class="parcel-create-error">{{ $message }}</p>@enderror
                         </div>
                     </div>

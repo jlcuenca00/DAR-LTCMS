@@ -9,13 +9,23 @@ class ApplicationParcel extends Model
     protected $table = 'application_parcels';
 
     protected $fillable = [
-    'land_transfer_application_id',
-    'parcel_id',
-    'area_hectares',
-    'parcel_code',
-    'title_no',
-    'tax_decl_no',
-];
+        'land_transfer_application_id',
+        'parcel_id',
+        'area_hectares',
+        'area_square_meters',
+        'parcel_code',
+        'title_no',
+        'tax_decl_no',
+        'lot_number',
+        'survey_plan_number',
+        'title_type',
+        'rod_office',
+    ];
+
+    protected $casts = [
+        'area_hectares' => 'decimal:4',
+        'area_square_meters' => 'decimal:2',
+    ];
 
     public function application()
     {
@@ -23,7 +33,7 @@ class ApplicationParcel extends Model
     }
 
     public function parcel()
-{
-    return $this->belongsTo(\App\Models\Parcel::class);
-}
+    {
+        return $this->belongsTo(Parcel::class);
+    }
 }

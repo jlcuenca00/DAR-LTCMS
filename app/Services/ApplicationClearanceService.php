@@ -39,12 +39,24 @@ class ApplicationClearanceService
                 $parcelArea = (string) $applicationParcel->area_hectares;
                 $totalArea = bcadd($totalArea, $parcelArea, 4);
 
+                $linkedParcel = $applicationParcel->parcel;
+                $areaSquareMeters = $applicationParcel->area_square_meters
+                    ?? $linkedParcel?->area_square_meters
+                    ?? (filled($parcelArea) ? bcmul($parcelArea, '10000', 2) : null);
+
                 $parcelSnapshot[] = [
                     'parcel_id' => $applicationParcel->parcel_id,
-                    'parcel_number' => $applicationParcel->parcel?->parcel_number,
-                    'lot_number' => $applicationParcel->parcel?->lot_number,
-                    'title_number' => $applicationParcel->parcel?->title_number,
+                    'parcel_code' => $applicationParcel->parcel_code ?? $linkedParcel?->parcel_code,
+                    'parcel_number' => $applicationParcel->parcel_code ?? $linkedParcel?->parcel_code,
+                    'title_no' => $applicationParcel->title_no ?? $linkedParcel?->title_no,
+                    'title_number' => $applicationParcel->title_no ?? $linkedParcel?->title_no,
+                    'tax_decl_no' => $applicationParcel->tax_decl_no ?? $linkedParcel?->tax_decl_no,
+                    'lot_number' => $applicationParcel->lot_number ?? $linkedParcel?->lot_number,
+                    'survey_plan_number' => $applicationParcel->survey_plan_number ?? $linkedParcel?->survey_plan_number,
+                    'title_type' => $applicationParcel->title_type ?? $linkedParcel?->title_type,
+                    'rod_office' => $applicationParcel->rod_office ?? $linkedParcel?->rod_office,
                     'area_hectares' => $parcelArea,
+                    'area_square_meters' => $areaSquareMeters,
                 ];
             }
 

@@ -232,6 +232,8 @@
         ];
 
         $currentStatusLabel = $parcel->status ? ucwords(str_replace('_', ' ', $parcel->status)) : 'Status N/A';
+        $titleTypes = $titleTypes ?? \App\Models\Parcel::titleTypeOptions();
+        $rodOffices = $rodOffices ?? \App\Models\Parcel::rodOfficeOptions();
     @endphp
 
     <div class="parcel-edit-page">
@@ -275,14 +277,56 @@
                             </div>
 
                             <div class="parcel-edit-field">
+                                <label for="lot_number">Lot Number</label>
+                                <input id="lot_number" type="text" name="lot_number" value="{{ old('lot_number', $parcel->lot_number) }}" class="parcel-edit-input">
+                                @error('lot_number')<p class="parcel-edit-error">{{ $message }}</p>@enderror
+                            </div>
+
+                            <div class="parcel-edit-field">
+                                <label for="survey_plan_number">Survey Plan Number</label>
+                                <input id="survey_plan_number" type="text" name="survey_plan_number" value="{{ old('survey_plan_number', $parcel->survey_plan_number) }}" class="parcel-edit-input">
+                                @error('survey_plan_number')<p class="parcel-edit-error">{{ $message }}</p>@enderror
+                            </div>
+
+                            <div class="parcel-edit-field">
+                                <label for="title_type">Title / Reference Type</label>
+                                <select id="title_type" name="title_type" class="parcel-edit-input">
+                                    <option value="">Select title/reference type</option>
+                                    @foreach ($titleTypes as $value => $label)
+                                        <option value="{{ $value }}" @selected(old('title_type', $parcel->title_type) === $value)>{{ $label }}</option>
+                                    @endforeach
+                                </select>
+                                @error('title_type')<p class="parcel-edit-error">{{ $message }}</p>@enderror
+                            </div>
+
+                            <div class="parcel-edit-field">
+                                <label for="rod_office">Register of Deeds Office</label>
+                                <select id="rod_office" name="rod_office" class="parcel-edit-input">
+                                    <option value="">Select ROD office</option>
+                                    @foreach ($rodOffices as $value => $label)
+                                        <option value="{{ $value }}" @selected(old('rod_office', $parcel->rod_office) === $value)>{{ $label }}</option>
+                                    @endforeach
+                                </select>
+                                @error('rod_office')<p class="parcel-edit-error">{{ $message }}</p>@enderror
+                            </div>
+
+                            <div class="parcel-edit-field">
                                 <label for="tax_decl_no">Tax Declaration Number</label>
                                 <input id="tax_decl_no" type="text" name="tax_decl_no" value="{{ old('tax_decl_no', $parcel->tax_decl_no) }}" class="parcel-edit-input">
                                 @error('tax_decl_no')<p class="parcel-edit-error">{{ $message }}</p>@enderror
                             </div>
 
                             <div class="parcel-edit-field">
+                                <label for="area_square_meters">Total Area / Square Meters</label>
+                                <input id="area_square_meters" type="number" step="0.01" min="0" name="area_square_meters" value="{{ old('area_square_meters', $parcel->area_square_meters) }}" class="parcel-edit-input">
+                                <p class="parcel-edit-helper">Land registration commonly records area in square meters. Hectares may be computed for monitoring.</p>
+                                @error('area_square_meters')<p class="parcel-edit-error">{{ $message }}</p>@enderror
+                            </div>
+
+                            <div class="parcel-edit-field">
                                 <label for="area_hectares">Area / Hectares</label>
                                 <input id="area_hectares" type="number" step="0.0001" min="0" name="area_hectares" value="{{ old('area_hectares', $parcel->area_hectares) }}" class="parcel-edit-input">
+                                <p class="parcel-edit-helper">Optional reference. Leave blank if square meters are encoded; the system computes it.</p>
                                 @error('area_hectares')<p class="parcel-edit-error">{{ $message }}</p>@enderror
                             </div>
 </div>
@@ -349,6 +393,7 @@
                             <p class="parcel-eyebrow">Current Parcel Record</p>
                             <h3 class="parcel-edit-code">{{ $parcel->parcel_code }}</h3>
                             <p class="parcel-edit-meta">{{ $parcel->municipality ?? 'No municipality' }}{{ $parcel->barangay ? ', '.$parcel->barangay : '' }}</p>
+                            <p class="parcel-edit-meta">{{ $parcel->title_no ?? 'No title number' }}{{ $parcel->lot_number ? ' · Lot '.$parcel->lot_number : '' }}</p>
                         </div>
                     </div>
 

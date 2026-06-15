@@ -355,9 +355,14 @@ public function store(Request $request)
             $application->applicationParcels()->create([
                 'parcel_id' => $parcel->id,
                 'area_hectares' => $validated['area_hectares'] ?? $parcel->area_hectares,
+                'area_square_meters' => $parcel->area_square_meters,
                 'parcel_code' => $parcel->parcel_code,
                 'title_no' => $parcel->title_no,
                 'tax_decl_no' => $parcel->tax_decl_no,
+                'lot_number' => $parcel->lot_number,
+                'survey_plan_number' => $parcel->survey_plan_number,
+                'title_type' => $parcel->title_type,
+                'rod_office' => $parcel->rod_office,
             ]);
         }
 

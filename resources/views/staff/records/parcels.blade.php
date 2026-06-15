@@ -9,7 +9,7 @@
         <div class="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
             <div>
                 <h2 class="staff-panel-title">Search and Filter Parcels</h2>
-                <p class="staff-panel-subtitle">Filter parcel records by code, title number, tax declaration number, location, record status, or remarks.</p>
+                <p class="staff-panel-subtitle">Filter parcel records by code, title number, lot number, survey plan number, tax declaration number, location, record status, or remarks.</p>
             </div>
             <p class="text-sm font-bold text-gray-500">{{ $parcels->total() }} record(s)</p>
         </div>
@@ -17,7 +17,7 @@
         <form method="GET" action="{{ route('staff.records.parcels.index') }}" class="mt-5 staff-filter-grid filter-grid-4">
             <div class="staff-filter-field">
                 <label class="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">Search</label>
-                <input type="text" name="search" value="{{ $filters['search'] ?? '' }}" placeholder="Parcel code, title no., tax declaration no., remarks" class="w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-green-600 focus:ring-green-600">
+                <input type="text" name="search" value="{{ $filters['search'] ?? '' }}" placeholder="Parcel code, title no., lot no., survey plan, ROD office" class="w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-green-600 focus:ring-green-600">
             </div>
             <div>
                 <label class="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">Municipality</label>
@@ -91,7 +91,7 @@
                 <thead>
                     <tr>
                         <th>Parcel</th>
-                        <th>Title / Tax Declaration</th>
+                        <th>Title / Lot Reference</th>
                         <th>Location</th>
                         <th>Area</th>
                         <th>Record Status</th>
@@ -108,13 +108,19 @@
                             </td>
                             <td>
                                 <div>{{ $parcel->title_no ?? 'N/A' }}</div>
+                                <div class="text-xs text-gray-500">{{ $parcel->lot_number ? 'Lot '.$parcel->lot_number : 'No lot number' }}</div>
+                                <div class="text-xs text-gray-500">{{ $parcel->survey_plan_number ? 'Survey '.$parcel->survey_plan_number : 'No survey plan' }}</div>
+                                <div class="text-xs text-gray-500">{{ $parcel->title_type ? $parcel->title_type_label : 'No title type' }}</div>
                                 <div class="text-xs text-gray-500">{{ $parcel->tax_decl_no ?? 'No tax declaration' }}</div>
                             </td>
                             <td>
                                 <div>{{ $parcel->municipality ?? 'N/A' }}</div>
                                 <div class="text-xs text-gray-500">{{ $parcel->barangay ?? 'N/A' }}</div>
                             </td>
-                            <td class="whitespace-nowrap">{{ $parcel->area_hectares ? number_format((float) $parcel->area_hectares, 4) . ' ha' : 'N/A' }}</td>
+                            <td class="whitespace-nowrap">
+                                <div>{{ $parcel->area_square_meters ? number_format((float) $parcel->area_square_meters, 2).' sq. m.' : 'N/A' }}</div>
+                                <div class="text-xs text-gray-500">{{ $parcel->area_hectares ? number_format((float) $parcel->area_hectares, 4).' ha' : 'No hectare value' }}</div>
+                            </td>
                             <td>
                                 <span class="staff-badge {{ $parcel->status === 'active' ? 'staff-badge-green' : 'staff-badge-slate' }}">{{ ucwords(str_replace('_', ' ', $parcel->status ?? 'Unspecified')) }}</span>
                             </td>

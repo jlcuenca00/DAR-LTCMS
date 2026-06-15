@@ -657,6 +657,22 @@
                     <div class="parcel-meta-card">
                         <p class="parcel-meta-label">Title Number</p>
                         <p class="parcel-meta-value">{{ $parcel->title_no ?? 'N/A' }}</p>
+                        <p class="parcel-meta-subvalue">{{ $parcel->title_type_label }}</p>
+                    </div>
+
+                    <div class="parcel-meta-card">
+                        <p class="parcel-meta-label">Lot Number</p>
+                        <p class="parcel-meta-value">{{ $parcel->lot_number ?? 'N/A' }}</p>
+                    </div>
+
+                    <div class="parcel-meta-card">
+                        <p class="parcel-meta-label">Survey Plan Number</p>
+                        <p class="parcel-meta-value">{{ $parcel->survey_plan_number ?? 'N/A' }}</p>
+                    </div>
+
+                    <div class="parcel-meta-card">
+                        <p class="parcel-meta-label">Register of Deeds Office</p>
+                        <p class="parcel-meta-value">{{ $parcel->rod_office ?? 'N/A' }}</p>
                     </div>
 
                     <div class="parcel-meta-card">
@@ -665,8 +681,9 @@
                     </div>
 
                     <div class="parcel-meta-card">
-                        <p class="parcel-meta-label">Area</p>
-                        <p class="parcel-meta-value">{{ number_format((float) $parcel->area_hectares, 4) }} hectares</p>
+                        <p class="parcel-meta-label">Total Area</p>
+                        <p class="parcel-meta-value">{{ $parcel->area_square_meters ? number_format((float) $parcel->area_square_meters, 2).' sq. m.' : 'N/A' }}</p>
+                        <p class="parcel-meta-subvalue">{{ $parcel->area_hectares ? number_format((float) $parcel->area_hectares, 4).' hectares' : 'No hectare conversion recorded' }}</p>
                     </div>
 
                     <div class="parcel-meta-card">
