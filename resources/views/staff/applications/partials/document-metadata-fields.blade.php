@@ -35,6 +35,9 @@
         || str_contains($requirementName, 'conveyance')
         || str_contains($requirementName, 'transfer document');
 
+    $isMarpoCertification = str_contains($requirementName, 'marpo')
+        || str_contains($requirementName, 'ltc form no. 2');
+
     $metadata = $doc->document_metadata ?? [];
 @endphp
 
@@ -178,6 +181,91 @@
             </div>
         </div>
     @endif
+
+    @if ($isMarpoCertification)
+        <div style="margin-top:12px; padding:12px; border:1px solid #dbe4dd; border-radius:8px; background:#ffffff;">
+            <div style="font-weight:700; color:#111827; margin-bottom:4px; font-size:13px;">
+                MARPO Certification / LTC Form No. 2 review details
+            </div>
+
+            <div style="font-size:12px; color:#6b7280; margin-bottom:10px;">
+                Encode only the checkbox findings and reference details shown in the submitted MARPO Certification. This is review context only and does not automatically approve, deny, transfer ownership, or mutate registry records.
+            </div>
+
+            <div style="display:grid; gap:8px; margin-bottom:12px;">
+                <label style="display:flex; gap:8px; align-items:flex-start; font-size:13px; color:#374151;">
+                    <input type="checkbox"
+                           name="document_metadata[marpo_has_tenants]"
+                           value="1"
+                           @checked((bool) old('document_metadata.marpo_has_tenants', data_get($metadata, 'marpo_has_tenants')))
+                           {{ $isFinal ? 'disabled' : '' }}
+                           title="{{ $isFinal ? $lockMsg : '' }}"
+                    >
+                    <span>There are agricultural tenants/leaseholders, farmworkers, actual tillers, or other workers directly tilling the subject land.</span>
+                </label>
+
+                <label style="display:flex; gap:8px; align-items:flex-start; font-size:13px; color:#374151;">
+                    <input type="checkbox"
+                           name="document_metadata[marpo_no_tenants]"
+                           value="1"
+                           @checked((bool) old('document_metadata.marpo_no_tenants', data_get($metadata, 'marpo_no_tenants')))
+                           {{ $isFinal ? 'disabled' : '' }}
+                           title="{{ $isFinal ? $lockMsg : '' }}"
+                    >
+                    <span>There are no agricultural tenants/leaseholders, actual tillers, or other workers directly tilling the subject land.</span>
+                </label>
+
+                <label style="display:flex; gap:8px; align-items:flex-start; font-size:13px; color:#374151;">
+                    <input type="checkbox"
+                           name="document_metadata[marpo_no_illegal_conversion]"
+                           value="1"
+                           @checked((bool) old('document_metadata.marpo_no_illegal_conversion', data_get($metadata, 'marpo_no_illegal_conversion')))
+                           {{ $isFinal ? 'disabled' : '' }}
+                           title="{{ $isFinal ? $lockMsg : '' }}"
+                    >
+                    <span>There are no erected/ongoing constructions or non-agricultural development activities warranting illegal conversion/premature conversion action.</span>
+                </label>
+
+                <label style="display:flex; gap:8px; align-items:flex-start; font-size:13px; color:#374151;">
+                    <input type="checkbox"
+                           name="document_metadata[marpo_no_conflict_claims]"
+                           value="1"
+                           @checked((bool) old('document_metadata.marpo_no_conflict_claims', data_get($metadata, 'marpo_no_conflict_claims')))
+                           {{ $isFinal ? 'disabled' : '' }}
+                           title="{{ $isFinal ? $lockMsg : '' }}"
+                    >
+                    <span>There are no conflict of claims involving the subject land by and between families or third person claimant.</span>
+                </label>
+            </div>
+
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                <div>
+                    <label style="display:block; font-size:12px; color:#374151; margin-bottom:6px;">Certification place</label>
+                    <input type="text"
+                           name="document_metadata[marpo_certification_place]"
+                           value="{{ old('document_metadata.marpo_certification_place', data_get($metadata, 'marpo_certification_place')) }}"
+                           placeholder="Municipality/City, Province"
+                           style="width:100%; border:1px solid #d1d5db; border-radius:6px; padding:6px 8px; font-size:14px;"
+                           {{ $isFinal ? 'disabled' : '' }}
+                           title="{{ $isFinal ? $lockMsg : '' }}"
+                    >
+                </div>
+
+                <div>
+                    <label style="display:block; font-size:12px; color:#374151; margin-bottom:6px;">MARPO / designated personnel</label>
+                    <input type="text"
+                           name="document_metadata[marpo_designated_personnel]"
+                           value="{{ old('document_metadata.marpo_designated_personnel', data_get($metadata, 'marpo_designated_personnel')) }}"
+                           placeholder="Signature over printed name"
+                           style="width:100%; border:1px solid #d1d5db; border-radius:6px; padding:6px 8px; font-size:14px;"
+                           {{ $isFinal ? 'disabled' : '' }}
+                           title="{{ $isFinal ? $lockMsg : '' }}"
+                    >
+                </div>
+            </div>
+        </div>
+    @endif
+
 
     <div style="margin-top:10px;">
         <label style="display:block; font-size:12px; color:#374151; margin-bottom:6px;">

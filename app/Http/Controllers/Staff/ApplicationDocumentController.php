@@ -82,6 +82,15 @@ class ApplicationDocumentController extends Controller
             'document_metadata.notarial_document_number' => ['nullable', 'string', 'max:100'],
             'document_metadata.notarial_series' => ['nullable', 'string', 'max:100'],
 
+            // MARPO Certification / LTC Form No. 2 indexing fields. These are review
+            // details only and do not automatically approve/deny the application.
+            'document_metadata.marpo_has_tenants' => ['nullable', 'boolean'],
+            'document_metadata.marpo_no_tenants' => ['nullable', 'boolean'],
+            'document_metadata.marpo_no_illegal_conversion' => ['nullable', 'boolean'],
+            'document_metadata.marpo_no_conflict_claims' => ['nullable', 'boolean'],
+            'document_metadata.marpo_certification_place' => ['nullable', 'string', 'max:255'],
+            'document_metadata.marpo_designated_personnel' => ['nullable', 'string', 'max:255'],
+
             'document_metadata.verification_notes' => ['nullable', 'string', 'max:2000'],
         ]);
 
