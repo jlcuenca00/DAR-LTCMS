@@ -83,6 +83,9 @@ class LandTransferApplication extends Model
     ];
 
     protected $casts = [
+        'ltc_form4_subject_land_findings' => 'array',
+        'ltc_form4_recommendation_findings' => 'array',
+        'ltc_form4_certified_at' => 'date',
         'reviewed_at' => 'datetime',
         'date_of_application' => 'date',
         'or_date' => 'date',

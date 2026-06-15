@@ -1850,6 +1850,8 @@
         </section>
         @include('staff.applications.partials.acknowledgement-receipt')
 
+        @include('staff.applications.partials.form4-attestation-recommendation')
+
 
         @foreach ($requirementGroups as $group)
             <section class="review-panel">

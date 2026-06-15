@@ -426,4 +426,45 @@ private function generateApplicationCode(): string
 
     return $code;
 }
+    public function updateForm4Review(Request $request, LandTransferApplication $application)
+    {
+        if ($application->isFinalized()) {
+            return back()->with('error', 'LTC Form No. 4 review details are locked after release or denial.');
+        }
+
+        $validated = $request->validate([
+            'ltc_form4_subject_land_findings' => ['nullable', 'array'],
+            'ltc_form4_subject_land_findings.*' => ['nullable', 'string', 'max:120'],
+            'ltc_form4_recommendation_findings' => ['nullable', 'array'],
+            'ltc_form4_recommendation_findings.*' => ['nullable', 'string', 'max:120'],
+            'ltc_form4_recommendation_decision' => ['nullable', 'in:approval,denial'],
+            'ltc_form4_other_findings' => ['nullable', 'string', 'max:2000'],
+            'ltc_form4_certified_at' => ['nullable', 'date'],
+            'ltc_form4_certifying_officer_name' => ['nullable', 'string', 'max:255'],
+        ]);
+
+        $application->forceFill([
+            'ltc_form4_subject_land_findings' => array_values($validated['ltc_form4_subject_land_findings'] ?? []),
+            'ltc_form4_recommendation_findings' => array_values($validated['ltc_form4_recommendation_findings'] ?? []),
+            'ltc_form4_recommendation_decision' => $validated['ltc_form4_recommendation_decision'] ?? null,
+            'ltc_form4_other_findings' => $validated['ltc_form4_other_findings'] ?? null,
+            'ltc_form4_certified_at' => $validated['ltc_form4_certified_at'] ?? null,
+            'ltc_form4_certifying_officer_name' => $validated['ltc_form4_certifying_officer_name'] ?? null,
+        ])->save();
+
+        AuditLogger::record(
+            'ltc_form4_review_updated',
+            $application,
+            $application,
+            [
+                'recommendation_decision' => $application->ltc_form4_recommendation_decision,
+                'subject_land_findings_count' => count((array) $application->ltc_form4_subject_land_findings),
+                'recommendation_findings_count' => count((array) $application->ltc_form4_recommendation_findings),
+            ],
+            Auth::id()
+        );
+
+        return back()->with('success', 'LTC Form No. 4 attestation and recommendation details updated.');
+    }
+
 }
