@@ -16,6 +16,11 @@ class RequiredDocumentSeeder extends Seeder
         $caseDependent = RequiredDocument::CLASSIFICATION_CASE_DEPENDENT;
         $reference = RequiredDocument::CLASSIFICATION_REFERENCE;
 
+        // Clean up earlier draft/typo entries before aligning with LTC Form No. 1.
+        RequiredDocument::where('name', 'Deed Certificate (if applicable)')
+            ->where('applies_to', 'transferor')
+            ->delete();
+
         $docs = [
             // TRANSFEROR / APPLICATION INTAKE
             [
@@ -37,31 +42,31 @@ class RequiredDocumentSeeder extends Seeder
                 'classification_notes' => 'Title proof required for parcel/title review. Certified True Copy details may be encoded in document metadata.',
             ],
             [
-                'name' => 'Recent Tax Declaration',
+                'name' => 'Recent Tax Declaration (if available)',
                 'applies_to' => 'transferor',
                 'is_mandatory' => false,
                 'requirement_classification' => $reference,
                 'blocks_acceptance' => false,
                 'legal_basis' => 'DAR A.O. No. 4, s. 2021',
-                'classification_notes' => 'Supplemental/reference document. It may support assessor classification and tax declaration number encoding but is not a release blocker by itself.',
+                'classification_notes' => 'Reference document when available. It may support assessor classification and tax declaration number encoding but is not a release blocker by itself.',
             ],
             [
-                'name' => 'Deed of Transfer / Deed of Sale / Donation (Registered)',
+                'name' => 'Deed or Document to be Registered',
                 'applies_to' => 'transferor',
                 'is_mandatory' => true,
                 'requirement_classification' => $mandatory,
                 'blocks_acceptance' => true,
                 'legal_basis' => 'DAR A.O. No. 4, s. 2021',
-                'classification_notes' => 'Transfer instrument required for review of transfer parties and details.',
+                'classification_notes' => 'Transfer instrument required for review of transfer parties and registration details. Metadata may include notarization date, notary public, page, book, document number, and series.',
             ],
             [
-                'name' => 'Deed Certificate (if applicable)',
+                'name' => 'Death Certificate (if applicable)',
                 'applies_to' => 'transferor',
                 'is_mandatory' => false,
                 'requirement_classification' => $caseDependent,
                 'blocks_acceptance' => false,
                 'legal_basis' => 'DAR A.O. No. 4, s. 2021',
-                'classification_notes' => 'Case-dependent supporting document. Staff should request it only when applicable.',
+                'classification_notes' => 'Required only when deceased persons are indicated in the transfer instrument.',
             ],
             [
                 'name' => 'Affidavit of Transferor',
