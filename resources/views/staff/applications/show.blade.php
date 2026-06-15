@@ -2417,11 +2417,32 @@
                         <div class="validation-item"><strong>Pending Incoming Total</strong>{{ number_format($pendingIncomingTotal, 4) }} ha</div>
                         <div class="validation-item"><strong>This Application Total</strong>{{ number_format($thisApplicationTotal, 4) }} ha</div>
                         <div class="validation-item"><strong>Projected Total</strong>{{ number_format($projectedTotal, 4) }} ha</div>
+                        <div class="validation-item"><strong>Transfer Nature</strong>{{ $application->transferNatureLabel() }}</div>
+                        <div class="validation-item"><strong>Succession Context</strong>{{ $application->is_succession_case ? 'Yes, noted for manual review' : 'No / not indicated' }}</div>
+                        <div class="validation-item"><strong>Retention Certificate</strong>
+                            @if ($application->retention_certificate_required)
+                                Required{{ $application->retention_certificate_reference ? ' — ' . $application->retention_certificate_reference : ' — reference not recorded' }}
+                            @else
+                                Not required / not indicated
+                            @endif
+                        </div>
+                        <div class="validation-item"><strong>Review Status</strong>{{ $fiveHectareValidation['status_label'] ?? 'For staff review' }}</div>
                     </div>
 
+                    @if (filled($application->landholding_review_notes))
+                        <div class="review-note-box mt-4">
+                            <strong>Landholding review notes:</strong><br>
+                            {{ $application->landholding_review_notes }}
+                        </div>
+                    @endif
+
                     <div class="review-note-box mt-4">
-                        @if ($exceedsFiveHectares)
-                            Projected total exceeds the 5-hectare reference limit based on encoded records. Release is blocked until records are resolved or the application is marked Denied. This does not automatically decide legal ownership.
+                        @if (($fiveHectareValidation['retention_certificate_missing'] ?? false))
+                            Retention Certificate is marked as required, but no reference was recorded. Release is blocked until the reference is encoded or the requirement is revised.
+                        @elseif ($exceedsFiveHectares && $application->is_succession_case)
+                            Projected total exceeds the 5-hectare reference limit, but succession/inheritance context has been noted for manual review. This is not an automatic approval and does not decide legal ownership.
+                        @elseif ($exceedsFiveHectares)
+                            Projected total exceeds the 5-hectare reference limit based on encoded records. Release is blocked until records are resolved, an applicable exception/reference is encoded, or the application is marked Denied. This does not automatically decide legal ownership.
                         @else
                             Projected total is within the 5-hectare reference limit based on encoded system records.
                         @endif

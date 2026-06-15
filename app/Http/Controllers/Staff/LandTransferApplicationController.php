@@ -306,6 +306,11 @@ public function store(Request $request)
         'barangay' => ['nullable', 'string', 'max:255'],
         'date_filed' => ['nullable', 'date'],
         'date_of_transfer' => ['nullable', 'date'],
+        'transfer_nature' => ['nullable', 'string', 'in:sale,donation,succession,extrajudicial_settlement,waiver_of_rights,other'],
+        'is_succession_case' => ['nullable', 'boolean'],
+        'retention_certificate_required' => ['nullable', 'boolean'],
+        'retention_certificate_reference' => ['nullable', 'string', 'max:150'],
+        'landholding_review_notes' => ['nullable', 'string', 'max:4000'],
         'remarks' => ['nullable', 'string'],
 
         'parcel_id' => ['nullable', 'exists:parcels,id'],
@@ -314,8 +319,10 @@ public function store(Request $request)
 
     $application = null;
     $hasSpecialPowerOfAttorney = $request->boolean('has_special_power_of_attorney');
+    $isSuccessionCase = $request->boolean('is_succession_case') || (($validated['transfer_nature'] ?? null) === 'succession');
+    $retentionCertificateRequired = $request->boolean('retention_certificate_required');
 
-    DB::transaction(function () use ($validated, $hasSpecialPowerOfAttorney, &$application) {
+    DB::transaction(function () use ($validated, $hasSpecialPowerOfAttorney, $isSuccessionCase, $retentionCertificateRequired, &$application) {
         $applicantType = $validated['applicant_type'] ?? null;
         $applicantName = $validated['applicant_name'] ?? null;
 
@@ -346,6 +353,13 @@ public function store(Request $request)
             'barangay' => $validated['barangay'] ?? null,
             'date_filed' => $validated['date_filed'] ?? $applicationDate,
             'date_of_transfer' => $validated['date_of_transfer'] ?? null,
+            'transfer_nature' => $validated['transfer_nature'] ?? null,
+            'is_succession_case' => $isSuccessionCase,
+            'retention_certificate_required' => $retentionCertificateRequired,
+            'retention_certificate_reference' => $retentionCertificateRequired
+                ? ($validated['retention_certificate_reference'] ?? null)
+                : null,
+            'landholding_review_notes' => $validated['landholding_review_notes'] ?? null,
             'remarks' => $validated['remarks'] ?? null,
             'status' => LandTransferApplication::STATUS_PENDING_LEGAL_REVIEW,
             'encoded_by' => Auth::id(),
@@ -377,6 +391,10 @@ public function store(Request $request)
                 'applicant_name' => $application->applicant_name,
                 'applicant_type' => $application->applicant_type,
                 'or_number' => $application->or_number,
+                'transfer_nature' => $application->transfer_nature,
+                'is_succession_case' => $application->is_succession_case,
+                'retention_certificate_required' => $application->retention_certificate_required,
+                'retention_certificate_reference' => $application->retention_certificate_reference,
                 'transferor_name' => $application->transferor_name,
                 'transferee_name' => $application->transferee_name,
                 'parcel_id' => $validated['parcel_id'] ?? null,

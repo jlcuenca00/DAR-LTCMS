@@ -430,6 +430,61 @@
             <section class="form-section">
                 <div class="section-head">
                     <div>
+                        <h3 class="section-title">Landholding Review Context</h3>
+                        <p class="section-copy">Record 5-hectare, succession, and retention-certificate review context for staff evaluation.</p>
+                    </div>
+                </div>
+
+                <div class="scope-alert">
+                    <i class="fa-solid fa-circle-info"></i>
+                    <div>
+                        These entries support manual clearance review only. Succession and retention-certificate notes do not automatically approve a clearance, transfer ownership, or mutate Registry of Deeds records.
+                    </div>
+                </div>
+
+                <div class="mt-4 field-grid">
+                    <div class="field-group">
+                        <label for="transfer_nature" class="field-label">Transfer Nature / Instrument Context</label>
+                        <select id="transfer_nature" name="transfer_nature" class="staff-select">
+                            <option value="" @selected(old('transfer_nature') === null)>Not specified</option>
+                            @foreach (\App\Models\LandTransferApplication::transferNatureOptions() as $value => $label)
+                                <option value="{{ $value }}" @selected(old('transfer_nature') === $value)>{{ $label }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div class="field-group">
+                        <label for="is_succession_case" class="field-label">Succession / Inheritance Case</label>
+                        <select id="is_succession_case" name="is_succession_case" class="staff-select">
+                            <option value="0" @selected(! old('is_succession_case'))>No / Not indicated</option>
+                            <option value="1" @selected(old('is_succession_case'))>Yes, succession exception context</option>
+                        </select>
+                        <p class="field-help">Use only when the application involves succession/inheritance context for manual review.</p>
+                    </div>
+
+                    <div class="field-group">
+                        <label for="retention_certificate_required" class="field-label">Retention Certificate</label>
+                        <select id="retention_certificate_required" name="retention_certificate_required" class="staff-select">
+                            <option value="0" @selected(! old('retention_certificate_required'))>Not required / Not indicated</option>
+                            <option value="1" @selected(old('retention_certificate_required'))>Required for this review</option>
+                        </select>
+                    </div>
+
+                    <div class="field-group">
+                        <label for="retention_certificate_reference" class="field-label">Retention Certificate Reference</label>
+                        <input id="retention_certificate_reference" type="text" name="retention_certificate_reference" value="{{ old('retention_certificate_reference') }}" class="staff-input" placeholder="Reference/control number, if required">
+                        <p class="field-help">If marked required, release will be blocked until a reference is recorded.</p>
+                    </div>
+
+                    <div class="field-group field-span-2">
+                        <label for="landholding_review_notes" class="field-label">Landholding Review Notes</label>
+                        <textarea id="landholding_review_notes" name="landholding_review_notes" rows="3" class="staff-textarea" placeholder="Optional notes about aggregate landholding, succession context, MARPO/LTI review, or retention certificate handling">{{ old('landholding_review_notes') }}</textarea>
+                    </div>
+                </div>
+
+            <section class="form-section">
+                <div class="section-head">
+                    <div>
                         <h3 class="section-title">Parcel Reference</h3>
                         <p class="section-copy">Link a main parcel record for review and reference only.</p>
                     </div>

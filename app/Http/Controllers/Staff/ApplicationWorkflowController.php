@@ -262,12 +262,16 @@ class ApplicationWorkflowController extends Controller
 
         $validationMessages = [];
 
-        if ((bool) $hectareValidation['exceeds_limit']) {
-            $validationMessages['five_hectare'] = sprintf(
-                'Projected landholding total exceeds the 5-hectare reference limit: %s ha projected against %s ha limit.',
-                number_format((float) $hectareValidation['projected_total'], 4),
-                number_format((float) $hectareValidation['limit'], 4)
-            );
+        if ((bool) ($hectareValidation['blocks_release'] ?? $hectareValidation['exceeds_limit'])) {
+            if ((bool) ($hectareValidation['retention_certificate_missing'] ?? false)) {
+                $validationMessages['retention_certificate'] = 'Retention Certificate is marked as required, but no retention certificate reference was recorded.';
+            } elseif ((bool) $hectareValidation['exceeds_limit']) {
+                $validationMessages['five_hectare'] = sprintf(
+                    'Projected landholding total exceeds the 5-hectare reference limit: %s ha projected against %s ha limit.',
+                    number_format((float) $hectareValidation['projected_total'], 4),
+                    number_format((float) $hectareValidation['limit'], 4)
+                );
+            }
         }
 
         foreach ($missingMandatoryDocuments as $document) {
@@ -287,7 +291,7 @@ class ApplicationWorkflowController extends Controller
             )
             ->all();
 
-        $hasCriticalFailures = (bool) $hectareValidation['exceeds_limit'] || $missingMandatoryCount > 0;
+        $hasCriticalFailures = (bool) ($hectareValidation['blocks_release'] ?? $hectareValidation['exceeds_limit']) || $missingMandatoryCount > 0;
 
         $snapshot = [
             'computed_at' => now()->toDateTimeString(),
@@ -298,6 +302,11 @@ class ApplicationWorkflowController extends Controller
                 'projected_total' => (float) $hectareValidation['projected_total'],
                 'remaining_after_projection' => (float) $hectareValidation['remaining_after_projection'],
                 'exceeds_limit' => (bool) $hectareValidation['exceeds_limit'],
+                'succession_exception_claimed' => (bool) ($hectareValidation['succession_exception_claimed'] ?? false),
+                'retention_certificate_required' => (bool) ($hectareValidation['retention_certificate_required'] ?? false),
+                'retention_certificate_reference' => $hectareValidation['retention_certificate_reference'] ?? null,
+                'retention_certificate_missing' => (bool) ($hectareValidation['retention_certificate_missing'] ?? false),
+                'blocks_release' => (bool) ($hectareValidation['blocks_release'] ?? $hectareValidation['exceeds_limit']),
                 'limit' => (float) $hectareValidation['limit'],
                 'scope_note' => $hectareValidation['scope_note'],
             ],

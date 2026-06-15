@@ -58,6 +58,11 @@ class LandTransferApplication extends Model
         'or_date',
         'amount_paid',
         'date_of_application',
+        'transfer_nature',
+        'is_succession_case',
+        'retention_certificate_required',
+        'retention_certificate_reference',
+        'landholding_review_notes',
         'transferor_name',
         'transferee_name',
         'barangay',
@@ -83,6 +88,8 @@ class LandTransferApplication extends Model
         'or_date' => 'date',
         'amount_paid' => 'decimal:2',
         'has_special_power_of_attorney' => 'boolean',
+        'is_succession_case' => 'boolean',
+        'retention_certificate_required' => 'boolean',
         'validated_at' => 'datetime',
         'registry_mutated_at' => 'datetime',
         'validation_snapshot' => 'array',
@@ -129,6 +136,23 @@ class LandTransferApplication extends Model
             self::STATUS_RELEASED => 'Released',
             self::STATUS_DENIED => 'Denied',
         ];
+    }
+
+    public static function transferNatureOptions(): array
+    {
+        return [
+            'sale' => 'Sale',
+            'donation' => 'Donation',
+            'succession' => 'Succession / inheritance',
+            'extrajudicial_settlement' => 'Extrajudicial settlement',
+            'waiver_of_rights' => 'Waiver of rights',
+            'other' => 'Other transfer instrument',
+        ];
+    }
+
+    public function transferNatureLabel(): string
+    {
+        return self::transferNatureOptions()[$this->transfer_nature] ?? 'Not specified';
     }
 
     public function statusLabel(): string
