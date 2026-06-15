@@ -6,10 +6,17 @@
     <title>{{ $clearance->clearance_number }} | Clearance Output</title>
 
     @php
-        $decisionLabel = $clearance->decision_status === 'approved'
-            ? 'Approved Clearance'
-            : ucwords(str_replace('_', ' ', $clearance->decision_status));
-        $decisionClass = strtolower((string) $clearance->decision_status) === 'approved' ? 'approved' : 'not-approved';
+        $decisionStatus = strtolower((string) $clearance->decision_status);
+        $decisionLabel = match ($decisionStatus) {
+            'released', 'approved' => 'Released Clearance',
+            'denied', 'not_approved' => 'Denied',
+            default => ucwords(str_replace('_', ' ', $decisionStatus)),
+        };
+        $decisionClass = match ($decisionStatus) {
+            'released', 'approved' => 'released',
+            'denied', 'not_approved' => 'denied',
+            default => 'pending',
+        };
         $reviewedAt = optional($clearance->reviewed_at)->timezone('Asia/Manila');
         $generatedAt = optional($clearance->generated_at)->timezone('Asia/Manila');
 
@@ -278,11 +285,13 @@
             background: #f0fdf4;
         }
 
+        .decision-box.denied,
         .decision-box.not-approved {
             border-color: #dc2626;
             background: #fef2f2;
         }
 
+        .decision-box.denied .decision-label,
         .decision-box.not-approved .decision-label {
             color: #991b1b;
         }
@@ -303,10 +312,12 @@
             text-transform: uppercase;
         }
 
+        .decision-box.denied .decision-value,
         .decision-box.not-approved .decision-value {
             color: #b91c1c;
         }
 
+        .decision-box.denied .decision-note,
         .decision-box.not-approved .decision-note {
             color: #7f1d1d;
         }
@@ -591,17 +602,17 @@
                 <div class="decision-box {{ $decisionClass }}">
                     <div class="decision-label">Recorded Application Decision</div>
                     <div class="decision-value">{{ $decisionLabel }}</div>
-                    <div class="decision-note">Decision status is locked in the system for auditability and monitoring.</div>
+                    <div class="decision-note">Release/denial status is locked in the system for auditability and monitoring.</div>
                 </div>
                 <div class="info-card">
                     <h2 class="info-card-title">Output Metadata</h2>
                     <div class="mini-meta">
                         <div class="mini-row">
-                            <span>Reviewed by</span>
+                            <span>Processed by</span>
                             <span>{{ $clearance->review_officer_name }}</span>
                         </div>
                         <div class="mini-row">
-                            <span>Reviewed at</span>
+                            <span>Processed at</span>
                             <span>{{ $reviewedAt?->format('M d, Y h:i A') ?? '—' }}</span>
                         </div>
                         <div class="mini-row">
@@ -668,7 +679,7 @@
             <section class="section">
                 <h2 class="section-title">Certification Statement</h2>
                 <p class="certification">
-                    This document certifies that the above land transfer clearance application has been processed through the Department of Agrarian Reform Land Transfer Clearance and Monitoring System. The decision shown in this record reflects the finalized administrative decision stored in the system for monitoring, documentation, and audit reference only.
+                    This document certifies that the above land transfer clearance application has been processed through the Department of Agrarian Reform Land Transfer Clearance and Monitoring System. The release or denial shown in this record reflects the finalized administrative clearance result stored in the system for monitoring, documentation, and audit reference only.
                 </p>
             </section>
 
@@ -676,7 +687,7 @@
                 <div></div>
                 <div>
                     <div class="signature-line">{{ $clearance->review_officer_name }}</div>
-                    <div class="signature-role">Reviewing Officer</div>
+                    <div class="signature-role">Processing Officer</div>
                 </div>
             </section>
 

@@ -22,6 +22,22 @@ class StaffDashboardController extends Controller
 
         $totalApplications = LandTransferApplication::count();
 
+        $countStatuses = function (array $statuses) use ($statusCounts): int {
+            return collect($statuses)
+                ->sum(fn ($status) => (int) ($statusCounts[$status] ?? 0));
+        };
+
+        $activeWorkflowStatuses = [
+            LandTransferApplication::STATUS_PENDING_LEGAL_REVIEW,
+            LandTransferApplication::STATUS_ENDORSED_LTI,
+            LandTransferApplication::STATUS_ENDORSED_CHIEF_LEGAL,
+            LandTransferApplication::STATUS_ENDORSED_PARPO,
+            LandTransferApplication::STATUS_FOR_RELEASING,
+            // Legacy statuses are counted here only for old records during the phased revision.
+            LandTransferApplication::STATUS_DRAFT,
+            LandTransferApplication::STATUS_PENDING_REVIEW,
+        ];
+
         $statusCards = [
             [
                 'label' => 'Total Applications',
@@ -31,33 +47,49 @@ class StaffDashboardController extends Controller
                 'accent' => 'bg-slate-800',
             ],
             [
-                'label' => 'Pending Review',
-                'value' => (int) ($statusCounts[LandTransferApplication::STATUS_PENDING_REVIEW] ?? 0),
-                'description' => 'Applications awaiting staff decision',
+                'label' => 'Pending Legal Review',
+                'value' => (int) ($statusCounts[LandTransferApplication::STATUS_PENDING_LEGAL_REVIEW] ?? 0),
+                'description' => 'Applications awaiting Legal Officer review',
                 'border' => 'border-amber-200',
                 'accent' => 'bg-amber-500',
             ],
             [
-                'label' => 'Approved Clearances',
-                'value' => (int) ($statusCounts[LandTransferApplication::STATUS_APPROVED] ?? 0),
-                'description' => 'Finalized clearance approvals only',
+                'label' => 'In Process',
+                'value' => $countStatuses($activeWorkflowStatuses),
+                'description' => 'Applications moving through DAR clearance stages',
+                'border' => 'border-blue-200',
+                'accent' => 'bg-blue-600',
+            ],
+            [
+                'label' => 'Released Clearances',
+                'value' => $countStatuses([
+                    LandTransferApplication::STATUS_RELEASED,
+                    LandTransferApplication::STATUS_APPROVED,
+                ]),
+                'description' => 'Finalized clearance releases only',
                 'border' => 'border-green-200',
                 'accent' => 'bg-green-600',
             ],
             [
-                'label' => 'Not Approved',
-                'value' => (int) ($statusCounts[LandTransferApplication::STATUS_NOT_APPROVED] ?? 0),
-                'description' => 'Finalized non-approval decisions',
+                'label' => 'Denied',
+                'value' => $countStatuses([
+                    LandTransferApplication::STATUS_DENIED,
+                    LandTransferApplication::STATUS_NOT_APPROVED,
+                ]),
+                'description' => 'Finalized denied application decisions',
                 'border' => 'border-red-200',
                 'accent' => 'bg-red-600',
             ],
         ];
 
         $statusDistribution = collect([
-            LandTransferApplication::STATUS_DRAFT => 'Draft',
-            LandTransferApplication::STATUS_PENDING_REVIEW => 'Pending Review',
-            LandTransferApplication::STATUS_APPROVED => 'Approved Clearances',
-            LandTransferApplication::STATUS_NOT_APPROVED => 'Not Approved',
+            LandTransferApplication::STATUS_PENDING_LEGAL_REVIEW => 'Pending Review by Legal Officer',
+            LandTransferApplication::STATUS_ENDORSED_LTI => 'Endorsed to LTI Division',
+            LandTransferApplication::STATUS_ENDORSED_CHIEF_LEGAL => 'Endorsed to Chief Legal',
+            LandTransferApplication::STATUS_ENDORSED_PARPO => 'Endorsed to PARPO II',
+            LandTransferApplication::STATUS_FOR_RELEASING => 'For Releasing',
+            LandTransferApplication::STATUS_RELEASED => 'Released',
+            LandTransferApplication::STATUS_DENIED => 'Denied',
         ])->map(function ($label, $status) use ($statusCounts, $totalApplications) {
             $count = (int) ($statusCounts[$status] ?? 0);
 

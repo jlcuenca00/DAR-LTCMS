@@ -15,6 +15,24 @@
         </div>
     @endif
 
+    @php
+        $statusLabels = \App\Models\LandTransferApplication::statusLabels();
+        $statusBadges = [
+            \App\Models\LandTransferApplication::STATUS_RELEASED => 'staff-badge-green',
+            \App\Models\LandTransferApplication::STATUS_DENIED => 'staff-badge-red',
+            \App\Models\LandTransferApplication::STATUS_FOR_RELEASING => 'staff-badge-blue',
+            \App\Models\LandTransferApplication::STATUS_ENDORSED_PARPO => 'staff-badge-blue',
+            \App\Models\LandTransferApplication::STATUS_ENDORSED_CHIEF_LEGAL => 'staff-badge-blue',
+            \App\Models\LandTransferApplication::STATUS_ENDORSED_LTI => 'staff-badge-blue',
+            \App\Models\LandTransferApplication::STATUS_PENDING_LEGAL_REVIEW => 'staff-badge-amber',
+
+            // Temporary legacy compatibility during the phased flow revision.
+            \App\Models\LandTransferApplication::STATUS_APPROVED => 'staff-badge-green',
+            \App\Models\LandTransferApplication::STATUS_NOT_APPROVED => 'staff-badge-red',
+            \App\Models\LandTransferApplication::STATUS_PENDING_REVIEW => 'staff-badge-amber',
+        ];
+    @endphp
+
     <section class="staff-panel staff-panel-pad">
         <div class="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
             <div>
@@ -47,7 +65,7 @@
                     <option value="">All statuses</option>
                     @foreach ($statuses as $status)
                         <option value="{{ $status }}" @selected(($filters['status'] ?? '') === $status)>
-                            {{ ucwords(str_replace('_', ' ', $status)) }}
+                            {{ $statusLabels[$status] ?? ucwords(str_replace('_', ' ', $status)) }}
                         </option>
                     @endforeach
                 </select>
@@ -151,15 +169,10 @@
                             </td>
                             <td>
                                 @php
-                                    $badge = match ($application->status) {
-                                        \App\Models\LandTransferApplication::STATUS_APPROVED => 'staff-badge-green',
-                                        \App\Models\LandTransferApplication::STATUS_NOT_APPROVED => 'staff-badge-red',
-                                        \App\Models\LandTransferApplication::STATUS_PENDING_REVIEW => 'staff-badge-amber',
-                                        default => 'staff-badge-slate',
-                                    };
+                                    $badge = $statusBadges[$application->status] ?? 'staff-badge-slate';
                                 @endphp
                                 <span class="staff-badge {{ $badge }}">
-                                    {{ $application->status === 'approved' ? 'Approved Clearance' : ucwords(str_replace('_', ' ', $application->status)) }}
+                                    {{ $application->statusLabel() }}
                                 </span>
                             </td>
                             <td class="whitespace-nowrap">{{ $application->created_at?->timezone('Asia/Manila')->format('M d, Y') ?? 'N/A' }}</td>

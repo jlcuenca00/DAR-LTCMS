@@ -60,7 +60,6 @@ class NotificationSystemTest extends TestCase
         $this->assertNull($notification->fresh()->read_at);
     }
 
-
     public function test_clicking_notification_opens_related_page_and_marks_it_read(): void
     {
         $staffUser = User::factory()->create([
@@ -74,7 +73,7 @@ class NotificationSystemTest extends TestCase
             'transferee_name' => 'Open Transferee',
             'municipality' => 'Dumaguete City',
             'barangay' => 'Bantayan',
-            'status' => LandTransferApplication::STATUS_DRAFT,
+            'status' => LandTransferApplication::STATUS_PENDING_LEGAL_REVIEW,
             'encoded_by' => $staffUser->id,
         ]);
 
@@ -131,9 +130,9 @@ class NotificationSystemTest extends TestCase
 
         SystemNotification::create([
             'user_id' => $user->id,
-            'type' => 'application_submitted',
-            'title' => 'Application submitted for review',
-            'message' => 'Application submitted.',
+            'type' => 'application_status_updated',
+            'title' => 'Application status updated',
+            'message' => 'Application status updated.',
         ]);
 
         $this->actingAs($user)
@@ -167,7 +166,7 @@ class NotificationSystemTest extends TestCase
         ]);
     }
 
-    public function test_application_submission_creates_staff_and_landowner_notifications(): void
+    public function test_application_stage_advancement_creates_staff_and_landowner_notifications(): void
     {
         $staffUser = User::factory()->create([
             'role' => User::ROLE_STAFF,
@@ -187,14 +186,14 @@ class NotificationSystemTest extends TestCase
         ]);
 
         $application = LandTransferApplication::create([
-            'application_code' => 'APP-NOTIF-SUBMIT-001',
+            'application_code' => 'APP-NOTIF-ADVANCE-001',
             'transferor_name' => 'Linked Landowner',
             'transferee_name' => 'Linked Landowner',
             'transferor_landowner_id' => $landowner->id,
             'transferee_landowner_id' => $landowner->id,
             'municipality' => 'Dumaguete City',
             'barangay' => 'Bantayan',
-            'status' => LandTransferApplication::STATUS_DRAFT,
+            'status' => LandTransferApplication::STATUS_PENDING_LEGAL_REVIEW,
             'encoded_by' => $staffUser->id,
         ]);
 
@@ -204,7 +203,7 @@ class NotificationSystemTest extends TestCase
 
         $this->assertDatabaseHas('system_notifications', [
             'user_id' => $staffUser->id,
-            'type' => 'application_submitted',
+            'type' => 'application_status_updated',
         ]);
 
         $this->assertDatabaseHas('system_notifications', [
@@ -213,7 +212,7 @@ class NotificationSystemTest extends TestCase
         ]);
     }
 
-    public function test_final_not_approved_decision_creates_staff_and_landowner_notifications(): void
+    public function test_final_denied_decision_creates_staff_and_landowner_notifications(): void
     {
         $staffUser = User::factory()->create([
             'role' => User::ROLE_STAFF,
@@ -240,20 +239,20 @@ class NotificationSystemTest extends TestCase
             'transferee_landowner_id' => $landowner->id,
             'municipality' => 'Dumaguete City',
             'barangay' => 'Bantayan',
-            'status' => LandTransferApplication::STATUS_PENDING_REVIEW,
+            'status' => LandTransferApplication::STATUS_PENDING_LEGAL_REVIEW,
             'encoded_by' => $staffUser->id,
         ]);
 
         $this->actingAs($staffUser)
             ->post(route('staff.applications.not_approved', $application), [
-                'decision_reason' => 'Incomplete requirements',
+                'decision_reason' => 'Invalid transfer for DAR clearance processing',
                 'decision_notes' => 'Test final decision notification.',
             ])
             ->assertRedirect();
 
         $this->assertDatabaseHas('system_notifications', [
             'user_id' => $staffUser->id,
-            'type' => 'application_not_approved',
+            'type' => 'application_denied',
         ]);
 
         $this->assertDatabaseHas('system_notifications', [

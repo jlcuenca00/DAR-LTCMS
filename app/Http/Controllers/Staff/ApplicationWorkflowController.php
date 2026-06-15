@@ -16,65 +16,91 @@ use Illuminate\Support\Facades\DB;
 class ApplicationWorkflowController extends Controller
 {
     /**
-     * Submit: draft -> pending_review
-     * Allowed even if validations fail (assistive system).
+     * Advance the application through the DAR office workflow.
+     *
+     * Existing route/method name is preserved for compatibility, but the action
+     * now represents stage advancement, not ownership transfer or registry mutation.
      */
     public function submit(LandTransferApplication $application)
     {
         if ($application->isFinalized()) {
-            return back()->withErrors(['status' => 'This application is already finalized and cannot be submitted again.']);
-        }
-
-        if ($application->status !== 'draft') {
-            return back()->withErrors(['status' => 'Only draft applications can be submitted.']);
+            return back()->withErrors(['status' => 'This application is already finalized and cannot be advanced again.']);
         }
 
         $oldStatus = $application->status;
 
-        $application->status = LandTransferApplication::STATUS_PENDING_REVIEW;
+        $nextStatus = match ($application->status) {
+            LandTransferApplication::STATUS_DRAFT,
+            LandTransferApplication::STATUS_PENDING_REVIEW => LandTransferApplication::STATUS_PENDING_LEGAL_REVIEW,
+            default => $application->nextWorkflowStatus(),
+        };
+
+        if (! $nextStatus || $nextStatus === LandTransferApplication::STATUS_RELEASED) {
+            return back()->withErrors(['status' => 'This application cannot be advanced further through this action. Use the release action when the clearance is ready for release.']);
+        }
+
+        $application->status = $nextStatus;
         $application->save();
 
         AuditLogger::record(
-            'application_submitted',
+            'application_status_advanced',
             $application,
             $application,
             [
                 'old_status' => $oldStatus,
                 'new_status' => $application->status,
+                'scope_note' => 'Status advancement only. No ownership transfer or registry mutation performed.',
             ]
         );
 
-        app(NotificationService::class)->notifyStaffApplicationSubmitted($application);
-        app(NotificationService::class)->notifyLinkedLandownersStatusChanged($application, 'submitted for review');
+        $statusLabel = $application->statusLabel();
 
-        return back()->with('success', 'Application submitted for review.');
+        app(NotificationService::class)->notifyActiveStaff(
+            'application_status_updated',
+            'Application status updated',
+            'Application ' . $application->application_code . ' is now ' . $statusLabel . '.',
+            $application,
+            [
+                'application_id' => $application->id,
+                'application_code' => $application->application_code,
+                'old_status' => $oldStatus,
+                'new_status' => $application->status,
+            ]
+        );
+
+        app(NotificationService::class)->notifyLinkedLandownersStatusChanged($application, $statusLabel);
+
+        return back()->with('success', 'Application moved to ' . $statusLabel . '.');
     }
 
     /**
-     * Approve: pending_review -> approved
+     * Release: for_releasing -> released
      *
      * Scope rule:
-     * Approval generates and records a clearance decision only.
+     * Releasing generates and records a clearance result only.
      * It does NOT automatically transfer land ownership or mutate registry records.
      */
     public function approve(Request $request, LandTransferApplication $application)
     {
         if ($application->isFinalized()) {
-            return back()->withErrors(['status' => 'This application already has a final decision and cannot be approved again.']);
+            return back()->withErrors(['status' => 'This application already has a final decision and cannot be released again.']);
         }
 
-        if ($application->status !== 'pending_review') {
-            return back()->withErrors(['status' => 'Only applications pending review can be approved.']);
+        if (! in_array($application->status, [
+            LandTransferApplication::STATUS_FOR_RELEASING,
+            LandTransferApplication::STATUS_PENDING_REVIEW,
+        ], true)) {
+            return back()->withErrors(['status' => 'Only applications marked For Releasing can be released.']);
         }
 
         $approvalErrors = [];
 
         if (! $application->transferor_landowner_id) {
-            $approvalErrors['transferor_landowner_id'] = 'Transferor must be linked to an existing Landowner record before approval.';
+            $approvalErrors['transferor_landowner_id'] = 'Transferor must be linked to an existing Landowner record before release.';
         }
 
         if (! $application->transferee_landowner_id) {
-            $approvalErrors['transferee_landowner_id'] = 'Transferee must be linked to an existing Landowner record before approval.';
+            $approvalErrors['transferee_landowner_id'] = 'Transferee must be linked to an existing Landowner record before release.';
         }
 
         if (! empty($approvalErrors)) {
@@ -85,7 +111,7 @@ class ApplicationWorkflowController extends Controller
 
         if ($hasCriticalFailures) {
             $validationMessages = array_merge([
-                'validation' => 'Resolve the following before approving this clearance:',
+                'validation' => 'Resolve the following before releasing this clearance:',
             ], $validationMessages);
 
             return back()->withErrors($validationMessages);
@@ -95,7 +121,7 @@ class ApplicationWorkflowController extends Controller
             DB::transaction(function () use ($request, $application, $snapshot) {
                 $application = LandTransferApplication::findOrFail($application->id);
 
-                $application->status = 'approved';
+                $application->status = LandTransferApplication::STATUS_RELEASED;
                 $application->reviewed_by = Auth::id();
                 $application->reviewed_at = now();
                 $application->validated_at = now();
@@ -115,7 +141,7 @@ class ApplicationWorkflowController extends Controller
                 $application->save();
 
                 AuditLogger::record(
-                    'application_approved',
+                    'application_released',
                     $application,
                     $application,
                     [
@@ -129,46 +155,58 @@ class ApplicationWorkflowController extends Controller
 
                 app(ApplicationClearanceService::class)->generateForDecision($application, Auth::id());
 
-                app(NotificationService::class)->notifyStaffApplicationApproved($application);
+                app(NotificationService::class)->notifyStaffApplicationReleased($application);
                 app(NotificationService::class)->notifyLinkedLandownersFinalDecision($application);
             });
         } catch (\Throwable $e) {
-            return back()->with('error', 'Approval failed: ' . $e->getMessage());
+            return back()->with('error', 'Release failed: ' . $e->getMessage());
         }
 
-        return back()->with('success', 'Application approved and clearance generated.');
+        return back()->with('success', 'Application released and clearance generated.');
     }
 
     /**
-     * Not Approved: pending_review -> not_approved
-     * Allowed even if validations fail (expected).
+     * Deny: active status -> denied
+     * Requires a reason/remarks and creates a final decision record.
      */
     public function notApproved(Request $request, LandTransferApplication $application)
     {
         if ($application->isFinalized()) {
-            return back()->withErrors(['status' => 'This application already has a final decision and cannot be marked Not Approved again.']);
+            return back()->withErrors(['status' => 'This application already has a final decision and cannot be denied again.']);
         }
 
-        if (! in_array($application->status, ['pending_review', 'draft'], true)) {
-            return back()->withErrors(['status' => 'Only draft or pending review applications can be marked Not Approved.']);
+        if (! in_array($application->status, array_merge(
+            LandTransferApplication::ACTIVE_STATUSES,
+            [LandTransferApplication::STATUS_DRAFT, LandTransferApplication::STATUS_PENDING_REVIEW]
+        ), true)) {
+            return back()->withErrors(['status' => 'Only active applications can be denied.']);
         }
+
+        $request->validate([
+            'decision_reason' => ['required', 'string', 'max:1000'],
+            'decision_notes' => ['nullable', 'string', 'max:4000'],
+        ], [
+            'decision_reason.required' => 'A denial reason is required before marking the application as Denied.',
+        ]);
 
         [$snapshot] = $this->buildValidationSnapshot($application);
 
         try {
             DB::transaction(function () use ($request, $application, $snapshot) {
                 $application = LandTransferApplication::findOrFail($application->id);
-                $application->status = 'not_approved';
+                $application->status = LandTransferApplication::STATUS_DENIED;
                 $application->reviewed_by = Auth::id();
                 $application->reviewed_at = now();
                 $application->validated_at = now();
                 $application->validation_snapshot = $snapshot;
                 $application->decision_reason = $request->input('decision_reason');
                 $application->decision_notes = $request->input('decision_notes');
+                $application->registry_mutated_at = null;
+                $application->registry_mutated_by = null;
                 $application->save();
 
                 AuditLogger::record(
-                    'application_not_approved',
+                    'application_denied',
                     $application,
                     $application,
                     [
@@ -182,14 +220,14 @@ class ApplicationWorkflowController extends Controller
 
                 app(ApplicationClearanceService::class)->generateForDecision($application, Auth::id());
 
-                app(NotificationService::class)->notifyStaffApplicationNotApproved($application);
+                app(NotificationService::class)->notifyStaffApplicationDenied($application);
                 app(NotificationService::class)->notifyLinkedLandownersFinalDecision($application);
             });
         } catch (\Throwable $e) {
-            return back()->with('error', 'Not Approved decision failed: ' . $e->getMessage());
+            return back()->with('error', 'Denied decision failed: ' . $e->getMessage());
         }
 
-        return back()->with('success', 'Application marked as Not Approved and clearance generated.');
+        return back()->with('success', 'Application marked as Denied and decision record generated.');
     }
 
     /**

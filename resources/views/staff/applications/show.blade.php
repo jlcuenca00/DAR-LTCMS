@@ -1406,11 +1406,42 @@
     @php
         $isFinal = $application->isFinalized();
         $lockMsg = 'Application finalized. Uploads, removals, and workflow decisions are locked.';
-        $statusLabel = ucwords(str_replace('_', ' ', $application->status));
+        $statusLabels = method_exists($application, 'statusLabel')
+            ? \App\Models\LandTransferApplication::statusLabels()
+            : [];
+        $statusLabel = method_exists($application, 'statusLabel')
+            ? $application->statusLabel()
+            : ucwords(str_replace('_', ' ', $application->status));
+        $nextWorkflowStatus = method_exists($application, 'nextWorkflowStatus')
+            ? $application->nextWorkflowStatus()
+            : null;
+
+        if (in_array($application->status, ['draft', 'pending_review'], true)) {
+            $nextWorkflowStatus = 'pending_legal_review';
+        }
+
+        $nextWorkflowStatusLabel = $nextWorkflowStatus
+            ? ($statusLabels[$nextWorkflowStatus] ?? ucwords(str_replace('_', ' ', $nextWorkflowStatus)))
+            : null;
+        $canAdvanceWorkflow = ! $isFinal
+            && $nextWorkflowStatus
+            && $nextWorkflowStatus !== 'released';
+        $canRelease = ! $isFinal
+            && in_array($application->status, ['for_releasing', 'pending_review'], true);
+        $canDeny = ! $isFinal
+            && in_array($application->status, [
+                'draft',
+                'pending_review',
+                'pending_legal_review',
+                'endorsed_lti',
+                'endorsed_chief_legal',
+                'endorsed_parpo',
+                'for_releasing',
+            ], true);
         $statusBadgeClass = match ($application->status) {
-            'approved' => 'staff-badge-green',
-            'pending_review' => 'staff-badge-amber',
-            'not_approved' => 'staff-badge-red',
+            'released', 'approved' => 'staff-badge-green',
+            'pending_legal_review', 'endorsed_lti', 'endorsed_chief_legal', 'endorsed_parpo', 'for_releasing', 'pending_review' => 'staff-badge-amber',
+            'denied', 'not_approved' => 'staff-badge-red',
             'draft' => 'staff-badge-slate',
             default => 'staff-badge-slate',
         };
@@ -1460,7 +1491,7 @@
 
         @if ($errors->any())
             <div class="review-alert review-alert-error">
-                <div class="font-bold mb-2">Approval blocked</div>
+                <div class="font-bold mb-2">Workflow action blocked</div>
                 <ul class="list-disc pl-5 space-y-1">
                     @foreach ($errors->all() as $error)
                         <li>{{ $error }}</li>
@@ -1479,7 +1510,7 @@
                                     <h2 class="review-panel-title">Final Decision Locked</h2>
                                     <p class="review-panel-subtitle">
                                         This application already has a final decision. Uploads, document removals, resubmission,
-                                        approval, and not-approved actions are locked for audit integrity.
+                                        release, and denial actions are locked for audit integrity.
                                     </p>
                                 </div>
                                 <span class="staff-badge {{ $statusBadgeClass }}">{{ $statusLabel }}</span>
@@ -1515,11 +1546,11 @@
                             <div class="final-clearance-card">
                                 <div class="final-clearance-title-row">
                                     <div>
-                                        <h2 class="review-panel-title">Generated Clearance</h2>
-                                        <p class="review-panel-subtitle">Clearance output generated from the final decision. This is not an ownership transfer record.</p>
+                                        <h2 class="review-panel-title">Generated Decision Output</h2>
+                                        <p class="review-panel-subtitle">Decision output generated from the final application result. This is not an ownership transfer record.</p>
                                     </div>
-                                    <span class="staff-badge {{ $application->clearance->decision_status === 'approved' ? 'staff-badge-green' : 'staff-badge-red' }}">
-                                        {{ $application->clearance->decision_status === 'approved' ? 'Approved Clearance' : 'Not Approved' }}
+                                    <span class="staff-badge {{ in_array($application->clearance->decision_status, ['released', 'approved'], true) ? 'staff-badge-green' : 'staff-badge-red' }}">
+                                        {{ in_array($application->clearance->decision_status, ['released', 'approved'], true) ? 'Clearance Released' : 'Denied' }}
                                     </span>
                                 </div>
 
@@ -1547,8 +1578,8 @@
                             </div>
                         @else
                             <div class="final-clearance-card">
-                                <h2 class="review-panel-title">Generated Clearance</h2>
-                                <p class="review-panel-subtitle">No generated clearance output is attached yet.</p>
+                                <h2 class="review-panel-title">Generated Decision Output</h2>
+                                <p class="review-panel-subtitle">No generated decision output is attached yet.</p>
                             </div>
                         @endif
                     </div>
@@ -1575,7 +1606,7 @@
                         </div>
                         <div class="summary-item">
                             <p class="summary-label">Status</p>
-                            <p class="summary-value">{{ strtoupper($application->status) }}</p>
+                            <p class="summary-value">{{ $statusLabel }}</p>
                         </div>
                         <div class="summary-item">
                             <p class="summary-label">Transferor</p>
@@ -2173,94 +2204,107 @@
                     <div class="review-note-box">
                         No workflow actions are available because this application is finalized.
                     </div>
-                @elseif ($application->status === 'draft')
-                    <div class="workflow-submit-card">
-                        <span class="workflow-action-icon" aria-hidden="true">
-                            <i class="fa-solid fa-paper-plane"></i>
-                        </span>
-
-                        <div>
-                            <p class="workflow-action-title">Submit application for review</p>
-                            <p class="workflow-action-copy">
-                                Move this draft application to pending review after the available requirements and indexing details have been encoded. This does not approve the clearance.
-                            </p>
-                        </div>
-
-                        <form method="POST" action="{{ route('staff.applications.submit', $application) }}" class="workflow-submit-form">
-                            @csrf
-                            <button type="submit" class="staff-button staff-button-primary">
-                                <i class="fa-solid fa-paper-plane"></i>
-                                Submit for Review
-                            </button>
-                        </form>
-                    </div>
-                @elseif ($application->status === 'pending_review')
+                @elseif ($canAdvanceWorkflow || $canRelease || $canDeny)
                     <div class="workflow-decision-grid">
-                        <form method="POST" action="{{ route('staff.applications.approve', $application) }}" class="workflow-decision-card approve-card" data-decision-confirm="approve">
-                            @csrf
+                        @if ($canAdvanceWorkflow)
+                            <form method="POST" action="{{ route('staff.applications.submit', $application) }}" class="workflow-decision-card approve-card">
+                                @csrf
 
-                            <div class="workflow-decision-heading">
-                                <span class="workflow-action-icon" aria-hidden="true">
+                                <div class="workflow-decision-heading">
+                                    <span class="workflow-action-icon" aria-hidden="true">
+                                        <i class="fa-solid fa-arrow-right"></i>
+                                    </span>
+
+                                    <div>
+                                        <p class="workflow-action-title">Advance to {{ $nextWorkflowStatusLabel }}</p>
+                                        <p class="workflow-action-copy">
+                                            Move this application to the next DAR office workflow stage. This does not approve, release, transfer ownership, or mutate registry records.
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div class="workflow-decision-actions">
+                                    <div class="workflow-decision-note">
+                                        Use this only after the current stage review is complete.
+                                    </div>
+                                </div>
+
+                                <button type="submit" class="staff-button staff-button-primary">
+                                    <i class="fa-solid fa-arrow-right"></i>
+                                    Advance Stage
+                                </button>
+                            </form>
+                        @endif
+
+                        @if ($canRelease)
+                            <form method="POST" action="{{ route('staff.applications.approve', $application) }}" class="workflow-decision-card approve-card" data-decision-confirm="release">
+                                @csrf
+
+                                <div class="workflow-decision-heading">
+                                    <span class="workflow-action-icon" aria-hidden="true">
+                                        <i class="fa-solid fa-check"></i>
+                                    </span>
+
+                                    <div>
+                                        <p class="workflow-action-title">Release clearance</p>
+                                        <p class="workflow-action-copy">
+                                            Generate and record the released clearance result. This does not automatically transfer land ownership or mutate registry records.
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div class="workflow-decision-actions">
+                                    <div class="workflow-form-fields">
+                                        <input type="text" name="decision_reason" placeholder="Reason / basis (optional)" class="review-input">
+                                        <input type="text" name="decision_notes" placeholder="Internal notes (optional)" class="review-input">
+                                    </div>
+
+                                    <div class="workflow-decision-note">
+                                        Use only after PARPO II review/signature and when the clearance is ready for release.
+                                    </div>
+                                </div>
+
+                                <button type="submit" class="staff-button staff-button-primary">
                                     <i class="fa-solid fa-check"></i>
-                                </span>
+                                    Release Clearance
+                                </button>
+                            </form>
+                        @endif
 
-                                <div>
-                                    <p class="workflow-action-title">Approve clearance result</p>
-                                    <p class="workflow-action-copy">
-                                        Generate and record an approved clearance result. This does not automatically transfer land ownership or mutate registry records.
-                                    </p>
+                        @if ($canDeny)
+                            <form method="POST" action="{{ route('staff.applications.not_approved', $application) }}" class="workflow-decision-card not-approved-card" data-decision-confirm="deny">
+                                @csrf
+
+                                <div class="workflow-decision-heading">
+                                    <span class="workflow-action-icon warning" aria-hidden="true">
+                                        <i class="fa-solid fa-xmark"></i>
+                                    </span>
+
+                                    <div>
+                                        <p class="workflow-action-title">Deny application</p>
+                                        <p class="workflow-action-copy">
+                                            Record a final denied decision and lock further editing or upload actions for audit integrity.
+                                        </p>
+                                    </div>
                                 </div>
-                            </div>
 
-                            <div class="workflow-decision-actions">
-                                <div class="workflow-form-fields">
-                                    <input type="text" name="decision_reason" placeholder="Reason / basis (optional)" class="review-input">
-                                    <input type="text" name="decision_notes" placeholder="Internal notes (optional)" class="review-input">
+                                <div class="workflow-decision-actions">
+                                    <div class="workflow-form-fields">
+                                        <input type="text" name="decision_reason" placeholder="Denial reason / basis (required)" class="review-input" required>
+                                        <input type="text" name="decision_notes" placeholder="Internal notes (optional)" class="review-input">
+                                    </div>
+
+                                    <div class="workflow-decision-note">
+                                        This finalizes the application as Denied and preserves the record for monitoring and audit review.
+                                    </div>
                                 </div>
 
-                                <div class="workflow-decision-note">
-                                    Use only after reviewing the encoded details, requirements, and supporting records.
-                                </div>
-                            </div>
-
-                            <button type="submit" class="staff-button staff-button-primary">
-                                <i class="fa-solid fa-check"></i>
-                                Approve Clearance
-                            </button>
-                        </form>
-
-                        <form method="POST" action="{{ route('staff.applications.not_approved', $application) }}" class="workflow-decision-card not-approved-card" data-decision-confirm="not-approved">
-                            @csrf
-
-                            <div class="workflow-decision-heading">
-                                <span class="workflow-action-icon warning" aria-hidden="true">
+                                <button type="submit" class="staff-button staff-button-danger">
                                     <i class="fa-solid fa-xmark"></i>
-                                </span>
-
-                                <div>
-                                    <p class="workflow-action-title">Mark application as not approved</p>
-                                    <p class="workflow-action-copy">
-                                        Record a final non-approval decision and lock further editing or upload actions for audit integrity.
-                                    </p>
-                                </div>
-                            </div>
-
-                            <div class="workflow-decision-actions">
-                                <div class="workflow-form-fields">
-                                    <input type="text" name="decision_reason" placeholder="Reason / basis (optional)" class="review-input">
-                                    <input type="text" name="decision_notes" placeholder="Internal notes (optional)" class="review-input">
-                                </div>
-
-                                <div class="workflow-decision-note">
-                                    This finalizes the application as not approved and preserves the record for monitoring and audit review.
-                                </div>
-                            </div>
-
-                            <button type="submit" class="staff-button staff-button-danger">
-                                <i class="fa-solid fa-xmark"></i>
-                                Mark Not Approved
-                            </button>
-                        </form>
+                                    Mark as Denied
+                                </button>
+                            </form>
+                        @endif
                     </div>
                 @else
                     <div class="review-note-box">
@@ -2297,7 +2341,7 @@
 
                     <div class="review-note-box mt-4">
                         @if ($exceedsFiveHectares)
-                            Projected total exceeds the 5-hectare reference limit based on encoded records. Approval is blocked until records are resolved or the application is marked not approved. This does not automatically decide legal ownership.
+                            Projected total exceeds the 5-hectare reference limit based on encoded records. Release is blocked until records are resolved or the application is marked Denied. This does not automatically decide legal ownership.
                         @else
                             Projected total is within the 5-hectare reference limit based on encoded system records.
                         @endif
@@ -2586,28 +2630,28 @@
             let pendingDecisionForm = null;
 
             const decisionMessages = {
-                approve: {
+                release: {
                     icon: 'fa-check',
                     danger: false,
                     buttonClass: 'staff-button staff-button-primary',
-                    buttonText: 'Approve Clearance',
-                    title: 'Approve this clearance?',
-                    copy: 'This will generate and record an approved clearance result for this application.',
-                    warning: 'Approval records the clearance result only. It does not automatically transfer land ownership or mutate Registry of Deeds records.'
+                    buttonText: 'Release Clearance',
+                    title: 'Release this clearance?',
+                    copy: 'This will generate and record a released clearance result for this application.',
+                    warning: 'Release records the clearance result only. It does not automatically transfer land ownership or mutate Registry of Deeds records.'
                 },
-                'not-approved': {
+                deny: {
                     icon: 'fa-xmark',
                     danger: true,
                     buttonClass: 'staff-button staff-button-danger',
-                    buttonText: 'Mark Not Approved',
-                    title: 'Mark this application as not approved?',
-                    copy: 'This will record a final non-approval decision for this application.',
+                    buttonText: 'Mark as Denied',
+                    title: 'Deny this application?',
+                    copy: 'This will record a final denied decision for this application.',
                     warning: 'This finalizes the application and locks further editing or document uploads for audit integrity.'
                 }
             };
 
             function openDecisionModal(form, type) {
-                const config = decisionMessages[type] || decisionMessages.approve;
+                const config = decisionMessages[type] || decisionMessages.release;
                 pendingDecisionForm = form;
 
                 decisionModalIcon.className = 'decision-modal-icon' + (config.danger ? ' danger' : '');

@@ -71,7 +71,7 @@ class NotificationService
         $this->notifyActiveStaff(
             'application_created',
             'Clearance application encoded',
-            'A clearance application was encoded: ' . $application->application_code . '.',
+            'Application ' . $application->application_code . ' was encoded and placed under ' . $application->statusLabel() . '.',
             $application,
             $this->applicationData($application)
         );
@@ -80,31 +80,31 @@ class NotificationService
     public function notifyStaffApplicationSubmitted(LandTransferApplication $application): void
     {
         $this->notifyActiveStaff(
-            'application_submitted',
-            'Application submitted for review',
-            'Application ' . $application->application_code . ' was submitted for staff review.',
+            'application_status_updated',
+            'Application status updated',
+            'Application ' . $application->application_code . ' is now ' . $application->statusLabel() . '.',
             $application,
             $this->applicationData($application)
         );
     }
 
-    public function notifyStaffApplicationApproved(LandTransferApplication $application): void
+    public function notifyStaffApplicationReleased(LandTransferApplication $application): void
     {
         $this->notifyActiveStaff(
-            'application_approved',
-            'Application approved',
-            'A final approved clearance decision was recorded for application ' . $application->application_code . '.',
+            'application_released',
+            'Clearance released',
+            'A final released clearance decision was recorded for application ' . $application->application_code . '.',
             $application,
             $this->applicationData($application)
         );
     }
 
-    public function notifyStaffApplicationNotApproved(LandTransferApplication $application): void
+    public function notifyStaffApplicationDenied(LandTransferApplication $application): void
     {
         $this->notifyActiveStaff(
-            'application_not_approved',
-            'Application marked not approved',
-            'A final not-approved clearance decision was recorded for application ' . $application->application_code . '.',
+            'application_denied',
+            'Application denied',
+            'A final denied clearance decision was recorded for application ' . $application->application_code . '.',
             $application,
             $this->applicationData($application)
         );
@@ -127,9 +127,7 @@ class NotificationService
     public function notifyLinkedLandownersFinalDecision(LandTransferApplication $application): void
     {
         $users = $this->linkedLandownerUsers($application);
-        $statusLabel = $application->status === LandTransferApplication::STATUS_APPROVED
-            ? 'approved'
-            : 'not approved';
+        $statusLabel = $this->finalDecisionLabel($application);
 
         $this->notifyUsers(
             $users,
@@ -191,10 +189,24 @@ class NotificationService
             'application_id' => $application->id,
             'application_code' => $application->application_code,
             'status' => $application->status,
+            'status_label' => $application->statusLabel(),
             'transferor_name' => $application->transferor_name,
             'transferee_name' => $application->transferee_name,
             'municipality' => $application->municipality,
             'barangay' => $application->barangay,
         ];
+    }
+
+    private function finalDecisionLabel(LandTransferApplication $application): string
+    {
+        return match ($application->status) {
+            LandTransferApplication::STATUS_RELEASED,
+            LandTransferApplication::STATUS_APPROVED => 'Released',
+
+            LandTransferApplication::STATUS_DENIED,
+            LandTransferApplication::STATUS_NOT_APPROVED => 'Denied',
+
+            default => $application->statusLabel(),
+        };
     }
 }

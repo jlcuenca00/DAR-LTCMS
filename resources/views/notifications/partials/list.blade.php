@@ -1,3 +1,37 @@
+@php
+    $notificationTypeLabels = [
+        'application_created' => 'Application encoded',
+        'application_submitted' => 'Application updated',
+        'application_status_updated' => 'Application status updated',
+        'application_approved' => 'Clearance released',
+        'application_released' => 'Clearance released',
+        'application_not_approved' => 'Application denied',
+        'application_denied' => 'Application denied',
+        'document_uploaded' => 'Document uploaded',
+        'document_reviewed' => 'Document reviewed',
+        'source_record_created' => 'Source record created',
+        'source_package_created' => 'Source package created',
+    ];
+
+    $cleanNotificationText = function (?string $value): string {
+        $value = (string) $value;
+
+        return str($value)
+            ->replace('Approved Clearance', 'Released Clearance')
+            ->replace('Approved clearance', 'Released clearance')
+            ->replace('Application approved', 'Clearance released')
+            ->replace('application approved', 'clearance released')
+            ->replace('approved clearance', 'released clearance')
+            ->replace('approved application', 'released application')
+            ->replace('Not Approved', 'Denied')
+            ->replace('not approved', 'denied')
+            ->replace('not-approved', 'denied')
+            ->replace('APPROVED', 'RELEASED')
+            ->replace('NOT APPROVED', 'DENIED')
+            ->toString();
+    };
+@endphp
+
 <div class="space-y-4">
     @if (session('success'))
         <div class="rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm font-semibold text-green-800">
@@ -25,6 +59,12 @@
 
     <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
         @forelse ($notifications as $notification)
+            @php
+                $typeLabel = $notificationTypeLabels[$notification->type] ?? str_replace('_', ' ', $notification->type);
+                $title = $cleanNotificationText($notification->title);
+                $message = $cleanNotificationText($notification->message);
+            @endphp
+
             <div class="flex flex-col gap-4 border-b border-slate-100 p-5 last:border-b-0 md:flex-row md:items-start md:justify-between {{ $notification->read_at ? 'bg-white' : 'bg-green-50/70' }}">
                 <div class="min-w-0 flex-1">
                     <div class="flex flex-wrap items-center gap-2">
@@ -35,17 +75,17 @@
                         @endif
 
                         <span class="text-xs font-bold uppercase tracking-wide text-slate-400">
-                            {{ str_replace('_', ' ', $notification->type) }}
+                            {{ $typeLabel }}
                         </span>
                     </div>
 
                     <a href="{{ route('notifications.open', $notification) }}" class="mt-3 inline-flex items-center gap-2 text-base font-black text-slate-950 hover:text-green-800">
-                        {{ $notification->title }}
+                        {{ $title }}
                         <i class="fa-solid fa-arrow-up-right-from-square text-xs text-slate-400"></i>
                     </a>
 
                     <p class="mt-1 text-sm font-semibold leading-6 text-slate-600">
-                        {{ $notification->message }}
+                        {{ $message }}
                     </p>
 
                     <p class="mt-3 text-xs font-bold text-slate-400">

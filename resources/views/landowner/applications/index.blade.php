@@ -1,22 +1,25 @@
 @php
     use App\Models\LandTransferApplication;
 
-    $statusLabel = function (?string $status): string {
-        return match ($status) {
-            LandTransferApplication::STATUS_APPROVED => 'Approved Clearance',
-            LandTransferApplication::STATUS_NOT_APPROVED => 'Not Approved',
-            LandTransferApplication::STATUS_PENDING_REVIEW => 'Pending Review',
-            LandTransferApplication::STATUS_DRAFT => 'Draft',
-            default => 'N/A',
-        };
-    };
-
     $statusClass = function (?string $status): string {
         return match ($status) {
-            LandTransferApplication::STATUS_APPROVED => 'status-approved',
-            LandTransferApplication::STATUS_NOT_APPROVED => 'status-not-approved',
-            LandTransferApplication::STATUS_PENDING_REVIEW => 'status-pending',
-            default => 'status-draft',
+            LandTransferApplication::STATUS_RELEASED,
+            LandTransferApplication::STATUS_APPROVED => 'status-released',
+
+            LandTransferApplication::STATUS_DENIED,
+            LandTransferApplication::STATUS_NOT_APPROVED => 'status-denied',
+
+            LandTransferApplication::STATUS_ENDORSED_LTI,
+            LandTransferApplication::STATUS_ENDORSED_CHIEF_LEGAL,
+            LandTransferApplication::STATUS_ENDORSED_PARPO => 'status-endorsed',
+
+            LandTransferApplication::STATUS_FOR_RELEASING => 'status-for-releasing',
+
+            LandTransferApplication::STATUS_PENDING_LEGAL_REVIEW,
+            LandTransferApplication::STATUS_PENDING_REVIEW,
+            LandTransferApplication::STATUS_DRAFT => 'status-pending',
+
+            default => 'status-pending',
         };
     };
 @endphp
@@ -169,13 +172,13 @@
                 white-space: nowrap;
             }
 
-            .status-approved {
+            .status-released {
                 background: #dcfce7;
                 border: 1px solid #bbf7d0;
                 color: #166534;
             }
 
-            .status-not-approved {
+            .status-denied {
                 background: #fee2e2;
                 border: 1px solid #fecaca;
                 color: #b91c1c;
@@ -187,10 +190,16 @@
                 color: #c2410c;
             }
 
-            .status-draft {
-                background: #f1f5f9;
-                border: 1px solid #e2e8f0;
-                color: #334155;
+            .status-endorsed {
+                background: #e0f2fe;
+                border: 1px solid #bae6fd;
+                color: #0369a1;
+            }
+
+            .status-for-releasing {
+                background: #ede9fe;
+                border: 1px solid #ddd6fe;
+                color: #6d28d9;
             }
 
             .lo-parcel-tags {
@@ -291,7 +300,7 @@
             <div class="lo-panel-header">
                 <div>
                     <h2 class="lo-panel-title">Linked Applications</h2>
-                    <p class="lo-panel-subtitle">Application status and final decision dates, if already reviewed by DAR staff.</p>
+                    <p class="lo-panel-subtitle">Application status, release/denial date, and final decision output if already finalized by DAR staff.</p>
                 </div>
             </div>
 
@@ -311,7 +320,7 @@
                                     <th>Location</th>
                                     <th>Parcels</th>
                                     <th>Status</th>
-                                    <th>Decision Date</th>
+                                    <th>Release/Denial Date</th>
                                     <th>Decision Output</th>
                                 </tr>
                             </thead>
@@ -335,7 +344,7 @@
                                         </td>
                                         <td>
                                             <span class="lo-status-pill {{ $statusClass($application->status) }}">
-                                                {{ $statusLabel($application->status) }}
+                                                {{ $application->statusLabel() }}
                                             </span>
                                         </td>
                                         <td>{{ $application->reviewed_at?->format('M d, Y') ?? 'Pending' }}</td>

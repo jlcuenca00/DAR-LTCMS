@@ -155,7 +155,6 @@
     </x-slot>
 
     @php
-        $agriculturalStatuses = $agriculturalStatuses ?? \App\Models\Parcel::agriculturalStatusOptions();
         $parcelStatuses = $parcelStatuses ?? [
             'active' => 'Active',
             'inactive' => 'Inactive',
@@ -171,7 +170,7 @@
             <section class="parcel-create-card">
                 <div class="parcel-create-card-header">
                     <h2 class="parcel-create-title">Parcel Information</h2>
-                    <p class="parcel-create-subtitle">Encode the main parcel reference details used by records, applications, and map visualization.</p>
+                    <p class="parcel-create-subtitle">Encode the main agricultural parcel reference details used by records, applications, and map visualization.</p>
                 </div>
 
                 <div class="parcel-create-body">
@@ -208,16 +207,6 @@
                             <label for="area_hectares">Area / Hectares</label>
                             <input id="area_hectares" type="number" step="0.0001" min="0" name="area_hectares" value="{{ old('area_hectares') }}" class="parcel-create-input" placeholder="2.4000">
                             @error('area_hectares')<p class="parcel-create-error">{{ $message }}</p>@enderror
-                        </div>
-
-                        <div class="parcel-create-field">
-                            <label for="agricultural_status">Agricultural Classification</label>
-                            <select id="agricultural_status" name="agricultural_status" class="parcel-create-input">
-                                @foreach ($agriculturalStatuses as $value => $label)
-                                    <option value="{{ $value }}" @selected(old('agricultural_status', \App\Models\Parcel::DEFAULT_AGRICULTURAL_STATUS) === $value)>{{ $label }}</option>
-                                @endforeach
-                            </select>
-                            @error('agricultural_status')<p class="parcel-create-error">{{ $message }}</p>@enderror
                         </div>
                     </div>
                 </div>
@@ -302,7 +291,7 @@
             </section>
 
             <div class="parcel-create-note">
-                Parcel encoding supports DAR record review, monitoring, and map visualization only. It does not transfer ownership or mutate Registry of Deeds records.
+                Parcel encoding is limited to agricultural land records used for DAR clearance review, monitoring, and map visualization. It does not transfer ownership, prove final legal ownership, or mutate Registry of Deeds records.
             </div>
         </aside>
     </form>

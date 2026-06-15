@@ -17,8 +17,19 @@ class ApplicationClearanceService
                 ->lockForUpdate()
                 ->findOrFail($application->id);
 
-            if (!in_array($application->status, ['approved', 'not_approved'], true)) {
-                throw new \RuntimeException('Clearance can only be generated for finalized decisions.');
+            if (! $application->isFinalized()) {
+                throw new \RuntimeException('Clearance can only be generated for finalized clearance decisions.');
+            }
+
+            $allowedDecisionStatuses = [
+                LandTransferApplication::STATUS_RELEASED,
+                LandTransferApplication::STATUS_DENIED,
+                LandTransferApplication::STATUS_APPROVED,
+                LandTransferApplication::STATUS_NOT_APPROVED,
+            ];
+
+            if (! in_array($application->status, $allowedDecisionStatuses, true)) {
+                throw new \RuntimeException('Clearance can only be generated for released/denied decisions.');
             }
 
             $totalArea = '0.0000';

@@ -283,42 +283,60 @@
     @php
         $normalizedStatusCounts = collect($statusCounts ?? []);
         $statusRows = [
-            'pending_review' => [
-                'label' => 'Pending Review',
-                'count' => (int) ($normalizedStatusCounts['pending_review'] ?? 0),
+            'pending_legal_review' => [
+                'label' => 'Pending Review by Legal Officer',
+                'count' => (int) (($normalizedStatusCounts['pending_legal_review'] ?? 0) + ($normalizedStatusCounts['pending_review'] ?? 0) + ($normalizedStatusCounts['draft'] ?? 0)),
                 'class' => 'staff-badge-amber',
             ],
-            'approved' => [
-                'label' => 'Approved Clearances',
-                'count' => (int) ($normalizedStatusCounts['approved'] ?? 0),
+            'endorsed_lti' => [
+                'label' => 'Endorsed to LTI Division',
+                'count' => (int) ($normalizedStatusCounts['endorsed_lti'] ?? 0),
+                'class' => 'staff-badge-blue',
+            ],
+            'endorsed_chief_legal' => [
+                'label' => 'Endorsed to Chief Legal',
+                'count' => (int) ($normalizedStatusCounts['endorsed_chief_legal'] ?? 0),
+                'class' => 'staff-badge-blue',
+            ],
+            'endorsed_parpo' => [
+                'label' => 'Endorsed to PARPO II',
+                'count' => (int) ($normalizedStatusCounts['endorsed_parpo'] ?? 0),
+                'class' => 'staff-badge-blue',
+            ],
+            'for_releasing' => [
+                'label' => 'For Releasing',
+                'count' => (int) ($normalizedStatusCounts['for_releasing'] ?? 0),
+                'class' => 'staff-badge-amber',
+            ],
+            'released' => [
+                'label' => 'Released',
+                'count' => (int) (($normalizedStatusCounts['released'] ?? 0) + ($normalizedStatusCounts['approved'] ?? 0)),
                 'class' => 'staff-badge-green',
             ],
-            'not_approved' => [
-                'label' => 'Not Approved',
-                'count' => (int) ($normalizedStatusCounts['not_approved'] ?? 0),
+            'denied' => [
+                'label' => 'Denied',
+                'count' => (int) (($normalizedStatusCounts['denied'] ?? 0) + ($normalizedStatusCounts['not_approved'] ?? 0)),
                 'class' => 'staff-badge-red',
             ],
-            'draft' => [
-                'label' => 'Draft',
-                'count' => (int) ($normalizedStatusCounts['draft'] ?? 0),
-                'class' => 'staff-badge-slate',
-            ],
         ];
 
-        $statusDisplay = [
-            'approved' => 'Approved Clearance',
-            'not_approved' => 'Not Approved',
-            'pending_review' => 'Pending Review',
-            'draft' => 'Draft',
-        ];
+        $statusClassFor = function (?string $status): string {
+            return match ($status) {
+                'released', 'approved' => 'staff-badge-green',
+                'denied', 'not_approved' => 'staff-badge-red',
+                'pending_legal_review', 'pending_review', 'draft', 'for_releasing' => 'staff-badge-amber',
+                'endorsed_lti', 'endorsed_chief_legal', 'endorsed_parpo' => 'staff-badge-blue',
+                default => 'staff-badge-slate',
+            };
+        };
 
-        $normalizedAgriculturalStatusBreakdown = collect($agriculturalStatusBreakdown ?? []);
-        $agriculturalStatusOptions = $agriculturalStatusOptions ?? \App\Models\Parcel::agriculturalStatusOptions();
-        $agriculturalStatusRows = collect($agriculturalStatusOptions)->map(fn ($label, $key) => [
-            'key' => $key,
-            'label' => $label,
-            'count' => (int) ($normalizedAgriculturalStatusBreakdown[$key] ?? 0),
-        ]);
+        $decisionLabelFor = function (?string $status): string {
+            return match ($status) {
+                'released', 'approved' => 'Released Clearance',
+                'denied', 'not_approved' => 'Denied',
+                default => $status ? ucwords(str_replace('_', ' ', $status)) : 'Recorded',
+            };
+        };
     @endphp
 
     <div class="reports-page">
@@ -326,7 +344,7 @@
             <div>
                 <h2 class="report-hero-title">Monitoring Overview</h2>
                 <p class="report-hero-copy">
-                    Review clearance application counts, generated outputs, parcel classification context, and recent records for office monitoring.
+                    Review clearance application stages, released or denied outputs, municipal distribution, and recent records for office monitoring.
                 </p>
             </div>
             <div class="report-hero-actions">
@@ -349,18 +367,18 @@
 
             <article class="report-metric-card">
                 <div>
-                    <p class="report-metric-label">Pending Review</p>
-                    <p class="report-metric-value text-amber-700">{{ number_format($statusRows['pending_review']['count']) }}</p>
-                    <p class="report-metric-description">Applications awaiting staff-side review or decision.</p>
+                    <p class="report-metric-label">Legal Review</p>
+                    <p class="report-metric-value text-amber-700">{{ number_format($statusRows['pending_legal_review']['count']) }}</p>
+                    <p class="report-metric-description">Applications waiting for Legal Officer review before endorsement.</p>
                 </div>
                 <div class="report-metric-icon amber"><i class="fa-solid fa-clock"></i></div>
             </article>
 
             <article class="report-metric-card">
                 <div>
-                    <p class="report-metric-label">Generated Clearances</p>
+                    <p class="report-metric-label">Recorded Results</p>
                     <p class="report-metric-value text-green-700">{{ number_format($totalClearances) }}</p>
-                    <p class="report-metric-description">Clearance outputs generated and recorded by the system.</p>
+                    <p class="report-metric-description">Released or denied clearance results generated and recorded by the system.</p>
                 </div>
                 <div class="report-metric-icon green"><i class="fa-solid fa-file-circle-check"></i></div>
             </article>
@@ -369,7 +387,7 @@
                 <div>
                     <p class="report-metric-label">Total Clearance Area</p>
                     <p class="report-metric-value">{{ number_format((float) $totalClearanceArea, 4) }}</p>
-                    <p class="report-metric-description">Hectares recorded in generated clearance outputs.</p>
+                    <p class="report-metric-description">Hectares recorded in generated release/denial outputs.</p>
                 </div>
                 <div class="report-metric-icon blue"><i class="fa-solid fa-chart-area"></i></div>
             </article>
@@ -379,8 +397,8 @@
             <article class="report-panel">
                 <div class="report-panel-header">
                     <div>
-                        <h2 class="report-panel-title">Application Status</h2>
-                        <p class="report-panel-subtitle">Current workflow count by application status.</p>
+                        <h2 class="report-panel-title">Application Workflow Stage</h2>
+                        <p class="report-panel-subtitle">Current count by actual DAR clearance processing stage.</p>
                     </div>
                     <span class="report-panel-count">{{ number_format($totalApplications) }} total</span>
                 </div>
@@ -419,19 +437,25 @@
             <article class="report-panel">
                 <div class="report-panel-header">
                     <div>
-                        <h2 class="report-panel-title">Agricultural Status Summary</h2>
-                        <p class="report-panel-subtitle">Parcel classification context for DAR record monitoring.</p>
+                        <h2 class="report-panel-title">DAR Clearance Scope</h2>
+                        <p class="report-panel-subtitle">Scope reminders for interpreting monitoring results.</p>
                     </div>
-                    <span class="report-panel-count">Parcel records</span>
+                    <span class="report-panel-count">Administrative only</span>
                 </div>
 
                 <div class="report-list">
-                    @foreach ($agriculturalStatusRows as $row)
-                        <div class="report-list-row">
-                            <span class="report-list-label">{{ $row['label'] }}</span>
-                            <span class="staff-badge staff-badge-slate">{{ number_format($row['count']) }}</span>
-                        </div>
-                    @endforeach
+                    <div class="report-list-row">
+                        <span class="report-list-label">DAR Land Transfer Clearance applies to agricultural lands only.</span>
+                        <span class="staff-badge staff-badge-green">Scope</span>
+                    </div>
+                    <div class="report-list-row">
+                        <span class="report-list-label">OCT, TCT, CLOA, and EP are title/reference types, not clearance status choices.</span>
+                        <span class="staff-badge staff-badge-blue">Reference</span>
+                    </div>
+                    <div class="report-list-row">
+                        <span class="report-list-label">Release or denial records do not automatically transfer ownership or mutate registry records.</span>
+                        <span class="staff-badge staff-badge-slate">Limit</span>
+                    </div>
                 </div>
             </article>
         </section>
@@ -458,12 +482,7 @@
                         <tbody>
                             @forelse ($recentApplications as $application)
                                 @php
-                                    $statusClass = match ($application->status) {
-                                        'approved' => 'staff-badge-green',
-                                        'not_approved' => 'staff-badge-red',
-                                        'pending_review' => 'staff-badge-amber',
-                                        default => 'staff-badge-slate',
-                                    };
+                                    $statusClass = $statusClassFor($application->status);
                                 @endphp
                                 <tr>
                                     <td>
@@ -477,7 +496,7 @@
                                     </td>
                                     <td>
                                         <span class="staff-badge {{ $statusClass }}">
-                                            {{ $statusDisplay[$application->status] ?? ucwords(str_replace('_', ' ', $application->status)) }}
+                                            {{ method_exists($application, 'statusLabel') ? $application->statusLabel() : $decisionLabelFor($application->status) }}
                                         </span>
                                     </td>
                                     <td>{{ $application->municipality ?? 'N/A' }}</td>
@@ -495,8 +514,8 @@
             <article class="report-panel">
                 <div class="report-panel-header">
                     <div>
-                        <h2 class="report-panel-title">Recent Generated Clearances</h2>
-                        <p class="report-panel-subtitle">Latest generated clearance outputs. These are not automatic ownership transfers.</p>
+                        <h2 class="report-panel-title">Recent Release / Denial Outputs</h2>
+                        <p class="report-panel-subtitle">Latest generated clearance results. These are not automatic ownership transfers.</p>
                     </div>
                 </div>
 
@@ -505,7 +524,7 @@
                         <thead>
                             <tr>
                                 <th>Clearance No.</th>
-                                <th>Decision</th>
+                                <th>Result</th>
                                 <th>Area</th>
                                 <th>Generated</th>
                             </tr>
@@ -515,8 +534,8 @@
                                 <tr>
                                     <td class="font-bold text-gray-900 whitespace-nowrap">{{ $clearance->clearance_number }}</td>
                                     <td>
-                                        <span class="staff-badge {{ $clearance->decision_status === 'approved' ? 'staff-badge-green' : 'staff-badge-red' }}">
-                                            {{ $clearance->decision_status === 'approved' ? 'Approved Clearance' : ucwords(str_replace('_', ' ', $clearance->decision_status)) }}
+                                        <span class="staff-badge {{ $statusClassFor($clearance->decision_status) }}">
+                                            {{ $decisionLabelFor($clearance->decision_status) }}
                                         </span>
                                     </td>
                                     <td>{{ number_format((float) $clearance->total_area_hectares, 4) }} ha</td>

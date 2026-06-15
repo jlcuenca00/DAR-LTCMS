@@ -265,20 +265,19 @@
             </div>
         @endif
 
-        <form method="POST" action="{{ route('staff.applications.store') }}" class="form-shell" data-autosave-key="clearance-application-create" data-autosave-label="clearance application draft">
+        <form method="POST" action="{{ route('staff.applications.store') }}" class="form-shell" data-autosave-key="clearance-application-create" data-autosave-label="clearance application record">
             @csrf
 
             <div class="form-header">
                 <div>
                     <h2>New Clearance Application Record</h2>
                     <p>
-                        Encode the parties, location, filing dates, and optional parcel reference. The record starts as a draft
-                        until submitted for review.
+                        Encode the parties, location, filing dates, and optional parcel reference. The record will start under Pending Review by Legal Officer after saving.
                     </p>
                 </div>
                 <span class="draft-pill">
                     <i class="fa-solid fa-file-pen"></i>
-                    Draft Record
+                    Pending Legal Review
                 </span>
             </div>
 
@@ -383,7 +382,7 @@
                 <div class="scope-alert">
                     <i class="fa-solid fa-triangle-exclamation"></i>
                     <div>
-                        Linked parcels support application review and monitoring only. Creating this application does not transfer ownership or change registry records.
+                        Linked parcels support application review and monitoring only. Creating this application does not transfer ownership, change parcel ownership linkage, or mutate Registry of Deeds records.
                     </div>
                 </div>
 
@@ -429,7 +428,7 @@
 
             <div class="form-footer">
                 <p class="footer-note">
-                    Saving creates a draft clearance application record. Submission, review, approval, not-approval, and clearance generation remain separate staff actions.
+                    Saving creates a clearance application record under Pending Review by Legal Officer. Endorsement, release, denial, and clearance output generation remain separate staff actions.
                 </p>
 
                 <div class="footer-actions">
@@ -438,7 +437,7 @@
                     </a>
                     <button type="submit" class="staff-button staff-button-primary">
                         <i class="fa-solid fa-floppy-disk"></i>
-                        Save Draft Application
+                        Save Application Record
                     </button>
                 </div>
             </div>

@@ -315,7 +315,7 @@ public function store(Request $request)
             'date_filed' => $validated['date_filed'] ?? null,
             'date_of_transfer' => $validated['date_of_transfer'] ?? null,
             'remarks' => $validated['remarks'] ?? null,
-            'status' => LandTransferApplication::STATUS_DRAFT,
+            'status' => LandTransferApplication::STATUS_PENDING_LEGAL_REVIEW,
             'encoded_by' => Auth::id(),
         ]);
 
@@ -349,13 +349,13 @@ public function store(Request $request)
 
     return redirect()
         ->route('staff.applications.show', $application)
-        ->with('success', 'Application encoded successfully. It remains a draft until submitted for review.');
+        ->with('success', 'Application encoded successfully and placed under Pending Review by Legal Officer.');
 }
 
 private function generateApplicationCode(): string
 {
     $year = now()->format('Y');
-    $prefix = "APP-{$year}-";
+    $prefix = "{$year}-";
 
     $nextNumber = LandTransferApplication::query()
         ->where('application_code', 'LIKE', $prefix . '%')

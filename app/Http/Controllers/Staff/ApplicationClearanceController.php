@@ -12,12 +12,12 @@ class ApplicationClearanceController extends Controller
     {
         $application->load('clearance');
 
-        if (!in_array($application->status, ['approved', 'not_approved'], true)) {
-            return back()->with('error', 'Clearance is only available for finalized applications.');
+        if (! $application->isFinalized()) {
+            return back()->with('error', 'Decision output is only available for released or denied applications.');
         }
 
-        if (!$application->clearance) {
-            return back()->with('error', 'Clearance record not found for this application.');
+        if (! $application->clearance) {
+            return back()->with('error', 'Decision output record not found for this application.');
         }
 
         return view('staff.clearances.show', [
@@ -30,12 +30,12 @@ class ApplicationClearanceController extends Controller
     {
         $application->load('clearance');
 
-        if (!in_array($application->status, ['approved', 'not_approved'], true)) {
-            return back()->with('error', 'Clearance is only available for finalized applications.');
+        if (! $application->isFinalized()) {
+            return back()->with('error', 'Decision output is only available for released or denied applications.');
         }
 
-        if (!$application->clearance) {
-            return back()->with('error', 'Clearance record not found for this application.');
+        if (! $application->clearance) {
+            return back()->with('error', 'Decision output record not found for this application.');
         }
 
         $pdf = Pdf::loadView('staff.clearances.pdf', [

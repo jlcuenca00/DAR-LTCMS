@@ -5,20 +5,35 @@
 
     $statusLabel = function (?string $status): string {
         return match ($status) {
-            LandTransferApplication::STATUS_APPROVED => 'Approved Clearance',
-            LandTransferApplication::STATUS_NOT_APPROVED => 'Not Approved',
-            LandTransferApplication::STATUS_PENDING_REVIEW => 'Pending Review',
-            LandTransferApplication::STATUS_DRAFT => 'Draft',
-            default => 'N/A',
+            LandTransferApplication::STATUS_PENDING_LEGAL_REVIEW => 'Pending Review by Legal Officer',
+            LandTransferApplication::STATUS_ENDORSED_LTI => 'Endorsed to LTI Division',
+            LandTransferApplication::STATUS_ENDORSED_CHIEF_LEGAL => 'Endorsed to Chief Legal',
+            LandTransferApplication::STATUS_ENDORSED_PARPO => 'Endorsed to PARPO II',
+            LandTransferApplication::STATUS_FOR_RELEASING => 'For Releasing',
+            LandTransferApplication::STATUS_RELEASED,
+            LandTransferApplication::STATUS_APPROVED => 'Released',
+            LandTransferApplication::STATUS_DENIED,
+            LandTransferApplication::STATUS_NOT_APPROVED => 'Denied',
+            LandTransferApplication::STATUS_PENDING_REVIEW,
+            LandTransferApplication::STATUS_DRAFT => 'Pending Review by Legal Officer',
+            default => $status ? str($status)->replace('_', ' ')->title()->toString() : 'N/A',
         };
     };
 
     $statusClass = function (?string $status): string {
         return match ($status) {
-            LandTransferApplication::STATUS_APPROVED => 'status-approved',
-            LandTransferApplication::STATUS_NOT_APPROVED => 'status-not-approved',
-            LandTransferApplication::STATUS_PENDING_REVIEW => 'status-pending',
-            default => 'status-draft',
+            LandTransferApplication::STATUS_RELEASED,
+            LandTransferApplication::STATUS_APPROVED => 'status-released',
+            LandTransferApplication::STATUS_DENIED,
+            LandTransferApplication::STATUS_NOT_APPROVED => 'status-denied',
+            LandTransferApplication::STATUS_ENDORSED_LTI,
+            LandTransferApplication::STATUS_ENDORSED_CHIEF_LEGAL,
+            LandTransferApplication::STATUS_ENDORSED_PARPO => 'status-endorsed',
+            LandTransferApplication::STATUS_FOR_RELEASING => 'status-releasing',
+            LandTransferApplication::STATUS_PENDING_LEGAL_REVIEW,
+            LandTransferApplication::STATUS_PENDING_REVIEW,
+            LandTransferApplication::STATUS_DRAFT => 'status-pending',
+            default => 'status-pending',
         };
     };
 @endphp
@@ -227,13 +242,14 @@
                 white-space: nowrap;
             }
 
+            .status-released,
             .status-approved {
                 background: #dcfce7;
                 border: 1px solid #bbf7d0;
                 color: #166534;
             }
 
-            .status-not-approved {
+            .status-denied {
                 background: #fee2e2;
                 border: 1px solid #fecaca;
                 color: #b91c1c;
@@ -243,6 +259,18 @@
                 background: #ffedd5;
                 border: 1px solid #fed7aa;
                 color: #c2410c;
+            }
+
+            .status-endorsed {
+                background: #e0f2fe;
+                border: 1px solid #bae6fd;
+                color: #0369a1;
+            }
+
+            .status-releasing {
+                background: #ede9fe;
+                border: 1px solid #ddd6fe;
+                color: #6d28d9;
             }
 
             .status-draft {

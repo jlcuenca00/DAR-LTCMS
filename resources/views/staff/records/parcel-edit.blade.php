@@ -224,7 +224,6 @@
     </x-slot>
 
     @php
-        $agriculturalStatuses = $agriculturalStatuses ?? \App\Models\Parcel::agriculturalStatusOptions();
         $parcelStatuses = $parcelStatuses ?? [
             'active' => 'Active',
             'inactive' => 'Inactive',
@@ -232,7 +231,6 @@
             'flagged' => 'Flagged for Review',
         ];
 
-        $agriculturalStatusLabel = \App\Models\Parcel::agriculturalStatusLabel(old('agricultural_status', $parcel->agricultural_status ?? 'not_yet_determined'));
         $currentStatusLabel = $parcel->status ? ucwords(str_replace('_', ' ', $parcel->status)) : 'Status N/A';
     @endphp
 
@@ -331,9 +329,9 @@
                     </div>
 
                     <div class="parcel-edit-body">
-                        <div class="parcel-create-field">
+                        <div class="parcel-edit-field">
                         <label for="reference_photo">Reference Photo / Scan</label>
-                        <input id="reference_photo" type="file" name="reference_photo" accept="image/*" class="parcel-create-input">
+                        <input id="reference_photo" type="file" name="reference_photo" accept="image/*" class="parcel-edit-input">
                         <p class="mt-1 text-xs leading-relaxed text-gray-500">Optional photo/scan of the title, tax declaration, sketch, or reference sheet used for encoding.</p>
                     </div>
 
@@ -356,13 +354,12 @@
 
                     <div class="parcel-edit-badges">
                         <span class="staff-badge {{ $parcel->status === 'active' ? 'staff-badge-green' : 'staff-badge-slate' }}">{{ $currentStatusLabel }}</span>
-                        <span class="staff-badge staff-badge-slate">{{ $agriculturalStatusLabel }}</span>
                     </div>
                 </section>
 
                 <section class="parcel-save-card">
                     <h3 class="parcel-edit-title">Save Changes</h3>
-                    <p class="parcel-edit-subtitle">Agricultural status changes are audit logged for traceability.</p>
+                    <p class="parcel-edit-subtitle">Updates are audit logged for administrative traceability and record integrity.</p>
 
                     <div class="parcel-save-actions">
                         <button type="submit" class="staff-button staff-button-primary justify-center">
@@ -376,7 +373,7 @@
                 </section>
 
                 <div class="parcel-edit-note">
-                    This classification supports DAR record review and monitoring only. It does not approve a transfer, assign ownership, or mutate registry records.
+                    Parcel records support DAR clearance review, monitoring, map visualization, and source/reference checking only. Saving this record does not transfer ownership, assign ownership, or mutate Registry of Deeds records.
                 </div>
             </aside>
         </form>

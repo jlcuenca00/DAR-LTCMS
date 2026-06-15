@@ -1,16 +1,15 @@
 <x-staff-shell
     title="Parcel Records"
-    subtitle="Search and review main parcel records used for clearance reference checking, monitoring, and map display."
+    subtitle="Search and review agricultural parcel records used for clearance reference checking, monitoring, and map display."
     active="parcel-records"
 >
-    @php($agriculturalStatuses = $agriculturalStatuses ?? \App\Models\Parcel::agriculturalStatusOptions())
 <span class="sr-only">Staff Parcel Record Search</span>
 
     <section class="staff-panel staff-panel-pad">
         <div class="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
             <div>
                 <h2 class="staff-panel-title">Search and Filter Parcels</h2>
-                <p class="staff-panel-subtitle">Filter parcel records by code, title number, tax declaration number, location, status, or remarks.</p>
+                <p class="staff-panel-subtitle">Filter parcel records by code, title number, tax declaration number, location, record status, or remarks.</p>
             </div>
             <p class="text-sm font-bold text-gray-500">{{ $parcels->total() }} record(s)</p>
         </div>
@@ -39,19 +38,11 @@
                 </select>
             </div>
             <div>
-                <label class="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">Status</label>
+                <label class="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">Record Status</label>
                 <select name="status" class="w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-green-600 focus:ring-green-600">
-                    <option value="">All statuses</option>
+                    <option value="">All record statuses</option>
                     @foreach ($statuses as $status)
                         <option value="{{ $status }}" @selected(($filters['status'] ?? '') === $status)>{{ ucwords(str_replace('_', ' ', $status)) }}</option>
-                    @endforeach
-                </select>
-            </div>            <div>
-                <label class="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">Agricultural Status</label>
-                <select name="agricultural_status" class="w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-green-600 focus:ring-green-600">
-                    <option value="">All classifications</option>
-                    @foreach ($agriculturalStatuses as $value => $label)
-                        <option value="{{ $value }}" @selected(($filters['agricultural_status'] ?? '') === $value)>{{ $label }}</option>
                     @endforeach
                 </select>
             </div>
@@ -60,6 +51,18 @@
                 <a href="{{ route('staff.records.parcels.index') }}" class="staff-button staff-button-light">Reset</a>
             </div>
         </form>
+    </section>
+
+    <section class="staff-panel staff-panel-pad border border-emerald-100 bg-emerald-50/60">
+        <div class="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
+            <div>
+                <h2 class="text-sm font-black uppercase tracking-[0.18em] text-emerald-800">DAR Clearance Scope</h2>
+                <p class="mt-2 text-sm leading-6 text-emerald-900">
+                    Parcel records in this module are maintained as agricultural land records for DAR clearance review, monitoring, source/reference matching, and map visualization. OCT, TCT, CLOA, and EP references should be treated as title or document references, not parcel classification workflows.
+                </p>
+            </div>
+            <span class="staff-badge staff-badge-green whitespace-nowrap">Agricultural Land Records</span>
+        </div>
     </section>
 
     <section class="staff-panel overflow-hidden">
@@ -91,7 +94,7 @@
                         <th>Title / Tax Declaration</th>
                         <th>Location</th>
                         <th>Area</th>
-                        <th>Status</th>
+                        <th>Record Status</th>
                         <th>Map Data</th>
                         <th class="text-right">Action</th>
                     </tr>
@@ -114,9 +117,6 @@
                             <td class="whitespace-nowrap">{{ $parcel->area_hectares ? number_format((float) $parcel->area_hectares, 4) . ' ha' : 'N/A' }}</td>
                             <td>
                                 <span class="staff-badge {{ $parcel->status === 'active' ? 'staff-badge-green' : 'staff-badge-slate' }}">{{ ucwords(str_replace('_', ' ', $parcel->status ?? 'Unspecified')) }}</span>
-                                <div class="mt-1">
-                                    <span class="staff-badge staff-badge-slate">{{ $parcel->agricultural_status_label }}</span>
-                                </div>
                             </td>
                             <td><span class="staff-badge {{ $parcel->geometry_geojson ? 'staff-badge-blue' : 'staff-badge-slate' }}">{{ $parcel->geometry_geojson ? 'Mapped' : 'No Geometry' }}</span></td>
                             <td class="text-right">

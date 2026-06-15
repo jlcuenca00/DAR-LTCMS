@@ -151,10 +151,6 @@
                 line-height: 1.4;
             }
 
-            .parcel-meta-card.is-agricultural-status {
-                border-color: #d1fae5;
-                background: #f7fef9;
-            }
 
             .parcel-remarks-box {
                 margin-top: 12px;
@@ -595,8 +591,6 @@
         $sourcePackages = $parcel->sourceRecordPackages ?? collect();
         $legacyRecords = $parcel->legacyRecords ?? collect();
         $attachedSourceCount = $sourcePackages->count() + $legacyRecords->count();
-        $agriculturalStatusLabel = $parcel->agricultural_status_label
-            ?? \App\Models\Parcel::agriculturalStatusLabel($parcel->agricultural_status ?? null);
     @endphp
 
     <div class="parcel-page-stack">
@@ -625,9 +619,6 @@
                             {{ $parcel->geometry_geojson ? 'Mapped Geometry' : 'No Geometry' }}
                         </span>
 
-                        <span data-agricultural-status-display class="staff-badge staff-badge-slate">
-                            Agricultural: {{ $agriculturalStatusLabel }}
-                        </span>
                     </div>
                 </div>
 
@@ -658,7 +649,7 @@
                 <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-3 mb-5">
                     <div>
                         <h3 class="staff-panel-title">Parcel Reference Information</h3>
-                        <p class="staff-panel-subtitle">Core encoded reference values used for application review, source matching, and map display.</p>
+                        <p class="staff-panel-subtitle">Core encoded reference values used for DAR clearance review, source matching, and map display. This page does not execute ownership transfer or registry mutation.</p>
                     </div>
                 </div>
 
@@ -678,10 +669,10 @@
                         <p class="parcel-meta-value">{{ number_format((float) $parcel->area_hectares, 4) }} hectares</p>
                     </div>
 
-                    <div class="parcel-meta-card is-agricultural-status">
-                        <p class="parcel-meta-label">Agricultural Status</p>
-                        <p class="parcel-meta-value">{{ $agriculturalStatusLabel }}</p>
-                        <p class="parcel-meta-subvalue">DAR record classification.</p>
+                    <div class="parcel-meta-card">
+                        <p class="parcel-meta-label">DAR Clearance Scope</p>
+                        <p class="parcel-meta-value">Agricultural land record</p>
+                        <p class="parcel-meta-subvalue">For clearance review, monitoring, source matching, and map reference only.</p>
                     </div>
 
                     <div class="parcel-meta-card">

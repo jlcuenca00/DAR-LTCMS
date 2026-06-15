@@ -6,10 +6,18 @@
     <title>{{ $clearance->clearance_number }} | Decision Output</title>
 
     @php
-        $decisionLabel = $clearance->decision_status === 'approved'
-            ? 'Approved Clearance'
-            : ucwords(str_replace('_', ' ', $clearance->decision_status));
-        $decisionClass = strtolower((string) $clearance->decision_status) === 'approved' ? 'approved' : 'not-approved';
+        $rawDecisionStatus = strtolower((string) $clearance->decision_status);
+
+        $decisionLabel = match ($rawDecisionStatus) {
+            'released', 'approved' => 'Released Clearance',
+            'denied', 'not_approved' => 'Denied',
+            default => ucwords(str_replace('_', ' ', $rawDecisionStatus)),
+        };
+
+        $decisionClass = in_array($rawDecisionStatus, ['released', 'approved'], true)
+            ? 'released'
+            : 'denied';
+
         $reviewedAt = optional($clearance->reviewed_at)->timezone('Asia/Manila');
         $generatedAt = optional($clearance->generated_at)->timezone('Asia/Manila');
 
@@ -278,12 +286,12 @@
             background: #f0fdf4;
         }
 
-        .decision-box.not-approved {
+        .decision-box.denied {
             border-color: #dc2626;
             background: #fef2f2;
         }
 
-        .decision-box.not-approved .decision-label {
+        .decision-box.denied .decision-label {
             color: #991b1b;
         }
 
@@ -303,11 +311,11 @@
             text-transform: uppercase;
         }
 
-        .decision-box.not-approved .decision-value {
+        .decision-box.denied .decision-value {
             color: #b91c1c;
         }
 
-        .decision-box.not-approved .decision-note {
+        .decision-box.denied .decision-note {
             color: #7f1d1d;
         }
 
@@ -591,7 +599,7 @@
                 <div class="decision-box {{ $decisionClass }}">
                     <div class="decision-label">Recorded Application Decision</div>
                     <div class="decision-value">{{ $decisionLabel }}</div>
-                    <div class="decision-note">Decision status is locked in the system for auditability and monitoring.</div>
+                    <div class="decision-note">Release/denial result is locked in the system for auditability and monitoring.</div>
                 </div>
                 <div class="info-card">
                     <h2 class="info-card-title">Output Metadata</h2>
@@ -668,7 +676,7 @@
             <section class="section">
                 <h2 class="section-title">Certification Statement</h2>
                 <p class="certification">
-                    This document certifies that the above land transfer clearance application has been processed through the Department of Agrarian Reform Land Transfer Clearance and Monitoring System. The decision shown in this record reflects the finalized administrative decision stored in the system for monitoring, documentation, and audit reference only.
+                    This document certifies that the above land transfer clearance application has been processed through the Department of Agrarian Reform Land Transfer Clearance and Monitoring System. The decision shown in this record reflects the finalized administrative clearance result stored in the system for monitoring, documentation, and audit reference only.
                 </p>
             </section>
 

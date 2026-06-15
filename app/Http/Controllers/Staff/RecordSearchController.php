@@ -104,7 +104,6 @@ class RecordSearchController extends Controller
             'municipality' => ['nullable', 'string', 'max:255'],
             'barangay' => ['nullable', 'string', 'max:255'],
             'status' => ['nullable', 'string', 'max:50'],
-            'agricultural_status' => ['nullable', 'string', Rule::in(array_keys(Parcel::AGRICULTURAL_STATUSES))],
         ]);
 
         $parcelsQuery = Parcel::query()
@@ -133,13 +132,6 @@ class RecordSearchController extends Controller
             $parcelsQuery->where('status', $filters['status']);
         }
 
-        if (! empty($filters['agricultural_status'])) {
-            $parcelsQuery->where('agricultural_status', $filters['agricultural_status']);
-        }
-
-        if (($filters['agricultural_status'] ?? null) !== null && $filters['agricultural_status'] !== '') {
-            $parcelsQuery->where('agricultural_status', $filters['agricultural_status']); // automatic agricultural status index filter
-        }
 
         $parcels = $parcelsQuery
             ->paginate(15)
@@ -169,22 +161,18 @@ class RecordSearchController extends Controller
             ->orderBy('status')
             ->pluck('status');
 
-        $agriculturalStatuses = Parcel::agriculturalStatusOptions();
-
         return view('staff.records.parcels', compact(
             'parcels',
             'filters',
             'municipalities',
             'barangays',
-            'statuses',
-            'agriculturalStatuses'
+            'statuses'
         ));
     }
 
     public function createParcel()
     {
         return view('staff.records.parcel-create', [
-            'agriculturalStatuses' => Parcel::agriculturalStatusOptions(),
             'parcelStatuses' => [
                 'active' => 'Active',
                 'inactive' => 'Inactive',
@@ -205,14 +193,15 @@ class RecordSearchController extends Controller
             'barangay' => ['nullable', 'string', 'max:255'],
             'area_hectares' => ['nullable', 'numeric', 'min:0', 'max:999999.9999'],
             'status' => ['required', Rule::in(['active', 'inactive', 'linked_application', 'flagged'])],
-            'agricultural_status' => ['nullable', Rule::in(array_keys(Parcel::AGRICULTURAL_STATUSES))],
             'geometry_geojson' => ['nullable', 'json'],
             'remarks' => ['nullable', 'string', 'max:5000'],
             'reference_photo' => ['nullable', 'image', 'max:5120'],
         ]);
 
         $data['province'] = $data['province'] ?: 'Negros Oriental';
-        $data['agricultural_status'] = $data['agricultural_status'] ?: Parcel::DEFAULT_AGRICULTURAL_STATUS;
+        // DAR clearance workflow is limited to agricultural land records.
+        // Classification is not a reviewer decision field here; keep the internal default only.
+        $data['agricultural_status'] = Parcel::DEFAULT_AGRICULTURAL_STATUS;
         $data['geometry_geojson'] = filled($data['geometry_geojson'] ?? null)
             ? json_decode($data['geometry_geojson'], true)
             : null;
@@ -234,8 +223,7 @@ class RecordSearchController extends Controller
                 'municipality' => $parcel->municipality,
                 'barangay' => $parcel->barangay,
                 'area_hectares' => $parcel->area_hectares,
-                'agricultural_status' => $parcel->agricultural_status,
-                'agricultural_status_label' => $parcel->agricultural_status_label,
+                'dar_clearance_scope' => 'Agricultural land clearance record only',
                 'has_geometry' => ! empty($parcel->geometry_geojson),
                 'actor_user_id' => $request->user()?->id,
                 'actor_name' => $request->user()?->name,
@@ -262,7 +250,6 @@ class RecordSearchController extends Controller
     {
         return view('staff.records.parcel-edit', [
             'parcel' => $parcel,
-            'agriculturalStatuses' => Parcel::agriculturalStatusOptions(),
             'parcelStatuses' => [
                 'active' => 'Active',
                 'inactive' => 'Inactive',
@@ -287,36 +274,16 @@ class RecordSearchController extends Controller
             'reference_photo' => ['nullable', 'image', 'max:5120'],
         ]);
 
-        $data['agricultural_status'] = $data['agricultural_status'] ?? 'private_agricultural'; // automatic agricultural default after form removal
+        // Keep the existing internal classification value. Staff no longer edits this as a clearance workflow field.
+        $data['agricultural_status'] = $parcel->agricultural_status ?: Parcel::DEFAULT_AGRICULTURAL_STATUS;
 
         unset($data['reference_photo']);
         if ($request->hasFile('reference_photo')) {
             $data['reference_photo_path'] = $request->file('reference_photo')->store('reference-photos/parcels', 'public');
         }
 
-        $oldAgriculturalStatus = $parcel->agricultural_status ?: 'not_yet_determined';
-
         $parcel->fill($data);
-        $agriculturalStatusChanged = $parcel->isDirty('agricultural_status');
         $parcel->save();
-
-        if ($agriculturalStatusChanged) {
-            AuditLogger::record(
-                'parcel_agricultural_status_updated',
-                null,
-                $parcel,
-                [
-                    'parcel_id' => $parcel->id,
-                    'parcel_code' => $parcel->parcel_code,
-                    'old_agricultural_status' => $oldAgriculturalStatus,
-                    'old_agricultural_status_label' => Parcel::agriculturalStatusLabel($oldAgriculturalStatus),
-                    'new_agricultural_status' => $parcel->agricultural_status,
-                    'new_agricultural_status_label' => $parcel->agricultural_status_label,
-                    'actor_user_id' => $request->user()?->id,
-                    'actor_name' => $request->user()?->name,
-                ]
-            );
-        }
 
         app(NotificationService::class)->notifyGeodeticParcelReferenceUpdated($parcel);
 
