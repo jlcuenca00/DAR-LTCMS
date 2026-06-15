@@ -37,6 +37,13 @@
                 final release or denial remains subject to authorized review and does not transfer ownership.
             </p>
         </div>
+
+        <a href="{{ route('staff.applications.form4.pdf', $application) }}"
+           class="staff-button staff-button-primary"
+           target="_blank">
+            <i class="fa-solid fa-file-pdf"></i>
+            Open Form No. 4 PDF
+        </a>
     </div>
 
     <div class="review-panel-body">

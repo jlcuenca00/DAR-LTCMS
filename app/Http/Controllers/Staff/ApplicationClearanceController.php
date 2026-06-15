@@ -91,4 +91,21 @@ class ApplicationClearanceController extends Controller
         return $pdf->stream('LTC-Form-No-3-' . $safeApplicationCode . '.pdf');
     }
 
+    public function form4Pdf(LandTransferApplication $application)
+    {
+        $application->load([
+            'applicationParcels.parcel',
+            'transferorLandowner',
+            'transfereeLandowner',
+        ]);
+
+        $pdf = Pdf::loadView('staff.applications.pdfs.form4-attestation-recommendation', [
+            'application' => $application,
+        ])->setPaper('a4');
+
+        $safeApplicationCode = str_replace(['/', '\\', ' '], '-', (string) $application->application_code);
+
+        return $pdf->stream('LTC-Form-No-4-' . $safeApplicationCode . '.pdf');
+    }
+
 }

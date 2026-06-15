@@ -170,6 +170,8 @@ Route::middleware(['auth', 'role:staff'])
             ->name('applications.acknowledgement.pdf');
         Route::patch('/applications/{application}/form-4-review', [LandTransferApplicationController::class, 'updateForm4Review'])
             ->name('applications.form4.update');
+        Route::get('/applications/{application}/form-4/pdf', [ApplicationClearanceController::class, 'form4Pdf'])
+            ->name('applications.form4.pdf');
         Route::get('/applications/{application}/documents/{requiredDocument}', [ApplicationDocumentController::class, 'show'])
             ->name('applications.documents.show');
         Route::post('/applications/{application}/documents/{requiredDocument}', [ApplicationDocumentController::class, 'store'])
