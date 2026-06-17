@@ -561,6 +561,27 @@
                 box-shadow: 0 0 0 3px rgba(21, 128, 61, 0.13);
             }
 
+            .source-input[type="file"] {
+                padding: 7px;
+                cursor: pointer;
+            }
+
+            .source-input[type="file"]::file-selector-button {
+                margin-right: 12px;
+                border: 1px solid #166534;
+                border-radius: 9px;
+                background: #166534;
+                color: #ffffff;
+                padding: 7px 12px;
+                font-size: 12px;
+                font-weight: 900;
+                cursor: pointer;
+            }
+
+            .source-input[type="file"]::file-selector-button:hover {
+                background: #14532d;
+            }
+
             .source-detail-record-list {
                 display: grid;
                 gap: 10px;
@@ -809,9 +830,54 @@
                 background: #f0fdf4;
             }
 
-            .source-package-flow-item.is-needed {
-                border-color: #fed7aa;
-                background: #fff7ed;
+            .source-form-field > span,
+            .source-form-field > label {
+                color: #334155;
+                font-size: 10.5px;
+                font-weight: 900;
+                letter-spacing: 0.08em;
+                text-transform: uppercase;
+            }
+
+            .source-scope-warning {
+                border: 1px solid #bbf7d0;
+                border-radius: 13px;
+                background: #f0fdf4;
+                color: #14532d;
+                font-size: 12.5px;
+                line-height: 1.5;
+                padding: 12px 14px;
+            }
+
+            .source-action-row {
+                display: flex;
+                justify-content: flex-end;
+                gap: 10px;
+                flex-wrap: wrap;
+            }
+
+            .source-primary-button {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                gap: 8px;
+                min-height: 42px;
+                border: 1px solid #166534;
+                border-radius: 11px;
+                background: #166534;
+                color: #ffffff;
+                padding: 9px 14px;
+                font-size: 13px;
+                font-weight: 950;
+                cursor: pointer;
+                text-decoration: none;
+                transition: transform 120ms ease, box-shadow 120ms ease, background 120ms ease;
+            }
+
+            .source-primary-button:hover {
+                background: #14532d;
+                box-shadow: 0 10px 18px rgba(20, 83, 45, 0.16);
+                transform: translateY(-1px);
             }
 
             @media (max-width: 980px) {
@@ -981,6 +1047,170 @@
                                 </div>
                             @endif
                         </div>
+                    </div>
+                </section>
+
+                <section class="source-detail-panel source-edit-panel">
+                    <div class="source-detail-panel-header">
+                        <div>
+                            <p class="source-detail-eyebrow">Source Package Edit</p>
+                            <h3 class="source-detail-title">Edit Source Package Details</h3>
+                            <p class="source-detail-help">Update the encoded reference data in one place. Related source records are synchronized for traceability only; this does not mutate parcel ownership or transfer land.</p>
+                        </div>
+                        <span class="staff-badge staff-badge-green">Unified Edit</span>
+                    </div>
+
+                    <div class="source-detail-body">
+                        <details class="source-form-details" {{ $errors->any() ? 'open' : '' }}>
+                            <summary class="source-open-summary-clean">
+                                Edit encoded package values, technical reference, and notes
+                            </summary>
+
+                            <form method="POST" action="{{ route('staff.source-record-packages.update', $package) }}" class="source-detail-form source-form-panel-clean mt-4">
+                                @csrf
+                                @method('PATCH')
+
+                                <div class="source-form-grid three">
+                                    <label class="source-form-field">
+                                        <span>Record Coverage</span>
+                                        <select name="source_record_scope" required class="source-input">
+                                            @foreach ($sourceScopes as $value => $label)
+                                                <option value="{{ $value }}" @selected(old('source_record_scope', $package->source_record_scope) === $value)>{{ $label }}</option>
+                                            @endforeach
+                                        </select>
+                                    </label>
+                                    <label class="source-form-field">
+                                        <span>Parcel Reference Code</span>
+                                        <input name="parcel_code" value="{{ old('parcel_code', $package->parcel_code) }}" class="source-input">
+                                    </label>
+                                    <label class="source-form-field">
+                                        <span>Area (hectares)</span>
+                                        <input type="number" step="0.0001" min="0" name="area_hectares" value="{{ old('area_hectares', $package->area_hectares) }}" class="source-input">
+                                    </label>
+                                </div>
+
+                                <div class="source-form-grid three">
+                                    <label class="source-form-field">
+                                        <span>Title Number</span>
+                                        <input name="title_number" value="{{ old('title_number', $package->title_number) }}" class="source-input">
+                                    </label>
+                                    <label class="source-form-field">
+                                        <span>Landholding Reference</span>
+                                        <input name="landholding_reference_number" value="{{ old('landholding_reference_number', $package->landholding_reference_number) }}" class="source-input">
+                                    </label>
+                                    <label class="source-form-field">
+                                        <span>Clearance Control Number</span>
+                                        <input name="control_number" value="{{ old('control_number', $package->control_number) }}" class="source-input">
+                                    </label>
+                                </div>
+
+                                <div class="source-form-grid three">
+                                    <label class="source-form-field">
+                                        <span>Encoded Owner / Landowner</span>
+                                        <input name="landowner_name" required value="{{ old('landowner_name', $package->landowner_name) }}" class="source-input">
+                                    </label>
+                                    <label class="source-form-field">
+                                        <span>Transferor</span>
+                                        <input name="transferor_name" value="{{ old('transferor_name', $package->transferor_name) }}" class="source-input">
+                                    </label>
+                                    <label class="source-form-field">
+                                        <span>Transferee</span>
+                                        <input name="transferee_name" value="{{ old('transferee_name', $package->transferee_name) }}" class="source-input">
+                                    </label>
+                                </div>
+
+                                <div class="source-form-grid three">
+                                    <label class="source-form-field">
+                                        <span>Lot Number</span>
+                                        <input name="lot_number" value="{{ old('lot_number', $package->lot_number) }}" class="source-input">
+                                    </label>
+                                    <label class="source-form-field">
+                                        <span>Survey Number</span>
+                                        <input name="survey_number" value="{{ old('survey_number', $package->survey_number) }}" class="source-input">
+                                    </label>
+                                    <label class="source-form-field">
+                                        <span>Type of Agricultural Land / Use</span>
+                                        <input name="crop_or_land_use" value="{{ old('crop_or_land_use', $package->crop_or_land_use) }}" class="source-input">
+                                    </label>
+                                </div>
+
+                                <div class="source-form-grid three">
+                                    <label class="source-form-field">
+                                        <span>Barangay</span>
+                                        <input name="barangay" value="{{ old('barangay', $package->barangay) }}" class="source-input">
+                                    </label>
+                                    <label class="source-form-field">
+                                        <span>Municipality</span>
+                                        <input name="municipality" value="{{ old('municipality', $package->municipality) }}" class="source-input">
+                                    </label>
+                                    <label class="source-form-field">
+                                        <span>Province</span>
+                                        <input name="province" value="{{ old('province', $package->province ?? 'Negros Oriental') }}" class="source-input">
+                                    </label>
+                                </div>
+
+                                <div class="source-form-grid three">
+                                    <label class="source-form-field">
+                                        <span>Source Book</span>
+                                        <input name="source_book" required value="{{ old('source_book', $package->source_book) }}" class="source-input">
+                                    </label>
+                                    <label class="source-form-field">
+                                        <span>Page Number</span>
+                                        <input name="page_number" value="{{ old('page_number', $package->page_number) }}" class="source-input">
+                                    </label>
+                                    <label class="source-form-field">
+                                        <span>Transcribed By</span>
+                                        <input name="transcribed_by" required value="{{ old('transcribed_by', $package->transcribed_by) }}" class="source-input">
+                                    </label>
+                                </div>
+
+                                <div class="source-form-grid three">
+                                    <label class="source-form-field">
+                                        <span>Transcription Date</span>
+                                        <input type="date" name="transcription_date" required value="{{ old('transcription_date', optional($package->transcription_date)->format('Y-m-d')) }}" class="source-input">
+                                    </label>
+                                </div>
+
+                                <div class="source-form-field">
+                                    <span>Source Geometry GeoJSON</span>
+                                    @include('staff.partials.geojson-polygon-editor', [
+                                        'fieldName' => 'source_geometry_geojson',
+                                        'fieldId' => 'source_geometry_geojson_edit',
+                                        'value' => old('source_geometry_geojson', $package->source_geometry_geojson ? json_encode($package->source_geometry_geojson, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) : ''),
+                                        'inputClass' => 'source-input font-mono text-xs',
+                                        'errorClass' => 'text-sm font-semibold text-red-700',
+                                        'rows' => 8,
+                                    ])
+                                </div>
+
+                                <div class="source-form-field">
+                                    <span>Boundary / Technical Description</span>
+                                    <textarea name="boundary_description" rows="3" class="source-input">{{ old('boundary_description', $package->boundary_description) }}</textarea>
+                                </div>
+
+                                <div class="source-form-grid">
+                                    <label class="source-form-field">
+                                        <span>Remarks</span>
+                                        <textarea name="remarks" rows="3" class="source-input">{{ old('remarks', $package->remarks) }}</textarea>
+                                    </label>
+                                    <label class="source-form-field">
+                                        <span>Source Notes</span>
+                                        <textarea name="source_notes" rows="3" class="source-input">{{ old('source_notes', $package->source_notes) }}</textarea>
+                                    </label>
+                                </div>
+
+                                <div class="source-scope-warning">
+                                    Changes here update administrative source/reference records only. They do not automatically change parcel ownership, landholding ownership, or any external registry record.
+                                </div>
+
+                                <div class="source-action-row">
+                                    <button type="submit" class="source-primary-button">
+                                        <i class="fa-solid fa-floppy-disk"></i>
+                                        Save Source Package Edits
+                                    </button>
+                                </div>
+                            </form>
+                        </details>
                     </div>
                 </section>
 

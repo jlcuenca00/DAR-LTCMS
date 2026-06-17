@@ -13,6 +13,11 @@
             Edit Record
         </a>
 
+        <button type="button" class="staff-button staff-button-danger" id="parcel-archive-modal-open">
+            <i class="fa-solid fa-box-archive"></i>
+            Archive Record
+        </button>
+
         <a href="{{ route('staff.records.parcels.index') }}" class="staff-button staff-button-light">
             <i class="fa-solid fa-arrow-left"></i>
             Back to Parcel Records
@@ -569,6 +574,98 @@
                     grid-column: 1 / -1;
                 }
             }
+
+
+            .archive-modal-backdrop {
+                position: fixed;
+                inset: 0;
+                z-index: 90;
+                display: none;
+                align-items: center;
+                justify-content: center;
+                padding: 24px;
+                background: rgba(15, 23, 42, 0.64);
+                backdrop-filter: blur(3px);
+            }
+
+            .archive-modal-backdrop.is-open {
+                display: flex;
+            }
+
+            .archive-modal-card {
+                width: min(520px, 100%);
+                border: 1px solid #fed7aa;
+                border-radius: 16px;
+                background: #ffffff;
+                box-shadow: 0 24px 70px rgba(15, 23, 42, 0.28);
+                overflow: hidden;
+            }
+
+            .archive-modal-header {
+                display: flex;
+                gap: 14px;
+                align-items: flex-start;
+                padding: 20px 22px 16px;
+                border-bottom: 1px solid #e5e7eb;
+                background: #fffbeb;
+            }
+
+            .archive-modal-icon {
+                width: 42px;
+                height: 42px;
+                border-radius: 12px;
+                background: #fef3c7;
+                color: #92400e;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                flex: 0 0 auto;
+            }
+
+            .archive-modal-title {
+                margin: 0;
+                font-family: var(--heading-font);
+                font-size: 18px;
+                font-weight: 950;
+                color: #111827;
+            }
+
+            .archive-modal-copy {
+                margin: 6px 0 0;
+                color: #64748b;
+                font-size: 13px;
+                line-height: 1.55;
+            }
+
+            .archive-modal-body {
+                padding: 18px 22px;
+            }
+
+            .archive-modal-warning {
+                border: 1px solid #fed7aa;
+                background: #fffbeb;
+                color: #92400e;
+                border-radius: 12px;
+                padding: 12px 14px;
+                font-size: 12.5px;
+                line-height: 1.55;
+                font-weight: 750;
+            }
+
+            .archive-modal-actions {
+                display: flex;
+                justify-content: flex-end;
+                gap: 10px;
+                padding: 16px 22px 20px;
+                border-top: 1px solid #e5e7eb;
+                background: #f8fafc;
+            }
+
+            .archive-modal-actions .staff-button {
+                min-width: 130px;
+                justify-content: center;
+            }
+
         </style>
     </x-slot>
 
@@ -1022,4 +1119,69 @@
             @endif
         </section>
     </div>
+
+    <div id="parcel-archive-modal" class="archive-modal-backdrop" aria-hidden="true">
+        <div class="archive-modal-card" role="dialog" aria-modal="true" aria-labelledby="parcel-archive-modal-title">
+            <div class="archive-modal-header">
+                <span class="archive-modal-icon" aria-hidden="true"><i class="fa-solid fa-box-archive"></i></span>
+                <div>
+                    <h2 id="parcel-archive-modal-title" class="archive-modal-title">Archive this parcel record?</h2>
+                    <p class="archive-modal-copy">
+                        This will remove the parcel from active staff workflows while preserving it for traceability and audit review.
+                    </p>
+                </div>
+            </div>
+
+            <div class="archive-modal-body">
+                <div class="archive-modal-warning">
+                    This is not a permanent deletion and does not transfer ownership, change landholding ownership, or mutate registry records.
+                </div>
+            </div>
+
+            <div class="archive-modal-actions">
+                <button type="button" class="staff-button staff-button-light" id="parcel-archive-modal-cancel">Cancel</button>
+                <form method="POST" action="{{ route('staff.records.parcels.destroy', $parcel) }}" style="margin:0;">
+                    @csrf
+                    @method('DELETE')
+                    <button type="submit" class="staff-button staff-button-danger">
+                        <i class="fa-solid fa-box-archive"></i>
+                        Archive Record
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const archiveModal = document.getElementById('parcel-archive-modal');
+            const archiveOpen = document.getElementById('parcel-archive-modal-open');
+            const archiveCancel = document.getElementById('parcel-archive-modal-cancel');
+
+            function openArchiveModal() {
+                if (! archiveModal) return;
+                archiveModal.classList.add('is-open');
+                archiveModal.setAttribute('aria-hidden', 'false');
+                document.body.style.overflow = 'hidden';
+                archiveCancel?.focus();
+            }
+
+            function closeArchiveModal() {
+                if (! archiveModal) return;
+                archiveModal.classList.remove('is-open');
+                archiveModal.setAttribute('aria-hidden', 'true');
+                document.body.style.overflow = '';
+            }
+
+            archiveOpen?.addEventListener('click', openArchiveModal);
+            archiveCancel?.addEventListener('click', closeArchiveModal);
+            archiveModal?.addEventListener('click', function (event) {
+                if (event.target === archiveModal) closeArchiveModal();
+            });
+            document.addEventListener('keydown', function (event) {
+                if (event.key === 'Escape' && archiveModal?.classList.contains('is-open')) closeArchiveModal();
+            });
+        });
+    </script>
+
 </x-staff-shell>

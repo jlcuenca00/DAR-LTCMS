@@ -184,7 +184,70 @@ class SourceRecordPackageController extends Controller
             'package' => $sourceRecordPackage,
             'parcels' => $parcels,
             'landowners' => $landowners,
+            'sourceScopes' => LegacyRecord::SOURCE_SCOPES,
         ]);
+    }
+
+
+    public function update(Request $request, SourceRecordPackage $sourceRecordPackage)
+    {
+        $data = $request->validate($this->updateRules());
+
+        if (! empty($data['source_geometry_geojson'])) {
+            $data['source_geometry_geojson'] = $this->decodeGeoJson($data['source_geometry_geojson']);
+        } else {
+            $data['source_geometry_geojson'] = null;
+        }
+
+        DB::transaction(function () use ($data, $sourceRecordPackage, $request) {
+            $sourceRecordPackage->update($data);
+
+            foreach ($sourceRecordPackage->records as $record) {
+                $record->update([
+                    'source_record_scope' => $sourceRecordPackage->source_record_scope,
+                    'parcel_id' => $sourceRecordPackage->parcel_id,
+                    'parcel_code' => $sourceRecordPackage->parcel_code,
+                    'title_number' => $sourceRecordPackage->title_number,
+                    'control_number' => $record->record_type === LegacyRecord::TYPE_HISTORICAL_CLEARANCE ? $sourceRecordPackage->control_number : null,
+                    'lot_number' => $sourceRecordPackage->lot_number,
+                    'survey_number' => $sourceRecordPackage->survey_number,
+                    'landowner_name' => $sourceRecordPackage->landowner_name,
+                    'transferor_name' => $record->record_type === LegacyRecord::TYPE_HISTORICAL_CLEARANCE ? $sourceRecordPackage->transferor_name : null,
+                    'transferee_name' => $record->record_type === LegacyRecord::TYPE_HISTORICAL_CLEARANCE ? $sourceRecordPackage->transferee_name : null,
+                    'area_hectares' => $sourceRecordPackage->area_hectares,
+                    'crop_or_land_use' => $sourceRecordPackage->crop_or_land_use,
+                    'barangay' => $sourceRecordPackage->barangay,
+                    'municipality' => $sourceRecordPackage->municipality,
+                    'province' => $sourceRecordPackage->province,
+                    'source_geometry_geojson' => $record->record_type === LegacyRecord::TYPE_PARCEL_SOURCE ? $sourceRecordPackage->source_geometry_geojson : null,
+                    'landholding_reference_number' => $record->record_type === LegacyRecord::TYPE_LANDHOLDING ? $sourceRecordPackage->landholding_reference_number : null,
+                    'remarks' => $sourceRecordPackage->remarks,
+                    'boundary_description' => $record->record_type === LegacyRecord::TYPE_PARCEL_SOURCE ? $sourceRecordPackage->boundary_description : null,
+                    'source_book' => $sourceRecordPackage->source_book,
+                    'page_number' => $sourceRecordPackage->page_number,
+                    'transcribed_by' => $sourceRecordPackage->transcribed_by,
+                    'transcription_date' => $sourceRecordPackage->transcription_date,
+                    'source_notes' => $sourceRecordPackage->source_notes,
+                ]);
+            }
+
+            AuditLogger::record(
+                'source_record_package_updated',
+                null,
+                $sourceRecordPackage,
+                [
+                    'package_code' => $sourceRecordPackage->package_code,
+                    'source_record_package_id' => $sourceRecordPackage->id,
+                    'records_synced' => $sourceRecordPackage->records()->count(),
+                    'actor_user_id' => $request->user()?->id,
+                    'actor_name' => $request->user()?->name,
+                ]
+            );
+        });
+
+        return redirect()
+            ->route('staff.source-record-packages.show', $sourceRecordPackage)
+            ->with('success', 'Source package details updated and related source records synchronized.');
     }
 
     public function linkParcel(Request $request, SourceRecordPackage $sourceRecordPackage)
@@ -512,6 +575,36 @@ class SourceRecordPackageController extends Controller
             'date_acquired' => ['nullable', 'date', 'after_or_equal:1900-01-01', 'before_or_equal:today'],
 
             'source_file' => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:10240'],
+        ];
+    }
+
+
+    private function updateRules(): array
+    {
+        return [
+            'source_record_scope' => ['required', Rule::in(array_keys(LegacyRecord::SOURCE_SCOPES))],
+            'parcel_code' => ['nullable', 'string', 'max:255'],
+            'title_number' => ['nullable', 'string', 'max:255'],
+            'landholding_reference_number' => ['nullable', 'string', 'max:255'],
+            'control_number' => ['nullable', 'string', 'max:255'],
+            'landowner_name' => ['required', 'string', 'max:255'],
+            'transferor_name' => ['nullable', 'string', 'max:255'],
+            'transferee_name' => ['nullable', 'string', 'max:255'],
+            'lot_number' => ['nullable', 'string', 'max:255'],
+            'survey_number' => ['nullable', 'string', 'max:255'],
+            'area_hectares' => ['nullable', 'numeric', 'min:0', 'max:999999.9999'],
+            'crop_or_land_use' => ['nullable', 'string', 'max:255'],
+            'barangay' => ['nullable', 'string', 'max:255'],
+            'municipality' => ['nullable', 'string', 'max:255'],
+            'province' => ['nullable', 'string', 'max:255'],
+            'source_geometry_geojson' => ['nullable', 'string', 'max:200000'],
+            'boundary_description' => ['nullable', 'string', 'max:5000'],
+            'source_book' => ['required', 'string', 'max:255'],
+            'page_number' => ['nullable', 'string', 'max:100'],
+            'transcribed_by' => ['required', 'string', 'max:255'],
+            'transcription_date' => ['required', 'date', 'after_or_equal:1900-01-01', 'before_or_equal:today'],
+            'source_notes' => ['nullable', 'string', 'max:5000'],
+            'remarks' => ['nullable', 'string', 'max:5000'],
         ];
     }
 

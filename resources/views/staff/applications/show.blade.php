@@ -386,6 +386,9 @@
 
             .requirement-main {
                 padding: 0;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
                 display: grid;
                 gap: 0;
             }
@@ -1437,6 +1440,564 @@
 
             .timeline-collapsible[open] .timeline-chevron { transform: rotate(180deg); }
             .timeline-collapsible[open] .timeline-summary-row { border-bottom-color: #e5e7eb; }
+
+
+            .application-review-page {
+                padding-bottom: 88px;
+            }
+
+            .requirement-card {
+                scroll-margin-top: 118px;
+            }
+
+            .requirement-card.is-uploaded {
+                border-color: #86efac;
+                box-shadow: 0 0 0 1px rgba(34, 197, 94, 0.08);
+            }
+
+            .requirement-card.is-missing-blocking {
+                border-color: #fecaca;
+                box-shadow: 0 0 0 1px rgba(220, 38, 38, 0.08);
+            }
+
+            .requirement-card.is-missing-blocking .requirement-heading {
+                background: linear-gradient(90deg, #fef2f2 0%, #ffffff 82%);
+            }
+
+            .requirement-card.is-uploaded .requirement-heading {
+                background: linear-gradient(90deg, #f0fdf4 0%, #ffffff 82%);
+            }
+
+            .requirement-card.is-missing-blocking .requirement-title-icon {
+                background: #dc2626;
+                box-shadow: 0 6px 14px rgba(220, 38, 38, 0.14);
+            }
+
+            .requirement-card.is-uploaded .requirement-title-icon {
+                background: #15803d;
+            }
+
+            .workflow-fab {
+                position: fixed;
+                right: 24px;
+                bottom: 22px;
+                z-index: 74;
+                border-color: #166534;
+                background: #166534;
+                color: #ffffff;
+                box-shadow: 0 16px 34px rgba(15, 23, 42, 0.20);
+            }
+
+            .workflow-fab:hover {
+                background: #14532d;
+                border-color: #14532d;
+                color: #ffffff;
+            }
+
+            .requirement-group-panel.transferor-group {
+                border-color: #bbf7d0;
+            }
+
+            .requirement-group-panel.transferor-group .review-panel-header {
+                background: linear-gradient(90deg, #f0fdf4 0%, #ffffff 82%);
+            }
+
+            .requirement-group-panel.transferee-group {
+                border-color: #bfdbfe;
+            }
+
+            .requirement-group-panel.transferee-group .review-panel-header {
+                background: linear-gradient(90deg, #eff6ff 0%, #ffffff 82%);
+            }
+
+            .party-heading-block {
+                display: flex;
+                align-items: flex-start;
+                justify-content: space-between;
+                gap: 14px;
+                width: 100%;
+            }
+
+            .party-heading-copy {
+                min-width: 0;
+            }
+
+            .party-group-badge {
+                display: inline-flex;
+                align-items: center;
+                gap: 7px;
+                border-radius: 999px;
+                padding: 7px 11px;
+                font-size: 11px;
+                font-weight: 950;
+                letter-spacing: 0.08em;
+                text-transform: uppercase;
+                white-space: nowrap;
+                flex: 0 0 auto;
+            }
+
+            .party-group-badge.transferor {
+                border: 1px solid #bbf7d0;
+                background: #dcfce7;
+                color: #14532d;
+            }
+
+            .party-group-badge.transferee {
+                border: 1px solid #bfdbfe;
+                background: #dbeafe;
+                color: #1d4ed8;
+            }
+
+            .requirement-type-label {
+                display: flex;
+                flex-wrap: wrap;
+                align-items: center;
+                gap: 7px;
+            }
+
+            .party-chip {
+                display: inline-flex;
+                align-items: center;
+                gap: 6px;
+                padding: 4px 8px;
+                border-radius: 999px;
+                font-size: 10px;
+                font-weight: 950;
+                letter-spacing: 0.1em;
+                text-transform: uppercase;
+                line-height: 1;
+            }
+
+            .party-chip.transferor {
+                border: 1px solid #bbf7d0;
+                background: #f0fdf4;
+                color: #166534;
+            }
+
+            .party-chip.transferee {
+                border: 1px solid #bfdbfe;
+                background: #eff6ff;
+                color: #1d4ed8;
+            }
+
+            .party-group-banner {
+                margin: 0 0 2px;
+                font-size: 12px;
+                font-weight: 900;
+                line-height: 1.5;
+            }
+
+            .party-group-banner.transferor {
+                color: #166534;
+            }
+
+            .party-group-banner.transferee {
+                color: #1d4ed8;
+            }
+
+
+            .requirement-rail {
+                position: fixed;
+                top: 50%;
+                right: 18px;
+                transform: translateY(-50%);
+                z-index: 62;
+                width: min(430px, calc(100vw - 28px));
+                display: flex;
+                justify-content: flex-end;
+                align-items: center;
+                pointer-events: none;
+            }
+
+            .requirement-rail-panel {
+                pointer-events: auto;
+                width: 32px;
+                max-height: calc(100vh - 96px);
+                overflow: hidden;
+                border-radius: 0;
+                padding: 8px 0;
+                background: transparent;
+                border: 0;
+                box-shadow: none;
+                backdrop-filter: none;
+                transform-origin: right center;
+                will-change: width;
+                transition:
+                    width 220ms cubic-bezier(.2, .8, .2, 1),
+                    background-color 160ms ease,
+                    border-color 160ms ease,
+                    box-shadow 160ms ease,
+                    padding 160ms ease,
+                    border-radius 160ms ease;
+            }
+
+            .requirement-rail.is-expanded .requirement-rail-panel,
+            .requirement-rail:hover .requirement-rail-panel,
+            .requirement-rail:focus-within .requirement-rail-panel {
+                width: 100%;
+                padding: 12px 10px;
+                background: rgba(248, 250, 252, 0.68);
+                border: 1px solid rgba(203, 213, 225, 0.76);
+                border-radius: 10px;
+                box-shadow: 0 18px 38px rgba(15, 23, 42, 0.13);
+                backdrop-filter: blur(8px);
+            }
+
+            .requirement-rail-collapsed {
+                width: 32px;
+                max-height: calc(100vh - 112px);
+                overflow: hidden;
+                display: grid;
+                grid-auto-rows: 16px;
+                row-gap: 4px;
+                justify-items: center;
+                align-items: center;
+                opacity: 1;
+                transition: opacity 100ms ease;
+            }
+
+            .requirement-rail.is-expanded .requirement-rail-collapsed,
+            .requirement-rail:hover .requirement-rail-collapsed,
+            .requirement-rail:focus-within .requirement-rail-collapsed {
+                opacity: 0;
+                pointer-events: none;
+                position: absolute;
+            }
+
+            .requirement-rail-collapsed-line {
+                display: block;
+                width: 22px;
+                height: 4px;
+                border-radius: 999px;
+                background: #dc2626;
+            }
+
+            .requirement-rail-collapsed-line.is-uploaded {
+                background: #16a34a;
+            }
+
+            .requirement-rail-collapsed-line.is-reference {
+                background: #94a3b8;
+            }
+
+            .requirement-rail-header {
+                display: none;
+                padding: 0 8px 10px;
+                margin-bottom: 10px;
+                border-bottom: 1px solid rgba(148, 163, 184, 0.22);
+            }
+
+            .requirement-rail.is-expanded .requirement-rail-header,
+            .requirement-rail:hover .requirement-rail-header,
+            .requirement-rail:focus-within .requirement-rail-header {
+                display: block;
+            }
+
+            .requirement-rail-progress {
+                display: grid;
+                gap: 6px;
+            }
+
+            .requirement-rail-progress-label {
+                display: flex;
+                justify-content: space-between;
+                gap: 10px;
+                color: #334155;
+                font-size: 11px;
+                font-weight: 900;
+            }
+
+            .requirement-rail-progress-track {
+                height: 5px;
+                overflow: hidden;
+                border-radius: 999px;
+                background: rgba(203, 213, 225, 0.54);
+            }
+
+            .requirement-rail-progress-bar {
+                height: 100%;
+                border-radius: inherit;
+                background: #16a34a;
+            }
+
+            .requirement-rail-scroll {
+                display: none;
+                width: 100%;
+                max-height: calc(100vh - 210px);
+                overflow-y: auto;
+                overflow-x: hidden;
+                overscroll-behavior: contain;
+                padding-right: 4px;
+                scrollbar-width: thin;
+                scrollbar-color: rgba(100, 116, 139, 0.42) transparent;
+            }
+
+            .requirement-rail.is-expanded .requirement-rail-scroll,
+            .requirement-rail:hover .requirement-rail-scroll,
+            .requirement-rail:focus-within .requirement-rail-scroll {
+                display: block;
+            }
+
+            .requirement-rail-header,
+            .requirement-rail-group-label,
+            .requirement-rail-text,
+            .requirement-rail-status {
+                opacity: 0;
+                visibility: hidden;
+                transition: opacity 120ms ease;
+            }
+
+            .requirement-rail.is-open-ready .requirement-rail-header,
+            .requirement-rail.is-open-ready .requirement-rail-group-label,
+            .requirement-rail.is-open-ready .requirement-rail-text,
+            .requirement-rail.is-open-ready .requirement-rail-status {
+                opacity: 1;
+                visibility: visible;
+            }
+
+            .requirement-rail-scroll::-webkit-scrollbar {
+                width: 6px;
+            }
+
+            .requirement-rail-scroll::-webkit-scrollbar-track {
+                background: transparent;
+            }
+
+            .requirement-rail-scroll::-webkit-scrollbar-thumb {
+                background: rgba(100, 116, 139, 0.34);
+                border-radius: 999px;
+            }
+
+            .requirement-rail-scroll::-webkit-scrollbar-thumb:hover {
+                background: rgba(100, 116, 139, 0.50);
+            }
+
+            .requirement-rail-group {
+                width: 100%;
+                display: block;
+            }
+
+            .requirement-rail-group + .requirement-rail-group {
+                margin-top: 4px;
+                padding-top: 4px;
+                border-top: 1px solid rgba(148, 163, 184, 0.16);
+            }
+
+            .requirement-rail-group-label {
+                display: flex;
+                width: 100%;
+                min-height: 18px;
+                align-items: center;
+                justify-content: flex-start;
+                text-align: left;
+                color: #166534;
+                padding: 0 8px;
+                margin-bottom: 2px;
+            }
+
+            .requirement-rail-group-label .group-short {
+                display: none;
+            }
+
+            .requirement-rail-group-label .group-full {
+                display: inline;
+                font-size: 12px;
+                font-weight: 950;
+                letter-spacing: 0.08em;
+                text-transform: uppercase;
+                line-height: 1;
+            }
+
+            .requirement-rail-group-label.transferee {
+                color: #1d4ed8;
+            }
+
+            .requirement-rail-items {
+                width: 100%;
+                display: grid;
+                gap: 2px;
+                justify-items: stretch;
+                align-items: stretch;
+            }
+
+            .requirement-rail-link {
+                width: 100%;
+                min-height: 40px;
+                display: grid;
+                grid-template-columns: 28px minmax(0, 1fr) auto;
+                align-items: center;
+                justify-items: stretch;
+                gap: 8px;
+                padding: 3px 8px;
+                border-radius: 8px;
+                text-decoration: none;
+                color: #0f172a;
+                transition: background-color 140ms ease;
+            }
+
+            .requirement-rail-link.is-uploaded {
+                background: rgba(240, 253, 244, 0.72);
+            }
+
+            .requirement-rail-link:hover,
+            .requirement-rail-link:focus-visible {
+                background: rgba(226, 232, 240, 0.74);
+                outline: none;
+            }
+
+            .requirement-rail-link.is-uploaded:hover,
+            .requirement-rail-link.is-uploaded:focus-visible {
+                background: rgba(220, 252, 231, 0.94);
+            }
+
+            .requirement-rail-link.is-missing-blocking:hover,
+            .requirement-rail-link.is-missing-blocking:focus-visible {
+                background: rgba(254, 226, 226, 0.82);
+            }
+
+            .requirement-rail-link.is-reference:hover,
+            .requirement-rail-link.is-reference:focus-visible {
+                background: rgba(241, 245, 249, 0.88);
+            }
+
+            .requirement-rail-line {
+                display: block;
+                justify-self: center;
+                align-self: center;
+                width: 22px;
+                min-width: 22px;
+                max-width: 22px;
+                height: 4px;
+                min-height: 4px;
+                max-height: 4px;
+                border-radius: 999px;
+                background: #dc2626;
+            }
+
+            .requirement-rail-link.is-uploaded .requirement-rail-line {
+                background: #16a34a;
+            }
+
+            .requirement-rail-link.is-reference .requirement-rail-line {
+                background: #94a3b8;
+            }
+
+            .requirement-rail-text,
+            .requirement-rail-status {
+                display: block;
+            }
+
+            .requirement-rail-text {
+                min-width: 0;
+                overflow: visible;
+                color: #0f172a;
+                font-size: 11px;
+                font-weight: 850;
+                line-height: 1.14;
+                white-space: normal;
+                word-break: break-word;
+            }
+
+            .requirement-rail-status {
+                justify-self: end;
+                align-self: center;
+                border-radius: 999px;
+                padding: 2px 7px;
+                background: rgba(241, 245, 249, 0.92);
+                color: #475569;
+                font-size: 9.5px;
+                font-weight: 900;
+                white-space: nowrap;
+            }
+
+            .requirement-rail-link.is-uploaded .requirement-rail-status {
+                background: #dcfce7;
+                color: #166534;
+            }
+
+            .requirement-rail-link.is-missing-blocking .requirement-rail-status {
+                background: #fee2e2;
+                color: #b91c1c;
+            }
+
+            .workflow-modal-backdrop {
+                position: fixed;
+                inset: 0;
+                z-index: 84;
+                display: none;
+                align-items: center;
+                justify-content: center;
+                padding: 24px;
+                background: rgba(15, 23, 42, 0.68);
+                backdrop-filter: blur(3px);
+            }
+
+            .workflow-modal-backdrop.is-open {
+                display: flex;
+            }
+
+            .workflow-modal-card {
+                width: min(1080px, 100%);
+                max-height: min(86vh, 860px);
+                overflow: hidden;
+                border-radius: 20px;
+                border: 1px solid #dbe4dd;
+                background: #ffffff;
+                box-shadow: 0 24px 70px rgba(15, 23, 42, 0.28);
+                display: grid;
+                grid-template-rows: auto minmax(0, 1fr) auto;
+            }
+
+            .workflow-modal-header,
+            .workflow-modal-footer {
+                padding: 18px 22px;
+                border-bottom: 1px solid #e5e7eb;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                gap: 14px;
+                background: #f8fafc;
+            }
+
+            .workflow-modal-footer {
+                border-bottom: 0;
+                border-top: 1px solid #e5e7eb;
+            }
+
+            .workflow-modal-body {
+                padding: 22px;
+                overflow: auto;
+                display: grid;
+                gap: 18px;
+                background: linear-gradient(180deg, #ffffff 0%, #fbfcfd 100%);
+            }
+
+            .workflow-modal-title {
+                margin: 0;
+                font-size: 19px;
+                font-weight: 950;
+                color: #0f172a;
+            }
+
+            .workflow-modal-copy {
+                margin: 4px 0 0;
+                font-size: 13px;
+                color: #64748b;
+                line-height: 1.5;
+            }
+
+            .workflow-modal-summary {
+                border: 1px solid #dbe4dd;
+                background: #f8faf9;
+                border-radius: 14px;
+                padding: 14px 16px;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                gap: 12px;
+                flex-wrap: wrap;
+            }
+
             @media (max-width: 1180px) {
                 .review-grid {
                     grid-template-columns: 1fr;
@@ -1516,6 +2077,28 @@
                 .checklist-compact-top,
                 .checklist-mini-stats {
                     grid-template-columns: 1fr;
+                }
+
+                .party-heading-block,
+                .workflow-modal-header,
+                .workflow-modal-footer,
+                .workflow-modal-summary {
+                    flex-direction: column;
+                    align-items: flex-start;
+                }
+
+                .requirement-rail {
+                    right: 8px;
+                }
+
+                .requirement-rail:hover .requirement-rail-panel,
+                .requirement-rail:focus-within .requirement-rail-panel {
+                    width: min(296px, calc(100vw - 24px));
+                }
+
+                .workflow-fab {
+                    right: 16px;
+                    bottom: 16px;
                 }
 
                 .checklist-compact-score {
@@ -1615,16 +2198,36 @@
 
         $requirementGroups = [
             [
+                'key' => 'transferor',
                 'title' => 'Transferor Requirements (DAR A.O. No. 4, s. 2021)',
-                'description' => 'Documents submitted by or for the transferor side of the clearance application.',
+                'description' => 'These are the documents required from the transferor side. Review this section only for transferor-submitted or transferor-related requirements.',
                 'requirements' => $transferorRequirements,
             ],
             [
+                'key' => 'transferee',
                 'title' => 'Transferee Requirements (DAR A.O. No. 4, s. 2021)',
-                'description' => 'Documents submitted by or for the transferee side of the clearance application.',
+                'description' => 'These are the documents required from the transferee side. Review this section only for transferee-submitted or transferee-related requirements.',
                 'requirements' => $transfereeRequirements,
             ],
         ];
+
+
+        $requirementNavItems = $allRequirements->map(function ($requirement) use ($uploaded) {
+            $document = $uploaded->get($requirement->id);
+            $isUploaded = $document && filled($document->file_path);
+            $blocksAcceptance = method_exists($requirement, 'blocksAcceptance')
+                ? $requirement->blocksAcceptance()
+                : (bool) $requirement->is_mandatory;
+
+            return [
+                'id' => $requirement->id,
+                'name' => $requirement->name,
+                'party' => $requirement->party,
+                'is_uploaded' => $isUploaded,
+                'blocks_acceptance' => $blocksAcceptance,
+                'status' => $isUploaded ? 'Uploaded' : ($blocksAcceptance ? 'Missing required file' : 'No file attached'),
+            ];
+        })->values();
 
         $landownerOptions = $landowners ?? \App\Models\Landowner::query()
             ->orderBy('last_name')
@@ -1726,7 +2329,7 @@
                                     </div>
                                     <div class="summary-item">
                                         <p class="summary-label">Generated At</p>
-                                        <p class="summary-value">{{ optional($application->clearance->generated_at)->format('M d, Y h:i A') ?? 'â€”' }}</p>
+                                        <p class="summary-value">{{ optional($application->clearance->generated_at)->format('M d, Y h:i A') ?? '—' }}</p>
                                     </div>
                                 </div>
 
@@ -1811,11 +2414,11 @@
                         </div>
                         <div class="summary-item">
                             <p class="summary-label">Barangay</p>
-                            <p class="summary-value">{{ $application->barangay ?? 'â€”' }}</p>
+                            <p class="summary-value">{{ $application->barangay ?? '—' }}</p>
                         </div>
                         <div class="summary-item">
                             <p class="summary-label">Municipality</p>
-                            <p class="summary-value">{{ $application->municipality ?? 'â€”' }}</p>
+                            <p class="summary-value">{{ $application->municipality ?? '—' }}</p>
                         </div>
 
                         @if ($applicationAgriculturalStatusLabels->isNotEmpty())
@@ -1866,7 +2469,7 @@
 
                             <div class="landowner-link-name">
                                 <strong>Typed Application Name</strong>
-                                <p class="landowner-link-name-value">{{ $application->transferor_name ?: 'â€”' }}</p>
+                                <p class="landowner-link-name-value">{{ $application->transferor_name ?: '—' }}</p>
                                 @if ($application->transferorLandowner)
                                     <div class="landowner-linked-note">
                                         <i class="fa-solid fa-link"></i>
@@ -1881,7 +2484,7 @@
                                     <option value="">No linked landowner record</option>
                                     @foreach ($landownerOptions as $landowner)
                                         <option value="{{ $landowner->id }}" @selected((int) old('transferor_landowner_id', $application->transferor_landowner_id) === (int) $landowner->id)>
-                                            {{ $landowner->full_name }} â€” {{ $landowner->municipality ?? 'No municipality' }}
+                                            {{ $landowner->full_name }} — {{ $landowner->municipality ?? 'No municipality' }}
                                         </option>
                                     @endforeach
                                 </select>
@@ -1901,7 +2504,7 @@
 
                             <div class="landowner-link-name">
                                 <strong>Typed Application Name</strong>
-                                <p class="landowner-link-name-value">{{ $application->transferee_name ?: 'â€”' }}</p>
+                                <p class="landowner-link-name-value">{{ $application->transferee_name ?: '—' }}</p>
                                 @if ($application->transfereeLandowner)
                                     <div class="landowner-linked-note">
                                         <i class="fa-solid fa-link"></i>
@@ -1916,7 +2519,7 @@
                                     <option value="">No linked landowner record</option>
                                     @foreach ($landownerOptions as $landowner)
                                         <option value="{{ $landowner->id }}" @selected((int) old('transferee_landowner_id', $application->transferee_landowner_id) === (int) $landowner->id)>
-                                            {{ $landowner->full_name }} â€” {{ $landowner->municipality ?? 'No municipality' }}
+                                            {{ $landowner->full_name }} — {{ $landowner->municipality ?? 'No municipality' }}
                                         </option>
                                     @endforeach
                                 </select>
@@ -1948,7 +2551,7 @@
                                 </div>
                                 <button type="submit" class="staff-button staff-button-light">
                                     <i class="fa-solid fa-user-plus"></i>
-                                    Create & auto-link from â€œ{{ $application->transferor_name ?: 'Transferor Name' }}â€
+                                    Create & auto-link from “{{ $application->transferor_name ?: 'Transferor Name' }}”
                                 </button>
                             </form>
                         @else
@@ -1974,7 +2577,7 @@
                                 </div>
                                 <button type="submit" class="staff-button staff-button-light">
                                     <i class="fa-solid fa-user-plus"></i>
-                                    Create & auto-link from â€œ{{ $application->transferee_name ?: 'Transferee Name' }}â€
+                                    Create & auto-link from “{{ $application->transferee_name ?: 'Transferee Name' }}”
                                 </button>
                             </form>
                         @else
@@ -1994,78 +2597,6 @@
             </div>
         </section>
 
-        <section class="review-panel">
-            <div class="review-panel-body checklist-compact-card">
-                <div class="checklist-compact-top">
-                    <div>
-                        <h2 class="checklist-compact-title">Checklist Completion</h2>
-                        <p class="checklist-compact-subtitle">
-                            Required acceptance files are checked here. Case-dependent and reference-only items stay in the document cards below.
-                        </p>
-                    </div>
-
-                    <div class="checklist-compact-score">
-                        <strong>{{ $blockingUploadedDocuments->count() }} / {{ $blockingTotal }}</strong>
-                        <span>Required files</span>
-                    </div>
-                </div>
-
-                <div class="checklist-progress-track" aria-hidden="true">
-                    <div class="checklist-progress-bar" style="width: {{ $blockingProgressPercent }}%;"></div>
-                </div>
-
-                <div class="checklist-mini-stats">
-                    <div class="checklist-mini-stat">
-                        <b>{{ $blockingUploadedDocuments->count() }}</b>
-                        <span>Attached</span>
-                    </div>
-                    <div class="checklist-mini-stat">
-                        <b>{{ $blockingMissingDocuments->count() }}</b>
-                        <span>Still blocking</span>
-                    </div>
-                    <div class="checklist-mini-stat">
-                        <b>{{ $uploadedCount }}</b>
-                        <span>Saved records</span>
-                    </div>
-                </div>
-
-                @if ($blockingMissingDocuments->isNotEmpty())
-                    <details class="checklist-compact-details" open>
-                        <summary>Missing required files ({{ $blockingMissingDocuments->count() }})</summary>
-                        <ul class="checklist-compact-list">
-                            @foreach ($blockingMissingDocuments->take(5) as $requirement)
-                                <li>
-                                    <span class="danger">{{ $requirement->name }}</span>
-                                    @if ($requirement->party)
-                                        <span>({{ ucfirst($requirement->party) }})</span>
-                                    @endif
-                                </li>
-                            @endforeach
-
-                            @if ($blockingMissingDocuments->count() > 5)
-                                <li>+ {{ $blockingMissingDocuments->count() - 5 }} more required file(s)</li>
-                            @endif
-                        </ul>
-                    </details>
-                @else
-                    <details class="checklist-compact-details">
-                        <summary>Required checklist complete</summary>
-                        <ul class="checklist-compact-list">
-                            <li>All required acceptance files are attached.</li>
-                        </ul>
-                    </details>
-                @endif
-
-                @if ($metadataOnlyCount > 0)
-                    <details class="checklist-compact-details">
-                        <summary>{{ $metadataOnlyCount }} document record(s) saved without an attached file</summary>
-                        <ul class="checklist-compact-list">
-                            <li>Open the related document card below to attach the missing file when needed.</li>
-                        </ul>
-                    </details>
-                @endif
-            </div>
-        </section>
         @include('staff.applications.partials.acknowledgement-receipt')
 
         @include('staff.applications.partials.marpo-certification-summary')
@@ -2073,12 +2604,91 @@
         @include('staff.applications.partials.form4-attestation-recommendation')
 
 
+
+        <aside class="requirement-rail" aria-label="Document requirement quick navigation">
+            <div class="requirement-rail-panel">
+                <div class="requirement-rail-collapsed" aria-hidden="true">
+                    @foreach ($requirementGroups as $navGroup)
+                        @foreach ($navGroup['requirements'] as $navReq)
+                            @php
+                                $navDoc = $uploaded->get($navReq->id);
+                                $navIsUploaded = $navDoc && filled($navDoc->file_path);
+                                $navBlocksAcceptance = method_exists($navReq, 'blocksAcceptance')
+                                    ? $navReq->blocksAcceptance()
+                                    : (bool) $navReq->is_mandatory;
+                            @endphp
+
+                            <span class="requirement-rail-collapsed-line {{ $navIsUploaded ? 'is-uploaded' : ($navBlocksAcceptance ? 'is-missing-blocking' : 'is-reference') }}"></span>
+                        @endforeach
+                    @endforeach
+                </div>
+
+                <div class="requirement-rail-header">
+                    <div class="requirement-rail-progress" aria-label="Required document completion">
+                        <div class="requirement-rail-progress-label">
+                            <span>{{ $blockingUploadedDocuments->count() }} / {{ $blockingTotal }} required</span>
+                            <span>{{ $blockingProgressPercent }}%</span>
+                        </div>
+                        <div class="requirement-rail-progress-track" aria-hidden="true">
+                            <div class="requirement-rail-progress-bar" style="width: {{ $blockingProgressPercent }}%;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="requirement-rail-scroll">
+                    @foreach ($requirementGroups as $navGroup)
+                        @php
+                            $navGroupKey = $navGroup['key'] ?? 'transferor';
+                            $navGroupLabel = $navGroupKey === 'transferee' ? 'Transferee' : 'Transferor';
+                        @endphp
+
+                        <div class="requirement-rail-group">
+                            <div class="requirement-rail-group-label {{ $navGroupKey }}">
+                                <span class="group-full">{{ $navGroupLabel }}</span>
+                            </div>
+
+                            <div class="requirement-rail-items">
+                                @foreach ($navGroup['requirements'] as $navReq)
+                                    @php
+                                        $navDoc = $uploaded->get($navReq->id);
+                                        $navIsUploaded = $navDoc && filled($navDoc->file_path);
+                                        $navBlocksAcceptance = method_exists($navReq, 'blocksAcceptance')
+                                            ? $navReq->blocksAcceptance()
+                                            : (bool) $navReq->is_mandatory;
+                                        $navStatus = $navIsUploaded ? 'Uploaded' : ($navBlocksAcceptance ? 'Missing' : 'Reference');
+                                        $navDisplayName = trim(preg_replace('/\s*\((?:if|when|where|as applicable)[^)]+\)/i', '', $navReq->name));
+                                    @endphp
+
+                                    <a href="#required-document-{{ $navReq->id }}"
+                                       class="requirement-rail-link {{ $navIsUploaded ? 'is-uploaded' : ($navBlocksAcceptance ? 'is-missing-blocking' : 'is-reference') }}"
+                                       title="{{ $navStatus }} · {{ $navGroupLabel }} · {{ $navDisplayName }}"
+                                       aria-label="Jump to {{ strtolower($navGroupLabel) }} requirement {{ $navDisplayName }}">
+                                        <span class="requirement-rail-line" aria-hidden="true"></span>
+                                        <span class="requirement-rail-text">{{ $navDisplayName }}</span>
+                                        <span class="requirement-rail-status">{{ $navStatus }}</span>
+                                    </a>
+                                @endforeach
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+        </aside>
+
+
         @foreach ($requirementGroups as $group)
-            <section class="review-panel">
+            @php
+                $groupKey = $group['key'] ?? 'transferor';
+                $groupLabel = $groupKey === 'transferee' ? 'Transferee Side' : 'Transferor Side';
+            @endphp
+            <section class="review-panel requirement-group-panel {{ $groupKey === 'transferee' ? 'transferee-group' : 'transferor-group' }}">
                 <div class="review-panel-header">
-                    <div>
-                        <h2 class="review-panel-title">{{ $group['title'] }}</h2>
-                        <p class="review-panel-subtitle">{{ $group['description'] }}</p>
+                    <div class="party-heading-block">
+                        <div class="party-heading-copy">
+                            <h2 class="review-panel-title">{{ $group['title'] }}</h2>
+                            <p class="review-panel-subtitle">{{ $group['description'] }}</p>
+                        </div>
+                        <span class="party-group-badge {{ $groupKey }}">{{ $groupLabel }}</span>
                     </div>
                 </div>
 
@@ -2086,7 +2696,7 @@
                     @foreach ($group['requirements'] as $req)
                         @php
                             $doc = $uploaded->get($req->id);
-                            $isUploaded = ! is_null($doc);
+                            $isUploaded = $doc && filled($doc->file_path);
                             $editPanelId = 'document-edit-panel-' . $req->id;
                             $documentExists = $isUploaded && $doc->file_path && \Illuminate\Support\Facades\Storage::exists($doc->file_path);
                             $documentMime = $documentExists ? (\Illuminate\Support\Facades\Storage::mimeType($doc->file_path) ?: null) : null;
@@ -2104,9 +2714,10 @@
                             $blocksAcceptance = method_exists($req, 'blocksAcceptance')
                                 ? $req->blocksAcceptance()
                                 : (bool) $req->is_mandatory;
+                            $reqDisplayName = trim(preg_replace('/\s*\((?:if|when|where|as applicable)[^)]+\)/i', '', $req->name));
                         @endphp
 
-                        <article id="required-document-{{ $req->id }}" class="requirement-card">
+                        <article id="required-document-{{ $req->id }}" class="requirement-card {{ $isUploaded ? 'is-uploaded' : ($blocksAcceptance ? 'is-missing-blocking' : 'is-reference') }}">
                             <div class="requirement-main">
                                 <div class="requirement-heading">
                                     <div class="requirement-title-wrap">
@@ -2115,10 +2726,12 @@
                                         </span>
 
                                         <div>
-                                            <p class="requirement-type-label">Document Requirement</p>
+                                            <p class="requirement-type-label">
+                                                <span class="party-chip {{ ($req->party ?? $groupKey) === 'transferee' ? 'transferee' : 'transferor' }}">{{ ($req->party ?? $groupKey) === 'transferee' ? 'Transferee Side' : 'Transferor Side' }}</span>
+                                            </p>
 
                                             <h3 class="requirement-title">
-                                                {{ $req->name }}
+                                                {{ $reqDisplayName }}
                                                 <span class="staff-badge {{ $classificationBadgeClass }} ml-2">{{ $classificationLabel }}</span>
                                             </h3>
 
@@ -2142,7 +2755,7 @@
                                             Uploaded Document
                                         </p>
                                         <p class="document-status-copy">
-                                            A file is already attached to this requirement. Use Edit to replace the file and update its indexing details, or Remove to delete the uploaded document record.
+                                            A file is already attached to this requirement. Use Edit to replace the file or update its reference details, or Remove to delete the uploaded document record.
                                         </p>
 
                                         <div class="document-detail-grid mt-3">
@@ -2151,19 +2764,10 @@
                                                 <div class="font-mono break-all mt-1">{{ $doc->original_filename }}</div>
                                             </div>
 
-                                            <div class="document-detail-item">
-                                                <strong>Annex Reference</strong>
-                                                <div class="mt-1">{{ $doc->annex_reference ?: 'â€”' }}</div>
-                                            </div>
 
                                             <div class="document-detail-item">
                                                 <strong>Reference No.</strong>
-                                                <div class="mt-1">{{ $doc->document_reference_number ?: 'â€”' }}</div>
-                                            </div>
-
-                                            <div class="document-detail-item">
-                                                <strong>Remarks</strong>
-                                                <div class="mt-1">{{ $doc->remarks ?: 'â€”' }}</div>
+                                                <div class="mt-1">{{ $doc->document_reference_number ?: '—' }}</div>
                                             </div>
 
                                         </div>
@@ -2338,13 +2942,9 @@
                                                     <div>
                                                         <p class="document-edit-panel-title">Edit Uploaded Document</p>
                                                         <p class="document-edit-panel-copy">
-                                                            Update the file or indexing details below. Choose a replacement file only when the uploaded file itself needs to be changed.
+                                                            Update the attached file or encoded reference details below.
                                                         </p>
                                                     </div>
-                                                    <span class="document-indexing-label">
-                                                        <i class="fa-solid fa-database"></i>
-                                                        Indexing Only
-                                                    </span>
                                                 </div>
 
                                                 <form method="POST"
@@ -2358,24 +2958,6 @@
                                                         <label class="block mb-2">Replacement file (optional)</label>
                                                         <input type="file" name="file">
                                                         <p class="file-input-help">Leave this blank to keep the currently uploaded file and save only the reference/indexing changes.</p>
-                                                    </div>
-
-                                                    <div class="upload-grid">
-                                                        <div>
-                                                            <label class="block mb-1">Annex reference (optional)</label>
-                                                            <input type="text"
-                                                                   name="annex_reference"
-                                                                   class="review-input"
-                                                                   value="{{ old('annex_reference', $doc->annex_reference ?? '') }}">
-                                                        </div>
-
-                                                        <div>
-                                                            <label class="block mb-1">Remarks (optional)</label>
-                                                            <input type="text"
-                                                                   name="remarks"
-                                                                   class="review-input"
-                                                                   value="{{ old('remarks', $doc->remarks ?? '') }}">
-                                                        </div>
                                                     </div>
 
                                                     @include('staff.applications.partials.document-metadata-fields', [
@@ -2420,13 +3002,9 @@
                                                     Upload Document
                                                 </p>
                                                 <p class="document-form-copy">
-                                                    Upload the required file for staff review and traceability.
+                                                    Upload the required file and encode the needed reference details for staff review.
                                                 </p>
                                             </div>
-                                            <span class="document-indexing-label">
-                                                <i class="fa-solid fa-database"></i>
-                                                Indexing Only
-                                            </span>
                                         </div>
 
                                         <div class="document-form-section">
@@ -2437,29 +3015,7 @@
                                                        required
                                                        {{ $isFinal ? 'disabled' : '' }}
                                                        title="{{ $isFinal ? $lockMsg : '' }}">
-                                                <p class="file-input-help">Accepted file is stored as an application document for staff review and indexing only.</p>
-                                            </div>
-
-                                            <div class="upload-grid">
-                                                <div>
-                                                    <label class="block mb-1">Annex reference (optional)</label>
-                                                    <input type="text"
-                                                           name="annex_reference"
-                                                           class="review-input"
-                                                           value="{{ old('annex_reference') }}"
-                                                           {{ $isFinal ? 'disabled' : '' }}
-                                                           title="{{ $isFinal ? $lockMsg : '' }}">
-                                                </div>
-
-                                                <div>
-                                                    <label class="block mb-1">Remarks (optional)</label>
-                                                    <input type="text"
-                                                           name="remarks"
-                                                           class="review-input"
-                                                           value="{{ old('remarks') }}"
-                                                           {{ $isFinal ? 'disabled' : '' }}
-                                                           title="{{ $isFinal ? $lockMsg : '' }}">
-                                                </div>
+                                                <p class="file-input-help">Accepted file is stored as an application document for staff review.</p>
                                             </div>
 
                                             @include('staff.applications.partials.document-metadata-fields', [
@@ -2488,22 +3044,280 @@
                 </div>
             </section>
         @endforeach
-        <section class="review-panel workflow-bottom-panel" id="workflow-actions-bottom">
-            <div class="review-panel-header">
-                <div>
-                    <h2 class="review-panel-title">Workflow Actions</h2>
-                    <p class="review-panel-subtitle">
-                        Use this after reviewing the encoded details and uploaded requirements.
-                    </p>
+        @if ($transfereeOwner)
+            <section class="review-panel">
+                <div class="review-panel-header">
+                    <div>
+                        <h2 class="review-panel-title">5-Hectare Validation (Assistive)</h2>
+                        <p class="review-panel-subtitle">
+                            This validation is based on encoded active landholding records and pending/current application areas only. It is assistive for staff review, not final legal authority.
+                        </p>
+                    </div>
+                    @if ($exceedsFiveHectares)
+                        <span class="staff-badge staff-badge-red">Limit Flagged</span>
+                    @else
+                        <span class="staff-badge staff-badge-green">Within Limit</span>
+                    @endif
                 </div>
 
-                <span class="workflow-status-pill">
-                    <i class="fa-solid fa-circle-info"></i>
-                    Current Status: {{ $statusLabel }}
-                </span>
+                <div class="review-panel-body">
+                    <div class="validation-grid">
+                        <div class="validation-item"><strong>Transferee</strong>{{ $transfereeOwner->full_name }}</div>
+                        <div class="validation-item"><strong>Current Active Hectares</strong>{{ number_format($currentApprovedTotal, 4) }} ha</div>
+                        <div class="validation-item"><strong>Pending Incoming Total</strong>{{ number_format($pendingIncomingTotal, 4) }} ha</div>
+                        <div class="validation-item"><strong>This Application Total</strong>{{ number_format($thisApplicationTotal, 4) }} ha</div>
+                        <div class="validation-item"><strong>Projected Total</strong>{{ number_format($projectedTotal, 4) }} ha</div>
+                        <div class="validation-item"><strong>Transfer Nature</strong>{{ $application->transferNatureLabel() }}</div>
+                        <div class="validation-item"><strong>Succession Context</strong>{{ $application->is_succession_case ? 'Yes, noted for manual review' : 'No / not indicated' }}</div>
+                        <div class="validation-item"><strong>Retention Certificate</strong>
+                            @if ($application->retention_certificate_required)
+                                Required{{ $application->retention_certificate_reference ? ' — ' . $application->retention_certificate_reference : ' — reference not recorded' }}
+                            @else
+                                Not required / not indicated
+                            @endif
+                        </div>
+                        <div class="validation-item"><strong>Review Status</strong>{{ $fiveHectareValidation['status_label'] ?? 'For staff review' }}</div>
+                    </div>
+
+                    @if (filled($application->landholding_review_notes))
+                        <div class="review-note-box mt-4">
+                            <strong>Landholding review notes:</strong><br>
+                            {{ $application->landholding_review_notes }}
+                        </div>
+                    @endif
+
+                    <div class="review-note-box mt-4">
+                        @if (($fiveHectareValidation['retention_certificate_missing'] ?? false))
+                            Retention Certificate is marked as required, but no reference was recorded. Release is blocked until the reference is encoded or the requirement is revised.
+                        @elseif ($exceedsFiveHectares && $application->is_succession_case)
+                            Projected total exceeds the 5-hectare reference limit, but succession/inheritance context has been noted for manual review.
+                        @elseif ($exceedsFiveHectares)
+                            Projected total exceeds the 5-hectare reference limit based on encoded records. Release is blocked until records are resolved, an applicable exception/reference is encoded, or the application is marked Denied.
+                        @else
+                            Projected total is within the 5-hectare reference limit based on encoded system records.
+                        @endif
+                    </div>
+                </div>
+            </section>
+        @endif
+
+        <section class="review-panel">
+            <div class="review-panel-header">
+                <div>
+                    <h2 class="review-panel-title">Prior / Source Records</h2>
+                    <p class="review-panel-subtitle">
+                        Matched digitized source records and source packages related to this application’s parcel, title, transferor, or transferee.
+                        These records support review and traceability only. They do not automatically transfer land ownership or mutate Registry of Deeds records.
+                    </p>
+                </div>
             </div>
 
-            <div class="review-panel-body workflow-box">
+            <div class="review-panel-body space-y-6">
+                @if ($matchedSourcePackages->count() > 0)
+                    <div>
+                        <h3 class="font-heading text-base font-bold text-gray-900 mb-3">Matched Source Packages</h3>
+                        <div class="source-table-wrap">
+                            <table class="staff-table">
+                                <thead>
+                                    <tr>
+                                        <th>Package Code</th>
+                                        <th>Status</th>
+                                        <th>References</th>
+                                        <th>Linked Parcel</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach ($matchedSourcePackages as $package)
+                                        <tr>
+                                            <td><strong>{{ $package->package_code }}</strong></td>
+                                            <td>{{ $package->status_label }}</td>
+                                            <td>
+                                                @if ($package->title_number)<div><strong>Title:</strong> {{ $package->title_number }}</div>@endif
+                                                @if ($package->parcel_code)<div><strong>Parcel Ref:</strong> {{ $package->parcel_code }}</div>@endif
+                                                @if ($package->landholding_reference_number)<div><strong>Landholding:</strong> {{ $package->landholding_reference_number }}</div>@endif
+                                                @if ($package->control_number)<div><strong>Clearance:</strong> {{ $package->control_number }}</div>@endif
+                                            </td>
+                                            <td>
+                                                @if ($package->parcel)
+                                                    <a href="{{ route('staff.records.parcels.show', $package->parcel) }}" class="staff-link">
+                                                        {{ $package->parcel->parcel_code }}
+                                                    </a>
+                                                @else
+                                                    <span class="text-gray-400">Not linked</span>
+                                                @endif
+                                            </td>
+                                            <td>
+                                                <a href="{{ route('staff.source-record-packages.show', $package) }}" class="staff-button staff-button-light">
+                                                    View Package
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                @endif
+
+                @if ($matchedSourceRecords->count() > 0)
+                    <div>
+                        <h3 class="font-heading text-base font-bold text-gray-900 mb-3">Matched Individual Source Records</h3>
+                        <div class="source-table-wrap">
+                            <table class="staff-table">
+                                <thead>
+                                    <tr>
+                                        <th>Type</th>
+                                        <th>Origin</th>
+                                        <th>References</th>
+                                        <th>Source</th>
+                                        <th>Linked Parcel</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach ($matchedSourceRecords as $record)
+                                        <tr>
+                                            <td><strong>{{ $record->record_type_label }}</strong></td>
+                                            <td>
+                                                <span class="staff-badge @if ($record->origin === 'encoded') staff-badge-blue @elseif ($record->origin === 'imported') staff-badge-amber @else staff-badge-slate @endif">
+                                                    {{ $record->origin_label }}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                @if ($record->title_number)<div><strong>Title:</strong> {{ $record->title_number }}</div>@endif
+                                                @if ($record->parcel_code)<div><strong>Parcel Ref:</strong> {{ $record->parcel_code }}</div>@endif
+                                                @if ($record->landholding_reference_number)<div><strong>Landholding:</strong> {{ $record->landholding_reference_number }}</div>@endif
+                                                @if ($record->control_number)<div><strong>Clearance:</strong> {{ $record->control_number }}</div>@endif
+                                                @if (! $record->title_number && ! $record->parcel_code && ! $record->landholding_reference_number && ! $record->control_number) — @endif
+                                            </td>
+                                            <td>
+                                                <div>{{ $record->source_book }}</div>
+                                                <div class="text-xs text-gray-500">Page: {{ $record->page_number ?? '—' }}</div>
+                                            </td>
+                                            <td>
+                                                @if ($record->parcel)
+                                                    <a href="{{ route('staff.records.parcels.show', $record->parcel) }}" class="staff-link">
+                                                        {{ $record->parcel->parcel_code }}
+                                                    </a>
+                                                @else
+                                                    <span class="text-gray-400">Not linked</span>
+                                                @endif
+                                            </td>
+                                            <td>
+                                                <a href="{{ route('staff.legacy-records.show', $record) }}" class="staff-button staff-button-light">
+                                                    View Record
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                @endif
+
+                @if ($matchedSourcePackages->count() === 0 && $matchedSourceRecords->count() === 0)
+                    <div class="review-note-box text-center">
+                        No matching source records were found for this application.
+                    </div>
+                @endif
+            </div>
+        </section>
+
+        <details class="review-panel timeline-collapsible">
+            <summary>
+                <div class="timeline-summary-row">
+                    <div class="timeline-summary-left">
+                        <span class="timeline-summary-icon" aria-hidden="true"><i class="fa-solid fa-clock-rotate-left"></i></span>
+                        <div>
+                            <h2 class="review-panel-title">Application Timeline / Status History</h2>
+                            <p class="review-panel-subtitle">{{ $applicationTimeline->count() }} recorded action(s). Open this section only when you need to inspect the audit-based status trail.</p>
+                        </div>
+                    </div>
+                    <span class="timeline-chevron" aria-hidden="true"><i class="fa-solid fa-chevron-down"></i></span>
+                </div>
+            </summary>
+
+            <div class="review-panel-body">
+                <div class="review-note-box mb-4">
+                    Timeline records are based on audit logs for traceability.
+                </div>
+                @if ($applicationTimeline->isEmpty())
+                    <div class="review-note-box text-center">No timeline records found yet.</div>
+                @else
+                    <div class="timeline-list">
+                        @foreach ($applicationTimeline as $timelineEntry)
+                            <article class="timeline-entry">
+                                <div class="timeline-entry-header">
+                                    <div>
+                                        <p class="timeline-action">{{ ucwords(str_replace('_', ' ', $timelineEntry->action)) }}</p>
+                                        <p class="timeline-meta">
+                                            By:
+                                            @if ($timelineEntry->actor)
+                                                {{ $timelineEntry->actor->name }}
+                                                <span class="text-gray-400">({{ $timelineEntry->actor->email }})</span>
+                                            @else
+                                                Unknown user
+                                            @endif
+                                        </p>
+                                    </div>
+                                    <div class="timeline-meta md:text-right">
+                                        {{ $timelineEntry->created_at?->timezone('Asia/Manila')->format('M d, Y h:i A') ?? 'N/A' }}
+                                    </div>
+                                </div>
+
+                                @if ($timelineEntry->auditable_type)
+                                    <div class="timeline-meta mt-2">
+                                        Related record:
+                                        {{ class_basename($timelineEntry->auditable_type) }}
+                                        @if ($timelineEntry->auditable_id)
+                                            #{{ $timelineEntry->auditable_id }}
+                                        @endif
+                                    </div>
+                                @endif
+
+                                @if (! empty($timelineEntry->metadata))
+                                    <details class="mt-3">
+                                        <summary class="details-summary"><i class="fa-solid fa-caret-right"></i> View action details</summary>
+                                        <pre class="details-pre">{{ json_encode($timelineEntry->metadata, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) }}</pre>
+                                    </details>
+                                @endif
+                            </article>
+                        @endforeach
+                    </div>
+                @endif
+            </div>
+        </details>
+    </div>
+
+
+
+    <div id="workflow-modal" class="workflow-modal-backdrop" aria-hidden="true">
+        <div class="workflow-modal-card" role="dialog" aria-modal="true" aria-labelledby="workflow-modal-title">
+            <div class="workflow-modal-header">
+                <div>
+                    <h2 id="workflow-modal-title" class="workflow-modal-title">Application Actions</h2>
+                    <p class="workflow-modal-copy">Open this panel after reviewing the encoded details and uploaded requirements.</p>
+                </div>
+                <button type="button" class="staff-button staff-button-light" id="workflow-modal-close-top">
+                    <i class="fa-solid fa-xmark"></i>
+                    Close
+                </button>
+            </div>
+
+            <div class="workflow-modal-body">
+                <div class="workflow-modal-summary">
+                    <div>
+                        <strong class="text-slate-900 font-heading">Current workflow status</strong>
+                        <p class="workflow-modal-copy">Review the current stage before advancing, releasing, or denying the application.</p>
+                    </div>
+                    <span class="workflow-status-pill">
+                        <i class="fa-solid fa-circle-info"></i>
+                        Current Status: {{ $statusLabel }}
+                    </span>
+                </div>
+
                 @if ($isFinal)
                     <div class="review-note-box">
                         No workflow actions are available because this application is finalized.
@@ -2616,256 +3430,17 @@
                     </div>
                 @endif
             </div>
-        </section>
 
-        @if ($transfereeOwner)
-            <section class="review-panel">
-                <div class="review-panel-header">
-                    <div>
-                        <h2 class="review-panel-title">5-Hectare Validation (Assistive)</h2>
-                        <p class="review-panel-subtitle">
-                            This validation is based on encoded active landholding records and pending/current application areas only. It is assistive for staff review, not final legal authority.
-                        </p>
-                    </div>
-                    @if ($exceedsFiveHectares)
-                        <span class="staff-badge staff-badge-red">Limit Flagged</span>
-                    @else
-                        <span class="staff-badge staff-badge-green">Within Limit</span>
-                    @endif
-                </div>
-
-                <div class="review-panel-body">
-                    <div class="validation-grid">
-                        <div class="validation-item"><strong>Transferee</strong>{{ $transfereeOwner->full_name }}</div>
-                        <div class="validation-item"><strong>Current Active Hectares</strong>{{ number_format($currentApprovedTotal, 4) }} ha</div>
-                        <div class="validation-item"><strong>Pending Incoming Total</strong>{{ number_format($pendingIncomingTotal, 4) }} ha</div>
-                        <div class="validation-item"><strong>This Application Total</strong>{{ number_format($thisApplicationTotal, 4) }} ha</div>
-                        <div class="validation-item"><strong>Projected Total</strong>{{ number_format($projectedTotal, 4) }} ha</div>
-                        <div class="validation-item"><strong>Transfer Nature</strong>{{ $application->transferNatureLabel() }}</div>
-                        <div class="validation-item"><strong>Succession Context</strong>{{ $application->is_succession_case ? 'Yes, noted for manual review' : 'No / not indicated' }}</div>
-                        <div class="validation-item"><strong>Retention Certificate</strong>
-                            @if ($application->retention_certificate_required)
-                                Required{{ $application->retention_certificate_reference ? ' — ' . $application->retention_certificate_reference : ' — reference not recorded' }}
-                            @else
-                                Not required / not indicated
-                            @endif
-                        </div>
-                        <div class="validation-item"><strong>Review Status</strong>{{ $fiveHectareValidation['status_label'] ?? 'For staff review' }}</div>
-                    </div>
-
-                    @if (filled($application->landholding_review_notes))
-                        <div class="review-note-box mt-4">
-                            <strong>Landholding review notes:</strong><br>
-                            {{ $application->landholding_review_notes }}
-                        </div>
-                    @endif
-
-                    <div class="review-note-box mt-4">
-                        @if (($fiveHectareValidation['retention_certificate_missing'] ?? false))
-                            Retention Certificate is marked as required, but no reference was recorded. Release is blocked until the reference is encoded or the requirement is revised.
-                        @elseif ($exceedsFiveHectares && $application->is_succession_case)
-                            Projected total exceeds the 5-hectare reference limit, but succession/inheritance context has been noted for manual review.
-                        @elseif ($exceedsFiveHectares)
-                            Projected total exceeds the 5-hectare reference limit based on encoded records. Release is blocked until records are resolved, an applicable exception/reference is encoded, or the application is marked Denied.
-                        @else
-                            Projected total is within the 5-hectare reference limit based on encoded system records.
-                        @endif
-                    </div>
-                </div>
-            </section>
-        @endif
-
-        <section class="review-panel">
-            <div class="review-panel-header">
-                <div>
-                    <h2 class="review-panel-title">Prior / Source Records</h2>
-                    <p class="review-panel-subtitle">
-                        Matched digitized source records and source packages related to this applicationâ€™s parcel, title, transferor, or transferee.
-                        These records support review and traceability only. They do not automatically transfer land ownership or mutate Registry of Deeds records.
-                    </p>
-                </div>
+            <div class="workflow-modal-footer">
+                <span class="text-xs text-slate-500">Workflow decisions record the clearance result only and do not automatically transfer ownership.</span>
             </div>
-
-            <div class="review-panel-body space-y-6">
-                @if ($matchedSourcePackages->count() > 0)
-                    <div>
-                        <h3 class="font-heading text-base font-bold text-gray-900 mb-3">Matched Source Packages</h3>
-                        <div class="source-table-wrap">
-                            <table class="staff-table">
-                                <thead>
-                                    <tr>
-                                        <th>Package Code</th>
-                                        <th>Status</th>
-                                        <th>References</th>
-                                        <th>Linked Parcel</th>
-                                        <th>Action</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach ($matchedSourcePackages as $package)
-                                        <tr>
-                                            <td><strong>{{ $package->package_code }}</strong></td>
-                                            <td>{{ $package->status_label }}</td>
-                                            <td>
-                                                @if ($package->title_number)<div><strong>Title:</strong> {{ $package->title_number }}</div>@endif
-                                                @if ($package->parcel_code)<div><strong>Parcel Ref:</strong> {{ $package->parcel_code }}</div>@endif
-                                                @if ($package->landholding_reference_number)<div><strong>Landholding:</strong> {{ $package->landholding_reference_number }}</div>@endif
-                                                @if ($package->control_number)<div><strong>Clearance:</strong> {{ $package->control_number }}</div>@endif
-                                            </td>
-                                            <td>
-                                                @if ($package->parcel)
-                                                    <a href="{{ route('staff.records.parcels.show', $package->parcel) }}" class="staff-link">
-                                                        {{ $package->parcel->parcel_code }}
-                                                    </a>
-                                                @else
-                                                    <span class="text-gray-400">Not linked</span>
-                                                @endif
-                                            </td>
-                                            <td>
-                                                <a href="{{ route('staff.source-record-packages.show', $package) }}" class="staff-button staff-button-light">
-                                                    View Package
-                                                </a>
-                                            </td>
-                                        </tr>
-                                    @endforeach
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                @endif
-
-                @if ($matchedSourceRecords->count() > 0)
-                    <div>
-                        <h3 class="font-heading text-base font-bold text-gray-900 mb-3">Matched Individual Source Records</h3>
-                        <div class="source-table-wrap">
-                            <table class="staff-table">
-                                <thead>
-                                    <tr>
-                                        <th>Type</th>
-                                        <th>Origin</th>
-                                        <th>References</th>
-                                        <th>Source</th>
-                                        <th>Linked Parcel</th>
-                                        <th>Action</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach ($matchedSourceRecords as $record)
-                                        <tr>
-                                            <td><strong>{{ $record->record_type_label }}</strong></td>
-                                            <td>
-                                                <span class="staff-badge @if ($record->origin === 'encoded') staff-badge-blue @elseif ($record->origin === 'imported') staff-badge-amber @else staff-badge-slate @endif">
-                                                    {{ $record->origin_label }}
-                                                </span>
-                                            </td>
-                                            <td>
-                                                @if ($record->title_number)<div><strong>Title:</strong> {{ $record->title_number }}</div>@endif
-                                                @if ($record->parcel_code)<div><strong>Parcel Ref:</strong> {{ $record->parcel_code }}</div>@endif
-                                                @if ($record->landholding_reference_number)<div><strong>Landholding:</strong> {{ $record->landholding_reference_number }}</div>@endif
-                                                @if ($record->control_number)<div><strong>Clearance:</strong> {{ $record->control_number }}</div>@endif
-                                                @if (! $record->title_number && ! $record->parcel_code && ! $record->landholding_reference_number && ! $record->control_number) â€” @endif
-                                            </td>
-                                            <td>
-                                                <div>{{ $record->source_book }}</div>
-                                                <div class="text-xs text-gray-500">Page: {{ $record->page_number ?? 'â€”' }}</div>
-                                            </td>
-                                            <td>
-                                                @if ($record->parcel)
-                                                    <a href="{{ route('staff.records.parcels.show', $record->parcel) }}" class="staff-link">
-                                                        {{ $record->parcel->parcel_code }}
-                                                    </a>
-                                                @else
-                                                    <span class="text-gray-400">Not linked</span>
-                                                @endif
-                                            </td>
-                                            <td>
-                                                <a href="{{ route('staff.legacy-records.show', $record) }}" class="staff-button staff-button-light">
-                                                    View Record
-                                                </a>
-                                            </td>
-                                        </tr>
-                                    @endforeach
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                @endif
-
-                @if ($matchedSourcePackages->count() === 0 && $matchedSourceRecords->count() === 0)
-                    <div class="review-note-box text-center">
-                        No matching source records were found for this application.
-                    </div>
-                @endif
-            </div>
-        </section>
-
-        <details class="review-panel timeline-collapsible">
-            <summary>
-                <div class="timeline-summary-row">
-                    <div class="timeline-summary-left">
-                        <span class="timeline-summary-icon" aria-hidden="true"><i class="fa-solid fa-clock-rotate-left"></i></span>
-                        <div>
-                            <h2 class="review-panel-title">Application Timeline / Status History</h2>
-                            <p class="review-panel-subtitle">{{ $applicationTimeline->count() }} recorded action(s). Open this section only when you need to inspect the audit-based status trail.</p>
-                        </div>
-                    </div>
-                    <span class="timeline-chevron" aria-hidden="true"><i class="fa-solid fa-chevron-down"></i></span>
-                </div>
-            </summary>
-
-            <div class="review-panel-body">
-                <div class="review-note-box mb-4">
-                    Timeline records are based on audit logs for traceability.
-                </div>
-                @if ($applicationTimeline->isEmpty())
-                    <div class="review-note-box text-center">No timeline records found yet.</div>
-                @else
-                    <div class="timeline-list">
-                        @foreach ($applicationTimeline as $timelineEntry)
-                            <article class="timeline-entry">
-                                <div class="timeline-entry-header">
-                                    <div>
-                                        <p class="timeline-action">{{ ucwords(str_replace('_', ' ', $timelineEntry->action)) }}</p>
-                                        <p class="timeline-meta">
-                                            By:
-                                            @if ($timelineEntry->actor)
-                                                {{ $timelineEntry->actor->name }}
-                                                <span class="text-gray-400">({{ $timelineEntry->actor->email }})</span>
-                                            @else
-                                                Unknown user
-                                            @endif
-                                        </p>
-                                    </div>
-                                    <div class="timeline-meta md:text-right">
-                                        {{ $timelineEntry->created_at?->timezone('Asia/Manila')->format('M d, Y h:i A') ?? 'N/A' }}
-                                    </div>
-                                </div>
-
-                                @if ($timelineEntry->auditable_type)
-                                    <div class="timeline-meta mt-2">
-                                        Related record:
-                                        {{ class_basename($timelineEntry->auditable_type) }}
-                                        @if ($timelineEntry->auditable_id)
-                                            #{{ $timelineEntry->auditable_id }}
-                                        @endif
-                                    </div>
-                                @endif
-
-                                @if (! empty($timelineEntry->metadata))
-                                    <details class="mt-3">
-                                        <summary class="details-summary"><i class="fa-solid fa-caret-right"></i> View action details</summary>
-                                        <pre class="details-pre">{{ json_encode($timelineEntry->metadata, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) }}</pre>
-                                    </details>
-                                @endif
-                            </article>
-                        @endforeach
-                    </div>
-                @endif
-            </div>
-        </details>
+        </div>
     </div>
 
-
+    <button type="button" class="staff-button workflow-fab" id="workflow-modal-open">
+        <i class="fa-solid fa-bolt"></i>
+        Application Actions
+    </button>
 
         <div id="decision-confirm-modal" class="decision-modal-backdrop" aria-hidden="true">
             <div class="decision-modal-card" role="dialog" aria-modal="true" aria-labelledby="decision-confirm-title" aria-describedby="decision-confirm-copy">
@@ -2945,6 +3520,136 @@
             }
 
 
+            const workflowModal = document.getElementById('workflow-modal');
+            const workflowModalOpen = document.getElementById('workflow-modal-open');
+            const workflowModalCloseTop = document.getElementById('workflow-modal-close-top');
+
+            function openWorkflowModal() {
+                if (! workflowModal) return;
+                workflowModal.classList.add('is-open');
+                workflowModal.setAttribute('aria-hidden', 'false');
+                document.body.style.overflow = 'hidden';
+                workflowModalCloseTop?.focus();
+            }
+
+            function closeWorkflowModal() {
+                if (! workflowModal) return;
+                workflowModal.classList.remove('is-open');
+                workflowModal.setAttribute('aria-hidden', 'true');
+                document.body.style.overflow = '';
+            }
+
+            workflowModalOpen?.addEventListener('click', openWorkflowModal);
+            workflowModalCloseTop?.addEventListener('click', closeWorkflowModal);
+            workflowModal?.addEventListener('click', function (event) {
+                if (event.target === workflowModal) {
+                    closeWorkflowModal();
+                }
+            });
+
+
+            const requirementRail = document.querySelector('.requirement-rail');
+            const requirementRailPanel = document.querySelector('.requirement-rail-panel');
+            const requirementRailScroll = document.querySelector('.requirement-rail-scroll');
+            let requirementRailReadyTimer = null;
+
+            function markRequirementRailOpening() {
+                if (! requirementRail) return;
+
+                window.clearTimeout(requirementRailReadyTimer);
+                requirementRail.classList.add('is-expanded');
+                requirementRail.classList.remove('is-open-ready');
+
+                requirementRailReadyTimer = window.setTimeout(function () {
+                    if (requirementRail.classList.contains('is-expanded')) {
+                        requirementRail.classList.add('is-open-ready');
+                    }
+                }, 225);
+            }
+
+            function closeRequirementRailText() {
+                if (! requirementRail) return;
+
+                window.clearTimeout(requirementRailReadyTimer);
+                requirementRail.classList.remove('is-open-ready');
+                requirementRail.classList.remove('is-expanded');
+            }
+
+            requirementRailPanel?.addEventListener('mouseenter', markRequirementRailOpening);
+            requirementRail?.addEventListener('focusin', markRequirementRailOpening);
+            requirementRailPanel?.addEventListener('mouseleave', function () {
+                if (! requirementRail?.matches(':focus-within')) {
+                    closeRequirementRailText();
+                }
+            });
+            requirementRail?.addEventListener('focusout', function () {
+                window.setTimeout(function () {
+                    if (! requirementRail.matches(':focus-within') && ! requirementRailPanel?.matches(':hover')) {
+                        closeRequirementRailText();
+                    }
+                }, 0);
+            });
+            requirementRailPanel?.addEventListener('transitionend', function (event) {
+                if (event.propertyName !== 'width' || ! requirementRail) return;
+
+                if (requirementRail.classList.contains('is-expanded')) {
+                    requirementRail.classList.add('is-open-ready');
+                }
+            });
+
+            requirementRailPanel?.addEventListener('wheel', function (event) {
+                if (! requirementRailScroll) return;
+
+                event.preventDefault();
+                event.stopPropagation();
+                requirementRailScroll.scrollTop += event.deltaY;
+            }, { passive: false });
+
+            document.querySelectorAll('.requirement-rail-link[href^="#required-document-"]').forEach(function (link) {
+                link.addEventListener('click', function (event) {
+                    const targetId = link.getAttribute('href');
+                    const target = targetId ? document.querySelector(targetId) : null;
+
+                    if (! target) {
+                        return;
+                    }
+
+                    event.preventDefault();
+                    const targetTop = target.getBoundingClientRect().top + window.scrollY - 92;
+                    window.scrollTo({ top: Math.max(targetTop, 0), behavior: 'smooth' });
+
+                    if (history.pushState) {
+                        history.pushState(null, '', targetId);
+                    }
+
+                    setTimeout(function () {
+                        link.blur();
+                        if (document.activeElement && typeof document.activeElement.blur === 'function') {
+                            document.activeElement.blur();
+                        }
+                    }, 140);
+                });
+            });
+
+            requirementRail?.addEventListener('mouseleave', function () {
+                closeRequirementRailText();
+
+                requirementRail.querySelectorAll('.requirement-rail-link').forEach(function (link) {
+                    if (typeof link.blur === 'function') {
+                        link.blur();
+                    }
+                });
+            });
+
+            requirementRail?.addEventListener('focusout', function () {
+                window.setTimeout(function () {
+                    if (! requirementRail.matches(':focus-within') && ! requirementRail.matches(':hover')) {
+                        closeRequirementRailText();
+                    }
+                }, 0);
+            });
+
+
             const decisionModal = document.getElementById('decision-confirm-modal');
             const decisionModalIcon = document.getElementById('decision-confirm-icon');
             const decisionModalTitle = document.getElementById('decision-confirm-title');
@@ -3003,6 +3708,7 @@
             document.querySelectorAll('form[data-decision-confirm]').forEach(function (form) {
                 form.addEventListener('submit', function (event) {
                     event.preventDefault();
+                    closeWorkflowModal();
                     openDecisionModal(form, form.getAttribute('data-decision-confirm'));
                 });
             });
@@ -3018,6 +3724,10 @@
             document.addEventListener('keydown', function (event) {
                 if (event.key === 'Escape' && decisionModal.classList.contains('is-open')) {
                     closeDecisionModal();
+                }
+
+                if (event.key === 'Escape' && workflowModal?.classList.contains('is-open')) {
+                    closeWorkflowModal();
                 }
             });
 

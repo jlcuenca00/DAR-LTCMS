@@ -106,6 +106,28 @@
                 --tw-ring-color: transparent;
             }
 
+            .parcel-edit-input[type="file"] {
+                padding: 7px;
+                background: #ffffff;
+                cursor: pointer;
+            }
+
+            .parcel-edit-input[type="file"]::file-selector-button {
+                margin-right: 12px;
+                border: 1px solid #166534;
+                border-radius: 9px;
+                background: #166534;
+                color: #ffffff;
+                padding: 7px 12px;
+                font-size: 12px;
+                font-weight: 900;
+                cursor: pointer;
+            }
+
+            .parcel-edit-input[type="file"]::file-selector-button:hover {
+                background: #14532d;
+            }
+
             .parcel-edit-helper {
                 margin-top: 6px;
                 font-size: 12px;
@@ -367,20 +389,46 @@
                 <section class="parcel-edit-card">
                     <div class="parcel-edit-card-header">
                         <div>
-                            <h2 class="parcel-edit-title">Remarks</h2>
-                            <p class="parcel-edit-subtitle">Optional staff notes for administrative reference.</p>
+                            <h2 class="parcel-edit-title">Map Geometry</h2>
+                            <p class="parcel-edit-subtitle">Update the GeoJSON Polygon used by the parcel map. The builder prevents staff from typing the full structure manually.</p>
                         </div>
                     </div>
 
                     <div class="parcel-edit-body">
                         <div class="parcel-edit-field">
-                        <label for="reference_photo">Reference Photo / Scan</label>
-                        <input id="reference_photo" type="file" name="reference_photo" accept="image/*" class="parcel-edit-input">
-                        <p class="mt-1 text-xs leading-relaxed text-gray-500">Optional photo/scan of the title, tax declaration, sketch, or reference sheet used for encoding.</p>
+                            <label for="geometry_geojson">GeoJSON Geometry</label>
+                            @include('staff.partials.geojson-polygon-editor', [
+                                'fieldName' => 'geometry_geojson',
+                                'fieldId' => 'geometry_geojson',
+                                'value' => old('geometry_geojson', $parcel->geometry_geojson ? json_encode($parcel->geometry_geojson, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) : ''),
+                                'inputClass' => 'parcel-edit-input font-mono text-xs',
+                                'errorClass' => 'parcel-edit-error',
+                                'rows' => 8,
+                            ])
+                        </div>
+                    </div>
+                </section>
+
+                <section class="parcel-edit-card">
+                    <div class="parcel-edit-card-header">
+                        <div>
+                            <h2 class="parcel-edit-title">Remarks</h2>
+                            <p class="parcel-edit-subtitle">Optional staff notes for administrative reference.</p>
+                        </div>
                     </div>
 
-                    <textarea name="remarks" rows="4" class="parcel-edit-input">{{ old('remarks', $parcel->remarks) }}</textarea>
-                        @error('remarks')<p class="parcel-edit-error">{{ $message }}</p>@enderror
+                    <div class="parcel-edit-body" style="display:grid; gap:14px;">
+                        <div class="parcel-edit-field">
+                            <label for="reference_photo">Reference Photo / Scan</label>
+                            <input id="reference_photo" type="file" name="reference_photo" accept="image/*" class="parcel-edit-input">
+                            <p class="parcel-edit-helper">Optional photo/scan of the title, tax declaration, sketch, or reference sheet used for encoding.</p>
+                        </div>
+
+                        <div class="parcel-edit-field">
+                            <label for="remarks">Remarks</label>
+                            <textarea id="remarks" name="remarks" rows="4" class="parcel-edit-input">{{ old('remarks', $parcel->remarks) }}</textarea>
+                            @error('remarks')<p class="parcel-edit-error">{{ $message }}</p>@enderror
+                        </div>
                     </div>
                 </section>
             </main>

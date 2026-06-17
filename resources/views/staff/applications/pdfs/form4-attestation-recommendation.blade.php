@@ -31,7 +31,7 @@
             'no_pending_case_or_conflict' => 'There is no pending case, protest, or conflict of claims involving the subject land.',
         ];
 
-        $checkbox = fn (bool $checked) => $checked ? '[X]' : '[ ]';
+        $checkbox = fn (bool $checked) => $checked ? '✓' : '';
 
         $recommendationDecision = $application->ltc_form4_recommendation_decision;
         $certifiedAt = $application->ltc_form4_certified_at ?? now();
@@ -44,26 +44,27 @@
 
     <style>
         @page {
-            margin: 38px 46px;
+            size: A4;
+            margin: 8px 14px;
         }
 
         body {
             font-family: "Times New Roman", Times, serif;
             color: #111827;
-            font-size: 12px;
-            line-height: 1.38;
+            font-size: 8.4px;
+            line-height: 1.04;
         }
 
         .form-no {
             text-align: right;
             font-weight: bold;
-            margin-bottom: 14px;
+            margin-bottom: 1px;
         }
 
         .header {
             text-align: center;
-            line-height: 1.25;
-            margin-bottom: 16px;
+            line-height: 1.04;
+            margin-bottom: 4px;
         }
 
         .agency {
@@ -73,66 +74,85 @@
 
         h1 {
             text-align: center;
-            font-size: 16px;
-            margin: 14px 0 4px;
+            font-size: 10.8px;
+            margin: 5px 0 2px;
             text-transform: uppercase;
         }
 
         .subtitle {
             text-align: center;
-            font-size: 12px;
-            margin-bottom: 18px;
+            font-size: 8.4px;
+            margin-bottom: 1px;
         }
 
         .meta {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 12px;
+            margin-bottom: 4px;
         }
 
         .meta td {
-            padding: 2px 4px;
+            padding: 1px 3px;
             vertical-align: top;
         }
 
         .meta .label {
-            width: 150px;
+            width: 120px;
             font-weight: bold;
         }
 
         .section-title {
             font-weight: bold;
-            margin: 14px 0 8px;
+            margin: 5px 0 3px;
             text-transform: uppercase;
         }
 
+        .check-list {
+            display: grid;
+            gap: 1px 8px;
+        }
+
+        .check-list.two-column {
+            grid-template-columns: 1fr 1fr;
+        }
+
         .check-row {
-            margin-bottom: 5px;
-            padding-left: 4px;
+            margin-bottom: 1px;
+            padding-left: 2px;
+            page-break-inside: avoid;
         }
 
         .check {
             font-family: DejaVu Sans, sans-serif;
             display: inline-block;
-            width: 28px;
+            width: 10px;
+            height: 10px;
+            line-height: 9px;
+            margin-right: 4px;
+            border: 1px solid #111827;
+            color: #111827;
+            text-align: center;
+            font-size: 7.2px;
+            font-weight: bold;
+            vertical-align: -1px;
         }
 
         .paragraph {
             text-align: justify;
-            margin-bottom: 10px;
+            margin-bottom: 1px;
         }
 
         .parcel-table {
             width: 100%;
             border-collapse: collapse;
-            margin: 8px 0 14px;
-            font-size: 10.5px;
+            margin: 3px 0 4px;
+            font-size: 8.4px;
         }
 
         .parcel-table th,
         .parcel-table td {
             border: 1px solid #cbd5e1;
-            padding: 4px 5px;
+            padding: 1.5px 2.5px;
             text-align: left;
         }
 
@@ -142,11 +162,11 @@
         }
 
         .signature {
-            width: 330px;
+            width: 260px;
             margin-left: auto;
-            margin-top: 44px;
+            margin-top: 6px;
             text-align: center;
-            font-size: 12px;
+            font-size: 8.4px;
         }
 
         .signature-line {
@@ -156,18 +176,27 @@
         }
 
         .copy-distribution {
-            margin-top: 38px;
-            font-size: 10.5px;
-            line-height: 1.25;
+            margin-top: 4px;
+            font-size: 8.4px;
+            line-height: 1.04;
         }
 
         .system-note {
-            margin-top: 14px;
-            padding-top: 8px;
+            margin-top: 4px;
+            padding-top: 4px;
             border-top: 1px solid #d1d5db;
-            font-size: 10.5px;
+            font-size: 8.4px;
             color: #374151;
             text-align: justify;
+        }
+
+        .meta,
+        .parcel-table,
+        .signature,
+        .copy-distribution,
+        .system-note,
+        .compact-block {
+            page-break-inside: avoid;
         }
     </style>
 </head>
@@ -236,21 +265,25 @@
 
     <div class="section-title">I. Facts / Information of the Subject Land</div>
 
-    @foreach ($subjectLandOptions as $value => $label)
-        <div class="check-row">
-            <span class="check">{{ $checkbox($subjectLandFindings->contains($value)) }}</span>
-            {{ $label }}
-        </div>
-    @endforeach
+    <div class="check-list two-column compact-block">
+        @foreach ($subjectLandOptions as $value => $label)
+            <div class="check-row">
+                <span class="check">{{ $checkbox($subjectLandFindings->contains($value)) }}</span>
+                {{ $label }}
+            </div>
+        @endforeach
+    </div>
 
     <div class="section-title">II. Recommendation</div>
 
-    @foreach ($recommendationOptions as $value => $label)
-        <div class="check-row">
-            <span class="check">{{ $checkbox($recommendationFindings->contains($value)) }}</span>
-            {{ $label }}
-        </div>
-    @endforeach
+    <div class="check-list compact-block">
+        @foreach ($recommendationOptions as $value => $label)
+            <div class="check-row">
+                <span class="check">{{ $checkbox($recommendationFindings->contains($value)) }}</span>
+                {{ $label }}
+            </div>
+        @endforeach
+    </div>
 
     @if ($application->ltc_form4_other_findings)
         <div class="section-title">Other Findings</div>
@@ -267,7 +300,7 @@
         Recommended for denial
     </div>
 
-    <p style="margin-top:18px;">
+    <p style="margin-top:6px;">
         Done this {{ optional($certifiedAt)->format('d') ?? '____' }} day of
         {{ optional($certifiedAt)->format('F') ?? '__________' }},
         {{ optional($certifiedAt)->format('Y') ?? '20____' }}.

@@ -28,6 +28,52 @@
     $form4Decision = old('ltc_form4_recommendation_decision', $application->ltc_form4_recommendation_decision);
 @endphp
 
+<style>
+    #ltc-form-no-4-review .ltc-form4-choice {
+        flex: 0 0 15px;
+    }
+
+    #ltc-form-no-4-review .ltc-form4-choice[type="checkbox"] {
+        appearance: none !important;
+        -webkit-appearance: none !important;
+        width: 15px !important;
+        height: 15px !important;
+        margin: 1px 0 0 !important;
+        border: 1.5px solid #16a34a !important;
+        border-radius: 2px !important;
+        background: #ffffff !important;
+        display: inline-grid !important;
+        place-content: center !important;
+        cursor: pointer;
+    }
+
+    #ltc-form-no-4-review .ltc-form4-choice[type="checkbox"]:checked {
+        background: #16a34a !important;
+        border-color: #16a34a !important;
+    }
+
+    #ltc-form-no-4-review .ltc-form4-choice[type="checkbox"]:checked::after {
+        content: "";
+        width: 4px;
+        height: 8px;
+        border: solid #ffffff;
+        border-width: 0 2px 2px 0;
+        transform: rotate(45deg);
+        margin-top: -1px;
+    }
+
+    #ltc-form-no-4-review .ltc-form4-choice[type="radio"] {
+        accent-color: #16a34a !important;
+        width: 15px !important;
+        height: 15px !important;
+    }
+
+    #ltc-form-no-4-review .ltc-form4-choice:disabled {
+        cursor: not-allowed;
+        opacity: 0.7;
+    }
+</style>
+
 <section class="review-panel" id="ltc-form-no-4-review">
     <div class="review-panel-header">
         <div>
@@ -58,6 +104,7 @@
                     @foreach ($subjectLandOptions as $value => $label)
                         <label style="display:flex; gap:8px; align-items:flex-start; font-size:13px; color:#374151;">
                             <input type="checkbox"
+                                   class="ltc-form4-choice"
                                    name="ltc_form4_subject_land_findings[]"
                                    value="{{ $value }}"
                                    @checked($subjectLandFindings->contains($value))
@@ -75,6 +122,7 @@
                     @foreach ($recommendationOptions as $value => $label)
                         <label style="display:flex; gap:8px; align-items:flex-start; font-size:13px; color:#374151;">
                             <input type="checkbox"
+                                   class="ltc-form4-choice"
                                    name="ltc_form4_recommendation_findings[]"
                                    value="{{ $value }}"
                                    @checked($recommendationFindings->contains($value))
@@ -97,6 +145,7 @@
                     <div style="display:flex; flex-wrap:wrap; gap:14px;">
                         <label style="display:flex; gap:8px; align-items:center; font-size:13px; color:#374151;">
                             <input type="radio"
+                                   class="ltc-form4-choice"
                                    name="ltc_form4_recommendation_decision"
                                    value="approval"
                                    @checked($form4Decision === 'approval')
@@ -106,6 +155,7 @@
 
                         <label style="display:flex; gap:8px; align-items:center; font-size:13px; color:#374151;">
                             <input type="radio"
+                                   class="ltc-form4-choice"
                                    name="ltc_form4_recommendation_decision"
                                    value="denial"
                                    @checked($form4Decision === 'denial')

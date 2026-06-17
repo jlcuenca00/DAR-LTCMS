@@ -42,117 +42,120 @@
 
     <style>
         @page {
-            margin: 36px 46px;
+            size: A4;
+            margin: 9px 16px;
         }
 
         body {
             font-family: "Times New Roman", Times, serif;
             color: #111827;
-            font-size: 12.5px;
-            line-height: 1.45;
+            font-size: 10.2px;
+            line-height: 1.16;
         }
 
         .form-no {
             text-align: right;
             font-weight: bold;
-            margin-bottom: 16px;
+            margin-bottom: 4px;
         }
 
         .header {
             text-align: center;
-            line-height: 1.25;
-            margin-bottom: 24px;
+            line-height: 1.08;
+            margin-bottom: 4px;
         }
 
         .header .republic {
-            font-size: 13px;
+            font-size: 10.8px;
         }
 
         .header .agency {
             font-weight: bold;
-            font-size: 14px;
+            font-size: 10.2px;
             text-transform: uppercase;
         }
 
         .header .region,
         .header .province {
-            font-size: 13px;
+            font-size: 10.8px;
         }
 
         .title {
             text-align: center;
-            margin: 22px 0 24px;
+            margin: 7px 0 8px;
         }
 
         .title h1 {
             margin: 0;
-            font-size: 17px;
-            letter-spacing: 0.42em;
+            font-size: 14px;
+            letter-spacing: 0.30em;
             font-weight: bold;
         }
 
         .title p {
             margin: 2px 0 0;
-            font-size: 13px;
+            font-size: 10.8px;
         }
 
         .meta {
             width: 100%;
-            margin-bottom: 14px;
+            margin-bottom: 7px;
             border-collapse: collapse;
         }
 
         .meta td {
             vertical-align: top;
             padding: 1px 0;
-            font-size: 12px;
+            font-size: 10.2px;
         }
 
         .meta .label {
-            width: 120px;
+            width: 105px;
             font-weight: bold;
         }
 
         .body-text {
             text-align: justify;
-            margin: 12px 0;
-            text-indent: 38px;
+            margin: 2px 0;
+            text-indent: 24px;
         }
 
         .checkbox-group {
-            margin: 22px 0 20px 55px;
+            margin: 5px 0 5px 28px;
         }
 
         .checkbox-row {
-            margin: 10px 0;
+            margin: 2px 0;
             font-weight: bold;
-            font-size: 13px;
+            font-size: 10.8px;
         }
 
         .box {
             display: inline-block;
-            width: 11px;
-            height: 11px;
+            width: 12px;
+            height: 12px;
             border: 1px solid #111827;
             margin-right: 8px;
-            vertical-align: -1px;
+            vertical-align: -2px;
             text-align: center;
-            line-height: 10px;
+            line-height: 11px;
             font-size: 10px;
+            color: #111827;
+            font-weight: bold;
             font-family: DejaVu Sans, sans-serif;
         }
 
         .parcel-table {
             width: 100%;
             border-collapse: collapse;
-            margin: 12px 0 18px;
-            font-size: 11px;
+            margin: 4px 0 5px;
+            font-size: 8.3px;
         }
 
         .parcel-table th,
         .parcel-table td {
             border: 1px solid #cbd5e1;
-            padding: 5px 6px;
+            padding: 1.5px 3px;
             text-align: left;
         }
 
@@ -164,7 +167,7 @@
         .signature {
             width: 260px;
             margin-left: auto;
-            margin-top: 42px;
+            margin-top: 12px;
             text-align: center;
         }
 
@@ -175,13 +178,13 @@
         }
 
         .signature-role {
-            font-size: 11.5px;
+            font-size: 9.8px;
         }
 
         .copy-distribution {
-            margin-top: 52px;
-            font-size: 10.5px;
-            line-height: 1.25;
+            margin-top: 5px;
+            font-size: 8.8px;
+            line-height: 1.08;
         }
 
         .copy-distribution strong {
@@ -189,16 +192,29 @@
         }
 
         .system-note {
-            margin-top: 16px;
-            padding-top: 8px;
+            margin-top: 5px;
+            padding-top: 5px;
             border-top: 1px solid #d1d5db;
-            font-size: 10.5px;
+            font-size: 8.8px;
             color: #374151;
             text-align: justify;
         }
 
         .muted {
             color: #4b5563;
+        }
+
+        .meta,
+        .parcel-table,
+        .signature,
+        .copy-distribution,
+        .system-note {
+            page-break-inside: avoid;
+        }
+
+        p {
+            orphans: 2;
+            widows: 2;
         }
     </style>
 </head>

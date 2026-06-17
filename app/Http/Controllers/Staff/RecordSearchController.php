@@ -205,7 +205,7 @@ class RecordSearchController extends Controller
             'area_hectares' => ['nullable', 'numeric', 'min:0', 'max:999999.9999'],
             'area_square_meters' => ['nullable', 'numeric', 'min:0', 'max:999999999.99'],
             'status' => ['required', Rule::in(['active', 'inactive', 'linked_application', 'flagged'])],
-            'geometry_geojson' => ['nullable', 'json'],
+            'geometry_geojson' => ['nullable', 'string', 'max:200000'],
             'remarks' => ['nullable', 'string', 'max:5000'],
             'reference_photo' => ['nullable', 'image', 'max:5120'],
         ]);
@@ -215,9 +215,7 @@ class RecordSearchController extends Controller
         // DAR clearance workflow is limited to agricultural land records.
         // Classification is not a reviewer decision field here; keep the internal default only.
         $data['agricultural_status'] = Parcel::DEFAULT_AGRICULTURAL_STATUS;
-        $data['geometry_geojson'] = filled($data['geometry_geojson'] ?? null)
-            ? json_decode($data['geometry_geojson'], true)
-            : null;
+        $data['geometry_geojson'] = $this->decodeParcelGeoJson($data['geometry_geojson'] ?? null);
 
         unset($data['reference_photo']);
         if ($request->hasFile('reference_photo')) {
@@ -248,17 +246,17 @@ class RecordSearchController extends Controller
             ->with('success', 'Parcel record created successfully.');
     }
     public function showParcel(Parcel $parcel)
-{
-    $parcel->load([
-        'landholdings.landowner',
-        'landholdings.sourceApplication',
-        'legacyRecords.package',
-        'sourceRecordPackages.records',
-    ]);
-    
+    {
+        $parcel->load([
+            'landholdings.landowner',
+            'landholdings.sourceApplication',
+            'legacyRecords.package',
+            'sourceRecordPackages.records',
+        ]);
 
-    return view('staff.records.parcel-show', compact('parcel'));
-}
+        return view('staff.records.parcel-show', compact('parcel'));
+    }
+
     public function editParcel(Parcel $parcel)
     {
         return view('staff.records.parcel-edit', [
@@ -291,11 +289,13 @@ class RecordSearchController extends Controller
             'area_square_meters' => ['nullable', 'numeric', 'min:0', 'max:999999999.99'],
             'status' => ['required', Rule::in(['active', 'inactive', 'linked_application', 'flagged'])],
             'remarks' => ['nullable', 'string', 'max:5000'],
+            'geometry_geojson' => ['nullable', 'string', 'max:200000'],
             'reference_photo' => ['nullable', 'image', 'max:5120'],
         ]);
 
         $data['province'] = $data['province'] ?: 'Negros Oriental';
         $data = $this->normalizeParcelRegistrationData($data);
+        $data['geometry_geojson'] = $this->decodeParcelGeoJson($data['geometry_geojson'] ?? null);
 
         // Keep the existing internal classification value. Staff no longer edits this as a clearance workflow field.
         $data['agricultural_status'] = $parcel->agricultural_status ?: Parcel::DEFAULT_AGRICULTURAL_STATUS;
@@ -308,11 +308,54 @@ class RecordSearchController extends Controller
         $parcel->fill($data);
         $parcel->save();
 
+        AuditLogger::record(
+            'parcel_updated',
+            null,
+            $parcel,
+            [
+                'parcel_id' => $parcel->id,
+                'parcel_code' => $parcel->parcel_code,
+                'status' => $parcel->status,
+                'has_geometry' => ! empty($parcel->geometry_geojson),
+                'actor_user_id' => $request->user()?->id,
+                'actor_name' => $request->user()?->name,
+            ]
+        );
+
         app(NotificationService::class)->notifyGeodeticParcelReferenceUpdated($parcel);
 
         return redirect()
             ->route('staff.records.parcels.show', $parcel)
             ->with('success', 'Parcel record updated successfully.');
+    }
+
+    public function destroyParcel(Request $request, Parcel $parcel)
+    {
+        $oldStatus = $parcel->status;
+
+        $parcel->forceFill([
+            'status' => 'inactive',
+            'remarks' => trim(($parcel->remarks ? $parcel->remarks . "\n\n" : '') . 'Archived by staff on ' . now()->timezone('Asia/Manila')->format('M d, Y h:i A') . '. Record retained for traceability.'),
+        ])->save();
+
+        AuditLogger::record(
+            'parcel_archived',
+            null,
+            $parcel,
+            [
+                'parcel_id' => $parcel->id,
+                'parcel_code' => $parcel->parcel_code,
+                'old_status' => $oldStatus,
+                'new_status' => $parcel->status,
+                'actor_user_id' => $request->user()?->id,
+                'actor_name' => $request->user()?->name,
+                'archive_policy' => 'Record retained; no ownership or registry mutation performed.',
+            ]
+        );
+
+        return redirect()
+            ->route('staff.records.parcels.index')
+            ->with('success', 'Parcel record archived. The record was retained for traceability and audit review.');
     }
 
     private function normalizeParcelRegistrationData(array $data): array
@@ -334,6 +377,35 @@ class RecordSearchController extends Controller
         }
 
         return $data;
+    }
+
+
+    private function decodeParcelGeoJson(?string $value): ?array
+    {
+        if (! filled($value)) {
+            return null;
+        }
+
+        $decoded = json_decode($value, true);
+
+        if (
+            json_last_error() !== JSON_ERROR_NONE ||
+            ! is_array($decoded) ||
+            empty($decoded['type']) ||
+            empty($decoded['coordinates'])
+        ) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'geometry_geojson' => 'The geometry must be valid GeoJSON. Use the polygon builder or provide JSON with type and coordinates.',
+            ]);
+        }
+
+        if (($decoded['type'] ?? null) !== 'Polygon') {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'geometry_geojson' => 'Only GeoJSON Polygon geometry is supported for parcel records.',
+            ]);
+        }
+
+        return $decoded;
     }
 
 }

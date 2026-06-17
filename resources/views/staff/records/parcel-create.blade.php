@@ -98,6 +98,28 @@
                 --tw-ring-color: transparent;
             }
 
+            .parcel-create-input[type="file"] {
+                padding: 7px;
+                background: #ffffff;
+                cursor: pointer;
+            }
+
+            .parcel-create-input[type="file"]::file-selector-button {
+                margin-right: 12px;
+                border: 1px solid #166534;
+                border-radius: 9px;
+                background: #166534;
+                color: #ffffff;
+                padding: 7px 12px;
+                font-size: 12px;
+                font-weight: 900;
+                cursor: pointer;
+            }
+
+            .parcel-create-input[type="file"]::file-selector-button:hover {
+                background: #14532d;
+            }
+
             .parcel-create-error {
                 margin-top: 6px;
                 font-size: 12px;
@@ -166,7 +188,7 @@
         $rodOffices = $rodOffices ?? \App\Models\Parcel::rodOfficeOptions();
     @endphp
 
-    <form method="POST" enctype="multipart/form-data" action="{{ route('staff.records.parcels.store') }}" class="parcel-create-layout" data-autosave-key="parcel-record-create" data-autosave-label="parcel record draft">
+    <form method="POST" enctype="multipart/form-data" action="{{ route('staff.records.parcels.store') }}" class="parcel-create-layout">
         @csrf
 
         <main class="parcel-create-main">
@@ -288,22 +310,27 @@
 
             <section class="parcel-create-card">
                 <div class="parcel-create-card-header">
-                    <h2 class="parcel-create-title">Map Geometry</h2>
-                    <p class="parcel-create-subtitle">Paste a GeoJSON Polygon object to make the parcel visible on the parcel map.</p>
+                    <h2 class="parcel-create-title">Reference File and Map Geometry</h2>
+                    <p class="parcel-create-subtitle">Attach an optional reference scan and use the builder to generate valid GeoJSON without manually typing the Polygon structure.</p>
                 </div>
 
-                <div class="parcel-create-body">
+                <div class="parcel-create-body" style="display:grid; gap:16px;">
                     <div class="parcel-create-field">
-                        <label for="geometry_geojson">GeoJSON Geometry</label>
-                        <div class="parcel-create-field">
                         <label for="reference_photo">Reference Photo / Scan</label>
                         <input id="reference_photo" type="file" name="reference_photo" accept="image/*" class="parcel-create-input">
-                        <p class="mt-1 text-xs leading-relaxed text-gray-500">Optional photo/scan of the title, tax declaration, sketch, or reference sheet used for encoding.</p>
+                        <p class="parcel-create-helper">Optional photo/scan of the title, tax declaration, sketch, or reference sheet used for encoding.</p>
                     </div>
 
-                    <textarea id="geometry_geojson" name="geometry_geojson" rows="9" class="parcel-create-input font-mono text-xs" placeholder='{"type":"Polygon","coordinates":[[[122.795,9.355],[122.8095,9.3585],[122.8072,9.3692],[122.795,9.355]]]}'>{!! old('geometry_geojson') !!}</textarea>
-                        <p class="parcel-create-helper">Use the fixed GeoJSON values from the beta tester guide so the parcel is large and visible on the map.</p>
-                        @error('geometry_geojson')<p class="parcel-create-error">{{ $message }}</p>@enderror
+                    <div class="parcel-create-field">
+                        <label for="geometry_geojson">GeoJSON Geometry</label>
+                        @include('staff.partials.geojson-polygon-editor', [
+                            'fieldName' => 'geometry_geojson',
+                            'fieldId' => 'geometry_geojson',
+                            'value' => old('geometry_geojson'),
+                            'inputClass' => 'parcel-create-input font-mono text-xs',
+                            'errorClass' => 'parcel-create-error',
+                            'rows' => 8,
+                        ])
                     </div>
                 </div>
             </section>
@@ -340,6 +367,4 @@
             </div>
         </aside>
     </form>
-    @include('staff.partials.form-autosave')
-
 </x-staff-shell>
