@@ -25,12 +25,12 @@ class ApplicationTimelineTest extends TestCase
             'transferee_name' => 'Timeline Transferee',
             'municipality' => 'Dumaguete City',
             'barangay' => 'Bantayan',
-            'status' => LandTransferApplication::STATUS_DRAFT,
+            'status' => LandTransferApplication::STATUS_PENDING_LEGAL_REVIEW,
             'encoded_by' => $staffUser->id,
         ]);
 
         AuditLog::create([
-            'actor_id' => $staffUser->id,
+            'actor_user_id' => $staffUser->id,
             'action' => 'document_uploaded',
             'land_transfer_application_id' => $application->id,
             'auditable_type' => LandTransferApplication::class,
@@ -44,13 +44,13 @@ class ApplicationTimelineTest extends TestCase
         ]);
 
         AuditLog::create([
-            'actor_id' => $staffUser->id,
+            'actor_user_id' => $staffUser->id,
             'action' => 'application_submitted',
             'land_transfer_application_id' => $application->id,
             'auditable_type' => LandTransferApplication::class,
             'auditable_id' => $application->id,
             'metadata' => [
-                'status' => 'pending_review',
+                'status' => LandTransferApplication::STATUS_PENDING_LEGAL_REVIEW,
             ],
             'ip_address' => '127.0.0.1',
             'user_agent' => 'PHPUnit',
@@ -60,12 +60,13 @@ class ApplicationTimelineTest extends TestCase
             ->get(route('staff.applications.show', $application));
 
         $response->assertOk();
-        $response->assertSee('Application Timeline / Status History');
-        $response->assertSee('Document Uploaded');
-        $response->assertSee('Application Submitted');
-        $response->assertSee('TCT-TIMELINE-001');
-        $response->assertSee('Electronic Copy of Title');
-        $response->assertSee('Timeline records are based on audit logs');
+        $response->assertSee('Application Timeline', false);
+        $response->assertSee('Status History', false);
+        $response->assertSee('Document Uploaded', false);
+        $response->assertSee('Application Submitted', false);
+        $response->assertSee('TCT-TIMELINE-001', false);
+        $response->assertSee('Electronic Copy of Title', false);
+        $response->assertSee('Timeline records are based on audit logs', false);
     }
 
     public function test_application_timeline_shows_empty_state_when_no_audit_logs_exist(): void
@@ -81,7 +82,7 @@ class ApplicationTimelineTest extends TestCase
             'transferee_name' => 'Empty Timeline Transferee',
             'municipality' => 'Dumaguete City',
             'barangay' => 'Bantayan',
-            'status' => LandTransferApplication::STATUS_DRAFT,
+            'status' => LandTransferApplication::STATUS_PENDING_LEGAL_REVIEW,
             'encoded_by' => $staffUser->id,
         ]);
 
@@ -89,7 +90,8 @@ class ApplicationTimelineTest extends TestCase
             ->get(route('staff.applications.show', $application));
 
         $response->assertOk();
-        $response->assertSee('Application Timeline / Status History');
-        $response->assertSee('No timeline records found yet.');
+        $response->assertSee('Application Timeline', false);
+        $response->assertSee('Status History', false);
+        $response->assertSee('No timeline records found yet.', false);
     }
 }

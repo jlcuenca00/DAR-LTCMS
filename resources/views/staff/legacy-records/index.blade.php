@@ -1,5 +1,5 @@
 <x-staff-shell
-    title="Source Records Archive"
+    title="Source Package Workspace"
     active="source-records"
 >
     <style>
@@ -9,8 +9,7 @@
         .source-action-icon { width: 3rem; height: 3rem; border-radius: 0.9rem; display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto; font-size: 1.15rem; box-shadow: 0 8px 18px rgba(15, 23, 42, 0.10); }
         .source-action-icon.package { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
         .source-action-icon.import { background: #eef2ff; color: #3730a3; border: 1px solid #c7d2fe; }
-        .source-action-icon.single { background: #f8fafc; color: #334155; border: 1px solid #cbd5e1; }
-        .source-action-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; }
+                .source-action-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
         .source-action-grid .source-action-card { min-height: 8.25rem; height: 100%; }
         .source-view-card { border: 1px solid #dbe4dd; border-radius: 1rem; background: #fff; overflow: hidden; }
         .source-view-header { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 1.15rem 1.35rem; border-bottom: 1px solid #e5e7eb; background: linear-gradient(90deg, #f8fafc 0%, #ffffff 82%); }
@@ -49,13 +48,23 @@
             </div>
         @endif
 
+        <section class="staff-scope-banner">
+            <div>
+                <h3>Source Package Workspace</h3>
+                <p>
+                    Use one workspace to encode source packages, attach scanned/reference files, and generate the searchable source records used during clearance review and linking.
+                </p>
+            </div>
+            <span class="staff-scope-pill">Unified Source Encoding</span>
+        </section>
+
         <section class="source-action-grid">
             <a href="{{ route('staff.source-record-packages.create') }}" class="source-action-card staff-panel staff-panel-pad block transition">
                 <div class="flex items-start gap-4">
                     <span class="source-action-icon package" aria-hidden="true"><i class="fa-solid fa-boxes-stacked"></i></span>
                     <div>
                         <h2 class="staff-panel-title">Encode Source Package</h2>
-                        <p class="staff-panel-subtitle">Best for one source file containing connected title, landholding, parcel source, or historical clearance details.</p>
+                        <p class="staff-panel-subtitle">Use this for both single-entry and multi-entry source encoding. Select one section for a single source record, or multiple sections for a grouped package.</p>
                     </div>
                 </div>
             </a>
@@ -70,26 +79,17 @@
                 </div>
             </a>
 
-            <a href="{{ route('staff.legacy-records.create') }}" class="source-action-card staff-panel staff-panel-pad block transition">
-                <div class="flex items-start gap-4">
-                    <span class="source-action-icon single" aria-hidden="true"><i class="fa-solid fa-file-pen"></i></span>
-                    <div>
-                        <h2 class="staff-panel-title">Encode Single Source Record</h2>
-                        <p class="staff-panel-subtitle">Use when the reference contains only one title, landholding, parcel source, or clearance entry.</p>
-                    </div>
-                </div>
-            </a>
         </section>
 
         <section class="staff-panel staff-panel-pad">
             <div class="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
                 <div>
                     <h2 class="staff-panel-title">Search and Filter Source Records</h2>
-                    <p class="staff-panel-subtitle">Search applies to both individual source records and source packages.</p>
+                    <p class="staff-panel-subtitle">Search generated source records or switch to package view for package-level file/linking actions.</p>
                 </div>
                 <span class="source-mode-pill">
                     <i class="fa-solid {{ $activeArchiveView === 'packages' ? 'fa-boxes-stacked' : 'fa-list-ul' }}"></i>
-                    {{ $activeArchiveView === 'packages' ? 'Viewing Source Packages' : 'Viewing Individual Sources' }}
+                    {{ $activeArchiveView === 'packages' ? 'Viewing Source Packages' : 'Viewing Generated Source Records' }}
                 </span>
             </div>
 
@@ -201,8 +201,8 @@
             <section class="source-view-card">
                 <div class="source-view-header">
                     <div>
-                        <h2 class="source-view-title">Individual Source Record View</h2>
-                        <p class="source-view-subtitle">Default working list for review. Open each generated source record by type, reference number, party, parcel link, or location.</p>
+                        <h2 class="source-view-title">Generated Source Records</h2>
+                        <p class="source-view-subtitle">Working list generated from source packages. Open records by type, reference number, party, parcel link, or location.</p>
                     </div>
                     <div class="source-view-actions">
                         <span class="staff-badge staff-badge-green">{{ $records->total() }} record(s)</span>

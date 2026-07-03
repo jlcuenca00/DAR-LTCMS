@@ -426,8 +426,8 @@ class BetaSystemRegressionTest extends TestCase
             ->get(route('staff.applications.show', $application));
 
         $response->assertOk();
-        $response->assertSee('LTC Form No. 3', false);
-        $response->assertSee('LTC Form No. 4', false);
+        $response->assertSee('Acknowledgement Receipt', false);
+        $response->assertSee('Certification, Attestation and Recommendation', false);
         $response->assertDontSee('Incomplete / with lacking documents', false);
     }
 

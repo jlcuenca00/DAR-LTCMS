@@ -166,6 +166,10 @@ Route::middleware(['auth', 'role:staff'])
             ->name('applications.store');
         Route::patch('/applications/{application}/landowner-links', [ApplicationLandownerLinkController::class, 'update'])
             ->name('applications.landowner-links.update');
+        Route::post('/applications/{application}/parcels', [LandTransferApplicationController::class, 'storeParcel'])
+            ->name('applications.parcels.store');
+        Route::delete('/applications/{application}/parcels/{applicationParcel}', [LandTransferApplicationController::class, 'destroyParcel'])
+            ->name('applications.parcels.destroy');
         Route::post('/applications/{application}/landowner-records', [ApplicationLandownerLinkController::class, 'createFromApplicationParty'])
             ->name('applications.landowner-records.create');
         Route::get('/applications/{application}', [LandTransferApplicationController::class, 'show'])

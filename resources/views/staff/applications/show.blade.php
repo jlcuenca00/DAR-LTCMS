@@ -143,6 +143,187 @@
                 line-height: 1.45;
             }
 
+
+            .application-summary-panel .review-panel-header {
+                padding: 14px 18px;
+                align-items: center;
+            }
+
+            .application-summary-panel .review-panel-body {
+                padding: 0;
+            }
+
+            .application-summary-layout {
+                display: grid;
+                grid-template-columns: minmax(280px, 0.9fr) minmax(0, 1.45fr);
+                gap: 0;
+                min-height: 0;
+            }
+
+            .application-summary-feature {
+                padding: 16px 18px;
+                background: linear-gradient(135deg, #f8fafc 0%, #eef7f1 100%);
+                border-right: 1px solid #e5e7eb;
+                display: flex;
+                flex-direction: column;
+                gap: 12px;
+                justify-content: space-between;
+            }
+
+            .application-summary-code-label {
+                margin: 0 0 5px;
+                font-size: 10px;
+                font-weight: 900;
+                letter-spacing: 0.13em;
+                text-transform: uppercase;
+                color: #64748b;
+            }
+
+            .application-summary-code {
+                margin: 0;
+                font-size: 24px;
+                line-height: 1.05;
+                font-weight: 950;
+                color: #0f172a;
+            }
+
+            .application-summary-chips {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 6px;
+            }
+
+            .application-summary-chip {
+                display: inline-flex;
+                align-items: center;
+                gap: 5px;
+                border: 1px solid #dbe4dd;
+                background: rgba(255,255,255,0.82);
+                color: #334155;
+                border-radius: 999px;
+                padding: 5px 8px;
+                font-size: 11px;
+                font-weight: 800;
+                line-height: 1;
+            }
+
+            .application-summary-main-person {
+                border: 1px solid #dbe4dd;
+                border-radius: 10px;
+                background: rgba(255,255,255,0.86);
+                padding: 10px 12px;
+            }
+
+            .application-summary-main-person p {
+                margin: 0;
+            }
+
+            .application-summary-main-person .summary-label {
+                font-size: 10px;
+            }
+
+            .application-summary-main-person .summary-value {
+                margin-top: 3px;
+                font-size: 15px;
+                line-height: 1.25;
+            }
+
+            .application-summary-details {
+                padding: 16px 18px;
+                display: grid;
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+                gap: 10px;
+                align-content: start;
+            }
+
+            .application-summary-detail {
+                min-height: 0;
+                border: 1px solid #e5e7eb;
+                background: #ffffff;
+                border-radius: 10px;
+                padding: 10px 11px;
+            }
+
+            .application-summary-detail.summary-wide {
+                grid-column: span 2;
+            }
+
+            .application-summary-detail .summary-label {
+                font-size: 10px;
+                letter-spacing: 0.09em;
+            }
+
+            .application-summary-detail .summary-value {
+                margin-top: 4px;
+                font-size: 13px;
+                line-height: 1.3;
+            }
+
+            .application-summary-status-list {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 6px;
+                margin-top: 6px;
+            }
+
+            .application-parcel-card {
+                border: 1px solid #dbe4dd;
+                background: #f8faf9;
+                border-radius: 12px;
+                overflow: hidden;
+            }
+
+            .application-parcel-list {
+                display: grid;
+                gap: 10px;
+            }
+
+            .application-parcel-row {
+                display: grid;
+                grid-template-columns: minmax(0, 1fr) auto;
+                gap: 12px;
+                align-items: center;
+                border: 1px solid #e5e7eb;
+                background: #ffffff;
+                border-radius: 10px;
+                padding: 12px;
+            }
+
+            .application-parcel-title {
+                margin: 0;
+                font-size: 14px;
+                font-weight: 900;
+                color: #111827;
+            }
+
+            .application-parcel-meta {
+                margin: 4px 0 0;
+                display: flex;
+                flex-wrap: wrap;
+                gap: 8px 12px;
+                font-size: 12px;
+                color: #64748b;
+                line-height: 1.4;
+            }
+
+            .application-parcel-form {
+                display: grid;
+                grid-template-columns: minmax(0, 1.3fr) minmax(180px, 0.5fr) auto;
+                gap: 12px;
+                align-items: end;
+            }
+
+            .application-parcel-empty {
+                border: 1px dashed #bbd7c4;
+                background: #ffffff;
+                border-radius: 10px;
+                padding: 14px;
+                color: #64748b;
+                font-size: 13px;
+                font-weight: 700;
+            }
+
+
             .workflow-box {
                 display: grid;
                 gap: 14px;
@@ -1184,7 +1365,7 @@
             .workflow-decision-grid {
                 display: grid;
                 grid-template-columns: repeat(2, minmax(0, 1fr));
-                gap: 16px;
+                gap: 12px;
                 align-items: stretch;
             }
 
@@ -1192,10 +1373,10 @@
                 border: 1px solid #dbe4dd;
                 background: #f8faf9;
                 border-radius: 12px;
-                padding: 16px;
+                padding: 14px;
                 display: grid;
-                grid-template-rows: auto minmax(0, 1fr) auto;
-                gap: 14px;
+                grid-template-rows: auto auto auto;
+                gap: 10px;
                 min-height: 100%;
             }
 
@@ -1209,6 +1390,19 @@
                 background: linear-gradient(180deg, #fef2f2 0%, #ffffff 100%);
             }
 
+            .workflow-decision-card.not-approved-card {
+                order: 1;
+            }
+
+            .workflow-decision-card.approve-card {
+                order: 2;
+            }
+
+            .workflow-decision-note {
+                display: none;
+            }
+
+
             .workflow-decision-heading {
                 display: flex;
                 gap: 13px;
@@ -1216,8 +1410,8 @@
             }
 
             .workflow-action-icon {
-                width: 42px;
-                height: 42px;
+                width: 34px;
+                height: 34px;
                 border-radius: 11px;
                 background: #166534;
                 color: #ffffff;
@@ -1233,16 +1427,16 @@
 
             .workflow-action-title {
                 margin: 0;
-                font-size: 16px;
+                font-size: 14px;
                 font-weight: 900;
                 color: #111827;
                 line-height: 1.3;
             }
 
             .workflow-action-copy {
-                margin: 6px 0 0;
-                font-size: 12.5px;
-                line-height: 1.55;
+                margin: 3px 0 0;
+                font-size: 11.5px;
+                line-height: 1.4;
                 color: #64748b;
             }
 
@@ -1939,10 +2133,10 @@
             }
 
             .workflow-modal-card {
-                width: min(1080px, 100%);
-                max-height: min(86vh, 860px);
+                width: min(900px, 100%);
+                max-height: min(82vh, 760px);
                 overflow: hidden;
-                border-radius: 20px;
+                border-radius: 16px;
                 border: 1px solid #dbe4dd;
                 background: #ffffff;
                 box-shadow: 0 24px 70px rgba(15, 23, 42, 0.28);
@@ -1952,7 +2146,7 @@
 
             .workflow-modal-header,
             .workflow-modal-footer {
-                padding: 18px 22px;
+                padding: 14px 18px;
                 border-bottom: 1px solid #e5e7eb;
                 display: flex;
                 justify-content: space-between;
@@ -1967,32 +2161,32 @@
             }
 
             .workflow-modal-body {
-                padding: 22px;
+                padding: 16px;
                 overflow: auto;
                 display: grid;
-                gap: 18px;
+                gap: 12px;
                 background: linear-gradient(180deg, #ffffff 0%, #fbfcfd 100%);
             }
 
             .workflow-modal-title {
                 margin: 0;
-                font-size: 19px;
+                font-size: 18px;
                 font-weight: 950;
                 color: #0f172a;
             }
 
             .workflow-modal-copy {
-                margin: 4px 0 0;
-                font-size: 13px;
+                margin: 3px 0 0;
+                font-size: 12px;
                 color: #64748b;
-                line-height: 1.5;
+                line-height: 1.4;
             }
 
             .workflow-modal-summary {
                 border: 1px solid #dbe4dd;
                 background: #f8faf9;
-                border-radius: 14px;
-                padding: 14px 16px;
+                border-radius: 12px;
+                padding: 12px 14px;
                 display: flex;
                 justify-content: space-between;
                 align-items: center;
@@ -2003,6 +2197,21 @@
             @media (max-width: 1180px) {
                 .review-grid {
                     grid-template-columns: 1fr;
+                }
+            }
+
+            @media (max-width: 980px) {
+                .application-summary-layout {
+                    grid-template-columns: 1fr;
+                }
+
+                .application-summary-feature {
+                    border-right: 0;
+                    border-bottom: 1px solid #e5e7eb;
+                }
+
+                .application-summary-details {
+                    grid-template-columns: repeat(2, minmax(0, 1fr));
                 }
             }
 
@@ -2017,6 +2226,7 @@
                 }
 
                 .summary-grid,
+                .application-summary-details,
                 .workflow-form-fields,
                 .workflow-decision-grid,
                 .landowner-link-grid,
@@ -2358,83 +2568,164 @@
         @endif
 
         <section class="review-single-grid">
-            <div class="review-panel">
+            <div class="review-panel application-summary-panel">
                 <div class="review-panel-header">
                     <div>
                         <h2 class="review-panel-title">Application Summary</h2>
-                        <p class="review-panel-subtitle">
-                            Main clearance application details for staff review and traceability.
-                        </p>
+                        <p class="review-panel-subtitle">Compact case overview for staff review and traceability.</p>
                     </div>
                     <span class="staff-badge {{ $statusBadgeClass }}">{{ $statusLabel }}</span>
                 </div>
                 <div class="review-panel-body">
-                    <div class="summary-grid">
-                        <div class="summary-item">
-                            <p class="summary-label">Application Code</p>
-                            <p class="summary-value">{{ $application->application_code }}</p>
-                        </div>
-                        <div class="summary-item">
-                            <p class="summary-label">Status</p>
-                            <p class="summary-value">{{ $statusLabel }}</p>
-                        </div>
-                        <div class="summary-item">
-                            <p class="summary-label">Applicant</p>
-                            <p class="summary-value">{{ $application->applicant_name ?? '—' }}</p>
-                        </div>
-                        <div class="summary-item">
-                            <p class="summary-label">Applicant Type</p>
-                            <p class="summary-value">{{ $application->applicant_type ? str($application->applicant_type)->replace('_', ' ')->title() : '—' }}</p>
-                        </div>
-                        <div class="summary-item">
-                            <p class="summary-label">Date of Application</p>
-                            <p class="summary-value">{{ $application->date_of_application?->format('M d, Y') ?? '—' }}</p>
-                        </div>
-                        <div class="summary-item">
-                            <p class="summary-label">OR Number</p>
-                            <p class="summary-value">{{ $application->or_number ?? '—' }}</p>
-                        </div>
-                        <div class="summary-item">
-                            <p class="summary-label">OR Date</p>
-                            <p class="summary-value">{{ $application->or_date?->format('M d, Y') ?? '—' }}</p>
-                        </div>
-                        <div class="summary-item">
-                            <p class="summary-label">Amount Paid (PHP)</p>
-                            <p class="summary-value">{{ $application->amount_paid !== null ? '₱' . number_format((float) $application->amount_paid, 2) : '—' }}</p>
-                        </div>
-                        <div class="summary-item">
-                            <p class="summary-label">Authorized Representative</p>
-                            <p class="summary-value">{{ $application->authorized_representative_name ?? '—' }}{{ $application->has_special_power_of_attorney ? ' (SPA indicated)' : '' }}</p>
-                        </div>
-                        <div class="summary-item">
-                            <p class="summary-label">Transferor</p>
-                            <p class="summary-value">{{ $application->transferor_name }}</p>
-                        </div>
-                        <div class="summary-item">
-                            <p class="summary-label">Transferee</p>
-                            <p class="summary-value">{{ $application->transferee_name }}</p>
-                        </div>
-                        <div class="summary-item">
-                            <p class="summary-label">Barangay</p>
-                            <p class="summary-value">{{ $application->barangay ?? '—' }}</p>
-                        </div>
-                        <div class="summary-item">
-                            <p class="summary-label">Municipality</p>
-                            <p class="summary-value">{{ $application->municipality ?? '—' }}</p>
+                    <div class="application-summary-layout">
+                        <div class="application-summary-feature">
+                            <div>
+                                <p class="application-summary-code-label">Application Code</p>
+                                <h3 class="application-summary-code">{{ $application->application_code }}</h3>
+                            </div>
+
+                            <div class="application-summary-chips">
+                                <span class="application-summary-chip"><i class="fa-solid fa-calendar-day"></i> {{ $application->date_of_application?->format('M d, Y') ?? 'No date' }}</span>
+                                <span class="application-summary-chip"><i class="fa-solid fa-user-tag"></i> {{ $application->applicant_type ? str($application->applicant_type)->replace('_', ' ')->title() : 'No type' }}</span>
+                            </div>
+
+                            <div class="application-summary-main-person">
+                                <p class="summary-label">Applicant</p>
+                                <p class="summary-value">{{ $application->applicant_name ?? '—' }}</p>
+                            </div>
                         </div>
 
-                        @if ($applicationAgriculturalStatusLabels->isNotEmpty())
-                            <div class="summary-item">
-                                <p class="summary-label">Linked Parcel Agricultural Status</p>
-                                <div class="summary-value flex flex-wrap gap-2">
-                                    @foreach ($applicationAgriculturalStatusLabels as $agriculturalStatusLabel)
-                                        <span class="staff-badge staff-badge-slate">{{ $agriculturalStatusLabel }}</span>
-                                    @endforeach
-                                </div>
+                        <div class="application-summary-details">
+                            <div class="application-summary-detail">
+                                <p class="summary-label">Transferor</p>
+                                <p class="summary-value">{{ $application->transferor_name }}</p>
                             </div>
-                        @endif
+                            <div class="application-summary-detail">
+                                <p class="summary-label">Transferee</p>
+                                <p class="summary-value">{{ $application->transferee_name }}</p>
+                            </div>
+                            <div class="application-summary-detail">
+                                <p class="summary-label">Representative</p>
+                                <p class="summary-value">{{ $application->authorized_representative_name ?? '—' }}{{ $application->has_special_power_of_attorney ? ' (SPA)' : '' }}</p>
+                            </div>
+                            <div class="application-summary-detail">
+                                <p class="summary-label">Barangay</p>
+                                <p class="summary-value">{{ $application->barangay ?? '—' }}</p>
+                            </div>
+                            <div class="application-summary-detail">
+                                <p class="summary-label">Municipality</p>
+                                <p class="summary-value">{{ $application->municipality ?? '—' }}</p>
+                            </div>
+                            <div class="application-summary-detail">
+                                <p class="summary-label">OR Number</p>
+                                <p class="summary-value">{{ $application->or_number ?? '—' }}</p>
+                            </div>
+                            <div class="application-summary-detail">
+                                <p class="summary-label">OR Date</p>
+                                <p class="summary-value">{{ $application->or_date?->format('M d, Y') ?? '—' }}</p>
+                            </div>
+                            <div class="application-summary-detail">
+                                <p class="summary-label">Amount Paid</p>
+                                <p class="summary-value">{{ $application->amount_paid !== null ? '₱' . number_format((float) $application->amount_paid, 2) : '—' }}</p>
+                            </div>
+
+                            @if ($applicationAgriculturalStatusLabels->isNotEmpty())
+                                <div class="application-summary-detail summary-wide">
+                                    <p class="summary-label">Linked Parcel Agricultural Status</p>
+                                    <div class="application-summary-status-list">
+                                        @foreach ($applicationAgriculturalStatusLabels as $agriculturalStatusLabel)
+                                            <span class="staff-badge staff-badge-slate">{{ $agriculturalStatusLabel }}</span>
+                                        @endforeach
+                                    </div>
+                                </div>
+                            @endif
+                        </div>
                     </div>
                 </div>
+            </div>
+        </section>
+
+
+        <section id="application-parcels" class="review-panel">
+            <div class="review-panel-header">
+                <div>
+                    <h2 class="review-panel-title">Linked Parcel References</h2>
+                    <p class="review-panel-subtitle">
+                        Add or update parcel references used for review, hectare computation, source matching, and map-based checking.
+                    </p>
+                </div>
+                <span class="staff-badge {{ $application->applicationParcels->count() > 0 ? 'staff-badge-green' : 'staff-badge-amber' }}">
+                    {{ $application->applicationParcels->count() }} linked
+                </span>
+            </div>
+
+            <div class="review-panel-body space-y-4">
+                @if ($application->applicationParcels->isEmpty())
+                    <div class="application-parcel-empty">
+                        No parcel is linked to this application yet. Add a parcel reference before final review.
+                    </div>
+                @else
+                    <div class="application-parcel-list">
+                        @foreach ($application->applicationParcels as $linkedParcel)
+                            <div class="application-parcel-row">
+                                <div>
+                                    <p class="application-parcel-title">
+                                        {{ $linkedParcel->parcel_code ?? $linkedParcel->parcel?->parcel_code ?? 'Parcel reference' }}
+                                    </p>
+                                    <div class="application-parcel-meta">
+                                        <span><strong>Area:</strong> {{ $linkedParcel->area_hectares !== null ? number_format((float) $linkedParcel->area_hectares, 4).' ha' : '—' }}</span>
+                                        <span><strong>Title:</strong> {{ $linkedParcel->title_no ?? $linkedParcel->parcel?->title_no ?? '—' }}</span>
+                                        <span><strong>Tax Dec:</strong> {{ $linkedParcel->tax_decl_no ?? $linkedParcel->parcel?->tax_decl_no ?? '—' }}</span>
+                                        <span><strong>Location:</strong> {{ collect([$linkedParcel->parcel?->barangay, $linkedParcel->parcel?->municipality])->filter()->implode(', ') ?: '—' }}</span>
+                                    </div>
+                                </div>
+
+                                @unless ($isFinal)
+                                    <form method="POST" action="{{ route('staff.applications.parcels.destroy', [$application, $linkedParcel]) }}" onsubmit="return confirm('Remove this linked parcel reference from the application review?');">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="staff-button staff-button-light">
+                                            <i class="fa-solid fa-xmark"></i>
+                                            Remove
+                                        </button>
+                                    </form>
+                                @endunless
+                            </div>
+                        @endforeach
+                    </div>
+                @endif
+
+                @unless ($isFinal)
+                    <form method="POST" action="{{ route('staff.applications.parcels.store', $application) }}" class="application-parcel-form" data-application-parcel-form>
+                        @csrf
+
+                        <div>
+                            <label for="application_parcel_id">Parcel record</label>
+                            <select id="application_parcel_id" name="parcel_id" class="review-input" required data-application-parcel-select>
+                                <option value="">Select parcel record</option>
+                                @foreach (($parcelOptions ?? collect()) as $parcel)
+                                    <option value="{{ $parcel->id }}" data-area="{{ $parcel->area_hectares }}">
+                                        {{ $parcel->parcel_code }}
+                                        @if ($parcel->title_no) — {{ $parcel->title_no }} @endif
+                                        @if ($parcel->municipality) — {{ $parcel->municipality }} @endif
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <div>
+                            <label for="application_parcel_area">Area hectares</label>
+                            <input id="application_parcel_area" type="number" step="0.0001" min="0.0001" name="area_hectares" class="review-input" placeholder="Use parcel area" data-application-parcel-area>
+                        </div>
+
+                        <button type="submit" class="staff-button staff-button-primary">
+                            <i class="fa-solid fa-plus"></i>
+                            Add / Update Parcel
+                        </button>
+                    </form>
+                @else
+                    <div class="review-note-box">Parcel references are locked with the final decision record.</div>
+                @endunless
             </div>
         </section>
 
@@ -3109,7 +3400,7 @@
                     <h2 class="review-panel-title">Prior / Source Records</h2>
                     <p class="review-panel-subtitle">
                         Matched digitized source records and source packages related to this application’s parcel, title, transferor, or transferee.
-                        These records support review and traceability only. They do not automatically transfer land ownership or mutate Registry of Deeds records.
+                        These records support review, source matching, and traceability for staff verification.
                     </p>
                 </div>
             </div>
@@ -3300,7 +3591,7 @@
             <div class="workflow-modal-header">
                 <div>
                     <h2 id="workflow-modal-title" class="workflow-modal-title">Application Actions</h2>
-                    <p class="workflow-modal-copy">Open this panel after reviewing the encoded details and uploaded requirements.</p>
+                    <p class="workflow-modal-copy">Advance, release, or deny after review.</p>
                 </div>
                 <button type="button" class="staff-button staff-button-light" id="workflow-modal-close-top">
                     <i class="fa-solid fa-xmark"></i>
@@ -3312,7 +3603,7 @@
                 <div class="workflow-modal-summary">
                     <div>
                         <strong class="text-slate-900 font-heading">Current workflow status</strong>
-                        <p class="workflow-modal-copy">Review the current stage before advancing, releasing, or denying the application.</p>
+                        <p class="workflow-modal-copy">Current stage and available action.</p>
                     </div>
                     <span class="workflow-status-pill">
                         <i class="fa-solid fa-circle-info"></i>
@@ -3322,7 +3613,7 @@
 
                 @if ($isFinal)
                     <div class="review-note-box">
-                        No workflow actions are available because this application is finalized.
+                        Finalized record. Workflow actions are locked for audit integrity.
                     </div>
                 @elseif ($canAdvanceWorkflow || $canRelease || $canDeny)
                     <div class="workflow-decision-grid">
@@ -3403,7 +3694,7 @@
                                     <div>
                                         <p class="workflow-action-title">Deny application</p>
                                         <p class="workflow-action-copy">
-                                            Record a final denied decision and lock further editing or upload actions for audit integrity.
+                                            Record the final denied decision and lock the review record.
                                         </p>
                                     </div>
                                 </div>
@@ -3434,7 +3725,7 @@
             </div>
 
             <div class="workflow-modal-footer">
-                <span class="text-xs text-slate-500">Workflow decisions record the clearance result only and do not automatically transfer ownership.</span>
+                <span class="text-xs font-semibold text-slate-500">Workflow actions are timestamped and preserved in the application audit trail.</span>
             </div>
         </div>
     </div>

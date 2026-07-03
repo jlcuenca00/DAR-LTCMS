@@ -173,6 +173,10 @@ class LandTransferApplicationController extends Controller
                 ->get();
         }
 
+        $parcelOptions = Parcel::query()
+            ->orderBy('parcel_code')
+            ->get();
+
         return view('staff.applications.show', compact(
             'application',
             'transferorRequirements',
@@ -188,6 +192,7 @@ class LandTransferApplicationController extends Controller
             'applicationTimeline',
             'matchedSourceRecords',
             'matchedSourcePackages',
+            'parcelOptions',
         ));
     }
     public function index(Request $request)
@@ -413,6 +418,97 @@ public function store(Request $request)
         ->route('staff.applications.show', $application)
         ->with('success', 'Application encoded successfully and placed under Pending Review by Legal Officer.');
 }
+
+
+    public function storeParcel(Request $request, LandTransferApplication $application)
+    {
+        if ($application->isFinalized()) {
+            return back()->with('error', 'Linked parcel records are locked after final decision.');
+        }
+
+        $validated = $request->validate([
+            'parcel_id' => ['required', 'exists:parcels,id'],
+            'area_hectares' => ['nullable', 'numeric', 'min:0.0001'],
+        ]);
+
+        $parcel = Parcel::findOrFail($validated['parcel_id']);
+        $areaHectares = $validated['area_hectares'] ?? $parcel->area_hectares;
+        $areaSquareMeters = $areaHectares !== null
+            ? round(((float) $areaHectares) * 10000, 2)
+            : $parcel->area_square_meters;
+
+        $applicationParcel = $application->applicationParcels()
+            ->where('parcel_id', $parcel->id)
+            ->first();
+
+        $payload = [
+            'parcel_id' => $parcel->id,
+            'area_hectares' => $areaHectares,
+            'area_square_meters' => $areaSquareMeters,
+            'parcel_code' => $parcel->parcel_code,
+            'title_no' => $parcel->title_no,
+            'tax_decl_no' => $parcel->tax_decl_no,
+            'lot_number' => $parcel->lot_number,
+            'survey_plan_number' => $parcel->survey_plan_number,
+            'title_type' => $parcel->title_type,
+            'rod_office' => $parcel->rod_office,
+        ];
+
+        if ($applicationParcel) {
+            $applicationParcel->update($payload);
+            $action = 'application_parcel_updated';
+            $message = 'Linked parcel reference updated.';
+        } else {
+            $applicationParcel = $application->applicationParcels()->create($payload);
+            $action = 'application_parcel_added';
+            $message = 'Parcel reference added to the application review.';
+        }
+
+        AuditLogger::record(
+            $action,
+            $application,
+            $application,
+            [
+                'application_parcel_id' => $applicationParcel->id,
+                'parcel_id' => $parcel->id,
+                'parcel_code' => $parcel->parcel_code,
+                'area_hectares' => $areaHectares,
+            ],
+            Auth::id()
+        );
+
+        return back()->with('success', $message);
+    }
+
+    public function destroyParcel(LandTransferApplication $application, ApplicationParcel $applicationParcel)
+    {
+        if ($application->isFinalized()) {
+            return back()->with('error', 'Linked parcel records are locked after final decision.');
+        }
+
+        if ((int) $applicationParcel->land_transfer_application_id !== (int) $application->id) {
+            abort(404);
+        }
+
+        $auditPayload = [
+            'application_parcel_id' => $applicationParcel->id,
+            'parcel_id' => $applicationParcel->parcel_id,
+            'parcel_code' => $applicationParcel->parcel_code,
+            'area_hectares' => $applicationParcel->area_hectares,
+        ];
+
+        $applicationParcel->delete();
+
+        AuditLogger::record(
+            'application_parcel_removed',
+            $application,
+            $application,
+            $auditPayload,
+            Auth::id()
+        );
+
+        return back()->with('success', 'Linked parcel reference removed from the application review.');
+    }
 
 private function generateApplicationCode(): string
 {
