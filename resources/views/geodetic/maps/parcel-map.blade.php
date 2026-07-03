@@ -304,8 +304,8 @@
                         <span class="geo-access-value">Not allowed</span>
                     </div>
                     <div class="geo-access-row">
-                        <span class="geo-access-label">Registry Mutation</span>
-                        <span class="geo-access-value">Outside scope</span>
+                        <span class="geo-access-label">Ownership / Registry Changes</span>
+                        <span class="geo-access-value">Not performed by system</span>
                     </div>
                 </div>
             </article>
@@ -342,7 +342,7 @@
                 }).addTo(map);
 
                 function getParcelColor(status) {
-                    if (status === 'pending_review') {
+                    if (status === 'pending_legal_review') {
                         return '#ea580c';
                     }
 

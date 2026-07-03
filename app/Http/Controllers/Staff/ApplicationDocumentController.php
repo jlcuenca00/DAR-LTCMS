@@ -67,6 +67,30 @@ class ApplicationDocumentController extends Controller
             'document_metadata.issuing_office' => ['nullable', 'string', 'max:255'],
             'document_metadata.date_issued' => ['nullable', 'date'],
             'document_metadata.reference_lot_or_parcel' => ['nullable', 'string', 'max:255'],
+
+            // Transfer instrument / deed indexing fields. These are reference details only
+            // and do not execute land ownership transfer or registry mutation.
+            'document_metadata.transfer_document_title' => ['nullable', 'string', 'max:255'],
+            'document_metadata.transferor_names' => ['nullable', 'string', 'max:1000'],
+            'document_metadata.transferee_names' => ['nullable', 'string', 'max:1000'],
+            'document_metadata.transfer_area' => ['nullable', 'string', 'max:150'],
+            'document_metadata.transfer_lot_number' => ['nullable', 'string', 'max:150'],
+            'document_metadata.notarization_date' => ['nullable', 'date'],
+            'document_metadata.notary_public' => ['nullable', 'string', 'max:255'],
+            'document_metadata.notarial_page_number' => ['nullable', 'string', 'max:100'],
+            'document_metadata.notarial_book_number' => ['nullable', 'string', 'max:100'],
+            'document_metadata.notarial_document_number' => ['nullable', 'string', 'max:100'],
+            'document_metadata.notarial_series' => ['nullable', 'string', 'max:100'],
+
+            // MARPO Certification / LTC Form No. 2 indexing fields. These are review
+            // details only and do not automatically approve/deny the application.
+            'document_metadata.marpo_has_tenants' => ['nullable', 'boolean'],
+            'document_metadata.marpo_no_tenants' => ['nullable', 'boolean'],
+            'document_metadata.marpo_no_illegal_conversion' => ['nullable', 'boolean'],
+            'document_metadata.marpo_no_conflict_claims' => ['nullable', 'boolean'],
+            'document_metadata.marpo_certification_place' => ['nullable', 'string', 'max:255'],
+            'document_metadata.marpo_designated_personnel' => ['nullable', 'string', 'max:255'],
+
             'document_metadata.verification_notes' => ['nullable', 'string', 'max:2000'],
         ]);
 

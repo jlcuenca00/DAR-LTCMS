@@ -600,24 +600,23 @@
                     </div>
 
                     <div class="source-field">
-                        <label for="crop_or_land_use">Agricultural Classification</label>
+                        <label for="crop_or_land_use">Land Use / Title Reference Notation</label>
                         @php
-    $agriculturalClassificationOptions = [
-        'Private Agricultural Land',
-        'Awarded CLOA Land',
-        'Emancipation Patent Land',
-        'CARP-Covered Land',
-        'Not Yet Determined',
-        'Non-Agricultural / Reference Only',
+    $landUseReferenceOptions = [
+        'Private agricultural land reference',
+        'CLOA title reference',
+        'Emancipation patent title reference',
+        'CARP program reference',
+        'Classification not yet verified from source',
     ];
 @endphp
 <select id="crop_or_land_use" name="crop_or_land_use" class="w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-green-600 focus:ring-green-600">
-    <option value="">Select classification</option>
-    @foreach ($agriculturalClassificationOptions as $classification)
+    <option value="">Select reference notation</option>
+    @foreach ($landUseReferenceOptions as $classification)
         <option value="{{ $classification }}" @selected(old('crop_or_land_use') === $classification)>{{ $classification }}</option>
     @endforeach
 </select>
-<p class="mt-1 text-xs text-gray-500">Use the classification indicated by the source document, if available.</p>
+<p class="mt-1 text-xs text-gray-500">Use only as source/reference notation. This does not classify the parcel for approval, prove ownership, or mutate registry records.</p>
                     </div>
 
                     <div class="source-field">
@@ -713,7 +712,14 @@
 
                     <div class="source-field-wide">
                         <label for="source_geometry_geojson">Source GeoJSON Geometry</label>
-                        <textarea id="source_geometry_geojson" name="source_geometry_geojson" rows="4" placeholder='Example polygon: {"type":"Polygon","coordinates":[[[123.3048,9.3064],[123.3058,9.3064],[123.3058,9.3072],[123.3048,9.3072],[123.3048,9.3064]]]}' class="w-full rounded-lg border-gray-300 text-xs">{{ old('source_geometry_geojson') }}</textarea>
+                        @include('staff.partials.geojson-polygon-editor', [
+                            'fieldName' => 'source_geometry_geojson',
+                            'fieldId' => 'source_geometry_geojson',
+                            'value' => old('source_geometry_geojson'),
+                            'inputClass' => 'w-full rounded-lg border-gray-300 text-xs font-mono',
+                            'errorClass' => 'text-xs font-bold text-red-600',
+                            'rows' => 5,
+                        ])
                         <p class="source-help-box mt-2">
                             Geometry entered here is documentary/reference geometry only. Staff may later copy it into a main Parcel Record through a confirmed parcel creation/linking action.
                         </p>

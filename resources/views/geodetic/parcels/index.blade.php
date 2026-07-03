@@ -139,7 +139,7 @@
             <div>
                 <h2 class="geo-card-title">Read-Only Parcel and Landholding References</h2>
                 <p class="geo-card-subtitle">
-                    These records support parcel checking, map review, and hectare monitoring only. Geodetic users can inspect technical references but cannot edit parcels, encode ownership changes, or finalize legal land transactions.
+                    These records support parcel checking, map review, hectare monitoring, and technical reference review only. DAR clearance processing applies to agricultural land records; this view does not verify ownership, encode ownership changes, or finalize legal land transactions.
                 </p>
             </div>
 
@@ -169,7 +169,7 @@
                             <th>Landowner</th>
                             <th>Location</th>
                             <th>Area</th>
-                            <th>Agricultural Status</th>
+                            <th>Clearance Scope</th>
                             <th>Status</th>
                             <th>Geometry</th>
                         </tr>
@@ -200,7 +200,7 @@
                                 </td>
                                 <td>
                                     <span class="geo-badge geo-badge-muted">
-                                        {{ $holding->parcel?->agricultural_status_label ?? 'Not Yet Determined' }}
+                                        Agricultural land record
                                     </span>
                                 </td>
                                 <td>

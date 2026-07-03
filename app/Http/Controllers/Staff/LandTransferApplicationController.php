@@ -24,7 +24,7 @@ class LandTransferApplicationController extends Controller
     public function show(LandTransferApplication $application)
     {
         $application->load([
-            'documents',
+            'documents.requiredDocument',
             'applicationParcels.parcel',
             'transferorLandowner',
             'transfereeLandowner',
@@ -33,12 +33,14 @@ class LandTransferApplicationController extends Controller
 
         // 1) Required documents (checklist)
         $transferorRequirements = RequiredDocument::where('applies_to', 'transferor')
-            ->orderBy('is_mandatory', 'desc')
+            ->orderBy('blocks_acceptance', 'desc')
+            ->orderBy('requirement_classification')
             ->orderBy('name')
             ->get();
 
         $transfereeRequirements = RequiredDocument::where('applies_to', 'transferee')
-            ->orderBy('is_mandatory', 'desc')
+            ->orderBy('blocks_acceptance', 'desc')
+            ->orderBy('requirement_classification')
             ->orderBy('name')
             ->get();
 
@@ -288,6 +290,15 @@ public function store(Request $request)
         'transferor_landowner_id' => ['nullable', 'exists:landowners,id'],
         'transferee_landowner_id' => ['nullable', 'exists:landowners,id'],
 
+        'applicant_name' => ['nullable', 'string', 'max:255'],
+        'applicant_type' => ['nullable', 'string', 'in:transferor,transferee,authorized_representative,other'],
+        'authorized_representative_name' => ['nullable', 'string', 'max:255'],
+        'has_special_power_of_attorney' => ['nullable', 'boolean'],
+        'or_number' => ['nullable', 'string', 'max:100'],
+        'or_date' => ['nullable', 'date'],
+        'amount_paid' => ['nullable', 'numeric', 'min:0', 'max:999999999.99'],
+        'date_of_application' => ['nullable', 'date'],
+
         'transferor_name' => ['required', 'string', 'max:255'],
         'transferee_name' => ['required', 'string', 'max:255'],
 
@@ -295,6 +306,11 @@ public function store(Request $request)
         'barangay' => ['nullable', 'string', 'max:255'],
         'date_filed' => ['nullable', 'date'],
         'date_of_transfer' => ['nullable', 'date'],
+        'transfer_nature' => ['nullable', 'string', 'in:sale,donation,succession,extrajudicial_settlement,waiver_of_rights,other'],
+        'is_succession_case' => ['nullable', 'boolean'],
+        'retention_certificate_required' => ['nullable', 'boolean'],
+        'retention_certificate_reference' => ['nullable', 'string', 'max:150'],
+        'landholding_review_notes' => ['nullable', 'string', 'max:4000'],
         'remarks' => ['nullable', 'string'],
 
         'parcel_id' => ['nullable', 'exists:parcels,id'],
@@ -302,20 +318,50 @@ public function store(Request $request)
     ]);
 
     $application = null;
+    $hasSpecialPowerOfAttorney = $request->boolean('has_special_power_of_attorney');
+    $isSuccessionCase = $request->boolean('is_succession_case') || (($validated['transfer_nature'] ?? null) === 'succession');
+    $retentionCertificateRequired = $request->boolean('retention_certificate_required');
 
-    DB::transaction(function () use ($validated, &$application) {
+    DB::transaction(function () use ($validated, $hasSpecialPowerOfAttorney, $isSuccessionCase, $retentionCertificateRequired, &$application) {
+        $applicantType = $validated['applicant_type'] ?? null;
+        $applicantName = $validated['applicant_name'] ?? null;
+
+        if (! filled($applicantName)) {
+            $applicantName = match ($applicantType) {
+                'transferee' => $validated['transferee_name'],
+                default => $validated['transferor_name'],
+            };
+        }
+
+        $applicationDate = $validated['date_of_application'] ?? $validated['date_filed'] ?? now()->toDateString();
+
         $application = LandTransferApplication::create([
             'application_code' => $this->generateApplicationCode(),
+            'applicant_name' => $applicantName,
+            'applicant_type' => $applicantType,
+            'authorized_representative_name' => $validated['authorized_representative_name'] ?? null,
+            'has_special_power_of_attorney' => $hasSpecialPowerOfAttorney,
+            'or_number' => $validated['or_number'] ?? null,
+            'or_date' => $validated['or_date'] ?? null,
+            'amount_paid' => $validated['amount_paid'] ?? null,
+            'date_of_application' => $applicationDate,
             'transferor_landowner_id' => $validated['transferor_landowner_id'] ?? null,
             'transferee_landowner_id' => $validated['transferee_landowner_id'] ?? null,
             'transferor_name' => $validated['transferor_name'],
             'transferee_name' => $validated['transferee_name'],
             'municipality' => $validated['municipality'] ?? null,
             'barangay' => $validated['barangay'] ?? null,
-            'date_filed' => $validated['date_filed'] ?? null,
+            'date_filed' => $validated['date_filed'] ?? $applicationDate,
             'date_of_transfer' => $validated['date_of_transfer'] ?? null,
+            'transfer_nature' => $validated['transfer_nature'] ?? null,
+            'is_succession_case' => $isSuccessionCase,
+            'retention_certificate_required' => $retentionCertificateRequired,
+            'retention_certificate_reference' => $retentionCertificateRequired
+                ? ($validated['retention_certificate_reference'] ?? null)
+                : null,
+            'landholding_review_notes' => $validated['landholding_review_notes'] ?? null,
             'remarks' => $validated['remarks'] ?? null,
-            'status' => LandTransferApplication::STATUS_DRAFT,
+            'status' => LandTransferApplication::STATUS_PENDING_LEGAL_REVIEW,
             'encoded_by' => Auth::id(),
         ]);
 
@@ -325,9 +371,14 @@ public function store(Request $request)
             $application->applicationParcels()->create([
                 'parcel_id' => $parcel->id,
                 'area_hectares' => $validated['area_hectares'] ?? $parcel->area_hectares,
+                'area_square_meters' => $parcel->area_square_meters,
                 'parcel_code' => $parcel->parcel_code,
                 'title_no' => $parcel->title_no,
                 'tax_decl_no' => $parcel->tax_decl_no,
+                'lot_number' => $parcel->lot_number,
+                'survey_plan_number' => $parcel->survey_plan_number,
+                'title_type' => $parcel->title_type,
+                'rod_office' => $parcel->rod_office,
             ]);
         }
 
@@ -337,6 +388,13 @@ public function store(Request $request)
             $application,
             [
                 'status' => $application->status,
+                'applicant_name' => $application->applicant_name,
+                'applicant_type' => $application->applicant_type,
+                'or_number' => $application->or_number,
+                'transfer_nature' => $application->transfer_nature,
+                'is_succession_case' => $application->is_succession_case,
+                'retention_certificate_required' => $application->retention_certificate_required,
+                'retention_certificate_reference' => $application->retention_certificate_reference,
                 'transferor_name' => $application->transferor_name,
                 'transferee_name' => $application->transferee_name,
                 'parcel_id' => $validated['parcel_id'] ?? null,
@@ -349,13 +407,13 @@ public function store(Request $request)
 
     return redirect()
         ->route('staff.applications.show', $application)
-        ->with('success', 'Application encoded successfully. It remains a draft until submitted for review.');
+        ->with('success', 'Application encoded successfully and placed under Pending Review by Legal Officer.');
 }
 
 private function generateApplicationCode(): string
 {
     $year = now()->format('Y');
-    $prefix = "APP-{$year}-";
+    $prefix = "{$year}-";
 
     $nextNumber = LandTransferApplication::query()
         ->where('application_code', 'LIKE', $prefix . '%')
@@ -368,4 +426,45 @@ private function generateApplicationCode(): string
 
     return $code;
 }
+    public function updateForm4Review(Request $request, LandTransferApplication $application)
+    {
+        if ($application->isFinalized()) {
+            return back()->with('error', 'LTC Form No. 4 review details are locked after release or denial.');
+        }
+
+        $validated = $request->validate([
+            'ltc_form4_subject_land_findings' => ['nullable', 'array'],
+            'ltc_form4_subject_land_findings.*' => ['nullable', 'string', 'max:120'],
+            'ltc_form4_recommendation_findings' => ['nullable', 'array'],
+            'ltc_form4_recommendation_findings.*' => ['nullable', 'string', 'max:120'],
+            'ltc_form4_recommendation_decision' => ['nullable', 'in:approval,denial'],
+            'ltc_form4_other_findings' => ['nullable', 'string', 'max:2000'],
+            'ltc_form4_certified_at' => ['nullable', 'date'],
+            'ltc_form4_certifying_officer_name' => ['nullable', 'string', 'max:255'],
+        ]);
+
+        $application->forceFill([
+            'ltc_form4_subject_land_findings' => array_values($validated['ltc_form4_subject_land_findings'] ?? []),
+            'ltc_form4_recommendation_findings' => array_values($validated['ltc_form4_recommendation_findings'] ?? []),
+            'ltc_form4_recommendation_decision' => $validated['ltc_form4_recommendation_decision'] ?? null,
+            'ltc_form4_other_findings' => $validated['ltc_form4_other_findings'] ?? null,
+            'ltc_form4_certified_at' => $validated['ltc_form4_certified_at'] ?? null,
+            'ltc_form4_certifying_officer_name' => $validated['ltc_form4_certifying_officer_name'] ?? null,
+        ])->save();
+
+        AuditLogger::record(
+            'ltc_form4_review_updated',
+            $application,
+            $application,
+            [
+                'recommendation_decision' => $application->ltc_form4_recommendation_decision,
+                'subject_land_findings_count' => count((array) $application->ltc_form4_subject_land_findings),
+                'recommendation_findings_count' => count((array) $application->ltc_form4_recommendation_findings),
+            ],
+            Auth::id()
+        );
+
+        return back()->with('success', 'LTC Form No. 4 attestation and recommendation details updated.');
+    }
+
 }

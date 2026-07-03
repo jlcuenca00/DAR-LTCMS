@@ -39,6 +39,8 @@ class RecordSearchController extends Controller
                 $query->whereRaw('LOWER(first_name) LIKE ?', ["%{$search}%"])
                     ->orWhereRaw('LOWER(middle_name) LIKE ?', ["%{$search}%"])
                     ->orWhereRaw('LOWER(last_name) LIKE ?', ["%{$search}%"])
+                    ->orWhereRaw('LOWER(registered_owner_status) LIKE ?', ["%{$search}%"])
+                    ->orWhereRaw('LOWER(spouse_name) LIKE ?', ["%{$search}%"])
                     ->orWhereRaw('LOWER(contact_number) LIKE ?', ["%{$search}%"])
                     ->orWhereRaw('LOWER(address_line) LIKE ?', ["%{$search}%"]);
             });
@@ -104,7 +106,6 @@ class RecordSearchController extends Controller
             'municipality' => ['nullable', 'string', 'max:255'],
             'barangay' => ['nullable', 'string', 'max:255'],
             'status' => ['nullable', 'string', 'max:50'],
-            'agricultural_status' => ['nullable', 'string', Rule::in(array_keys(Parcel::AGRICULTURAL_STATUSES))],
         ]);
 
         $parcelsQuery = Parcel::query()
@@ -117,6 +118,9 @@ class RecordSearchController extends Controller
                 $query->whereRaw('LOWER(parcel_code) LIKE ?', ["%{$search}%"])
                     ->orWhereRaw('LOWER(title_no) LIKE ?', ["%{$search}%"])
                     ->orWhereRaw('LOWER(tax_decl_no) LIKE ?', ["%{$search}%"])
+                    ->orWhereRaw('LOWER(lot_number) LIKE ?', ["%{$search}%"])
+                    ->orWhereRaw('LOWER(survey_plan_number) LIKE ?', ["%{$search}%"])
+                    ->orWhereRaw('LOWER(rod_office) LIKE ?', ["%{$search}%"])
                     ->orWhereRaw('LOWER(remarks) LIKE ?', ["%{$search}%"]);
             });
         }
@@ -133,13 +137,6 @@ class RecordSearchController extends Controller
             $parcelsQuery->where('status', $filters['status']);
         }
 
-        if (! empty($filters['agricultural_status'])) {
-            $parcelsQuery->where('agricultural_status', $filters['agricultural_status']);
-        }
-
-        if (($filters['agricultural_status'] ?? null) !== null && $filters['agricultural_status'] !== '') {
-            $parcelsQuery->where('agricultural_status', $filters['agricultural_status']); // automatic agricultural status index filter
-        }
 
         $parcels = $parcelsQuery
             ->paginate(15)
@@ -169,28 +166,26 @@ class RecordSearchController extends Controller
             ->orderBy('status')
             ->pluck('status');
 
-        $agriculturalStatuses = Parcel::agriculturalStatusOptions();
-
         return view('staff.records.parcels', compact(
             'parcels',
             'filters',
             'municipalities',
             'barangays',
-            'statuses',
-            'agriculturalStatuses'
+            'statuses'
         ));
     }
 
     public function createParcel()
     {
         return view('staff.records.parcel-create', [
-            'agriculturalStatuses' => Parcel::agriculturalStatusOptions(),
             'parcelStatuses' => [
                 'active' => 'Active',
                 'inactive' => 'Inactive',
                 'linked_application' => 'Linked to Application',
                 'flagged' => 'Flagged for Review',
             ],
+            'titleTypes' => Parcel::titleTypeOptions(),
+            'rodOffices' => Parcel::rodOfficeOptions(),
         ]);
     }
 
@@ -200,22 +195,27 @@ class RecordSearchController extends Controller
             'parcel_code' => ['required', 'string', 'max:255', Rule::unique('parcels', 'parcel_code')],
             'title_no' => ['nullable', 'string', 'max:255'],
             'tax_decl_no' => ['nullable', 'string', 'max:255'],
+            'lot_number' => ['nullable', 'string', 'max:255'],
+            'survey_plan_number' => ['nullable', 'string', 'max:255'],
+            'title_type' => ['nullable', Rule::in(array_keys(Parcel::titleTypeOptions()))],
+            'rod_office' => ['nullable', Rule::in(array_keys(Parcel::rodOfficeOptions()))],
             'province' => ['nullable', 'string', 'max:255'],
             'municipality' => ['nullable', 'string', 'max:255'],
             'barangay' => ['nullable', 'string', 'max:255'],
             'area_hectares' => ['nullable', 'numeric', 'min:0', 'max:999999.9999'],
+            'area_square_meters' => ['nullable', 'numeric', 'min:0', 'max:999999999.99'],
             'status' => ['required', Rule::in(['active', 'inactive', 'linked_application', 'flagged'])],
-            'agricultural_status' => ['nullable', Rule::in(array_keys(Parcel::AGRICULTURAL_STATUSES))],
-            'geometry_geojson' => ['nullable', 'json'],
+            'geometry_geojson' => ['nullable', 'string', 'max:200000'],
             'remarks' => ['nullable', 'string', 'max:5000'],
             'reference_photo' => ['nullable', 'image', 'max:5120'],
         ]);
 
         $data['province'] = $data['province'] ?: 'Negros Oriental';
-        $data['agricultural_status'] = $data['agricultural_status'] ?: Parcel::DEFAULT_AGRICULTURAL_STATUS;
-        $data['geometry_geojson'] = filled($data['geometry_geojson'] ?? null)
-            ? json_decode($data['geometry_geojson'], true)
-            : null;
+        $data = $this->normalizeParcelRegistrationData($data);
+        // DAR clearance workflow is limited to agricultural land records.
+        // Classification is not a reviewer decision field here; keep the internal default only.
+        $data['agricultural_status'] = Parcel::DEFAULT_AGRICULTURAL_STATUS;
+        $data['geometry_geojson'] = $this->decodeParcelGeoJson($data['geometry_geojson'] ?? null);
 
         unset($data['reference_photo']);
         if ($request->hasFile('reference_photo')) {
@@ -234,8 +234,7 @@ class RecordSearchController extends Controller
                 'municipality' => $parcel->municipality,
                 'barangay' => $parcel->barangay,
                 'area_hectares' => $parcel->area_hectares,
-                'agricultural_status' => $parcel->agricultural_status,
-                'agricultural_status_label' => $parcel->agricultural_status_label,
+                'dar_clearance_scope' => 'Agricultural land clearance record only',
                 'has_geometry' => ! empty($parcel->geometry_geojson),
                 'actor_user_id' => $request->user()?->id,
                 'actor_name' => $request->user()?->name,
@@ -247,28 +246,29 @@ class RecordSearchController extends Controller
             ->with('success', 'Parcel record created successfully.');
     }
     public function showParcel(Parcel $parcel)
-{
-    $parcel->load([
-        'landholdings.landowner',
-        'landholdings.sourceApplication',
-        'legacyRecords.package',
-        'sourceRecordPackages.records',
-    ]);
-    
+    {
+        $parcel->load([
+            'landholdings.landowner',
+            'landholdings.sourceApplication',
+            'legacyRecords.package',
+            'sourceRecordPackages.records',
+        ]);
 
-    return view('staff.records.parcel-show', compact('parcel'));
-}
+        return view('staff.records.parcel-show', compact('parcel'));
+    }
+
     public function editParcel(Parcel $parcel)
     {
         return view('staff.records.parcel-edit', [
             'parcel' => $parcel,
-            'agriculturalStatuses' => Parcel::agriculturalStatusOptions(),
             'parcelStatuses' => [
                 'active' => 'Active',
                 'inactive' => 'Inactive',
                 'linked_application' => 'Linked to Application',
                 'flagged' => 'Flagged for Review',
             ],
+            'titleTypes' => Parcel::titleTypeOptions(),
+            'rodOffices' => Parcel::rodOfficeOptions(),
         ]);
     }
 
@@ -278,51 +278,134 @@ class RecordSearchController extends Controller
             'parcel_code' => ['required', 'string', 'max:255', Rule::unique('parcels', 'parcel_code')->ignore($parcel->id)],
             'title_no' => ['nullable', 'string', 'max:255'],
             'tax_decl_no' => ['nullable', 'string', 'max:255'],
+            'lot_number' => ['nullable', 'string', 'max:255'],
+            'survey_plan_number' => ['nullable', 'string', 'max:255'],
+            'title_type' => ['nullable', Rule::in(array_keys(Parcel::titleTypeOptions()))],
+            'rod_office' => ['nullable', Rule::in(array_keys(Parcel::rodOfficeOptions()))],
             'province' => ['nullable', 'string', 'max:255'],
             'municipality' => ['nullable', 'string', 'max:255'],
             'barangay' => ['nullable', 'string', 'max:255'],
             'area_hectares' => ['nullable', 'numeric', 'min:0', 'max:999999.9999'],
+            'area_square_meters' => ['nullable', 'numeric', 'min:0', 'max:999999999.99'],
             'status' => ['required', Rule::in(['active', 'inactive', 'linked_application', 'flagged'])],
             'remarks' => ['nullable', 'string', 'max:5000'],
+            'geometry_geojson' => ['nullable', 'string', 'max:200000'],
             'reference_photo' => ['nullable', 'image', 'max:5120'],
         ]);
 
-        $data['agricultural_status'] = $data['agricultural_status'] ?? 'private_agricultural'; // automatic agricultural default after form removal
+        $data['province'] = $data['province'] ?: 'Negros Oriental';
+        $data = $this->normalizeParcelRegistrationData($data);
+        $data['geometry_geojson'] = $this->decodeParcelGeoJson($data['geometry_geojson'] ?? null);
+
+        // Keep the existing internal classification value. Staff no longer edits this as a clearance workflow field.
+        $data['agricultural_status'] = $parcel->agricultural_status ?: Parcel::DEFAULT_AGRICULTURAL_STATUS;
 
         unset($data['reference_photo']);
         if ($request->hasFile('reference_photo')) {
             $data['reference_photo_path'] = $request->file('reference_photo')->store('reference-photos/parcels', 'public');
         }
 
-        $oldAgriculturalStatus = $parcel->agricultural_status ?: 'not_yet_determined';
-
         $parcel->fill($data);
-        $agriculturalStatusChanged = $parcel->isDirty('agricultural_status');
         $parcel->save();
 
-        if ($agriculturalStatusChanged) {
-            AuditLogger::record(
-                'parcel_agricultural_status_updated',
-                null,
-                $parcel,
-                [
-                    'parcel_id' => $parcel->id,
-                    'parcel_code' => $parcel->parcel_code,
-                    'old_agricultural_status' => $oldAgriculturalStatus,
-                    'old_agricultural_status_label' => Parcel::agriculturalStatusLabel($oldAgriculturalStatus),
-                    'new_agricultural_status' => $parcel->agricultural_status,
-                    'new_agricultural_status_label' => $parcel->agricultural_status_label,
-                    'actor_user_id' => $request->user()?->id,
-                    'actor_name' => $request->user()?->name,
-                ]
-            );
-        }
+        AuditLogger::record(
+            'parcel_updated',
+            null,
+            $parcel,
+            [
+                'parcel_id' => $parcel->id,
+                'parcel_code' => $parcel->parcel_code,
+                'status' => $parcel->status,
+                'has_geometry' => ! empty($parcel->geometry_geojson),
+                'actor_user_id' => $request->user()?->id,
+                'actor_name' => $request->user()?->name,
+            ]
+        );
 
         app(NotificationService::class)->notifyGeodeticParcelReferenceUpdated($parcel);
 
         return redirect()
             ->route('staff.records.parcels.show', $parcel)
             ->with('success', 'Parcel record updated successfully.');
+    }
+
+    public function destroyParcel(Request $request, Parcel $parcel)
+    {
+        $oldStatus = $parcel->status;
+
+        $parcel->forceFill([
+            'status' => 'inactive',
+            'remarks' => trim(($parcel->remarks ? $parcel->remarks . "\n\n" : '') . 'Archived by staff on ' . now()->timezone('Asia/Manila')->format('M d, Y h:i A') . '. Record retained for traceability.'),
+        ])->save();
+
+        AuditLogger::record(
+            'parcel_archived',
+            null,
+            $parcel,
+            [
+                'parcel_id' => $parcel->id,
+                'parcel_code' => $parcel->parcel_code,
+                'old_status' => $oldStatus,
+                'new_status' => $parcel->status,
+                'actor_user_id' => $request->user()?->id,
+                'actor_name' => $request->user()?->name,
+                'archive_policy' => 'Record retained; no ownership or registry mutation performed.',
+            ]
+        );
+
+        return redirect()
+            ->route('staff.records.parcels.index')
+            ->with('success', 'Parcel record archived. The record was retained for traceability and audit review.');
+    }
+
+    private function normalizeParcelRegistrationData(array $data): array
+    {
+        if (array_key_exists('area_square_meters', $data) && filled($data['area_square_meters'])) {
+            $data['area_square_meters'] = round((float) $data['area_square_meters'], 2);
+
+            if (empty($data['area_hectares'])) {
+                $data['area_hectares'] = round($data['area_square_meters'] / 10000, 4);
+            }
+        }
+
+        if (array_key_exists('area_hectares', $data) && filled($data['area_hectares'])) {
+            $data['area_hectares'] = round((float) $data['area_hectares'], 4);
+
+            if (empty($data['area_square_meters'])) {
+                $data['area_square_meters'] = round($data['area_hectares'] * 10000, 2);
+            }
+        }
+
+        return $data;
+    }
+
+
+    private function decodeParcelGeoJson(?string $value): ?array
+    {
+        if (! filled($value)) {
+            return null;
+        }
+
+        $decoded = json_decode($value, true);
+
+        if (
+            json_last_error() !== JSON_ERROR_NONE ||
+            ! is_array($decoded) ||
+            empty($decoded['type']) ||
+            empty($decoded['coordinates'])
+        ) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'geometry_geojson' => 'The geometry must be valid GeoJSON. Use the polygon builder or provide JSON with type and coordinates.',
+            ]);
+        }
+
+        if (($decoded['type'] ?? null) !== 'Polygon') {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'geometry_geojson' => 'Only GeoJSON Polygon geometry is supported for parcel records.',
+            ]);
+        }
+
+        return $decoded;
     }
 
 }

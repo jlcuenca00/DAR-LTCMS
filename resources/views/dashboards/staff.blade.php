@@ -90,7 +90,7 @@
 
             .stats-grid {
                 display: grid;
-                grid-template-columns: repeat(4, minmax(0, 1fr));
+                grid-template-columns: repeat(5, minmax(0, 1fr));
                 gap: 18px;
             }
 
@@ -144,6 +144,7 @@
 
             .icon-slate { background: #334155; }
             .icon-amber { background: #ea580c; }
+            .icon-blue { background: #2563eb; }
             .icon-green { background: #16a34a; }
             .icon-red { background: #dc2626; }
 
@@ -412,25 +413,37 @@
                 border: 1px solid;
             }
 
-            .status-approved {
+            .status-released,
+            .status-released {
                 background: #dcfce7;
                 border-color: #bbf7d0;
                 color: #166534;
             }
 
-            .status-pending_review {
+            .status-pending_legal_review,
+            .status-pending-legal-review {
                 background: #ffedd5;
                 border-color: #fed7aa;
                 color: #c2410c;
             }
 
-            .status-not_approved {
+            .status-endorsed_lti,
+            .status-endorsed_chief_legal,
+            .status-endorsed_parpo,
+            .status-for_releasing {
+                background: #dbeafe;
+                border-color: #bfdbfe;
+                color: #1d4ed8;
+            }
+
+            .status-denied,
+            .status-denied {
                 background: #fee2e2;
                 border-color: #fecaca;
                 color: #b91c1c;
             }
 
-            .status-draft {
+            .status-pending-legal-review {
                 background: #f1f5f9;
                 border-color: #cbd5e1;
                 color: #475569;
@@ -548,15 +561,17 @@
             @php
                 $iconClass = match ($index) {
                     1 => 'icon-amber',
-                    2 => 'icon-green',
-                    3 => 'icon-red',
+                    2 => 'icon-blue',
+                    3 => 'icon-green',
+                    4 => 'icon-red',
                     default => 'icon-slate',
                 };
 
                 $icon = match ($index) {
-                    1 => 'fa-clock',
-                    2 => 'fa-circle-check',
-                    3 => 'fa-circle-xmark',
+                    1 => 'fa-scale-balanced',
+                    2 => 'fa-route',
+                    3 => 'fa-stamp',
+                    4 => 'fa-circle-xmark',
                     default => 'fa-file-lines',
                 };
             @endphp
@@ -647,9 +662,13 @@
                                     <td>{{ $application->transferee_name }}</td>
                                     <td>
                                         <span class="status-badge status-{{ $application->status }}">
-                                            {{ $application->status === 'approved'
-                                                ? 'Approved Clearance'
-                                                : ucwords(str_replace('_', ' ', $application->status)) }}
+                                            {{ method_exists($application, 'statusLabel')
+                                                ? $application->statusLabel()
+                                                : ($application->status === 'released'
+                                                    ? 'Released'
+                                                    : ($application->status === 'denied'
+                                                        ? 'Denied'
+                                                        : ucwords(str_replace('_', ' ', $application->status)))) }}
                                         </span>
                                     </td>
                                     <td class="date-col">{{ $application->created_at?->format('M d, Y') }}</td>
@@ -685,10 +704,10 @@
                         <i class="fa-solid fa-plus quick-action-icon"></i>
                     </a>
 
-                    <a href="{{ route('staff.applications.index', ['status' => \App\Models\LandTransferApplication::STATUS_PENDING_REVIEW]) }}" class="quick-link">
+                    <a href="{{ route('staff.applications.index', ['status' => \App\Models\LandTransferApplication::STATUS_PENDING_LEGAL_REVIEW]) }}" class="quick-link">
                         <div>
-                            <p class="quick-title">Pending Review</p>
-                            <p class="quick-desc">Open applications awaiting decision.</p>
+                            <p class="quick-title">Review Applications</p>
+                            <p class="quick-desc">Open applications that need staff review action.</p>
                         </div>
                         <i class="fa-solid fa-clock quick-action-icon"></i>
                     </a>

@@ -265,22 +265,82 @@
             </div>
         @endif
 
-        <form method="POST" action="{{ route('staff.applications.store') }}" class="form-shell" data-autosave-key="clearance-application-create" data-autosave-label="clearance application draft">
+        <form method="POST" action="{{ route('staff.applications.store') }}" class="form-shell" data-autosave-key="clearance-application-create" data-autosave-label="clearance application record">
             @csrf
 
             <div class="form-header">
                 <div>
                     <h2>New Clearance Application Record</h2>
                     <p>
-                        Encode the parties, location, filing dates, and optional parcel reference. The record starts as a draft
-                        until submitted for review.
+                        Encode the parties, location, filing dates, and optional parcel reference. The record will start under Pending Review by Legal Officer after saving.
                     </p>
                 </div>
                 <span class="draft-pill">
                     <i class="fa-solid fa-file-pen"></i>
-                    Draft Record
+                    Pending Legal Review
                 </span>
             </div>
+
+            <section class="form-section">
+                <div class="section-head">
+                    <div>
+                        <h3 class="section-title">Application Intake and Payment Details</h3>
+                        <p class="section-copy">Record the applicant, official receipt, and application date used for DAR clearance processing.</p>
+                    </div>
+                </div>
+
+                <div class="field-grid">
+                    <div class="field-group">
+                        <label for="applicant_type" class="field-label">Applicant Type</label>
+                        <select id="applicant_type" name="applicant_type" class="staff-select">
+                            <option value="" @selected(old('applicant_type') === null)>Not specified</option>
+                            <option value="transferor" @selected(old('applicant_type') === 'transferor')>Transferor</option>
+                            <option value="transferee" @selected(old('applicant_type') === 'transferee')>Transferee</option>
+                            <option value="authorized_representative" @selected(old('applicant_type') === 'authorized_representative')>Authorized Representative</option>
+                            <option value="other" @selected(old('applicant_type') === 'other')>Other</option>
+                        </select>
+                    </div>
+
+                    <div class="field-group">
+                        <label for="applicant_name" class="field-label">Applicant Name</label>
+                        <input id="applicant_name" type="text" name="applicant_name" value="{{ old('applicant_name') }}" class="staff-input" placeholder="Name of person filing the application">
+                        <p class="field-help">Leave blank to use the transferor name as the applicant.</p>
+                    </div>
+
+                    <div class="field-group">
+                        <label for="authorized_representative_name" class="field-label">Authorized Representative Name</label>
+                        <input id="authorized_representative_name" type="text" name="authorized_representative_name" value="{{ old('authorized_representative_name') }}" class="staff-input" placeholder="Required only when applicable">
+                    </div>
+
+                    <div class="field-group">
+                        <label for="has_special_power_of_attorney" class="field-label">Special Power of Attorney</label>
+                        <select id="has_special_power_of_attorney" name="has_special_power_of_attorney" class="staff-select">
+                            <option value="0" @selected(! old('has_special_power_of_attorney'))>Not applicable / Not indicated</option>
+                            <option value="1" @selected(old('has_special_power_of_attorney'))>SPA presented / indicated</option>
+                        </select>
+                    </div>
+
+                    <div class="field-group">
+                        <label for="date_of_application" class="field-label">Date of Application</label>
+                        <input id="date_of_application" type="date" name="date_of_application" value="{{ old('date_of_application', now()->toDateString()) }}" class="staff-input">
+                    </div>
+
+                    <div class="field-group">
+                        <label for="or_number" class="field-label">OR Number</label>
+                        <input id="or_number" type="text" name="or_number" value="{{ old('or_number') }}" class="staff-input" placeholder="Official Receipt number">
+                    </div>
+
+                    <div class="field-group">
+                        <label for="or_date" class="field-label">OR Date</label>
+                        <input id="or_date" type="date" name="or_date" value="{{ old('or_date') }}" class="staff-input">
+                    </div>
+
+                    <div class="field-group">
+                        <label for="amount_paid" class="field-label">Amount Paid (PHP)</label>
+                        <input id="amount_paid" type="number" step="0.01" min="0" name="amount_paid" value="{{ old('amount_paid') }}" class="staff-input" placeholder="0.00">
+                    </div>
+                </div>
+            </section>
 
             <section class="form-section">
                 <div class="section-head">
@@ -361,16 +421,66 @@
                     </div>
 
                     <div class="field-group">
-                        <label for="date_filed" class="field-label">Date Filed</label>
-                        <input id="date_filed" type="date" name="date_filed" value="{{ old('date_filed', now()->toDateString()) }}" class="staff-input">
-                    </div>
-
-                    <div class="field-group">
                         <label for="date_of_transfer" class="field-label">Date of Intended Transfer</label>
                         <input id="date_of_transfer" type="date" name="date_of_transfer" value="{{ old('date_of_transfer') }}" class="staff-input">
                     </div>
                 </div>
             </section>
+
+            <section class="form-section">
+                <div class="section-head">
+                    <div>
+                        <h3 class="section-title">Landholding Review Context</h3>
+                        <p class="section-copy">Record 5-hectare, succession, and retention-certificate review context for staff evaluation.</p>
+                    </div>
+                </div>
+
+                <div class="scope-alert">
+                    <i class="fa-solid fa-circle-info"></i>
+                    <div>
+                        These entries support manual clearance review only. Succession and retention-certificate notes do not automatically approve a clearance, transfer ownership, or mutate Registry of Deeds records.
+                    </div>
+                </div>
+
+                <div class="mt-4 field-grid">
+                    <div class="field-group">
+                        <label for="transfer_nature" class="field-label">Transfer Nature / Instrument Context</label>
+                        <select id="transfer_nature" name="transfer_nature" class="staff-select">
+                            <option value="" @selected(old('transfer_nature') === null)>Not specified</option>
+                            @foreach (\App\Models\LandTransferApplication::transferNatureOptions() as $value => $label)
+                                <option value="{{ $value }}" @selected(old('transfer_nature') === $value)>{{ $label }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div class="field-group">
+                        <label for="is_succession_case" class="field-label">Succession / Inheritance Case</label>
+                        <select id="is_succession_case" name="is_succession_case" class="staff-select">
+                            <option value="0" @selected(! old('is_succession_case'))>No / Not indicated</option>
+                            <option value="1" @selected(old('is_succession_case'))>Yes, succession exception context</option>
+                        </select>
+                        <p class="field-help">Use only when the application involves succession/inheritance context for manual review.</p>
+                    </div>
+
+                    <div class="field-group">
+                        <label for="retention_certificate_required" class="field-label">Retention Certificate</label>
+                        <select id="retention_certificate_required" name="retention_certificate_required" class="staff-select">
+                            <option value="0" @selected(! old('retention_certificate_required'))>Not required / Not indicated</option>
+                            <option value="1" @selected(old('retention_certificate_required'))>Required for this review</option>
+                        </select>
+                    </div>
+
+                    <div class="field-group">
+                        <label for="retention_certificate_reference" class="field-label">Retention Certificate Reference</label>
+                        <input id="retention_certificate_reference" type="text" name="retention_certificate_reference" value="{{ old('retention_certificate_reference') }}" class="staff-input" placeholder="Reference/control number, if required">
+                        <p class="field-help">If marked required, release will be blocked until a reference is recorded.</p>
+                    </div>
+
+                    <div class="field-group field-span-2">
+                        <label for="landholding_review_notes" class="field-label">Landholding Review Notes</label>
+                        <textarea id="landholding_review_notes" name="landholding_review_notes" rows="3" class="staff-textarea" placeholder="Optional notes about aggregate landholding, succession context, MARPO/LTI review, or retention certificate handling">{{ old('landholding_review_notes') }}</textarea>
+                    </div>
+                </div>
 
             <section class="form-section">
                 <div class="section-head">
@@ -383,7 +493,7 @@
                 <div class="scope-alert">
                     <i class="fa-solid fa-triangle-exclamation"></i>
                     <div>
-                        Linked parcels support application review and monitoring only. Creating this application does not transfer ownership or change registry records.
+                        Linked parcels support application review and monitoring only. Creating this application does not transfer ownership, change parcel ownership linkage, or mutate Registry of Deeds records.
                     </div>
                 </div>
 
@@ -429,7 +539,7 @@
 
             <div class="form-footer">
                 <p class="footer-note">
-                    Saving creates a draft clearance application record. Submission, review, approval, not-approval, and clearance generation remain separate staff actions.
+                    Saving creates a clearance application record under Pending Review by Legal Officer. Endorsement, release, denial, and clearance output generation remain separate staff actions.
                 </p>
 
                 <div class="footer-actions">
@@ -438,7 +548,7 @@
                     </a>
                     <button type="submit" class="staff-button staff-button-primary">
                         <i class="fa-solid fa-floppy-disk"></i>
-                        Save Draft Application
+                        Save Application Record
                     </button>
                 </div>
             </div>

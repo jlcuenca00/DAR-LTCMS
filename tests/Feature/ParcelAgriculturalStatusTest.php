@@ -2,7 +2,6 @@
 
 namespace Tests\Feature;
 
-use App\Models\AuditLog;
 use App\Models\Parcel;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -12,7 +11,7 @@ class ParcelAgriculturalStatusTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_staff_update_defaults_parcel_to_private_agricultural_when_land_type_field_is_not_on_form_and_audit_log_is_created(): void
+    public function test_staff_update_preserves_internal_agricultural_status_when_land_type_field_is_not_on_form(): void
     {
         $staffUser = User::factory()->create([
             'role' => User::ROLE_STAFF,
@@ -20,7 +19,7 @@ class ParcelAgriculturalStatusTest extends TestCase
         ]);
 
         $parcel = Parcel::create([
-            'parcel_code' => 'AGR-STATUS-001',
+            'parcel_code' => 'AGR-SCOPE-001',
             'title_no' => 'TCT-AGR-001',
             'tax_decl_no' => 'TD-AGR-001',
             'province' => 'Negros Oriental',
@@ -29,12 +28,12 @@ class ParcelAgriculturalStatusTest extends TestCase
             'area_hectares' => 2.4000,
             'status' => 'active',
             'agricultural_status' => 'not_yet_determined',
-            'remarks' => 'Initial agricultural classification test parcel.',
+            'remarks' => 'Initial internal classification test parcel.',
         ]);
 
         $response = $this->actingAs($staffUser)
             ->patch(route('staff.records.parcels.update', $parcel), [
-                'parcel_code' => 'AGR-STATUS-001',
+                'parcel_code' => 'AGR-SCOPE-001',
                 'title_no' => 'TCT-AGR-001',
                 'tax_decl_no' => 'TD-AGR-001',
                 'province' => 'Negros Oriental',
@@ -49,25 +48,11 @@ class ParcelAgriculturalStatusTest extends TestCase
 
         $this->assertDatabaseHas('parcels', [
             'id' => $parcel->id,
-            'agricultural_status' => 'private_agricultural',
+            'agricultural_status' => 'not_yet_determined',
         ]);
-
-        $this->assertDatabaseHas('audit_logs', [
-            'actor_user_id' => $staffUser->id,
-            'auditable_type' => Parcel::class,
-            'auditable_id' => $parcel->id,
-            'action' => 'parcel_agricultural_status_updated',
-        ]);
-
-        $auditLog = AuditLog::query()
-            ->where('action', 'parcel_agricultural_status_updated')
-            ->firstOrFail();
-
-        $this->assertSame('not_yet_determined', $auditLog->metadata['old_agricultural_status']);
-        $this->assertSame('private_agricultural', $auditLog->metadata['new_agricultural_status']);
     }
 
-    public function test_staff_parcel_details_display_agricultural_status_label(): void
+    public function test_staff_parcel_details_display_dar_clearance_scope_instead_of_agricultural_status_label(): void
     {
         $staffUser = User::factory()->create([
             'role' => User::ROLE_STAFF,
@@ -89,11 +74,13 @@ class ParcelAgriculturalStatusTest extends TestCase
             ->get(route('staff.records.parcels.show', $parcel));
 
         $response->assertOk();
-        $response->assertSee('Agricultural Status');
-        $response->assertSee('Private Agricultural Land');
+        $response->assertSee('DAR Clearance Scope');
+        $response->assertSee('Agricultural land record');
+        $response->assertDontSee('Agricultural Status');
+        $response->assertDontSee('Private Agricultural Land');
     }
 
-    public function test_staff_can_filter_parcels_by_agricultural_status(): void
+    public function test_staff_parcel_list_no_longer_filters_by_agricultural_status(): void
     {
         $staffUser = User::factory()->create([
             'role' => User::ROLE_STAFF,
@@ -112,7 +99,7 @@ class ParcelAgriculturalStatusTest extends TestCase
         ]);
 
         Parcel::create([
-            'parcel_code' => 'HIDDEN-AGRI-FILTER',
+            'parcel_code' => 'ALSO-VISIBLE-AGRI-FILTER',
             'title_no' => 'TCT-HIDDEN-AGRI',
             'province' => 'Negros Oriental',
             'municipality' => 'Bayawan City',
@@ -129,6 +116,7 @@ class ParcelAgriculturalStatusTest extends TestCase
 
         $response->assertOk();
         $response->assertSee('VISIBLE-AGRI-FILTER');
-        $response->assertDontSee('HIDDEN-AGRI-FILTER');
+        $response->assertSee('ALSO-VISIBLE-AGRI-FILTER');
+        $response->assertDontSee('Agricultural Status');
     }
 }

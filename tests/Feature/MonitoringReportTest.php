@@ -18,13 +18,13 @@ class MonitoringReportTest extends TestCase
             'role' => 'staff',
         ]);
 
-        $approvedApplication = LandTransferApplication::create([
-            'application_code' => 'REPORT-APPROVED-001',
+        $releasedApplication = LandTransferApplication::create([
+            'application_code' => 'REPORT-RELEASED-001',
             'transferor_name' => 'Report Transferor',
             'transferee_name' => 'Report Transferee',
             'municipality' => 'Dumaguete City',
             'barangay' => 'Bantayan',
-            'status' => LandTransferApplication::STATUS_APPROVED,
+            'status' => LandTransferApplication::STATUS_RELEASED,
             'encoded_by' => $staffUser->id,
             'reviewed_by' => $staffUser->id,
             'reviewed_at' => now(),
@@ -36,31 +36,31 @@ class MonitoringReportTest extends TestCase
             'transferee_name' => 'Pending Transferee',
             'municipality' => 'Valencia',
             'barangay' => 'Poblacion',
-            'status' => LandTransferApplication::STATUS_PENDING_REVIEW,
+            'status' => LandTransferApplication::STATUS_PENDING_LEGAL_REVIEW,
             'encoded_by' => $staffUser->id,
         ]);
 
         LandTransferApplication::create([
-            'application_code' => 'REPORT-NOT-APPROVED-001',
+            'application_code' => 'REPORT-DENIED-001',
             'transferor_name' => 'Rejected Transferor',
             'transferee_name' => 'Rejected Transferee',
             'municipality' => 'Dumaguete City',
             'barangay' => 'Cadawinonan',
-            'status' => LandTransferApplication::STATUS_NOT_APPROVED,
+            'status' => LandTransferApplication::STATUS_DENIED,
             'encoded_by' => $staffUser->id,
             'reviewed_by' => $staffUser->id,
             'reviewed_at' => now(),
         ]);
 
         ApplicationClearance::create([
-            'land_transfer_application_id' => $approvedApplication->id,
+            'land_transfer_application_id' => $releasedApplication->id,
             'clearance_number' => 'DAR-CLR-TEST-000001',
-            'decision_status' => LandTransferApplication::STATUS_APPROVED,
-            'application_code' => $approvedApplication->application_code,
-            'transferor_name' => $approvedApplication->transferor_name,
-            'transferee_name' => $approvedApplication->transferee_name,
-            'municipality' => $approvedApplication->municipality,
-            'barangay' => $approvedApplication->barangay,
+            'decision_status' => LandTransferApplication::STATUS_RELEASED,
+            'application_code' => $releasedApplication->application_code,
+            'transferor_name' => $releasedApplication->transferor_name,
+            'transferee_name' => $releasedApplication->transferee_name,
+            'municipality' => $releasedApplication->municipality,
+            'barangay' => $releasedApplication->barangay,
             'total_area_hectares' => 3.5000,
             'parcel_snapshot' => [],
             'review_officer_name' => $staffUser->name,
@@ -76,15 +76,15 @@ class MonitoringReportTest extends TestCase
 
         $response->assertSee('Monitoring and Reports');
         $response->assertSee('Total Applications');
-        $response->assertSee('Pending Review');
-        $response->assertSee('Generated Clearances');
+        $response->assertSee('Pending Review by Legal Officer');
+        $response->assertSee('Recorded Results');
         $response->assertSee('Municipality Breakdown');
         $response->assertSee('Recent Applications');
-        $response->assertSee('Recent Generated Clearances');
+        $response->assertSee('Recent Release / Denial Outputs');
 
-        $response->assertSee('REPORT-APPROVED-001');
+        $response->assertSee('REPORT-RELEASED-001');
         $response->assertSee('REPORT-PENDING-001');
-        $response->assertSee('REPORT-NOT-APPROVED-001');
+        $response->assertSee('REPORT-DENIED-001');
         $response->assertSee('DAR-CLR-TEST-000001');
         $response->assertSee('Dumaguete City');
         $response->assertSee('Valencia');
@@ -120,34 +120,35 @@ class MonitoringReportTest extends TestCase
 
         $response->assertRedirect(route('login'));
     }
+
     public function test_staff_can_view_printable_monitoring_report(): void
-{
-    $staffUser = User::factory()->create([
-        'role' => User::ROLE_STAFF,
-        'is_active' => true,
-    ]);
+    {
+        $staffUser = User::factory()->create([
+            'role' => User::ROLE_STAFF,
+            'is_active' => true,
+        ]);
 
-    LandTransferApplication::create([
-        'application_code' => 'PRINT-REPORT-001',
-        'transferor_name' => 'Print Transferor',
-        'transferee_name' => 'Print Transferee',
-        'municipality' => 'Dumaguete City',
-        'barangay' => 'Bantayan',
-        'status' => LandTransferApplication::STATUS_APPROVED,
-        'encoded_by' => $staffUser->id,
-    ]);
+        LandTransferApplication::create([
+            'application_code' => 'PRINT-REPORT-001',
+            'transferor_name' => 'Print Transferor',
+            'transferee_name' => 'Print Transferee',
+            'municipality' => 'Dumaguete City',
+            'barangay' => 'Bantayan',
+            'status' => LandTransferApplication::STATUS_RELEASED,
+            'encoded_by' => $staffUser->id,
+        ]);
 
-    $response = $this->actingAs($staffUser)
-        ->get(route('staff.reports.monitoring.print'));
+        $response = $this->actingAs($staffUser)
+            ->get(route('staff.reports.monitoring.print'));
 
-    $response->assertOk();
-    $response->assertSee('Monitoring Report');
-    $response->assertSee('Department of Agrarian Reform');
-    $response->assertSee('Negros Oriental Provincial Office');
-    $response->assertSee('Date Generated');
-    $response->assertSee('Generated By');
-    $response->assertSee('Scope Notice');
-    $response->assertSee('PRINT-REPORT-001');
-    $response->assertSee('This report is generated for administrative monitoring and decision-support purposes only');
-}
+        $response->assertOk();
+        $response->assertSee('Monitoring Report');
+        $response->assertSee('Department of Agrarian Reform');
+        $response->assertSee('Negros Oriental Provincial Office');
+        $response->assertSee('Date Generated');
+        $response->assertSee('Generated By');
+        $response->assertSee('Scope Notice');
+        $response->assertSee('PRINT-REPORT-001');
+        $response->assertSee('This report is generated for administrative monitoring and decision-support purposes only');
+    }
 }

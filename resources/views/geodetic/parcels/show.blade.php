@@ -334,7 +334,7 @@
                     {{ $parcel->geometry_geojson ? 'Mapped Geometry' : 'No Geometry' }}
                 </span>
                 <span class="geo-badge geo-badge-gray">
-                    Agricultural Status: {{ $parcel->agricultural_status_label }}
+                    DAR Clearance Scope: Agricultural land record
                 </span>
             </div>
 
@@ -372,7 +372,7 @@
         <article class="geo-panel">
             <div class="geo-panel-inner">
                 <h2 class="geo-panel-title">Parcel Reference Information</h2>
-                <p class="geo-panel-subtitle">Core encoded reference values used for technical review and map display.</p>
+                <p class="geo-panel-subtitle">Core encoded reference values used for technical review, clearance context, source matching, and map display. This view does not verify ownership or perform registry changes.</p>
 
                 <dl class="geo-field-grid">
                     <div class="geo-field">
@@ -388,11 +388,6 @@
                     <div class="geo-field">
                         <dt class="geo-field-label">Area</dt>
                         <dd class="geo-field-value">{{ number_format((float) $parcel->area_hectares, 4) }} hectares</dd>
-                    </div>
-
-                    <div class="geo-field">
-                        <dt class="geo-field-label">Agricultural Status</dt>
-                        <dd class="geo-field-value">{{ $parcel->agricultural_status_label }}</dd>
                     </div>
 
                     <div class="geo-field">

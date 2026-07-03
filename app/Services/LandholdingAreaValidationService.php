@@ -40,10 +40,10 @@ class LandholdingAreaValidationService
             $pendingIncomingQuery = ApplicationParcel::query()
                 ->whereHas('application', function ($query) use ($landowner, $application) {
                     $query->where('transferee_landowner_id', $landowner->id)
-                        ->whereIn('status', [
-                            LandTransferApplication::STATUS_DRAFT,
-                            LandTransferApplication::STATUS_PENDING_REVIEW,
-                        ]);
+                        ->whereIn('status', array_merge(
+                            LandTransferApplication::ACTIVE_STATUSES,
+                            [LandTransferApplication::STATUS_DRAFT, LandTransferApplication::STATUS_PENDING_REVIEW]
+                        ));
 
                     if ($application) {
                         $query->where('id', '!=', $application->id);
@@ -63,7 +63,16 @@ class LandholdingAreaValidationService
         $exceedsLimit = $projectedTotal > self::FIVE_HECTARE_LIMIT;
         $nearLimit = ! $exceedsLimit && $projectedTotal >= self::NEAR_LIMIT_THRESHOLD;
 
+        $successionExceptionClaimed = (bool) ($application?->is_succession_case ?? false);
+        $retentionCertificateRequired = (bool) ($application?->retention_certificate_required ?? false);
+        $retentionCertificateReference = trim((string) ($application?->retention_certificate_reference ?? ''));
+        $retentionCertificateMissing = $retentionCertificateRequired && $retentionCertificateReference === '';
+
+        $blocksRelease = ($exceedsLimit && ! $successionExceptionClaimed) || $retentionCertificateMissing;
+
         $status = match (true) {
+            $retentionCertificateMissing => 'retention_certificate_missing',
+            $exceedsLimit && $successionExceptionClaimed => 'succession_exception_for_manual_review',
             $exceedsLimit => 'over_limit',
             $nearLimit => 'near_limit',
             default => 'within_limit',
@@ -81,13 +90,20 @@ class LandholdingAreaValidationService
             'remaining_after_projection' => round($remainingAfterProjection, 4),
             'exceeds_limit' => $exceedsLimit,
             'near_limit' => $nearLimit,
+            'succession_exception_claimed' => $successionExceptionClaimed,
+            'retention_certificate_required' => $retentionCertificateRequired,
+            'retention_certificate_reference' => $retentionCertificateReference ?: null,
+            'retention_certificate_missing' => $retentionCertificateMissing,
+            'blocks_release' => $blocksRelease,
             'status' => $status,
             'status_label' => match ($status) {
+                'retention_certificate_missing' => 'Retention Certificate reference needed',
+                'succession_exception_for_manual_review' => 'Over limit with succession exception noted',
                 'over_limit' => 'Over 5-hectare reference limit',
                 'near_limit' => 'Near 5-hectare reference limit',
                 default => 'Within 5-hectare reference limit',
             },
-            'scope_note' => 'Computed from encoded active landholding records and pending/current clearance application areas only. This is assistive for staff review and is not a final legal ownership determination.',
+            'scope_note' => 'Computed from encoded active landholding records and pending/current clearance application areas only. Succession and retention-certificate entries are staff review context, not automatic legal determinations.',
         ];
     }
 }

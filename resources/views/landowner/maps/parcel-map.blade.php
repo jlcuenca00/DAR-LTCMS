@@ -304,8 +304,8 @@
                         <span class="lo-access-value">Not allowed</span>
                     </div>
                     <div class="lo-access-row">
-                        <span class="lo-access-label">Registry Mutation</span>
-                        <span class="lo-access-value">Outside scope</span>
+                        <span class="lo-access-label">Ownership / Registry Changes</span>
+                        <span class="lo-access-value">Not performed by system</span>
                     </div>
                 </div>
             </article>
@@ -342,7 +342,7 @@
                 }).addTo(map);
 
                 function getParcelColor(status) {
-                    if (status === 'pending_review') {
+                    if (status === 'pending_legal_review') {
                         return '#ea580c';
                     }
 

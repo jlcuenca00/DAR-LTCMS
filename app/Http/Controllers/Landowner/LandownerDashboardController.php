@@ -58,16 +58,58 @@ class LandownerDashboardController extends Controller
         $applicationCount = (clone $applicationQuery)->count();
 
         $statusSummary = collect([
-            LandTransferApplication::STATUS_DRAFT => 'Draft',
-            LandTransferApplication::STATUS_PENDING_REVIEW => 'Pending Review',
-            LandTransferApplication::STATUS_APPROVED => 'Approved Clearance',
-            LandTransferApplication::STATUS_NOT_APPROVED => 'Not Approved',
-        ])->map(function ($label, $status) use ($statusCounts) {
-            return [
-                'status' => $status,
-                'label' => $label,
-                'count' => (int) ($statusCounts[$status] ?? 0),
-            ];
+            [
+                'status' => LandTransferApplication::STATUS_PENDING_LEGAL_REVIEW,
+                'label' => 'Pending Review by Legal Officer',
+                'statuses' => [
+                    LandTransferApplication::STATUS_PENDING_LEGAL_REVIEW,
+                    LandTransferApplication::STATUS_DRAFT,
+                    LandTransferApplication::STATUS_PENDING_REVIEW,
+                ],
+            ],
+            [
+                'status' => LandTransferApplication::STATUS_ENDORSED_LTI,
+                'label' => 'Endorsed to LTI Division',
+                'statuses' => [LandTransferApplication::STATUS_ENDORSED_LTI],
+            ],
+            [
+                'status' => LandTransferApplication::STATUS_ENDORSED_CHIEF_LEGAL,
+                'label' => 'Endorsed to Chief Legal',
+                'statuses' => [LandTransferApplication::STATUS_ENDORSED_CHIEF_LEGAL],
+            ],
+            [
+                'status' => LandTransferApplication::STATUS_ENDORSED_PARPO,
+                'label' => 'Endorsed to PARPO II',
+                'statuses' => [LandTransferApplication::STATUS_ENDORSED_PARPO],
+            ],
+            [
+                'status' => LandTransferApplication::STATUS_FOR_RELEASING,
+                'label' => 'For Releasing',
+                'statuses' => [LandTransferApplication::STATUS_FOR_RELEASING],
+            ],
+            [
+                'status' => LandTransferApplication::STATUS_RELEASED,
+                'label' => 'Released',
+                'statuses' => [
+                    LandTransferApplication::STATUS_RELEASED,
+                    LandTransferApplication::STATUS_APPROVED,
+                ],
+            ],
+            [
+                'status' => LandTransferApplication::STATUS_DENIED,
+                'label' => 'Denied',
+                'statuses' => [
+                    LandTransferApplication::STATUS_DENIED,
+                    LandTransferApplication::STATUS_NOT_APPROVED,
+                ],
+            ],
+        ])->map(function (array $summary) use ($statusCounts) {
+            $summary['count'] = collect($summary['statuses'])
+                ->sum(fn (string $status) => (int) ($statusCounts[$status] ?? 0));
+
+            unset($summary['statuses']);
+
+            return $summary;
         })->values();
 
         $recentApplications = (clone $applicationQuery)

@@ -52,7 +52,11 @@ class LandownerRecordController extends Controller
             ->orderBy('name')
             ->get();
 
-        return view('staff.records.landowner-edit', compact('landowner', 'landownerUsers'));
+        return view('staff.records.landowner-edit', [
+            'landowner' => $landowner,
+            'landownerUsers' => $landownerUsers,
+            'registeredOwnerStatusOptions' => Landowner::registeredOwnerStatusOptions(),
+        ]);
     }
 
     public function update(Request $request, Landowner $landowner)
@@ -62,6 +66,8 @@ class LandownerRecordController extends Controller
             'middle_name' => ['nullable', 'string', 'max:255'],
             'last_name' => ['required', 'string', 'max:255'],
             'suffix' => ['nullable', 'string', 'max:50'],
+            'registered_owner_status' => ['nullable', Rule::in(array_keys(Landowner::registeredOwnerStatusOptions()))],
+            'spouse_name' => ['nullable', 'string', 'max:255', 'required_if:registered_owner_status,'.Landowner::STATUS_MARRIED],
             'contact_number' => ['nullable', 'string', 'max:100'],
             'address_line' => ['nullable', 'string', 'max:255'],
             'barangay' => ['nullable', 'string', 'max:255'],
@@ -73,6 +79,10 @@ class LandownerRecordController extends Controller
                 Rule::unique('landowners', 'user_id')->ignore($landowner->id),
             ],
         ]);
+
+        if (($validated['registered_owner_status'] ?? null) !== Landowner::STATUS_MARRIED) {
+            $validated['spouse_name'] = null;
+        }
 
         $oldValues = $landowner->only(array_keys($validated));
 
@@ -101,7 +111,10 @@ class LandownerRecordController extends Controller
             ->orderBy('name')
             ->get();
 
-        return view('staff.records.landowner-create', compact('landownerUsers'));
+        return view('staff.records.landowner-create', [
+            'landownerUsers' => $landownerUsers,
+            'registeredOwnerStatusOptions' => Landowner::registeredOwnerStatusOptions(),
+        ]);
     }
 
     public function store(Request $request)
@@ -111,6 +124,8 @@ class LandownerRecordController extends Controller
             'middle_name' => ['nullable', 'string', 'max:255'],
             'last_name' => ['required', 'string', 'max:255'],
             'suffix' => ['nullable', 'string', 'max:50'],
+            'registered_owner_status' => ['nullable', Rule::in(array_keys(Landowner::registeredOwnerStatusOptions()))],
+            'spouse_name' => ['nullable', 'string', 'max:255', 'required_if:registered_owner_status,'.Landowner::STATUS_MARRIED],
             'contact_number' => ['nullable', 'string', 'max:100'],
             'address_line' => ['nullable', 'string', 'max:255'],
             'barangay' => ['nullable', 'string', 'max:255'],
@@ -122,6 +137,10 @@ class LandownerRecordController extends Controller
                 Rule::unique('landowners', 'user_id'),
             ],
         ]);
+
+        if (($validated['registered_owner_status'] ?? null) !== Landowner::STATUS_MARRIED) {
+            $validated['spouse_name'] = null;
+        }
 
         $landowner = Landowner::create($validated);
 

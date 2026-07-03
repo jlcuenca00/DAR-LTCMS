@@ -17,19 +17,19 @@ class AuditLoggingTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_application_submission_creates_audit_log(): void
+    public function test_application_stage_advancement_creates_audit_log(): void
     {
         $staffUser = User::factory()->create([
             'role' => 'staff',
         ]);
 
         $application = LandTransferApplication::create([
-            'application_code' => 'AUDIT-SUBMIT-001',
+            'application_code' => 'AUDIT-ADVANCE-001',
             'transferor_name' => 'Audit Transferor',
             'transferee_name' => 'Audit Transferee',
             'municipality' => 'Dumaguete City',
             'barangay' => 'Bantayan',
-            'status' => LandTransferApplication::STATUS_DRAFT,
+            'status' => LandTransferApplication::STATUS_PENDING_LEGAL_REVIEW,
             'encoded_by' => $staffUser->id,
         ]);
 
@@ -42,13 +42,14 @@ class AuditLoggingTest extends TestCase
             'land_transfer_application_id' => $application->id,
             'auditable_type' => LandTransferApplication::class,
             'auditable_id' => $application->id,
-            'action' => 'application_submitted',
+            'action' => 'application_status_advanced',
         ]);
 
-        $log = AuditLog::where('action', 'application_submitted')->first();
+        $log = AuditLog::where('action', 'application_status_advanced')->first();
 
-        $this->assertSame(LandTransferApplication::STATUS_DRAFT, $log->metadata['old_status']);
-        $this->assertSame(LandTransferApplication::STATUS_PENDING_REVIEW, $log->metadata['new_status']);
+        $this->assertSame(LandTransferApplication::STATUS_PENDING_LEGAL_REVIEW, $log->metadata['old_status']);
+        $this->assertSame(LandTransferApplication::STATUS_ENDORSED_LTI, $log->metadata['new_status']);
+        $this->assertSame('Status advancement only. No ownership transfer or registry mutation performed.', $log->metadata['scope_note']);
     }
 
     public function test_document_upload_creates_audit_log(): void
@@ -65,7 +66,7 @@ class AuditLoggingTest extends TestCase
             'transferee_name' => 'Audit Transferee',
             'municipality' => 'Dumaguete City',
             'barangay' => 'Bantayan',
-            'status' => LandTransferApplication::STATUS_DRAFT,
+            'status' => LandTransferApplication::STATUS_PENDING_LEGAL_REVIEW,
             'encoded_by' => $staffUser->id,
         ]);
 
@@ -123,7 +124,7 @@ class AuditLoggingTest extends TestCase
             'transferee_name' => 'Audit Transferee',
             'municipality' => 'Dumaguete City',
             'barangay' => 'Bantayan',
-            'status' => LandTransferApplication::STATUS_DRAFT,
+            'status' => LandTransferApplication::STATUS_PENDING_LEGAL_REVIEW,
             'encoded_by' => $staffUser->id,
         ]);
 
@@ -172,7 +173,7 @@ class AuditLoggingTest extends TestCase
         $this->assertSame('audit-existing.pdf', $log->metadata['original_filename']);
     }
 
-    public function test_approval_creates_application_and_clearance_audit_logs(): void
+    public function test_release_creates_application_and_clearance_audit_logs(): void
     {
         $staffUser = User::factory()->create([
             'role' => 'staff',
@@ -191,35 +192,35 @@ class AuditLoggingTest extends TestCase
         ]);
 
         $application = LandTransferApplication::create([
-            'application_code' => 'AUDIT-APPROVE-001',
+            'application_code' => 'AUDIT-RELEASE-001',
             'transferor_name' => 'Audit Transferor',
             'transferee_name' => 'Audit Transferee',
             'transferor_landowner_id' => $transferor->id,
             'transferee_landowner_id' => $transferee->id,
             'municipality' => 'Dumaguete City',
             'barangay' => 'Bantayan',
-            'status' => LandTransferApplication::STATUS_PENDING_REVIEW,
+            'status' => LandTransferApplication::STATUS_FOR_RELEASING,
             'encoded_by' => $staffUser->id,
         ]);
 
         $this->actingAs($staffUser)->post(
             route('staff.applications.approve', $application),
             [
-                'decision_reason' => 'Audit approval reason',
-                'decision_notes' => 'Audit approval notes',
+                'decision_reason' => 'Audit release reason',
+                'decision_notes' => 'Audit release notes',
             ]
         )->assertSessionHas('success');
 
         $application->refresh();
 
-        $this->assertSame(LandTransferApplication::STATUS_APPROVED, $application->status);
+        $this->assertSame(LandTransferApplication::STATUS_RELEASED, $application->status);
 
         $this->assertDatabaseHas('audit_logs', [
             'actor_user_id' => $staffUser->id,
             'land_transfer_application_id' => $application->id,
             'auditable_type' => LandTransferApplication::class,
             'auditable_id' => $application->id,
-            'action' => 'application_approved',
+            'action' => 'application_released',
         ]);
 
         $this->assertDatabaseHas('audit_logs', [
@@ -228,15 +229,15 @@ class AuditLoggingTest extends TestCase
             'action' => 'clearance_generated',
         ]);
 
-        $approvalLog = AuditLog::where('action', 'application_approved')->first();
+        $releaseLog = AuditLog::where('action', 'application_released')->first();
 
-        $this->assertSame('Audit approval reason', $approvalLog->metadata['decision_reason']);
-        $this->assertSame('Audit approval notes', $approvalLog->metadata['decision_notes']);
-        $this->assertFalse($approvalLog->metadata['registry_mutation_performed']);
+        $this->assertSame('Audit release reason', $releaseLog->metadata['decision_reason']);
+        $this->assertSame('Audit release notes', $releaseLog->metadata['decision_notes']);
+        $this->assertFalse($releaseLog->metadata['registry_mutation_performed']);
 
         $clearanceLog = AuditLog::where('action', 'clearance_generated')->first();
 
-        $this->assertSame(LandTransferApplication::STATUS_APPROVED, $clearanceLog->metadata['decision_status']);
+        $this->assertSame(LandTransferApplication::STATUS_RELEASED, $clearanceLog->metadata['decision_status']);
         $this->assertSame(0, $clearanceLog->metadata['parcel_count']);
     }
-}   
+}

@@ -9,7 +9,7 @@
         <div class="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
             <div>
                 <h2 class="staff-panel-title">Search and Filter Landowners</h2>
-                <p class="staff-panel-subtitle">Filter by name, address, municipality, barangay, or user-account link status.</p>
+                <p class="staff-panel-subtitle">Filter by registered owner name, spouse name, address, municipality, barangay, or user-account link status.</p>
             </div>
             <p class="text-sm font-bold text-gray-500">{{ $landowners->total() }} record(s)</p>
         </div>
@@ -89,6 +89,10 @@
                         <tr>
                             <td>
                                 <div class="font-bold text-gray-900">{{ $landowner->full_name }}</div>
+                                <div class="text-xs text-gray-500">Status: {{ $landowner->registered_owner_status_label }}</div>
+                                @if ($landowner->registered_owner_status === \App\Models\Landowner::STATUS_MARRIED)
+                                    <div class="text-xs text-gray-500">Spouse: {{ $landowner->spouse_name ?? 'Not encoded' }}</div>
+                                @endif
                                 <div class="text-xs text-gray-500">Landowner ID: {{ $landowner->id }}</div>
                             </td>
                             <td>{{ $landowner->contact_number ?? 'N/A' }}</td>

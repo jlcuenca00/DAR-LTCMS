@@ -5,516 +5,359 @@
     <title>{{ $clearance->clearance_number }}</title>
 
     @php
-        $decisionLabel = $clearance->decision_status === 'approved'
-            ? 'Approved Clearance'
-            : ucwords(str_replace('_', ' ', $clearance->decision_status));
-        $decisionClass = strtolower((string) $clearance->decision_status) === 'approved' ? 'approved' : 'not-approved';
-        $reviewedAt = optional($clearance->reviewed_at)->timezone('Asia/Manila');
-        $generatedAt = optional($clearance->generated_at)->timezone('Asia/Manila');
+        $rawDecisionStatus = strtolower((string) $clearance->decision_status);
+        $isApprovedForForm = in_array($rawDecisionStatus, ['released', 'approved'], true);
+        $isDeniedForForm = in_array($rawDecisionStatus, ['denied', 'not_approved'], true);
 
-        $darLogoDataUri = null;
-        foreach (['images/dar-logo.png', 'images/dar-logo.svg', 'images/dar-logo.jpg', 'images/dar-logo.jpeg'] as $logoCandidate) {
-            $logoPath = public_path($logoCandidate);
+        $formDecisionLabel = $isApprovedForForm ? 'APPROVED' : ($isDeniedForForm ? 'DENIED' : strtoupper(str_replace('_', ' ', $rawDecisionStatus)));
 
-            if (file_exists($logoPath)) {
-                $extension = strtolower(pathinfo($logoPath, PATHINFO_EXTENSION));
-                $mime = match ($extension) {
-                    'svg' => 'image/svg+xml',
-                    'jpg', 'jpeg' => 'image/jpeg',
-                    default => 'image/png',
-                };
-                $darLogoDataUri = 'data:' . $mime . ';base64,' . base64_encode(file_get_contents($logoPath));
-                break;
-            }
-        }
+        $generatedAt = $clearance->generated_at;
+        $reviewedAt = $clearance->reviewed_at;
+        $issueDate = $generatedAt ?? $reviewedAt ?? now();
+
+        $parcels = collect($clearance->parcel_snapshot ?? []);
+        $firstParcel = $parcels->first() ?? [];
+
+        $titleType = $firstParcel['title_type'] ?? 'OCT/TCT';
+        $titleNo = $firstParcel['title_number'] ?? $firstParcel['title_no'] ?? '__________';
+        $lotNo = $firstParcel['lot_number'] ?? '__________';
+        $surveyNo = $firstParcel['survey_plan_number'] ?? '__________';
+        $taxDeclNo = $firstParcel['tax_decl_no'] ?? '__________';
+        $location = trim(($clearance->barangay ? $clearance->barangay . ', ' : '') . ($clearance->municipality ?? ''));
+        $location = $location !== '' ? $location : '__________';
+        $areaHectares = number_format((float) $clearance->total_area_hectares, 4);
+
+        $applicationCode = $application->application_code ?? $clearance->application_code ?? '__________';
+        $applicantName = $application->applicant_name ?: ($clearance->transferor_name ?: '__________');
+        $applicantRoleLabel = match ($application->applicant_type ?? null) {
+            'transferor' => 'Transferor',
+            'transferee' => 'Transferee',
+            'authorized_representative' => 'Authorized Representative',
+            default => 'Applicant / Requesting Party',
+        };
+        $authorizedRepresentativeName = $application->authorized_representative_name ?: null;
+        $province = 'Negros Oriental';
+        $region = 'VII';
     @endphp
 
     <style>
         @page {
             size: A4;
-            margin: 13mm 14mm 15mm;
-        }
-
-        :root {
-            --font-ui: 'Google Sans', 'Product Sans', Arial, Helvetica, sans-serif;
-        }
-
-        * {
-            font-family: var(--font-ui) !important;
+            margin: 9px 16px;
         }
 
         body {
-            margin: 0;
+            font-family: "Times New Roman", Times, serif;
             color: #111827;
-            font-family: var(--font-ui);
-            font-size: 11px;
-            line-height: 1.42;
+            font-size: 10.2px;
+            line-height: 1.16;
         }
 
-        .official-header {
-            width: 100%;
-            border-bottom: 3px double #14532d;
-            padding-bottom: 10px;
-            margin-bottom: 14px;
-        }
-
-        .seal-cell {
-            width: 58px;
-            vertical-align: middle;
-        }
-
-        .seal {
-            width: 48px;
-            height: 48px;
-            text-align: center;
-        }
-
-        .seal-logo {
-            width: 48px;
-            height: 48px;
-        }
-
-        .seal-fallback {
-            width: 40px;
-            height: 40px;
-            line-height: 40px;
-            border: 1px solid #bbf7d0;
-            border-radius: 10px;
-            background: #f0fdf4;
-            color: #14532d;
-            text-align: center;
-            font-size: 12px;
-            font-weight: bold;
-        }
-
-        .header-text {
-            text-align: center;
-            padding-right: 58px;
-        }
-
-        .republic {
-            font-size: 10px;
-            color: #374151;
-        }
-
-        .agency {
-            margin-top: 2px;
-            font-size: 14px;
-            font-weight: bold;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .office {
-            margin-top: 2px;
-            color: #14532d;
-            font-size: 11px;
-            font-weight: bold;
-        }
-
-        .system-name {
-            margin-top: 2px;
-            color: #4b5563;
-            font-size: 9.5px;
-        }
-
-        .title-table {
-            width: 100%;
-            margin-bottom: 12px;
-        }
-
-        .title-cell h1 {
-            margin: 0;
-            font-size: 17px;
-            font-weight: bold;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        .title-cell p {
-            margin: 4px 0 0;
-            color: #4b5563;
-            font-size: 10px;
-        }
-
-        .clearance-box {
-            width: 190px;
-            border: 1px solid #d1d5db;
-            background: #f8fafc;
-            padding: 8px 9px;
-        }
-
-        .box-label {
-            display: block;
-            margin-bottom: 3px;
-            color: #64748b;
-            font-size: 8.5px;
-            font-weight: bold;
-            text-transform: uppercase;
-            letter-spacing: 0.7px;
-        }
-
-        .box-value {
-            color: #111827;
-            font-size: 12px;
-            font-weight: bold;
-        }
-
-        .notice {
-            border: 1px solid #bbf7d0;
-            background: #f0fdf4;
-            color: #064e3b;
-            padding: 9px 10px;
-            margin: 10px 0 12px;
-            font-size: 10px;
-            text-align: justify;
-        }
-
-        .notice strong {
-            color: #14532d;
-        }
-
-        .decision-table {
-            width: 100%;
-            border-collapse: separate;
-            border-spacing: 0 0;
-            margin: 10px 0 14px;
-        }
-
-        .decision-cell {
-            width: 56%;
-            border: 2px solid #14532d;
-            background: #f0fdf4;
-            padding: 11px;
-            vertical-align: top;
-        }
-
-        .decision-cell.not-approved {
-            border-color: #dc2626;
-            background: #fef2f2;
-        }
-
-        .decision-label {
-            color: #475569;
-            font-size: 8.5px;
-            font-weight: bold;
-            letter-spacing: 0.8px;
-            text-transform: uppercase;
-        }
-
-        .decision-cell.not-approved .decision-label {
-            color: #991b1b;
-        }
-
-        .decision-value {
-            margin-top: 5px;
-            color: #14532d;
-            font-size: 18px;
-            font-weight: bold;
-            text-transform: uppercase;
-        }
-
-        .decision-cell.not-approved .decision-value {
-            color: #b91c1c;
-        }
-
-        .decision-note {
-            margin-top: 5px;
-            color: #4b5563;
-            font-size: 9.5px;
-        }
-
-        .decision-cell.not-approved .decision-note {
-            color: #7f1d1d;
-        }
-
-        .metadata-cell {
-            width: 44%;
-            border: 1px solid #d1d5db;
-            padding: 10px;
-            vertical-align: top;
-        }
-
-        .metadata-title {
-            margin-bottom: 6px;
-            font-size: 11px;
-            font-weight: bold;
-        }
-
-        .mini-table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        .mini-table td {
-            border-bottom: 1px solid #e5e7eb;
-            padding: 4px 0;
-            vertical-align: top;
-            font-size: 9.5px;
-        }
-
-        .mini-table td:first-child {
-            color: #64748b;
-            font-weight: bold;
-        }
-
-        .mini-table td:last-child {
+        .form-no {
             text-align: right;
             font-weight: bold;
+            margin-bottom: 4px;
         }
 
-        .section-title {
-            margin-top: 13px;
-            margin-bottom: 7px;
-            padding-bottom: 4px;
-            border-bottom: 1px solid #cbd5e1;
-            font-size: 10.5px;
+        .header {
+            text-align: center;
+            line-height: 1.08;
+            margin-bottom: 4px;
+        }
+
+        .header .republic {
+            font-size: 10.8px;
+        }
+
+        .header .agency {
             font-weight: bold;
+            font-size: 10.2px;
             text-transform: uppercase;
-            letter-spacing: 0.8px;
         }
 
-        .meta-table,
-        .parcel-table {
+        .header .region,
+        .header .province {
+            font-size: 10.8px;
+        }
+
+        .title {
+            text-align: center;
+            margin: 7px 0 8px;
+        }
+
+        .title h1 {
+            margin: 0;
+            font-size: 14px;
+            letter-spacing: 0.30em;
+            font-weight: bold;
+        }
+
+        .title p {
+            margin: 2px 0 0;
+            font-size: 10.8px;
+        }
+
+        .meta {
             width: 100%;
+            margin-bottom: 7px;
             border-collapse: collapse;
         }
 
-        .meta-table td {
-            border: 1px solid #d1d5db;
-            padding: 6px 7px;
+        .meta td {
             vertical-align: top;
+            padding: 1px 0;
+            font-size: 10.2px;
         }
 
-        .meta-table td:first-child {
-            width: 31%;
-            background: #f8fafc;
-            color: #475569;
-            font-size: 9.5px;
+        .meta .label {
+            width: 105px;
             font-weight: bold;
-            text-transform: uppercase;
-            letter-spacing: 0.4px;
         }
 
-        .meta-table td:last-child {
+        .body-text {
+            text-align: justify;
+            margin: 2px 0;
+            text-indent: 24px;
+        }
+
+        .checkbox-group {
+            margin: 5px 0 5px 28px;
+        }
+
+        .checkbox-row {
+            margin: 2px 0;
             font-weight: bold;
+            font-size: 10.8px;
+        }
+
+        .box {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border: 1px solid #111827;
+            margin-right: 8px;
+            vertical-align: -2px;
+            text-align: center;
+            line-height: 11px;
+            font-size: 10px;
+            color: #111827;
+            font-weight: bold;
+            font-family: DejaVu Sans, sans-serif;
         }
 
         .parcel-table {
-            margin-top: 6px;
+            width: 100%;
+            border-collapse: collapse;
+            margin: 4px 0 5px;
+            font-size: 8.3px;
         }
 
         .parcel-table th,
         .parcel-table td {
-            border: 1px solid #d1d5db;
-            padding: 6px 7px;
+            border: 1px solid #cbd5e1;
+            padding: 1.5px 3px;
             text-align: left;
-            vertical-align: top;
-            font-size: 9.8px;
         }
 
         .parcel-table th {
             background: #f8fafc;
-            color: #475569;
-            font-size: 8.8px;
-            font-weight: bold;
-            letter-spacing: 0.5px;
-            text-transform: uppercase;
-        }
-
-        .area-cell {
-            text-align: right;
-            white-space: nowrap;
             font-weight: bold;
         }
 
-        .muted {
-            color: #64748b;
-            font-size: 9px;
-            margin-top: 5px;
-        }
-
-        .certification {
-            border: 1px solid #d1d5db;
-            padding: 10px;
-            text-align: justify;
-            font-size: 10.5px;
-            line-height: 1.6;
-        }
-
-        .signature-table {
-            width: 100%;
-            margin-top: 40px;
-        }
-
-        .signature-table td {
-            width: 50%;
-            vertical-align: bottom;
+        .signature {
+            width: 260px;
+            margin-left: auto;
+            margin-top: 12px;
+            text-align: center;
         }
 
         .signature-line {
             border-top: 1px solid #111827;
-            padding-top: 6px;
-            text-align: center;
+            padding-top: 4px;
             font-weight: bold;
         }
 
         .signature-role {
-            margin-top: 2px;
-            color: #64748b;
-            font-size: 9.5px;
-            text-align: center;
+            font-size: 9.8px;
         }
 
-        .footer {
-            margin-top: 22px;
-            padding-top: 8px;
-            border-top: 1px solid #e5e7eb;
-            color: #475569;
-            font-size: 9px;
+        .copy-distribution {
+            margin-top: 5px;
+            font-size: 8.8px;
+            line-height: 1.08;
+        }
+
+        .copy-distribution strong {
+            display: block;
+        }
+
+        .system-note {
+            margin-top: 5px;
+            padding-top: 5px;
+            border-top: 1px solid #d1d5db;
+            font-size: 8.8px;
+            color: #374151;
             text-align: justify;
+        }
+
+        .muted {
+            color: #4b5563;
+        }
+
+        .meta,
+        .parcel-table,
+        .signature,
+        .copy-distribution,
+        .system-note {
+            page-break-inside: avoid;
+        }
+
+        p {
+            orphans: 2;
+            widows: 2;
         }
     </style>
 </head>
 <body>
-    <table class="official-header">
-        <tr>
-            <td class="seal-cell">
-                <div class="seal">
-                    @if ($darLogoDataUri)
-                        <img src="{{ $darLogoDataUri }}" alt="Department of Agrarian Reform Logo" class="seal-logo">
-                    @else
-                        <div class="seal-fallback">DAR</div>
-                    @endif
-                </div>
-            </td>
-            <td class="header-text">
-                <div class="republic">Republic of the Philippines</div>
-                <div class="agency">Department of Agrarian Reform</div>
-                <div class="office">Negros Oriental Provincial Office</div>
-                <div class="system-name">Land Transfer Clearance and Monitoring System</div>
-            </td>
-        </tr>
-    </table>
+    <div class="form-no">LTC Form No. 5</div>
 
-    <table class="title-table">
-        <tr>
-            <td class="title-cell">
-                <h1>Clearance Decision Record</h1>
-                <p>System-generated administrative record of the finalized clearance application decision.</p>
-            </td>
-            <td class="clearance-box">
-                <span class="box-label">Clearance Number</span>
-                <span class="box-value">{{ $clearance->clearance_number }}</span>
-            </td>
-        </tr>
-    </table>
-
-    <div class="notice">
-        <strong>Scope Notice:</strong>
-        This clearance output records the finalized processing decision only. It does not automatically transfer land ownership, alter registry records, assign landholdings, or replace separate legal and administrative procedures required for actual land transfer or ownership mutation.
+    <div class="header">
+        <div class="republic">Republic of the Philippines</div>
+        <div class="agency">Department of Agrarian Reform</div>
+        <div class="region">Region {{ $region }}</div>
+        <div class="province">Province of {{ $province }}</div>
     </div>
 
-    <table class="decision-table">
+    <table class="meta">
         <tr>
-            <td class="decision-cell {{ $decisionClass }}">
-                <div class="decision-label">Recorded Application Decision</div>
-                <div class="decision-value">{{ $decisionLabel }}</div>
-                <div class="decision-note">Decision status is locked in the system for auditability and monitoring.</div>
-            </td>
-            <td style="width: 10px;"></td>
-            <td class="metadata-cell">
-                <div class="metadata-title">Output Metadata</div>
-                <table class="mini-table">
-                    <tr>
-                        <td>Reviewed by</td>
-                        <td>{{ $clearance->review_officer_name }}</td>
-                    </tr>
-                    <tr>
-                        <td>Reviewed at</td>
-                        <td>{{ $reviewedAt?->format('M d, Y h:i A') ?? '—' }}</td>
-                    </tr>
-                    <tr>
-                        <td>Generated at</td>
-                        <td>{{ $generatedAt?->format('M d, Y h:i A') ?? '—' }}</td>
-                    </tr>
-                </table>
-            </td>
-        </tr>
-    </table>
-
-    <div class="section-title">Application Information</div>
-    <table class="meta-table">
-        <tr>
-            <td>Application Code</td>
-            <td>{{ $clearance->application_code }}</td>
+            <td class="label">LTC Application No.</td>
+            <td>{{ $applicationCode }}</td>
         </tr>
         <tr>
-            <td>Transferor</td>
-            <td>{{ $clearance->transferor_name }}</td>
+            <td class="label">Applicant Role</td>
+            <td>{{ $applicantRoleLabel }}</td>
         </tr>
-        <tr>
-            <td>Transferee</td>
-            <td>{{ $clearance->transferee_name }}</td>
-        </tr>
-        <tr>
-            <td>Location</td>
-            <td>{{ $clearance->barangay ?? '—' }}, {{ $clearance->municipality ?? '—' }}</td>
-        </tr>
-        <tr>
-            <td>Total Area Covered</td>
-            <td>{{ number_format((float) $clearance->total_area_hectares, 4) }} hectares</td>
-        </tr>
-    </table>
-
-    <div class="section-title">Parcel Snapshot</div>
-    <table class="parcel-table">
-        <thead>
+        @if ($authorizedRepresentativeName)
             <tr>
-                <th>Parcel ID</th>
-                <th>Parcel / Code</th>
-                <th>Lot Number</th>
-                <th>Title Number</th>
-                <th>Area (ha)</th>
+                <td class="label">Authorized Representative</td>
+                <td>{{ $authorizedRepresentativeName }}</td>
             </tr>
-        </thead>
-        <tbody>
-            @forelse ($clearance->parcel_snapshot as $parcel)
-                <tr>
-                    <td>{{ $parcel['parcel_id'] ?? '—' }}</td>
-                    <td>{{ $parcel['parcel_number'] ?? $parcel['parcel_code'] ?? '—' }}</td>
-                    <td>{{ $parcel['lot_number'] ?? '—' }}</td>
-                    <td>{{ $parcel['title_number'] ?? $parcel['title_no'] ?? '—' }}</td>
-                    <td class="area-cell">
-                        {{ isset($parcel['area_hectares']) ? number_format((float) $parcel['area_hectares'], 4) : '0.0000' }}
-                    </td>
-                </tr>
-            @empty
-                <tr>
-                    <td colspan="5">No parcel snapshot recorded.</td>
-                </tr>
-            @endforelse
-        </tbody>
+        @endif
+        <tr>
+            <td class="label">System Result No.</td>
+            <td>{{ $clearance->clearance_number }}</td>
+        </tr>
+        @if ($application->or_number || $application->or_date || $application->amount_paid)
+            <tr>
+                <td class="label">Payment Reference</td>
+                <td>
+                    OR Number: {{ $application->or_number ?: '—' }};
+                    OR Date: {{ optional($application->or_date)->format('M d, Y') ?? '—' }};
+                    Amount Paid (PHP): {{ $application->amount_paid ? '₱' . number_format((float) $application->amount_paid, 2) : '—' }}
+                </td>
+            </tr>
+        @endif
     </table>
-    <div class="muted">Parcel information is a snapshot captured at clearance generation time for documentation and audit reference only.</div>
 
-    <div class="section-title">Certification Statement</div>
-    <div class="certification">
-        This document certifies that the above land transfer clearance application has been processed through the Department of Agrarian Reform Land Transfer Clearance and Monitoring System. The decision shown in this record reflects the finalized administrative decision stored in the system for monitoring, documentation, and audit reference only.
+    <div class="title">
+        <h1>CERTIFICATION</h1>
+        <p>(Land Transfer Clearance)</p>
     </div>
 
-    <table class="signature-table">
-        <tr>
-            <td></td>
-            <td>
-                <div class="signature-line">{{ $clearance->review_officer_name }}</div>
-                <div class="signature-role">Reviewing Officer</div>
-            </td>
-        </tr>
-    </table>
+    <p class="body-text">
+        This is to certify that the application/request for Issuance of Land Transfer Clearance (LTC)
+        filed to this Office in the name of <strong>{{ $applicantName }}</strong>, as {{ strtolower($applicantRoleLabel) }}, covered by
+        {{ $titleType ?: 'OCT/TCT' }} No. <strong>{{ $titleNo }}</strong>, with Lot No.
+        <strong>{{ $lotNo }}</strong>, Approved Survey No. <strong>{{ $surveyNo }}</strong>,
+        with an area of <strong>{{ $areaHectares }}</strong> hectares, more or less, and located at
+        <strong>{{ $location }}</strong> or declared under Tax Declaration No.
+        <strong>{{ $taxDeclNo }}</strong> is hereby:
+    </p>
 
-    <div class="footer">
-        Generated by DAR-LTCMS as an administrative clearance output. This document remains subject to applicable DAR procedures, official verification, and separate legal requirements. It is not an automatic land ownership transfer, parcel ownership mutation, or Registry of Deeds alteration.
+    <div class="checkbox-group">
+        <div class="checkbox-row">
+            <span class="box">{{ $isApprovedForForm ? '✓' : '' }}</span> APPROVED
+        </div>
+        <div class="checkbox-row">
+            <span class="box">{{ $isDeniedForForm ? '✓' : '' }}</span> DENIED
+        </div>
+    </div>
+
+    <p class="body-text">
+        based on the Attestation of the CARPO-LTS/FOD and from the report and recommendation of the
+        Chief Legal Division/Authorized Legal Officer pursuant to Administrative Order (A.O.) No.
+        _____, Series of 2020.
+    </p>
+
+    <p class="body-text">
+        Any actual change in the use of the land and/or development over the subject land require a prior
+        Order of Conversion or Exemption/Exclusion from the Office of the DAR Regional Director.
+    </p>
+
+    <p class="body-text">
+        This Office reserves the right to revoke this Certification of LTC in case of findings of
+        misrepresentation or submission of falsified documents by either or both parties to the Deed of
+        Transfer and any third person who may be affected by the transfer.
+    </p>
+
+    <p class="body-text">
+        This Certification is hereby issued only for the purpose stated in the application/request for
+        issuance of LTC.
+    </p>
+
+    <p>
+        Done and issued this day <strong>{{ $issueDate?->format('d') ?? '____' }}</strong> of
+        <strong>{{ $issueDate?->format('F') ?? '__________' }}</strong>
+        <strong>{{ $issueDate?->format('Y') ?? '20____' }}</strong> at the DAR Provincial Office.
+    </p>
+
+    @if ($parcels->count() > 1)
+        <p class="muted">
+            The application contains multiple parcel snapshot entries recorded by the system for audit reference:
+        </p>
+
+        <table class="parcel-table">
+            <thead>
+                <tr>
+                    <th>Parcel / Code</th>
+                    <th>Lot No.</th>
+                    <th>Survey Plan No.</th>
+                    <th>Title Type</th>
+                    <th>Title No.</th>
+                    <th>Area (ha)</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach ($parcels as $parcel)
+                    <tr>
+                        <td>{{ $parcel['parcel_number'] ?? $parcel['parcel_code'] ?? '—' }}</td>
+                        <td>{{ $parcel['lot_number'] ?? '—' }}</td>
+                        <td>{{ $parcel['survey_plan_number'] ?? '—' }}</td>
+                        <td>{{ $parcel['title_type'] ?? '—' }}</td>
+                        <td>{{ $parcel['title_number'] ?? $parcel['title_no'] ?? '—' }}</td>
+                        <td>{{ isset($parcel['area_hectares']) ? number_format((float) $parcel['area_hectares'], 4) : '—' }}</td>
+                    </tr>
+                @endforeach
+            </tbody>
+        </table>
+    @endif
+
+    <div class="signature">
+        <div class="signature-line">Signature Over Printed Name</div>
+        <div class="signature-role">Provincial Agrarian Reform Program Officer II</div>
+    </div>
+
+    <div class="copy-distribution">
+        <strong>Copy Distribution:</strong>
+        Original-Applicant<br>
+        Duplicate-LTC Folder
+    </div>
+
+    <div class="system-note">
+        System note: This PDF is a system-generated administrative clearance result patterned after LTC Form No. 5
+        for monitoring, documentation, and audit purposes. It records the clearance result only and does not
+        automatically transfer land ownership, change parcel ownership linkage, or mutate Registry of Deeds records.
+        Internal system status: {{ $rawDecisionStatus }} / Form decision: {{ $formDecisionLabel }}.
     </div>
 </body>
 </html>

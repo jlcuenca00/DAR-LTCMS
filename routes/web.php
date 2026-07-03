@@ -96,6 +96,8 @@ Route::middleware(['auth', 'role:staff'])
             ->name('records.parcels.edit');
         Route::patch('/records/parcels/{parcel}', [RecordSearchController::class, 'updateParcel'])
             ->name('records.parcels.update');
+        Route::delete('/records/parcels/{parcel}', [RecordSearchController::class, 'destroyParcel'])
+            ->name('records.parcels.destroy');
         Route::get('/records/parcels/{parcel}', [RecordSearchController::class, 'showParcel'])
             ->name('records.parcels.show');
 
@@ -130,6 +132,8 @@ Route::middleware(['auth', 'role:staff'])
             ->name('source-record-packages.store');
         Route::get('/source-record-packages/{sourceRecordPackage}', [SourceRecordPackageController::class, 'show'])
             ->name('source-record-packages.show');
+        Route::patch('/source-record-packages/{sourceRecordPackage}', [SourceRecordPackageController::class, 'update'])
+            ->name('source-record-packages.update');
         Route::post('/source-record-packages/{sourceRecordPackage}/link-parcel', [SourceRecordPackageController::class, 'linkParcel'])
             ->name('source-record-packages.link-parcel');
         Route::post('/source-record-packages/{sourceRecordPackage}/source-file', [SourceRecordPackageController::class, 'uploadSourceFile'])
@@ -166,6 +170,12 @@ Route::middleware(['auth', 'role:staff'])
             ->name('applications.landowner-records.create');
         Route::get('/applications/{application}', [LandTransferApplicationController::class, 'show'])
             ->name('applications.show');
+        Route::get('/applications/{application}/acknowledgement/pdf', [ApplicationClearanceController::class, 'acknowledgementPdf'])
+            ->name('applications.acknowledgement.pdf');
+        Route::patch('/applications/{application}/form-4-review', [LandTransferApplicationController::class, 'updateForm4Review'])
+            ->name('applications.form4.update');
+        Route::get('/applications/{application}/form-4/pdf', [ApplicationClearanceController::class, 'form4Pdf'])
+            ->name('applications.form4.pdf');
         Route::get('/applications/{application}/documents/{requiredDocument}', [ApplicationDocumentController::class, 'show'])
             ->name('applications.documents.show');
         Route::post('/applications/{application}/documents/{requiredDocument}', [ApplicationDocumentController::class, 'store'])

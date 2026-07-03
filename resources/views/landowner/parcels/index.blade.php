@@ -215,7 +215,7 @@
                                     <th>Tax Declaration</th>
                                     <th>Location</th>
                                     <th>Area</th>
-                                    <th>Agricultural Status</th>
+                                    <th>Clearance Scope</th>
                                     <th>Status</th>
                                     <th>Map</th>
                                 </tr>
@@ -239,7 +239,7 @@
                                         <td>{{ number_format((float) $holding->area_hectares, 4) }} ha</td>
                                         <td>
                                             <span class="lo-status-pill neutral">
-                                                {{ $parcel?->agricultural_status_label ?? 'Not Yet Determined' }}
+                                                Agricultural land record
                                             </span>
                                         </td>
                                         <td>

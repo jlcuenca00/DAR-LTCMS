@@ -98,6 +98,28 @@
                 --tw-ring-color: transparent;
             }
 
+            .parcel-create-input[type="file"] {
+                padding: 7px;
+                background: #ffffff;
+                cursor: pointer;
+            }
+
+            .parcel-create-input[type="file"]::file-selector-button {
+                margin-right: 12px;
+                border: 1px solid #166534;
+                border-radius: 9px;
+                background: #166534;
+                color: #ffffff;
+                padding: 7px 12px;
+                font-size: 12px;
+                font-weight: 900;
+                cursor: pointer;
+            }
+
+            .parcel-create-input[type="file"]::file-selector-button:hover {
+                background: #14532d;
+            }
+
             .parcel-create-error {
                 margin-top: 6px;
                 font-size: 12px;
@@ -155,23 +177,25 @@
     </x-slot>
 
     @php
-        $agriculturalStatuses = $agriculturalStatuses ?? \App\Models\Parcel::agriculturalStatusOptions();
         $parcelStatuses = $parcelStatuses ?? [
             'active' => 'Active',
             'inactive' => 'Inactive',
             'linked_application' => 'Linked to Application',
             'flagged' => 'Flagged for Review',
         ];
+
+        $titleTypes = $titleTypes ?? \App\Models\Parcel::titleTypeOptions();
+        $rodOffices = $rodOffices ?? \App\Models\Parcel::rodOfficeOptions();
     @endphp
 
-    <form method="POST" enctype="multipart/form-data" action="{{ route('staff.records.parcels.store') }}" class="parcel-create-layout" data-autosave-key="parcel-record-create" data-autosave-label="parcel record draft">
+    <form method="POST" enctype="multipart/form-data" action="{{ route('staff.records.parcels.store') }}" class="parcel-create-layout">
         @csrf
 
         <main class="parcel-create-main">
             <section class="parcel-create-card">
                 <div class="parcel-create-card-header">
                     <h2 class="parcel-create-title">Parcel Information</h2>
-                    <p class="parcel-create-subtitle">Encode the main parcel reference details used by records, applications, and map visualization.</p>
+                    <p class="parcel-create-subtitle">Encode the main agricultural parcel reference details used by records, applications, and map visualization.</p>
                 </div>
 
                 <div class="parcel-create-body">
@@ -199,25 +223,57 @@
                         </div>
 
                         <div class="parcel-create-field">
+                            <label for="lot_number">Lot Number</label>
+                            <input id="lot_number" type="text" name="lot_number" value="{{ old('lot_number') }}" class="parcel-create-input" placeholder="Lot 1234">
+                            @error('lot_number')<p class="parcel-create-error">{{ $message }}</p>@enderror
+                        </div>
+
+                        <div class="parcel-create-field">
+                            <label for="survey_plan_number">Survey Plan Number</label>
+                            <input id="survey_plan_number" type="text" name="survey_plan_number" value="{{ old('survey_plan_number') }}" class="parcel-create-input" placeholder="PSD-07-000000">
+                            @error('survey_plan_number')<p class="parcel-create-error">{{ $message }}</p>@enderror
+                        </div>
+
+                        <div class="parcel-create-field">
+                            <label for="title_type">Title / Reference Type</label>
+                            <select id="title_type" name="title_type" class="parcel-create-input">
+                                <option value="">Select title/reference type</option>
+                                @foreach ($titleTypes as $value => $label)
+                                    <option value="{{ $value }}" @selected(old('title_type') === $value)>{{ $label }}</option>
+                                @endforeach
+                            </select>
+                            @error('title_type')<p class="parcel-create-error">{{ $message }}</p>@enderror
+                        </div>
+
+                        <div class="parcel-create-field">
+                            <label for="rod_office">Register of Deeds Office</label>
+                            <select id="rod_office" name="rod_office" class="parcel-create-input">
+                                <option value="">Select ROD office</option>
+                                @foreach ($rodOffices as $value => $label)
+                                    <option value="{{ $value }}" @selected(old('rod_office') === $value)>{{ $label }}</option>
+                                @endforeach
+                            </select>
+                            @error('rod_office')<p class="parcel-create-error">{{ $message }}</p>@enderror
+                        </div>
+
+                        <div class="parcel-create-field">
                             <label for="tax_decl_no">Tax Declaration Number</label>
                             <input id="tax_decl_no" type="text" name="tax_decl_no" value="{{ old('tax_decl_no') }}" class="parcel-create-input" placeholder="TD-2026-0001">
                             @error('tax_decl_no')<p class="parcel-create-error">{{ $message }}</p>@enderror
                         </div>
 
                         <div class="parcel-create-field">
-                            <label for="area_hectares">Area / Hectares</label>
-                            <input id="area_hectares" type="number" step="0.0001" min="0" name="area_hectares" value="{{ old('area_hectares') }}" class="parcel-create-input" placeholder="2.4000">
-                            @error('area_hectares')<p class="parcel-create-error">{{ $message }}</p>@enderror
+                            <label for="area_square_meters">Total Area / Square Meters</label>
+                            <input id="area_square_meters" type="number" step="0.01" min="0" name="area_square_meters" value="{{ old('area_square_meters') }}" class="parcel-create-input" placeholder="24000.00">
+                            <p class="parcel-create-helper">Land registration commonly records area in square meters. Hectares may be computed for 5-hectare monitoring.</p>
+                            @error('area_square_meters')<p class="parcel-create-error">{{ $message }}</p>@enderror
                         </div>
 
                         <div class="parcel-create-field">
-                            <label for="agricultural_status">Agricultural Classification</label>
-                            <select id="agricultural_status" name="agricultural_status" class="parcel-create-input">
-                                @foreach ($agriculturalStatuses as $value => $label)
-                                    <option value="{{ $value }}" @selected(old('agricultural_status', \App\Models\Parcel::DEFAULT_AGRICULTURAL_STATUS) === $value)>{{ $label }}</option>
-                                @endforeach
-                            </select>
-                            @error('agricultural_status')<p class="parcel-create-error">{{ $message }}</p>@enderror
+                            <label for="area_hectares">Area / Hectares</label>
+                            <input id="area_hectares" type="number" step="0.0001" min="0" name="area_hectares" value="{{ old('area_hectares') }}" class="parcel-create-input" placeholder="2.4000">
+                            <p class="parcel-create-helper">Optional. Leave blank if square meters are encoded; the system computes it.</p>
+                            @error('area_hectares')<p class="parcel-create-error">{{ $message }}</p>@enderror
                         </div>
                     </div>
                 </div>
@@ -254,22 +310,27 @@
 
             <section class="parcel-create-card">
                 <div class="parcel-create-card-header">
-                    <h2 class="parcel-create-title">Map Geometry</h2>
-                    <p class="parcel-create-subtitle">Paste a GeoJSON Polygon object to make the parcel visible on the parcel map.</p>
+                    <h2 class="parcel-create-title">Reference File and Map Geometry</h2>
+                    <p class="parcel-create-subtitle">Attach an optional reference scan and use the builder to generate valid GeoJSON without manually typing the Polygon structure.</p>
                 </div>
 
-                <div class="parcel-create-body">
+                <div class="parcel-create-body" style="display:grid; gap:16px;">
                     <div class="parcel-create-field">
-                        <label for="geometry_geojson">GeoJSON Geometry</label>
-                        <div class="parcel-create-field">
                         <label for="reference_photo">Reference Photo / Scan</label>
                         <input id="reference_photo" type="file" name="reference_photo" accept="image/*" class="parcel-create-input">
-                        <p class="mt-1 text-xs leading-relaxed text-gray-500">Optional photo/scan of the title, tax declaration, sketch, or reference sheet used for encoding.</p>
+                        <p class="parcel-create-helper">Optional photo/scan of the title, tax declaration, sketch, or reference sheet used for encoding.</p>
                     </div>
 
-                    <textarea id="geometry_geojson" name="geometry_geojson" rows="9" class="parcel-create-input font-mono text-xs" placeholder='{"type":"Polygon","coordinates":[[[122.795,9.355],[122.8095,9.3585],[122.8072,9.3692],[122.795,9.355]]]}'>{!! old('geometry_geojson') !!}</textarea>
-                        <p class="parcel-create-helper">Use the fixed GeoJSON values from the beta tester guide so the parcel is large and visible on the map.</p>
-                        @error('geometry_geojson')<p class="parcel-create-error">{{ $message }}</p>@enderror
+                    <div class="parcel-create-field">
+                        <label for="geometry_geojson">GeoJSON Geometry</label>
+                        @include('staff.partials.geojson-polygon-editor', [
+                            'fieldName' => 'geometry_geojson',
+                            'fieldId' => 'geometry_geojson',
+                            'value' => old('geometry_geojson'),
+                            'inputClass' => 'parcel-create-input font-mono text-xs',
+                            'errorClass' => 'parcel-create-error',
+                            'rows' => 8,
+                        ])
                     </div>
                 </div>
             </section>
@@ -302,10 +363,8 @@
             </section>
 
             <div class="parcel-create-note">
-                Parcel encoding supports DAR record review, monitoring, and map visualization only. It does not transfer ownership or mutate Registry of Deeds records.
+                Parcel encoding is limited to agricultural land records used for DAR clearance review, monitoring, and map visualization. It does not transfer ownership, prove final legal ownership, or mutate Registry of Deeds records.
             </div>
         </aside>
     </form>
-    @include('staff.partials.form-autosave')
-
 </x-staff-shell>

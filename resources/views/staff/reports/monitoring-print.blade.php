@@ -7,10 +7,45 @@
 
     @php
         $generatedAtPh = $generatedAt?->timezone('Asia/Manila');
-        $statusLabel = fn ($value) => ucwords(str_replace('_', ' ', (string) $value));
-        $decisionLabel = fn ($value) => (string) $value === 'approved'
-            ? 'Approved Clearance'
-            : ucwords(str_replace('_', ' ', (string) $value));
+        $statusLabel = function ($value) {
+            return match ((string) $value) {
+                'draft', 'pending_review', 'pending_legal_review' => 'Pending Review by Legal Officer',
+                'endorsed_lti' => 'Endorsed to LTI Division',
+                'endorsed_chief_legal' => 'Endorsed to Chief Legal',
+                'endorsed_parpo' => 'Endorsed to PARPO II',
+                'for_releasing' => 'For Releasing',
+                'released' => 'Released',
+                'denied' => 'Denied',
+                default => ucwords(str_replace('_', ' ', (string) $value)),
+            };
+        };
+
+        $statusClass = function ($value) {
+            return match ((string) $value) {
+                'draft', 'pending_review', 'pending_legal_review' => 'pending-legal-review',
+                'endorsed_lti', 'endorsed_chief_legal', 'endorsed_parpo' => 'endorsed',
+                'for_releasing' => 'for-releasing',
+                'approved', 'released' => 'released',
+                'not_approved', 'denied' => 'denied',
+                default => strtolower(str_replace('_', '-', (string) $value)),
+            };
+        };
+
+        $decisionLabel = function ($value) {
+            return match ((string) $value) {
+                'released' => 'Released',
+                'denied' => 'Denied',
+                default => ucwords(str_replace('_', ' ', (string) $value)),
+            };
+        };
+
+        $decisionClass = function ($value) {
+            return match ((string) $value) {
+                'approved', 'released' => 'released',
+                'not_approved', 'denied' => 'denied',
+                default => strtolower(str_replace('_', '-', (string) $value)),
+            };
+        };
 
         $darLogoDataUri = null;
         foreach (['images/dar-logo.png', 'images/dar-logo.svg', 'images/dar-logo.jpg', 'images/dar-logo.jpeg'] as $logoCandidate) {
@@ -393,6 +428,7 @@
             white-space: nowrap;
         }
 
+        .status-released,
         .status-approved,
         .status-approved-clearance {
             color: #14532d;
@@ -400,12 +436,21 @@
             border-color: #bbf7d0;
         }
 
+        .status-pending-legal-review,
         .status-pending-review {
             color: #c2410c;
             background: #ffedd5;
             border-color: #fed7aa;
         }
 
+        .status-endorsed,
+        .status-for-releasing {
+            color: #1d4ed8;
+            background: #dbeafe;
+            border-color: #bfdbfe;
+        }
+
+        .status-denied,
         .status-not-approved {
             color: #b91c1c;
             background: #fee2e2;
@@ -511,7 +556,7 @@
         <section class="report-title-block">
             <div class="report-title-main">
                 <h1>Monitoring Report</h1>
-                <p>Clearance application processing, decision recording, and administrative monitoring summary.</p>
+                <p>Clearance application processing, release/denial recording, and administrative monitoring summary.</p>
             </div>
             <div class="report-chip">
                 <span class="chip">Office Report</span>
@@ -554,13 +599,13 @@
                     <div class="summary-value">{{ number_format($totalApplications) }}</div>
                 </div>
                 <div class="summary-card">
-                    <div class="summary-label">Clearance Outputs</div>
+                    <div class="summary-label">Recorded Results</div>
                     <div class="summary-value">{{ number_format($totalClearances) }}</div>
                 </div>
                 <div class="summary-card">
                     <div class="summary-label">Recorded Area</div>
                     <div class="summary-value">{{ number_format((float) $totalClearanceArea, 2) }}</div>
-                    <div class="summary-unit">hectares in generated clearances</div>
+                    <div class="summary-unit">hectares in recorded outputs</div>
                 </div>
                 <div class="summary-card">
                     <div class="summary-label">Municipalities</div>
@@ -581,9 +626,9 @@
                     </thead>
                     <tbody>
                         @forelse ($statusCounts as $status => $total)
-                            @php $statusClass = strtolower(str_replace('_', '-', (string) $status)); @endphp
+                            @php $statusClassValue = $statusClass($status); @endphp
                             <tr>
-                                <td><span class="status-pill status-{{ $statusClass }}">{{ $statusLabel($status) }}</span></td>
+                                <td><span class="status-pill status-{{ $statusClassValue }}">{{ $statusLabel($status) }}</span></td>
                                 <td class="count-cell">{{ number_format($total) }}</td>
                             </tr>
                         @empty
@@ -596,7 +641,7 @@
             </div>
 
             <div class="column">
-                <h2 class="section-title">Clearance Decision Breakdown</h2>
+                <h2 class="section-title">Release / Denial Breakdown</h2>
                 <table class="data-table">
                     <thead>
                         <tr>
@@ -606,14 +651,14 @@
                     </thead>
                     <tbody>
                         @forelse ($clearanceCounts as $decisionStatus => $total)
-                            @php $decisionClass = strtolower(str_replace('_', '-', (string) $decisionStatus)); @endphp
+                            @php $decisionClassValue = $decisionClass($decisionStatus); @endphp
                             <tr>
-                                <td><span class="status-pill status-{{ $decisionClass }}">{{ $decisionLabel($decisionStatus) }}</span></td>
+                                <td><span class="status-pill status-{{ $decisionClassValue }}">{{ $decisionLabel($decisionStatus) }}</span></td>
                                 <td class="count-cell">{{ number_format($total) }}</td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="2">No clearance decision records found.</td>
+                                <td colspan="2">No release or denial records found.</td>
                             </tr>
                         @endforelse
                     </tbody>
@@ -659,12 +704,12 @@
                 </thead>
                 <tbody>
                     @forelse ($recentApplications as $application)
-                        @php $statusClass = strtolower(str_replace('_', '-', (string) $application->status)); @endphp
+                        @php $statusClassValue = $statusClass($application->status); @endphp
                         <tr>
                             <td><strong>{{ $application->application_code }}</strong></td>
                             <td>{{ $application->transferor_name ?? 'N/A' }}</td>
                             <td>{{ $application->transferee_name ?? 'N/A' }}</td>
-                            <td><span class="status-pill status-{{ $statusClass }}">{{ $statusLabel($application->status) }}</span></td>
+                            <td><span class="status-pill status-{{ $statusClassValue }}">{{ $statusLabel($application->status) }}</span></td>
                             <td>{{ $application->barangay ?? 'N/A' }}, {{ $application->municipality ?? 'N/A' }}</td>
                         </tr>
                     @empty
@@ -677,28 +722,28 @@
         </section>
 
         <section class="section">
-            <h2 class="section-title">Recent Clearance Outputs</h2>
+            <h2 class="section-title">Recent Recorded Results</h2>
             <table class="data-table">
                 <thead>
                     <tr>
-                        <th>Clearance No.</th>
+                        <th>Result No.</th>
                         <th>Decision</th>
                         <th>Total Area</th>
-                        <th>Generated At</th>
+                        <th>Recorded At</th>
                     </tr>
                 </thead>
                 <tbody>
                     @forelse ($recentClearances as $clearance)
-                        @php $decisionClass = strtolower(str_replace('_', '-', (string) $clearance->decision_status)); @endphp
+                        @php $decisionClassValue = $decisionClass($clearance->decision_status); @endphp
                         <tr>
                             <td><strong>{{ $clearance->clearance_number ?? 'N/A' }}</strong></td>
-                            <td><span class="status-pill status-{{ $decisionClass }}">{{ $decisionLabel($clearance->decision_status) }}</span></td>
+                            <td><span class="status-pill status-{{ $decisionClassValue }}">{{ $decisionLabel($clearance->decision_status) }}</span></td>
                             <td class="area-cell">{{ number_format((float) $clearance->total_area_hectares, 2) }} ha</td>
                             <td>{{ $clearance->generated_at?->timezone('Asia/Manila')->format('M d, Y h:i A') ?? 'N/A' }}</td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="4">No recent clearance outputs found.</td>
+                            <td colspan="4">No recent release or denial outputs found.</td>
                         </tr>
                     @endforelse
                 </tbody>

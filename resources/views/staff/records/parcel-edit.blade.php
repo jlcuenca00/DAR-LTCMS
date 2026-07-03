@@ -106,6 +106,28 @@
                 --tw-ring-color: transparent;
             }
 
+            .parcel-edit-input[type="file"] {
+                padding: 7px;
+                background: #ffffff;
+                cursor: pointer;
+            }
+
+            .parcel-edit-input[type="file"]::file-selector-button {
+                margin-right: 12px;
+                border: 1px solid #166534;
+                border-radius: 9px;
+                background: #166534;
+                color: #ffffff;
+                padding: 7px 12px;
+                font-size: 12px;
+                font-weight: 900;
+                cursor: pointer;
+            }
+
+            .parcel-edit-input[type="file"]::file-selector-button:hover {
+                background: #14532d;
+            }
+
             .parcel-edit-helper {
                 margin-top: 6px;
                 font-size: 12px;
@@ -224,7 +246,6 @@
     </x-slot>
 
     @php
-        $agriculturalStatuses = $agriculturalStatuses ?? \App\Models\Parcel::agriculturalStatusOptions();
         $parcelStatuses = $parcelStatuses ?? [
             'active' => 'Active',
             'inactive' => 'Inactive',
@@ -232,8 +253,9 @@
             'flagged' => 'Flagged for Review',
         ];
 
-        $agriculturalStatusLabel = \App\Models\Parcel::agriculturalStatusLabel(old('agricultural_status', $parcel->agricultural_status ?? 'not_yet_determined'));
         $currentStatusLabel = $parcel->status ? ucwords(str_replace('_', ' ', $parcel->status)) : 'Status N/A';
+        $titleTypes = $titleTypes ?? \App\Models\Parcel::titleTypeOptions();
+        $rodOffices = $rodOffices ?? \App\Models\Parcel::rodOfficeOptions();
     @endphp
 
     <div class="parcel-edit-page">
@@ -277,14 +299,56 @@
                             </div>
 
                             <div class="parcel-edit-field">
+                                <label for="lot_number">Lot Number</label>
+                                <input id="lot_number" type="text" name="lot_number" value="{{ old('lot_number', $parcel->lot_number) }}" class="parcel-edit-input">
+                                @error('lot_number')<p class="parcel-edit-error">{{ $message }}</p>@enderror
+                            </div>
+
+                            <div class="parcel-edit-field">
+                                <label for="survey_plan_number">Survey Plan Number</label>
+                                <input id="survey_plan_number" type="text" name="survey_plan_number" value="{{ old('survey_plan_number', $parcel->survey_plan_number) }}" class="parcel-edit-input">
+                                @error('survey_plan_number')<p class="parcel-edit-error">{{ $message }}</p>@enderror
+                            </div>
+
+                            <div class="parcel-edit-field">
+                                <label for="title_type">Title / Reference Type</label>
+                                <select id="title_type" name="title_type" class="parcel-edit-input">
+                                    <option value="">Select title/reference type</option>
+                                    @foreach ($titleTypes as $value => $label)
+                                        <option value="{{ $value }}" @selected(old('title_type', $parcel->title_type) === $value)>{{ $label }}</option>
+                                    @endforeach
+                                </select>
+                                @error('title_type')<p class="parcel-edit-error">{{ $message }}</p>@enderror
+                            </div>
+
+                            <div class="parcel-edit-field">
+                                <label for="rod_office">Register of Deeds Office</label>
+                                <select id="rod_office" name="rod_office" class="parcel-edit-input">
+                                    <option value="">Select ROD office</option>
+                                    @foreach ($rodOffices as $value => $label)
+                                        <option value="{{ $value }}" @selected(old('rod_office', $parcel->rod_office) === $value)>{{ $label }}</option>
+                                    @endforeach
+                                </select>
+                                @error('rod_office')<p class="parcel-edit-error">{{ $message }}</p>@enderror
+                            </div>
+
+                            <div class="parcel-edit-field">
                                 <label for="tax_decl_no">Tax Declaration Number</label>
                                 <input id="tax_decl_no" type="text" name="tax_decl_no" value="{{ old('tax_decl_no', $parcel->tax_decl_no) }}" class="parcel-edit-input">
                                 @error('tax_decl_no')<p class="parcel-edit-error">{{ $message }}</p>@enderror
                             </div>
 
                             <div class="parcel-edit-field">
+                                <label for="area_square_meters">Total Area / Square Meters</label>
+                                <input id="area_square_meters" type="number" step="0.01" min="0" name="area_square_meters" value="{{ old('area_square_meters', $parcel->area_square_meters) }}" class="parcel-edit-input">
+                                <p class="parcel-edit-helper">Land registration commonly records area in square meters. Hectares may be computed for monitoring.</p>
+                                @error('area_square_meters')<p class="parcel-edit-error">{{ $message }}</p>@enderror
+                            </div>
+
+                            <div class="parcel-edit-field">
                                 <label for="area_hectares">Area / Hectares</label>
                                 <input id="area_hectares" type="number" step="0.0001" min="0" name="area_hectares" value="{{ old('area_hectares', $parcel->area_hectares) }}" class="parcel-edit-input">
+                                <p class="parcel-edit-helper">Optional reference. Leave blank if square meters are encoded; the system computes it.</p>
                                 @error('area_hectares')<p class="parcel-edit-error">{{ $message }}</p>@enderror
                             </div>
 </div>
@@ -325,20 +389,46 @@
                 <section class="parcel-edit-card">
                     <div class="parcel-edit-card-header">
                         <div>
+                            <h2 class="parcel-edit-title">Map Geometry</h2>
+                            <p class="parcel-edit-subtitle">Update the GeoJSON Polygon used by the parcel map. The builder prevents staff from typing the full structure manually.</p>
+                        </div>
+                    </div>
+
+                    <div class="parcel-edit-body">
+                        <div class="parcel-edit-field">
+                            <label for="geometry_geojson">GeoJSON Geometry</label>
+                            @include('staff.partials.geojson-polygon-editor', [
+                                'fieldName' => 'geometry_geojson',
+                                'fieldId' => 'geometry_geojson',
+                                'value' => old('geometry_geojson', $parcel->geometry_geojson ? json_encode($parcel->geometry_geojson, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) : ''),
+                                'inputClass' => 'parcel-edit-input font-mono text-xs',
+                                'errorClass' => 'parcel-edit-error',
+                                'rows' => 8,
+                            ])
+                        </div>
+                    </div>
+                </section>
+
+                <section class="parcel-edit-card">
+                    <div class="parcel-edit-card-header">
+                        <div>
                             <h2 class="parcel-edit-title">Remarks</h2>
                             <p class="parcel-edit-subtitle">Optional staff notes for administrative reference.</p>
                         </div>
                     </div>
 
-                    <div class="parcel-edit-body">
-                        <div class="parcel-create-field">
-                        <label for="reference_photo">Reference Photo / Scan</label>
-                        <input id="reference_photo" type="file" name="reference_photo" accept="image/*" class="parcel-create-input">
-                        <p class="mt-1 text-xs leading-relaxed text-gray-500">Optional photo/scan of the title, tax declaration, sketch, or reference sheet used for encoding.</p>
-                    </div>
+                    <div class="parcel-edit-body" style="display:grid; gap:14px;">
+                        <div class="parcel-edit-field">
+                            <label for="reference_photo">Reference Photo / Scan</label>
+                            <input id="reference_photo" type="file" name="reference_photo" accept="image/*" class="parcel-edit-input">
+                            <p class="parcel-edit-helper">Optional photo/scan of the title, tax declaration, sketch, or reference sheet used for encoding.</p>
+                        </div>
 
-                    <textarea name="remarks" rows="4" class="parcel-edit-input">{{ old('remarks', $parcel->remarks) }}</textarea>
-                        @error('remarks')<p class="parcel-edit-error">{{ $message }}</p>@enderror
+                        <div class="parcel-edit-field">
+                            <label for="remarks">Remarks</label>
+                            <textarea id="remarks" name="remarks" rows="4" class="parcel-edit-input">{{ old('remarks', $parcel->remarks) }}</textarea>
+                            @error('remarks')<p class="parcel-edit-error">{{ $message }}</p>@enderror
+                        </div>
                     </div>
                 </section>
             </main>
@@ -351,18 +441,18 @@
                             <p class="parcel-eyebrow">Current Parcel Record</p>
                             <h3 class="parcel-edit-code">{{ $parcel->parcel_code }}</h3>
                             <p class="parcel-edit-meta">{{ $parcel->municipality ?? 'No municipality' }}{{ $parcel->barangay ? ', '.$parcel->barangay : '' }}</p>
+                            <p class="parcel-edit-meta">{{ $parcel->title_no ?? 'No title number' }}{{ $parcel->lot_number ? ' · Lot '.$parcel->lot_number : '' }}</p>
                         </div>
                     </div>
 
                     <div class="parcel-edit-badges">
                         <span class="staff-badge {{ $parcel->status === 'active' ? 'staff-badge-green' : 'staff-badge-slate' }}">{{ $currentStatusLabel }}</span>
-                        <span class="staff-badge staff-badge-slate">{{ $agriculturalStatusLabel }}</span>
                     </div>
                 </section>
 
                 <section class="parcel-save-card">
                     <h3 class="parcel-edit-title">Save Changes</h3>
-                    <p class="parcel-edit-subtitle">Agricultural status changes are audit logged for traceability.</p>
+                    <p class="parcel-edit-subtitle">Updates are audit logged for administrative traceability and record integrity.</p>
 
                     <div class="parcel-save-actions">
                         <button type="submit" class="staff-button staff-button-primary justify-center">
@@ -376,7 +466,7 @@
                 </section>
 
                 <div class="parcel-edit-note">
-                    This classification supports DAR record review and monitoring only. It does not approve a transfer, assign ownership, or mutate registry records.
+                    Parcel records support DAR clearance review, monitoring, map visualization, and source/reference checking only. Saving this record does not transfer ownership, assign ownership, or mutate Registry of Deeds records.
                 </div>
             </aside>
         </form>
