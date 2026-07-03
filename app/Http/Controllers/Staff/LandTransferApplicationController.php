@@ -32,17 +32,21 @@ class LandTransferApplicationController extends Controller
         ]);
 
         // 1) Required documents (checklist)
-        $transferorRequirements = RequiredDocument::where('applies_to', 'transferor')
-            ->orderBy('blocks_acceptance', 'desc')
-            ->orderBy('requirement_classification')
-            ->orderBy('name')
-            ->get();
+        $transferorRequirements = RequiredDocument::deduplicateForApplicationReview(
+            RequiredDocument::where('applies_to', 'transferor')
+                ->orderBy('blocks_acceptance', 'desc')
+                ->orderBy('requirement_classification')
+                ->orderBy('name')
+                ->get()
+        );
 
-        $transfereeRequirements = RequiredDocument::where('applies_to', 'transferee')
-            ->orderBy('blocks_acceptance', 'desc')
-            ->orderBy('requirement_classification')
-            ->orderBy('name')
-            ->get();
+        $transfereeRequirements = RequiredDocument::deduplicateForApplicationReview(
+            RequiredDocument::where('applies_to', 'transferee')
+                ->orderBy('blocks_acceptance', 'desc')
+                ->orderBy('requirement_classification')
+                ->orderBy('name')
+                ->get()
+        );
 
         // 2) Uploaded docs for this application (keyed by required_document_id)
         $uploaded = ApplicationDocument::where('land_transfer_application_id', $application->id)

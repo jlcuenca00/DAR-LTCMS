@@ -53,18 +53,6 @@
         </form>
     </section>
 
-    <section class="staff-panel staff-panel-pad border border-emerald-100 bg-emerald-50/60">
-        <div class="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
-            <div>
-                <h2 class="text-sm font-black uppercase tracking-[0.18em] text-emerald-800">DAR Clearance Scope</h2>
-                <p class="mt-2 text-sm leading-6 text-emerald-900">
-                    Parcel records in this module are maintained as agricultural land records for DAR clearance review, monitoring, source/reference matching, and map visualization. OCT, TCT, CLOA, and EP references should be treated as title or document references, not parcel classification workflows.
-                </p>
-            </div>
-            <span class="staff-badge staff-badge-green whitespace-nowrap">Agricultural Land Records</span>
-        </div>
-    </section>
-
     <section class="staff-panel overflow-hidden">
         <div class="staff-panel-pad flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
             <div>

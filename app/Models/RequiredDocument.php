@@ -63,6 +63,35 @@ class RequiredDocument extends Model
         return $this->requirement_classification === self::CLASSIFICATION_REFERENCE;
     }
 
+
+
+    public static function normalizedReviewName(string $name): string
+    {
+        $normalized = preg_replace('/\s*\(if available\)\s*/i', '', $name) ?? $name;
+        $normalized = preg_replace('/\s+/', ' ', trim($normalized)) ?? trim($normalized);
+
+        return mb_strtolower($normalized);
+    }
+
+    public static function deduplicateForApplicationReview($requirements)
+    {
+        $requirements = collect($requirements)->values();
+        $grouped = $requirements->groupBy(
+            fn (RequiredDocument $document) => self::normalizedReviewName((string) $document->name)
+        );
+
+        return $requirements
+            ->filter(function (RequiredDocument $document) use ($grouped): bool {
+                $group = $grouped->get(self::normalizedReviewName((string) $document->name), collect());
+
+                $preferred = $group->firstWhere('name', 'Recent Tax Declaration (if available)')
+                    ?? $group->first();
+
+                return (int) $document->id === (int) $preferred->id;
+            })
+            ->values();
+    }
+
     public function classificationLabel(): string
     {
         return match ($this->requirement_classification) {

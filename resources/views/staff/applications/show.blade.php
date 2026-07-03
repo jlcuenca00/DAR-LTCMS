@@ -1621,14 +1621,8 @@
                 box-shadow: none;
                 backdrop-filter: none;
                 transform-origin: right center;
-                will-change: width;
-                transition:
-                    width 220ms cubic-bezier(.2, .8, .2, 1),
-                    background-color 160ms ease,
-                    border-color 160ms ease,
-                    box-shadow 160ms ease,
-                    padding 160ms ease,
-                    border-radius 160ms ease;
+                will-change: auto;
+                transition: none;
             }
 
             .requirement-rail.is-expanded .requirement-rail-panel,
@@ -1653,7 +1647,7 @@
                 justify-items: center;
                 align-items: center;
                 opacity: 1;
-                transition: opacity 100ms ease;
+                transition: none;
             }
 
             .requirement-rail.is-expanded .requirement-rail-collapsed,
@@ -1744,13 +1738,21 @@
             .requirement-rail-status {
                 opacity: 0;
                 visibility: hidden;
-                transition: opacity 120ms ease;
+                transition: none;
             }
 
-            .requirement-rail.is-open-ready .requirement-rail-header,
-            .requirement-rail.is-open-ready .requirement-rail-group-label,
-            .requirement-rail.is-open-ready .requirement-rail-text,
-            .requirement-rail.is-open-ready .requirement-rail-status {
+            .requirement-rail.is-expanded .requirement-rail-header,
+            .requirement-rail:hover .requirement-rail-header,
+            .requirement-rail:focus-within .requirement-rail-header,
+            .requirement-rail.is-expanded .requirement-rail-group-label,
+            .requirement-rail:hover .requirement-rail-group-label,
+            .requirement-rail:focus-within .requirement-rail-group-label,
+            .requirement-rail.is-expanded .requirement-rail-text,
+            .requirement-rail:hover .requirement-rail-text,
+            .requirement-rail:focus-within .requirement-rail-text,
+            .requirement-rail.is-expanded .requirement-rail-status,
+            .requirement-rail:hover .requirement-rail-status,
+            .requirement-rail:focus-within .requirement-rail-status {
                 opacity: 1;
                 visibility: visible;
             }
@@ -3551,28 +3553,16 @@
             const requirementRail = document.querySelector('.requirement-rail');
             const requirementRailPanel = document.querySelector('.requirement-rail-panel');
             const requirementRailScroll = document.querySelector('.requirement-rail-scroll');
-            let requirementRailReadyTimer = null;
-
             function markRequirementRailOpening() {
                 if (! requirementRail) return;
 
-                window.clearTimeout(requirementRailReadyTimer);
-                requirementRail.classList.add('is-expanded');
-                requirementRail.classList.remove('is-open-ready');
-
-                requirementRailReadyTimer = window.setTimeout(function () {
-                    if (requirementRail.classList.contains('is-expanded')) {
-                        requirementRail.classList.add('is-open-ready');
-                    }
-                }, 225);
+                requirementRail.classList.add('is-expanded', 'is-open-ready');
             }
 
             function closeRequirementRailText() {
                 if (! requirementRail) return;
 
-                window.clearTimeout(requirementRailReadyTimer);
-                requirementRail.classList.remove('is-open-ready');
-                requirementRail.classList.remove('is-expanded');
+                requirementRail.classList.remove('is-open-ready', 'is-expanded');
             }
 
             requirementRailPanel?.addEventListener('mouseenter', markRequirementRailOpening);
@@ -3588,13 +3578,6 @@
                         closeRequirementRailText();
                     }
                 }, 0);
-            });
-            requirementRailPanel?.addEventListener('transitionend', function (event) {
-                if (event.propertyName !== 'width' || ! requirementRail) return;
-
-                if (requirementRail.classList.contains('is-expanded')) {
-                    requirementRail.classList.add('is-open-ready');
-                }
             });
 
             requirementRailPanel?.addEventListener('wheel', function (event) {

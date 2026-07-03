@@ -38,138 +38,172 @@
     $transfereeAcknowledgementItems = $renderRequirementChecklist($transfereeRequirements);
 @endphp
 
+<style>
+    #ltc-form-no-3-acknowledgement .ltc-form3-workspace {
+        display: grid;
+        gap: 14px;
+    }
+
+    #ltc-form-no-3-acknowledgement .ltc-form3-summary-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+    }
+
+    #ltc-form-no-3-acknowledgement .ltc-form3-summary-card,
+    #ltc-form-no-3-acknowledgement .ltc-form3-card {
+        border: 1px solid #d1d5db;
+        border-radius: 12px;
+        background: #ffffff;
+        padding: 14px 16px;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+    }
+
+    #ltc-form-no-3-acknowledgement .ltc-form3-label {
+        margin: 0 0 4px;
+        color: #64748b;
+        font-size: 10px;
+        font-weight: 900;
+        letter-spacing: .08em;
+        text-transform: uppercase;
+    }
+
+    #ltc-form-no-3-acknowledgement .ltc-form3-value {
+        margin: 0;
+        color: #111827;
+        font-size: 13px;
+        font-weight: 900;
+        line-height: 1.4;
+    }
+
+    #ltc-form-no-3-acknowledgement .ltc-form3-checklist-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+    }
+
+    #ltc-form-no-3-acknowledgement .ltc-form3-card-title {
+        margin: 0 0 10px;
+        color: #111827;
+        font-size: 14px;
+        font-weight: 900;
+    }
+
+    #ltc-form-no-3-acknowledgement .ltc-form3-list {
+        display: grid;
+        gap: 8px;
+    }
+
+    #ltc-form-no-3-acknowledgement .ltc-form3-row {
+        display: grid;
+        grid-template-columns: 16px minmax(0, 1fr) auto;
+        gap: 8px;
+        align-items: start;
+        color: #374151;
+        font-size: 12.5px;
+        line-height: 1.35;
+    }
+
+    #ltc-form-no-3-acknowledgement .ltc-form3-check {
+        width: 15px;
+        height: 15px;
+        border: 1.5px solid #16a34a;
+        border-radius: 2px;
+        background: #ffffff;
+        display: inline-grid;
+        place-content: center;
+        color: #ffffff;
+        font-size: 10px;
+        font-weight: 900;
+        line-height: 1;
+        margin-top: 1px;
+    }
+
+    #ltc-form-no-3-acknowledgement .ltc-form3-check.is-checked {
+        background: #16a34a;
+        border-color: #16a34a;
+    }
+
+    #ltc-form-no-3-acknowledgement .ltc-form3-annex {
+        color: #64748b;
+        font-size: 11px;
+        font-weight: 800;
+        white-space: nowrap;
+    }
+
+
+    @media (max-width: 980px) {
+        #ltc-form-no-3-acknowledgement .ltc-form3-summary-grid,
+        #ltc-form-no-3-acknowledgement .ltc-form3-checklist-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
 <section class="review-panel" id="ltc-form-no-3-acknowledgement">
     <div class="review-panel-header">
         <div>
             <h2 class="review-panel-title">LTC Form No. 3 — Acknowledgement Receipt</h2>
             <p class="review-panel-subtitle">
-                System preview of the acknowledgement receipt checklist based on uploaded required documents.
-                This supports intake tracking and checklist review.
+                Review the encoded acknowledgement receipt checklist before opening the formal PDF output.
             </p>
         </div>
 
-        <div style="display:flex; flex-wrap:wrap; gap:8px;">
-            <a href="{{ route('staff.applications.acknowledgement.pdf', $application) }}"
-               class="staff-button staff-button-primary"
-               target="_blank">
-                <i class="fa-solid fa-file-pdf"></i>
-                Open Form No. 3 PDF
-            </a>
-
-            <button type="button" class="staff-button staff-button-light" onclick="window.print()">
-                <i class="fa-solid fa-print"></i>
-                Print Page
-            </button>
-        </div>
+        <a href="{{ route('staff.applications.acknowledgement.pdf', $application) }}"
+           class="staff-button staff-button-primary"
+           target="_blank">
+            <i class="fa-solid fa-file-pdf"></i>
+            Open Form No. 3 PDF
+        </a>
     </div>
 
     <div class="review-panel-body">
-        <div style="border:1px solid #d1d5db; border-radius:12px; background:#ffffff; padding:22px; color:#111827;">
-            <div style="text-align:right; font-family:'Times New Roman', serif; font-weight:700; margin-bottom:12px;">
-                LTC Form No. 3
+        <div class="ltc-form3-workspace">
+            <div class="ltc-form3-summary-grid">
+                <div class="ltc-form3-summary-card">
+                    <p class="ltc-form3-label">LTC Application No.</p>
+                    <p class="ltc-form3-value">{{ $application->application_code }}</p>
+                </div>
+                <div class="ltc-form3-summary-card">
+                    <p class="ltc-form3-label">Applicant / Parties</p>
+                    <p class="ltc-form3-value">{{ $acknowledgementApplicantNames }}</p>
+                </div>
+                <div class="ltc-form3-summary-card">
+                    <p class="ltc-form3-label">Receipt Date</p>
+                    <p class="ltc-form3-value">
+                        {{ optional($acknowledgementIssuedAt)->format('F d, Y') ?? 'Not set' }}
+                    </p>
+                </div>
             </div>
 
-            <div style="text-align:center; font-family:'Times New Roman', serif; line-height:1.25; margin-bottom:18px;">
-                <div>Republic of the Philippines</div>
-                <div style="font-weight:700; text-transform:uppercase;">Department of Agrarian Reform</div>
-                <div>Region VII</div>
-                <div>Province of Negros Oriental</div>
-            </div>
-
-            <div style="display:flex; justify-content:flex-end; gap:8px; font-family:'Times New Roman', serif; margin-bottom:14px;">
-                <strong>LTC Application No.</strong>
-                <span>{{ $application->application_code }}</span>
-            </div>
-
-            <h3 style="text-align:center; font-family:'Times New Roman', serif; font-size:18px; font-weight:700; margin:18px 0;">
-                ACKNOWLEDGEMENT RECEIPT
-            </h3>
-
-            <p style="font-family:'Times New Roman', serif; font-size:14px; text-align:justify; line-height:1.55; margin:0 0 16px;">
-                Pursuant to Administrative Order (A.O.) No. _____, Series of 2020, the undersigned acknowledges
-                the receipt of the duly notarized Application for Issuance of Certification on Land Transfer Clearance
-                (LTC Form No. 1) and the attached mandatory documentary requirements filed by
-                <strong>{{ $acknowledgementApplicantNames }}</strong>, to wit:
-            </p>
-
-            <div style="display:grid; gap:18px; font-family:'Times New Roman', serif; font-size:14px;">
-                <div>
-                    <strong>1. FOR THE TRANSFEROR:</strong>
-                    <div style="margin-top:8px; display:grid; gap:5px;">
+            <div class="ltc-form3-checklist-grid">
+                <div class="ltc-form3-card">
+                    <h3 class="ltc-form3-card-title">1. For the Transferor</h3>
+                    <div class="ltc-form3-list">
                         @foreach ($transferorAcknowledgementItems as $item)
-                            <div style="display:grid; grid-template-columns: 18px minmax(0, 1fr) 110px; gap:8px; align-items:start;">
-                                <span style="font-family:DejaVu Sans, sans-serif;">{{ $item['checked'] ? '☑' : '☐' }}</span>
+                            <div class="ltc-form3-row">
+                                <span class="ltc-form3-check {{ $item['checked'] ? 'is-checked' : '' }}">{{ $item['checked'] ? '✓' : '' }}</span>
                                 <span>{{ $item['name'] }}</span>
-                                <span>: Annex {{ $item['annex'] }}</span>
+                                <span class="ltc-form3-annex">Annex {{ $item['annex'] }}</span>
                             </div>
                         @endforeach
                     </div>
                 </div>
 
-                <div>
-                    <strong>2. FOR THE TRANSFEREE:</strong>
-                    <div style="margin-top:8px; display:grid; gap:5px;">
+                <div class="ltc-form3-card">
+                    <h3 class="ltc-form3-card-title">2. For the Transferee</h3>
+                    <div class="ltc-form3-list">
                         @foreach ($transfereeAcknowledgementItems as $item)
-                            <div style="display:grid; grid-template-columns: 18px minmax(0, 1fr) 110px; gap:8px; align-items:start;">
-                                <span style="font-family:DejaVu Sans, sans-serif;">{{ $item['checked'] ? '☑' : '☐' }}</span>
+                            <div class="ltc-form3-row">
+                                <span class="ltc-form3-check {{ $item['checked'] ? 'is-checked' : '' }}">{{ $item['checked'] ? '✓' : '' }}</span>
                                 <span>{{ $item['name'] }}</span>
-                                <span>: Annex {{ $item['annex'] }}</span>
+                                <span class="ltc-form3-annex">Annex {{ $item['annex'] }}</span>
                             </div>
                         @endforeach
                     </div>
                 </div>
             </div>
 
-            <div style="margin-top:22px; font-family:'Times New Roman', serif; font-size:14px;">
-                <p style="margin-bottom:12px;">
-                    Further, the undersigned initially examined the said application and the aforementioned documents
-                    and found the following:
-                </p>
-
-                <div style="display:grid; gap:12px;">
-                    <div>
-                        <span style="font-family:DejaVu Sans, sans-serif;">{{ $acknowledgementComplete ? '☑' : '☐' }}</span>
-                        Complete and in order; or
-                    </div>
-
-                    <div>
-                        <span style="font-family:DejaVu Sans, sans-serif;">{{ $acknowledgementComplete ? '☐' : '☑' }}</span>
-                        Incomplete and with lacking documents:
-                        @if ($acknowledgementMissingRequirements->isNotEmpty())
-                            <ul style="margin:8px 0 0 26px;">
-                                @foreach ($acknowledgementMissingRequirements as $missingRequirement)
-                                    <li>{{ $missingRequirement->name }}</li>
-                                @endforeach
-                            </ul>
-                        @else
-                            <span>None</span>
-                        @endif
-                    </div>
-                </div>
-            </div>
-
-            <p style="font-family:'Times New Roman', serif; font-size:14px; margin-top:22px;">
-                Done this {{ optional($acknowledgementIssuedAt)->format('d') ?? '____' }} day of
-                {{ optional($acknowledgementIssuedAt)->format('F') ?? '__________' }},
-                {{ optional($acknowledgementIssuedAt)->format('Y') ?? '20____' }}.
-            </p>
-
-            <div style="width:320px; margin-left:auto; margin-top:46px; text-align:center; font-family:'Times New Roman', serif; font-size:13px;">
-                <div style="border-top:1px solid #111827; padding-top:4px;">Signature Over Printed Name</div>
-                <div>Agrarian Reform Legal Assistance Division / Designated Personnel</div>
-            </div>
-
-            <div style="margin-top:38px; font-family:'Times New Roman', serif; font-size:11px; line-height:1.25;">
-                <strong>Copy Distribution:</strong><br>
-                Original-Applicant<br>
-                Duplicate-DARPOS
-            </div>
-
-            <div style="margin-top:14px; padding-top:8px; border-top:1px solid #e5e7eb; font-size:12px; color:#4b5563;">
-                System note: This acknowledgement preview is generated from encoded application and document records.
-                It supports administrative tracking and checklist review only. It does not approve the clearance, transfer
-                ownership, change parcel ownership linkage, or mutate Registry of Deeds records.
-            </div>
         </div>
     </div>
 </section>

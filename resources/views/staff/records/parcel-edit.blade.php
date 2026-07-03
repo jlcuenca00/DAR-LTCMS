@@ -464,10 +464,6 @@
                         </a>
                     </div>
                 </section>
-
-                <div class="parcel-edit-note">
-                    Parcel records support DAR clearance review, monitoring, map visualization, and source/reference checking only. Saving this record does not transfer ownership, assign ownership, or mutate Registry of Deeds records.
-                </div>
             </aside>
         </form>
     </div>
