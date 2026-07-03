@@ -30,26 +30,27 @@
 
     <style>
         @page {
-            margin: 42px 48px;
+            size: A4;
+            margin: 24px 34px;
         }
 
         body {
             font-family: "Times New Roman", Times, serif;
             color: #111827;
-            font-size: 12.5px;
-            line-height: 1.45;
+            font-size: 10.6px;
+            line-height: 1.18;
         }
 
         .form-no {
             text-align: right;
             font-weight: bold;
-            margin-bottom: 18px;
+            margin-bottom: 8px;
         }
 
         .header {
             text-align: center;
-            line-height: 1.25;
-            margin-bottom: 22px;
+            line-height: 1.15;
+            margin-bottom: 10px;
         }
 
         .agency {
@@ -59,62 +60,68 @@
 
         .application-no {
             text-align: right;
-            margin-bottom: 18px;
+            margin-bottom: 9px;
         }
 
         h1 {
             text-align: center;
-            font-size: 17px;
-            margin: 16px 0 22px;
+            font-size: 14px;
+            margin: 9px 0 11px;
             letter-spacing: 0.08em;
         }
 
         p {
             text-align: justify;
-            margin: 0 0 12px;
+            margin: 0 0 7px;
         }
 
         .section-title {
             font-weight: bold;
-            margin: 14px 0 8px;
+            margin: 8px 0 4px;
+            text-transform: uppercase;
         }
 
         .checklist {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 12px;
+            margin-bottom: 7px;
         }
 
         .checklist td {
             vertical-align: top;
-            padding: 3px 2px;
+            padding: 1.4px 2px;
         }
 
         .check {
-            width: 34px;
+            width: 28px;
             font-family: DejaVu Sans, sans-serif;
             white-space: nowrap;
         }
 
         .annex {
-            width: 110px;
+            width: 92px;
             white-space: nowrap;
         }
 
         .finding {
-            margin: 10px 0;
+            margin: 6px 0;
         }
 
         .missing-list {
-            margin: 6px 0 0 32px;
+            margin: 3px 0 0 30px;
+            padding: 0;
+        }
+
+        .date-line {
+            margin-top: 12px;
         }
 
         .signature {
-            width: 340px;
+            width: 320px;
             margin-left: auto;
-            margin-top: 50px;
+            margin-top: 24px;
             text-align: center;
-            font-size: 12px;
+            font-size: 10.2px;
         }
 
         .signature-line {
@@ -123,18 +130,16 @@
         }
 
         .copy-distribution {
-            margin-top: 44px;
-            font-size: 10.5px;
-            line-height: 1.25;
+            margin-top: 18px;
+            font-size: 9.4px;
+            line-height: 1.16;
         }
 
-        .system-note {
-            margin-top: 14px;
-            padding-top: 8px;
-            border-top: 1px solid #d1d5db;
-            font-size: 10.5px;
-            color: #374151;
-            text-align: justify;
+        .checklist,
+        .finding,
+        .signature,
+        .copy-distribution {
+            page-break-inside: avoid;
         }
     </style>
 </head>
@@ -211,7 +216,7 @@
         @endif
     </div>
 
-    <p style="margin-top:22px;">
+    <p class="date-line">
         Done this {{ optional($acknowledgementIssuedAt)->format('d') ?? '____' }} day of
         {{ optional($acknowledgementIssuedAt)->format('F') ?? '__________' }},
         {{ optional($acknowledgementIssuedAt)->format('Y') ?? '20____' }}.
@@ -226,12 +231,6 @@
         <strong>Copy Distribution:</strong><br>
         Original-Applicant<br>
         Duplicate-DARPOS
-    </div>
-
-    <div class="system-note">
-        System note: This acknowledgement receipt is generated from encoded application and document records.
-        It supports administrative intake tracking and checklist review only. It does not approve/release the clearance,
-        deny the application, transfer land ownership, change parcel ownership linkage, or mutate Registry of Deeds records.
     </div>
 </body>
 </html>

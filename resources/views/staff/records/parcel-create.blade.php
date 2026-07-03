@@ -361,10 +361,6 @@
                     <a href="{{ route('staff.records.parcels.index') }}" class="staff-button staff-button-light justify-center">Cancel</a>
                 </div>
             </section>
-
-            <div class="parcel-create-note">
-                Parcel encoding is limited to agricultural land records used for DAR clearance review, monitoring, and map visualization. It does not transfer ownership, prove final legal ownership, or mutate Registry of Deeds records.
-            </div>
         </aside>
     </form>
 </x-staff-shell>

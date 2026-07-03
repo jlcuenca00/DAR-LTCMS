@@ -200,25 +200,6 @@
                 flex: 0 0 auto;
             }
 
-            .application-create-page .scope-alert {
-                display: flex;
-                gap: 12px;
-                align-items: flex-start;
-                border: 1px solid #fed7aa;
-                background: #fff7ed;
-                color: #9a3412;
-                border-radius: 12px;
-                padding: 14px 16px;
-                font-size: 13px;
-                line-height: 1.55;
-                font-weight: 600;
-            }
-
-            .application-create-page .scope-alert i {
-                margin-top: 2px;
-                color: #ea580c;
-            }
-
             @media (max-width: 900px) {
                 .application-create-page .field-grid {
                     grid-template-columns: 1fr;
@@ -435,13 +416,6 @@
                     </div>
                 </div>
 
-                <div class="scope-alert">
-                    <i class="fa-solid fa-circle-info"></i>
-                    <div>
-                        These entries support manual clearance review only. Succession and retention-certificate notes do not automatically approve a clearance, transfer ownership, or mutate Registry of Deeds records.
-                    </div>
-                </div>
-
                 <div class="mt-4 field-grid">
                     <div class="field-group">
                         <label for="transfer_nature" class="field-label">Transfer Nature / Instrument Context</label>
@@ -481,19 +455,13 @@
                         <textarea id="landholding_review_notes" name="landholding_review_notes" rows="3" class="staff-textarea" placeholder="Optional notes about aggregate landholding, succession context, MARPO/LTI review, or retention certificate handling">{{ old('landholding_review_notes') }}</textarea>
                     </div>
                 </div>
+            </section>
 
             <section class="form-section">
                 <div class="section-head">
                     <div>
                         <h3 class="section-title">Parcel Reference</h3>
                         <p class="section-copy">Link a main parcel record for review and reference only.</p>
-                    </div>
-                </div>
-
-                <div class="scope-alert">
-                    <i class="fa-solid fa-triangle-exclamation"></i>
-                    <div>
-                        Linked parcels support application review and monitoring only. Creating this application does not transfer ownership, change parcel ownership linkage, or mutate Registry of Deeds records.
                     </div>
                 </div>
 

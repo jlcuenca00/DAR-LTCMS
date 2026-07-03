@@ -29,6 +29,94 @@
 @endphp
 
 <style>
+    #ltc-form-no-4-review .ltc-form4-workspace {
+        display: grid;
+        gap: 12px;
+    }
+
+    #ltc-form-no-4-review .ltc-form4-card {
+        border: 1px solid #d1d5db;
+        border-radius: 12px;
+        background: #ffffff;
+        padding: 14px 16px;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+    }
+
+    #ltc-form-no-4-review .ltc-form4-card-title {
+        margin: 0 0 10px;
+        color: #111827;
+        font-size: 14px;
+        font-weight: 900;
+        line-height: 1.25;
+    }
+
+    #ltc-form-no-4-review .ltc-form4-option-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 7px 12px;
+    }
+
+    #ltc-form-no-4-review .ltc-form4-recommendation-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1.3fr) minmax(280px, .7fr);
+        gap: 12px;
+    }
+
+    #ltc-form-no-4-review .ltc-form4-option {
+        display: flex;
+        gap: 8px;
+        align-items: flex-start;
+        color: #374151;
+        font-size: 12.5px;
+        font-weight: 700;
+        line-height: 1.32;
+    }
+
+    #ltc-form-no-4-review .ltc-form4-option span {
+        min-width: 0;
+    }
+
+    #ltc-form-no-4-review .ltc-form4-label {
+        display: block;
+        margin: 0 0 5px;
+        color: #64748b;
+        font-size: 10px;
+        font-weight: 900;
+        letter-spacing: .08em;
+        text-transform: uppercase;
+    }
+
+    #ltc-form-no-4-review .ltc-form4-input,
+    #ltc-form-no-4-review .ltc-form4-textarea {
+        width: 100%;
+        border: 1px solid #d1d5db;
+        border-radius: 8px;
+        background: #ffffff;
+        color: #111827;
+        font-size: 13px;
+        font-weight: 700;
+        line-height: 1.35;
+        padding: 8px 10px;
+    }
+
+    #ltc-form-no-4-review .ltc-form4-textarea {
+        min-height: 84px;
+        resize: vertical;
+    }
+
+    #ltc-form-no-4-review .ltc-form4-field-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+    }
+
+    #ltc-form-no-4-review .ltc-form4-decision-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-top: 12px;
+    }
+
     #ltc-form-no-4-review .ltc-form4-choice {
         flex: 0 0 15px;
     }
@@ -68,9 +156,19 @@
         height: 15px !important;
     }
 
-    #ltc-form-no-4-review .ltc-form4-choice:disabled {
+    #ltc-form-no-4-review .ltc-form4-choice:disabled,
+    #ltc-form-no-4-review .ltc-form4-input:disabled,
+    #ltc-form-no-4-review .ltc-form4-textarea:disabled {
         cursor: not-allowed;
-        opacity: 0.7;
+        opacity: 0.72;
+    }
+
+    @media (max-width: 1100px) {
+        #ltc-form-no-4-review .ltc-form4-option-grid,
+        #ltc-form-no-4-review .ltc-form4-recommendation-grid,
+        #ltc-form-no-4-review .ltc-form4-field-grid {
+            grid-template-columns: 1fr;
+        }
     }
 </style>
 
@@ -79,8 +177,7 @@
         <div>
             <h2 class="review-panel-title">LTC Form No. 4 — Certification, Attestation and Recommendation</h2>
             <p class="review-panel-subtitle">
-                Encode LTI/Legal review findings and recommendation details. This is decision-support context only;
-                final release or denial remains subject to authorized review.
+                Encode LTI/Legal review findings and recommendation details before opening the formal PDF output.
             </p>
         </div>
 
@@ -93,16 +190,16 @@
     </div>
 
     <div class="review-panel-body">
-        <form method="POST" action="{{ route('staff.applications.form4.update', $application) }}" style="display:grid; gap:18px;">
+        <form method="POST" action="{{ route('staff.applications.form4.update', $application) }}" class="ltc-form4-workspace">
             @csrf
             @method('PATCH')
 
-            <div style="border:1px solid #d1d5db; border-radius:12px; padding:16px; background:#ffffff;">
-                <h3 style="margin:0 0 10px; font-size:15px; font-weight:900; color:#111827;">I. Facts / Information of the Subject Land</h3>
+            <div class="ltc-form4-card">
+                <h3 class="ltc-form4-card-title">I. Facts / Information of the Subject Land</h3>
 
-                <div style="display:grid; gap:8px;">
+                <div class="ltc-form4-option-grid">
                     @foreach ($subjectLandOptions as $value => $label)
-                        <label style="display:flex; gap:8px; align-items:flex-start; font-size:13px; color:#374151;">
+                        <label class="ltc-form4-option">
                             <input type="checkbox"
                                    class="ltc-form4-choice"
                                    name="ltc_form4_subject_land_findings[]"
@@ -115,81 +212,80 @@
                 </div>
             </div>
 
-            <div style="border:1px solid #d1d5db; border-radius:12px; padding:16px; background:#ffffff;">
-                <h3 style="margin:0 0 10px; font-size:15px; font-weight:900; color:#111827;">II. Recommendation</h3>
+            <div class="ltc-form4-recommendation-grid">
+                <div class="ltc-form4-card">
+                    <h3 class="ltc-form4-card-title">II. Recommendation</h3>
 
-                <div style="display:grid; gap:8px;">
-                    @foreach ($recommendationOptions as $value => $label)
-                        <label style="display:flex; gap:8px; align-items:flex-start; font-size:13px; color:#374151;">
-                            <input type="checkbox"
-                                   class="ltc-form4-choice"
-                                   name="ltc_form4_recommendation_findings[]"
-                                   value="{{ $value }}"
-                                   @checked($recommendationFindings->contains($value))
-                                   {{ $isFinal ? 'disabled' : '' }}>
-                            <span>{{ $label }}</span>
-                        </label>
-                    @endforeach
+                    <div class="ltc-form4-option-grid" style="grid-template-columns:1fr;">
+                        @foreach ($recommendationOptions as $value => $label)
+                            <label class="ltc-form4-option">
+                                <input type="checkbox"
+                                       class="ltc-form4-choice"
+                                       name="ltc_form4_recommendation_findings[]"
+                                       value="{{ $value }}"
+                                       @checked($recommendationFindings->contains($value))
+                                       {{ $isFinal ? 'disabled' : '' }}>
+                                <span>{{ $label }}</span>
+                            </label>
+                        @endforeach
+                    </div>
+
+                    <div style="margin-top:12px;">
+                        <label class="ltc-form4-label">Other findings</label>
+                        <textarea name="ltc_form4_other_findings"
+                                  rows="3"
+                                  class="ltc-form4-textarea"
+                                  {{ $isFinal ? 'disabled' : '' }}>{{ old('ltc_form4_other_findings', $application->ltc_form4_other_findings) }}</textarea>
+                    </div>
                 </div>
 
-                <div style="margin-top:12px;">
-                    <label style="display:block; font-size:12px; font-weight:800; color:#374151; margin-bottom:6px;">Other findings</label>
-                    <textarea name="ltc_form4_other_findings"
-                              rows="3"
-                              style="width:100%; border:1px solid #d1d5db; border-radius:8px; padding:8px 10px;"
-                              {{ $isFinal ? 'disabled' : '' }}>{{ old('ltc_form4_other_findings', $application->ltc_form4_other_findings) }}</textarea>
-                </div>
+                <div class="ltc-form4-card">
+                    <h3 class="ltc-form4-card-title">Review Decision Details</h3>
 
-                <div style="margin-top:12px;">
-                    <label style="display:block; font-size:12px; font-weight:800; color:#374151; margin-bottom:6px;">Recommendation</label>
-                    <div style="display:flex; flex-wrap:wrap; gap:14px;">
-                        <label style="display:flex; gap:8px; align-items:center; font-size:13px; color:#374151;">
+                    <label class="ltc-form4-label">Recommendation</label>
+                    <div class="ltc-form4-decision-row">
+                        <label class="ltc-form4-option">
                             <input type="radio"
                                    class="ltc-form4-choice"
                                    name="ltc_form4_recommendation_decision"
                                    value="approval"
                                    @checked($form4Decision === 'approval')
                                    {{ $isFinal ? 'disabled' : '' }}>
-                            Approval
+                            <span>Approval</span>
                         </label>
 
-                        <label style="display:flex; gap:8px; align-items:center; font-size:13px; color:#374151;">
+                        <label class="ltc-form4-option">
                             <input type="radio"
                                    class="ltc-form4-choice"
                                    name="ltc_form4_recommendation_decision"
                                    value="denial"
                                    @checked($form4Decision === 'denial')
                                    {{ $isFinal ? 'disabled' : '' }}>
-                            Denial
+                            <span>Denial</span>
                         </label>
                     </div>
-                </div>
-            </div>
 
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
-                <div>
-                    <label style="display:block; font-size:12px; font-weight:800; color:#374151; margin-bottom:6px;">Date</label>
-                    <input type="date"
-                           name="ltc_form4_certified_at"
-                           value="{{ old('ltc_form4_certified_at', optional($application->ltc_form4_certified_at)->format('Y-m-d')) }}"
-                           style="width:100%; border:1px solid #d1d5db; border-radius:8px; padding:8px 10px;"
-                           {{ $isFinal ? 'disabled' : '' }}>
-                </div>
+                    <div class="ltc-form4-field-grid" style="margin-top:14px;">
+                        <div>
+                            <label class="ltc-form4-label">Date</label>
+                            <input type="date"
+                                   name="ltc_form4_certified_at"
+                                   value="{{ old('ltc_form4_certified_at', optional($application->ltc_form4_certified_at)->format('Y-m-d')) }}"
+                                   class="ltc-form4-input"
+                                   {{ $isFinal ? 'disabled' : '' }}>
+                        </div>
 
-                <div>
-                    <label style="display:block; font-size:12px; font-weight:800; color:#374151; margin-bottom:6px;">Chief Legal / Authorized Legal Officer</label>
-                    <input type="text"
-                           name="ltc_form4_certifying_officer_name"
-                           value="{{ old('ltc_form4_certifying_officer_name', $application->ltc_form4_certifying_officer_name) }}"
-                           placeholder="Signature over printed name"
-                           style="width:100%; border:1px solid #d1d5db; border-radius:8px; padding:8px 10px;"
-                           {{ $isFinal ? 'disabled' : '' }}>
+                        <div>
+                            <label class="ltc-form4-label">Authorized Officer</label>
+                            <input type="text"
+                                   name="ltc_form4_certifying_officer_name"
+                                   value="{{ old('ltc_form4_certifying_officer_name', $application->ltc_form4_certifying_officer_name) }}"
+                                   placeholder="Signature over printed name"
+                                   class="ltc-form4-input"
+                                   {{ $isFinal ? 'disabled' : '' }}>
+                        </div>
+                    </div>
                 </div>
-            </div>
-
-            <div style="padding:12px; border:1px solid #bbf7d0; border-radius:10px; background:#f0fdf4; color:#166534; font-size:12px; line-height:1.5;">
-                These Form No. 4 entries are administrative review details. Saving them does not approve/release the clearance,
-                deny the application, transfer land ownership, change parcel linkage, or mutate Registry of Deeds records.
             </div>
 
             @unless ($isFinal)

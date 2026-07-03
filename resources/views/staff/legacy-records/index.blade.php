@@ -49,16 +49,6 @@
             </div>
         @endif
 
-        <section class="staff-scope-banner">
-            <div>
-                <h3>Source Records Archive</h3>
-                <p>
-                    This archive stores documentary and provenance references used during clearance review. Source packages group scanned/source-file context; individual source records remain the searchable working list for review and linking.
-                </p>
-            </div>
-            <span class="staff-scope-pill">Documentary Records Only</span>
-        </section>
-
         <section class="source-action-grid">
             <a href="{{ route('staff.source-record-packages.create') }}" class="source-action-card staff-panel staff-panel-pad block transition">
                 <div class="flex items-start gap-4">

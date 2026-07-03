@@ -433,31 +433,6 @@
                     @endforelse
                 </div>
             </article>
-
-            <article class="report-panel">
-                <div class="report-panel-header">
-                    <div>
-                        <h2 class="report-panel-title">DAR Clearance Scope</h2>
-                        <p class="report-panel-subtitle">Scope reminders for interpreting monitoring results.</p>
-                    </div>
-                    <span class="report-panel-count">Administrative only</span>
-                </div>
-
-                <div class="report-list">
-                    <div class="report-list-row">
-                        <span class="report-list-label">DAR Land Transfer Clearance applies to agricultural lands only.</span>
-                        <span class="staff-badge staff-badge-green">Scope</span>
-                    </div>
-                    <div class="report-list-row">
-                        <span class="report-list-label">OCT, TCT, CLOA, and EP are title/reference types, not clearance status choices.</span>
-                        <span class="staff-badge staff-badge-blue">Reference</span>
-                    </div>
-                    <div class="report-list-row">
-                        <span class="report-list-label">Release or denial records do not automatically transfer ownership or mutate registry records.</span>
-                        <span class="staff-badge staff-badge-slate">Limit</span>
-                    </div>
-                </div>
-            </article>
         </section>
 
         <section class="report-grid">

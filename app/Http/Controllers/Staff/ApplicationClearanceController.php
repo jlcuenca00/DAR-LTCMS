@@ -55,17 +55,21 @@ class ApplicationClearanceController extends Controller
             'transfereeLandowner',
         ]);
 
-        $transferorRequirements = RequiredDocument::where('applies_to', 'transferor')
-            ->orderBy('blocks_acceptance', 'desc')
-            ->orderBy('requirement_classification')
-            ->orderBy('name')
-            ->get();
+        $transferorRequirements = RequiredDocument::deduplicateForApplicationReview(
+            RequiredDocument::where('applies_to', 'transferor')
+                ->orderBy('blocks_acceptance', 'desc')
+                ->orderBy('requirement_classification')
+                ->orderBy('name')
+                ->get()
+        );
 
-        $transfereeRequirements = RequiredDocument::where('applies_to', 'transferee')
-            ->orderBy('blocks_acceptance', 'desc')
-            ->orderBy('requirement_classification')
-            ->orderBy('name')
-            ->get();
+        $transfereeRequirements = RequiredDocument::deduplicateForApplicationReview(
+            RequiredDocument::where('applies_to', 'transferee')
+                ->orderBy('blocks_acceptance', 'desc')
+                ->orderBy('requirement_classification')
+                ->orderBy('name')
+                ->get()
+        );
 
         $uploaded = ApplicationDocument::where('land_transfer_application_id', $application->id)
             ->get()
