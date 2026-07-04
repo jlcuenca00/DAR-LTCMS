@@ -3,7 +3,7 @@
     'subtitle' => null,
     'active' => 'dashboard',
     'eyebrow' => 'DAR Negros Oriental Provincial Office',
-    'maxWidth' => 'max-w-7xl',
+    'maxWidth' => 'max-w-none',
 ])
 
 <!DOCTYPE html>
@@ -563,7 +563,12 @@
 
         .staff-content-inner {
             width: 100%;
+            max-width: none !important;
             margin: 0 auto;
+        }
+
+        .staff-content-inner > :not(style):not(script):not(.sr-only) + :not(style):not(script):not(.sr-only) {
+            margin-top: 1.25rem;
         }
 
         .staff-panel {
@@ -942,6 +947,45 @@
             outline: none !important;
         }
 
+
+        .staff-content-inner input[type="file"] {
+            width: 100%;
+            min-height: 42px;
+            border: 1px solid #cbd5d1 !important;
+            border-radius: 9px !important;
+            background: #ffffff !important;
+            color: #475569 !important;
+            padding: 6px 8px !important;
+            font-size: 13px !important;
+            font-weight: 700 !important;
+            cursor: pointer;
+        }
+
+        .staff-content-inner input[type="file"]::file-selector-button {
+            min-height: 30px;
+            margin-right: 12px;
+            border: 0;
+            border-radius: 7px;
+            background: #166534;
+            color: #ffffff;
+            padding: 7px 12px;
+            font-family: var(--heading-font) !important;
+            font-size: 12px;
+            font-weight: 900;
+            cursor: pointer;
+            transition: 150ms ease;
+        }
+
+        .staff-content-inner input[type="file"]:hover::file-selector-button {
+            background: #14532d;
+        }
+
+        .staff-content-inner input[type="file"]:focus {
+            border-color: #15803d !important;
+            box-shadow: 0 0 0 3px rgba(21, 128, 61, 0.14) !important;
+            outline: none !important;
+        }
+
         .staff-content-inner .bg-green-100,
         .staff-content-inner .bg-green-50 {
             border-color: #bbf7d0 !important;
@@ -1155,7 +1199,7 @@
             </header>
 
             <div class="staff-content">
-                <div class="staff-content-inner {{ $maxWidth }} space-y-5">
+                <div class="staff-content-inner {{ $maxWidth }}">
                     {{ $slot }}
                 </div>
             </div>
