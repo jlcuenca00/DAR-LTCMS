@@ -2,7 +2,9 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Collection;
 
 class LandTransferApplication extends Model
 {
@@ -59,14 +61,19 @@ class LandTransferApplication extends Model
         'amount_paid',
         'date_of_application',
         'transfer_nature',
+        'transfer_instruments',
         'is_succession_case',
         'retention_certificate_required',
         'retention_certificate_reference',
         'landholding_review_notes',
         'transferor_name',
+        'transferors',
         'transferee_name',
+        'transferees',
         'barangay',
         'municipality',
+        'date_of_clearance_release',
+        'ltc_page_number',
         'status',
         'encoded_by',
         'reviewed_by',
@@ -78,14 +85,16 @@ class LandTransferApplication extends Model
 
         'transferor_landowner_id',
         'transferee_landowner_id',
-        'registry_mutated_at',
-        'registry_mutated_by',
     ];
 
     protected $casts = [
         'ltc_form4_subject_land_findings' => 'array',
         'ltc_form4_recommendation_findings' => 'array',
         'ltc_form4_certified_at' => 'date',
+        'transferors' => 'array',
+        'transferees' => 'array',
+        'transfer_instruments' => 'array',
+        'date_of_clearance_release' => 'date',
         'reviewed_at' => 'datetime',
         'date_of_application' => 'date',
         'or_date' => 'date',
@@ -94,7 +103,6 @@ class LandTransferApplication extends Model
         'is_succession_case' => 'boolean',
         'retention_certificate_required' => 'boolean',
         'validated_at' => 'datetime',
-        'registry_mutated_at' => 'datetime',
         'validation_snapshot' => 'array',
     ];
 
@@ -156,6 +164,165 @@ class LandTransferApplication extends Model
     public function transferNatureLabel(): string
     {
         return self::transferNatureOptions()[$this->transfer_nature] ?? 'Not specified';
+    }
+
+
+    public function transferorDisplayName(): string
+    {
+        $names = collect($this->transferors ?? [])->pluck('name')->filter();
+
+        return $names->isNotEmpty() ? $names->implode('; ') : (string) ($this->transferor_name ?? '');
+    }
+
+    public function transfereeDisplayName(): string
+    {
+        $names = collect($this->transferees ?? [])->pluck('name')->filter();
+
+        return $names->isNotEmpty() ? $names->implode('; ') : (string) ($this->transferee_name ?? '');
+    }
+
+    public function transferInstrumentDisplay(): string
+    {
+        $instruments = collect($this->transfer_instruments ?? [])
+            ->map(fn ($instrument) => trim((string) ($instrument['name'] ?? $instrument)))
+            ->filter();
+
+        return $instruments->isNotEmpty() ? $instruments->implode('; ') : $this->transferNatureLabel();
+    }
+
+    /**
+     * Return normalized transferor or transferee rows while preserving
+     * backward compatibility with the legacy single-link columns.
+     */
+    public function partyRows(string $party): array
+    {
+        $isTransferor = $party === 'transferor';
+        $jsonField = $isTransferor ? 'transferors' : 'transferees';
+        $nameField = $isTransferor ? 'transferor_name' : 'transferee_name';
+        $legacyLinkField = $isTransferor ? 'transferor_landowner_id' : 'transferee_landowner_id';
+
+        $rows = collect($this->{$jsonField} ?? [])
+            ->map(function ($row) {
+                $name = trim((string) data_get($row, 'name', ''));
+
+                if ($name === '') {
+                    return null;
+                }
+
+                $parcelShares = collect((array) data_get($row, 'parcel_shares', []))
+                    ->mapWithKeys(function ($value, $key) {
+                        if ($value === null || $value === '') {
+                            return [];
+                        }
+
+                        return [(string) $key => round((float) $value, 4)];
+                    })
+                    ->all();
+
+                return [
+                    'name' => $name,
+                    'landowner_id' => filled(data_get($row, 'landowner_id'))
+                        ? (int) data_get($row, 'landowner_id')
+                        : null,
+                    'parcel_shares' => $parcelShares,
+                ];
+            })
+            ->filter()
+            ->values();
+
+        if ($rows->isEmpty() && filled($this->{$nameField})) {
+            $legacyNames = preg_split('/\s*;\s*/', trim((string) $this->{$nameField})) ?: [];
+
+            $rows = collect($legacyNames)
+                ->filter(fn ($name) => filled($name))
+                ->values()
+                ->map(function ($name, $index) use ($legacyLinkField) {
+                    return [
+                        'name' => trim((string) $name),
+                        'landowner_id' => $index === 0 && filled($this->{$legacyLinkField})
+                            ? (int) $this->{$legacyLinkField}
+                            : null,
+                        'parcel_shares' => [],
+                    ];
+                });
+        }
+
+        return $rows->values()->all();
+    }
+
+    public function linkedLandownerIds(?string $party = null): Collection
+    {
+        $parties = $party ? [$party] : ['transferor', 'transferee'];
+
+        return collect($parties)
+            ->flatMap(fn ($partyType) => collect($this->partyRows($partyType))->pluck('landowner_id'))
+            ->filter()
+            ->map(fn ($id) => (int) $id)
+            ->unique()
+            ->values();
+    }
+
+    public function allPartiesLinked(): bool
+    {
+        foreach (['transferor', 'transferee'] as $party) {
+            $rows = $this->partyRows($party);
+
+            if (empty($rows) || collect($rows)->contains(fn ($row) => blank($row['landowner_id'] ?? null))) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    public function isLinkedToLandowner(int $landownerId): bool
+    {
+        return $this->linkedLandownerIds()->contains($landownerId);
+    }
+
+    public function partyAreaForParcel(string $party, int $landownerId, int $applicationParcelId, float $fallbackArea = 0.0): float
+    {
+        $rows = collect($this->partyRows($party));
+        $row = $rows->first(fn ($item) => (int) ($item['landowner_id'] ?? 0) === $landownerId);
+
+        if (! $row) {
+            return 0.0;
+        }
+
+        $share = data_get($row, 'parcel_shares.' . $applicationParcelId);
+
+        if ($share !== null && $share !== '') {
+            return round((float) $share, 4);
+        }
+
+        $linkedCount = max(1, $rows->filter(fn ($item) => filled($item['landowner_id'] ?? null))->count());
+
+        return round($fallbackArea / $linkedCount, 4);
+    }
+
+    public function scopeLinkedToLandownerIds(Builder $query, iterable $landownerIds): Builder
+    {
+        $ids = collect($landownerIds)
+            ->filter()
+            ->map(fn ($id) => (int) $id)
+            ->unique()
+            ->values();
+
+        if ($ids->isEmpty()) {
+            return $query->whereRaw('1 = 0');
+        }
+
+        return $query->where(function (Builder $linkedQuery) use ($ids) {
+            $linkedQuery
+                ->whereIn('transferor_landowner_id', $ids)
+                ->orWhereIn('transferee_landowner_id', $ids);
+
+            foreach ($ids as $id) {
+                $linkedQuery
+                    ->orWhereJsonContains('transferors', [['landowner_id' => $id]])
+                    ->orWhereJsonContains('transferees', [['landowner_id' => $id]]);
+            }
+        });
     }
 
     public function statusLabel(): string

@@ -33,13 +33,18 @@ Route::get('/', function () {
 });
 
 Route::get('/dashboard', function () {
-    return view('dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
+    $user = request()->user();
+
+    return match ($user?->role) {
+        'staff' => redirect()->route('staff.dashboard'),
+        'geodetic' => redirect()->route('geodetic.dashboard'),
+        default => redirect()->route('landowner.dashboard'),
+    };
+})->middleware('auth')->name('dashboard');
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
     Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
     Route::get('/notifications/{notification}/open', [NotificationController::class, 'open'])->name('notifications.open');
@@ -68,6 +73,9 @@ Route::middleware(['auth', 'role:staff'])
 
         Route::resource('users', UserManagementController::class)
             ->only(['index', 'create', 'store', 'edit', 'update']);
+        Route::post('/users/{user}/reset-password', [UserManagementController::class, 'resetPassword'])
+            ->middleware('throttle:5,1')
+            ->name('users.reset-password');
 
         Route::get('/records/landowners', [RecordSearchController::class, 'landowners'])
             ->name('records.landowners.index');

@@ -6,10 +6,13 @@ use App\Http\Controllers\Controller;
 use App\Models\Landowner;
 use App\Models\User;
 use App\Services\AuditLogger;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Rules\Password;
 
 class UserManagementController extends Controller
 {
@@ -35,6 +38,7 @@ class UserManagementController extends Controller
         if (! empty($filters['search'])) {
             $usersQuery->where(function ($query) use ($filters) {
                 $query->where('name', 'like', '%' . $filters['search'] . '%')
+                    ->orWhere('username', 'like', '%' . $filters['search'] . '%')
                     ->orWhere('email', 'like', '%' . $filters['search'] . '%');
             });
         }
@@ -61,8 +65,9 @@ class UserManagementController extends Controller
     {
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'max:255', 'unique:users,email'],
-            'password' => ['required', 'string', 'min:8', 'confirmed'],
+            'username' => ['required', 'string', 'alpha_dash:ascii', 'max:100', 'unique:users,username'],
+            'email' => ['nullable', 'email', 'max:255', 'unique:users,email'],
+            'password' => ['required', Password::defaults(), 'confirmed'],
             'role' => ['required', 'string', Rule::in(User::ROLES)],
             'is_active' => ['nullable', 'boolean'],
             'landowner_id' => ['nullable', 'integer', 'exists:landowners,id'],
@@ -91,10 +96,13 @@ class UserManagementController extends Controller
         $user = DB::transaction(function () use ($validated) {
             $user = User::create([
                 'name' => $validated['name'],
-                'email' => $validated['email'],
+                'username' => $validated['username'],
+                'email' => $validated['email'] ?? ($validated['username'] . '@dar-ltcms.local'),
                 'password' => $validated['password'],
                 'role' => $validated['role'],
                 'is_active' => (bool) ($validated['is_active'] ?? false),
+                'must_change_password' => true,
+                'password_changed_at' => now(),
             ]);
 
             if ($validated['role'] === User::ROLE_LANDOWNER && ! empty($validated['landowner_id'])) {
@@ -110,10 +118,11 @@ class UserManagementController extends Controller
                 $user,
                 [
                     'created_user_id' => $user->id,
-                    'created_user_email' => $user->email,
+                    'created_user_username' => $user->username,
                     'created_user_role' => $user->role,
                     'is_active' => $user->is_active,
                     'linked_landowner_id' => $validated['landowner_id'] ?? null,
+                    'must_change_password' => true,
                 ]
             );
 
@@ -122,7 +131,7 @@ class UserManagementController extends Controller
 
         return redirect()
             ->route('staff.users.index')
-            ->with('success', "User account {$user->email} created successfully.");
+            ->with('success', "User account {$user->username} created successfully. The user must change the initial password after signing in.");
     }
 
     public function edit(User $user)
@@ -151,13 +160,19 @@ class UserManagementController extends Controller
 
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'email' => [
+            'username' => [
                 'required',
+                'string',
+                'alpha_dash:ascii',
+                'max:100',
+                Rule::unique('users', 'username')->ignore($user->id),
+            ],
+            'email' => [
+                'nullable',
                 'email',
                 'max:255',
                 Rule::unique('users', 'email')->ignore($user->id),
             ],
-            'password' => ['nullable', 'string', 'min:8', 'confirmed'],
             'role' => ['required', 'string', Rule::in(User::ROLES)],
             'is_active' => ['nullable', 'boolean'],
             'landowner_id' => ['nullable', 'integer', 'exists:landowners,id'],
@@ -212,14 +227,11 @@ class UserManagementController extends Controller
 
             $user->fill([
                 'name' => $validated['name'],
-                'email' => $validated['email'],
+                'username' => $validated['username'],
+                'email' => $validated['email'] ?? ($validated['username'] . '@dar-ltcms.local'),
                 'role' => $validated['role'],
                 'is_active' => $requestedIsActive,
             ]);
-
-            if (! empty($validated['password'])) {
-                $user->password = $validated['password'];
-            }
 
             $user->save();
 
@@ -243,7 +255,7 @@ class UserManagementController extends Controller
                 $user,
                 [
                     'updated_user_id' => $user->id,
-                    'updated_user_email' => $user->email,
+                    'updated_user_username' => $user->username,
                     'old_values' => $oldValues,
                     'new_values' => [
                         'name' => $user->name,
@@ -252,13 +264,53 @@ class UserManagementController extends Controller
                         'is_active' => $user->is_active,
                         'linked_landowner_id' => optional($user->landowner)->id,
                     ],
-                    'password_changed' => ! empty($validated['password']),
                 ]
             );
         });
 
         return redirect()
             ->route('staff.users.index')
-            ->with('success', "User account {$user->email} updated successfully.");
+            ->with('success', "User account {$user->username} updated successfully.");
     }
+
+    public function resetPassword(Request $request, User $user): RedirectResponse
+    {
+        if ((int) $request->user()->id === (int) $user->id) {
+            return back()->with('error', 'Use your profile settings to change your own password.');
+        }
+
+        $temporaryPassword = Str::password(12, true, true, false, false);
+
+        DB::transaction(function () use ($user, $temporaryPassword, $request) {
+            $user->forceFill([
+                'password' => $temporaryPassword,
+                'must_change_password' => true,
+                'password_changed_at' => now(),
+                'remember_token' => Str::random(60),
+            ])->save();
+
+            AuditLogger::record(
+                'user_password_reset',
+                null,
+                $user,
+                [
+                    'reset_user_id' => $user->id,
+                    'reset_username' => $user->username,
+                    'account_active' => $user->is_active,
+                    'force_change_on_next_login' => true,
+                ],
+                $request->user()->id
+            );
+        });
+
+        $statusMessage = $user->is_active
+            ? 'A temporary password was generated. It is shown only once below.'
+            : 'A temporary password was generated. The account remains inactive and cannot sign in until reactivated.';
+
+        return back()
+            ->with('success', $statusMessage)
+            ->with('temporary_password', $temporaryPassword)
+            ->with('temporary_password_username', $user->username);
+    }
+
 }

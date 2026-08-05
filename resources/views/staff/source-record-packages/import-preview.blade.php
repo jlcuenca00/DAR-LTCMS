@@ -7,10 +7,6 @@
             <i class="fa-solid fa-upload"></i>
             Upload Another File
         </a>
-        <a href="{{ route('staff.legacy-records.index') }}" class="staff-button staff-button-dark">
-            <i class="fa-solid fa-box-archive"></i>
-            Back to Archive
-        </a>
     </x-slot>
 
 
@@ -285,7 +281,6 @@
                 </div>
 
                 <div class="source-submit-actions">
-                    <a href="{{ route('staff.legacy-records.index') }}" class="staff-button staff-button-light">Back to Source Records</a>
                     @if ($batch->status !== 'committed')
                         <button type="submit" class="staff-button staff-button-primary">
                             <i class="fa-solid fa-check"></i>

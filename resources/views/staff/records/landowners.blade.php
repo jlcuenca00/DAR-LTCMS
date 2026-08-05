@@ -1,26 +1,102 @@
 <x-staff-shell
     title="Landowner Records"
-    subtitle="Search and review landowner records used for clearance application processing and privacy-filtered landowner access."
+    subtitle="Search and review landowner records used during clearance processing."
     active="landowner-records"
 >
-<span class="sr-only">Staff Landowner Record Search</span>
+    <style>
+        .records-toolbar {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .landowner-filter-grid {
+            display: grid;
+            grid-template-columns: minmax(260px, 1.8fr) repeat(3, minmax(170px, 1fr));
+            gap: .8rem;
+            align-items: end;
+        }
+
+        .landowner-filter-actions {
+            display: flex;
+            align-items: center;
+            gap: .55rem;
+            grid-column: 1 / -1;
+        }
+
+        .landowner-name {
+            color: #0f172a;
+            font-size: .92rem;
+            font-weight: 900;
+            line-height: 1.3;
+        }
+
+        .landowner-meta {
+            margin-top: .22rem;
+            color: #64748b;
+            font-size: .76rem;
+            line-height: 1.4;
+        }
+
+        .landholding-summary {
+            display: grid;
+            gap: .35rem;
+            min-width: 180px;
+        }
+
+        .landholding-area {
+            color: #0f172a;
+            font-size: .95rem;
+            font-weight: 950;
+        }
+
+        @media (max-width: 1120px) {
+            .landowner-filter-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+
+        @media (max-width: 720px) {
+            .landowner-filter-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .landowner-filter-actions {
+                width: 100%;
+            }
+
+            .landowner-filter-actions .staff-button {
+                flex: 1 1 auto;
+                justify-content: center;
+            }
+        }
+    </style>
+
+    <span class="sr-only">Staff Landowner Record Search</span>
 
     <section class="staff-panel staff-panel-pad">
-        <div class="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
+        <div class="records-toolbar">
             <div>
-                <h2 class="staff-panel-title">Search and Filter Landowners</h2>
-                <p class="staff-panel-subtitle">Filter by registered owner name, spouse name, address, municipality, barangay, or user-account link status.</p>
+                <h2 class="staff-panel-title">Landowner Directory</h2>
+                <p class="staff-panel-subtitle">{{ $landowners->total() }} total record(s). Hectare checks are assistive references only.</p>
             </div>
-            <p class="text-sm font-bold text-gray-500">{{ $landowners->total() }} record(s)</p>
+
+            <a href="{{ route('staff.records.landowners.create') }}" class="staff-button staff-button-primary" data-main-card-actions-moved>
+                <i class="fa-solid fa-user-plus"></i>
+                Add Landowner
+            </a>
         </div>
 
-        <form method="GET" action="{{ route('staff.records.landowners.index') }}" class="mt-5 staff-filter-grid filter-grid-4">
-            <div>
-                <label class="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">Search</label>
-                <input type="text" name="search" value="{{ $filters['search'] ?? '' }}" placeholder="Name, contact, or address" class="w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-green-600 focus:ring-green-600">
+        <form method="GET" action="{{ route('staff.records.landowners.index') }}" class="mt-5 landowner-filter-grid">
+            <div class="staff-filter-field">
+                <label class="staff-form-label">SEARCH</label>
+                <input type="text" name="search" value="{{ $filters['search'] ?? '' }}" placeholder="Name, contact number, or address" class="w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-green-600 focus:ring-green-600">
             </div>
-            <div>
-                <label class="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">Municipality</label>
+
+            <div class="staff-filter-field">
+                <label class="staff-form-label">MUNICIPALITY</label>
                 <select name="municipality" class="w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-green-600 focus:ring-green-600">
                     <option value="">All municipalities</option>
                     @foreach ($municipalities as $municipality)
@@ -28,8 +104,9 @@
                     @endforeach
                 </select>
             </div>
-            <div>
-                <label class="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">Barangay</label>
+
+            <div class="staff-filter-field">
+                <label class="staff-form-label">BARANGAY</label>
                 <select name="barangay" class="w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-green-600 focus:ring-green-600">
                     <option value="">All barangays</option>
                     @foreach ($barangays as $barangay)
@@ -37,15 +114,17 @@
                     @endforeach
                 </select>
             </div>
-            <div>
-                <label class="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">Account Link Status</label>
+
+            <div class="staff-filter-field">
+                <label class="staff-form-label">ACCOUNT LINK</label>
                 <select name="linked_status" class="w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-green-600 focus:ring-green-600">
                     <option value="">All records</option>
                     <option value="linked" @selected(($filters['linked_status'] ?? '') === 'linked')>Linked to user account</option>
-                    <option value="unlinked" @selected(($filters['linked_status'] ?? '') === 'unlinked')>Not linked to user account</option>
+                    <option value="unlinked" @selected(($filters['linked_status'] ?? '') === 'unlinked')>Not linked</option>
                 </select>
             </div>
-            <div class="staff-filter-actions">
+
+            <div class="landowner-filter-actions">
                 <button type="submit" class="staff-button staff-button-dark"><i class="fa-solid fa-filter"></i>Apply Filters</button>
                 <a href="{{ route('staff.records.landowners.index') }}" class="staff-button staff-button-light">Reset</a>
             </div>
@@ -53,21 +132,9 @@
     </section>
 
     <section class="staff-panel overflow-hidden">
-        <div class="staff-panel-pad" style="display:flex; align-items:center; justify-content:space-between; gap:1rem; flex-wrap:wrap;">
-            <div style="min-width:0;">
-                <h2 class="staff-panel-title">Landowner List</h2>
-                <p class="staff-panel-subtitle">Showing {{ $landowners->count() }} of {{ $landowners->total() }} landowner record(s).</p>
-            </div>
-            <div style="display:flex; align-items:center; justify-content:flex-end; gap:0.5rem; flex-wrap:wrap; margin-left:auto;" data-main-card-actions-moved>
-                <a href="{{ route('staff.records.landowners.create') }}" class="staff-button staff-button-primary">
-                    <i class="fa-solid fa-user-plus"></i>
-                    Add Landowner
-                </a>
-                <a href="{{ route('staff.records.parcels.index') }}" class="staff-button staff-button-light">
-                    <i class="fa-solid fa-map-location-dot"></i>
-                    View Parcel Records
-                </a>
-            </div>
+        <div class="staff-panel-pad">
+            <h2 class="staff-panel-title">Landowner List</h2>
+            <p class="staff-panel-subtitle">Showing {{ $landowners->count() }} of {{ $landowners->total() }} matching record(s).</p>
         </div>
 
         <div class="staff-table-wrap">
@@ -75,76 +142,79 @@
                 <thead>
                     <tr>
                         <th>Landowner</th>
-                        <th>Contact</th>
-                        <th>Address</th>
-                        <th>Municipality / Barangay</th>
-                        <th>Current Hectares / 5-ha Check</th>
-                        <th>Linked User Account</th>
-                        <th>Created</th>
-                        <th>Action</th>
+                        <th>Contact and Location</th>
+                        <th>Landholding Summary</th>
+                        <th>Account Access</th>
+                        <th>Added</th>
+                        <th class="staff-table-action">Action</th>
                     </tr>
                 </thead>
                 <tbody>
                     @forelse ($landowners as $landowner)
+                        @php
+                            $activeArea = (float) ($landowner->active_landholding_area_hectares ?? 0);
+                            $activeCount = (int) ($landowner->active_landholding_count ?? 0);
+                            $remainingArea = max(0, ($fiveHectareLimit ?? 5) - $activeArea);
+                            $hectareBadge = $activeArea > ($fiveHectareLimit ?? 5)
+                                ? 'staff-badge-red'
+                                : ($activeArea >= 4.5 ? 'staff-badge-amber' : 'staff-badge-green');
+                            $hectareStatus = $activeArea > ($fiveHectareLimit ?? 5)
+                                ? 'Over limit'
+                                : ($activeArea >= 4.5 ? 'Near limit' : 'Within limit');
+                        @endphp
+
                         <tr>
                             <td>
-                                <div class="font-bold text-gray-900">{{ $landowner->full_name }}</div>
-                                <div class="text-xs text-gray-500">Status: {{ $landowner->registered_owner_status_label }}</div>
+                                <a href="{{ route('staff.records.landowners.show', $landowner) }}" class="landowner-name">{{ $landowner->full_name }}</a>
+                                <div class="landowner-meta">{{ $landowner->registered_owner_status_label }}</div>
                                 @if ($landowner->registered_owner_status === \App\Models\Landowner::STATUS_MARRIED)
-                                    <div class="text-xs text-gray-500">Spouse: {{ $landowner->spouse_name ?? 'Not encoded' }}</div>
+                                    <div class="landowner-meta">Spouse: {{ $landowner->spouse_name ?? 'Not encoded' }}</div>
                                 @endif
-                                <div class="text-xs text-gray-500">Landowner ID: {{ $landowner->id }}</div>
-                            </td>
-                            <td>{{ $landowner->contact_number ?? 'N/A' }}</td>
-                            <td>{{ $landowner->address_line ?? 'N/A' }}</td>
-                            <td>
-                                <div>{{ $landowner->municipality ?? 'N/A' }}</div>
-                                <div class="text-xs text-gray-500">{{ $landowner->barangay ?? 'N/A' }}</div>
+                                <div class="landowner-meta">Record ID {{ $landowner->id }}</div>
                             </td>
                             <td>
-                                @php
-                                    $activeArea = (float) ($landowner->active_landholding_area_hectares ?? 0);
-                                    $activeCount = (int) ($landowner->active_landholding_count ?? 0);
-                                    $remainingArea = max(0, ($fiveHectareLimit ?? 5) - $activeArea);
-                                    $hectareBadge = $activeArea > ($fiveHectareLimit ?? 5)
-                                        ? 'staff-badge-red'
-                                        : ($activeArea >= 4.5 ? 'staff-badge-amber' : 'staff-badge-green');
-                                    $hectareStatus = $activeArea > ($fiveHectareLimit ?? 5)
-                                        ? 'Over limit'
-                                        : ($activeArea >= 4.5 ? 'Near limit' : 'Within limit');
-                                @endphp
-
-                                <div class="font-black text-gray-950">{{ number_format($activeArea, 4) }} ha</div>
-                                <div class="mt-1 text-xs text-gray-500">{{ $activeCount }} active landholding record(s)</div>
-                                <div class="mt-2 flex flex-wrap items-center gap-2">
-                                    <span class="staff-badge {{ $hectareBadge }}">{{ $hectareStatus }}</span>
-                                    <span class="text-xs font-bold text-gray-500">{{ number_format($remainingArea, 4) }} ha remaining</span>
+                                <div class="font-semibold text-gray-900">{{ $landowner->contact_number ?? 'No contact number' }}</div>
+                                <div class="landowner-meta">{{ $landowner->address_line ?? 'No street address' }}</div>
+                                <div class="landowner-meta">{{ $landowner->barangay ?? 'N/A' }}, {{ $landowner->municipality ?? 'N/A' }}</div>
+                            </td>
+                            <td>
+                                <div class="landholding-summary">
+                                    <div class="landholding-area">{{ number_format($activeArea, 4) }} ha</div>
+                                    <div class="landowner-meta">{{ $activeCount }} active landholding record(s)</div>
+                                    <div class="flex flex-wrap items-center gap-2">
+                                        <span class="staff-badge {{ $hectareBadge }}">{{ $hectareStatus }}</span>
+                                        <span class="text-xs font-bold text-gray-500">{{ number_format($remainingArea, 4) }} ha remaining</span>
+                                    </div>
                                 </div>
                             </td>
                             <td>
                                 @if ($landowner->user)
-                                    <div class="font-bold text-gray-900">{{ $landowner->user->name }}</div>
-                                    <div class="text-xs text-gray-500">{{ $landowner->user->email }}</div>
+                                    <div class="font-semibold text-gray-900">{{ $landowner->user->name }}</div>
+                                    <div class="landowner-meta">{{ $landowner->user->email ?? $landowner->user->username ?? 'Linked account' }}</div>
                                     <span class="staff-badge mt-2 {{ $landowner->user->is_active ? 'staff-badge-green' : 'staff-badge-red' }}">
-                                        {{ $landowner->user->is_active ? 'Active' : 'Inactive' }}
+                                        {{ $landowner->user->is_active ? 'Active account' : 'Inactive account' }}
                                     </span>
                                 @else
                                     <span class="staff-badge staff-badge-slate">Not linked</span>
                                 @endif
                             </td>
                             <td class="whitespace-nowrap">{{ $landowner->created_at?->timezone('Asia/Manila')->format('M d, Y') ?? 'N/A' }}</td>
-                            <td class="whitespace-nowrap">
-                                <a href="{{ route('staff.records.landowners.show', $landowner) }}" class="staff-button staff-button-light">
-                                    View
-                                </a>
+                            <td class="staff-table-action">
+                                <div class="staff-table-action-group">
+                                    <a href="{{ route('staff.records.landowners.show', $landowner) }}" class="staff-button staff-button-light">
+                                    Open
+                                        <i class="fa-solid fa-arrow-right"></i>
+                                    </a>
+                                </div>
                             </td>
                         </tr>
                     @empty
-                        <tr><td colspan="8" class="py-8 text-center text-gray-500">No landowner records found.</td></tr>
+                        <tr><td colspan="6" class="py-8 text-center text-gray-500">No landowner records found.</td></tr>
                     @endforelse
                 </tbody>
             </table>
         </div>
+
         <div class="border-t border-gray-200 px-5 py-4">{{ $landowners->withQueryString()->links() }}</div>
     </section>
 </x-staff-shell>

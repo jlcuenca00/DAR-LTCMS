@@ -1,0 +1,448 @@
+
+============================================================
+PROJECT VERSION
+============================================================
+Branch: main
+Commit: 1d578d7
+
+============================================================
+CORE SOFTWARE VERSIONS
+============================================================
+Laravel Framework [32m12.50.0[39m
+PHP 8.4.16 (cli) (built: Dec 17 2025 10:33:12) (ZTS Visual C++ 2022 x64)
+Copyright (c) The PHP Group
+[32mComposer[39m version [33m2.8.12[39m 2025-09-19 13:41:59
+v22.18.0
+11.18.0
+
+============================================================
+IMPORTANT COMPOSER PACKAGES
+============================================================
+
+[laravel/framework]
+Not installed
+
+[laravel/breeze]
+Not installed
+
+[laravel/sanctum]
+Not installed
+
+[laravel/tinker]
+Not installed
+
+[spatie/laravel-permission]
+Not installed
+
+============================================================
+IMPORTANT FRONTEND PACKAGES
+============================================================
+├── @tailwindcss/forms@0.5.11
+├── @tailwindcss/vite@4.2.1
+├── alpinejs@3.15.8
+├── axios@1.13.5
+├── laravel-vite-plugin@2.1.0
+├── tailwindcss@3.4.19
+└── vite@7.3.1
+
+============================================================
+SAFE ENVIRONMENT SETTINGS
+============================================================
+APP_ENV=local
+APP_URL=http://127.0.0.1:8000/
+DB_CONNECTION=pgsql
+SESSION_DRIVER=file
+FILESYSTEM_DISK=local
+QUEUE_CONNECTION=database
+CACHE_STORE=database
+MAIL_MAILER=log
+
+============================================================
+LARAVEL APPLICATION INFORMATION
+============================================================
+
+  [32;1mEnvironment[39;22m [90m................................................................[39m  
+  Application Name [90m...................................................[39m Laravel  
+  Laravel Version [90m....................................................[39m 12.50.0  
+  PHP Version [90m.........................................................[39m 8.4.16  
+  Composer Version [90m....................................................[39m 2.8.12  
+  Environment [90m..........................................................[39m local  
+  Debug Mode [90m.........................................................[39m [33;1mENABLED[39;22m  
+  URL [90m........................................................[39m 127.0.0.1:8000/  
+  Maintenance Mode [90m.......................................................[39m OFF  
+  Timezone [90m.......................................................[39m Asia/Manila  
+  Locale [90m..................................................................[39m en  
+
+  [32;1mCache[39;22m [90m......................................................................[39m  
+  Config [90m..........................................................[39m [33;1mNOT CACHED[39;22m  
+  Events [90m..........................................................[39m [33;1mNOT CACHED[39;22m  
+  Routes [90m..........................................................[39m [33;1mNOT CACHED[39;22m  
+  Views [90m...............................................................[39m [32;1mCACHED[39;22m  
+
+  [32;1mDrivers[39;22m [90m....................................................................[39m  
+  Broadcasting [90m...........................................................[39m log  
+  Cache [90m.............................................................[39m database  
+  Database [90m.............................................................[39m pgsql  
+  Logs [90m........................................................[39m [33;1mstack[39;22m [90;1m/[39;22m single  
+  Mail [90m...................................................................[39m log  
+  Queue [90m.............................................................[39m database  
+  Session [90m...............................................................[39m file  
+
+  [32;1mStorage[39;22m [90m....................................................................[39m  
+  C:\Users\dekla\DAR-iLAND\public\storage [90m.............................[39m [32;1mLINKED[39;22m  
+
+
+============================================================
+DATABASE INFORMATION AND TABLE COUNTS
+============================================================
+
+  [32;1mPostgreSQL[39;22m [90m............................................................[39m 18.1  
+  Connection [90m...........................................................[39m pgsql  
+  Database [90m.........................................................[39m dar_iland  
+  Host [90m.............................................................[39m 127.0.0.1  
+  Port [90m..................................................................[39m 5432  
+  Username [90m.........................................................[39m dar_admin  
+  URL [90m........................................................................[39m  
+  Open Connections [90m.........................................................[39m 9  
+  Tables [90m..................................................................[39m 24  
+
+  [41;1m RuntimeException [49;22m
+
+[39;1m  The "intl" PHP extension is required to use the [format] method.[39;22m
+
+  at [32mC:\Users\dekla\DAR-iLAND\vendor\laravel\framework\src\Illuminate\Support\Number.php[39m:[32m443[39m
+    439▕     {
+    440▕         if (! extension_loaded('intl')) {
+    441▕             $method = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 2)[1]['function'];
+    442▕ 
+  ➜ 443▕             throw new RuntimeException('The "intl" PHP extension is required to use the ['.$method.'] method.');
+    444▕         }
+    445▕     }
+    446▕ }
+    447▕
+
+  [33m1   [39m[39;1mC:\Users\dekla\DAR-iLAND\vendor\laravel\framework\src\Illuminate\Support\Number.php[39;22m:[39;1m38[39;22m
+  [90m    Illuminate\Support\Number::ensureIntlExtensionIsInstalled()[39m
+
+  [33m2   [39m[39;1mC:\Users\dekla\DAR-iLAND\vendor\laravel\framework\src\Illuminate\Support\Number.php[39;22m:[39;1m216[39;22m
+  [90m    Illuminate\Support\Number::format()[39m
+
+
+  [32;1mPostgreSQL[39;22m [90m............................................................[39m 18.1  
+  Connection [90m...........................................................[39m pgsql  
+  Database [90m.........................................................[39m dar_iland  
+  Host [90m.............................................................[39m 127.0.0.1  
+  Port [90m..................................................................[39m 5432  
+  Username [90m.........................................................[39m dar_admin  
+  URL [90m........................................................................[39m  
+  Open Connections [90m.........................................................[39m 9  
+  Tables [90m..................................................................[39m 24  
+
+  [41;1m RuntimeException [49;22m
+
+[39;1m  The "intl" PHP extension is required to use the [format] method.[39;22m
+
+  at [32mC:\Users\dekla\DAR-iLAND\vendor\laravel\framework\src\Illuminate\Support\Number.php[39m:[32m443[39m
+    439▕     {
+    440▕         if (! extension_loaded('intl')) {
+    441▕             $method = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 2)[1]['function'];
+    442▕ 
+  ➜ 443▕             throw new RuntimeException('The "intl" PHP extension is required to use the ['.$method.'] method.');
+    444▕         }
+    445▕     }
+    446▕ }
+    447▕
+
+  [33m1   [39m[39;1mC:\Users\dekla\DAR-iLAND\vendor\laravel\framework\src\Illuminate\Support\Number.php[39;22m:[39;1m38[39;22m
+  [90m    Illuminate\Support\Number::ensureIntlExtensionIsInstalled()[39m
+
+  [33m2   [39m[39;1mC:\Users\dekla\DAR-iLAND\vendor\laravel\framework\src\Illuminate\Support\Number.php[39;22m:[39;1m216[39;22m
+  [90m    Illuminate\Support\Number::format()[39m
+
+Unable to run artisan db:show
+
+============================================================
+MIGRATION COUNT
+============================================================
+Migration files: 47
+
+============================================================
+QUEUE AND FILE STORAGE CONFIGURATION
+============================================================
+Queue connection: database
+Filesystem disk: local
+Session driver: file
+Cache store: database
+Mail transport: log
+
+============================================================
+NOTIFICATION CLASSES
+============================================================
+Notification class count: 0
+
+============================================================
+QUEUED CLASSES AND JOBS
+============================================================
+Job files: 0
+
+Classes implementing ShouldQueue:
+
+============================================================
+SCHEDULED TASKS
+============================================================
+
+  [37;44m INFO [39;49m No scheduled tasks have been defined.  
+
+
+============================================================
+AUTHORIZATION AND ROLE-BASED ACCESS
+============================================================
+Policies:
+
+Middleware:
+app/Http/Middleware/EnsureUserIsActive.php
+app/Http/Middleware/RoleMiddleware.php
+
+Role, policy, and authorization references:
+app/Http/Controllers/Auth/AuthenticatedSessionController.php:33:    return match ($user?->role) {
+app/Http/Controllers/Staff/LandownerRecordController.php:47:            ->where('role', 'landowner')
+app/Http/Controllers/Staff/LandownerRecordController.php:109:            ->where('role', 'landowner')
+app/Http/Controllers/Staff/UserManagementController.php:19:            'role' => ['nullable', 'string', Rule::in(User::ROLES)],
+app/Http/Controllers/Staff/UserManagementController.php:27:        if (! empty($filters['role'])) {
+app/Http/Controllers/Staff/UserManagementController.php:28:            $usersQuery->where('role', $filters['role']);
+app/Http/Controllers/Staff/UserManagementController.php:68:            'role' => ['required', 'string', Rule::in(User::ROLES)],
+app/Http/Controllers/Staff/UserManagementController.php:73:        if ($validated['role'] === User::ROLE_LANDOWNER && empty($validated['landowner_id'])) {
+app/Http/Controllers/Staff/UserManagementController.php:99:                'role' => $validated['role'],
+app/Http/Controllers/Staff/UserManagementController.php:103:            if ($validated['role'] === User::ROLE_LANDOWNER && ! empty($validated['landowner_id'])) {
+app/Http/Controllers/Staff/UserManagementController.php:117:                    'created_user_role' => $user->role,
+app/Http/Controllers/Staff/UserManagementController.php:171:            'role' => ['required', 'string', Rule::in(User::ROLES)],
+app/Http/Controllers/Staff/UserManagementController.php:176:        if ($user->id === $currentUser?->id && $validated['role'] !== $user->role) {
+app/Http/Controllers/Staff/UserManagementController.php:180:                    'role' => 'You cannot change your own role.',
+app/Http/Controllers/Staff/UserManagementController.php:194:        if ($validated['role'] === User::ROLE_LANDOWNER && empty($validated['landowner_id'])) {
+app/Http/Controllers/Staff/UserManagementController.php:218:                'role' => $user->role,
+app/Http/Controllers/Staff/UserManagementController.php:227:                'role' => $validated['role'],
+app/Http/Controllers/Staff/UserManagementController.php:242:            if ($user->role === User::ROLE_LANDOWNER && ! empty($validated['landowner_id'])) {
+app/Http/Controllers/Staff/UserManagementController.php:262:                        'role' => $user->role,
+app/Http/Middleware/RoleMiddleware.php:16:    public function handle($request, \Closure $next, ...$roles)
+app/Http/Middleware/RoleMiddleware.php:22:    if (!in_array($user->role, $roles, true)) {
+app/Http/Requests/Auth/LoginRequest.php:17:    public function authorize(): bool
+app/Models/SystemNotification.php:53:            if ($viewer->role === User::ROLE_STAFF && Route::has('staff.applications.show')) {
+app/Models/SystemNotification.php:57:            if ($viewer->role === User::ROLE_LANDOWNER) {
+app/Models/SystemNotification.php:69:            if ($viewer->role === User::ROLE_STAFF && Route::has('staff.source-record-packages.show')) {
+app/Models/SystemNotification.php:73:            if ($viewer->role === User::ROLE_GEODETIC && Route::has('geodetic.parcels.index')) {
+app/Models/SystemNotification.php:79:            if ($viewer->role === User::ROLE_STAFF && Route::has('staff.records.parcels.show')) {
+app/Models/SystemNotification.php:83:            if ($viewer->role === User::ROLE_GEODETIC && Route::has('geodetic.parcels.show')) {
+app/Models/SystemNotification.php:87:            if ($viewer->role === User::ROLE_LANDOWNER && Route::has('landowner.parcels.show')) {
+app/Models/User.php:35:        'role',
+app/Models/User.php:80:        return $this->role === self::ROLE_STAFF;
+app/Models/User.php:85:        return $this->role === self::ROLE_LANDOWNER;
+app/Models/User.php:90:        return $this->role === self::ROLE_GEODETIC;
+app/Services/NotificationService.php:50:            ->where('role', User::ROLE_STAFF)
+app/Services/NotificationService.php:61:            ->where('role', User::ROLE_GEODETIC)
+routes/web.php:50:        ->middleware('role:staff')
+routes/web.php:54:        ->middleware('role:landowner')
+routes/web.php:58:        ->middleware('role:geodetic')
+routes/web.php:62:Route::middleware(['auth', 'role:staff'])
+routes/web.php:201:Route::middleware(['auth', 'role:landowner'])
+routes/web.php:219:Route::middleware(['auth', 'role:geodetic'])
+database/migrations/2026_02_24_155515_add_role_to_users_table.php:11:            $table->string('role', 20)->default('landowner')->index();
+database/migrations/2026_02_24_155515_add_role_to_users_table.php:19:            $table->dropColumn('role');
+database/migrations/2026_02_24_195857_create_landowners_table.php:30:        // Optional link to login account (for Landowner role)
+database/migrations/2026_05_05_143435_add_is_active_to_users_table.php:17:                ->after('role')
+
+============================================================
+MAP AND EXTERNAL SERVICE REFERENCES
+============================================================
+app/Http/Controllers/Geodetic/GeodeticDashboardController.php:15:            ->whereNotNull('geometry_geojson')
+app/Http/Controllers/Geodetic/ParcelMapController.php:14:            ->whereNotNull('geometry_geojson')
+app/Http/Controllers/Geodetic/ParcelMapController.php:20:                $geometry = $parcel->geometry_geojson;
+app/Http/Controllers/Landowner/LandownerDashboardController.php:52:                $query->whereNotNull('geometry_geojson');
+app/Http/Controllers/Landowner/ParcelMapController.php:23:                    $query->whereNotNull('geometry_geojson');
+app/Http/Controllers/Landowner/ParcelMapController.php:34:                $geometry = $parcel->geometry_geojson;
+app/Http/Controllers/Staff/LegacyRecordController.php:123:        if (! empty($data['source_geometry_geojson'])) {
+app/Http/Controllers/Staff/LegacyRecordController.php:124:            $data['source_geometry_geojson'] = $this->decodeGeoJson($data['source_geometry_geojson']);
+app/Http/Controllers/Staff/LegacyRecordController.php:239:            'geometry_geojson' => ['nullable', 'string', 'max:200000'],
+app/Http/Controllers/Staff/LegacyRecordController.php:249:        if (! empty($data['geometry_geojson'])) {
+app/Http/Controllers/Staff/LegacyRecordController.php:250:            $geometry = $this->decodeGeoJson($data['geometry_geojson']);
+app/Http/Controllers/Staff/LegacyRecordController.php:261:                'geometry_geojson' => $geometry,
+app/Http/Controllers/Staff/LegacyRecordController.php:336:            'source_geometry_geojson' => ['nullable', 'string', 'max:200000'],
+app/Http/Controllers/Staff/LegacyRecordController.php:419:                'source_geometry_geojson' => 'The geometry must be valid GeoJSON with type and coordinates.',
+app/Http/Controllers/Staff/LegacyRecordController.php:420:                'geometry_geojson' => 'The geometry must be valid GeoJSON with type and coordinates.',
+app/Http/Controllers/Staff/ParcelMapController.php:14:            ->whereNotNull('geometry_geojson')
+app/Http/Controllers/Staff/ParcelMapController.php:20:                $geometry = $parcel->geometry_geojson;
+app/Http/Controllers/Staff/RecordSearchController.php:208:            'geometry_geojson' => ['nullable', 'string', 'max:200000'],
+app/Http/Controllers/Staff/RecordSearchController.php:218:        $data['geometry_geojson'] = $this->decodeParcelGeoJson($data['geometry_geojson'] ?? null);
+app/Http/Controllers/Staff/RecordSearchController.php:238:                'has_geometry' => ! empty($parcel->geometry_geojson),
+app/Http/Controllers/Staff/RecordSearchController.php:292:            'geometry_geojson' => ['nullable', 'string', 'max:200000'],
+app/Http/Controllers/Staff/RecordSearchController.php:298:        $data['geometry_geojson'] = $this->decodeParcelGeoJson($data['geometry_geojson'] ?? null);
+app/Http/Controllers/Staff/RecordSearchController.php:319:                'has_geometry' => ! empty($parcel->geometry_geojson),
+app/Http/Controllers/Staff/RecordSearchController.php:398:                'geometry_geojson' => 'The geometry must be valid GeoJSON. Use the polygon builder or provide JSON with type and coordinates.',
+app/Http/Controllers/Staff/RecordSearchController.php:404:                'geometry_geojson' => 'Only GeoJSON Polygon geometry is supported for parcel records.',
+app/Http/Controllers/Staff/SourceRecordPackageController.php:81:        if (! empty($data['source_geometry_geojson'])) {
+app/Http/Controllers/Staff/SourceRecordPackageController.php:82:            $data['source_geometry_geojson'] = $this->decodeGeoJson($data['source_geometry_geojson']);
+app/Http/Controllers/Staff/SourceRecordPackageController.php:196:        if (! empty($data['source_geometry_geojson'])) {
+app/Http/Controllers/Staff/SourceRecordPackageController.php:197:            $data['source_geometry_geojson'] = $this->decodeGeoJson($data['source_geometry_geojson']);
+app/Http/Controllers/Staff/SourceRecordPackageController.php:199:            $data['source_geometry_geojson'] = null;
+app/Http/Controllers/Staff/SourceRecordPackageController.php:222:                    'source_geometry_geojson' => $record->record_type === LegacyRecord::TYPE_PARCEL_SOURCE ? $sourceRecordPackage->source_geometry_geojson : null,
+app/Http/Controllers/Staff/SourceRecordPackageController.php:307:            'geometry_geojson' => ['nullable', 'string', 'max:200000'],
+app/Http/Controllers/Staff/SourceRecordPackageController.php:317:        if (! empty($data['geometry_geojson'])) {
+app/Http/Controllers/Staff/SourceRecordPackageController.php:318:            $geometry = $this->decodeGeoJson($data['geometry_geojson']);
+app/Http/Controllers/Staff/SourceRecordPackageController.php:329:                'geometry_geojson' => $geometry,
+app/Http/Controllers/Staff/SourceRecordPackageController.php:408:            Storage::disk('public')->delete($sourceRecordPackage->source_file_path);
+app/Http/Controllers/Staff/SourceRecordPackageController.php:512:            'source_geometry_geojson' => $recordType === LegacyRecord::TYPE_PARCEL_SOURCE
+app/Http/Controllers/Staff/SourceRecordPackageController.php:513:                ? $package->source_geometry_geojson
+app/Http/Controllers/Staff/SourceRecordPackageController.php:565:            'source_geometry_geojson' => ['nullable', 'string', 'max:200000'],
+app/Http/Controllers/Staff/SourceRecordPackageController.php:600:            'source_geometry_geojson' => ['nullable', 'string', 'max:200000'],
+app/Http/Controllers/Staff/SourceRecordPackageController.php:620:            Storage::disk('public')->delete($package->source_file_path);
+app/Http/Controllers/Staff/SourceRecordPackageController.php:645:                'source_geometry_geojson' => 'The geometry must be valid GeoJSON with type and coordinates.',
+app/Http/Controllers/Staff/SourceRecordPackageController.php:646:                'geometry_geojson' => 'The geometry must be valid GeoJSON with type and coordinates.',
+app/Http/Controllers/Staff/SourceRecordPackageImportController.php:38:        'source_geometry_geojson',
+app/Http/Controllers/Staff/SourceRecordPackageImportController.php:235:                    'source_geometry_geojson' => $data['source_geometry_geojson_decoded'],
+app/Http/Controllers/Staff/SourceRecordPackageImportController.php:399:        $data['source_geometry_geojson_decoded'] = null;
+app/Http/Controllers/Staff/SourceRecordPackageImportController.php:401:        if ($data['source_geometry_geojson'] !== '') {
+app/Http/Controllers/Staff/SourceRecordPackageImportController.php:402:            $decoded = json_decode($data['source_geometry_geojson'], true);
+app/Http/Controllers/Staff/SourceRecordPackageImportController.php:410:                $errors[] = 'source_geometry_geojson must be valid GeoJSON with type and coordinates.';
+app/Http/Controllers/Staff/SourceRecordPackageImportController.php:412:                $data['source_geometry_geojson_decoded'] = $decoded;
+app/Http/Controllers/Staff/SourceRecordPackageImportController.php:489:            'source_geometry_geojson' => $recordType === LegacyRecord::TYPE_PARCEL_SOURCE
+app/Http/Controllers/Staff/SourceRecordPackageImportController.php:490:                ? $package->source_geometry_geojson
+app/Models/LegacyRecord.php:68:        'source_geometry_geojson',
+app/Models/LegacyRecord.php:90:        'source_geometry_geojson' => 'array',
+app/Models/Parcel.php:46:        'geometry_geojson',
+app/Models/Parcel.php:54:        'geometry_geojson' => 'array',
+app/Models/SourceRecordPackage.php:45:        'source_geometry_geojson',
+app/Models/SourceRecordPackage.php:64:        'source_geometry_geojson' => 'array',
+resources/views/auth/verify-email.blade.php:18:                    {{ __('Resend Verification Email') }}
+resources/views/dashboards/geodetic.blade.php:326:                                            <span class="geo-badge {{ $parcel->geometry_geojson ? 'geo-badge-has-geometry' : 'geo-badge-needs-geometry' }}">
+resources/views/dashboards/geodetic.blade.php:327:                                                {{ $parcel->geometry_geojson ? 'Mapped' : 'No Geometry' }}
+resources/views/geodetic/maps/parcel-map.blade.php:8:            href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+resources/views/geodetic/maps/parcel-map.blade.php:164:            .leaflet-control-zoom a {
+resources/views/geodetic/maps/parcel-map.blade.php:171:            .leaflet-control-zoom a:hover {
+resources/views/geodetic/maps/parcel-map.blade.php:175:            .leaflet-control-attribution {
+resources/views/geodetic/maps/parcel-map.blade.php:181:            .leaflet-control-attribution a {
+resources/views/geodetic/maps/parcel-map.blade.php:185:            .leaflet-popup-content-wrapper,
+resources/views/geodetic/maps/parcel-map.blade.php:186:            .leaflet-popup-tip {
+resources/views/geodetic/maps/parcel-map.blade.php:193:            .leaflet-popup-content {
+resources/views/geodetic/maps/parcel-map.blade.php:321:            src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+resources/views/geodetic/maps/parcel-map.blade.php:341:                    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+resources/views/geodetic/parcels/index.blade.php:212:                                    <span class="geo-badge {{ $holding->parcel?->geometry_geojson ? 'geo-badge-active' : 'geo-badge-muted' }}">
+resources/views/geodetic/parcels/index.blade.php:213:                                        {{ $holding->parcel?->geometry_geojson ? 'Mapped' : 'No Geometry' }}
+resources/views/geodetic/parcels/show.blade.php:333:                <span class="geo-badge {{ $parcel->geometry_geojson ? 'geo-badge-green' : 'geo-badge-gray' }}">
+resources/views/geodetic/parcels/show.blade.php:334:                    {{ $parcel->geometry_geojson ? 'Mapped Geometry' : 'No Geometry' }}
+resources/views/geodetic/parcels/show.blade.php:423:                    <span class="geo-badge {{ $parcel->geometry_geojson ? 'geo-badge-green' : 'geo-badge-gray' }}">
+resources/views/geodetic/parcels/show.blade.php:424:                        {{ $parcel->geometry_geojson['type'] ?? 'N/A' }}
+resources/views/geodetic/parcels/show.blade.php:431:                        <dd class="geo-field-value">{{ $parcel->geometry_geojson['type'] ?? 'N/A' }}</dd>
+resources/views/geodetic/parcels/show.blade.php:436:                        <dd class="geo-field-value">{{ $parcel->geometry_geojson ? 'Available' : 'Not encoded' }}</dd>
+resources/views/geodetic/parcels/show.blade.php:454:                            <span><i class="fa-solid fa-code"></i> View raw GeoJSON</span>
+resources/views/geodetic/parcels/show.blade.php:457:                        <pre class="geo-raw-code">{{ json_encode($parcel->geometry_geojson, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) }}</pre>
+resources/views/landowner/maps/parcel-map.blade.php:8:            href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+resources/views/landowner/maps/parcel-map.blade.php:164:            .leaflet-control-zoom a {
+resources/views/landowner/maps/parcel-map.blade.php:171:            .leaflet-control-zoom a:hover {
+resources/views/landowner/maps/parcel-map.blade.php:175:            .leaflet-control-attribution {
+resources/views/landowner/maps/parcel-map.blade.php:181:            .leaflet-control-attribution a {
+resources/views/landowner/maps/parcel-map.blade.php:185:            .leaflet-popup-content-wrapper,
+resources/views/landowner/maps/parcel-map.blade.php:186:            .leaflet-popup-tip {
+resources/views/landowner/maps/parcel-map.blade.php:193:            .leaflet-popup-content {
+resources/views/landowner/maps/parcel-map.blade.php:321:            src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+resources/views/landowner/maps/parcel-map.blade.php:341:                    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+resources/views/landowner/parcels/index.blade.php:252:                                                {{ $parcel?->geometry_geojson ? 'Available' : 'Not mapped' }}
+resources/views/landowner/parcels/show.blade.php:272:                    <span class="lo-pill neutral">{{ $parcel->geometry_geojson ? 'Mapped Geometry' : 'No Geometry' }}</span>
+resources/views/landowner/parcels/show.blade.php:365:                    <span class="lo-pill">{{ $parcel->geometry_geojson ? 'Available' : 'Not mapped' }}</span>
+resources/views/landowner/parcels/show.blade.php:372:                            <p class="lo-info-value">{{ $parcel->geometry_geojson ? 'Available' : 'Not yet encoded' }}</p>
+resources/views/profile/partials/account-settings-content.blade.php:54:                                        <button form="send-verification" class="profile-inline-button">Resend verification email</button>.
+resources/views/staff/legacy-records/show.blade.php:17:        $geometryValue = $record->source_geometry_geojson;
+resources/views/staff/legacy-records/show.blade.php:639:                                        <textarea name="geometry_geojson" rows="6" class="w-full rounded-lg border-gray-300 font-mono text-xs shadow-sm focus:border-green-600 focus:ring-green-600">{{ old('geometry_geojson', $geometryDisplay ?? '') }}</textarea>
+resources/views/staff/maps/parcel-map.blade.php:9:            href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+resources/views/staff/maps/parcel-map.blade.php:233:            .leaflet-container {
+resources/views/staff/maps/parcel-map.blade.php:238:            .leaflet-tile-pane {
+resources/views/staff/maps/parcel-map.blade.php:242:            .leaflet-control-zoom {
+resources/views/staff/maps/parcel-map.blade.php:249:            .leaflet-control-zoom a {
+resources/views/staff/maps/parcel-map.blade.php:256:            .leaflet-control-zoom a:hover {
+resources/views/staff/maps/parcel-map.blade.php:261:            .leaflet-control-attribution {
+resources/views/staff/maps/parcel-map.blade.php:268:            .leaflet-control-attribution a {
+resources/views/staff/maps/parcel-map.blade.php:272:            .leaflet-popup-content-wrapper,
+resources/views/staff/maps/parcel-map.blade.php:273:            .leaflet-popup-tip {
+resources/views/staff/maps/parcel-map.blade.php:280:            .leaflet-popup-content-wrapper {
+resources/views/staff/maps/parcel-map.blade.php:284:            .leaflet-popup-content {
+resources/views/staff/maps/parcel-map.blade.php:289:            .leaflet-popup-content p {
+resources/views/staff/maps/parcel-map.blade.php:470:            src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+resources/views/staff/maps/parcel-map.blade.php:493:                    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+resources/views/staff/partials/geojson-polygon-editor.blade.php:2:    $geoFieldName = $fieldName ?? 'geometry_geojson';
+resources/views/staff/partials/geojson-polygon-editor.blade.php:15:<div class="geojson-helper" data-geojson-helper data-target="{{ $geoFieldId }}">
+resources/views/staff/partials/geojson-polygon-editor.blade.php:16:    <div class="geojson-toolbar">
+resources/views/staff/partials/geojson-polygon-editor.blade.php:18:            <p class="geojson-title">Parcel boundary helper</p>
+resources/views/staff/partials/geojson-polygon-editor.blade.php:19:            <p class="geojson-copy">Enter longitude and latitude points. The helper creates the valid Polygon format used by the map field.</p>
+resources/views/staff/partials/geojson-polygon-editor.blade.php:21:        <div class="geojson-actions">
+resources/views/staff/partials/geojson-polygon-editor.blade.php:22:            <button type="button" class="geojson-button" data-geojson-add-point>
+resources/views/staff/partials/geojson-polygon-editor.blade.php:25:            <button type="button" class="geojson-button" data-geojson-sample>
+resources/views/staff/partials/geojson-polygon-editor.blade.php:28:            <button type="button" class="geojson-button primary" data-geojson-build>
+resources/views/staff/partials/geojson-polygon-editor.blade.php:34:    <div class="geojson-point-grid" data-geojson-points>
+resources/views/staff/partials/geojson-polygon-editor.blade.php:36:            <div class="geojson-point-row">
+resources/views/staff/partials/geojson-polygon-editor.blade.php:38:                <input type="number" step="0.000001" placeholder="Longitude / X" data-geojson-lng>
+resources/views/staff/partials/geojson-polygon-editor.blade.php:39:                <input type="number" step="0.000001" placeholder="Latitude / Y" data-geojson-lat>
+resources/views/staff/partials/geojson-polygon-editor.blade.php:44:    <div class="geojson-textarea-wrap">
+resources/views/staff/partials/geojson-polygon-editor.blade.php:45:        <div class="geojson-textarea-header">
+resources/views/staff/partials/geojson-polygon-editor.blade.php:47:            <div class="geojson-actions compact">
+resources/views/staff/partials/geojson-polygon-editor.blade.php:48:                <button type="button" class="geojson-button" data-geojson-format>
+resources/views/staff/partials/geojson-polygon-editor.blade.php:51:                <button type="button" class="geojson-button" data-geojson-clear>
+resources/views/staff/partials/geojson-polygon-editor.blade.php:59:    <p class="geojson-message" data-geojson-message></p>
+resources/views/staff/partials/geojson-polygon-editor.blade.php:65:        .geojson-helper {
+resources/views/staff/partials/geojson-polygon-editor.blade.php:74:        .geojson-toolbar,
+resources/views/staff/partials/geojson-polygon-editor.blade.php:75:        .geojson-textarea-header {
+resources/views/staff/partials/geojson-polygon-editor.blade.php:82:        .geojson-title {
+resources/views/staff/partials/geojson-polygon-editor.blade.php:89:        .geojson-copy {
+resources/views/staff/partials/geojson-polygon-editor.blade.php:96:        .geojson-actions {
+resources/views/staff/partials/geojson-polygon-editor.blade.php:103:        .geojson-actions.compact {
+resources/views/staff/partials/geojson-polygon-editor.blade.php:107:        .geojson-button {
+resources/views/staff/partials/geojson-polygon-editor.blade.php:123:        .geojson-button:hover {
+resources/views/staff/partials/geojson-polygon-editor.blade.php:128:        .geojson-button.primary {
+resources/views/staff/partials/geojson-polygon-editor.blade.php:134:        .geojson-point-grid {
+resources/views/staff/partials/geojson-polygon-editor.blade.php:139:        .geojson-point-row {
+resources/views/staff/partials/geojson-polygon-editor.blade.php:146:        .geojson-point-row span {
+resources/views/staff/partials/geojson-polygon-editor.blade.php:154:        .geojson-point-row input,
+resources/views/staff/partials/geojson-polygon-editor.blade.php:155:        .geojson-textarea-wrap textarea {
+resources/views/staff/partials/geojson-polygon-editor.blade.php:160:        .geojson-point-row input {
+resources/views/staff/partials/geojson-polygon-editor.blade.php:167:        .geojson-textarea-wrap {
+resources/views/staff/partials/geojson-polygon-editor.blade.php:172:        .geojson-textarea-header span {
+resources/views/staff/partials/geojson-polygon-editor.blade.php:180:        .geojson-message {
+resources/views/staff/partials/geojson-polygon-editor.blade.php:188:        .geojson-message.is-error {
+resources/views/staff/partials/geojson-polygon-editor.blade.php:193:            .geojson-toolbar,
+resources/views/staff/partials/geojson-polygon-editor.blade.php:194:            .geojson-textarea-header,
+resources/views/staff/partials/geojson-polygon-editor.blade.php:195:            .geojson-point-row {
+resources/views/staff/partials/geojson-polygon-editor.blade.php:200:            .geojson-actions {
+resources/views/staff/partials/geojson-polygon-editor.blade.php:204:            .geojson-button {
+resources/views/staff/partials/geojson-polygon-editor.blade.php:212:            document.querySelectorAll('[data-geojson-helper]').forEach(function (editor) {
+resources/views/staff/partials/geojson-polygon-editor.blade.php:214:                const pointsWrap = editor.querySelector('[data-geojson-points]');
+resources/views/staff/partials/geojson-polygon-editor.blade.php:215:                const message = editor.querySelector('[data-geojson-message]');
+
+============================================================
+DEPLOYMENT CONFIGURATION FILES
+============================================================
+
+============================================================
+LOCALLY AVAILABLE WEB SERVERS
+============================================================
+
+============================================================
+UPLOAD AND GENERATED FILE DIRECTORIES
+============================================================
+public
+public/build
+public/build/assets
+public/geojson
+public/images
+storage/app
+storage/app/private
+storage/app/private/application-documents
+storage/app/private/application-documents/1
+storage/app/private/application-documents/2
+storage/app/private/application-documents/3
+storage/app/private/application-documents/4
+storage/app/private/application-documents/7
+storage/app/private/application-documents/8
+storage/app/private/application-documents/9
+storage/app/public
+
+============================================================
+REPORT COMPLETE
+============================================================
+No passwords, APP_KEY values, tokens, or database credentials were intentionally included.

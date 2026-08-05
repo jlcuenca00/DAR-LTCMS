@@ -65,12 +65,16 @@ class ApplicationClearanceService
             $reviewOfficerName = $reviewOfficer?->name
                 ?? ('User #' . ($application->reviewed_by ?? $userId));
 
-            $decisionYear = ($application->reviewed_at ?? now())->format('Y');
-            $clearanceNumber = sprintf(
-                'DAR-CLR-%s-%06d',
-                $decisionYear,
-                $application->id
-            );
+            $decisionYear = ($application->date_of_clearance_release ?? $application->reviewed_at ?? now())->format('Y');
+            $pageNumber = 1;
+            $sequence = (int) $application->id;
+
+            do {
+                $clearanceNumber = sprintf('1803-%s-%04d (%d)', $decisionYear, $sequence, $pageNumber);
+                $sequence++;
+            } while (ApplicationClearance::where('clearance_number', $clearanceNumber)
+                ->where('land_transfer_application_id', '<>', $application->id)
+                ->exists());
 
                         $clearance = ApplicationClearance::updateOrCreate(
                 [
@@ -80,8 +84,8 @@ class ApplicationClearanceService
                     'clearance_number' => $clearanceNumber,
                     'decision_status' => $application->status,
                     'application_code' => $application->application_code,
-                    'transferor_name' => $application->transferor_name,
-                    'transferee_name' => $application->transferee_name,
+                    'transferor_name' => $application->transferorDisplayName(),
+                    'transferee_name' => $application->transfereeDisplayName(),
                     'municipality' => $application->municipality,
                     'barangay' => $application->barangay,
                     'total_area_hectares' => $totalArea,

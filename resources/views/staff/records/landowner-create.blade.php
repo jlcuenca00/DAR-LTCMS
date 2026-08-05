@@ -2,12 +2,7 @@
     title="Create Landowner Record"
     active="landowner-records"
 >
-    <x-slot name="actions">
-        <a href="{{ route('staff.records.landowners.index') }}" class="staff-button staff-button-light">
-            <i class="fa-solid fa-arrow-left"></i>
-            Back to Landowner Records
-        </a>
-    </x-slot>
+    
 
     @if ($errors->any())
         <div class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">

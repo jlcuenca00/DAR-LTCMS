@@ -2,12 +2,7 @@
     title="Create User Account"
     active="users"
 >
-    <x-slot name="actions">
-        <a href="{{ route('staff.users.index') }}" class="staff-button staff-button-light">
-            <i class="fa-solid fa-arrow-left"></i>
-            Back to Users
-        </a>
-    </x-slot>
+    
 
     <style>
         .user-editor-wrap {
@@ -589,7 +584,7 @@
                             <span class="user-card-icon"><i class="fa-solid fa-id-card"></i></span>
                             <div>
                                 <h3 class="user-card-title">Login Information</h3>
-                                <p class="user-card-copy">Enter the name and email address used for system login.</p>
+                                <p class="user-card-copy">Enter the name and username used for system login.</p>
                             </div>
                         </div>
                         <div class="user-card-body user-form-grid">
@@ -602,9 +597,9 @@
                             </div>
 
                             <div class="user-field">
-                                <label class="user-label">Email Address</label>
-                                <input type="email" name="email" value="{{ old('email') }}" required class="user-input">
-                                @error('email')
+                                <label class="user-label">Username</label>
+                                <input type="text" name="username" value="{{ old('username') }}" required class="user-input" placeholder="Example: dar_staff01">
+                                @error('username')
                                     <p class="user-error">{{ $message }}</p>
                                 @enderror
                             </div>
@@ -616,7 +611,7 @@
                             <span class="user-card-icon"><i class="fa-solid fa-key"></i></span>
                             <div>
                                 <h3 class="user-card-title">Initial Password</h3>
-                                <p class="user-card-copy">Set the first password for this account.</p>
+                                <p class="user-card-copy">Set a temporary initial password. The user must replace it after the first sign-in.</p>
                             </div>
                         </div>
                         <div class="user-card-body user-form-grid">

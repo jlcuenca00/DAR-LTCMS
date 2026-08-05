@@ -20,14 +20,10 @@
             <section class="profile-panel">
                 <div class="profile-panel-header">
                     <h3 class="profile-panel-title">Profile Information</h3>
-                    <p class="profile-panel-subtitle">Update the name and email address used for your system login.</p>
+                    <p class="profile-panel-subtitle">Update your name and contact email. Your username is managed by authorized DAR staff.</p>
                 </div>
 
                 <div class="profile-panel-body">
-                    <form id="send-verification" method="post" action="{{ route('verification.send') }}">
-                        @csrf
-                    </form>
-
                     <form method="post" action="{{ route('profile.update') }}" class="profile-form">
                         @csrf
                         @method('patch')
@@ -42,22 +38,17 @@
                             </div>
 
                             <div class="profile-field">
-                                <label class="profile-label" for="email">Email Address</label>
-                                <input id="email" name="email" type="email" class="profile-input" value="{{ old('email', $user->email) }}" required autocomplete="username">
+                                <label class="profile-label" for="profile_username">Username</label>
+                                <input id="profile_username" type="text" class="profile-input" value="{{ $user->username }}" readonly aria-readonly="true">
+                                <div class="mt-1 text-xs text-gray-500">Contact authorized DAR staff to change the username.</div>
+                            </div>
+
+                            <div class="profile-field full">
+                                <label class="profile-label" for="email">Email Address (Optional)</label>
+                                <input id="email" name="email" type="email" class="profile-input" value="{{ old('email', $user->email) }}" autocomplete="email">
                                 @error('email')
                                     <div class="profile-error">{{ $message }}</div>
                                 @enderror
-
-                                @if ($user instanceof \Illuminate\Contracts\Auth\MustVerifyEmail && ! $user->hasVerifiedEmail())
-                                    <div class="profile-verify-box">
-                                        Your email address is unverified.
-                                        <button form="send-verification" class="profile-inline-button">Resend verification email</button>.
-
-                                        @if (session('status') === 'verification-link-sent')
-                                            <div class="profile-saved" style="margin-top: 6px;">A new verification link has been sent.</div>
-                                        @endif
-                                    </div>
-                                @endif
                             </div>
                         </div>
 
@@ -77,8 +68,8 @@
 
             <section class="profile-panel">
                 <div class="profile-panel-header">
-                    <h3 class="profile-panel-title">Update Password</h3>
-                    <p class="profile-panel-subtitle">Use a secure password to protect system access and preserve account accountability.</p>
+                    <h3 class="profile-panel-title">Change Password</h3>
+                    <p class="profile-panel-subtitle">Enter your current password, then create a new password for your username-based account.</p>
                 </div>
 
                 <div class="profile-panel-body">
@@ -115,7 +106,7 @@
                         <div class="profile-actions">
                             <button type="submit" class="profile-button">
                                 <i class="fa-solid fa-key"></i>
-                                Save Password
+                                Change Password
                             </button>
 
                             @if (session('status') === 'password-updated')
@@ -130,7 +121,7 @@
         <aside class="profile-panel">
             <div class="profile-panel-header">
                 <h3 class="profile-panel-title">Account Access Notes</h3>
-                <p class="profile-panel-subtitle">Profile changes affect login identity only.</p>
+                <p class="profile-panel-subtitle">Profile changes do not alter your username, role, or permissions.</p>
             </div>
 
             <div class="profile-panel-body">

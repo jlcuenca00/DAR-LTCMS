@@ -3,12 +3,7 @@
     subtitle="Encode a main parcel record for search, review, monitoring, and map visualization."
     active="parcel-records"
 >
-    <x-slot name="actions">
-        <a href="{{ route('staff.records.parcels.index') }}" class="staff-button staff-button-light">
-            <i class="fa-solid fa-arrow-left"></i>
-            Back to Parcel Records
-        </a>
-    </x-slot>
+    
 
     <x-slot name="styles">
         <style>

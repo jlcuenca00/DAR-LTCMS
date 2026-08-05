@@ -11,6 +11,7 @@ use App\Models\SourceRecordPackage;
 use App\Services\AuditLogger;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 
@@ -53,20 +54,21 @@ class ApplicationDocumentController extends Controller
             ->first();
 
         $validated = $request->validate([
-            'file' => [$existingDocument ? 'nullable' : 'required', 'file', 'max:10240'],
+            'file' => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png,webp', 'max:10240'],
             'annex_reference' => ['nullable', 'string', 'max:100'],
             'remarks' => ['nullable', 'string', 'max:2000'],
             'source_record_link' => ['nullable', 'string', 'max:100'],
 
-            'document_reference_number' => ['nullable', 'string', 'max:150'],
 
             'document_metadata' => ['nullable', 'array'],
             'document_metadata.title_number' => ['nullable', 'string', 'max:150'],
             'document_metadata.tax_declaration_number' => ['nullable', 'string', 'max:150'],
             'document_metadata.document_number' => ['nullable', 'string', 'max:150'],
-            'document_metadata.issuing_office' => ['nullable', 'string', 'max:255'],
             'document_metadata.date_issued' => ['nullable', 'date'],
             'document_metadata.reference_lot_or_parcel' => ['nullable', 'string', 'max:255'],
+            'document_metadata.document_owner_names' => ['nullable', 'string', 'max:1500'],
+            'document_metadata.title_owner_names' => ['nullable', 'string', 'max:1500'],
+            'document_metadata.payor_or_owner_name' => ['nullable', 'string', 'max:500'],
 
             // Transfer instrument / deed indexing fields. These are reference details only
             // and do not execute land ownership transfer or registry mutation.
@@ -98,46 +100,57 @@ class ApplicationDocumentController extends Controller
 
         $metadata = $this->cleanMetadata($validated['document_metadata'] ?? []);
 
-        $hasMetadata = filled($validated['document_reference_number'] ?? null) || ! empty($metadata);
+        $hasMetadata = ! empty($metadata);
 
         $documentValues = [
             'annex_reference' => $validated['annex_reference'] ?? null,
             'remarks' => $validated['remarks'] ?? null,
             'source_record_id' => $sourceRecordId,
             'source_record_package_id' => $sourceRecordPackageId,
-            'document_reference_number' => $validated['document_reference_number'] ?? null,
+            'document_reference_number' => null,
             'document_metadata' => $metadata ?: null,
             'metadata_encoded_by' => $hasMetadata ? Auth::id() : null,
             'metadata_encoded_at' => $hasMetadata ? now() : null,
         ];
 
-        if ($request->hasFile('file')) {
-            if ($existingDocument?->file_path && Storage::exists($existingDocument->file_path)) {
-                Storage::delete($existingDocument->file_path);
+        $newFilePath = null;
+        $oldFilePath = $existingDocument?->file_path;
+
+        try {
+            if ($request->hasFile('file')) {
+                $newFilePath = $request->file('file')->store("application-documents/{$application->id}");
+
+                $documentValues['original_filename'] = $request->file('file')->getClientOriginalName();
+                $documentValues['file_path'] = $newFilePath;
+                $documentValues['uploaded_by'] = Auth::id();
+            } elseif ($existingDocument) {
+                $documentValues['original_filename'] = $existingDocument->original_filename;
+                $documentValues['file_path'] = $existingDocument->file_path;
+                $documentValues['uploaded_by'] = $existingDocument->uploaded_by;
             }
 
-            $path = $request->file('file')->store("application-documents/{$application->id}");
+            $document = DB::transaction(fn () => ApplicationDocument::updateOrCreate(
+                [
+                    'land_transfer_application_id' => $application->id,
+                    'required_document_id' => $requiredDocument->id,
+                ],
+                $documentValues
+            ));
+        } catch (\Throwable $exception) {
+            if ($newFilePath && Storage::exists($newFilePath)) {
+                Storage::delete($newFilePath);
+            }
 
-            $documentValues['original_filename'] = $request->file('file')->getClientOriginalName();
-            $documentValues['file_path'] = $path;
-            $documentValues['uploaded_by'] = Auth::id();
-        } elseif ($existingDocument) {
-            $documentValues['original_filename'] = $existingDocument->original_filename;
-            $documentValues['file_path'] = $existingDocument->file_path;
-            $documentValues['uploaded_by'] = $existingDocument->uploaded_by;
+            throw $exception;
         }
 
-        $document = ApplicationDocument::updateOrCreate(
-            [
-                'land_transfer_application_id' => $application->id,
-                'required_document_id' => $requiredDocument->id,
-            ],
-            $documentValues
-        );
+        if ($newFilePath && $oldFilePath && $oldFilePath !== $newFilePath && Storage::exists($oldFilePath)) {
+            Storage::delete($oldFilePath);
+        }
 
         $action = $existingDocument
             ? ($request->hasFile('file') ? 'document_replaced' : 'document_metadata_updated')
-            : 'document_uploaded';
+            : ($request->hasFile('file') ? 'document_uploaded' : 'document_metadata_encoded');
 
         AuditLogger::record(
             $action,
@@ -160,8 +173,8 @@ class ApplicationDocumentController extends Controller
         return redirect()
             ->route('staff.applications.show', ['application' => $application->id])
             ->with('success', $request->hasFile('file')
-                ? 'Document file and indexing details saved successfully.'
-                : 'Document indexing details saved successfully. The existing uploaded file was kept.');
+                ? 'Requirement details and optional supporting file saved successfully.'
+                : 'Requirement details saved successfully. No file upload was required.');
     }
 
     public function destroy(LandTransferApplication $application, RequiredDocument $requiredDocument)

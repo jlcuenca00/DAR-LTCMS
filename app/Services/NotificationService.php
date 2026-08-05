@@ -172,13 +172,17 @@ class NotificationService
 
     private function linkedLandownerUsers(LandTransferApplication $application): Collection
     {
-        $application->loadMissing(['transferorLandowner.user', 'transfereeLandowner.user']);
+        $landownerIds = $application->linkedLandownerIds();
 
-        return collect([
-            $application->transferorLandowner?->user,
-            $application->transfereeLandowner?->user,
-        ])
-            ->filter(fn ($user) => $user instanceof User && $user->is_active)
+        if ($landownerIds->isEmpty()) {
+            return collect();
+        }
+
+        return User::query()
+            ->where('role', User::ROLE_LANDOWNER)
+            ->where('is_active', true)
+            ->whereHas('landowner', fn ($query) => $query->whereIn('id', $landownerIds))
+            ->get()
             ->unique('id')
             ->values();
     }

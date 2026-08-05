@@ -50,6 +50,26 @@
 
         * { box-sizing: border-box; }
 
+        .skip-link {
+            position: fixed;
+            top: -64px;
+            left: 16px;
+            z-index: 9999;
+            padding: 10px 14px;
+            border-radius: 8px;
+            background: #ffffff;
+            color: #14532d;
+            border: 2px solid #15803d;
+            font-weight: 800;
+            text-decoration: none;
+            transition: top 120ms ease;
+        }
+
+        .skip-link:focus {
+            top: 12px;
+        }
+
+
         body {
             margin: 0;
             font-family: var(--body-font) !important;
@@ -696,6 +716,27 @@
 
         .staff-table tbody tr:hover td { background: #f9fafb; }
 
+        /* Keep action headers and controls centered in one compact column. */
+        .staff-table th.staff-table-action,
+        .staff-table td.staff-table-action {
+            width: 1%;
+            min-width: 138px;
+            text-align: center !important;
+            white-space: nowrap;
+        }
+
+        .staff-table td.staff-table-action {
+            vertical-align: middle;
+        }
+
+        .staff-table-action-group {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            flex-wrap: nowrap;
+        }
+
         .staff-link {
             color: #166534;
             font-weight: 800;
@@ -1086,6 +1127,7 @@
     </style>
 </head>
 <body>
+    <a class="skip-link" href="#main-content">Skip to main content</a>
     @php
         $navItems = [
             ['active' => 'dashboard', 'route' => 'staff.dashboard', 'icon' => 'fa-gauge-high', 'label' => 'Staff Dashboard'],
@@ -1166,7 +1208,7 @@
             </div>
         </aside>
 
-        <main class="staff-main">
+        <main id="main-content" class="staff-main" tabindex="-1">
             <header class="staff-topbar">
                 <div>
                     <p class="staff-page-eyebrow">{{ $eyebrow }}</p>
@@ -1200,6 +1242,7 @@
 
             <div class="staff-content">
                 <div class="staff-content-inner {{ $maxWidth }}">
+                    <x-breadcrumbs :title="$title" />
                     {{ $slot }}
                 </div>
             </div>

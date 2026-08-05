@@ -93,14 +93,25 @@ class ApplicationWorkflowController extends Controller
             return back()->withErrors(['status' => 'Only applications marked For Releasing can be released.']);
         }
 
+        $request->validate([
+            'final_decision_confirmation' => ['accepted'],
+            'decision_reason' => ['nullable', 'string', 'max:1000'],
+            'decision_notes' => ['nullable', 'string', 'max:4000'],
+        ], [
+            'final_decision_confirmation.accepted' => 'Confirm the final release decision before continuing.',
+        ]);
+
         $approvalErrors = [];
 
-        if (! $application->transferor_landowner_id) {
-            $approvalErrors['transferor_landowner_id'] = 'Transferor must be linked to an existing Landowner record before release.';
+        $transferorRows = collect($application->partyRows('transferor'));
+        $transfereeRows = collect($application->partyRows('transferee'));
+
+        if ($transferorRows->isEmpty() || $transferorRows->contains(fn ($row) => blank($row['landowner_id'] ?? null))) {
+            $approvalErrors['transferors'] = 'Every transferor must be linked to a separate Landowner record before release.';
         }
 
-        if (! $application->transferee_landowner_id) {
-            $approvalErrors['transferee_landowner_id'] = 'Transferee must be linked to an existing Landowner record before release.';
+        if ($transfereeRows->isEmpty() || $transfereeRows->contains(fn ($row) => blank($row['landowner_id'] ?? null))) {
+            $approvalErrors['transferees'] = 'Every transferee must be linked to a separate Landowner record before release.';
         }
 
         if (! empty($approvalErrors)) {
@@ -119,24 +130,35 @@ class ApplicationWorkflowController extends Controller
 
         try {
             DB::transaction(function () use ($request, $application, $snapshot) {
-                $application = LandTransferApplication::findOrFail($application->id);
+                $application = LandTransferApplication::query()
+                    ->lockForUpdate()
+                    ->findOrFail($application->id);
+
+                if ($application->isFinalized()) {
+                    throw new \RuntimeException('This application was already finalized by another request.');
+                }
+
+                if (! in_array($application->status, [
+                    LandTransferApplication::STATUS_FOR_RELEASING,
+                    LandTransferApplication::STATUS_PENDING_REVIEW,
+                ], true)) {
+                    throw new \RuntimeException('The application status changed before release. Refresh the page and review the current stage.');
+                }
 
                 $application->status = LandTransferApplication::STATUS_RELEASED;
                 $application->reviewed_by = Auth::id();
                 $application->reviewed_at = now();
+                $application->date_of_clearance_release = $application->date_of_clearance_release ?: now()->toDateString();
                 $application->validated_at = now();
                 $application->validation_snapshot = $snapshot;
                 $application->decision_reason = $request->input('decision_reason');
                 $application->decision_notes = $request->input('decision_notes');
 
                 /*
-                 * Important:
-                 * Do not call LandRegistryMutationService here.
-                 * This system is limited to clearance generation, processing,
-                 * monitoring, and record keeping only.
+                 * Important: releasing a clearance records the administrative
+                 * decision only. No ownership transfer or registry alteration
+                 * is performed by DAR-LTCMS.
                  */
-                $application->registry_mutated_at = null;
-                $application->registry_mutated_by = null;
 
                 $application->save();
 
@@ -149,7 +171,8 @@ class ApplicationWorkflowController extends Controller
                         'decision_notes' => $application->decision_notes,
                         'validated_at' => optional($application->validated_at)->toDateTimeString(),
                         'has_validation_snapshot' => ! empty($application->validation_snapshot),
-                        'registry_mutation_performed' => false,
+                        'ownership_transfer_performed' => false,
+                        'scope_note' => 'Final clearance decision only; no ownership transfer or registry alteration was performed.',
                     ]
                 );
 
@@ -183,9 +206,11 @@ class ApplicationWorkflowController extends Controller
         }
 
         $request->validate([
+            'final_decision_confirmation' => ['accepted'],
             'decision_reason' => ['required', 'string', 'max:1000'],
             'decision_notes' => ['nullable', 'string', 'max:4000'],
         ], [
+            'final_decision_confirmation.accepted' => 'Confirm the final denied decision before continuing.',
             'decision_reason.required' => 'A denial reason is required before marking the application as Denied.',
         ]);
 
@@ -193,16 +218,29 @@ class ApplicationWorkflowController extends Controller
 
         try {
             DB::transaction(function () use ($request, $application, $snapshot) {
-                $application = LandTransferApplication::findOrFail($application->id);
+                $application = LandTransferApplication::query()
+                    ->lockForUpdate()
+                    ->findOrFail($application->id);
+
+                if ($application->isFinalized()) {
+                    throw new \RuntimeException('This application was already finalized by another request.');
+                }
+
+                if (! in_array($application->status, array_merge(
+                    LandTransferApplication::ACTIVE_STATUSES,
+                    [LandTransferApplication::STATUS_DRAFT, LandTransferApplication::STATUS_PENDING_REVIEW]
+                ), true)) {
+                    throw new \RuntimeException('The application status changed before denial. Refresh the page and review the current stage.');
+                }
+
                 $application->status = LandTransferApplication::STATUS_DENIED;
                 $application->reviewed_by = Auth::id();
                 $application->reviewed_at = now();
+                $application->date_of_clearance_release = $application->date_of_clearance_release ?: now()->toDateString();
                 $application->validated_at = now();
                 $application->validation_snapshot = $snapshot;
                 $application->decision_reason = $request->input('decision_reason');
                 $application->decision_notes = $request->input('decision_notes');
-                $application->registry_mutated_at = null;
-                $application->registry_mutated_by = null;
                 $application->save();
 
                 AuditLogger::record(
@@ -214,7 +252,8 @@ class ApplicationWorkflowController extends Controller
                         'decision_notes' => $application->decision_notes,
                         'validated_at' => optional($application->validated_at)->toDateTimeString(),
                         'has_validation_snapshot' => ! empty($application->validation_snapshot),
-                        'registry_mutation_performed' => false,
+                        'ownership_transfer_performed' => false,
+                        'scope_note' => 'Final clearance decision only; no ownership transfer or registry alteration was performed.',
                     ]
                 );
 
@@ -246,7 +285,6 @@ class ApplicationWorkflowController extends Controller
             ->get(['id', 'name', 'applies_to', 'requirement_classification', 'blocks_acceptance']);
 
         $uploadedIds = $application->documents()
-            ->whereNotNull('file_path')
             ->pluck('required_document_id')
             ->filter()
             ->map(fn ($id) => (int) $id)
@@ -309,6 +347,7 @@ class ApplicationWorkflowController extends Controller
                 'blocks_release' => (bool) ($hectareValidation['blocks_release'] ?? $hectareValidation['exceeds_limit']),
                 'limit' => (float) $hectareValidation['limit'],
                 'scope_note' => $hectareValidation['scope_note'],
+                'per_landowner' => $hectareValidation['per_landowner'] ?? [],
             ],
             'documents' => [
                 'classification_scope' => 'Only acceptance/release-blocking documents are counted as critical blockers. Case-dependent and reference-only documents remain visible for manual review.',

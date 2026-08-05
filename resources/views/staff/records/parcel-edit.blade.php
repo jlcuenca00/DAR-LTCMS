@@ -2,12 +2,7 @@
     title="Edit Parcel Record"
     active="parcel-records"
 >
-    <x-slot name="actions">
-        <a href="{{ route('staff.records.parcels.show', $parcel) }}" class="staff-button staff-button-light">
-            <i class="fa-solid fa-arrow-left"></i>
-            Back to Parcel Details
-        </a>
-    </x-slot>
+    
 
     <x-slot name="styles">
         <style>

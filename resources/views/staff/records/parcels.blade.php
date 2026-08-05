@@ -1,26 +1,128 @@
 <x-staff-shell
     title="Parcel Records"
-    subtitle="Search and review agricultural parcel records used for clearance reference checking, monitoring, and map display."
+    subtitle="Search and review agricultural parcel records used for clearance reference checking and map display."
     active="parcel-records"
 >
-<span class="sr-only">Staff Parcel Record Search</span>
+    <style>
+        .records-toolbar {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .records-toolbar-actions {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: .65rem;
+            flex-wrap: wrap;
+        }
+
+        .parcel-filter-grid {
+            display: grid;
+            grid-template-columns: minmax(280px, 1.8fr) repeat(3, minmax(170px, 1fr));
+            gap: .8rem;
+            align-items: end;
+        }
+
+        .parcel-filter-actions {
+            display: flex;
+            align-items: center;
+            gap: .55rem;
+            grid-column: 1 / -1;
+        }
+
+        .parcel-code {
+            color: #065f46;
+            font-size: .92rem;
+            font-weight: 950;
+            text-decoration: none;
+        }
+
+        .parcel-code:hover { text-decoration: underline; }
+
+        .parcel-reference-list {
+            display: grid;
+            gap: .22rem;
+            margin-top: .4rem;
+            color: #64748b;
+            font-size: .76rem;
+            line-height: 1.35;
+        }
+
+        .parcel-reference-row {
+            display: grid;
+            grid-template-columns: 4.4rem minmax(0, 1fr);
+            gap: .4rem;
+        }
+
+        .parcel-reference-label {
+            font-weight: 850;
+            color: #64748b;
+        }
+
+        .parcel-state-stack {
+            display: flex;
+            flex-wrap: wrap;
+            gap: .4rem;
+            min-width: 150px;
+        }
+
+        @media (max-width: 1120px) {
+            .parcel-filter-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+
+        @media (max-width: 720px) {
+            .parcel-filter-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .parcel-filter-actions,
+            .records-toolbar-actions {
+                width: 100%;
+            }
+
+            .parcel-filter-actions .staff-button,
+            .records-toolbar-actions .staff-button {
+                flex: 1 1 auto;
+                justify-content: center;
+            }
+        }
+    </style>
+
+    <span class="sr-only">Staff Parcel Record Search</span>
 
     <section class="staff-panel staff-panel-pad">
-        <div class="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
+        <div class="records-toolbar">
             <div>
-                <h2 class="staff-panel-title">Search and Filter Parcels</h2>
-                <p class="staff-panel-subtitle">Filter parcel records by code, title number, lot number, survey plan number, tax declaration number, location, record status, or remarks.</p>
+                <h2 class="staff-panel-title">Parcel Directory</h2>
+                <p class="staff-panel-subtitle">{{ $parcels->total() }} total record(s). Only agricultural parcel references are maintained in this workspace.</p>
             </div>
-            <p class="text-sm font-bold text-gray-500">{{ $parcels->total() }} record(s)</p>
+
+            <div class="records-toolbar-actions" data-main-card-actions-moved>
+                <a href="{{ route('staff.records.parcels.create') }}" class="staff-button staff-button-primary">
+                    <i class="fa-solid fa-plus"></i>
+                    Add Parcel
+                </a>
+                <a href="{{ route('staff.parcel-map.index') }}" class="staff-button staff-button-light">
+                    <i class="fa-solid fa-map"></i>
+                    Open Map
+                </a>
+            </div>
         </div>
 
-        <form method="GET" action="{{ route('staff.records.parcels.index') }}" class="mt-5 staff-filter-grid filter-grid-4">
+        <form method="GET" action="{{ route('staff.records.parcels.index') }}" class="mt-5 parcel-filter-grid">
             <div class="staff-filter-field">
-                <label class="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">Search</label>
-                <input type="text" name="search" value="{{ $filters['search'] ?? '' }}" placeholder="Parcel code, title no., lot no., survey plan, ROD office" class="w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-green-600 focus:ring-green-600">
+                <label class="staff-form-label">SEARCH</label>
+                <input type="text" name="search" value="{{ $filters['search'] ?? '' }}" placeholder="Parcel code, title, lot, survey plan, or tax declaration" class="w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-green-600 focus:ring-green-600">
             </div>
-            <div>
-                <label class="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">Municipality</label>
+
+            <div class="staff-filter-field">
+                <label class="staff-form-label">MUNICIPALITY</label>
                 <select name="municipality" class="w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-green-600 focus:ring-green-600">
                     <option value="">All municipalities</option>
                     @foreach ($municipalities as $municipality)
@@ -28,8 +130,9 @@
                     @endforeach
                 </select>
             </div>
-            <div>
-                <label class="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">Barangay</label>
+
+            <div class="staff-filter-field">
+                <label class="staff-form-label">BARANGAY</label>
                 <select name="barangay" class="w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-green-600 focus:ring-green-600">
                     <option value="">All barangays</option>
                     @foreach ($barangays as $barangay)
@@ -37,8 +140,9 @@
                     @endforeach
                 </select>
             </div>
-            <div>
-                <label class="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">Record Status</label>
+
+            <div class="staff-filter-field">
+                <label class="staff-form-label">RECORD STATUS</label>
                 <select name="status" class="w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-green-600 focus:ring-green-600">
                     <option value="">All record statuses</option>
                     @foreach ($statuses as $status)
@@ -46,7 +150,8 @@
                     @endforeach
                 </select>
             </div>
-            <div class="staff-filter-actions">
+
+            <div class="parcel-filter-actions">
                 <button type="submit" class="staff-button staff-button-dark"><i class="fa-solid fa-filter"></i>Apply Filters</button>
                 <a href="{{ route('staff.records.parcels.index') }}" class="staff-button staff-button-light">Reset</a>
             </div>
@@ -54,78 +159,62 @@
     </section>
 
     <section class="staff-panel overflow-hidden">
-        <div class="staff-panel-pad flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-            <div>
-                <h2 class="staff-panel-title">Parcel List</h2>
-                <p class="staff-panel-subtitle">Showing {{ $parcels->count() }} of {{ $parcels->total() }} parcel record(s).</p>
-            </div>
-            <div class="flex flex-wrap gap-2" data-main-card-actions-moved>
-                <a href="{{ route('staff.records.parcels.create') }}" class="staff-button staff-button-primary">
-                            <i class="fa-solid fa-plus"></i>
-                            Add Parcel
-                        </a>
-                        <a href="{{ route('staff.parcel-map.index') }}" class="staff-button staff-button-light">
-                            <i class="fa-solid fa-map"></i>
-                            Open Parcel Map
-                        </a>
-                        <a href="{{ route('staff.records.landowners.index') }}" class="staff-button staff-button-light">
-                            <i class="fa-solid fa-users"></i>
-                            Landowner Records
-                        </a>
-            </div>
+        <div class="staff-panel-pad">
+            <h2 class="staff-panel-title">Parcel List</h2>
+            <p class="staff-panel-subtitle">Showing {{ $parcels->count() }} of {{ $parcels->total() }} matching record(s).</p>
         </div>
+
         <div class="staff-table-wrap">
             <table class="staff-table">
                 <thead>
                     <tr>
-                        <th>Parcel</th>
-                        <th>Title / Lot Reference</th>
+                        <th>Parcel and References</th>
                         <th>Location</th>
                         <th>Area</th>
-                        <th>Record Status</th>
-                        <th>Map Data</th>
-                        <th class="text-right">Action</th>
+                        <th>Record State</th>
+                        <th class="staff-table-action">Action</th>
                     </tr>
                 </thead>
                 <tbody>
                     @forelse ($parcels as $parcel)
                         <tr>
                             <td>
-                                <a href="{{ route('staff.records.parcels.show', $parcel) }}" class="staff-link">{{ $parcel->parcel_code }}</a>
-                                <div class="text-xs text-gray-500">Parcel ID: {{ $parcel->id }}</div>
+                                <a href="{{ route('staff.records.parcels.show', $parcel) }}" class="parcel-code">{{ $parcel->parcel_code }}</a>
+                                <div class="parcel-reference-list">
+                                    <div class="parcel-reference-row"><span class="parcel-reference-label">Title</span><span>{{ $parcel->title_no ?? 'N/A' }}</span></div>
+                                    <div class="parcel-reference-row"><span class="parcel-reference-label">Lot</span><span>{{ $parcel->lot_number ?? 'N/A' }}</span></div>
+                                    <div class="parcel-reference-row"><span class="parcel-reference-label">Survey</span><span>{{ $parcel->survey_plan_number ?? 'N/A' }}</span></div>
+                                    <div class="parcel-reference-row"><span class="parcel-reference-label">Tax Dec.</span><span>{{ $parcel->tax_decl_no ?? 'N/A' }}</span></div>
+                                </div>
                             </td>
                             <td>
-                                <div>{{ $parcel->title_no ?? 'N/A' }}</div>
-                                <div class="text-xs text-gray-500">{{ $parcel->lot_number ? 'Lot '.$parcel->lot_number : 'No lot number' }}</div>
-                                <div class="text-xs text-gray-500">{{ $parcel->survey_plan_number ? 'Survey '.$parcel->survey_plan_number : 'No survey plan' }}</div>
-                                <div class="text-xs text-gray-500">{{ $parcel->title_type ? $parcel->title_type_label : 'No title type' }}</div>
-                                <div class="text-xs text-gray-500">{{ $parcel->tax_decl_no ?? 'No tax declaration' }}</div>
-                            </td>
-                            <td>
-                                <div>{{ $parcel->municipality ?? 'N/A' }}</div>
+                                <div class="font-semibold text-gray-900">{{ $parcel->municipality ?? 'N/A' }}</div>
                                 <div class="text-xs text-gray-500">{{ $parcel->barangay ?? 'N/A' }}</div>
                             </td>
                             <td class="whitespace-nowrap">
-                                <div>{{ $parcel->area_square_meters ? number_format((float) $parcel->area_square_meters, 2).' sq. m.' : 'N/A' }}</div>
-                                <div class="text-xs text-gray-500">{{ $parcel->area_hectares ? number_format((float) $parcel->area_hectares, 4).' ha' : 'No hectare value' }}</div>
+                                <div class="font-semibold text-gray-900">{{ $parcel->area_hectares ? number_format((float) $parcel->area_hectares, 4).' ha' : 'N/A' }}</div>
+                                <div class="text-xs text-gray-500">{{ $parcel->area_square_meters ? number_format((float) $parcel->area_square_meters, 2).' sq. m.' : 'No square-meter value' }}</div>
                             </td>
                             <td>
-                                <span class="staff-badge {{ $parcel->status === 'active' ? 'staff-badge-green' : 'staff-badge-slate' }}">{{ ucwords(str_replace('_', ' ', $parcel->status ?? 'Unspecified')) }}</span>
+                                <div class="parcel-state-stack">
+                                    <span class="staff-badge {{ $parcel->status === 'active' ? 'staff-badge-green' : 'staff-badge-slate' }}">{{ ucwords(str_replace('_', ' ', $parcel->status ?? 'Unspecified')) }}</span>
+                                    <span class="staff-badge {{ $parcel->geometry_geojson ? 'staff-badge-blue' : 'staff-badge-slate' }}">{{ $parcel->geometry_geojson ? 'Mapped' : 'No Geometry' }}</span>
+                                </div>
                             </td>
-                            <td><span class="staff-badge {{ $parcel->geometry_geojson ? 'staff-badge-blue' : 'staff-badge-slate' }}">{{ $parcel->geometry_geojson ? 'Mapped' : 'No Geometry' }}</span></td>
-                            <td class="text-right">
-                                <div class="flex flex-wrap justify-end gap-2">
-                                    <a href="{{ route('staff.records.parcels.show', $parcel) }}" class="staff-button staff-button-light">View</a>
+                            <td class="staff-table-action">
+                                <div class="staff-table-action-group">
+                                    <a href="{{ route('staff.records.parcels.show', $parcel) }}" class="staff-button staff-button-light">Open</a>
                                     <a href="{{ route('staff.records.parcels.edit', $parcel) }}" class="staff-button staff-button-light">Edit</a>
                                 </div>
                             </td>
                         </tr>
                     @empty
-                        <tr><td colspan="7" class="py-8 text-center text-gray-500">No parcel records found.</td></tr>
+                        <tr><td colspan="5" class="py-8 text-center text-gray-500">No parcel records found.</td></tr>
                     @endforelse
                 </tbody>
             </table>
         </div>
+
         <div class="border-t border-gray-200 px-6 py-4">{{ $parcels->withQueryString()->links() }}</div>
     </section>
 </x-staff-shell>

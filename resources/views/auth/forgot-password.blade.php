@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Forgot Password | DAR-LTCMS</title>
+    <title>Account Access Help | DAR-LTCMS</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -278,44 +278,13 @@
                 <p class="auth-office">DAR Negros Oriental Provincial Office</p>
 
                 <div class="reset-intro">
-                    <h2>Forgot your password?</h2>
-                    <p>Enter your email address and the system will send a secure password reset link.</p>
+                    <h2>Need help signing in?</h2>
+                    <p>DAR-LTCMS uses staff-managed usernames. Password reset links are not sent by email.</p>
                 </div>
 
-                @if (session('status'))
-                    <div class="status-box">{{ session('status') }}</div>
-                @endif
-
-                @if ($errors->any())
-                    <div class="error-box">
-                        <ul style="margin: 0; padding-left: 1.1rem;">
-                            @foreach ($errors->all() as $error)
-                                <li>{{ $error }}</li>
-                            @endforeach
-                        </ul>
-                    </div>
-                @endif
-
-                <form method="POST" action="{{ route('password.email') }}" class="auth-form">
-                    @csrf
-
-                    <div class="form-group">
-                        <label for="email" class="form-label">Email</label>
-                        <input
-                            id="email"
-                            class="form-input"
-                            type="email"
-                            name="email"
-                            value="{{ old('email') }}"
-                            placeholder="Enter your email"
-                            required
-                            autofocus
-                            autocomplete="username"
-                        >
-                    </div>
-
-                    <button type="submit" class="auth-button">Email Password Reset Link</button>
-                </form>
+                <div class="status-box" style="text-align: left; line-height: 1.65;">
+                    Contact an authorized DAR staff account manager and provide your username. Staff will issue a temporary password that must be replaced after your next sign-in.
+                </div>
 
                 <div class="back-link-row">
                     <a href="{{ route('login') }}" class="back-link">Back to login</a>

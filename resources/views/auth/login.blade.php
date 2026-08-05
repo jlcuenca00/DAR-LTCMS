@@ -426,17 +426,17 @@
                     @csrf
 
                     <div class="form-group">
-                        <label for="email" class="form-label">
-                            Email
+                        <label for="username" class="form-label">
+                            Username
                         </label>
 
                         <input
-                            id="email"
+                            id="username"
                             class="form-input"
-                            type="email"
-                            name="email"
-                            value="{{ old('email') }}"
-                            placeholder="Enter your email"
+                            type="text"
+                            name="username"
+                            value="{{ old('username') }}"
+                            placeholder="Enter your username"
                             required
                             autofocus
                             autocomplete="username"
@@ -495,7 +495,7 @@
 
                         @if (Route::has('password.request'))
                             <a class="forgot-link" href="{{ route('password.request') }}">
-                                Forgot password?
+                                Need Help Signing In?
                             </a>
                         @endif
                     </div>

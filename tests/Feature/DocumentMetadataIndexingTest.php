@@ -50,9 +50,8 @@ class DocumentMetadataIndexingTest extends TestCase
                 'file' => UploadedFile::fake()->create('sample-title.pdf', 100, 'application/pdf'),
                 'annex_reference' => 'Annex A',
                 'remarks' => 'Uploaded with metadata indexing.',
-                'document_reference_number' => 'TCT-12345',
                 'document_metadata' => [
-                    'issuing_office' => 'Registry of Deeds',
+                    'title_number' => 'TCT-12345',
                     'date_issued' => '2026-05-04',
                     'reference_lot_or_parcel' => 'Lot 123',
                     'transfer_document_title' => 'Deed of Sale',
@@ -77,8 +76,8 @@ class DocumentMetadataIndexingTest extends TestCase
 
         $this->assertNotNull($document);
 
-        $this->assertSame('TCT-12345', $document->document_reference_number);
-        $this->assertSame('Registry of Deeds', $document->document_metadata['issuing_office']);
+        $this->assertNull($document->document_reference_number);
+        $this->assertSame('TCT-12345', $document->document_metadata['title_number']);
         $this->assertSame('2026-05-04', $document->document_metadata['date_issued']);
         $this->assertSame('Lot 123', $document->document_metadata['reference_lot_or_parcel']);
         $this->assertSame('Deed of Sale', $document->document_metadata['transfer_document_title']);
@@ -99,12 +98,50 @@ class DocumentMetadataIndexingTest extends TestCase
         $log = AuditLog::where('action', 'document_uploaded')->first();
 
         $this->assertNotNull($log);
-        $this->assertSame('TCT-12345', $log->metadata['document_reference_number']);
-        $this->assertSame('Registry of Deeds', $log->metadata['document_metadata']['issuing_office']);
+        $this->assertNull($log->metadata['document_reference_number']);
+        $this->assertSame('TCT-12345', $log->metadata['document_metadata']['title_number']);
         $this->assertSame('Lot 123', $log->metadata['document_metadata']['reference_lot_or_parcel']);
         $this->assertSame('Deed of Sale', $log->metadata['document_metadata']['transfer_document_title']);
         $this->assertSame('Atty. Test Notary', $log->metadata['document_metadata']['notary_public']);
         $this->assertSame('456', $log->metadata['document_metadata']['notarial_document_number']);
+    }
+
+    public function test_staff_can_save_requirement_details_without_uploading_a_file(): void
+    {
+        Storage::fake('local');
+
+        $staffUser = User::factory()->create(['role' => 'staff']);
+        $application = LandTransferApplication::create([
+            'application_code' => 'DOC-META-ONLY-001',
+            'transferor_name' => 'Metadata Only Transferor',
+            'transferee_name' => 'Metadata Only Transferee',
+            'status' => LandTransferApplication::STATUS_PENDING_LEGAL_REVIEW,
+            'encoded_by' => $staffUser->id,
+        ]);
+        $requiredDocument = RequiredDocument::forceCreate([
+            'name' => 'Metadata-Only Requirement',
+            'applies_to' => 'transferor',
+            'is_mandatory' => true,
+        ]);
+
+        $this->actingAs($staffUser)->post(
+            route('staff.applications.documents.store', [$application, $requiredDocument]),
+            [
+                'annex_reference' => 'Annex M',
+                'document_metadata' => [
+                    'title_number' => 'T-META-001',
+                    'date_issued' => '2026-08-05',
+                    'verification_notes' => 'Encoded from the presented physical record.',
+                ],
+            ]
+        )->assertSessionHas('success');
+
+        $document = ApplicationDocument::firstOrFail();
+
+        $this->assertNull($document->file_path);
+        $this->assertNull($document->uploaded_by);
+        $this->assertSame($staffUser->id, $document->metadata_encoded_by);
+        $this->assertSame('T-META-001', $document->document_metadata['title_number']);
     }
 
     public function test_document_metadata_is_locked_after_final_decision(): void
@@ -139,9 +176,8 @@ class DocumentMetadataIndexingTest extends TestCase
             ]),
             [
                 'file' => UploadedFile::fake()->create('tax-declaration.pdf', 100, 'application/pdf'),
-                'document_reference_number' => 'TD-99999',
                 'document_metadata' => [
-                    'issuing_office' => 'Assessor Office',
+                    'tax_declaration_number' => 'TD-99999',
                     'date_issued' => '2026-05-04',
                     'reference_lot_or_parcel' => 'Lot 999',
                     'verification_notes' => 'This should not be saved.',
@@ -152,7 +188,6 @@ class DocumentMetadataIndexingTest extends TestCase
         $this->assertDatabaseMissing('application_documents', [
             'land_transfer_application_id' => $application->id,
             'required_document_id' => $requiredDocument->id,
-            'document_reference_number' => 'TD-99999',
         ]);
 
         $this->assertDatabaseMissing('audit_logs', [

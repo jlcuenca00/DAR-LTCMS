@@ -30,7 +30,7 @@
             <form method="GET" action="{{ route('staff.users.index') }}" class="mt-5 grid gap-3 lg:grid-cols-[minmax(240px,1fr)_180px_180px_auto] lg:items-end">
                 <div>
                     <label class="mb-1 block text-xs font-bold uppercase tracking-wider text-gray-500">Search</label>
-                    <input type="text" name="search" value="{{ $filters['search'] ?? '' }}" placeholder="Name or email" class="w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-green-600 focus:ring-green-600">
+                    <input type="text" name="search" value="{{ $filters['search'] ?? '' }}" placeholder="Name or username" class="w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-green-600 focus:ring-green-600">
                 </div>
                 <div>
                     <label class="mb-1 block text-xs font-bold uppercase tracking-wider text-gray-500">Role</label>
@@ -68,7 +68,7 @@
                         <th>Status</th>
                         <th>Linked Landowner</th>
                         <th>Created</th>
-                        <th class="text-right">Action</th>
+                        <th class="staff-table-action">Action</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -89,7 +89,7 @@
                                     </div>
                                     <div>
                                         <div class="font-bold text-gray-950">{{ $user->name }}</div>
-                                        <div class="mt-0.5 text-xs text-gray-500">{{ $user->email }}</div>
+                                        <div class="mt-0.5 text-xs text-gray-500">{{ $user->username ?? $user->email }}</div>
                                     </div>
                                 </div>
                             </td>
@@ -99,9 +99,14 @@
                                 </span>
                             </td>
                             <td>
-                                <span class="staff-badge {{ $user->is_active ? 'staff-badge-green' : 'staff-badge-red' }}">
-                                    {{ $user->is_active ? 'Active' : 'Inactive' }}
-                                </span>
+                                <div class="flex flex-col items-start gap-1.5">
+                                    <span class="staff-badge {{ $user->is_active ? 'staff-badge-green' : 'staff-badge-red' }}">
+                                        {{ $user->is_active ? 'Active' : 'Inactive' }}
+                                    </span>
+                                    @if ($user->must_change_password)
+                                        <span class="staff-badge staff-badge-amber">Password Change Required</span>
+                                    @endif
+                                </div>
                             </td>
                             <td>
                                 @if ($user->landowner)
@@ -112,11 +117,13 @@
                                 @endif
                             </td>
                             <td class="whitespace-nowrap">{{ $user->created_at?->timezone('Asia/Manila')->format('M d, Y') ?? 'N/A' }}</td>
-                            <td class="text-right">
-                                <a href="{{ route('staff.users.edit', $user) }}" class="staff-button staff-button-light">
+                            <td class="staff-table-action">
+                                <div class="staff-table-action-group">
+                                    <a href="{{ route('staff.users.edit', $user) }}" class="staff-button staff-button-light">
                                     <i class="fa-solid fa-pen-to-square"></i>
-                                    Edit
-                                </a>
+                                        Edit
+                                    </a>
+                                </div>
                             </td>
                         </tr>
                     @empty

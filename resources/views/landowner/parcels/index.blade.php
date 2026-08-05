@@ -1,188 +1,142 @@
-<x-landowner-shell
-    title="My Parcel Records"
-    active="parcels"
->
+<x-landowner-shell title="My Parcel Records" active="parcels">
     @push('styles')
         <style>
-            .lo-page-stack {
-                display: grid;
-                gap: 18px;
-            }
+            .lo-parcel-page { display: grid; gap: 18px; }
 
-            .lo-page-hero {
+            .lo-parcel-overview {
                 background: #ffffff;
                 border: 1px solid var(--lo-line);
-                border-radius: 12px;
-                box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
-                padding: 22px 24px;
+                border-radius: 14px;
+                padding: 21px 22px;
                 display: flex;
                 justify-content: space-between;
-                align-items: flex-start;
+                align-items: center;
                 gap: 18px;
+                box-shadow: 0 1px 3px rgba(15, 23, 42, .07);
             }
 
-            .lo-hero-label {
-                margin: 0;
+            .lo-parcel-kicker { margin: 0; color: var(--lo-green-800); font-size: 10px; font-weight: 900; letter-spacing: .16em; text-transform: uppercase; }
+            .lo-parcel-title { margin: 5px 0 0; color: var(--lo-ink); font-size: 22px; line-height: 1.2; font-weight: 900; }
+            .lo-parcel-copy { margin: 6px 0 0; max-width: 760px; color: var(--lo-muted); font-size: 13px; line-height: 1.5; }
+
+            .lo-parcel-overview-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+            .lo-parcel-count {
+                min-height: 39px;
+                display: inline-flex;
+                align-items: center;
+                gap: 7px;
+                padding: 0 12px;
+                border: 1px solid #d7ded9;
+                border-radius: 9px;
+                background: #f8faf9;
+                color: #475569;
                 font-size: 11px;
                 font-weight: 900;
-                letter-spacing: 0.16em;
-                text-transform: uppercase;
-                color: var(--lo-green-800);
+                white-space: nowrap;
             }
 
-            .lo-hero-title {
-                margin: 5px 0 0;
-                font-size: 24px;
-                line-height: 1.15;
-                font-weight: 900;
-                color: var(--lo-ink);
-            }
-
-            .lo-hero-copy {
-                margin: 8px 0 0;
-                color: var(--lo-muted);
-                font-size: 13px;
-                line-height: 1.55;
-                max-width: 820px;
-            }
-
-            .lo-hero-actions {
-                display: flex;
-                gap: 10px;
-                flex-wrap: wrap;
-                justify-content: flex-end;
-            }
-
-            .lo-panel {
+            .lo-parcel-panel {
                 background: #ffffff;
                 border: 1px solid var(--lo-line);
-                border-radius: 12px;
-                box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+                border-radius: 14px;
+                box-shadow: 0 1px 3px rgba(15, 23, 42, .07);
                 overflow: hidden;
             }
 
-            .lo-panel-header {
-                padding: 20px 22px 0;
-                display: flex;
-                justify-content: space-between;
-                align-items: flex-start;
-                gap: 16px;
-            }
+            .lo-parcel-panel-header { padding: 18px 20px 15px; border-bottom: 1px solid #e8eeea; }
+            .lo-parcel-panel-title { margin: 0; color: var(--lo-ink); font-size: 17px; font-weight: 900; }
+            .lo-parcel-panel-copy { margin: 4px 0 0; color: var(--lo-muted); font-size: 12px; line-height: 1.45; }
 
-            .lo-panel-title {
-                margin: 0;
-                font-size: 18px;
-                font-weight: 900;
-                color: var(--lo-ink);
-            }
-
-            .lo-panel-subtitle {
-                margin: 5px 0 0;
-                font-size: 13px;
-                color: var(--lo-muted);
-                line-height: 1.45;
-            }
-
-            .lo-panel-body { padding: 18px 22px 22px; }
-
-            .lo-table-wrap { overflow-x: auto; }
-
-            .lo-table {
-                width: 100%;
-                border-collapse: collapse;
-                min-width: 980px;
-                font-size: 13px;
-            }
-
-            .lo-table thead {
+            .lo-parcel-table-wrap { overflow-x: auto; }
+            .lo-parcel-table { width: 100%; min-width: 940px; border-collapse: collapse; font-size: 13px; }
+            .lo-parcel-table th {
+                padding: 12px 15px;
                 background: #f8faf9;
                 border-bottom: 1px solid var(--lo-line);
-            }
-
-            .lo-table th {
-                padding: 12px 14px;
-                text-align: left;
                 color: #667085;
+                text-align: left;
                 font-size: 10px;
                 font-weight: 900;
-                letter-spacing: 0.14em;
+                letter-spacing: .13em;
                 text-transform: uppercase;
                 white-space: nowrap;
             }
-
-            .lo-table td {
-                padding: 14px;
-                border-bottom: 1px solid #edf0ee;
-                color: #344054;
-                vertical-align: top;
+            .lo-parcel-table td { padding: 15px; border-bottom: 1px solid #edf1ee; color: #344054; vertical-align: top; }
+            .lo-parcel-table th.lo-parcel-action-column,
+            .lo-parcel-table td.lo-parcel-action-column {
+                width: 1%;
+                min-width: 150px;
+                text-align: center;
+                white-space: nowrap;
             }
+            .lo-parcel-table td.lo-parcel-action-column { vertical-align: middle; }
+            .lo-parcel-table tbody tr:last-child td { border-bottom: 0; }
 
-            .lo-table tbody tr:last-child td { border-bottom: 0; }
+            .lo-parcel-code-link { color: var(--lo-green-900); text-decoration: none; font-weight: 900; white-space: nowrap; }
+            .lo-parcel-code-link:hover { text-decoration: underline; }
+            .lo-parcel-record-id { margin-top: 4px; color: #667085; font-size: 11px; }
 
-            .lo-code-link {
-                color: var(--lo-green-900);
-                text-decoration: none;
-                font-weight: 900;
-            }
+            .lo-reference-list { display: grid; gap: 4px; min-width: 190px; }
+            .lo-reference-row { display: grid; grid-template-columns: 58px minmax(0, 1fr); gap: 7px; color: #344054; font-size: 12px; line-height: 1.35; }
+            .lo-reference-label { color: #667085; font-size: 10px; font-weight: 900; text-transform: uppercase; }
 
-            .lo-code-link:hover { text-decoration: underline; }
+            .lo-location-main { color: #1f2937; font-weight: 800; }
+            .lo-location-sub { margin-top: 3px; color: #667085; font-size: 11px; }
+            .lo-area-main { color: #0f172a; font-weight: 900; white-space: nowrap; }
+            .lo-area-sub { margin-top: 3px; color: #667085; font-size: 11px; }
 
-            .lo-muted { color: var(--lo-muted); }
-
-            .lo-status-pill {
+            .lo-state-stack { display: grid; gap: 6px; justify-items: start; }
+            .lo-state-badge {
                 display: inline-flex;
                 align-items: center;
-                justify-content: center;
-                min-height: 28px;
+                min-height: 25px;
+                padding: 0 9px;
+                border: 1px solid #e2e8f0;
                 border-radius: 999px;
-                padding: 0 11px;
-                font-size: 12px;
+                background: #f8fafc;
+                color: #475569;
+                font-size: 10px;
                 font-weight: 900;
                 white-space: nowrap;
-                background: #dcfce7;
-                border: 1px solid #bbf7d0;
-                color: #166534;
             }
+            .lo-state-badge.is-active { background: #dcfce7; border-color: #bbf7d0; color: #166534; }
+            .lo-state-badge.is-mapped { background: #dbeafe; border-color: #bfdbfe; color: #1d4ed8; }
 
-            .lo-status-pill.neutral {
-                background: #f1f5f9;
-                border-color: #e2e8f0;
-                color: #334155;
-            }
-
-            .lo-map-state {
-                font-weight: 900;
+            .lo-open-link {
+                min-height: 32px;
+                display: inline-flex;
+                align-items: center;
+                gap: 7px;
+                padding: 0 11px;
+                border: 1px solid #d7ded9;
+                border-radius: 9px;
+                background: #ffffff;
                 color: var(--lo-green-900);
+                text-decoration: none;
+                font-size: 11px;
+                font-weight: 900;
+                white-space: nowrap;
             }
-
-            .lo-empty {
-                border: 1px dashed #cbd5d1;
-                border-radius: 10px;
-                background: #fbfcfb;
-                padding: 24px;
-                color: var(--lo-muted);
-                font-size: 13px;
-                line-height: 1.55;
-            }
+            .lo-open-link:hover { background: var(--lo-green-50); border-color: #bbf7d0; }
+            .lo-parcel-empty { padding: 28px 20px; color: var(--lo-muted); font-size: 13px; line-height: 1.5; }
 
             @media (max-width: 760px) {
-                .lo-page-hero { flex-direction: column; }
-                .lo-hero-actions { justify-content: flex-start; }
+                .lo-parcel-overview { flex-direction: column; align-items: flex-start; }
+                .lo-parcel-overview-actions { width: 100%; }
             }
         </style>
     @endpush
 
-    <section class="lo-page-stack">
-        <article class="lo-page-hero">
+    <section class="lo-parcel-page">
+        <article class="lo-parcel-overview">
             <div>
-                <p class="lo-hero-label">Landowner Parcel View</p>
-                <h2 class="lo-hero-title">Linked Parcel and Landholding Records</h2>
-                <p class="lo-hero-copy">
-                    These records are limited to parcels and landholding references linked to your landowner account. They are displayed for reference and monitoring only.
-                </p>
+                <p class="lo-parcel-kicker">Linked Land Records</p>
+                <h2 class="lo-parcel-title">My Parcel Records</h2>
+                <p class="lo-parcel-copy">View only parcel and landholding references connected to your landowner account. These records support monitoring and do not independently establish or transfer legal ownership.</p>
             </div>
 
-            <div class="lo-hero-actions">
+            <div class="lo-parcel-overview-actions">
+                <span class="lo-parcel-count"><i class="fa-solid fa-link"></i>{{ $landholdings->count() }} linked</span>
                 <a href="{{ route('landowner.parcel-map.index') }}" class="lo-button lo-button-primary">
                     <i class="fa-solid fa-map-location-dot"></i>
                     Open Map
@@ -190,75 +144,73 @@
             </div>
         </article>
 
-        <article class="lo-panel">
-            <div class="lo-panel-header">
-                <div>
-                    <h2 class="lo-panel-title">My Parcel Records</h2>
-                    <p class="lo-panel-subtitle">Parcel references connected to your active or historical landholding records.</p>
-                </div>
+        <article class="lo-parcel-panel">
+            <header class="lo-parcel-panel-header">
+                <h2 class="lo-parcel-panel-title">Parcel and Landholding References</h2>
+                <p class="lo-parcel-panel-copy">Essential reference numbers, location, linked area, and map availability.</p>
+            </header>
 
-                <span class="lo-status-pill neutral">{{ $landholdings->count() }} linked</span>
-            </div>
-
-            <div class="lo-panel-body">
-                @if ($landholdings->isEmpty())
-                    <div class="lo-empty">
-                        No parcel records are currently linked to your landowner account.
-                    </div>
-                @else
-                    <div class="lo-table-wrap">
-                        <table class="lo-table">
-                            <thead>
+            @if ($landholdings->isEmpty())
+                <div class="lo-parcel-empty">No parcel records are currently linked to your landowner account.</div>
+            @else
+                <div class="lo-parcel-table-wrap">
+                    <table class="lo-parcel-table">
+                        <thead>
+                            <tr>
+                                <th>Parcel</th>
+                                <th>References</th>
+                                <th>Location</th>
+                                <th>Linked Area</th>
+                                <th>Record State</th>
+                                <th class="lo-parcel-action-column">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach ($landholdings as $holding)
+                                @php($parcel = $holding->parcel)
                                 <tr>
-                                    <th>Parcel Code</th>
-                                    <th>Title No.</th>
-                                    <th>Tax Declaration</th>
-                                    <th>Location</th>
-                                    <th>Area</th>
-                                    <th>Clearance Scope</th>
-                                    <th>Status</th>
-                                    <th>Map</th>
+                                    <td>
+                                        @if ($parcel)
+                                            <a href="{{ route('landowner.parcels.show', $parcel) }}" class="lo-parcel-code-link">{{ $parcel->parcel_code }}</a>
+                                            <div class="lo-parcel-record-id">Parcel record #{{ $parcel->id }}</div>
+                                        @else
+                                            <span class="lo-parcel-code-link">Unlinked parcel</span>
+                                        @endif
+                                    </td>
+                                    <td>
+                                        <div class="lo-reference-list">
+                                            <div class="lo-reference-row"><span class="lo-reference-label">Title</span><span>{{ $parcel?->title_no ?? 'N/A' }}</span></div>
+                                            <div class="lo-reference-row"><span class="lo-reference-label">Tax Dec.</span><span>{{ $parcel?->tax_decl_no ?? 'N/A' }}</span></div>
+                                            <div class="lo-reference-row"><span class="lo-reference-label">Lot</span><span>{{ $parcel?->lot_number ?? 'N/A' }}</span></div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="lo-location-main">{{ $parcel?->municipality ?? 'N/A' }}</div>
+                                        <div class="lo-location-sub">{{ $parcel?->barangay ?? 'N/A' }}, {{ $parcel?->province ?? 'Negros Oriental' }}</div>
+                                    </td>
+                                    <td>
+                                        <div class="lo-area-main">{{ number_format((float) $holding->area_hectares, 4) }} ha</div>
+                                        <div class="lo-area-sub">Landholding reference</div>
+                                    </td>
+                                    <td>
+                                        <div class="lo-state-stack">
+                                            <span class="lo-state-badge {{ $holding->status === 'active' ? 'is-active' : '' }}">{{ $holding->status ? ucwords(str_replace('_', ' ', $holding->status)) : 'Unspecified' }}</span>
+                                            <span class="lo-state-badge {{ $parcel?->geometry_geojson ? 'is-mapped' : '' }}">{{ $parcel?->geometry_geojson ? 'Mapped' : 'No Geometry' }}</span>
+                                        </div>
+                                    </td>
+                                    <td class="lo-parcel-action-column">
+                                        @if ($parcel)
+                                            <a href="{{ route('landowner.parcels.show', $parcel) }}" class="lo-open-link">Open Details <i class="fa-solid fa-arrow-right"></i></a>
+                                        @else
+                                            <span class="lo-state-badge">Unavailable</span>
+                                        @endif
+                                    </td>
                                 </tr>
-                            </thead>
-                            <tbody>
-                                @foreach ($landholdings as $holding)
-                                    @php($parcel = $holding->parcel)
-                                    <tr>
-                                        <td>
-                                            @if ($parcel)
-                                                <a href="{{ route('landowner.parcels.show', $parcel) }}" class="lo-code-link">
-                                                    {{ $parcel->parcel_code }}
-                                                </a>
-                                            @else
-                                                <span class="lo-muted">Unlinked parcel</span>
-                                            @endif
-                                        </td>
-                                        <td>{{ $parcel?->title_no ?? 'N/A' }}</td>
-                                        <td>{{ $parcel?->tax_decl_no ?? 'N/A' }}</td>
-                                        <td>{{ $parcel?->barangay ?? 'N/A' }}, {{ $parcel?->municipality ?? 'N/A' }}</td>
-                                        <td>{{ number_format((float) $holding->area_hectares, 4) }} ha</td>
-                                        <td>
-                                            <span class="lo-status-pill neutral">
-                                                Agricultural land record
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <span class="lo-status-pill">
-                                                {{ $holding->status ? ucwords(str_replace('_', ' ', $holding->status)) : 'N/A' }}
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <span class="lo-map-state">
-                                                {{ $parcel?->geometry_geojson ? 'Available' : 'Not mapped' }}
-                                            </span>
-                                        </td>
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                    </div>
-                @endif
-            </div>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            @endif
         </article>
     </section>
 </x-landowner-shell>

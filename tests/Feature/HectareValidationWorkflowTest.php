@@ -110,6 +110,7 @@ class HectareValidationWorkflowTest extends TestCase
 
         $this->actingAs($staffUser)
             ->post(route('staff.applications.approve', $application), [
+                'final_decision_confirmation' => '1',
                 'decision_reason' => 'Test approval',
             ])
             ->assertSessionHasErrors('validation');
@@ -117,7 +118,6 @@ class HectareValidationWorkflowTest extends TestCase
         $this->assertDatabaseHas('land_transfer_applications', [
             'id' => $application->id,
             'status' => LandTransferApplication::STATUS_PENDING_REVIEW,
-            'registry_mutated_at' => null,
         ]);
     }
 }

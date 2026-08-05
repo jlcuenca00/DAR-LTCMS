@@ -3,12 +3,7 @@
     active="source-records"
     maxWidth="max-w-7xl"
 >
-    <x-slot name="actions">
-        <a href="{{ route('staff.legacy-records.index') }}" class="staff-button staff-button-light">
-            <i class="fa-solid fa-arrow-left"></i>
-            Back to Source Records
-        </a>
-    </x-slot>
+    
 
     <x-slot name="styles">
         <style>

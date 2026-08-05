@@ -2,532 +2,303 @@
     use App\Models\LandTransferApplication;
 
     $displayName = $landowner?->full_name ?? auth()->user()->name;
-
-    $statusLabel = function (?string $status): string {
-        return match ($status) {
-            LandTransferApplication::STATUS_PENDING_LEGAL_REVIEW => 'Pending Review by Legal Officer',
-            LandTransferApplication::STATUS_ENDORSED_LTI => 'Endorsed to LTI Division',
-            LandTransferApplication::STATUS_ENDORSED_CHIEF_LEGAL => 'Endorsed to Chief Legal',
-            LandTransferApplication::STATUS_ENDORSED_PARPO => 'Endorsed to PARPO II',
-            LandTransferApplication::STATUS_FOR_RELEASING => 'For Releasing',
-            LandTransferApplication::STATUS_RELEASED,
-                LandTransferApplication::STATUS_DENIED,
-                LandTransferApplication::STATUS_PENDING_REVIEW,
-            LandTransferApplication::STATUS_DRAFT => 'Pending Review by Legal Officer',
-            default => $status ? str($status)->replace('_', ' ')->title()->toString() : 'N/A',
-        };
-    };
+    $cardValue = fn (string $label) => (int) (collect($dashboardCards)->firstWhere('label', $label)['value'] ?? 0);
 
     $statusClass = function (?string $status): string {
         return match ($status) {
             LandTransferApplication::STATUS_RELEASED,
-                LandTransferApplication::STATUS_DENIED,
-                LandTransferApplication::STATUS_ENDORSED_LTI,
+            LandTransferApplication::STATUS_APPROVED => 'is-green',
+            LandTransferApplication::STATUS_DENIED,
+            LandTransferApplication::STATUS_NOT_APPROVED => 'is-red',
+            LandTransferApplication::STATUS_FOR_RELEASING => 'is-violet',
+            LandTransferApplication::STATUS_ENDORSED_LTI,
             LandTransferApplication::STATUS_ENDORSED_CHIEF_LEGAL,
-            LandTransferApplication::STATUS_ENDORSED_PARPO => 'status-endorsed',
-            LandTransferApplication::STATUS_FOR_RELEASING => 'status-releasing',
-            LandTransferApplication::STATUS_PENDING_LEGAL_REVIEW,
-            LandTransferApplication::STATUS_PENDING_REVIEW,
-            LandTransferApplication::STATUS_DRAFT => 'status-pending',
-            default => 'status-pending',
+            LandTransferApplication::STATUS_ENDORSED_PARPO => 'is-blue',
+            default => 'is-amber',
         };
     };
 @endphp
 
-<x-landowner-shell
-    title="Landowner Dashboard"
-    active="dashboard"
->
+<x-landowner-shell title="Landowner Dashboard" active="dashboard">
     @push('styles')
         <style>
-            .lo-dashboard-kpis {
-                display: grid;
-                grid-template-columns: repeat(4, minmax(0, 1fr));
-                gap: 16px;
-            }
+            .lo-dashboard-stack { display: grid; gap: 18px; }
 
-            .lo-kpi-card {
-                min-height: 118px;
-                background: #ffffff;
-                border: 1px solid var(--lo-line);
-                border-radius: 12px;
-                padding: 18px;
-                display: flex;
-                justify-content: space-between;
-                gap: 16px;
-                box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
-            }
-
-            .lo-kpi-label {
-                margin: 0;
-                font-size: 11px;
-                font-weight: 900;
-                letter-spacing: 0.14em;
-                text-transform: uppercase;
-                color: #667085;
-            }
-
-            .lo-kpi-value {
-                margin: 12px 0 0;
-                font-size: 31px;
-                line-height: 1;
-                font-weight: 900;
-                color: var(--lo-ink);
-            }
-
-            .lo-kpi-description {
-                margin: 12px 0 0;
-                font-size: 12px;
-                color: var(--lo-muted);
-                line-height: 1.45;
-            }
-
-            .lo-kpi-icon {
-                width: 48px;
-                height: 48px;
-                border-radius: 10px;
-                display: grid;
-                place-items: center;
+            .lo-dashboard-hero {
+                background: linear-gradient(120deg, #0f4b25 0%, #166534 62%, #1f7a3c 100%);
+                border: 1px solid rgba(5, 46, 22, .28);
+                border-radius: 16px;
+                padding: 26px 28px;
                 color: #ffffff;
-                background: var(--lo-green-800);
-                flex: 0 0 auto;
-                font-size: 17px;
-            }
-
-            .lo-kpi-icon.slate { background: #334155; }
-            .lo-kpi-icon.green { background: var(--lo-green-800); }
-            .lo-kpi-icon.amber { background: #ea580c; }
-            .lo-kpi-icon.blue { background: #0f766e; }
-
-            .lo-dashboard-grid {
                 display: grid;
-                grid-template-columns: minmax(0, 2fr) minmax(330px, 0.95fr);
-                gap: 20px;
-                align-items: start;
-            }
-
-            .lo-stack {
-                display: grid;
-                gap: 20px;
-            }
-
-            .lo-panel-header {
-                padding: 20px 22px 0;
-                display: flex;
-                justify-content: space-between;
-                align-items: flex-start;
-                gap: 16px;
-            }
-
-            .lo-panel-title {
-                margin: 0;
-                font-size: 18px;
-                line-height: 1.25;
-                font-weight: 900;
-                color: var(--lo-ink);
-            }
-
-            .lo-panel-subtitle {
-                margin: 5px 0 0;
-                font-size: 13px;
-                color: var(--lo-muted);
-                line-height: 1.45;
-            }
-
-            .lo-panel-body {
-                padding: 18px 22px 22px;
-            }
-
-            .lo-action-grid {
-                display: grid;
-                grid-template-columns: repeat(2, minmax(0, 1fr));
-                gap: 10px;
-            }
-
-            .lo-action-link {
-                min-height: 54px;
-                display: flex;
+                grid-template-columns: minmax(0, 1.5fr) minmax(360px, .9fr);
+                gap: 24px;
                 align-items: center;
-                justify-content: space-between;
-                gap: 12px;
-                border: 1px solid var(--lo-line);
-                border-radius: 10px;
-                background: #ffffff;
-                padding: 12px 14px;
-                color: var(--lo-green-900);
-                text-decoration: none;
-                font-size: 13px;
-                font-weight: 900;
-                transition: 160ms ease;
+                box-shadow: 0 12px 28px rgba(15, 75, 37, .13);
             }
 
-            .lo-action-link:hover {
-                background: var(--lo-green-50);
-                border-color: #bbf7d0;
-            }
-
-            .lo-action-link i {
-                width: 28px;
-                height: 28px;
-                display: grid;
-                place-items: center;
-                border-radius: 8px;
-                background: #effaf2;
-                border: 1px solid #bbf7d0;
-                color: var(--lo-green-800);
-                flex: 0 0 auto;
-            }
-
-            .lo-table-wrap {
-                overflow-x: auto;
-            }
-
-            .lo-table {
-                width: 100%;
-                border-collapse: collapse;
-                font-size: 13px;
-                min-width: 760px;
-            }
-
-            .lo-table thead {
-                background: #f8faf9;
-                border-bottom: 1px solid var(--lo-line);
-            }
-
-            .lo-table th {
-                padding: 12px 14px;
-                text-align: left;
-                color: #667085;
+            .lo-dashboard-kicker {
+                margin: 0;
+                color: #bbf7d0;
                 font-size: 10px;
                 font-weight: 900;
-                letter-spacing: 0.14em;
+                letter-spacing: .17em;
                 text-transform: uppercase;
-                white-space: nowrap;
             }
 
-            .lo-table td {
-                padding: 13px 14px;
-                border-bottom: 1px solid #edf0ee;
-                color: #344054;
-                vertical-align: top;
-            }
-
-            .lo-table tbody tr:last-child td {
-                border-bottom: 0;
-            }
-
-            .lo-strong-link {
-                color: var(--lo-green-900);
-                text-decoration: none;
+            .lo-dashboard-welcome {
+                margin: 8px 0 0;
+                font-size: clamp(25px, 3vw, 36px);
+                line-height: 1.08;
                 font-weight: 900;
+                color: #ffffff;
             }
 
-            .lo-muted {
-                color: var(--lo-muted);
-            }
-
-            .lo-status-pill {
-                display: inline-flex;
-                align-items: center;
-                justify-content: center;
-                min-height: 28px;
-                border-radius: 999px;
-                padding: 0 11px;
-                font-size: 12px;
-                font-weight: 900;
-                white-space: nowrap;
-            }
-
-            .status-released,
-            .status-released {
-                background: #dcfce7;
-                border: 1px solid #bbf7d0;
-                color: #166534;
-            }
-
-            .status-denied {
-                background: #fee2e2;
-                border: 1px solid #fecaca;
-                color: #b91c1c;
-            }
-
-            .status-pending {
-                background: #ffedd5;
-                border: 1px solid #fed7aa;
-                color: #c2410c;
-            }
-
-            .status-endorsed {
-                background: #e0f2fe;
-                border: 1px solid #bae6fd;
-                color: #0369a1;
-            }
-
-            .status-releasing {
-                background: #ede9fe;
-                border: 1px solid #ddd6fe;
-                color: #6d28d9;
-            }
-
-            .status-pending {
-                background: #f1f5f9;
-                border: 1px solid #e2e8f0;
-                color: #334155;
-            }
-
-            .lo-summary-list {
-                display: grid;
-                gap: 10px;
-            }
-
-            .lo-summary-row {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                gap: 12px;
-                border: 1px solid #edf0ee;
-                background: #fbfcfb;
-                border-radius: 10px;
-                padding: 12px 14px;
-            }
-
-            .lo-summary-label {
-                color: #344054;
-                font-size: 13px;
-                font-weight: 800;
-            }
-
-            .lo-summary-count {
-                width: 32px;
-                height: 32px;
-                border-radius: 999px;
-                display: grid;
-                place-items: center;
-                background: #effaf2;
-                border: 1px solid #bbf7d0;
-                color: var(--lo-green-900);
-                font-weight: 900;
-            }
-
-            .lo-landholding-list {
-                display: grid;
-                gap: 10px;
-            }
-
-            .lo-landholding-card {
-                border: 1px solid #edf0ee;
-                border-radius: 10px;
-                padding: 13px 14px;
-                background: #fbfcfb;
-            }
-
-            .lo-landholding-top {
-                display: flex;
-                justify-content: space-between;
-                gap: 12px;
-                align-items: flex-start;
-            }
-
-            .lo-landholding-code {
-                margin: 0;
-                color: var(--lo-green-900);
-                font-weight: 900;
-            }
-
-            .lo-landholding-meta {
-                margin: 4px 0 0;
-                color: var(--lo-muted);
-                font-size: 12px;
-                line-height: 1.45;
-            }
-
-            .lo-empty {
-                border: 1px dashed #cbd5d1;
-                border-radius: 10px;
-                background: #fbfcfb;
-                padding: 22px;
-                color: var(--lo-muted);
+            .lo-dashboard-note {
+                margin: 10px 0 0;
+                max-width: 690px;
+                color: #dcfce7;
                 font-size: 13px;
                 line-height: 1.55;
             }
 
-            @media (max-width: 1180px) {
-                .lo-dashboard-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .lo-hero-stats {
+                display: grid;
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+                border: 1px solid rgba(255, 255, 255, .16);
+                border-radius: 13px;
+                background: rgba(5, 46, 22, .24);
+                overflow: hidden;
+            }
+
+            .lo-hero-stat {
+                min-width: 0;
+                padding: 15px 14px;
+                border-right: 1px solid rgba(255, 255, 255, .14);
+            }
+
+            .lo-hero-stat:last-child { border-right: 0; }
+            .lo-hero-stat-value { display: block; font-size: 24px; line-height: 1; font-weight: 900; }
+            .lo-hero-stat-label { display: block; margin-top: 7px; color: #bbf7d0; font-size: 10px; font-weight: 800; line-height: 1.3; }
+
+            .lo-dashboard-grid {
+                display: grid;
+                grid-template-columns: minmax(0, 1.75fr) minmax(320px, .8fr);
+                gap: 18px;
+                align-items: start;
+            }
+
+            .lo-dashboard-side { display: grid; gap: 18px; }
+
+            .lo-dashboard-panel {
+                background: #ffffff;
+                border: 1px solid var(--lo-line);
+                border-radius: 14px;
+                box-shadow: 0 1px 3px rgba(15, 23, 42, .07);
+                overflow: hidden;
+            }
+
+            .lo-dashboard-panel-header {
+                padding: 18px 20px 15px;
+                border-bottom: 1px solid #e8eeea;
+                display: flex;
+                justify-content: space-between;
+                align-items: flex-start;
+                gap: 14px;
+            }
+
+            .lo-dashboard-panel-title { margin: 0; color: var(--lo-ink); font-size: 17px; line-height: 1.25; font-weight: 900; }
+            .lo-dashboard-panel-copy { margin: 4px 0 0; color: var(--lo-muted); font-size: 12px; line-height: 1.45; }
+            .lo-dashboard-link { color: var(--lo-green-800); text-decoration: none; font-size: 12px; font-weight: 900; white-space: nowrap; }
+            .lo-dashboard-link:hover { text-decoration: underline; }
+
+            .lo-application-list { display: grid; }
+            .lo-application-row {
+                display: grid;
+                grid-template-columns: minmax(115px, .65fr) minmax(240px, 1.35fr) minmax(165px, .8fr) minmax(90px, .55fr);
+                gap: 16px;
+                align-items: center;
+                padding: 15px 20px;
+                border-bottom: 1px solid #edf1ee;
+            }
+            .lo-application-row:last-child { border-bottom: 0; }
+
+            .lo-app-code { color: var(--lo-green-900); font-size: 13px; font-weight: 900; }
+            .lo-app-parties { display: grid; gap: 3px; min-width: 0; }
+            .lo-app-party { color: #344054; font-size: 12px; line-height: 1.35; overflow-wrap: anywhere; }
+            .lo-app-party span { display: inline-block; width: 34px; color: #667085; font-size: 10px; font-weight: 900; text-transform: uppercase; }
+            .lo-app-date { color: #667085; font-size: 12px; white-space: nowrap; }
+
+            .lo-status-badge {
+                display: inline-flex;
+                align-items: center;
+                width: fit-content;
+                min-height: 26px;
+                padding: 0 9px;
+                border-radius: 999px;
+                border: 1px solid #e2e8f0;
+                background: #f8fafc;
+                color: #475569;
+                font-size: 10px;
+                line-height: 1.2;
+                font-weight: 900;
+            }
+            .lo-status-badge.is-green { background: #dcfce7; border-color: #bbf7d0; color: #166534; }
+            .lo-status-badge.is-red { background: #fee2e2; border-color: #fecaca; color: #b91c1c; }
+            .lo-status-badge.is-blue { background: #dbeafe; border-color: #bfdbfe; color: #1d4ed8; }
+            .lo-status-badge.is-violet { background: #ede9fe; border-color: #ddd6fe; color: #6d28d9; }
+            .lo-status-badge.is-amber { background: #ffedd5; border-color: #fed7aa; color: #c2410c; }
+
+            .lo-parcel-list { display: grid; }
+            .lo-parcel-row {
+                display: grid;
+                grid-template-columns: minmax(0, 1fr) auto;
+                gap: 12px;
+                align-items: center;
+                padding: 14px 18px;
+                border-bottom: 1px solid #edf1ee;
+            }
+            .lo-parcel-row:last-child { border-bottom: 0; }
+            .lo-parcel-code { color: var(--lo-green-900); font-size: 13px; font-weight: 900; text-decoration: none; }
+            .lo-parcel-code:hover { text-decoration: underline; }
+            .lo-parcel-meta { margin-top: 3px; color: #667085; font-size: 11px; line-height: 1.4; }
+            .lo-parcel-area { color: #0f172a; font-size: 12px; font-weight: 900; white-space: nowrap; }
+
+            .lo-status-summary { padding: 8px 18px 12px; display: grid; }
+            .lo-status-summary-row {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 12px;
+                padding: 10px 0;
+                border-bottom: 1px solid #edf1ee;
+            }
+            .lo-status-summary-row:last-child { border-bottom: 0; }
+            .lo-status-summary-label { color: #475569; font-size: 12px; font-weight: 750; }
+            .lo-status-summary-count { min-width: 28px; text-align: center; color: var(--lo-green-900); font-size: 14px; font-weight: 900; }
+
+            .lo-dashboard-empty { padding: 24px 20px; color: var(--lo-muted); font-size: 13px; line-height: 1.5; }
+
+            @media (max-width: 1120px) {
+                .lo-dashboard-hero,
                 .lo-dashboard-grid { grid-template-columns: 1fr; }
             }
 
-            @media (max-width: 640px) {
-                .lo-dashboard-kpis,
-                .lo-action-grid { grid-template-columns: 1fr; }
-                .lo-panel-header { flex-direction: column; }
+            @media (max-width: 760px) {
+                .lo-dashboard-hero { padding: 22px 20px; }
+                .lo-hero-stats { grid-template-columns: 1fr; }
+                .lo-hero-stat { border-right: 0; border-bottom: 1px solid rgba(255, 255, 255, .14); }
+                .lo-hero-stat:last-child { border-bottom: 0; }
+                .lo-application-row { grid-template-columns: 1fr; gap: 8px; }
             }
         </style>
     @endpush
 
-    <section class="lo-dashboard-kpis">
-        @foreach ($dashboardCards as $card)
-            <article class="lo-kpi-card">
-                <div>
-                    <p class="lo-kpi-label">{{ $card['label'] }}</p>
-                    <p class="lo-kpi-value">{{ $card['value'] }}</p>
-                    <p class="lo-kpi-description">{{ $card['description'] }}</p>
-                </div>
+    <section class="lo-dashboard-stack">
+        <article class="lo-dashboard-hero">
+            <div>
+                <p class="lo-dashboard-kicker">Landowner Portal</p>
+                <h2 class="lo-dashboard-welcome">Welcome, {{ $displayName }}.</h2>
+                <p class="lo-dashboard-note">Review only the parcel records and clearance applications linked to your account. All records remain subject to DAR review and separate legal or administrative procedures.</p>
+            </div>
 
-                <div class="lo-kpi-icon {{ $card['tone'] ?? 'green' }}">
-                    <i class="fa-solid {{ $card['icon'] }}"></i>
+            <div class="lo-hero-stats" aria-label="Landowner record summary">
+                <div class="lo-hero-stat">
+                    <span class="lo-hero-stat-value">{{ $cardValue('Linked Parcels') }}</span>
+                    <span class="lo-hero-stat-label">Linked parcels</span>
                 </div>
-            </article>
-        @endforeach
-    </section>
+                <div class="lo-hero-stat">
+                    <span class="lo-hero-stat-value">{{ $cardValue('My Applications') }}</span>
+                    <span class="lo-hero-stat-label">Applications</span>
+                </div>
+                <div class="lo-hero-stat">
+                    <span class="lo-hero-stat-value">{{ $cardValue('Mapped Parcels') }}</span>
+                    <span class="lo-hero-stat-label">Mapped parcels</span>
+                </div>
+            </div>
+        </article>
 
-    <section class="lo-dashboard-grid">
-        <div class="lo-stack">
-            <article class="lo-panel">
-                <div class="lo-panel-header">
+        <section class="lo-dashboard-grid">
+            <article class="lo-dashboard-panel">
+                <header class="lo-dashboard-panel-header">
                     <div>
-                        <h2 class="lo-panel-title">My Clearance Applications</h2>
-                        <p class="lo-panel-subtitle">Application status records where your landowner account is linked.</p>
+                        <h2 class="lo-dashboard-panel-title">Recent Application Status</h2>
+                        <p class="lo-dashboard-panel-copy">Latest clearance applications linked to your landowner record.</p>
                     </div>
+                    <a href="{{ route('landowner.applications.index') }}" class="lo-dashboard-link">View all →</a>
+                </header>
 
-                    <a href="{{ route('landowner.applications.index') }}" class="lo-button">View All →</a>
-                </div>
-
-                <div class="lo-panel-body">
-                    @if ($recentApplications->isEmpty())
-                        <div class="lo-empty">
-                            No clearance applications are currently linked to your landowner account.
-                        </div>
-                    @else
-                        <div class="lo-table-wrap">
-                            <table class="lo-table">
-                                <thead>
-                                    <tr>
-                                        <th>Code</th>
-                                        <th>Transferor</th>
-                                        <th>Transferee</th>
-                                        <th>Status</th>
-                                        <th>Decision Date</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach ($recentApplications as $application)
-                                        <tr>
-                                            <td>
-                                                <span class="lo-strong-link">{{ $application->application_code }}</span>
-                                            </td>
-                                            <td>{{ $application->transferorLandowner?->full_name ?? $application->transferor_name ?? 'N/A' }}</td>
-                                            <td>{{ $application->transfereeLandowner?->full_name ?? $application->transferee_name ?? 'N/A' }}</td>
-                                            <td>
-                                                <span class="lo-status-pill {{ $statusClass($application->status) }}">
-                                                    {{ $statusLabel($application->status) }}
-                                                </span>
-                                            </td>
-                                            <td>{{ $application->reviewed_at?->format('M d, Y') ?? 'Pending' }}</td>
-                                        </tr>
-                                    @endforeach
-                                </tbody>
-                            </table>
-                        </div>
-                    @endif
-                </div>
+                @if ($recentApplications->isEmpty())
+                    <div class="lo-dashboard-empty">No clearance applications are currently linked to your account.</div>
+                @else
+                    <div class="lo-application-list">
+                        @foreach ($recentApplications as $application)
+                            <div class="lo-application-row">
+                                <div class="lo-app-code">{{ $application->application_code }}</div>
+                                <div class="lo-app-parties">
+                                    <div class="lo-app-party"><span>From</span>{{ $application->transferorDisplayName() ?: 'N/A' }}</div>
+                                    <div class="lo-app-party"><span>To</span>{{ $application->transfereeDisplayName() ?: 'N/A' }}</div>
+                                </div>
+                                <span class="lo-status-badge {{ $statusClass($application->status) }}">{{ $application->statusLabel() }}</span>
+                                <div class="lo-app-date">{{ $application->updated_at?->format('M d, Y') ?? 'N/A' }}</div>
+                            </div>
+                        @endforeach
+                    </div>
+                @endif
             </article>
 
-            <article class="lo-panel">
-                <div class="lo-panel-header">
-                    <div>
-                        <h2 class="lo-panel-title">Recent Landholding References</h2>
-                        <p class="lo-panel-subtitle">Administrative landholding records linked to your account.</p>
-                    </div>
+            <aside class="lo-dashboard-side">
+                <article class="lo-dashboard-panel">
+                    <header class="lo-dashboard-panel-header">
+                        <div>
+                            <h2 class="lo-dashboard-panel-title">My Parcel Snapshot</h2>
+                            <p class="lo-dashboard-panel-copy">Recently linked landholding records.</p>
+                        </div>
+                        <a href="{{ route('landowner.parcels.index') }}" class="lo-dashboard-link">View all →</a>
+                    </header>
 
-                    <a href="{{ route('landowner.parcels.index') }}" class="lo-button">View Parcels →</a>
-                </div>
-
-                <div class="lo-panel-body">
                     @if ($recentLandholdings->isEmpty())
-                        <div class="lo-empty">
-                            No landholding references are currently linked to your account.
-                        </div>
+                        <div class="lo-dashboard-empty">No parcel records are currently linked to your account.</div>
                     @else
-                        <div class="lo-landholding-list">
-                            @foreach ($recentLandholdings as $landholding)
-                                <div class="lo-landholding-card">
-                                    <div class="lo-landholding-top">
-                                        <div>
-                                            <p class="lo-landholding-code">{{ $landholding->parcel?->parcel_code ?? 'Unlinked Parcel Reference' }}</p>
-                                            <p class="lo-landholding-meta">
-                                                {{ $landholding->parcel?->barangay ?? 'N/A' }}, {{ $landholding->parcel?->municipality ?? 'N/A' }}
-                                            </p>
-                                        </div>
-
-                                        <span class="lo-status-pill status-released">
-                                            {{ $landholding->status ? ucwords(str_replace('_', ' ', $landholding->status)) : 'N/A' }}
-                                        </span>
+                        <div class="lo-parcel-list">
+                            @foreach ($recentLandholdings->take(4) as $holding)
+                                @php($parcel = $holding->parcel)
+                                <div class="lo-parcel-row">
+                                    <div>
+                                        @if ($parcel)
+                                            <a href="{{ route('landowner.parcels.show', $parcel) }}" class="lo-parcel-code">{{ $parcel->parcel_code }}</a>
+                                        @else
+                                            <span class="lo-parcel-code">Unlinked parcel</span>
+                                        @endif
+                                        <div class="lo-parcel-meta">{{ $parcel?->barangay ?? 'N/A' }}, {{ $parcel?->municipality ?? 'N/A' }} · {{ $parcel?->geometry_geojson ? 'Mapped' : 'No geometry' }}</div>
                                     </div>
-
-                                    <p class="lo-landholding-meta">
-                                        {{ number_format((float) $landholding->area_hectares, 4) }} ha · Acquired: {{ $landholding->date_acquired?->format('M d, Y') ?? 'N/A' }}
-                                    </p>
+                                    <div class="lo-parcel-area">{{ number_format((float) $holding->area_hectares, 4) }} ha</div>
                                 </div>
                             @endforeach
                         </div>
                     @endif
-                </div>
-            </article>
-        </div>
+                </article>
 
-        <aside class="lo-stack">
-            <article class="lo-panel">
-                <div class="lo-panel-header">
-                    <div>
-                        <h2 class="lo-panel-title">Quick Actions</h2>
-                        <p class="lo-panel-subtitle">View your linked records and map references.</p>
-                    </div>
-                </div>
+                <article class="lo-dashboard-panel">
+                    <header class="lo-dashboard-panel-header">
+                        <div>
+                            <h2 class="lo-dashboard-panel-title">Application Status Overview</h2>
+                            <p class="lo-dashboard-panel-copy">Count of linked applications by stage.</p>
+                        </div>
+                    </header>
 
-                <div class="lo-panel-body">
-                    <div class="lo-action-grid">
-                        <a href="{{ route('landowner.parcel-map.index') }}" class="lo-action-link">
-                            <span>Open Map</span>
-                            <i class="fa-solid fa-map-location-dot"></i>
-                        </a>
-
-                        <a href="{{ route('landowner.parcels.index') }}" class="lo-action-link">
-                            <span>Parcel Records</span>
-                            <i class="fa-solid fa-draw-polygon"></i>
-                        </a>
-
-                        <a href="{{ route('landowner.applications.index') }}" class="lo-action-link">
-                            <span>Applications</span>
-                            <i class="fa-solid fa-file-lines"></i>
-                        </a>
-
-                        <a href="{{ route('profile.edit') }}" class="lo-action-link">
-                            <span>Profile</span>
-                            <i class="fa-solid fa-user-gear"></i>
-                        </a>
-                    </div>
-                </div>
-            </article>
-
-            <article class="lo-panel">
-                <div class="lo-panel-header">
-                    <div>
-                        <h2 class="lo-panel-title">Application Status Summary</h2>
-                        <p class="lo-panel-subtitle">Current status count for your linked clearance applications.</p>
-                    </div>
-                </div>
-
-                <div class="lo-panel-body">
-                    <div class="lo-summary-list">
-                        @foreach ($statusSummary as $summary)
-                            <div class="lo-summary-row">
-                                <span class="lo-summary-label">{{ $summary['label'] }}</span>
-                                <span class="lo-summary-count">{{ $summary['count'] }}</span>
+                    <div class="lo-status-summary">
+                        @forelse ($statusSummary->where('count', '>', 0) as $summary)
+                            <div class="lo-status-summary-row">
+                                <span class="lo-status-summary-label">{{ $summary['label'] }}</span>
+                                <span class="lo-status-summary-count">{{ $summary['count'] }}</span>
                             </div>
-                        @endforeach
+                        @empty
+                            <div class="lo-dashboard-empty" style="padding-left:0; padding-right:0;">No application status data is available.</div>
+                        @endforelse
                     </div>
-                </div>
-            </article>
-        </aside>
+                </article>
+            </aside>
+        </section>
     </section>
 </x-landowner-shell>

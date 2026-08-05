@@ -2,12 +2,7 @@
     title="Import Source Packages"
     active="source-records"
 >
-    <x-slot name="actions">
-        <a href="{{ route('staff.legacy-records.index') }}" class="staff-button staff-button-light">
-            <i class="fa-solid fa-arrow-left"></i>
-            Back to Archive
-        </a>
-    </x-slot>
+    
 
     <x-slot name="styles">
         <style>

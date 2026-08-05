@@ -81,7 +81,6 @@ class BarebonesTesterSeeder extends Seeder
             'source_record_package_import_batches',
 
             // landholding/parcel/landowner records
-            'landholding_mutations',
             'landholdings',
             'parcels',
             'landowners',

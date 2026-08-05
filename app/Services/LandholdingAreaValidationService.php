@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Models\ApplicationParcel;
 use App\Models\Landowner;
 use App\Models\LandTransferApplication;
 
@@ -13,17 +12,46 @@ class LandholdingAreaValidationService
 
     public function forApplication(LandTransferApplication $application): array
     {
-        $application->loadMissing('transfereeLandowner');
+        $application->loadMissing('applicationParcels.parcel');
 
-        return $this->calculate(
-            $application->transfereeLandowner,
-            $application
-        );
+        $linkedTransfereeIds = $application->linkedLandownerIds('transferee');
+        $landowners = Landowner::query()
+            ->whereIn('id', $linkedTransfereeIds)
+            ->get()
+            ->keyBy('id');
+
+        if ($linkedTransfereeIds->isEmpty()) {
+            $result = $this->calculate(null, $application);
+            $result['per_landowner'] = [];
+
+            return $result;
+        }
+
+        $perLandowner = $linkedTransfereeIds
+            ->map(function ($landownerId) use ($landowners, $application) {
+                return $this->calculate($landowners->get($landownerId), $application);
+            })
+            ->values();
+
+        $representative = $perLandowner
+            ->sortByDesc(fn ($row) => ((int) $row['blocks_release'] * 1000000) + (float) $row['projected_total'])
+            ->first();
+
+        $representative['blocks_release'] = $perLandowner->contains(fn ($row) => $row['blocks_release']);
+        $representative['exceeds_limit'] = $perLandowner->contains(fn ($row) => $row['exceeds_limit']);
+        $representative['near_limit'] = $perLandowner->contains(fn ($row) => $row['near_limit']);
+        $representative['per_landowner'] = $perLandowner->all();
+        $representative['scope_note'] = 'Computed separately for every linked transferee using encoded active landholding records and the transferee hectare share recorded for each linked parcel. The result is assistive only and does not make a final legal determination or execute ownership transfer.';
+
+        return $representative;
     }
 
     public function forLandowner(Landowner $landowner): array
     {
-        return $this->calculate($landowner, null);
+        $result = $this->calculate($landowner, null);
+        $result['per_landowner'] = [$result];
+
+        return $result;
     }
 
     private function calculate(?Landowner $landowner, ?LandTransferApplication $application): array
@@ -37,25 +65,27 @@ class LandholdingAreaValidationService
                 ->where('status', 'active')
                 ->sum('area_hectares');
 
-            $pendingIncomingQuery = ApplicationParcel::query()
-                ->whereHas('application', function ($query) use ($landowner, $application) {
+            $pendingApplications = LandTransferApplication::query()
+                ->with('applicationParcels.parcel')
+                ->where(function ($query) use ($landowner) {
                     $query->where('transferee_landowner_id', $landowner->id)
-                        ->whereIn('status', array_merge(
-                            LandTransferApplication::ACTIVE_STATUSES,
-                            [LandTransferApplication::STATUS_DRAFT, LandTransferApplication::STATUS_PENDING_REVIEW]
-                        ));
+                        ->orWhereJsonContains('transferees', [['landowner_id' => $landowner->id]]);
+                })
+                ->whereIn('status', array_merge(
+                    LandTransferApplication::ACTIVE_STATUSES,
+                    [LandTransferApplication::STATUS_DRAFT, LandTransferApplication::STATUS_PENDING_REVIEW]
+                ))
+                ->when($application, fn ($query) => $query->where('id', '!=', $application->id))
+                ->get();
 
-                    if ($application) {
-                        $query->where('id', '!=', $application->id);
-                    }
-                });
-
-            $pendingIncomingTotal = (float) $pendingIncomingQuery->sum('area_hectares');
+            $pendingIncomingTotal = (float) $pendingApplications
+                ->sum(fn (LandTransferApplication $pendingApplication) => $this->incomingAreaForLandowner($pendingApplication, $landowner->id));
         }
 
         if ($application) {
-            $thisApplicationTotal = (float) $application->applicationParcels()
-                ->sum('area_hectares');
+            $thisApplicationTotal = $landowner
+                ? $this->incomingAreaForLandowner($application, $landowner->id)
+                : (float) $application->applicationParcels()->sum('area_hectares');
         }
 
         $projectedTotal = $currentActiveTotal + $pendingIncomingTotal + $thisApplicationTotal;
@@ -105,5 +135,21 @@ class LandholdingAreaValidationService
             },
             'scope_note' => 'Computed from encoded active landholding records and pending/current clearance application areas only. Succession and retention-certificate entries are staff review context, not automatic legal determinations.',
         ];
+    }
+
+    private function incomingAreaForLandowner(LandTransferApplication $application, int $landownerId): float
+    {
+        $application->loadMissing('applicationParcels.parcel');
+
+        return round((float) $application->applicationParcels->sum(function ($applicationParcel) use ($application, $landownerId) {
+            $parcelArea = (float) ($applicationParcel->area_hectares ?? $applicationParcel->parcel?->area_hectares ?? 0);
+
+            return $application->partyAreaForParcel(
+                'transferee',
+                $landownerId,
+                (int) $applicationParcel->id,
+                $parcelArea
+            );
+        }), 4);
     }
 }

@@ -1,429 +1,330 @@
-<x-staff-shell title="Staff Operations Dashboard" active="dashboard" maxWidth="max-w-none">
+<x-staff-shell
+    title="Staff Dashboard"
+    active="dashboard"
+    maxWidth="max-w-none"
+>
     <x-slot name="styles">
         <style>
-            .scope-notice {
-                display: flex;
-                justify-content: space-between;
+            .staff-dashboard {
+                display: grid;
                 gap: 18px;
-                align-items: flex-start;
-                border: 1px solid #bbf7d0;
-                background: #f0fdf4;
-                color: #14532d;
-                border-radius: 10px;
-                padding: 14px 18px;
             }
 
-            .scope-notice h3 {
+            .dashboard-hero {
+                display: grid;
+                grid-template-columns: minmax(0, 1.35fr) minmax(350px, 0.75fr);
+                gap: 22px;
+                align-items: center;
+                padding: 20px 24px;
+                border: 1px solid #145c38;
+                border-radius: 18px;
+                background: linear-gradient(135deg, #115a36 0%, #1a713f 100%);
+                color: #ffffff;
+                box-shadow: 0 12px 28px rgba(15, 81, 50, 0.14);
+            }
+
+            .hero-title {
                 margin: 0;
+                color: #ffffff;
                 font-family: var(--heading-font);
-                font-size: 14px;
+                font-size: clamp(25px, 2.3vw, 32px);
                 font-weight: 900;
+                letter-spacing: -0.025em;
+                line-height: 1.12;
             }
 
-            .scope-notice p {
-                margin: 5px 0 0;
-                max-width: 920px;
-                font-size: 12.5px;
-                line-height: 1.55;
-                font-weight: 600;
+            .hero-actions {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 10px;
+                margin-top: 15px;
             }
 
-            .scope-pill {
-                flex: 0 0 auto;
-                border: 1px solid #bbf7d0;
-                background: #dcfce7;
-                color: #14532d;
-                border-radius: 999px;
-                padding: 5px 11px;
-                font-size: 11px;
-                font-weight: 900;
-                white-space: nowrap;
-            }
-
-            .panel {
+            .hero-action {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                gap: 9px;
+                min-height: 40px;
+                padding: 8px 14px;
+                border: 1px solid #ffffff;
+                border-radius: 10px;
                 background: #ffffff;
-                border: 1px solid var(--border);
-                border-radius: 12px;
-                box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+                color: #14532d;
+                font-size: 11.5px;
+                font-weight: 900;
+                text-decoration: none;
+                transition: transform 150ms ease, background 150ms ease;
+            }
+
+            .hero-action:hover {
+                background: #f2fbf5;
+                transform: translateY(-1px);
+            }
+
+            .hero-queue {
+                padding: 11px 14px;
+                border: 1px solid rgba(255, 255, 255, 0.18);
+                border-radius: 14px;
+                background: rgba(8, 47, 28, 0.34);
+            }
+
+            .hero-queue-title {
+                margin: 0 0 7px;
+                color: #ffffff;
+                font-size: 12px;
+                font-weight: 900;
+            }
+
+            .queue-row {
+                display: grid;
+                grid-template-columns: 32px minmax(0, 1fr) auto;
+                align-items: center;
+                gap: 10px;
+                width: 100%;
+                padding: 8px 4px;
+                border: 0;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.13);
+                background: transparent;
+                color: inherit;
+                font: inherit;
+                text-align: left;
+                cursor: pointer;
+            }
+
+            .queue-row:last-child { border-bottom: 0; }
+
+            .queue-row.is-active {
+                border-radius: 9px;
+                background: rgba(255, 255, 255, 0.10);
+            }
+
+            .queue-row:focus-visible {
+                outline: 2px solid #ffffff;
+                outline-offset: 2px;
+            }
+
+            .queue-icon {
+                display: grid;
+                width: 29px;
+                height: 29px;
+                place-items: center;
+                border-radius: 8px;
+                background: rgba(255, 255, 255, 0.12);
+                color: #ffffff;
+                font-size: 11px;
+            }
+
+            .queue-label {
+                display: block;
+                color: #ffffff;
+                font-size: 10.5px;
+                font-weight: 900;
+                line-height: 1.3;
+            }
+
+            .queue-description {
+                display: block;
+                margin-top: 2px;
+                color: #ccebd7;
+                font-size: 9px;
+                line-height: 1.3;
+            }
+
+            .queue-value {
+                color: #ffffff;
+                font-family: var(--heading-font);
+                font-size: 21px;
+                font-weight: 900;
+                line-height: 1;
+            }
+
+            .today-strip {
+                display: grid;
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+                gap: 14px;
+            }
+
+            .today-card {
+                display: grid;
+                grid-template-columns: 38px minmax(0, 1fr) auto;
+                align-items: center;
+                gap: 12px;
+                min-height: 78px;
+                padding: 14px 16px;
+                border: 1px solid #d6e0da;
+                border-radius: 13px;
+                background: #ffffff;
+                box-shadow: 0 3px 12px rgba(15, 23, 42, 0.045);
+            }
+
+            .today-icon {
+                display: grid;
+                width: 38px;
+                height: 38px;
+                place-items: center;
+                border-radius: 10px;
+                background: #eef8f1;
+                color: #166534;
+                font-size: 14px;
+            }
+
+            .today-label {
+                color: #475569;
+                font-size: 11.5px;
+                font-weight: 800;
+                line-height: 1.35;
+            }
+
+            .today-value {
+                color: #111827;
+                font-family: var(--heading-font);
+                font-size: 25px;
+                font-weight: 900;
+                line-height: 1;
+            }
+
+            .dashboard-workspace {
+                display: grid;
+                grid-template-columns: minmax(0, 1.9fr) minmax(310px, 0.65fr);
+                gap: 18px;
+                align-items: start;
+            }
+
+            .dashboard-panel {
                 overflow: hidden;
+                border: 1px solid #cfdcd4;
+                border-radius: 14px;
+                background: #ffffff;
+                box-shadow: 0 7px 20px rgba(15, 23, 42, 0.055);
             }
 
             .panel-header {
-                padding: 20px 22px 0;
                 display: flex;
-                justify-content: space-between;
                 align-items: flex-start;
-                gap: 16px;
+                justify-content: space-between;
+                gap: 18px;
+                padding: 17px 19px;
+                border-bottom: 1px solid #e7ece9;
             }
 
             .panel-title {
                 margin: 0;
+                color: #111827;
                 font-family: var(--heading-font);
                 font-size: 17px;
                 font-weight: 900;
-                color: #111827;
+                letter-spacing: -0.01em;
             }
 
             .panel-subtitle {
                 margin: 5px 0 0;
-                font-size: 13px;
                 color: #6b7280;
-                line-height: 1.5;
-            }
-
-            .panel-link {
-                font-size: 13px;
-                font-weight: 900;
-                color: #166534;
-                text-decoration: none;
-                white-space: nowrap;
-            }
-
-            .panel-link:hover { text-decoration: underline; }
-
-            .empty-state {
-                padding: 28px;
-                text-align: center;
-                color: #6b7280;
-                font-size: 13px;
-            }
-
-            .stats-grid {
-                display: grid;
-                grid-template-columns: repeat(5, minmax(0, 1fr));
-                gap: 18px;
-            }
-
-            .stat-card {
-                background: var(--panel);
-                border: 1px solid var(--border);
-                border-radius: 12px;
-                box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
-                padding: 20px;
-                min-height: 120px;
-                display: flex;
-                justify-content: space-between;
-                gap: 18px;
-            }
-
-            .stat-label {
-                margin: 0;
                 font-size: 11px;
-                font-weight: 900;
-                letter-spacing: 0.14em;
-                text-transform: uppercase;
-                color: #6b7280;
-            }
-
-            .stat-value {
-                margin: 12px 0 0;
-                font-family: var(--heading-font);
-                font-size: 32px;
-                line-height: 1;
-                font-weight: 900;
-                color: #111827;
-            }
-
-            .stat-description {
-                margin: 12px 0 0;
-                font-size: 12px;
-                color: #6b7280;
                 line-height: 1.45;
             }
 
-            .stat-icon {
-                width: 48px;
-                height: 48px;
-                border-radius: 10px;
-                display: grid;
-                place-items: center;
-                color: #ffffff;
-                flex: 0 0 auto;
-                font-size: 18px;
-            }
-
-            .icon-slate { background: #334155; }
-            .icon-amber { background: #ea580c; }
-            .icon-blue { background: #2563eb; }
-            .icon-green { background: #16a34a; }
-            .icon-red { background: #dc2626; }
-
-            .dashboard-layout {
-                display: grid;
-                grid-template-columns: minmax(0, 1.68fr) minmax(340px, 0.82fr);
-                gap: 20px;
-                align-items: start;
-            }
-
-            .dashboard-main-stack,
-            .dashboard-side-stack {
-                display: grid;
-                gap: 20px;
-                min-width: 0;
-                align-items: start;
-            }
-
-            .dashboard-chart-panel {
-                min-height: 360px;
-                display: flex;
-                flex-direction: column;
-            }
-
-            .dashboard-chart-panel .panel-header {
-                min-height: 72px;
-            }
-
-            .dashboard-recent-panel {
-                align-self: start;
-            }
-
-            .dashboard-compact-panel .panel-header {
-                padding: 16px 20px 0;
-            }
-
-            .dashboard-compact-panel .panel-title {
-                font-size: 16px;
-            }
-
-            .dashboard-compact-panel .panel-subtitle {
-                font-size: 12.5px;
-            }
-
-            .bar-chart {
-                flex: 1;
-                height: 250px;
-                min-height: 250px;
-                padding: 18px 24px 18px;
-                display: flex;
-                align-items: end;
-                gap: 18px;
-            }
-
-            .bar-item {
-                flex: 1;
-                min-width: 0;
-                display: grid;
-                gap: 10px;
-                align-items: end;
-                text-align: center;
-            }
-
-            .bar-track {
-                height: 168px;
-                display: flex;
-                align-items: end;
-                border-left: 1px dashed #e5e7eb;
-                border-bottom: 1px solid #cbd5e1;
-                padding: 0 8px;
-            }
-
-            .bar-fill {
-                width: 100%;
-                min-height: 8px;
-                border-radius: 6px 6px 0 0;
-                background: #2e7d32;
-            }
-
-            .bar-label {
-                margin: 0;
-                font-size: 12px;
-                font-weight: 700;
-                color: #4b5563;
-            }
-
-            .bar-count {
-                margin: -6px 0 0;
+            .panel-link {
+                color: #166534;
                 font-size: 11px;
-                color: #6b7280;
-            }
-
-            .quick-list {
-                padding: 16px 20px 18px;
-                display: grid;
-                gap: 8px;
-            }
-
-            .quick-link {
-                min-height: 58px;
-                display: flex;
-                justify-content: space-between;
-                gap: 14px;
-                align-items: center;
+                font-weight: 900;
                 text-decoration: none;
-                border: 1px solid #dbe4dd;
-                border-radius: 10px;
-                padding: 11px 14px;
-                background: #f8faf9;
-                transition: 160ms ease;
-            }
-
-            .quick-link:hover {
-                border-color: #86efac;
-                background: #f0fdf4;
-            }
-
-            .quick-title {
-                margin: 0;
-                font-size: 14px;
-                font-weight: 800;
-                color: #14532d;
-            }
-
-            .quick-desc {
-                margin: 2px 0 0;
-                font-size: 11.5px;
-                line-height: 1.35;
-                color: #6b7280;
-            }
-
-            .quick-action-icon {
-                width: 18px;
-                text-align: center;
-                color: #166534;
-                font-size: 15px;
-            }
-
-            .dashboard-primary-actions {
-                align-self: start;
-                height: auto !important;
-                min-height: 0 !important;
-            }
-
-            .dashboard-primary-actions .quick-list {
-                grid-template-columns: repeat(2, minmax(0, 1fr));
-                gap: 8px;
-                padding: 12px 16px 16px;
-            }
-
-            .dashboard-primary-actions .quick-link {
-                min-height: 54px;
-                align-items: center;
-                justify-content: flex-start;
-                flex-direction: row;
-                gap: 10px;
-                padding: 9px 11px;
-                background: #ffffff;
-            }
-
-            .dashboard-primary-actions .quick-link:hover {
-                transform: translateY(-1px);
-                box-shadow: 0 8px 18px rgba(22, 101, 52, 0.08);
-            }
-
-            .dashboard-primary-actions .quick-title {
-                font-size: 12.5px;
-                line-height: 1.18;
-                letter-spacing: 0.01em;
-            }
-
-            .dashboard-primary-actions .quick-desc {
-                display: none;
-            }
-
-            .dashboard-primary-actions .quick-action-icon {
-                order: -1;
-                width: 28px;
-                height: 28px;
-                border: 1px solid #bbf7d0;
-                border-radius: 9px;
-                display: grid;
-                place-items: center;
-                align-self: center;
-                flex: 0 0 auto;
-                margin-top: 0;
-                background: #ecfdf5;
-                color: #166534;
-                font-size: 12px;
-            }
-
-            .dashboard-primary-actions .quick-link:hover .quick-action-icon {
-                background: #dcfce7;
-            }
-
-            .table-wrap {
-                padding: 12px 24px 16px;
-                overflow-x: auto;
-                scrollbar-color: #166534 #e5e7eb;
-                scrollbar-width: thin;
-            }
-
-            .dashboard-recent-panel .table-wrap {
-                padding-bottom: 14px;
-            }
-
-            .data-table {
-                width: 100%;
-                border-collapse: collapse;
-                font-size: 13px;
-            }
-
-            .data-table th {
-                text-align: left;
-                padding: 12px 10px;
-                border-bottom: 1px solid #d1d5db;
-                font-size: 11px;
-                letter-spacing: 0.12em;
-                text-transform: uppercase;
-                color: #64748b;
-            }
-
-            .data-table td {
-                padding: 11px 10px;
-                border-bottom: 1px solid #e5e7eb;
-                color: #374151;
-                vertical-align: top;
-            }
-
-            .data-table th,
-            .data-table td {
                 white-space: nowrap;
             }
 
-            .data-table th:first-child,
-            .data-table td:first-child {
-                padding-left: 0;
+            .panel-link:hover {
+                text-decoration: underline;
+                text-underline-offset: 3px;
             }
 
-            .data-table th:last-child,
-            .data-table td:last-child {
-                padding-right: 0;
+            .dashboard-table-wrap {
+                overflow-x: auto;
+                padding: 3px 19px 10px;
             }
 
-            .date-col {
-                text-align: right;
-                width: 110px;
+            .dashboard-table {
+                width: 100%;
+                border-collapse: collapse;
+                font-size: 12px;
             }
 
-            .code-link {
+            .dashboard-table th {
+                padding: 11px 8px;
+                border-bottom: 1px solid #d9e1dc;
+                color: #64748b;
+                font-size: 9px;
+                font-weight: 900;
+                letter-spacing: 0.09em;
+                text-align: left;
+                text-transform: uppercase;
+                white-space: nowrap;
+            }
+
+            .dashboard-table td {
+                padding: 13px 8px;
+                border-bottom: 1px solid #edf1ee;
+                color: #374151;
+                vertical-align: middle;
+            }
+
+            .dashboard-table tbody tr:last-child td { border-bottom: 0; }
+            .dashboard-table tbody tr:hover { background: #fbfdfb; }
+
+            .application-link {
                 color: #166534;
                 font-weight: 900;
                 text-decoration: none;
+                white-space: nowrap;
             }
 
-            .code-link:hover {
+            .application-link:hover {
                 text-decoration: underline;
+                text-underline-offset: 3px;
             }
 
-            .status-badge {
+            .party-transfer {
+                display: grid;
+                gap: 3px;
+                min-width: 220px;
+            }
+
+            .party-line {
+                overflow: hidden;
+                max-width: 420px;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+
+            .party-direction {
+                color: #94a3b8;
+                font-size: 8px;
+            }
+
+            .dashboard-status {
                 display: inline-flex;
+                align-items: center;
+                padding: 5px 9px;
+                border: 1px solid #cbd5e1;
                 border-radius: 999px;
-                padding: 5px 10px;
-                font-size: 11px;
+                background: #f1f5f9;
+                color: #475569;
+                font-size: 9.5px;
                 font-weight: 900;
-                border: 1px solid;
+                white-space: nowrap;
             }
 
             .status-released,
-            .status-released {
-                background: #dcfce7;
+            .status-approved {
                 border-color: #bbf7d0;
+                background: #dcfce7;
                 color: #166534;
             }
 
             .status-pending_legal_review,
-            .status-pending-legal-review {
-                background: #ffedd5;
+            .status-pending_review,
+            .status-draft {
                 border-color: #fed7aa;
+                background: #ffedd5;
                 color: #c2410c;
             }
 
@@ -431,379 +332,342 @@
             .status-endorsed_chief_legal,
             .status-endorsed_parpo,
             .status-for_releasing {
-                background: #dbeafe;
                 border-color: #bfdbfe;
+                background: #dbeafe;
                 color: #1d4ed8;
             }
 
             .status-denied,
-            .status-denied {
-                background: #fee2e2;
+            .status-not_approved {
                 border-color: #fecaca;
+                background: #fee2e2;
                 color: #b91c1c;
             }
 
-            .status-pending-legal-review {
+            .attention-list {
+                display: grid;
+                gap: 0;
+            }
+
+            .attention-item {
+                display: grid;
+                grid-template-columns: 36px minmax(0, 1fr);
+                gap: 11px;
+                padding: 15px 17px;
+                border-bottom: 1px solid #edf1ee;
+            }
+
+            .attention-item:last-child { border-bottom: 0; }
+
+            .attention-icon {
+                display: grid;
+                width: 34px;
+                height: 34px;
+                place-items: center;
+                border-radius: 9px;
                 background: #f1f5f9;
-                border-color: #cbd5e1;
                 color: #475569;
+                font-size: 12px;
             }
 
-            .mini-grid {
-                padding: 16px 20px 18px;
-                display: grid;
-                grid-template-columns: repeat(2, minmax(0, 1fr));
-                gap: 10px;
-            }
-
-            .mini-card {
-                border: 1px solid #e5e7eb;
-                border-radius: 10px;
-                padding: 15px;
-                background: #ffffff;
-            }
-
-            .mini-label {
+            .attention-label {
                 margin: 0;
-                font-size: 10px;
-                font-weight: 900;
-                letter-spacing: 0.12em;
-                text-transform: uppercase;
                 color: #64748b;
-            }
-
-            .mini-value {
-                margin: 8px 0 0;
-                font-family: var(--heading-font);
-                font-size: 24px;
+                font-size: 9.5px;
                 font-weight: 900;
-                color: #111827;
+                letter-spacing: 0.06em;
+                text-transform: uppercase;
             }
 
-            .activity-list {
-                padding: 16px 20px 18px;
-                display: grid;
-                gap: 8px;
+            .attention-link {
+                display: inline-block;
+                margin-top: 4px;
+                color: #166534;
+                font-size: 12.5px;
+                font-weight: 900;
+                text-decoration: none;
             }
 
-            .activity-card {
-                border: 1px solid #e5e7eb;
+            .attention-link:hover { text-decoration: underline; }
+
+            .attention-meta,
+            .attention-empty {
+                margin-top: 3px;
+                color: #64748b;
+                font-size: 10.5px;
+                line-height: 1.4;
+            }
+
+            .stale-callout {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 12px;
+                margin: 14px 16px 16px;
+                padding: 12px 13px;
+                border: 1px solid #fed7aa;
                 border-radius: 10px;
-                padding: 13px 14px;
-                background: #ffffff;
+                background: #fff7ed;
             }
 
-            .activity-action {
-                margin: 0;
-                font-size: 13px;
-                font-weight: 900;
-                color: #111827;
-            }
-
-            .activity-meta {
-                margin: 4px 0 0;
+            .stale-label {
+                color: #9a3412;
                 font-size: 11px;
-                color: #6b7280;
+                font-weight: 850;
+                line-height: 1.4;
             }
 
+            .stale-value {
+                color: #c2410c;
+                font-family: var(--heading-font);
+                font-size: 22px;
+                font-weight: 900;
+            }
 
-            @media (max-width: 1180px) {
-                .stats-grid {
-                    grid-template-columns: repeat(2, minmax(0, 1fr));
-                }
+            .dashboard-empty {
+                padding: 34px 18px;
+                color: #6b7280;
+                font-size: 11.5px;
+                text-align: center;
+            }
 
-                .dashboard-layout {
+            @media (max-width: 1120px) {
+                .dashboard-hero,
+                .dashboard-workspace {
                     grid-template-columns: 1fr;
                 }
+
+                .hero-queue {
+                    display: grid;
+                    grid-template-columns: repeat(3, minmax(0, 1fr));
+                    gap: 1px;
+                }
+
+                .hero-queue-title { grid-column: 1 / -1; }
+
+                .queue-row {
+                    padding: 10px 8px;
+                    border-right: 1px solid rgba(255, 255, 255, 0.13);
+                    border-bottom: 0;
+                }
+
+                .queue-row:last-child { border-right: 0; }
             }
 
             @media (max-width: 760px) {
-                .stats-grid,
-                .dashboard-layout,
-                .mini-grid {
-                    grid-template-columns: 1fr;
+                .today-strip { grid-template-columns: 1fr; }
+                .hero-queue { grid-template-columns: 1fr; }
+
+                .queue-row {
+                    border-right: 0;
+                    border-bottom: 1px solid rgba(255, 255, 255, 0.13);
                 }
 
-                .bar-chart {
-                    height: 260px;
-                    padding: 20px 18px;
-                    gap: 10px;
+                .queue-row:last-child { border-bottom: 0; }
+                .panel-header { flex-direction: column; }
+            }
+
+            @media (max-width: 560px) {
+                .dashboard-hero {
+                    padding: 20px 17px;
+                    border-radius: 14px;
                 }
 
-                .bar-track {
-                    height: 180px;
-                    padding: 0 4px;
-                }
-
-                .stat-card {
-                    min-height: auto;
-                }
-
-                .dashboard-primary-actions .quick-list {
-                    grid-template-columns: 1fr;
-                }
-
-                .dashboard-primary-actions .quick-link {
-                    min-height: 58px;
-                    flex-direction: row;
-                    align-items: center;
-                }
-
-                .dashboard-primary-actions .quick-desc {
-                    display: block;
-                }
+                .hero-title { font-size: 26px; }
+                .dashboard-table-wrap { padding-inline: 13px; }
             }
         </style>
     </x-slot>
 
-    <section class="stats-grid">
-        @foreach ($statusCards as $index => $card)
-            @php
-                $iconClass = match ($index) {
-                    1 => 'icon-amber',
-                    2 => 'icon-blue',
-                    3 => 'icon-green',
-                    4 => 'icon-red',
-                    default => 'icon-slate',
-                };
+    <div class="staff-dashboard">
+        <section class="dashboard-hero" aria-label="Clearance operations">
+            <div>
+                <h2 class="hero-title">Welcome, {{ auth()->user()->name }}.</h2>
 
-                $icon = match ($index) {
-                    1 => 'fa-scale-balanced',
-                    2 => 'fa-route',
-                    3 => 'fa-stamp',
-                    4 => 'fa-circle-xmark',
-                    default => 'fa-file-lines',
-                };
-            @endphp
-
-            <article class="stat-card">
-                <div>
-                    <p class="stat-label">{{ $card['label'] }}</p>
-                    <p class="stat-value">{{ number_format($card['value']) }}</p>
-                    <p class="stat-description">{{ $card['description'] }}</p>
-                </div>
-
-                <div class="stat-icon {{ $iconClass }}">
-                    <i class="fa-solid {{ $icon }}"></i>
-                </div>
-            </article>
-        @endforeach
-    </section>
-
-    <section class="dashboard-layout">
-        <div class="dashboard-main-stack">
-            <div class="panel dashboard-chart-panel">
-                <div class="panel-header">
-                    <div>
-                        <h2 class="panel-title">Monthly Application Submissions</h2>
-                        <p class="panel-subtitle">Encoded clearance applications during the last six months.</p>
-                    </div>
-
-                    <a href="{{ route('staff.applications.index') }}" class="panel-link">
-                        View Applications →
+                <div class="hero-actions" aria-label="Primary staff actions">
+                    <a href="{{ route('staff.applications.create') }}" class="hero-action">
+                        <i class="fa-solid fa-plus" aria-hidden="true"></i>
+                        Encode New Application
                     </a>
-                </div>
-
-                <div class="bar-chart">
-                    @foreach ($monthlyApplications as $month)
-                        @php
-                            $height = max(6, round(($month['count'] / $maxMonthlyCount) * 100));
-                        @endphp
-
-                        <div class="bar-item">
-                            <div class="bar-track">
-                                <div
-                                    class="bar-fill"
-                                    style="height: {{ $height }}%;"
-                                    title="{{ $month['count'] }} application(s)"
-                                ></div>
-                            </div>
-
-                            <p class="bar-label">{{ $month['label'] }}</p>
-                            <p class="bar-count">{{ $month['count'] }}</p>
-                        </div>
-                    @endforeach
                 </div>
             </div>
 
-            <div class="panel dashboard-recent-panel">
+            <div class="hero-queue" aria-label="Current work queue">
+                <h3 class="hero-queue-title">Current Work Queue</h3>
+
+                @foreach ($workQueue as $item)
+                    <button
+                        type="button"
+                        class="queue-row{{ $item['filter'] === 'all' ? ' is-active' : '' }}"
+                        data-dashboard-filter="{{ $item['filter'] }}"
+                        aria-pressed="{{ $item['filter'] === 'all' ? 'true' : 'false' }}"
+                    >
+                        <span class="queue-icon">
+                            <i class="fa-solid {{ $item['icon'] }}" aria-hidden="true"></i>
+                        </span>
+                        <span>
+                            <span class="queue-label">{{ $item['label'] }}</span>
+                            <span class="queue-description">{{ $item['description'] }}</span>
+                        </span>
+                        <span class="queue-value">{{ number_format($item['value']) }}</span>
+                    </button>
+                @endforeach
+            </div>
+        </section>
+
+        <section class="today-strip" aria-label="Today's office activity">
+            @foreach ($todaySummary as $item)
+                <article class="today-card">
+                    <span class="today-icon">
+                        <i class="fa-solid {{ $item['icon'] }}" aria-hidden="true"></i>
+                    </span>
+                    <span class="today-label">{{ $item['label'] }}</span>
+                    <strong class="today-value">{{ number_format($item['value']) }}</strong>
+                </article>
+            @endforeach
+        </section>
+
+        <section class="dashboard-workspace">
+            <article class="dashboard-panel" aria-label="Applications requiring action">
                 <div class="panel-header">
                     <div>
-                        <h2 class="panel-title">Recent Clearance Applications</h2>
-                        <p class="panel-subtitle">Latest encoded applications.</p>
+                        <h2 class="panel-title">Applications Requiring Action</h2>
+                        <p class="panel-subtitle">Highest-priority active applications for continued staff processing.</p>
                     </div>
-
-                    <a href="{{ route('staff.applications.index') }}" class="panel-link">
-                        View All Applications →
-                    </a>
+                    <a href="{{ route('staff.applications.index') }}" class="panel-link">View all applications →</a>
                 </div>
 
-                <div class="table-wrap">
-                    <table class="data-table">
+                <div class="dashboard-table-wrap">
+                    <table class="dashboard-table">
                         <thead>
                             <tr>
-                                <th>Code</th>
-                                <th>Transferor</th>
-                                <th>Transferee</th>
-                                <th>Status</th>
-                                <th class="date-col">Date</th>
+                                <th>Application</th>
+                                <th>Transfer</th>
+                                <th>Current Stage</th>
+                                <th>Updated</th>
                             </tr>
                         </thead>
-
                         <tbody>
-                            @forelse ($recentApplications as $application)
-                                <tr>
+                            @forelse ($actionApplications as $application)
+                                <tr data-dashboard-status="{{ $application->status }}">
                                     <td>
-                                        <a href="{{ route('staff.applications.show', $application) }}" class="code-link">
+                                        <a href="{{ route('staff.applications.show', $application) }}" class="application-link">
                                             {{ $application->application_code }}
                                         </a>
                                     </td>
-                                    <td>{{ $application->transferor_name }}</td>
-                                    <td>{{ $application->transferee_name }}</td>
                                     <td>
-                                        <span class="status-badge status-{{ $application->status }}">
-                                            {{ method_exists($application, 'statusLabel')
-                                                ? $application->statusLabel()
-                                                : ($application->status === 'released'
-                                                    ? 'Released'
-                                                    : ($application->status === 'denied'
-                                                        ? 'Denied'
-                                                        : ucwords(str_replace('_', ' ', $application->status)))) }}
+                                        <div class="party-transfer">
+                                            <span class="party-line" title="{{ $application->transferorDisplayName() }}">
+                                                {{ $application->transferorDisplayName() }}
+                                            </span>
+                                            <span class="party-direction">
+                                                <i class="fa-solid fa-arrow-down" aria-hidden="true"></i>
+                                            </span>
+                                            <span class="party-line" title="{{ $application->transfereeDisplayName() }}">
+                                                {{ $application->transfereeDisplayName() }}
+                                            </span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="dashboard-status status-{{ $application->status }}">
+                                            {{ $application->statusLabel() }}
                                         </span>
                                     </td>
-                                    <td class="date-col">{{ $application->created_at?->format('M d, Y') }}</td>
+                                    <td>{{ $application->updated_at?->format('M d, Y') }}</td>
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="5">
-                                        <div class="empty-state">No clearance applications found yet.</div>
-                                    </td>
+                                    <td colspan="4" class="dashboard-empty">No active applications currently require staff action.</td>
                                 </tr>
                             @endforelse
+
+                            @if ($actionApplications->isNotEmpty())
+                                <tr data-dashboard-filter-empty hidden>
+                                    <td colspan="4" class="dashboard-empty">No applications in this preview match the selected queue.</td>
+                                </tr>
+                            @endif
                         </tbody>
                     </table>
                 </div>
-            </div>
-        </div>
+            </article>
 
-        <aside class="dashboard-side-stack">
-            <div class="panel dashboard-compact-panel dashboard-primary-actions">
+            <aside class="dashboard-panel" aria-label="Processing attention">
                 <div class="panel-header">
                     <div>
-                        <h2 class="panel-title">Quick Actions</h2>
-                        <p class="panel-subtitle">Common staff-side modules.</p>
+                        <h2 class="panel-title">Processing Attention</h2>
+                        <p class="panel-subtitle">Items that may require follow-up.</p>
                     </div>
                 </div>
 
-                <div class="quick-list">
-                    <a href="{{ \Illuminate\Support\Facades\Route::has('staff.applications.create') ? route('staff.applications.create') : route('staff.applications.index') }}" class="quick-link">
-                        <div>
-                            <p class="quick-title">New Application</p>
-                            <p class="quick-desc">Create a staff-encoded clearance application.</p>
+                <div class="attention-list">
+                    @foreach ($attentionItems as $index => $item)
+                        <div class="attention-item">
+                            <span class="attention-icon">
+                                <i class="fa-solid {{ $index === 0 ? 'fa-scale-balanced' : 'fa-file-export' }}" aria-hidden="true"></i>
+                            </span>
+                            <div>
+                                <p class="attention-label">{{ $item['label'] }}</p>
+                                @if ($item['application'])
+                                    <a href="{{ route('staff.applications.show', $item['application']) }}" class="attention-link">
+                                        {{ $item['application']->application_code }}
+                                    </a>
+                                    <div class="attention-meta">
+                                        Waiting {{ (int) ($item['application']->updated_at?->copy()->startOfDay()->diffInDays(today()) ?? 0) }} day(s)
+                                    </div>
+                                @else
+                                    <div class="attention-empty">{{ $item['empty'] }}</div>
+                                @endif
+                            </div>
                         </div>
-                        <i class="fa-solid fa-plus quick-action-icon"></i>
-                    </a>
-
-                    <a href="{{ route('staff.applications.index', ['status' => \App\Models\LandTransferApplication::STATUS_PENDING_LEGAL_REVIEW]) }}" class="quick-link">
-                        <div>
-                            <p class="quick-title">Review Applications</p>
-                            <p class="quick-desc">Open applications that need staff review action.</p>
-                        </div>
-                        <i class="fa-solid fa-clock quick-action-icon"></i>
-                    </a>
-
-                    <a href="{{ route('staff.records.parcels.index') }}" class="quick-link">
-                        <div>
-                            <p class="quick-title">Parcel Search</p>
-                            <p class="quick-desc">Find main parcel records.</p>
-                        </div>
-                        <i class="fa-solid fa-magnifying-glass-location quick-action-icon"></i>
-                    </a>
-
-                    <a href="{{ route('staff.legacy-records.index') }}" class="quick-link">
-                        <div>
-                            <p class="quick-title">Source Archive</p>
-                            <p class="quick-desc">Review documentary source records.</p>
-                        </div>
-                        <i class="fa-solid fa-box-archive quick-action-icon"></i>
-                    </a>
-
-                    <a href="{{ route('staff.reports.monitoring.index') }}" class="quick-link">
-                        <div>
-                            <p class="quick-title">Monitoring Report</p>
-                            <p class="quick-desc">Open printable monitoring outputs.</p>
-                        </div>
-                        <i class="fa-solid fa-chart-line quick-action-icon"></i>
-                    </a>
-
-                    <a href="{{ route('staff.audit-logs.index') }}" class="quick-link">
-                        <div>
-                            <p class="quick-title">Audit Logs</p>
-                            <p class="quick-desc">Review traceability records.</p>
-                        </div>
-                        <i class="fa-solid fa-clipboard-list quick-action-icon"></i>
-                    </a>
-                </div>
-            </div>
-
-            <div class="panel dashboard-compact-panel">
-                <div class="panel-header">
-                    <div>
-                        <h2 class="panel-title">Records Summary</h2>
-                        <p class="panel-subtitle">Current administrative record totals.</p>
-                    </div>
+                    @endforeach
                 </div>
 
-                <div class="mini-grid">
-                    <div class="mini-card">
-                        <p class="mini-label">Landowners</p>
-                        <p class="mini-value">{{ number_format($recordsSummary['landowners']) }}</p>
-                    </div>
-
-                    <div class="mini-card">
-                        <p class="mini-label">Parcels</p>
-                        <p class="mini-value">{{ number_format($recordsSummary['parcels']) }}</p>
-                    </div>
-
-                    <div class="mini-card">
-                        <p class="mini-label">Source Packages</p>
-                        <p class="mini-value">{{ number_format($recordsSummary['source_packages']) }}</p>
-                    </div>
-
-                    <div class="mini-card">
-                        <p class="mini-label">Source Records</p>
-                        <p class="mini-value">{{ number_format($recordsSummary['legacy_records']) }}</p>
-                    </div>
+                <div class="stale-callout">
+                    <span class="stale-label">Active applications with no update for more than 7 days</span>
+                    <strong class="stale-value">{{ number_format($staleActiveCount) }}</strong>
                 </div>
-            </div>
+            </aside>
+        </section>
+    </div>
 
-            <div class="panel dashboard-compact-panel">
-                <div class="panel-header">
-                    <div>
-                        <h2 class="panel-title">Recent Audit Activity</h2>
-                        <p class="panel-subtitle">Latest trace records from important staff-side actions.</p>
-                    </div>
+    <x-slot name="scripts">
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                const filterButtons = Array.from(document.querySelectorAll('[data-dashboard-filter]'));
+                const applicationRows = Array.from(document.querySelectorAll('[data-dashboard-status]'));
+                const emptyRow = document.querySelector('[data-dashboard-filter-empty]');
 
-                    <a href="{{ route('staff.audit-logs.index') }}" class="panel-link">
-                        View →
-                    </a>
-                </div>
+                if (!filterButtons.length || !applicationRows.length) {
+                    return;
+                }
 
-                <div class="activity-list">
-                    @forelse ($recentAuditLogs as $log)
-                        <div class="activity-card">
-                            <p class="activity-action">
-                                {{ ucwords(str_replace('_', ' ', $log->action)) }}
-                            </p>
-                            <p class="activity-meta">
-                                {{ $log->actor?->name ?? 'System' }} · {{ $log->created_at?->format('M d, Y h:i A') }}
-                            </p>
-                        </div>
-                    @empty
-                        <div class="empty-state">No audit activity recorded yet.</div>
-                    @endforelse
-                </div>
-            </div>
-        </aside>
-    </section>
+                filterButtons.forEach(function (button) {
+                    button.addEventListener('click', function () {
+                        const selectedFilter = button.dataset.dashboardFilter;
+                        let visibleCount = 0;
+
+                        filterButtons.forEach(function (candidate) {
+                            const isActive = candidate === button;
+                            candidate.classList.toggle('is-active', isActive);
+                            candidate.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+                        });
+
+                        applicationRows.forEach(function (row) {
+                            const isVisible = selectedFilter === 'all'
+                                || row.dataset.dashboardStatus === selectedFilter;
+
+                            row.hidden = !isVisible;
+                            if (isVisible) {
+                                visibleCount += 1;
+                            }
+                        });
+
+                        if (emptyRow) {
+                            emptyRow.hidden = visibleCount !== 0;
+                        }
+                    });
+                });
+            });
+        </script>
+    </x-slot>
 </x-staff-shell>

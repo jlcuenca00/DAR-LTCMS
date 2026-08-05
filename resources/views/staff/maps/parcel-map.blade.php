@@ -34,7 +34,7 @@
 
             .map-workspace {
                 display: grid;
-                grid-template-columns: 320px minmax(0, 1fr);
+                grid-template-columns: 300px minmax(0, 1fr);
                 gap: 18px;
                 align-items: stretch;
             }
@@ -44,6 +44,95 @@
                 gap: 14px;
                 align-content: start;
                 min-width: 0;
+            }
+
+            .parcel-search-input-wrap {
+                position: relative;
+                margin-top: .9rem;
+            }
+
+            .parcel-search-input-wrap i {
+                position: absolute;
+                left: .85rem;
+                top: 50%;
+                transform: translateY(-50%);
+                color: #64748b;
+                font-size: .82rem;
+                pointer-events: none;
+            }
+
+            .parcel-search-input {
+                width: 100%;
+                border: 1px solid #cbd5e1;
+                border-radius: .75rem;
+                padding: .72rem .8rem .72rem 2.35rem;
+                font-size: .84rem;
+                color: #0f172a;
+                background: #fff;
+            }
+
+            .parcel-search-input:focus {
+                outline: none;
+                border-color: #15803d;
+                box-shadow: 0 0 0 3px rgba(21, 128, 61, .12);
+            }
+
+            .parcel-search-results {
+                display: grid;
+                gap: .45rem;
+                margin-top: .7rem;
+                max-height: 350px;
+                overflow-y: auto;
+            }
+
+            .parcel-search-result {
+                width: 100%;
+                border: 1px solid #e2e8f0;
+                border-radius: .72rem;
+                background: #f8fafc;
+                padding: .68rem .72rem;
+                text-align: left;
+                transition: 140ms ease;
+            }
+
+            .parcel-search-result:hover,
+            .parcel-search-result:focus {
+                border-color: #86efac;
+                background: #f0fdf4;
+                outline: none;
+            }
+
+            .parcel-search-result-code {
+                display: block;
+                color: #065f46;
+                font-size: .82rem;
+                font-weight: 900;
+                line-height: 1.25;
+            }
+
+            .parcel-search-result-meta {
+                display: block;
+                margin-top: .16rem;
+                color: #64748b;
+                font-size: .72rem;
+                line-height: 1.35;
+            }
+
+            .parcel-search-empty {
+                border: 1px dashed #cbd5e1;
+                border-radius: .72rem;
+                padding: .8rem;
+                color: #64748b;
+                font-size: .78rem;
+                text-align: center;
+            }
+
+            .map-header-actions {
+                display: flex;
+                align-items: center;
+                justify-content: flex-end;
+                gap: .55rem;
+                flex-wrap: wrap;
             }
 
             .panel-pad {
@@ -370,76 +459,43 @@
         <aside class="map-sidebar">
             <div class="panel map-card">
                 <div class="panel-pad">
-                    <h3 class="panel-title">Map Tools</h3>
-                    <p class="panel-copy">
-                        Reset the map to the full Negros Oriental provincial view or open the parcel records list.
-                    </p>
+                    <h3 class="panel-title">Find a Parcel</h3>
+                    <p class="panel-copy">Search the mapped records by parcel code, title number, landowner, or location.</p>
 
-                    <div class="tool-list">
-                        <button type="button" id="reset-map-view" class="tool-button primary">
-                            <i class="fa-solid fa-expand"></i>
-                            Reset View
-                        </button>
-
-
-                        <a href="{{ route('staff.records.parcels.index') }}" class="tool-link secondary">
-                            <i class="fa-solid fa-list"></i>
-                            Parcel List
-                        </a>
+                    <div class="parcel-search-input-wrap">
+                        <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+                        <input
+                            id="parcel-map-search"
+                            type="search"
+                            class="parcel-search-input"
+                            placeholder="Search mapped parcels"
+                            autocomplete="off"
+                        >
                     </div>
+
+                    <div id="parcel-search-results" class="parcel-search-results" aria-live="polite"></div>
                 </div>
             </div>
 
             <div class="panel map-card">
                 <div class="panel-pad">
-                    <h3 class="panel-title">Legend</h3>
-                    <p class="panel-copy">
-                        Colors represent parcel record states used for monitoring display.
-                    </p>
-
-                    <div class="legend-list">
+                    <h3 class="panel-title">Map Legend</h3>
+                    <div class="legend-list mt-3">
                         <div class="legend-item">
                             <span class="legend-dot" style="background:#22c55e;"></span>
                             Active parcel record
                         </div>
-
                         <div class="legend-item">
                             <span class="legend-dot" style="background:#f59e0b;"></span>
                             Pending review reference
                         </div>
-
                         <div class="legend-item">
                             <span class="legend-dot" style="background:#2563eb;"></span>
                             Linked to application
                         </div>
-
                         <div class="legend-item">
                             <span class="legend-dot" style="background:#dc2626;"></span>
                             Flagged record
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="panel map-card">
-                <div class="panel-pad">
-                    <h3 class="panel-title">Access Control</h3>
-                    <p class="panel-copy">
-                        Staff may review broad parcel references. The map itself remains non-mutating.
-                    </p>
-
-                    <div class="access-list">
-                        <div class="access-row">
-                            <span class="access-label">Role</span>
-                            <span class="access-value">Staff</span>
-                        </div>
-                        <div class="access-row">
-                            <span class="access-label">Access Level</span>
-                            <span class="access-value">Broad parcel viewing</span>
-                        </div>
-                        <div class="access-row">
-                            <span class="access-label">Editing</span>
-                            <span class="access-value locked">Not allowed on map</span>
                         </div>
                     </div>
                 </div>
@@ -449,13 +505,19 @@
         <section class="panel map-card map-panel">
             <div class="map-panel-header">
                 <div>
-                    <h3 class="map-panel-title">Mapped Main Parcel Records</h3>
-                    <p class="map-panel-subtitle">Click a parcel to open its staff parcel record. Source records do not appear unless linked to a main parcel record.</p>
+                    <h3 class="map-panel-title">Mapped Parcel Records</h3>
+                    <p class="map-panel-subtitle">Select a search result to focus the map, or click a parcel boundary to open its record.</p>
                 </div>
 
-                <div class="map-count">
-                    <i class="fa-solid fa-draw-polygon"></i>
-                    {{ number_format($mappedParcelCount) }} mapped parcel{{ $mappedParcelCount === 1 ? '' : 's' }}
+                <div class="map-header-actions">
+                    <div class="map-count">
+                        <i class="fa-solid fa-draw-polygon"></i>
+                        {{ number_format($mappedParcelCount) }} mapped parcel{{ $mappedParcelCount === 1 ? '' : 's' }}
+                    </div>
+                    <button type="button" id="reset-map-view" class="staff-button staff-button-light">
+                        <i class="fa-solid fa-expand"></i>
+                        Reset View
+                    </button>
                 </div>
             </div>
 
@@ -474,8 +536,19 @@
 
         <script>
             document.addEventListener('DOMContentLoaded', function () {
+                const mapContainer = document.getElementById('parcel-map');
+
+                if (typeof window.L === 'undefined') {
+                    if (mapContainer) {
+                        mapContainer.innerHTML = '<div style="height:100%;min-height:360px;display:grid;place-items:center;padding:24px;text-align:center;color:#475569;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:10px;"><div><strong style="display:block;color:#0f172a;margin-bottom:6px;">Map resources could not be loaded.</strong><span>Check the internet connection, then refresh the page. Parcel records remain available in the list and detail views.</span></div></div>';
+                    }
+                    return;
+                }
                 const negrosOrientalCenter = [9.3068, 123.3054];
                 const parcelGeoJson = @json($parcelGeoJson);
+                const searchInput = document.getElementById('parcel-map-search');
+                const searchResults = document.getElementById('parcel-search-results');
+                const parcelLayers = new Map();
 
                 const map = L.map('parcel-map', {
                     zoomControl: false,
@@ -584,6 +657,8 @@
                 let parcelLayer = null;
 
                 function onEachParcel(feature, layer) {
+                    parcelLayers.set(String(feature.properties.id), layer);
+
                     layer.bindTooltip(buildTooltipContent(feature.properties), {
                         sticky: true,
                         direction: 'top',
@@ -660,7 +735,7 @@
                         .openOn(map);
                 }
 
-                document.getElementById('reset-map-view').addEventListener('click', function () {
+                function resetMapView() {
                     if (parcelLayer) {
                         map.fitBounds(parcelLayer.getBounds(), {
                             padding: [40, 40],
@@ -670,7 +745,97 @@
                     } else {
                         map.setView(negrosOrientalCenter, 12);
                     }
-                });
+                }
+
+                function featureSearchText(feature) {
+                    const properties = feature.properties || {};
+                    return [
+                        properties.parcel_code,
+                        properties.title_no,
+                        properties.tax_decl_no,
+                        properties.landowner,
+                        properties.municipality,
+                        properties.barangay
+                    ].join(' ').toLowerCase();
+                }
+
+                function focusParcel(feature) {
+                    const layer = parcelLayers.get(String(feature.properties.id));
+                    if (!layer) {
+                        return;
+                    }
+
+                    if (layer.getBounds) {
+                        map.fitBounds(layer.getBounds(), {
+                            padding: [70, 70],
+                            maxZoom: 17,
+                            animate: true,
+                            duration: 0.55
+                        });
+                    } else if (layer.getLatLng) {
+                        map.setView(layer.getLatLng(), 17, { animate: true });
+                    }
+
+                    setTimeout(function () {
+                        layer.openTooltip();
+                    }, 450);
+                }
+
+                function renderSearchResults(query = '') {
+                    if (!searchResults) {
+                        return;
+                    }
+
+                    const normalizedQuery = query.trim().toLowerCase();
+                    const features = (parcelGeoJson.features || [])
+                        .filter(function (feature) {
+                            return normalizedQuery === '' || featureSearchText(feature).includes(normalizedQuery);
+                        })
+                        .slice(0, 8);
+
+                    searchResults.innerHTML = '';
+
+                    if (features.length === 0) {
+                        const empty = document.createElement('div');
+                        empty.className = 'parcel-search-empty';
+                        empty.textContent = 'No mapped parcels match this search.';
+                        searchResults.appendChild(empty);
+                        return;
+                    }
+
+                    features.forEach(function (feature) {
+                        const properties = feature.properties || {};
+                        const button = document.createElement('button');
+                        button.type = 'button';
+                        button.className = 'parcel-search-result';
+
+                        const code = document.createElement('span');
+                        code.className = 'parcel-search-result-code';
+                        code.textContent = properties.parcel_code || 'Parcel record';
+
+                        const meta = document.createElement('span');
+                        meta.className = 'parcel-search-result-meta';
+                        meta.textContent = `${properties.barangay || 'N/A'}, ${properties.municipality || 'N/A'} · ${properties.area_hectares || 'N/A'} ha`;
+
+                        button.appendChild(code);
+                        button.appendChild(meta);
+                        button.addEventListener('click', function () {
+                            focusParcel(feature);
+                        });
+
+                        searchResults.appendChild(button);
+                    });
+                }
+
+                document.getElementById('reset-map-view').addEventListener('click', resetMapView);
+
+                if (searchInput) {
+                    searchInput.addEventListener('input', function (event) {
+                        renderSearchResults(event.target.value);
+                    });
+                }
+
+                renderSearchResults();
             });
         </script>
     </x-slot>

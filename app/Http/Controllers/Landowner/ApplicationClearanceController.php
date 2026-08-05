@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Landowner;
 use App\Http\Controllers\Controller;
 use App\Models\Landowner;
 use App\Models\LandTransferApplication;
-use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Auth;
 
 class ApplicationClearanceController extends Controller
@@ -14,7 +13,7 @@ class ApplicationClearanceController extends Controller
     {
         $this->authorizeLandownerApplication($application);
 
-        $application->load('clearance');
+        $application->load(['clearance', 'documents.requiredDocument', 'applicationParcels.parcel']);
 
         if (! $application->isFinalized()) {
             return redirect()
@@ -28,9 +27,11 @@ class ApplicationClearanceController extends Controller
                 ->with('error', 'Decision output record is not yet available for this application.');
         }
 
-        return view('landowner.clearances.show', [
+        return view('staff.clearances.show', [
             'application' => $application,
             'clearance' => $application->clearance,
+            'returnRoute' => route('landowner.applications.index'),
+            'returnLabel' => 'Back to My Applications',
         ]);
     }
 
@@ -38,26 +39,7 @@ class ApplicationClearanceController extends Controller
     {
         $this->authorizeLandownerApplication($application);
 
-        $application->load('clearance');
-
-        if (! $application->isFinalized()) {
-            return redirect()
-                ->route('landowner.applications.index')
-                ->with('error', 'Decision output is only available after the application is finalized.');
-        }
-
-        if (! $application->clearance) {
-            return redirect()
-                ->route('landowner.applications.index')
-                ->with('error', 'Decision output record is not yet available for this application.');
-        }
-
-        $pdf = Pdf::loadView('staff.clearances.pdf', [
-            'application' => $application,
-            'clearance' => $application->clearance,
-        ])->setPaper('a4');
-
-        return $pdf->stream($application->clearance->clearance_number . '.pdf');
+        return redirect()->route('landowner.applications.clearance.show', $application);
     }
 
     private function authorizeLandownerApplication(LandTransferApplication $application): void
@@ -67,8 +49,7 @@ class ApplicationClearanceController extends Controller
             ->pluck('id');
 
         abort_unless(
-            $landownerIds->contains($application->transferor_landowner_id)
-                || $landownerIds->contains($application->transferee_landowner_id),
+            $landownerIds->contains(fn ($landownerId) => $application->isLinkedToLandowner((int) $landownerId)),
             403
         );
     }

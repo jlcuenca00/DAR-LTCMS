@@ -2,12 +2,7 @@
     title="Source Record Details"
     active="source-records"
 >
-    <x-slot name="actions">
-        <a href="{{ route('staff.legacy-records.index') }}" class="staff-button staff-button-light">
-            <i class="fa-solid fa-arrow-left"></i>
-            Back to Archive
-        </a>
-    </x-slot>
+    
 
     @php
         $sourceLandownerName = $record->landowner_name ?: ($record->transferor_name ?: $record->transferee_name);

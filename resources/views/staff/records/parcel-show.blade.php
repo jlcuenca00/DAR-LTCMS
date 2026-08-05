@@ -3,11 +3,6 @@
     active="parcel-records"
 >
     <x-slot name="actions">
-        <a href="{{ route('staff.parcel-map.index') }}" class="staff-button staff-button-primary">
-            <i class="fa-solid fa-map-location-dot"></i>
-            Back to Map
-        </a>
-
         <a href="{{ route('staff.records.parcels.edit', $parcel) }}" class="staff-button staff-button-primary">
             <i class="fa-solid fa-pen-to-square"></i>
             Edit Record
@@ -18,10 +13,6 @@
             Archive Record
         </button>
 
-        <a href="{{ route('staff.records.parcels.index') }}" class="staff-button staff-button-light">
-            <i class="fa-solid fa-arrow-left"></i>
-            Back to Parcel Records
-        </a>
     </x-slot>
 
     <x-slot name="styles">

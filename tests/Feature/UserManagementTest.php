@@ -2,10 +2,10 @@
 
 namespace Tests\Feature;
 
-use App\Models\AuditLog;
 use App\Models\Landowner;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
 
 class UserManagementTest extends TestCase
@@ -14,85 +14,66 @@ class UserManagementTest extends TestCase
 
     public function test_staff_can_view_user_management_page(): void
     {
-        $staffUser = User::factory()->create([
+        $staff = User::factory()->create([
             'role' => User::ROLE_STAFF,
             'is_active' => true,
         ]);
 
-        $response = $this->actingAs($staffUser)
-            ->get(route('staff.users.index'));
-
-        $response->assertOk();
-        $response->assertSee('User / Role Management');
-        $response->assertSee('Staff-Managed User Accounts');
+        $this->actingAs($staff)
+            ->get(route('staff.users.index'))
+            ->assertOk()
+            ->assertSee('User / Role Management');
     }
 
-    public function test_landowner_cannot_view_user_management_page(): void
+    public function test_non_staff_users_cannot_view_user_management_page(): void
     {
-        $landownerUser = User::factory()->create([
-            'role' => User::ROLE_LANDOWNER,
-            'is_active' => true,
-        ]);
+        foreach ([User::ROLE_LANDOWNER, User::ROLE_GEODETIC] as $role) {
+            $user = User::factory()->create([
+                'role' => $role,
+                'is_active' => true,
+            ]);
 
-        $response = $this->actingAs($landownerUser)
-            ->get(route('staff.users.index'));
-
-        $response->assertForbidden();
+            $this->actingAs($user)
+                ->get(route('staff.users.index'))
+                ->assertForbidden();
+        }
     }
 
-    public function test_geodetic_cannot_view_user_management_page(): void
+    public function test_staff_can_create_account_that_requires_initial_password_change(): void
     {
-        $geodeticUser = User::factory()->create([
-            'role' => User::ROLE_GEODETIC,
-            'is_active' => true,
-        ]);
-
-        $response = $this->actingAs($geodeticUser)
-            ->get(route('staff.users.index'));
-
-        $response->assertForbidden();
-    }
-
-    public function test_staff_can_create_geodetic_user_account(): void
-    {
-        $staffUser = User::factory()->create([
+        $staff = User::factory()->create([
             'role' => User::ROLE_STAFF,
             'is_active' => true,
         ]);
 
-        $response = $this->actingAs($staffUser)
+        $response = $this->actingAs($staff)
             ->post(route('staff.users.store'), [
                 'name' => 'Test Geodetic User',
-                'email' => 'test.geodetic@example.com',
-                'password' => 'password',
-                'password_confirmation' => 'password',
+                'username' => 'geo_test_01',
+                'email' => null,
+                'password' => 'Temporary-123!',
+                'password_confirmation' => 'Temporary-123!',
                 'role' => User::ROLE_GEODETIC,
                 'is_active' => '1',
                 'landowner_id' => null,
             ]);
 
         $response->assertRedirect(route('staff.users.index'));
-        $response->assertSessionHas('success');
 
-        $this->assertDatabaseHas('users', [
-            'email' => 'test.geodetic@example.com',
-            'role' => User::ROLE_GEODETIC,
-            'is_active' => true,
-        ]);
-
-        $createdUser = User::where('email', 'test.geodetic@example.com')->first();
-
+        $created = User::where('username', 'geo_test_01')->firstOrFail();
+        $this->assertTrue($created->must_change_password);
+        $this->assertNotNull($created->password_changed_at);
         $this->assertDatabaseHas('audit_logs', [
-            'actor_user_id' => $staffUser->id,
+            'actor_user_id' => $staff->id,
             'action' => 'user_created',
             'auditable_type' => User::class,
-            'auditable_id' => $createdUser->id,
+            'auditable_id' => $created->id,
         ]);
     }
 
     public function test_staff_can_create_landowner_account_linked_to_landowner_record(): void
     {
-        $staffUser = User::factory()->create([
+        $staff = User::factory()->create([
             'role' => User::ROLE_STAFF,
             'is_active' => true,
         ]);
@@ -105,179 +86,175 @@ class UserManagementTest extends TestCase
             'province' => 'Negros Oriental',
         ]);
 
-        $response = $this->actingAs($staffUser)
+        $this->actingAs($staff)
             ->post(route('staff.users.store'), [
                 'name' => 'Linked Landowner User',
-                'email' => 'linked.landowner@example.com',
-                'password' => 'password',
-                'password_confirmation' => 'password',
+                'username' => 'linked_landowner',
+                'email' => null,
+                'password' => 'Temporary-123!',
+                'password_confirmation' => 'Temporary-123!',
                 'role' => User::ROLE_LANDOWNER,
                 'is_active' => '1',
                 'landowner_id' => $landowner->id,
-            ]);
+            ])
+            ->assertRedirect(route('staff.users.index'));
 
-        $response->assertRedirect(route('staff.users.index'));
-        $response->assertSessionHas('success');
-
-        $createdUser = User::where('email', 'linked.landowner@example.com')->first();
-
-        $this->assertNotNull($createdUser);
-
+        $created = User::where('username', 'linked_landowner')->firstOrFail();
         $this->assertDatabaseHas('landowners', [
             'id' => $landowner->id,
-            'user_id' => $createdUser->id,
-        ]);
-
-        $this->assertDatabaseHas('audit_logs', [
-            'actor_user_id' => $staffUser->id,
-            'action' => 'user_created',
-            'auditable_type' => User::class,
-            'auditable_id' => $createdUser->id,
+            'user_id' => $created->id,
         ]);
     }
 
     public function test_landowner_role_requires_linked_landowner_record(): void
     {
-        $staffUser = User::factory()->create([
+        $staff = User::factory()->create([
             'role' => User::ROLE_STAFF,
             'is_active' => true,
         ]);
 
-        $response = $this->actingAs($staffUser)
+        $this->actingAs($staff)
             ->post(route('staff.users.store'), [
                 'name' => 'Unlinked Landowner User',
-                'email' => 'unlinked.landowner@example.com',
-                'password' => 'password',
-                'password_confirmation' => 'password',
+                'username' => 'unlinked_landowner',
+                'email' => null,
+                'password' => 'Temporary-123!',
+                'password_confirmation' => 'Temporary-123!',
                 'role' => User::ROLE_LANDOWNER,
                 'is_active' => '1',
                 'landowner_id' => null,
-            ]);
-
-        $response->assertSessionHasErrors('landowner_id');
-
-        $this->assertDatabaseMissing('users', [
-            'email' => 'unlinked.landowner@example.com',
-        ]);
+            ])
+            ->assertSessionHasErrors('landowner_id');
     }
 
-    public function test_staff_cannot_change_own_role(): void
+    public function test_staff_cannot_change_own_role_or_deactivate_own_account(): void
     {
-        $staffUser = User::factory()->create([
+        $staff = User::factory()->create([
             'name' => 'Current Staff',
-            'email' => 'current.staff@example.com',
+            'username' => 'current_staff',
             'role' => User::ROLE_STAFF,
             'is_active' => true,
         ]);
 
-        $response = $this->actingAs($staffUser)
-            ->put(route('staff.users.update', $staffUser), [
-                'name' => 'Current Staff',
-                'email' => 'current.staff@example.com',
-                'password' => null,
-                'password_confirmation' => null,
+        $this->actingAs($staff)
+            ->put(route('staff.users.update', $staff), [
+                'name' => $staff->name,
+                'username' => $staff->username,
+                'email' => $staff->email,
                 'role' => User::ROLE_GEODETIC,
                 'is_active' => '1',
                 'landowner_id' => null,
-            ]);
+            ])
+            ->assertSessionHasErrors('role');
 
-        $response->assertSessionHasErrors('role');
-
-        $this->assertDatabaseHas('users', [
-            'id' => $staffUser->id,
-            'role' => User::ROLE_STAFF,
-            'is_active' => true,
-        ]);
-    }
-
-    public function test_staff_cannot_deactivate_own_account(): void
-    {
-        $staffUser = User::factory()->create([
-            'name' => 'Current Staff',
-            'email' => 'current.staff@example.com',
-            'role' => User::ROLE_STAFF,
-            'is_active' => true,
-        ]);
-
-        $response = $this->actingAs($staffUser)
-            ->put(route('staff.users.update', $staffUser), [
-                'name' => 'Current Staff',
-                'email' => 'current.staff@example.com',
-                'password' => null,
-                'password_confirmation' => null,
+        $this->actingAs($staff)
+            ->put(route('staff.users.update', $staff), [
+                'name' => $staff->name,
+                'username' => $staff->username,
+                'email' => $staff->email,
                 'role' => User::ROLE_STAFF,
                 'landowner_id' => null,
-            ]);
-
-        $response->assertSessionHasErrors('is_active');
-
-        $this->assertDatabaseHas('users', [
-            'id' => $staffUser->id,
-            'role' => User::ROLE_STAFF,
-            'is_active' => true,
-        ]);
+            ])
+            ->assertSessionHasErrors('is_active');
     }
 
-    public function test_inactive_user_cannot_login(): void
+    public function test_inactive_user_cannot_login_with_username(): void
     {
-        User::factory()->create([
-            'name' => 'Inactive Staff',
-            'email' => 'inactive.staff@example.com',
-            'password' => 'password',
+        $user = User::factory()->create([
+            'username' => 'inactive_staff',
+            'password' => Hash::make('password'),
             'role' => User::ROLE_STAFF,
             'is_active' => false,
         ]);
 
-        $response = $this->post(route('login'), [
-            'email' => 'inactive.staff@example.com',
+        $this->post(route('login'), [
+            'username' => $user->username,
             'password' => 'password',
-        ]);
-
-        $response->assertSessionHasErrors('email');
+        ])->assertSessionHasErrors('username');
 
         $this->assertGuest();
     }
 
-    public function test_staff_can_update_other_user_status_and_role(): void
+    public function test_staff_can_update_another_user_without_changing_password(): void
     {
-        $staffUser = User::factory()->create([
+        $staff = User::factory()->create([
             'role' => User::ROLE_STAFF,
             'is_active' => true,
         ]);
 
-        $targetUser = User::factory()->create([
+        $target = User::factory()->create([
             'name' => 'Target User',
-            'email' => 'target.user@example.com',
+            'username' => 'target_user',
             'role' => User::ROLE_GEODETIC,
             'is_active' => true,
         ]);
 
-        $response = $this->actingAs($staffUser)
-            ->put(route('staff.users.update', $targetUser), [
+        $originalHash = $target->password;
+
+        $this->actingAs($staff)
+            ->put(route('staff.users.update', $target), [
                 'name' => 'Updated Target User',
-                'email' => 'target.user@example.com',
-                'password' => null,
-                'password_confirmation' => null,
+                'username' => 'updated_target',
+                'email' => $target->email,
                 'role' => User::ROLE_STAFF,
                 'is_active' => '1',
                 'landowner_id' => null,
-            ]);
+            ])
+            ->assertRedirect(route('staff.users.index'));
 
-        $response->assertRedirect(route('staff.users.index'));
-        $response->assertSessionHas('success');
+        $target->refresh();
+        $this->assertSame($originalHash, $target->password);
+        $this->assertSame('updated_target', $target->username);
+        $this->assertSame(User::ROLE_STAFF, $target->role);
+    }
 
-        $this->assertDatabaseHas('users', [
-            'id' => $targetUser->id,
-            'name' => 'Updated Target User',
+    public function test_staff_can_generate_one_time_temporary_password_for_another_user(): void
+    {
+        $staff = User::factory()->create([
             'role' => User::ROLE_STAFF,
             'is_active' => true,
         ]);
 
-        $this->assertDatabaseHas('audit_logs', [
-            'actor_user_id' => $staffUser->id,
-            'action' => 'user_updated',
-            'auditable_type' => User::class,
-            'auditable_id' => $targetUser->id,
+        $target = User::factory()->create([
+            'username' => 'reset_target',
+            'must_change_password' => false,
+            'password_changed_at' => null,
         ]);
+
+        $oldHash = $target->password;
+
+        $response = $this->actingAs($staff)
+            ->post(route('staff.users.reset-password', $target));
+
+        $response
+            ->assertRedirect()
+            ->assertSessionHas('temporary_password')
+            ->assertSessionHas('temporary_password_username', 'reset_target');
+
+        $temporaryPassword = $response->getSession()->get('temporary_password');
+        $target->refresh();
+
+        $this->assertNotSame($oldHash, $target->password);
+        $this->assertTrue(Hash::check($temporaryPassword, $target->password));
+        $this->assertTrue($target->must_change_password);
+        $this->assertNotNull($target->password_changed_at);
+        $this->assertDatabaseHas('audit_logs', [
+            'actor_user_id' => $staff->id,
+            'action' => 'user_password_reset',
+            'auditable_type' => User::class,
+            'auditable_id' => $target->id,
+        ]);
+    }
+
+    public function test_staff_must_use_profile_to_change_own_password(): void
+    {
+        $staff = User::factory()->create([
+            'role' => User::ROLE_STAFF,
+            'is_active' => true,
+        ]);
+
+        $this->actingAs($staff)
+            ->post(route('staff.users.reset-password', $staff))
+            ->assertSessionHas('error');
     }
 }

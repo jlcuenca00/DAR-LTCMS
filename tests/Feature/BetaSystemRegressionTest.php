@@ -165,6 +165,7 @@ class BetaSystemRegressionTest extends TestCase
 
         $this->actingAs($staff)
             ->post(route('staff.applications.approve', $application), [
+                'final_decision_confirmation' => '1',
                 'decision_reason' => 'Clearance release validated for beta regression testing.',
                 'decision_notes' => 'Final release path verified.',
             ])
@@ -176,8 +177,6 @@ class BetaSystemRegressionTest extends TestCase
         $this->assertSame(LandTransferApplication::STATUS_RELEASED, $application->status);
         $this->assertSame($staff->id, $application->reviewed_by);
         $this->assertNotNull($application->validated_at);
-        $this->assertNull($application->registry_mutated_at);
-        $this->assertNull($application->registry_mutated_by);
         $this->assertNotNull($application->clearance()->first());
 
         $this->assertDatabaseHas('audit_logs', [
@@ -220,6 +219,7 @@ class BetaSystemRegressionTest extends TestCase
 
         $this->actingAs($staff)
             ->post(route('staff.applications.not_approved', $application), [
+                'final_decision_confirmation' => '1',
                 'decision_reason' => 'Documentary review did not support release.',
                 'decision_notes' => 'Beta denial path verified.',
             ])
@@ -231,8 +231,6 @@ class BetaSystemRegressionTest extends TestCase
         $this->assertSame(LandTransferApplication::STATUS_DENIED, $application->status);
         $this->assertSame($staff->id, $application->reviewed_by);
         $this->assertNotNull($application->validated_at);
-        $this->assertNull($application->registry_mutated_at);
-        $this->assertNull($application->registry_mutated_by);
         $this->assertNotNull($application->clearance()->first());
 
         $this->assertDatabaseHas('audit_logs', [
@@ -365,6 +363,7 @@ class BetaSystemRegressionTest extends TestCase
 
         $this->actingAs($geodetic)
             ->post(route('staff.applications.not_approved', $application), [
+                'final_decision_confirmation' => '1',
                 'decision_reason' => 'Should be blocked.',
             ])
             ->assertForbidden();

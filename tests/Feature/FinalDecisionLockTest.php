@@ -305,6 +305,7 @@ class FinalDecisionLockTest extends TestCase
 
         $this->actingAs($staffUser)
             ->post(route('staff.applications.approve', $application), [
+                'final_decision_confirmation' => '1',
                 'decision_reason' => 'Release clearance only.',
                 'decision_notes' => 'Regression test: release must not mutate ownership records.',
             ])
@@ -393,6 +394,7 @@ class FinalDecisionLockTest extends TestCase
 
         $this->actingAs($staffUser)
             ->post(route('staff.applications.not_approved', $application), [
+                'final_decision_confirmation' => '1',
                 'decision_reason' => 'Denied clearance only.',
                 'decision_notes' => 'Regression test: denial must not mutate ownership records.',
             ])

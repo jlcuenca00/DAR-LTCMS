@@ -54,13 +54,8 @@ class LandTransferApplicationController extends Controller
             ->keyBy('required_document_id');
 
         // 3) 5-hectare validation (assistive, centralized)
-        $transfereeOwner = $application->transfereeLandowner;
         $fiveHectareValidation = app(LandholdingAreaValidationService::class)
             ->forApplication($application);
-        $currentApprovedTotal = $fiveHectareValidation['current_active_total'];
-        $pendingIncomingTotal = $fiveHectareValidation['pending_incoming_total'];
-        $thisApplicationTotal = $fiveHectareValidation['this_application_total'];
-        $projectedTotal = $fiveHectareValidation['projected_total'];
         $exceedsFiveHectares = $fiveHectareValidation['exceeds_limit'];
 
         $applicationTimeline = AuditLog::with('actor')
@@ -68,7 +63,7 @@ class LandTransferApplicationController extends Controller
             ->latest()
             ->get();
 
-                    $applicationParcels = $application->applicationParcels
+        $applicationParcels = $application->applicationParcels
             ->pluck('parcel')
             ->filter();
 
@@ -90,15 +85,23 @@ class LandTransferApplicationController extends Controller
             ->unique()
             ->values();
 
-        $transferorName = $application->transferorLandowner?->full_name;
-        $transfereeName = $application->transfereeLandowner?->full_name;
+        $transferorNames = collect($application->partyRows('transferor'))
+            ->pluck('name')
+            ->filter()
+            ->unique()
+            ->values();
+        $transfereeNames = collect($application->partyRows('transferee'))
+            ->pluck('name')
+            ->filter()
+            ->unique()
+            ->values();
 
         $hasPriorRecordSignals =
             $parcelIds->isNotEmpty() ||
             $parcelCodes->isNotEmpty() ||
             $titleNumbers->isNotEmpty() ||
-            filled($transferorName) ||
-            filled($transfereeName);
+            $transferorNames->isNotEmpty() ||
+            $transfereeNames->isNotEmpty();
 
         $matchedSourceRecords = collect();
         $matchedSourcePackages = collect();
@@ -110,8 +113,8 @@ class LandTransferApplicationController extends Controller
                     $parcelIds,
                     $parcelCodes,
                     $titleNumbers,
-                    $transferorName,
-                    $transfereeName
+                    $transferorNames,
+                    $transfereeNames
                 ) {
                     if ($parcelIds->isNotEmpty()) {
                         $query->orWhereIn('parcel_id', $parcelIds);
@@ -125,12 +128,12 @@ class LandTransferApplicationController extends Controller
                         $query->orWhereIn('title_number', $titleNumbers);
                     }
 
-                    if (filled($transferorName)) {
+                    foreach ($transferorNames as $transferorName) {
                         $query->orWhere('landowner_name', 'ILIKE', '%' . $transferorName . '%')
                             ->orWhere('transferor_name', 'ILIKE', '%' . $transferorName . '%');
                     }
 
-                    if (filled($transfereeName)) {
+                    foreach ($transfereeNames as $transfereeName) {
                         $query->orWhere('transferee_name', 'ILIKE', '%' . $transfereeName . '%');
                     }
                 })
@@ -144,8 +147,8 @@ class LandTransferApplicationController extends Controller
                     $parcelIds,
                     $parcelCodes,
                     $titleNumbers,
-                    $transferorName,
-                    $transfereeName
+                    $transferorNames,
+                    $transfereeNames
                 ) {
                     if ($parcelIds->isNotEmpty()) {
                         $query->orWhereIn('parcel_id', $parcelIds);
@@ -159,12 +162,12 @@ class LandTransferApplicationController extends Controller
                         $query->orWhereIn('title_number', $titleNumbers);
                     }
 
-                    if (filled($transferorName)) {
+                    foreach ($transferorNames as $transferorName) {
                         $query->orWhere('landowner_name', 'ILIKE', '%' . $transferorName . '%')
                             ->orWhere('transferor_name', 'ILIKE', '%' . $transferorName . '%');
                     }
 
-                    if (filled($transfereeName)) {
+                    foreach ($transfereeNames as $transfereeName) {
                         $query->orWhere('transferee_name', 'ILIKE', '%' . $transfereeName . '%');
                     }
                 })
@@ -177,22 +180,33 @@ class LandTransferApplicationController extends Controller
             ->orderBy('parcel_code')
             ->get();
 
+        $linkedLandownerIds = $application->linkedLandownerIds();
+        $landowners = Landowner::query()
+            ->whereIn('id', $linkedLandownerIds)
+            ->get()
+            ->concat(
+                Landowner::query()
+                    ->orderBy('last_name')
+                    ->orderBy('first_name')
+                    ->limit(500)
+                    ->get()
+            )
+            ->unique('id')
+            ->sortBy(fn (Landowner $landowner) => mb_strtolower($landowner->last_name . ' ' . $landowner->first_name))
+            ->values();
+
         return view('staff.applications.show', compact(
             'application',
             'transferorRequirements',
             'transfereeRequirements',
             'uploaded',
-            'transfereeOwner',
-            'currentApprovedTotal',
-            'pendingIncomingTotal',
-            'thisApplicationTotal',
-            'projectedTotal',
             'exceedsFiveHectares',
             'fiveHectareValidation',
             'applicationTimeline',
             'matchedSourceRecords',
             'matchedSourcePackages',
             'parcelOptions',
+            'landowners',
         ));
     }
     public function index(Request $request)
@@ -287,9 +301,12 @@ public function create()
         ->orderBy('parcel_code')
         ->get();
 
+    $locationOptions = config('dar_locations.municipalities', []);
+
     return view('staff.applications.create', compact(
         'landowners',
-        'parcels'
+        'parcels',
+        'locationOptions'
     ));
 }
 
@@ -298,6 +315,12 @@ public function store(Request $request)
     $validated = $request->validate([
         'transferor_landowner_id' => ['nullable', 'exists:landowners,id'],
         'transferee_landowner_id' => ['nullable', 'exists:landowners,id'],
+        'transferors' => ['nullable', 'array'],
+        'transferors.*.landowner_id' => ['nullable', 'exists:landowners,id'],
+        'transferors.*.name' => ['nullable', 'string', 'max:255'],
+        'transferees' => ['nullable', 'array'],
+        'transferees.*.landowner_id' => ['nullable', 'exists:landowners,id'],
+        'transferees.*.name' => ['nullable', 'string', 'max:255'],
 
         'applicant_name' => ['nullable', 'string', 'max:255'],
         'applicant_type' => ['nullable', 'string', 'in:transferor,transferee,authorized_representative,other'],
@@ -308,14 +331,16 @@ public function store(Request $request)
         'amount_paid' => ['nullable', 'numeric', 'min:0', 'max:999999999.99'],
         'date_of_application' => ['nullable', 'date'],
 
-        'transferor_name' => ['required', 'string', 'max:255'],
-        'transferee_name' => ['required', 'string', 'max:255'],
+        'transferor_name' => ['nullable', 'string', 'max:1000'],
+        'transferee_name' => ['nullable', 'string', 'max:1000'],
 
         'municipality' => ['nullable', 'string', 'max:255'],
         'barangay' => ['nullable', 'string', 'max:255'],
         'date_filed' => ['nullable', 'date'],
-        'date_of_transfer' => ['nullable', 'date'],
-        'transfer_nature' => ['nullable', 'string', 'in:sale,donation,succession,extrajudicial_settlement,waiver_of_rights,other'],
+        'date_of_clearance_release' => ['nullable', 'date'],
+        'transfer_nature' => ['nullable', 'string', 'max:255'],
+        'transfer_instruments' => ['nullable', 'array'],
+        'transfer_instruments.*.name' => ['nullable', 'string', 'max:255'],
         'is_succession_case' => ['nullable', 'boolean'],
         'retention_certificate_required' => ['nullable', 'boolean'],
         'retention_certificate_reference' => ['nullable', 'string', 'max:150'],
@@ -328,17 +353,30 @@ public function store(Request $request)
 
     $application = null;
     $hasSpecialPowerOfAttorney = $request->boolean('has_special_power_of_attorney');
-    $isSuccessionCase = $request->boolean('is_succession_case') || (($validated['transfer_nature'] ?? null) === 'succession');
+    $isSuccessionCase = $request->boolean('is_succession_case') || str_contains(strtolower(collect($validated['transfer_instruments'] ?? [])->pluck('name')->implode(' ')), 'succession');
     $retentionCertificateRequired = $request->boolean('retention_certificate_required');
+    $transferors = $this->normalizePartyRows($validated['transferors'] ?? [], $validated['transferor_name'] ?? null, $validated['transferor_landowner_id'] ?? null);
+    $transferees = $this->normalizePartyRows($validated['transferees'] ?? [], $validated['transferee_name'] ?? null, $validated['transferee_landowner_id'] ?? null);
+    $transferInstruments = $this->normalizeInstrumentRows($validated['transfer_instruments'] ?? [], $validated['transfer_nature'] ?? null);
 
-    DB::transaction(function () use ($validated, $hasSpecialPowerOfAttorney, $isSuccessionCase, $retentionCertificateRequired, &$application) {
+    if (empty($transferors)) {
+        return back()->withInput()->withErrors(['transferors.0.name' => 'At least one transferor is required.']);
+    }
+    if (empty($transferees)) {
+        return back()->withInput()->withErrors(['transferees.0.name' => 'At least one transferee is required.']);
+    }
+
+    $transferorSummary = collect($transferors)->pluck('name')->filter()->implode('; ');
+    $transfereeSummary = collect($transferees)->pluck('name')->filter()->implode('; ');
+
+    DB::transaction(function () use ($validated, $hasSpecialPowerOfAttorney, $isSuccessionCase, $retentionCertificateRequired, $transferors, $transferees, $transferInstruments, $transferorSummary, $transfereeSummary, &$application) {
         $applicantType = $validated['applicant_type'] ?? null;
         $applicantName = $validated['applicant_name'] ?? null;
 
         if (! filled($applicantName)) {
             $applicantName = match ($applicantType) {
-                'transferee' => $validated['transferee_name'],
-                default => $validated['transferor_name'],
+                'transferee' => $transfereeSummary,
+                default => $transferorSummary,
             };
         }
 
@@ -354,15 +392,20 @@ public function store(Request $request)
             'or_date' => $validated['or_date'] ?? null,
             'amount_paid' => $validated['amount_paid'] ?? null,
             'date_of_application' => $applicationDate,
-            'transferor_landowner_id' => $validated['transferor_landowner_id'] ?? null,
-            'transferee_landowner_id' => $validated['transferee_landowner_id'] ?? null,
-            'transferor_name' => $validated['transferor_name'],
-            'transferee_name' => $validated['transferee_name'],
+            'transferor_landowner_id' => $transferors[0]['landowner_id'] ?? ($validated['transferor_landowner_id'] ?? null),
+            'transferee_landowner_id' => $transferees[0]['landowner_id'] ?? ($validated['transferee_landowner_id'] ?? null),
+            'transferor_name' => $transferorSummary,
+            'transferors' => $transferors,
+            'transferee_name' => $transfereeSummary,
+            'transferees' => $transferees,
             'municipality' => $validated['municipality'] ?? null,
             'barangay' => $validated['barangay'] ?? null,
             'date_filed' => $validated['date_filed'] ?? $applicationDate,
-            'date_of_transfer' => $validated['date_of_transfer'] ?? null,
+            'date_of_transfer' => null,
+            'date_of_clearance_release' => $validated['date_of_clearance_release'] ?? null,
+            'ltc_page_number' => 1,
             'transfer_nature' => $validated['transfer_nature'] ?? null,
+            'transfer_instruments' => $transferInstruments,
             'is_succession_case' => $isSuccessionCase,
             'retention_certificate_required' => $retentionCertificateRequired,
             'retention_certificate_reference' => $retentionCertificateRequired
@@ -400,12 +443,15 @@ public function store(Request $request)
                 'applicant_name' => $application->applicant_name,
                 'applicant_type' => $application->applicant_type,
                 'or_number' => $application->or_number,
+                'transfer_instruments' => $application->transfer_instruments,
                 'transfer_nature' => $application->transfer_nature,
                 'is_succession_case' => $application->is_succession_case,
                 'retention_certificate_required' => $application->retention_certificate_required,
                 'retention_certificate_reference' => $application->retention_certificate_reference,
                 'transferor_name' => $application->transferor_name,
+                'transferors' => $application->transferors,
                 'transferee_name' => $application->transferee_name,
+                'transferees' => $application->transferees,
                 'parcel_id' => $validated['parcel_id'] ?? null,
                 'scope_note' => 'Application encoding only. No ownership transfer or registry mutation was performed.',
             ]
@@ -509,6 +555,58 @@ public function store(Request $request)
 
         return back()->with('success', 'Linked parcel reference removed from the application review.');
     }
+
+
+private function normalizePartyRows(array $rows, ?string $legacyName = null, $legacyLandownerId = null): array
+{
+    $normalized = collect($rows)->map(function ($row) {
+        $name = trim((string) ($row['name'] ?? ''));
+        if ($name === '') return null;
+
+        $parcelShares = collect((array) ($row['parcel_shares'] ?? []))
+            ->mapWithKeys(function ($value, $key) {
+                if ($value === null || $value === '') {
+                    return [];
+                }
+
+                return [(string) $key => round((float) $value, 4)];
+            })
+            ->all();
+
+        return [
+            'landowner_id' => filled($row['landowner_id'] ?? null) ? (int) $row['landowner_id'] : null,
+            'name' => $name,
+            'parcel_shares' => $parcelShares,
+        ];
+    })->filter()->values()->all();
+
+    if (empty($normalized) && filled($legacyName)) {
+        $normalized[] = [
+            'landowner_id' => filled($legacyLandownerId) ? (int) $legacyLandownerId : null,
+            'name' => trim((string) $legacyName),
+            'parcel_shares' => [],
+        ];
+    }
+
+    return $normalized;
+}
+
+private function normalizeInstrumentRows(array $rows, ?string $primaryInstrument = null): array
+{
+    $normalized = collect($rows)
+        ->map(fn ($row) => trim((string) ($row['name'] ?? '')))
+        ->filter()
+        ->unique()
+        ->map(fn ($name) => ['name' => $name])
+        ->values()
+        ->all();
+
+    if (empty($normalized) && filled($primaryInstrument)) {
+        $normalized[] = ['name' => LandTransferApplication::transferNatureOptions()[$primaryInstrument] ?? $primaryInstrument];
+    }
+
+    return $normalized;
+}
 
 private function generateApplicationCode(): string
 {

@@ -32,10 +32,7 @@ class LandownerDashboardController extends Controller
                 'applicationParcels.parcel',
                 'clearance',
             ])
-            ->where(function ($query) use ($landownerIds) {
-                $query->whereIn('transferor_landowner_id', $landownerIds)
-                    ->orWhereIn('transferee_landowner_id', $landownerIds);
-            });
+            ->linkedToLandownerIds($landownerIds);
 
         $statusCounts = (clone $applicationQuery)
             ->select('status', DB::raw('COUNT(*) as total'))

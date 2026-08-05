@@ -11,22 +11,20 @@ use Illuminate\View\View;
 
 class ConfirmablePasswordController extends Controller
 {
-    /**
-     * Show the confirm password view.
-     */
     public function show(): View
     {
         return view('auth.confirm-password');
     }
 
-    /**
-     * Confirm the user's password.
-     */
     public function store(Request $request): RedirectResponse
     {
+        $request->validate([
+            'password' => ['required', 'string'],
+        ]);
+
         if (! Auth::guard('web')->validate([
-            'email' => $request->user()->email,
-            'password' => $request->password,
+            'username' => $request->user()->username,
+            'password' => $request->input('password'),
         ])) {
             throw ValidationException::withMessages([
                 'password' => __('auth.password'),
@@ -35,6 +33,15 @@ class ConfirmablePasswordController extends Controller
 
         $request->session()->put('auth.password_confirmed_at', time());
 
-        return redirect()->intended(route('dashboard', absolute: false));
+        return redirect()->intended($this->dashboardRouteFor($request));
+    }
+
+    private function dashboardRouteFor(Request $request): string
+    {
+        return match ($request->user()->role) {
+            'staff' => route('staff.dashboard'),
+            'geodetic' => route('geodetic.dashboard'),
+            default => route('landowner.dashboard'),
+        };
     }
 }

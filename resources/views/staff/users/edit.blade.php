@@ -2,12 +2,7 @@
     title="Edit User Account"
     active="users"
 >
-    <x-slot name="actions">
-        <a href="{{ route('staff.users.index') }}" class="staff-button staff-button-light">
-            <i class="fa-solid fa-arrow-left"></i>
-            Back to Users
-        </a>
-    </x-slot>
+    
 
     <style>
         .user-editor-wrap {
@@ -562,6 +557,25 @@
     @endif
 
     <div class="user-editor-wrap space-y-6">
+        @if (session('success'))
+            <div class="rounded-2xl border border-green-200 bg-green-50 px-5 py-4 text-sm font-semibold text-green-800 shadow-sm">
+                <i class="fa-solid fa-circle-check mr-2"></i>{{ session('success') }}
+            </div>
+        @endif
+
+        @if (session('error'))
+            <div class="rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-sm font-semibold text-red-800 shadow-sm">
+                <i class="fa-solid fa-circle-exclamation mr-2"></i>{{ session('error') }}
+            </div>
+        @endif
+
+        @if (session('temporary_password'))
+            <section class="rounded-2xl border border-amber-300 bg-amber-50 px-5 py-4 shadow-sm">
+                <p class="text-xs font-black uppercase tracking-[0.16em] text-amber-800">Temporary Password — Shown Once</p>
+                <p class="mt-2 text-sm text-amber-900">Give this password securely to <strong>{{ session('temporary_password_username') }}</strong>. The user must replace it after signing in.</p>
+                <div class="mt-3 rounded-xl border border-amber-300 bg-white px-4 py-3 font-mono text-lg font-black tracking-wider text-gray-950">{{ session('temporary_password') }}</div>
+            </section>
+        @endif
 
         <form method="POST" action="{{ route('staff.users.update', $user) }}" class="space-y-5">
             @csrf
@@ -573,7 +587,7 @@
                     <div class="min-w-0">
                         <p class="user-editor-kicker">Authorized Account</p>
                         <h2 class="user-editor-title">{{ $user->name }}</h2>
-                        <p class="user-editor-muted">{{ $user->email }}</p>
+                        <p class="user-editor-muted">{{ $user->username ?? $user->email }}</p>
                     </div>
                 </div>
 
@@ -582,6 +596,9 @@
                     <span class="staff-badge {{ $user->is_active ? 'staff-badge-green' : 'staff-badge-red' }}">
                         {{ $user->is_active ? 'Active' : 'Inactive' }}
                     </span>
+                    @if ($user->must_change_password)
+                        <span class="staff-badge staff-badge-amber">Password Change Required</span>
+                    @endif
                 </div>
             </section>
 
@@ -592,7 +609,7 @@
                             <span class="user-card-icon"><i class="fa-solid fa-id-card"></i></span>
                             <div>
                                 <h3 class="user-card-title">Login Information</h3>
-                                <p class="user-card-copy">Maintain the name and email address used for system login.</p>
+                                <p class="user-card-copy">Maintain the name and username used for system login.</p>
                             </div>
                         </div>
                         <div class="user-card-body user-form-grid">
@@ -605,9 +622,9 @@
                             </div>
 
                             <div class="user-field">
-                                <label class="user-label">Email Address</label>
-                                <input type="email" name="email" value="{{ old('email', $user->email) }}" required class="user-input">
-                                @error('email')
+                                <label class="user-label">Username</label>
+                                <input type="text" name="username" value="{{ old('username', $user->username) }}" required class="user-input">
+                                @error('username')
                                     <p class="user-error">{{ $message }}</p>
                                 @enderror
                             </div>
@@ -618,22 +635,29 @@
                         <div class="user-card-head">
                             <span class="user-card-icon"><i class="fa-solid fa-key"></i></span>
                             <div>
-                                <h3 class="user-card-title">Password Reset</h3>
-                                <p class="user-card-copy">Optional. Leave both fields blank to keep the current password.</p>
+                                <h3 class="user-card-title">Staff-Assisted Password Reset</h3>
+                                <p class="user-card-copy">Generate a temporary password when the user cannot sign in. The current password is never displayed.</p>
                             </div>
                         </div>
-                        <div class="user-card-body user-form-grid">
-                            <div class="user-field">
-                                <label class="user-label">New Password</label>
-                                <input type="password" name="password" class="user-input">
-                                @error('password')
-                                    <p class="user-error">{{ $message }}</p>
-                                @enderror
-                            </div>
-
-                            <div class="user-field">
-                                <label class="user-label">Confirm New Password</label>
-                                <input type="password" name="password_confirmation" class="user-input">
+                        <div class="user-card-body">
+                            <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                                <div>
+                                    <p class="font-bold text-gray-950">Force password change on next login</p>
+                                    <p class="mt-1 text-sm leading-6 text-gray-500">Resetting does not activate an inactive account. Existing sessions are invalidated by the password-version check.</p>
+                                </div>
+                                @if (auth()->id() === $user->id)
+                                    <span class="staff-badge staff-badge-slate">Use Profile Settings</span>
+                                @else
+                                    <button
+                                        type="submit"
+                                        form="staff-password-reset-form"
+                                        class="staff-button staff-button-dark whitespace-nowrap"
+                                        onclick="return confirm('Generate a new temporary password for this user?');"
+                                    >
+                                        <i class="fa-solid fa-key"></i>
+                                        Reset Password
+                                    </button>
+                                @endif
                             </div>
                         </div>
                     </section>
@@ -734,5 +758,11 @@
                 </aside>
             </div>
         </form>
+
+        @if (auth()->id() !== $user->id)
+            <form id="staff-password-reset-form" method="POST" action="{{ route('staff.users.reset-password', $user) }}" class="hidden">
+                @csrf
+            </form>
+        @endif
     </div>
 </x-staff-shell>

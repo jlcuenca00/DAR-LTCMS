@@ -40,10 +40,7 @@ class LandownerPortalController extends Controller
                 'applicationParcels.parcel',
                 'clearance',
             ])
-            ->where(function ($query) use ($landownerIds) {
-                $query->whereIn('transferor_landowner_id', $landownerIds)
-                    ->orWhereIn('transferee_landowner_id', $landownerIds);
-            })
+            ->linkedToLandownerIds($landownerIds)
             ->orderByDesc('created_at')
             ->get();
 

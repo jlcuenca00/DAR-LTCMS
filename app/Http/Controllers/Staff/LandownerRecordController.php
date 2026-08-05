@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Staff;
 
 use App\Http\Controllers\Controller;
 use App\Models\Landowner;
+use App\Models\LandTransferApplication;
 use App\Models\Parcel;
 use App\Models\User;
 use App\Services\AuditLogger;
@@ -21,8 +22,6 @@ class LandownerRecordController extends Controller
             'landholdings.sourceApplication',
             'sourceRecords',
             'sourceRecordPackages',
-            'transferorApplications',
-            'transfereeApplications',
         ]);
 
         $parcels = Parcel::query()
@@ -32,10 +31,16 @@ class LandownerRecordController extends Controller
 
         $hectareSummary = $hectareValidator->forLandowner($landowner);
 
+        $relatedApplications = LandTransferApplication::query()
+            ->linkedToLandownerIds([$landowner->id])
+            ->latest()
+            ->get();
+
         return view('staff.records.landowner-show', compact(
             'landowner',
             'parcels',
-            'hectareSummary'
+            'hectareSummary',
+            'relatedApplications'
         ));
     }
 

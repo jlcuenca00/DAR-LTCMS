@@ -2,12 +2,7 @@
     title="Application Review"
     active="applications"
 >
-    <x-slot name="actions">
-        <a href="{{ route('staff.applications.index') }}" class="staff-button staff-button-light">
-            <i class="fa-solid fa-arrow-left"></i>
-            Back to Applications
-        </a>
-    </x-slot>
+    
 
     <x-slot name="styles">
         <style>
@@ -1232,6 +1227,56 @@
                 gap: 16px;
             }
 
+            .landowner-share-grid {
+                display: grid;
+                gap: 10px;
+                padding-top: 2px;
+            }
+
+            .landowner-share-field label {
+                display: block;
+                margin-bottom: 5px;
+                font-size: 10px;
+                font-weight: 900;
+                color: #475569;
+            }
+
+            .landowner-share-input-wrap {
+                display: grid;
+                grid-template-columns: minmax(0, 1fr) auto;
+                gap: 8px;
+                align-items: center;
+            }
+
+            .landowner-share-input-wrap span {
+                font-size: 12px;
+                font-weight: 800;
+                color: #64748b;
+            }
+
+            .landowner-link-options {
+                margin-top: 16px;
+                display: grid;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 12px;
+            }
+
+            .landowner-link-option {
+                display: flex;
+                gap: 10px;
+                align-items: flex-start;
+                border: 1px solid #dbe4dd;
+                background: #f8faf9;
+                border-radius: 12px;
+                padding: 12px;
+                cursor: pointer;
+            }
+
+            .landowner-link-option input { margin-top: 3px; }
+            .landowner-link-option span { display: grid; gap: 3px; }
+            .landowner-link-option strong { font-size: 13px; color: #111827; }
+            .landowner-link-option small { font-size: 11px; line-height: 1.45; color: #64748b; }
+
             .landowner-create-grid {
                 margin-top: 16px;
                 display: grid;
@@ -2447,6 +2492,14 @@
             ->limit(500)
             ->get();
 
+        $transferorRows = collect(old('transferors', $application->partyRows('transferor')))->values();
+        $transfereeRows = collect(old('transferees', $application->partyRows('transferee')))->values();
+        $allPartyLinksReady = $transferorRows->isNotEmpty()
+            && $transfereeRows->isNotEmpty()
+            && $transferorRows->every(fn ($row) => filled(data_get($row, 'landowner_id')))
+            && $transfereeRows->every(fn ($row) => filled(data_get($row, 'landowner_id')));
+        $landownerOptionsById = $landownerOptions->keyBy('id');
+
         $applicationAgriculturalStatusLabels = $application->applicationParcels
             ->pluck('parcel')
             ->filter()
@@ -2546,13 +2599,9 @@
                                 </div>
 
                                 <div class="final-clearance-actions">
-                                    <a href="{{ route('staff.applications.clearance.show', $application) }}" class="staff-button staff-button-dark">
+                                    <a href="{{ route('staff.applications.clearance.show', $application) }}" class="staff-button staff-button-primary">
                                         <i class="fa-solid fa-print"></i>
-                                        Print View
-                                    </a>
-                                    <a href="{{ route('staff.applications.clearance.pdf', $application) }}" class="staff-button staff-button-primary" target="_blank">
-                                        <i class="fa-solid fa-file-pdf"></i>
-                                        PDF Output
+                                        Open Official Print View
                                     </a>
                                 </div>
                             </div>
@@ -2735,11 +2784,11 @@
                 <div>
                     <h2 class="review-panel-title">Landowner Record Links</h2>
                     <p class="review-panel-subtitle">
-                        Link each typed party name to an encoded Landowner Record before final decision checking.
+                        Link every transferor and transferee to a separate Landowner Record. Hectare shares may also be recorded per linked parcel.
                     </p>
                 </div>
-                <span class="staff-badge {{ ($application->transferor_landowner_id && $application->transferee_landowner_id) ? 'staff-badge-green' : 'staff-badge-amber' }}">
-                    {{ ($application->transferor_landowner_id && $application->transferee_landowner_id) ? 'Ready for Decision Check' : 'Links Needed' }}
+                <span class="staff-badge {{ $allPartyLinksReady ? 'staff-badge-green' : 'staff-badge-amber' }}">
+                    {{ $allPartyLinksReady ? 'Ready for Decision Check' : 'Links Needed' }}
                 </span>
             </div>
 
@@ -2748,145 +2797,148 @@
                     @csrf
                     @method('PATCH')
 
-                    <div class="landowner-link-grid">
-                        <div class="landowner-link-card {{ $application->transferor_landowner_id ? 'linked' : 'unlinked' }}">
-                            <div class="landowner-link-heading">
+                    @foreach ([
+                        'transferors' => ['label' => 'Transferor', 'rows' => $transferorRows, 'share_label' => 'Current landholding share'],
+                        'transferees' => ['label' => 'Transferee', 'rows' => $transfereeRows, 'share_label' => 'Expected share for validation'],
+                    ] as $partyKey => $partyGroup)
+                        <div class="mb-5">
+                            <div class="landowner-link-heading mb-3">
                                 <div>
-                                    <h3 class="landowner-link-title">Transferor Link</h3>
-                                    <p class="landowner-link-copy">Select the matching record for the transferor.</p>
+                                    <h3 class="landowner-link-title">{{ $partyGroup['label'] }} Links</h3>
+                                    <p class="landowner-link-copy">One separate link is required for every listed person.</p>
                                 </div>
-                                <span class="staff-badge {{ $application->transferor_landowner_id ? 'staff-badge-green' : 'staff-badge-amber' }}">
-                                    {{ $application->transferor_landowner_id ? 'Linked' : 'Needs Link' }}
-                                </span>
+                                <span class="staff-badge staff-badge-gray">{{ $partyGroup['rows']->count() }} listed</span>
                             </div>
 
-                            <div class="landowner-link-name">
-                                <strong>Typed Application Name</strong>
-                                <p class="landowner-link-name-value">{{ $application->transferor_name ?: '—' }}</p>
-                                @if ($application->transferorLandowner)
-                                    <div class="landowner-linked-note">
-                                        <i class="fa-solid fa-link"></i>
-                                        Linked to {{ $application->transferorLandowner->full_name }} Â· ID {{ $application->transferorLandowner->id }}
+                            <div class="landowner-link-grid">
+                                @foreach ($partyGroup['rows'] as $partyIndex => $partyRow)
+                                    @php
+                                        $linkedId = data_get($partyRow, 'landowner_id');
+                                        $linkedOwner = $linkedId ? $landownerOptionsById->get((int) $linkedId) : null;
+                                        $partySingular = $partyKey === 'transferors' ? 'transferor' : 'transferee';
+                                    @endphp
+
+                                    <div class="landowner-link-card {{ $linkedId ? 'linked' : 'unlinked' }}">
+                                        <div class="landowner-link-heading">
+                                            <div>
+                                                <h4 class="landowner-link-title">{{ $partyGroup['label'] }} {{ $partyIndex + 1 }}</h4>
+                                                <p class="landowner-link-copy">{{ data_get($partyRow, 'name') }}</p>
+                                            </div>
+                                            <span class="staff-badge {{ $linkedId ? 'staff-badge-green' : 'staff-badge-amber' }}">
+                                                {{ $linkedId ? 'Linked' : 'Needs Link' }}
+                                            </span>
+                                        </div>
+
+                                        <input type="hidden" name="{{ $partyKey }}[{{ $partyIndex }}][name]" value="{{ data_get($partyRow, 'name') }}">
+
+                                        <div class="landowner-link-field">
+                                            <label for="{{ $partyKey }}_{{ $partyIndex }}_landowner_id">Existing Landowner Record</label>
+                                            <select id="{{ $partyKey }}_{{ $partyIndex }}_landowner_id"
+                                                    name="{{ $partyKey }}[{{ $partyIndex }}][landowner_id]"
+                                                    class="review-input"
+                                                    @disabled($isFinal)>
+                                                <option value="">No linked landowner record</option>
+                                                @foreach ($landownerOptions as $landowner)
+                                                    <option value="{{ $landowner->id }}" @selected((int) $linkedId === (int) $landowner->id)>
+                                                        {{ $landowner->full_name }} — {{ $landowner->municipality ?? 'No municipality' }}
+                                                    </option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+
+                                        @if ($linkedOwner)
+                                            <div class="landowner-linked-note">
+                                                <i class="fa-solid fa-link"></i>
+                                                {{ $linkedOwner->full_name }} · ID {{ $linkedOwner->id }}
+                                            </div>
+                                        @endif
+
+                                        @if ($application->applicationParcels->isNotEmpty())
+                                            <div class="landowner-share-grid">
+                                                @foreach ($application->applicationParcels as $linkedParcel)
+                                                    @php
+                                                        $shareableArea = $partyKey === 'transferors'
+                                                            ? ($linkedParcel->parcel?->area_hectares ?? $linkedParcel->area_hectares)
+                                                            : ($linkedParcel->area_hectares ?? $linkedParcel->parcel?->area_hectares);
+                                                        $shareValue = data_get($partyRow, 'parcel_shares.' . $linkedParcel->id);
+                                                    @endphp
+                                                    <div class="landowner-share-field">
+                                                        <label for="{{ $partyKey }}_{{ $partyIndex }}_share_{{ $linkedParcel->id }}">
+                                                            {{ $linkedParcel->parcel_code ?? $linkedParcel->parcel?->parcel_code ?? 'Parcel' }} — {{ $partyGroup['share_label'] }}
+                                                        </label>
+                                                        <div class="landowner-share-input-wrap">
+                                                            <input id="{{ $partyKey }}_{{ $partyIndex }}_share_{{ $linkedParcel->id }}"
+                                                                   type="number"
+                                                                   step="0.0001"
+                                                                   min="0"
+                                                                   max="{{ $shareableArea ?: 999999 }}"
+                                                                   name="{{ $partyKey }}[{{ $partyIndex }}][parcel_shares][{{ $linkedParcel->id }}]"
+                                                                   value="{{ $shareValue }}"
+                                                                   class="review-input"
+                                                                   placeholder="0.0000"
+                                                                   @disabled($isFinal)>
+                                                            <span>ha</span>
+                                                        </div>
+                                                    </div>
+                                                @endforeach
+                                            </div>
+                                        @endif
+
+                                        @if (! $isFinal && ! $linkedId)
+                                            <button type="submit"
+                                                    form="create-{{ $partySingular }}-{{ $partyIndex }}"
+                                                    class="staff-button staff-button-light">
+                                                <i class="fa-solid fa-user-plus"></i>
+                                                Create Separate Record
+                                            </button>
+                                        @endif
                                     </div>
-                                @endif
-                            </div>
-
-                            <div class="landowner-link-field">
-                                <label for="transferor_landowner_id">Existing Landowner Record</label>
-                                <select id="transferor_landowner_id" name="transferor_landowner_id" class="review-input" @disabled($isFinal)>
-                                    <option value="">No linked landowner record</option>
-                                    @foreach ($landownerOptions as $landowner)
-                                        <option value="{{ $landowner->id }}" @selected((int) old('transferor_landowner_id', $application->transferor_landowner_id) === (int) $landowner->id)>
-                                            {{ $landowner->full_name }} — {{ $landowner->municipality ?? 'No municipality' }}
-                                        </option>
-                                    @endforeach
-                                </select>
+                                @endforeach
                             </div>
                         </div>
+                    @endforeach
 
-                        <div class="landowner-link-card {{ $application->transferee_landowner_id ? 'linked' : 'unlinked' }}">
-                            <div class="landowner-link-heading">
-                                <div>
-                                    <h3 class="landowner-link-title">Transferee Link</h3>
-                                    <p class="landowner-link-copy">Select or create the transferee record for review checks.</p>
-                                </div>
-                                <span class="staff-badge {{ $application->transferee_landowner_id ? 'staff-badge-green' : 'staff-badge-amber' }}">
-                                    {{ $application->transferee_landowner_id ? 'Linked' : 'Needs Link' }}
-                                </span>
-                            </div>
-
-                            <div class="landowner-link-name">
-                                <strong>Typed Application Name</strong>
-                                <p class="landowner-link-name-value">{{ $application->transferee_name ?: '—' }}</p>
-                                @if ($application->transfereeLandowner)
-                                    <div class="landowner-linked-note">
-                                        <i class="fa-solid fa-link"></i>
-                                        Linked to {{ $application->transfereeLandowner->full_name }} Â· ID {{ $application->transfereeLandowner->id }}
-                                    </div>
-                                @endif
-                            </div>
-
-                            <div class="landowner-link-field">
-                                <label for="transferee_landowner_id">Existing Landowner Record</label>
-                                <select id="transferee_landowner_id" name="transferee_landowner_id" class="review-input" @disabled($isFinal)>
-                                    <option value="">No linked landowner record</option>
-                                    @foreach ($landownerOptions as $landowner)
-                                        <option value="{{ $landowner->id }}" @selected((int) old('transferee_landowner_id', $application->transferee_landowner_id) === (int) $landowner->id)>
-                                            {{ $landowner->full_name }} — {{ $landowner->municipality ?? 'No municipality' }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                            </div>
+                    @unless ($isFinal)
+                        <div class="landowner-link-options">
+                            <label class="landowner-link-option">
+                                <input type="checkbox" name="split_equally" value="1" @checked(old('split_equally'))>
+                                <span><strong>Split parcel areas equally</strong><small>Uses the Parcel Record area for current transferors and the application area for transferee validation.</small></span>
+                            </label>
+                            <label class="landowner-link-option">
+                                <input type="checkbox" name="sync_current_landholdings" value="1" @checked(old('sync_current_landholdings'))>
+                                <span><strong>Update current transferor landholdings</strong><small>Saves positive co-owner shares without allowing active shares to exceed the Parcel Record area.</small></span>
+                            </label>
                         </div>
-                    </div>
+                    @endunless
 
                     <div class="landowner-link-save-row">
                         <p class="landowner-link-save-note">
-                            These links are for processing and auditability only; they do not transfer ownership or change registry records.
+                            Links and hectare shares support administrative review only. Approval does not transfer ownership or mutate registry records.
                         </p>
 
                         <button type="submit" class="staff-button staff-button-primary" @disabled($isFinal)>
                             <i class="fa-solid fa-link"></i>
-                            Save Links
+                            Save Party Links
                         </button>
                     </div>
                 </form>
 
-                @if (! $isFinal)
-                    <div class="landowner-create-grid">
-                        @if (! $application->transferor_landowner_id)
-                            <form method="POST" action="{{ route('staff.applications.landowner-records.create', $application) }}" class="landowner-create-card landowner-create-card-highlight">
-                                @csrf
-                                <input type="hidden" name="party" value="transferor">
-                                <div>
-                                    <h3 class="landowner-create-title">Create Transferor Record</h3>
-                                    <p class="landowner-create-note">Use only if the transferor is missing from Landowner Records.</p>
-                                </div>
-                                <button type="submit" class="staff-button staff-button-light">
-                                    <i class="fa-solid fa-user-plus"></i>
-                                    Create & auto-link from “{{ $application->transferor_name ?: 'Transferor Name' }}”
-                                </button>
-                            </form>
-                        @else
-                            <div class="landowner-create-card landowner-create-card-disabled">
-                                <div>
-                                    <h3 class="landowner-create-title">Transferor Record Linked</h3>
-                                    <p class="landowner-create-note">{{ $application->transferorLandowner?->full_name ?? 'Transferor' }} is already connected.</p>
-                                </div>
-                                <span class="staff-button staff-button-light">
-                                    <i class="fa-solid fa-check"></i>
-                                    No creation needed
-                                </span>
-                            </div>
-                        @endif
-
-                        @if (! $application->transferee_landowner_id)
-                            <form method="POST" action="{{ route('staff.applications.landowner-records.create', $application) }}" class="landowner-create-card landowner-create-card-highlight">
-                                @csrf
-                                <input type="hidden" name="party" value="transferee">
-                                <div>
-                                    <h3 class="landowner-create-title">Create Transferee Record</h3>
-                                    <p class="landowner-create-note">Create and auto-link the recipient record for review checks.</p>
-                                </div>
-                                <button type="submit" class="staff-button staff-button-light">
-                                    <i class="fa-solid fa-user-plus"></i>
-                                    Create & auto-link from “{{ $application->transferee_name ?: 'Transferee Name' }}”
-                                </button>
-                            </form>
-                        @else
-                            <div class="landowner-create-card landowner-create-card-disabled">
-                                <div>
-                                    <h3 class="landowner-create-title">Transferee Record Linked</h3>
-                                    <p class="landowner-create-note">{{ $application->transfereeLandowner?->full_name ?? 'Transferee' }} is already connected.</p>
-                                </div>
-                                <span class="staff-button staff-button-light">
-                                    <i class="fa-solid fa-check"></i>
-                                    No creation needed
-                                </span>
-                            </div>
-                        @endif
-                    </div>
-                @endif
+                @unless ($isFinal)
+                    @foreach (['transferor' => $transferorRows, 'transferee' => $transfereeRows] as $partySingular => $partyRows)
+                        @foreach ($partyRows as $partyIndex => $partyRow)
+                            @if (! data_get($partyRow, 'landowner_id'))
+                                <form id="create-{{ $partySingular }}-{{ $partyIndex }}"
+                                      method="POST"
+                                      action="{{ route('staff.applications.landowner-records.create', $application) }}"
+                                      class="hidden">
+                                    @csrf
+                                    <input type="hidden" name="party" value="{{ $partySingular }}">
+                                    <input type="hidden" name="index" value="{{ $partyIndex }}">
+                                </form>
+                            @endif
+                        @endforeach
+                    @endforeach
+                @endunless
             </div>
         </section>
 
@@ -2905,7 +2957,7 @@
                         @foreach ($navGroup['requirements'] as $navReq)
                             @php
                                 $navDoc = $uploaded->get($navReq->id);
-                                $navIsUploaded = $navDoc && filled($navDoc->file_path);
+                                $navIsUploaded = $navDoc && (filled($navDoc->file_path) || ! empty($navDoc->document_metadata));
                                 $navBlocksAcceptance = method_exists($navReq, 'blocksAcceptance')
                                     ? $navReq->blocksAcceptance()
                                     : (bool) $navReq->is_mandatory;
@@ -2944,11 +2996,11 @@
                                 @foreach ($navGroup['requirements'] as $navReq)
                                     @php
                                         $navDoc = $uploaded->get($navReq->id);
-                                        $navIsUploaded = $navDoc && filled($navDoc->file_path);
+                                        $navIsUploaded = $navDoc && (filled($navDoc->file_path) || ! empty($navDoc->document_metadata));
                                         $navBlocksAcceptance = method_exists($navReq, 'blocksAcceptance')
                                             ? $navReq->blocksAcceptance()
                                             : (bool) $navReq->is_mandatory;
-                                        $navStatus = $navIsUploaded ? 'Uploaded' : ($navBlocksAcceptance ? 'Missing' : 'Reference');
+                                        $navStatus = $navIsUploaded ? 'Encoded' : ($navBlocksAcceptance ? 'Missing' : 'Reference');
                                         $navDisplayName = trim(preg_replace('/\s*\((?:if|when|where|as applicable)[^)]+\)/i', '', $navReq->name));
                                     @endphp
 
@@ -2989,7 +3041,7 @@
                     @foreach ($group['requirements'] as $req)
                         @php
                             $doc = $uploaded->get($req->id);
-                            $isUploaded = $doc && filled($doc->file_path);
+                            $isUploaded = $doc && (filled($doc->file_path) || ! empty($doc->document_metadata));
                             $editPanelId = 'document-edit-panel-' . $req->id;
                             $documentExists = $isUploaded && $doc->file_path && \Illuminate\Support\Facades\Storage::exists($doc->file_path);
                             $documentMime = $documentExists ? (\Illuminate\Support\Facades\Storage::mimeType($doc->file_path) ?: null) : null;
@@ -3029,15 +3081,15 @@
                                             </h3>
 
                                             <p class="requirement-note">
-                                                Upload files and encode only the necessary reference details for review, indexing, monitoring, and auditability. Required acceptance documents block release when missing; case-dependent/reference documents support manual review.
+                                                Encode the requirement details first. File upload is optional and only supports review, indexing, monitoring, and auditability.
                                             </p>
                                         </div>
                                     </div>
 
                                     @if ($isUploaded)
-                                        <span class="staff-badge staff-badge-green">Uploaded</span>
+                                        <span class="staff-badge staff-badge-green">Details saved</span>
                                     @else
-                                        <span class="staff-badge {{ $blocksAcceptance ? 'staff-badge-red' : 'staff-badge-slate' }}">{{ $blocksAcceptance ? 'Required file missing' : 'No file attached' }}</span>
+                                        <span class="staff-badge {{ $blocksAcceptance ? 'staff-badge-red' : 'staff-badge-slate' }}">{{ $blocksAcceptance ? 'Details not yet encoded' : 'Optional / supporting only' }}</span>
                                     @endif
                                 </div>
 
@@ -3045,22 +3097,16 @@
                                     <div class="document-status-panel uploaded">
                                         <p class="document-status-title">
                                             <i class="fa-solid fa-file-circle-check text-green-700"></i>
-                                            Uploaded Document
+                                            Requirement Details
                                         </p>
                                         <p class="document-status-copy">
-                                            A file is already attached to this requirement. Use Edit to replace the file or update its reference details, or Remove to delete the uploaded document record.
+                                            Requirement details have been encoded. The attached file is optional/supporting only; use Edit to update the details or replace the file if needed.
                                         </p>
 
                                         <div class="document-detail-grid mt-3">
                                             <div class="document-detail-item">
                                                 <strong>Filename</strong>
                                                 <div class="font-mono break-all mt-1">{{ $doc->original_filename }}</div>
-                                            </div>
-
-
-                                            <div class="document-detail-item">
-                                                <strong>Reference No.</strong>
-                                                <div class="mt-1">{{ $doc->document_reference_number ?: '—' }}</div>
                                             </div>
 
                                         </div>
@@ -3233,9 +3279,9 @@
                                             <div id="{{ $editPanelId }}" class="document-edit-panel" hidden>
                                                 <div class="document-indexing-header">
                                                     <div>
-                                                        <p class="document-edit-panel-title">Edit Uploaded Document</p>
+                                                        <p class="document-edit-panel-title">Edit Requirement Details</p>
                                                         <p class="document-edit-panel-copy">
-                                                            Update the attached file or encoded reference details below.
+                                                            Update the encoded requirement details below. Replacement file upload remains optional/supporting only.
                                                         </p>
                                                     </div>
                                                 </div>
@@ -3263,7 +3309,7 @@
                                                     <div class="document-action-row">
                                                         <button type="submit" class="staff-button staff-button-primary">
                                                             <i class="fa-solid fa-floppy-disk"></i>
-                                                            Save Edited Document
+                                                            Save This Requirement
                                                         </button>
 
                                                         <button type="button"
@@ -3292,23 +3338,22 @@
                                             <div>
                                                 <p class="document-form-title">
                                                     <i class="fa-solid fa-triangle-exclamation text-red-700"></i>
-                                                    Upload Document
+                                                    Encode Requirement Details
                                                 </p>
                                                 <p class="document-form-copy">
-                                                    Upload the required file and encode the needed reference details for staff review.
+                                                    Fill out the requirement data. Attaching a scanned file is optional/supporting only.
                                                 </p>
                                             </div>
                                         </div>
 
                                         <div class="document-form-section">
                                             <div class="file-input-wrap">
-                                                <label class="block mb-2">Choose file (required)</label>
+                                                <label class="block mb-2">Attach supporting file (optional)</label>
                                                 <input type="file"
                                                        name="file"
-                                                       required
                                                        {{ $isFinal ? 'disabled' : '' }}
                                                        title="{{ $isFinal ? $lockMsg : '' }}">
-                                                <p class="file-input-help">Accepted file is stored as an application document for staff review.</p>
+                                                <p class="file-input-help">Optional scan/photo/PDF. Leave blank if only data details are available.</p>
                                             </div>
 
                                             @include('staff.applications.partials.document-metadata-fields', [
@@ -3324,8 +3369,8 @@
                                                         title="{{ $isFinal ? $lockMsg : '' }}"
                                                         {{ $isFinal ? 'disabled' : '' }}
                                                         @if($isFinal) style="opacity:0.7; cursor:not-allowed;" @endif>
-                                                    <i class="fa-solid fa-upload"></i>
-                                                    Upload Document
+                                                    <i class="fa-solid fa-floppy-disk"></i>
+                                                    Save This Requirement
                                                 </button>
                                             </div>
                                         </div>
@@ -3337,13 +3382,13 @@
                 </div>
             </section>
         @endforeach
-        @if ($transfereeOwner)
+        @if (! empty($fiveHectareValidation['per_landowner']))
             <section class="review-panel">
                 <div class="review-panel-header">
                     <div>
                         <h2 class="review-panel-title">5-Hectare Validation (Assistive)</h2>
                         <p class="review-panel-subtitle">
-                            This validation is based on encoded active landholding records and pending/current application areas only. It is assistive for staff review, not final legal authority.
+                            Each linked transferee is calculated separately using encoded landholding records and the recorded parcel share.
                         </p>
                     </div>
                     @if ($exceedsFiveHectares)
@@ -3353,13 +3398,19 @@
                     @endif
                 </div>
 
-                <div class="review-panel-body">
+                <div class="review-panel-body space-y-4">
+                    @foreach ($fiveHectareValidation['per_landowner'] as $transfereeValidation)
+                        <div class="validation-grid">
+                            <div class="validation-item"><strong>Transferee</strong>{{ $transfereeValidation['landowner_name'] ?? 'Linked landowner' }}</div>
+                            <div class="validation-item"><strong>Current Active Hectares</strong>{{ number_format((float) ($transfereeValidation['current_active_total'] ?? 0), 4) }} ha</div>
+                            <div class="validation-item"><strong>Pending Incoming Total</strong>{{ number_format((float) ($transfereeValidation['pending_incoming_total'] ?? 0), 4) }} ha</div>
+                            <div class="validation-item"><strong>This Application Share</strong>{{ number_format((float) ($transfereeValidation['this_application_total'] ?? 0), 4) }} ha</div>
+                            <div class="validation-item"><strong>Projected Total</strong>{{ number_format((float) ($transfereeValidation['projected_total'] ?? 0), 4) }} ha</div>
+                            <div class="validation-item"><strong>Review Status</strong>{{ $transfereeValidation['status_label'] ?? 'For staff review' }}</div>
+                        </div>
+                    @endforeach
+
                     <div class="validation-grid">
-                        <div class="validation-item"><strong>Transferee</strong>{{ $transfereeOwner->full_name }}</div>
-                        <div class="validation-item"><strong>Current Active Hectares</strong>{{ number_format($currentApprovedTotal, 4) }} ha</div>
-                        <div class="validation-item"><strong>Pending Incoming Total</strong>{{ number_format($pendingIncomingTotal, 4) }} ha</div>
-                        <div class="validation-item"><strong>This Application Total</strong>{{ number_format($thisApplicationTotal, 4) }} ha</div>
-                        <div class="validation-item"><strong>Projected Total</strong>{{ number_format($projectedTotal, 4) }} ha</div>
                         <div class="validation-item"><strong>Transfer Nature</strong>{{ $application->transferNatureLabel() }}</div>
                         <div class="validation-item"><strong>Succession Context</strong>{{ $application->is_succession_case ? 'Yes, noted for manual review' : 'No / not indicated' }}</div>
                         <div class="validation-item"><strong>Retention Certificate</strong>
@@ -3369,26 +3420,26 @@
                                 Not required / not indicated
                             @endif
                         </div>
-                        <div class="validation-item"><strong>Review Status</strong>{{ $fiveHectareValidation['status_label'] ?? 'For staff review' }}</div>
                     </div>
 
                     @if (filled($application->landholding_review_notes))
-                        <div class="review-note-box mt-4">
+                        <div class="review-note-box">
                             <strong>Landholding review notes:</strong><br>
                             {{ $application->landholding_review_notes }}
                         </div>
                     @endif
 
-                    <div class="review-note-box mt-4">
+                    <div class="review-note-box">
                         @if (($fiveHectareValidation['retention_certificate_missing'] ?? false))
                             Retention Certificate is marked as required, but no reference was recorded. Release is blocked until the reference is encoded or the requirement is revised.
                         @elseif ($exceedsFiveHectares && $application->is_succession_case)
-                            Projected total exceeds the 5-hectare reference limit, but succession/inheritance context has been noted for manual review.
+                            At least one projected total exceeds the 5-hectare reference limit, with succession/inheritance context noted for manual review.
                         @elseif ($exceedsFiveHectares)
-                            Projected total exceeds the 5-hectare reference limit based on encoded records. Release is blocked until records are resolved, an applicable exception/reference is encoded, or the application is marked Denied.
+                            At least one projected total exceeds the 5-hectare reference limit. Release is blocked until the encoded records are resolved or the application is marked Denied.
                         @else
-                            Projected total is within the 5-hectare reference limit based on encoded system records.
+                            All linked transferee projections are within the 5-hectare reference limit based on encoded system records.
                         @endif
+                        This validation is assistive only and does not execute or finalize legal land transfer.
                     </div>
                 </div>
             </section>
@@ -3417,7 +3468,7 @@
                                         <th>Status</th>
                                         <th>References</th>
                                         <th>Linked Parcel</th>
-                                        <th>Action</th>
+                                        <th class="staff-table-action">Action</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -3440,10 +3491,12 @@
                                                     <span class="text-gray-400">Not linked</span>
                                                 @endif
                                             </td>
-                                            <td>
-                                                <a href="{{ route('staff.source-record-packages.show', $package) }}" class="staff-button staff-button-light">
-                                                    View Package
-                                                </a>
+                                            <td class="staff-table-action">
+                                                <div class="staff-table-action-group">
+                                                    <a href="{{ route('staff.source-record-packages.show', $package) }}" class="staff-button staff-button-light">
+                                                        View Package
+                                                    </a>
+                                                </div>
                                             </td>
                                         </tr>
                                     @endforeach
@@ -3465,7 +3518,7 @@
                                         <th>References</th>
                                         <th>Source</th>
                                         <th>Linked Parcel</th>
-                                        <th>Action</th>
+                                        <th class="staff-table-action">Action</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -3497,10 +3550,12 @@
                                                     <span class="text-gray-400">Not linked</span>
                                                 @endif
                                             </td>
-                                            <td>
-                                                <a href="{{ route('staff.legacy-records.show', $record) }}" class="staff-button staff-button-light">
-                                                    View Record
-                                                </a>
+                                            <td class="staff-table-action">
+                                                <div class="staff-table-action-group">
+                                                    <a href="{{ route('staff.legacy-records.show', $record) }}" class="staff-button staff-button-light">
+                                                        View Record
+                                                    </a>
+                                                </div>
                                             </td>
                                         </tr>
                                     @endforeach
@@ -4011,6 +4066,16 @@
                 }
 
                 const form = pendingDecisionForm;
+                let confirmationInput = form.querySelector('input[name="final_decision_confirmation"]');
+
+                if (! confirmationInput) {
+                    confirmationInput = document.createElement('input');
+                    confirmationInput.type = 'hidden';
+                    confirmationInput.name = 'final_decision_confirmation';
+                    form.appendChild(confirmationInput);
+                }
+
+                confirmationInput.value = '1';
                 pendingDecisionForm = null;
                 decisionModal.classList.remove('is-open');
                 decisionModal.setAttribute('aria-hidden', 'true');

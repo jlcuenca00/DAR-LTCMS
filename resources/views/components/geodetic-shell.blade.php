@@ -45,6 +45,26 @@
 
         * { box-sizing: border-box; }
 
+        .skip-link {
+            position: fixed;
+            top: -64px;
+            left: 16px;
+            z-index: 9999;
+            padding: 10px 14px;
+            border-radius: 8px;
+            background: #ffffff;
+            color: #14532d;
+            border: 2px solid #15803d;
+            font-weight: 800;
+            text-decoration: none;
+            transition: top 120ms ease;
+        }
+
+        .skip-link:focus {
+            top: 12px;
+        }
+
+
         html { min-height: 100%; }
 
         body {
@@ -656,6 +676,7 @@
 </head>
 
 <body>
+    <a class="skip-link" href="#main-content">Skip to main content</a>
     @php
         $notificationUser = auth()->user();
         $notificationUnreadCount = $notificationUser?->unreadSystemNotifications()->count() ?? 0;
@@ -723,7 +744,7 @@
             </div>
         </aside>
 
-        <main class="geo-main">
+        <main id="main-content" class="geo-main" tabindex="-1">
             <header class="geo-topbar">
                 <div>
                     <p class="geo-eyebrow">DAR Negros Oriental Provincial Office</p>
@@ -760,6 +781,7 @@
             </header>
 
             <div class="geo-content">
+                <x-breadcrumbs :title="$title" />
                 {{ $slot }}
             </div>
         </main>

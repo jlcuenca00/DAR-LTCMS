@@ -1,0 +1,432 @@
+BEGIN;
+
+-- DAR-LTCMS mock Dumaguete agricultural data
+-- This version creates many mapped parcels clustered side by side in agricultural-looking areas of Dumaguete City.
+-- It is safe to rerun because it first clears the previous DGT-AGRI mock rows.
+
+DO $$
+BEGIN
+    IF to_regclass('public.application_parcels') IS NOT NULL THEN
+        DELETE FROM application_parcels
+        WHERE land_transfer_application_id IN (
+            SELECT id FROM land_transfer_applications
+            WHERE application_code LIKE '2026-DGT-%'
+        );
+    END IF;
+END $$;
+
+DELETE FROM land_transfer_applications WHERE application_code LIKE '2026-DGT-%';
+DELETE FROM legacy_records WHERE parcel_code LIKE 'DGT-AGRI-%' OR source_book = 'Dumaguete Mock Agri Map 2026';
+DELETE FROM source_record_packages WHERE parcel_code LIKE 'DGT-AGRI-%' OR source_book = 'Dumaguete Mock Agri Map 2026';
+DELETE FROM landholdings WHERE parcel_id IN (SELECT id FROM parcels WHERE parcel_code LIKE 'DGT-AGRI-%');
+DELETE FROM parcels WHERE parcel_code LIKE 'DGT-AGRI-%';
+DELETE FROM landowners WHERE contact_number LIKE '099990000%';
+
+DO $$
+DECLARE
+    v_staff_id bigint;
+    v_landowner_user_id bigint;
+    v_lo1 bigint;
+    v_p1 bigint;
+    v_lh1 bigint;
+    v_sp1 bigint;
+    v_app1 bigint;
+    v_lo2 bigint;
+    v_p2 bigint;
+    v_lh2 bigint;
+    v_sp2 bigint;
+    v_app2 bigint;
+    v_lo3 bigint;
+    v_p3 bigint;
+    v_lh3 bigint;
+    v_sp3 bigint;
+    v_app3 bigint;
+    v_lo4 bigint;
+    v_p4 bigint;
+    v_lh4 bigint;
+    v_sp4 bigint;
+    v_app4 bigint;
+    v_lo5 bigint;
+    v_p5 bigint;
+    v_lh5 bigint;
+    v_sp5 bigint;
+    v_app5 bigint;
+    v_lo6 bigint;
+    v_p6 bigint;
+    v_lh6 bigint;
+    v_sp6 bigint;
+    v_app6 bigint;
+    v_lo7 bigint;
+    v_p7 bigint;
+    v_lh7 bigint;
+    v_sp7 bigint;
+    v_app7 bigint;
+    v_lo8 bigint;
+    v_p8 bigint;
+    v_lh8 bigint;
+    v_sp8 bigint;
+    v_app8 bigint;
+    v_lo9 bigint;
+    v_p9 bigint;
+    v_lh9 bigint;
+    v_sp9 bigint;
+    v_app9 bigint;
+    v_lo10 bigint;
+    v_p10 bigint;
+    v_lh10 bigint;
+    v_sp10 bigint;
+    v_app10 bigint;
+    v_lo11 bigint;
+    v_p11 bigint;
+    v_lh11 bigint;
+    v_sp11 bigint;
+    v_app11 bigint;
+    v_lo12 bigint;
+    v_p12 bigint;
+    v_lh12 bigint;
+    v_sp12 bigint;
+    v_app12 bigint;
+BEGIN
+    SELECT id INTO v_staff_id FROM users WHERE role = 'staff' ORDER BY id LIMIT 1;
+    SELECT id INTO v_landowner_user_id FROM users WHERE role = 'landowner' ORDER BY id LIMIT 1;
+
+    IF v_staff_id IS NULL THEN
+        RAISE EXCEPTION 'No staff user found. Create at least one staff user before running this file.';
+    END IF;
+
+    INSERT INTO landowners (first_name, middle_name, last_name, suffix, contact_number, address_line, barangay, municipality, province, user_id, registered_owner_status, spouse_name, created_at, updated_at)
+    VALUES ('Roberto', 'Santos', 'Canlas', NULL, '09999000001', 'Mock agricultural holding cluster, Balugo', 'Balugo', 'Dumaguete City', 'Negros Oriental', v_landowner_user_id, 'Registered Owner', 'Elena Canlas', now(), now())
+    RETURNING id INTO v_lo1;
+
+    INSERT INTO parcels (parcel_code, title_no, tax_decl_no, municipality, barangay, province, area_hectares, area_square_meters, geometry_geojson, status, agricultural_status, lot_number, survey_plan_number, title_type, rod_office, remarks, created_at, updated_at)
+    VALUES ('DGT-AGRI-001', 'T-2026-DGT-0001', 'TD-2026-DGT-0001', 'Dumaguete City', 'Balugo', 'Negros Oriental', 2.1000, 21000.00, '{"type": "Polygon", "coordinates": [[[123.282, 9.33518], [123.28252, 9.33502], [123.28345, 9.3351], [123.2837, 9.3358], [123.2833, 9.33644], [123.28246, 9.33636], [123.28197, 9.33574], [123.282, 9.33518]]]}', 'active', 'private_agricultural', 'Lot 101-A', 'PSD-07-2026-001', 'TCT', 'ROD Dumaguete', 'Mock mapped agricultural parcel in a clustered Dumaguete agricultural area.', now(), now())
+    RETURNING id INTO v_p1;
+
+    INSERT INTO landholdings (landowner_id, parcel_id, area_hectares, status, date_acquired, source_reference_number, remarks, created_at, updated_at)
+    VALUES (v_lo1, v_p1, 2.1000, 'active', DATE '2019-01-15' + INTERVAL '30 days', 'LH-DGT-2026-001', 'Mock active agricultural landholding for Dumaguete clustered map testing.', now(), now())
+    RETURNING id INTO v_lh1;
+
+    INSERT INTO source_record_packages (package_code, status, source_record_scope, parcel_id, encoded_by_user_id, parcel_code, title_number, landholding_reference_number, landowner_name, lot_number, survey_number, area_hectares, crop_or_land_use, barangay, municipality, province, source_book, page_number, transcribed_by, transcription_date, source_notes, remarks, landowner_id, created_at, updated_at)
+    VALUES ('SRC-DGT-2026-001', 'encoded', 'current_active', v_p1, v_staff_id, 'DGT-AGRI-001', 'T-2026-DGT-0001', 'LH-DGT-2026-001', 'Roberto Canlas', 'Lot 101-A', 'PSD-07-2026-001', 2.1000, 'Rice / corn', 'Balugo', 'Dumaguete City', 'Negros Oriental', 'Dumaguete Mock Agri Map 2026', 'P-201', 'DAR-LTCMS Beta Encoder', CURRENT_DATE, 'Mock source package for clustered Dumaguete agricultural parcels.', 'Created for beta testing only.', v_lo1, now(), now())
+    RETURNING id INTO v_sp1;
+
+    INSERT INTO legacy_records (record_type, origin, encoded_by_user_id, title_number, tax_declaration_number, lot_number, survey_number, landowner_name, area_hectares, crop_or_land_use, barangay, municipality, province, record_date, decision_status, previous_dar_reference_number, remarks, source_book, page_number, transcribed_by, transcription_date, source_notes, parcel_id, source_record_scope, parcel_code, landholding_reference_number, source_record_package_id, landowner_id, created_at, updated_at)
+    VALUES ('title', 'encoded', v_staff_id, 'T-2026-DGT-0001', 'TD-2026-DGT-0001', 'Lot 101-A', 'PSD-07-2026-001', 'Roberto Canlas', 2.1000, 'Rice / corn', 'Balugo', 'Dumaguete City', 'Negros Oriental', CURRENT_DATE, 'active', 'DAR-DGT-0001', 'Mock source record generated under the source package workspace.', 'Dumaguete Mock Agri Map 2026', 'P-201', 'DAR-LTCMS Beta Encoder', CURRENT_DATE, 'Mock beta source record for mapped Dumaguete parcels.', v_p1, 'current_active', 'DGT-AGRI-001', 'LH-DGT-2026-001', v_sp1, v_lo1, now(), now());
+
+    INSERT INTO land_transfer_applications (application_code, transferor_name, transferee_name, municipality, barangay, date_filed, date_of_transfer, status, remarks, encoded_by, transferor_landowner_id, transferee_landowner_id, applicant_name, applicant_type, authorized_representative_name, has_special_power_of_attorney, or_number, or_date, amount_paid, date_of_application, transfer_nature, is_succession_case, retention_certificate_required, landholding_review_notes, created_at, updated_at)
+    VALUES ('2026-DGT-0001', 'Roberto Canlas', 'Jake Kevin Klair L. Cuenca', 'Dumaguete City', 'Balugo', CURRENT_DATE - INTERVAL '1 days', CURRENT_DATE, 'pending_review_legal', 'Mock beta application for workflow and UI testing of the Dumaguete agricultural parcel cluster.', v_staff_id, v_lo1, NULL, 'Roberto Canlas', 'Landowner', NULL, false, 'OR-DGT-0001', CURRENT_DATE, 500.00, CURRENT_DATE - INTERVAL '1 days', 'Sale / transfer review', false, false, 'Mock landholding review notes for beta testing.', now(), now())
+    RETURNING id INTO v_app1;
+
+    INSERT INTO landowners (first_name, middle_name, last_name, suffix, contact_number, address_line, barangay, municipality, province, user_id, registered_owner_status, spouse_name, created_at, updated_at)
+    VALUES ('Marites', 'Lopez', 'Dela Cruz', NULL, '09999000002', 'Mock agricultural holding cluster, Balugo', 'Balugo', 'Dumaguete City', 'Negros Oriental', NULL, 'Registered Owner', NULL, now(), now())
+    RETURNING id INTO v_lo2;
+
+    INSERT INTO parcels (parcel_code, title_no, tax_decl_no, municipality, barangay, province, area_hectares, area_square_meters, geometry_geojson, status, agricultural_status, lot_number, survey_plan_number, title_type, rod_office, remarks, created_at, updated_at)
+    VALUES ('DGT-AGRI-002', 'T-2026-DGT-0002', 'TD-2026-DGT-0002', 'Dumaguete City', 'Balugo', 'Negros Oriental', 2.4000, 24000.00, '{"type": "Polygon", "coordinates": [[[123.28378, 9.33518], [123.2843, 9.33502], [123.28523, 9.3351], [123.28548, 9.3358], [123.28508, 9.33644], [123.28424, 9.33636], [123.28375, 9.33574], [123.28378, 9.33518]]]}', 'active', 'private_agricultural', 'Lot 102-A', 'PSD-07-2026-002', 'TCT', 'ROD Dumaguete', 'Mock mapped agricultural parcel in a clustered Dumaguete agricultural area.', now(), now())
+    RETURNING id INTO v_p2;
+
+    INSERT INTO landholdings (landowner_id, parcel_id, area_hectares, status, date_acquired, source_reference_number, remarks, created_at, updated_at)
+    VALUES (v_lo2, v_p2, 2.4000, 'active', DATE '2019-01-15' + INTERVAL '60 days', 'LH-DGT-2026-002', 'Mock active agricultural landholding for Dumaguete clustered map testing.', now(), now())
+    RETURNING id INTO v_lh2;
+
+    INSERT INTO source_record_packages (package_code, status, source_record_scope, parcel_id, encoded_by_user_id, parcel_code, title_number, landholding_reference_number, landowner_name, lot_number, survey_number, area_hectares, crop_or_land_use, barangay, municipality, province, source_book, page_number, transcribed_by, transcription_date, source_notes, remarks, landowner_id, created_at, updated_at)
+    VALUES ('SRC-DGT-2026-002', 'encoded', 'current_active', v_p2, v_staff_id, 'DGT-AGRI-002', 'T-2026-DGT-0002', 'LH-DGT-2026-002', 'Marites Dela Cruz', 'Lot 102-A', 'PSD-07-2026-002', 2.4000, 'Rice / corn', 'Balugo', 'Dumaguete City', 'Negros Oriental', 'Dumaguete Mock Agri Map 2026', 'P-202', 'DAR-LTCMS Beta Encoder', CURRENT_DATE, 'Mock source package for clustered Dumaguete agricultural parcels.', 'Created for beta testing only.', v_lo2, now(), now())
+    RETURNING id INTO v_sp2;
+
+    INSERT INTO legacy_records (record_type, origin, encoded_by_user_id, title_number, tax_declaration_number, lot_number, survey_number, landowner_name, area_hectares, crop_or_land_use, barangay, municipality, province, record_date, decision_status, previous_dar_reference_number, remarks, source_book, page_number, transcribed_by, transcription_date, source_notes, parcel_id, source_record_scope, parcel_code, landholding_reference_number, source_record_package_id, landowner_id, created_at, updated_at)
+    VALUES ('title', 'encoded', v_staff_id, 'T-2026-DGT-0002', 'TD-2026-DGT-0002', 'Lot 102-A', 'PSD-07-2026-002', 'Marites Dela Cruz', 2.4000, 'Rice / corn', 'Balugo', 'Dumaguete City', 'Negros Oriental', CURRENT_DATE, 'active', 'DAR-DGT-0002', 'Mock source record generated under the source package workspace.', 'Dumaguete Mock Agri Map 2026', 'P-202', 'DAR-LTCMS Beta Encoder', CURRENT_DATE, 'Mock beta source record for mapped Dumaguete parcels.', v_p2, 'current_active', 'DGT-AGRI-002', 'LH-DGT-2026-002', v_sp2, v_lo2, now(), now());
+
+    INSERT INTO land_transfer_applications (application_code, transferor_name, transferee_name, municipality, barangay, date_filed, date_of_transfer, status, remarks, encoded_by, transferor_landowner_id, transferee_landowner_id, applicant_name, applicant_type, authorized_representative_name, has_special_power_of_attorney, or_number, or_date, amount_paid, date_of_application, transfer_nature, is_succession_case, retention_certificate_required, landholding_review_notes, created_at, updated_at)
+    VALUES ('2026-DGT-0002', 'Marites Dela Cruz', 'Ana Marie Rosales', 'Dumaguete City', 'Balugo', CURRENT_DATE - INTERVAL '2 days', CURRENT_DATE, 'pending_review_legal', 'Mock beta application for workflow and UI testing of the Dumaguete agricultural parcel cluster.', v_staff_id, v_lo2, NULL, 'Marites Dela Cruz', 'Landowner', NULL, false, 'OR-DGT-0002', CURRENT_DATE, 500.00, CURRENT_DATE - INTERVAL '2 days', 'Sale / transfer review', false, false, 'Mock landholding review notes for beta testing.', now(), now())
+    RETURNING id INTO v_app2;
+
+    INSERT INTO landowners (first_name, middle_name, last_name, suffix, contact_number, address_line, barangay, municipality, province, user_id, registered_owner_status, spouse_name, created_at, updated_at)
+    VALUES ('Alfredo', 'Gomez', 'Villanueva', 'Sr.', '09999000003', 'Mock agricultural holding cluster, Balugo', 'Balugo', 'Dumaguete City', 'Negros Oriental', NULL, 'Registered Owner', 'Rosa Villanueva', now(), now())
+    RETURNING id INTO v_lo3;
+
+    INSERT INTO parcels (parcel_code, title_no, tax_decl_no, municipality, barangay, province, area_hectares, area_square_meters, geometry_geojson, status, agricultural_status, lot_number, survey_plan_number, title_type, rod_office, remarks, created_at, updated_at)
+    VALUES ('DGT-AGRI-003', 'T-2026-DGT-0003', 'TD-2026-DGT-0003', 'Dumaguete City', 'Balugo', 'Negros Oriental', 2.8500, 28500.00, '{"type": "Polygon", "coordinates": [[[123.28556, 9.33518], [123.28608, 9.33502], [123.28701, 9.3351], [123.28726, 9.3358], [123.28686, 9.33644], [123.28602, 9.33636], [123.28553, 9.33574], [123.28556, 9.33518]]]}', 'active', 'private_agricultural', 'Lot 103-A', 'PSD-07-2026-003', 'TCT', 'ROD Dumaguete', 'Mock mapped agricultural parcel in a clustered Dumaguete agricultural area.', now(), now())
+    RETURNING id INTO v_p3;
+
+    INSERT INTO landholdings (landowner_id, parcel_id, area_hectares, status, date_acquired, source_reference_number, remarks, created_at, updated_at)
+    VALUES (v_lo3, v_p3, 2.8500, 'active', DATE '2019-01-15' + INTERVAL '90 days', 'LH-DGT-2026-003', 'Mock active agricultural landholding for Dumaguete clustered map testing.', now(), now())
+    RETURNING id INTO v_lh3;
+
+    INSERT INTO source_record_packages (package_code, status, source_record_scope, parcel_id, encoded_by_user_id, parcel_code, title_number, landholding_reference_number, landowner_name, lot_number, survey_number, area_hectares, crop_or_land_use, barangay, municipality, province, source_book, page_number, transcribed_by, transcription_date, source_notes, remarks, landowner_id, created_at, updated_at)
+    VALUES ('SRC-DGT-2026-003', 'encoded', 'current_active', v_p3, v_staff_id, 'DGT-AGRI-003', 'T-2026-DGT-0003', 'LH-DGT-2026-003', 'Alfredo Villanueva', 'Lot 103-A', 'PSD-07-2026-003', 2.8500, 'Sugarcane', 'Balugo', 'Dumaguete City', 'Negros Oriental', 'Dumaguete Mock Agri Map 2026', 'P-203', 'DAR-LTCMS Beta Encoder', CURRENT_DATE, 'Mock source package for clustered Dumaguete agricultural parcels.', 'Created for beta testing only.', v_lo3, now(), now())
+    RETURNING id INTO v_sp3;
+
+    INSERT INTO legacy_records (record_type, origin, encoded_by_user_id, title_number, tax_declaration_number, lot_number, survey_number, landowner_name, area_hectares, crop_or_land_use, barangay, municipality, province, record_date, decision_status, previous_dar_reference_number, remarks, source_book, page_number, transcribed_by, transcription_date, source_notes, parcel_id, source_record_scope, parcel_code, landholding_reference_number, source_record_package_id, landowner_id, created_at, updated_at)
+    VALUES ('title', 'encoded', v_staff_id, 'T-2026-DGT-0003', 'TD-2026-DGT-0003', 'Lot 103-A', 'PSD-07-2026-003', 'Alfredo Villanueva', 2.8500, 'Sugarcane', 'Balugo', 'Dumaguete City', 'Negros Oriental', CURRENT_DATE, 'active', 'DAR-DGT-0003', 'Mock source record generated under the source package workspace.', 'Dumaguete Mock Agri Map 2026', 'P-203', 'DAR-LTCMS Beta Encoder', CURRENT_DATE, 'Mock beta source record for mapped Dumaguete parcels.', v_p3, 'current_active', 'DGT-AGRI-003', 'LH-DGT-2026-003', v_sp3, v_lo3, now(), now());
+
+    INSERT INTO land_transfer_applications (application_code, transferor_name, transferee_name, municipality, barangay, date_filed, date_of_transfer, status, remarks, encoded_by, transferor_landowner_id, transferee_landowner_id, applicant_name, applicant_type, authorized_representative_name, has_special_power_of_attorney, or_number, or_date, amount_paid, date_of_application, transfer_nature, is_succession_case, retention_certificate_required, landholding_review_notes, created_at, updated_at)
+    VALUES ('2026-DGT-0003', 'Alfredo Villanueva', 'Miguel Reyes', 'Dumaguete City', 'Balugo', CURRENT_DATE - INTERVAL '3 days', CURRENT_DATE, 'endorsed_lti', 'Mock beta application for workflow and UI testing of the Dumaguete agricultural parcel cluster.', v_staff_id, v_lo3, NULL, 'Alfredo Villanueva', 'Landowner', NULL, false, 'OR-DGT-0003', CURRENT_DATE, 500.00, CURRENT_DATE - INTERVAL '3 days', 'Sale / transfer review', false, false, 'Mock landholding review notes for beta testing.', now(), now())
+    RETURNING id INTO v_app3;
+
+    INSERT INTO landowners (first_name, middle_name, last_name, suffix, contact_number, address_line, barangay, municipality, province, user_id, registered_owner_status, spouse_name, created_at, updated_at)
+    VALUES ('Lourdes', 'Abao', 'Mendoza', NULL, '09999000004', 'Mock agricultural holding cluster, Balugo', 'Balugo', 'Dumaguete City', 'Negros Oriental', NULL, 'Registered Owner', NULL, now(), now())
+    RETURNING id INTO v_lo4;
+
+    INSERT INTO parcels (parcel_code, title_no, tax_decl_no, municipality, barangay, province, area_hectares, area_square_meters, geometry_geojson, status, agricultural_status, lot_number, survey_plan_number, title_type, rod_office, remarks, created_at, updated_at)
+    VALUES ('DGT-AGRI-004', 'T-2026-DGT-0004', 'TD-2026-DGT-0004', 'Dumaguete City', 'Balugo', 'Negros Oriental', 3.2000, 32000.00, '{"type": "Polygon", "coordinates": [[[123.28734, 9.33518], [123.28786, 9.33502], [123.28879, 9.3351], [123.28904, 9.3358], [123.28864, 9.33644], [123.2878, 9.33636], [123.28731, 9.33574], [123.28734, 9.33518]]]}', 'active', 'private_agricultural', 'Lot 104-A', 'PSD-07-2026-004', 'TCT', 'ROD Dumaguete', 'Mock mapped agricultural parcel in a clustered Dumaguete agricultural area.', now(), now())
+    RETURNING id INTO v_p4;
+
+    INSERT INTO landholdings (landowner_id, parcel_id, area_hectares, status, date_acquired, source_reference_number, remarks, created_at, updated_at)
+    VALUES (v_lo4, v_p4, 3.2000, 'active', DATE '2019-01-15' + INTERVAL '120 days', 'LH-DGT-2026-004', 'Mock active agricultural landholding for Dumaguete clustered map testing.', now(), now())
+    RETURNING id INTO v_lh4;
+
+    INSERT INTO source_record_packages (package_code, status, source_record_scope, parcel_id, encoded_by_user_id, parcel_code, title_number, landholding_reference_number, landowner_name, lot_number, survey_number, area_hectares, crop_or_land_use, barangay, municipality, province, source_book, page_number, transcribed_by, transcription_date, source_notes, remarks, landowner_id, created_at, updated_at)
+    VALUES ('SRC-DGT-2026-004', 'encoded', 'current_active', v_p4, v_staff_id, 'DGT-AGRI-004', 'T-2026-DGT-0004', 'LH-DGT-2026-004', 'Lourdes Mendoza', 'Lot 104-A', 'PSD-07-2026-004', 3.2000, 'Sugarcane', 'Balugo', 'Dumaguete City', 'Negros Oriental', 'Dumaguete Mock Agri Map 2026', 'P-204', 'DAR-LTCMS Beta Encoder', CURRENT_DATE, 'Mock source package for clustered Dumaguete agricultural parcels.', 'Created for beta testing only.', v_lo4, now(), now())
+    RETURNING id INTO v_sp4;
+
+    INSERT INTO legacy_records (record_type, origin, encoded_by_user_id, title_number, tax_declaration_number, lot_number, survey_number, landowner_name, area_hectares, crop_or_land_use, barangay, municipality, province, record_date, decision_status, previous_dar_reference_number, remarks, source_book, page_number, transcribed_by, transcription_date, source_notes, parcel_id, source_record_scope, parcel_code, landholding_reference_number, source_record_package_id, landowner_id, created_at, updated_at)
+    VALUES ('title', 'encoded', v_staff_id, 'T-2026-DGT-0004', 'TD-2026-DGT-0004', 'Lot 104-A', 'PSD-07-2026-004', 'Lourdes Mendoza', 3.2000, 'Sugarcane', 'Balugo', 'Dumaguete City', 'Negros Oriental', CURRENT_DATE, 'active', 'DAR-DGT-0004', 'Mock source record generated under the source package workspace.', 'Dumaguete Mock Agri Map 2026', 'P-204', 'DAR-LTCMS Beta Encoder', CURRENT_DATE, 'Mock beta source record for mapped Dumaguete parcels.', v_p4, 'current_active', 'DGT-AGRI-004', 'LH-DGT-2026-004', v_sp4, v_lo4, now(), now());
+
+    INSERT INTO land_transfer_applications (application_code, transferor_name, transferee_name, municipality, barangay, date_filed, date_of_transfer, status, remarks, encoded_by, transferor_landowner_id, transferee_landowner_id, applicant_name, applicant_type, authorized_representative_name, has_special_power_of_attorney, or_number, or_date, amount_paid, date_of_application, transfer_nature, is_succession_case, retention_certificate_required, landholding_review_notes, created_at, updated_at)
+    VALUES ('2026-DGT-0004', 'Lourdes Mendoza', 'Patricia Lim', 'Dumaguete City', 'Balugo', CURRENT_DATE - INTERVAL '4 days', CURRENT_DATE, 'endorsed_lti', 'Mock beta application for workflow and UI testing of the Dumaguete agricultural parcel cluster.', v_staff_id, v_lo4, NULL, 'Lourdes Mendoza', 'Landowner', NULL, false, 'OR-DGT-0004', CURRENT_DATE, 500.00, CURRENT_DATE - INTERVAL '4 days', 'Sale / transfer review', false, false, 'Mock landholding review notes for beta testing.', now(), now())
+    RETURNING id INTO v_app4;
+
+    INSERT INTO landowners (first_name, middle_name, last_name, suffix, contact_number, address_line, barangay, municipality, province, user_id, registered_owner_status, spouse_name, created_at, updated_at)
+    VALUES ('Cesar', 'Torres', 'Abellanosa', NULL, '09999000005', 'Mock agricultural holding cluster, Cantil-e', 'Cantil-e', 'Dumaguete City', 'Negros Oriental', NULL, 'Registered Owner', 'Anita Abellanosa', now(), now())
+    RETURNING id INTO v_lo5;
+
+    INSERT INTO parcels (parcel_code, title_no, tax_decl_no, municipality, barangay, province, area_hectares, area_square_meters, geometry_geojson, status, agricultural_status, lot_number, survey_plan_number, title_type, rod_office, remarks, created_at, updated_at)
+    VALUES ('DGT-AGRI-005', 'T-2026-DGT-0005', 'TD-2026-DGT-0005', 'Dumaguete City', 'Cantil-e', 'Negros Oriental', 1.9500, 19500.00, '{"type": "Polygon", "coordinates": [[[123.282, 9.33676], [123.28252, 9.3366], [123.28345, 9.33668], [123.2837, 9.33738], [123.2833, 9.33802], [123.28246, 9.33794], [123.28197, 9.33732], [123.282, 9.33676]]]}', 'active', 'private_agricultural', 'Lot 105-A', 'PSD-07-2026-005', 'TCT', 'ROD Dumaguete', 'Mock mapped agricultural parcel in a clustered Dumaguete agricultural area.', now(), now())
+    RETURNING id INTO v_p5;
+
+    INSERT INTO landholdings (landowner_id, parcel_id, area_hectares, status, date_acquired, source_reference_number, remarks, created_at, updated_at)
+    VALUES (v_lo5, v_p5, 1.9500, 'active', DATE '2019-01-15' + INTERVAL '150 days', 'LH-DGT-2026-005', 'Mock active agricultural landholding for Dumaguete clustered map testing.', now(), now())
+    RETURNING id INTO v_lh5;
+
+    INSERT INTO source_record_packages (package_code, status, source_record_scope, parcel_id, encoded_by_user_id, parcel_code, title_number, landholding_reference_number, landowner_name, lot_number, survey_number, area_hectares, crop_or_land_use, barangay, municipality, province, source_book, page_number, transcribed_by, transcription_date, source_notes, remarks, landowner_id, created_at, updated_at)
+    VALUES ('SRC-DGT-2026-005', 'encoded', 'current_active', v_p5, v_staff_id, 'DGT-AGRI-005', 'T-2026-DGT-0005', 'LH-DGT-2026-005', 'Cesar Abellanosa', 'Lot 105-A', 'PSD-07-2026-005', 1.9500, 'Coconut / banana', 'Cantil-e', 'Dumaguete City', 'Negros Oriental', 'Dumaguete Mock Agri Map 2026', 'P-205', 'DAR-LTCMS Beta Encoder', CURRENT_DATE, 'Mock source package for clustered Dumaguete agricultural parcels.', 'Created for beta testing only.', v_lo5, now(), now())
+    RETURNING id INTO v_sp5;
+
+    INSERT INTO legacy_records (record_type, origin, encoded_by_user_id, title_number, tax_declaration_number, lot_number, survey_number, landowner_name, area_hectares, crop_or_land_use, barangay, municipality, province, record_date, decision_status, previous_dar_reference_number, remarks, source_book, page_number, transcribed_by, transcription_date, source_notes, parcel_id, source_record_scope, parcel_code, landholding_reference_number, source_record_package_id, landowner_id, created_at, updated_at)
+    VALUES ('title', 'encoded', v_staff_id, 'T-2026-DGT-0005', 'TD-2026-DGT-0005', 'Lot 105-A', 'PSD-07-2026-005', 'Cesar Abellanosa', 1.9500, 'Coconut / banana', 'Cantil-e', 'Dumaguete City', 'Negros Oriental', CURRENT_DATE, 'active', 'DAR-DGT-0005', 'Mock source record generated under the source package workspace.', 'Dumaguete Mock Agri Map 2026', 'P-205', 'DAR-LTCMS Beta Encoder', CURRENT_DATE, 'Mock beta source record for mapped Dumaguete parcels.', v_p5, 'current_active', 'DGT-AGRI-005', 'LH-DGT-2026-005', v_sp5, v_lo5, now(), now());
+
+    INSERT INTO land_transfer_applications (application_code, transferor_name, transferee_name, municipality, barangay, date_filed, date_of_transfer, status, remarks, encoded_by, transferor_landowner_id, transferee_landowner_id, applicant_name, applicant_type, authorized_representative_name, has_special_power_of_attorney, or_number, or_date, amount_paid, date_of_application, transfer_nature, is_succession_case, retention_certificate_required, landholding_review_notes, created_at, updated_at)
+    VALUES ('2026-DGT-0005', 'Cesar Abellanosa', 'Jonathan Uy', 'Dumaguete City', 'Cantil-e', CURRENT_DATE - INTERVAL '5 days', CURRENT_DATE, 'endorsed_chief_legal', 'Mock beta application for workflow and UI testing of the Dumaguete agricultural parcel cluster.', v_staff_id, v_lo5, NULL, 'Cesar Abellanosa', 'Landowner', NULL, false, 'OR-DGT-0005', CURRENT_DATE, 500.00, CURRENT_DATE - INTERVAL '5 days', 'Sale / transfer review', false, false, 'Mock landholding review notes for beta testing.', now(), now())
+    RETURNING id INTO v_app5;
+
+    INSERT INTO landowners (first_name, middle_name, last_name, suffix, contact_number, address_line, barangay, municipality, province, user_id, registered_owner_status, spouse_name, created_at, updated_at)
+    VALUES ('Imelda', 'Duran', 'Cabahug', NULL, '09999000006', 'Mock agricultural holding cluster, Cantil-e', 'Cantil-e', 'Dumaguete City', 'Negros Oriental', NULL, 'Registered Owner', NULL, now(), now())
+    RETURNING id INTO v_lo6;
+
+    INSERT INTO parcels (parcel_code, title_no, tax_decl_no, municipality, barangay, province, area_hectares, area_square_meters, geometry_geojson, status, agricultural_status, lot_number, survey_plan_number, title_type, rod_office, remarks, created_at, updated_at)
+    VALUES ('DGT-AGRI-006', 'T-2026-DGT-0006', 'TD-2026-DGT-0006', 'Dumaguete City', 'Cantil-e', 'Negros Oriental', 2.3000, 23000.00, '{"type": "Polygon", "coordinates": [[[123.28378, 9.33676], [123.2843, 9.3366], [123.28523, 9.33668], [123.28548, 9.33738], [123.28508, 9.33802], [123.28424, 9.33794], [123.28375, 9.33732], [123.28378, 9.33676]]]}', 'active', 'private_agricultural', 'Lot 106-A', 'PSD-07-2026-006', 'TCT', 'ROD Dumaguete', 'Mock mapped agricultural parcel in a clustered Dumaguete agricultural area.', now(), now())
+    RETURNING id INTO v_p6;
+
+    INSERT INTO landholdings (landowner_id, parcel_id, area_hectares, status, date_acquired, source_reference_number, remarks, created_at, updated_at)
+    VALUES (v_lo6, v_p6, 2.3000, 'active', DATE '2019-01-15' + INTERVAL '180 days', 'LH-DGT-2026-006', 'Mock active agricultural landholding for Dumaguete clustered map testing.', now(), now())
+    RETURNING id INTO v_lh6;
+
+    INSERT INTO source_record_packages (package_code, status, source_record_scope, parcel_id, encoded_by_user_id, parcel_code, title_number, landholding_reference_number, landowner_name, lot_number, survey_number, area_hectares, crop_or_land_use, barangay, municipality, province, source_book, page_number, transcribed_by, transcription_date, source_notes, remarks, landowner_id, created_at, updated_at)
+    VALUES ('SRC-DGT-2026-006', 'encoded', 'current_active', v_p6, v_staff_id, 'DGT-AGRI-006', 'T-2026-DGT-0006', 'LH-DGT-2026-006', 'Imelda Cabahug', 'Lot 106-A', 'PSD-07-2026-006', 2.3000, 'Coconut / banana', 'Cantil-e', 'Dumaguete City', 'Negros Oriental', 'Dumaguete Mock Agri Map 2026', 'P-206', 'DAR-LTCMS Beta Encoder', CURRENT_DATE, 'Mock source package for clustered Dumaguete agricultural parcels.', 'Created for beta testing only.', v_lo6, now(), now())
+    RETURNING id INTO v_sp6;
+
+    INSERT INTO legacy_records (record_type, origin, encoded_by_user_id, title_number, tax_declaration_number, lot_number, survey_number, landowner_name, area_hectares, crop_or_land_use, barangay, municipality, province, record_date, decision_status, previous_dar_reference_number, remarks, source_book, page_number, transcribed_by, transcription_date, source_notes, parcel_id, source_record_scope, parcel_code, landholding_reference_number, source_record_package_id, landowner_id, created_at, updated_at)
+    VALUES ('title', 'encoded', v_staff_id, 'T-2026-DGT-0006', 'TD-2026-DGT-0006', 'Lot 106-A', 'PSD-07-2026-006', 'Imelda Cabahug', 2.3000, 'Coconut / banana', 'Cantil-e', 'Dumaguete City', 'Negros Oriental', CURRENT_DATE, 'active', 'DAR-DGT-0006', 'Mock source record generated under the source package workspace.', 'Dumaguete Mock Agri Map 2026', 'P-206', 'DAR-LTCMS Beta Encoder', CURRENT_DATE, 'Mock beta source record for mapped Dumaguete parcels.', v_p6, 'current_active', 'DGT-AGRI-006', 'LH-DGT-2026-006', v_sp6, v_lo6, now(), now());
+
+    INSERT INTO land_transfer_applications (application_code, transferor_name, transferee_name, municipality, barangay, date_filed, date_of_transfer, status, remarks, encoded_by, transferor_landowner_id, transferee_landowner_id, applicant_name, applicant_type, authorized_representative_name, has_special_power_of_attorney, or_number, or_date, amount_paid, date_of_application, transfer_nature, is_succession_case, retention_certificate_required, landholding_review_notes, created_at, updated_at)
+    VALUES ('2026-DGT-0006', 'Imelda Cabahug', 'Clarissa Tan', 'Dumaguete City', 'Cantil-e', CURRENT_DATE - INTERVAL '6 days', CURRENT_DATE, 'endorsed_parpo_ii', 'Mock beta application for workflow and UI testing of the Dumaguete agricultural parcel cluster.', v_staff_id, v_lo6, NULL, 'Imelda Cabahug', 'Landowner', NULL, false, 'OR-DGT-0006', CURRENT_DATE, 500.00, CURRENT_DATE - INTERVAL '6 days', 'Sale / transfer review', false, false, 'Mock landholding review notes for beta testing.', now(), now())
+    RETURNING id INTO v_app6;
+
+    INSERT INTO landowners (first_name, middle_name, last_name, suffix, contact_number, address_line, barangay, municipality, province, user_id, registered_owner_status, spouse_name, created_at, updated_at)
+    VALUES ('Narciso', 'Perez', 'Alegre', NULL, '09999000007', 'Mock agricultural holding cluster, Cantil-e', 'Cantil-e', 'Dumaguete City', 'Negros Oriental', NULL, 'Registered Owner', 'Celia Alegre', now(), now())
+    RETURNING id INTO v_lo7;
+
+    INSERT INTO parcels (parcel_code, title_no, tax_decl_no, municipality, barangay, province, area_hectares, area_square_meters, geometry_geojson, status, agricultural_status, lot_number, survey_plan_number, title_type, rod_office, remarks, created_at, updated_at)
+    VALUES ('DGT-AGRI-007', 'T-2026-DGT-0007', 'TD-2026-DGT-0007', 'Dumaguete City', 'Cantil-e', 'Negros Oriental', 3.7500, 37500.00, '{"type": "Polygon", "coordinates": [[[123.28556, 9.33676], [123.28608, 9.3366], [123.28701, 9.33668], [123.28726, 9.33738], [123.28686, 9.33802], [123.28602, 9.33794], [123.28553, 9.33732], [123.28556, 9.33676]]]}', 'active', 'private_agricultural', 'Lot 107-A', 'PSD-07-2026-007', 'TCT', 'ROD Dumaguete', 'Mock mapped agricultural parcel in a clustered Dumaguete agricultural area.', now(), now())
+    RETURNING id INTO v_p7;
+
+    INSERT INTO landholdings (landowner_id, parcel_id, area_hectares, status, date_acquired, source_reference_number, remarks, created_at, updated_at)
+    VALUES (v_lo7, v_p7, 3.7500, 'active', DATE '2019-01-15' + INTERVAL '210 days', 'LH-DGT-2026-007', 'Mock active agricultural landholding for Dumaguete clustered map testing.', now(), now())
+    RETURNING id INTO v_lh7;
+
+    INSERT INTO source_record_packages (package_code, status, source_record_scope, parcel_id, encoded_by_user_id, parcel_code, title_number, landholding_reference_number, landowner_name, lot_number, survey_number, area_hectares, crop_or_land_use, barangay, municipality, province, source_book, page_number, transcribed_by, transcription_date, source_notes, remarks, landowner_id, created_at, updated_at)
+    VALUES ('SRC-DGT-2026-007', 'encoded', 'current_active', v_p7, v_staff_id, 'DGT-AGRI-007', 'T-2026-DGT-0007', 'LH-DGT-2026-007', 'Narciso Alegre', 'Lot 107-A', 'PSD-07-2026-007', 3.7500, 'Vegetables', 'Cantil-e', 'Dumaguete City', 'Negros Oriental', 'Dumaguete Mock Agri Map 2026', 'P-207', 'DAR-LTCMS Beta Encoder', CURRENT_DATE, 'Mock source package for clustered Dumaguete agricultural parcels.', 'Created for beta testing only.', v_lo7, now(), now())
+    RETURNING id INTO v_sp7;
+
+    INSERT INTO legacy_records (record_type, origin, encoded_by_user_id, title_number, tax_declaration_number, lot_number, survey_number, landowner_name, area_hectares, crop_or_land_use, barangay, municipality, province, record_date, decision_status, previous_dar_reference_number, remarks, source_book, page_number, transcribed_by, transcription_date, source_notes, parcel_id, source_record_scope, parcel_code, landholding_reference_number, source_record_package_id, landowner_id, created_at, updated_at)
+    VALUES ('title', 'encoded', v_staff_id, 'T-2026-DGT-0007', 'TD-2026-DGT-0007', 'Lot 107-A', 'PSD-07-2026-007', 'Narciso Alegre', 3.7500, 'Vegetables', 'Cantil-e', 'Dumaguete City', 'Negros Oriental', CURRENT_DATE, 'active', 'DAR-DGT-0007', 'Mock source record generated under the source package workspace.', 'Dumaguete Mock Agri Map 2026', 'P-207', 'DAR-LTCMS Beta Encoder', CURRENT_DATE, 'Mock beta source record for mapped Dumaguete parcels.', v_p7, 'current_active', 'DGT-AGRI-007', 'LH-DGT-2026-007', v_sp7, v_lo7, now(), now());
+
+    INSERT INTO land_transfer_applications (application_code, transferor_name, transferee_name, municipality, barangay, date_filed, date_of_transfer, status, remarks, encoded_by, transferor_landowner_id, transferee_landowner_id, applicant_name, applicant_type, authorized_representative_name, has_special_power_of_attorney, or_number, or_date, amount_paid, date_of_application, transfer_nature, is_succession_case, retention_certificate_required, landholding_review_notes, created_at, updated_at)
+    VALUES ('2026-DGT-0007', 'Narciso Alegre', 'Rafael Gatchalian', 'Dumaguete City', 'Cantil-e', CURRENT_DATE - INTERVAL '7 days', CURRENT_DATE, 'for_releasing', 'Mock beta application for workflow and UI testing of the Dumaguete agricultural parcel cluster.', v_staff_id, v_lo7, NULL, 'Narciso Alegre', 'Landowner', NULL, false, 'OR-DGT-0007', CURRENT_DATE, 500.00, CURRENT_DATE - INTERVAL '7 days', 'Sale / transfer review', false, false, 'Mock landholding review notes for beta testing.', now(), now())
+    RETURNING id INTO v_app7;
+
+    INSERT INTO landowners (first_name, middle_name, last_name, suffix, contact_number, address_line, barangay, municipality, province, user_id, registered_owner_status, spouse_name, created_at, updated_at)
+    VALUES ('Rosario', 'Bautista', 'Toring', NULL, '09999000008', 'Mock agricultural holding cluster, Cantil-e', 'Cantil-e', 'Dumaguete City', 'Negros Oriental', NULL, 'Registered Owner', NULL, now(), now())
+    RETURNING id INTO v_lo8;
+
+    INSERT INTO parcels (parcel_code, title_no, tax_decl_no, municipality, barangay, province, area_hectares, area_square_meters, geometry_geojson, status, agricultural_status, lot_number, survey_plan_number, title_type, rod_office, remarks, created_at, updated_at)
+    VALUES ('DGT-AGRI-008', 'T-2026-DGT-0008', 'TD-2026-DGT-0008', 'Dumaguete City', 'Cantil-e', 'Negros Oriental', 4.1000, 41000.00, '{"type": "Polygon", "coordinates": [[[123.28734, 9.33676], [123.28786, 9.3366], [123.28879, 9.33668], [123.28904, 9.33738], [123.28864, 9.33802], [123.2878, 9.33794], [123.28731, 9.33732], [123.28734, 9.33676]]]}', 'active', 'private_agricultural', 'Lot 108-A', 'PSD-07-2026-008', 'TCT', 'ROD Dumaguete', 'Mock mapped agricultural parcel in a clustered Dumaguete agricultural area.', now(), now())
+    RETURNING id INTO v_p8;
+
+    INSERT INTO landholdings (landowner_id, parcel_id, area_hectares, status, date_acquired, source_reference_number, remarks, created_at, updated_at)
+    VALUES (v_lo8, v_p8, 4.1000, 'active', DATE '2019-01-15' + INTERVAL '240 days', 'LH-DGT-2026-008', 'Mock active agricultural landholding for Dumaguete clustered map testing.', now(), now())
+    RETURNING id INTO v_lh8;
+
+    INSERT INTO source_record_packages (package_code, status, source_record_scope, parcel_id, encoded_by_user_id, parcel_code, title_number, landholding_reference_number, landowner_name, lot_number, survey_number, area_hectares, crop_or_land_use, barangay, municipality, province, source_book, page_number, transcribed_by, transcription_date, source_notes, remarks, landowner_id, created_at, updated_at)
+    VALUES ('SRC-DGT-2026-008', 'encoded', 'current_active', v_p8, v_staff_id, 'DGT-AGRI-008', 'T-2026-DGT-0008', 'LH-DGT-2026-008', 'Rosario Toring', 'Lot 108-A', 'PSD-07-2026-008', 4.1000, 'Vegetables', 'Cantil-e', 'Dumaguete City', 'Negros Oriental', 'Dumaguete Mock Agri Map 2026', 'P-208', 'DAR-LTCMS Beta Encoder', CURRENT_DATE, 'Mock source package for clustered Dumaguete agricultural parcels.', 'Created for beta testing only.', v_lo8, now(), now())
+    RETURNING id INTO v_sp8;
+
+    INSERT INTO legacy_records (record_type, origin, encoded_by_user_id, title_number, tax_declaration_number, lot_number, survey_number, landowner_name, area_hectares, crop_or_land_use, barangay, municipality, province, record_date, decision_status, previous_dar_reference_number, remarks, source_book, page_number, transcribed_by, transcription_date, source_notes, parcel_id, source_record_scope, parcel_code, landholding_reference_number, source_record_package_id, landowner_id, created_at, updated_at)
+    VALUES ('title', 'encoded', v_staff_id, 'T-2026-DGT-0008', 'TD-2026-DGT-0008', 'Lot 108-A', 'PSD-07-2026-008', 'Rosario Toring', 4.1000, 'Vegetables', 'Cantil-e', 'Dumaguete City', 'Negros Oriental', CURRENT_DATE, 'active', 'DAR-DGT-0008', 'Mock source record generated under the source package workspace.', 'Dumaguete Mock Agri Map 2026', 'P-208', 'DAR-LTCMS Beta Encoder', CURRENT_DATE, 'Mock beta source record for mapped Dumaguete parcels.', v_p8, 'current_active', 'DGT-AGRI-008', 'LH-DGT-2026-008', v_sp8, v_lo8, now(), now());
+
+    INSERT INTO land_transfer_applications (application_code, transferor_name, transferee_name, municipality, barangay, date_filed, date_of_transfer, status, remarks, encoded_by, transferor_landowner_id, transferee_landowner_id, applicant_name, applicant_type, authorized_representative_name, has_special_power_of_attorney, or_number, or_date, amount_paid, date_of_application, transfer_nature, is_succession_case, retention_certificate_required, landholding_review_notes, created_at, updated_at)
+    VALUES ('2026-DGT-0008', 'Rosario Toring', 'Sophia Velasco', 'Dumaguete City', 'Cantil-e', CURRENT_DATE - INTERVAL '8 days', CURRENT_DATE, 'released', 'Mock beta application for workflow and UI testing of the Dumaguete agricultural parcel cluster.', v_staff_id, v_lo8, NULL, 'Rosario Toring', 'Landowner', NULL, false, 'OR-DGT-0008', CURRENT_DATE, 500.00, CURRENT_DATE - INTERVAL '8 days', 'Sale / transfer review', false, false, 'Mock landholding review notes for beta testing.', now(), now())
+    RETURNING id INTO v_app8;
+
+    INSERT INTO landowners (first_name, middle_name, last_name, suffix, contact_number, address_line, barangay, municipality, province, user_id, registered_owner_status, spouse_name, created_at, updated_at)
+    VALUES ('Felix', 'Lim', 'Montealto', NULL, '09999000009', 'Mock agricultural holding cluster, Cadawinonan', 'Cadawinonan', 'Dumaguete City', 'Negros Oriental', NULL, 'Registered Owner', 'Susan Montealto', now(), now())
+    RETURNING id INTO v_lo9;
+
+    INSERT INTO parcels (parcel_code, title_no, tax_decl_no, municipality, barangay, province, area_hectares, area_square_meters, geometry_geojson, status, agricultural_status, lot_number, survey_plan_number, title_type, rod_office, remarks, created_at, updated_at)
+    VALUES ('DGT-AGRI-009', 'T-2026-DGT-0009', 'TD-2026-DGT-0009', 'Dumaguete City', 'Cadawinonan', 'Negros Oriental', 2.6500, 26500.00, '{"type": "Polygon", "coordinates": [[[123.282, 9.33834], [123.28252, 9.33818], [123.28345, 9.33826], [123.2837, 9.33896], [123.2833, 9.3396], [123.28246, 9.33952], [123.28197, 9.3389], [123.282, 9.33834]]]}', 'active', 'private_agricultural', 'Lot 109-A', 'PSD-07-2026-009', 'TCT', 'ROD Dumaguete', 'Mock mapped agricultural parcel in a clustered Dumaguete agricultural area.', now(), now())
+    RETURNING id INTO v_p9;
+
+    INSERT INTO landholdings (landowner_id, parcel_id, area_hectares, status, date_acquired, source_reference_number, remarks, created_at, updated_at)
+    VALUES (v_lo9, v_p9, 2.6500, 'active', DATE '2019-01-15' + INTERVAL '270 days', 'LH-DGT-2026-009', 'Mock active agricultural landholding for Dumaguete clustered map testing.', now(), now())
+    RETURNING id INTO v_lh9;
+
+    INSERT INTO source_record_packages (package_code, status, source_record_scope, parcel_id, encoded_by_user_id, parcel_code, title_number, landholding_reference_number, landowner_name, lot_number, survey_number, area_hectares, crop_or_land_use, barangay, municipality, province, source_book, page_number, transcribed_by, transcription_date, source_notes, remarks, landowner_id, created_at, updated_at)
+    VALUES ('SRC-DGT-2026-009', 'encoded', 'current_active', v_p9, v_staff_id, 'DGT-AGRI-009', 'T-2026-DGT-0009', 'LH-DGT-2026-009', 'Felix Montealto', 'Lot 109-A', 'PSD-07-2026-009', 2.6500, 'Mixed agricultural crops', 'Cadawinonan', 'Dumaguete City', 'Negros Oriental', 'Dumaguete Mock Agri Map 2026', 'P-209', 'DAR-LTCMS Beta Encoder', CURRENT_DATE, 'Mock source package for clustered Dumaguete agricultural parcels.', 'Created for beta testing only.', v_lo9, now(), now())
+    RETURNING id INTO v_sp9;
+
+    INSERT INTO legacy_records (record_type, origin, encoded_by_user_id, title_number, tax_declaration_number, lot_number, survey_number, landowner_name, area_hectares, crop_or_land_use, barangay, municipality, province, record_date, decision_status, previous_dar_reference_number, remarks, source_book, page_number, transcribed_by, transcription_date, source_notes, parcel_id, source_record_scope, parcel_code, landholding_reference_number, source_record_package_id, landowner_id, created_at, updated_at)
+    VALUES ('title', 'encoded', v_staff_id, 'T-2026-DGT-0009', 'TD-2026-DGT-0009', 'Lot 109-A', 'PSD-07-2026-009', 'Felix Montealto', 2.6500, 'Mixed agricultural crops', 'Cadawinonan', 'Dumaguete City', 'Negros Oriental', CURRENT_DATE, 'active', 'DAR-DGT-0009', 'Mock source record generated under the source package workspace.', 'Dumaguete Mock Agri Map 2026', 'P-209', 'DAR-LTCMS Beta Encoder', CURRENT_DATE, 'Mock beta source record for mapped Dumaguete parcels.', v_p9, 'current_active', 'DGT-AGRI-009', 'LH-DGT-2026-009', v_sp9, v_lo9, now(), now());
+
+    INSERT INTO land_transfer_applications (application_code, transferor_name, transferee_name, municipality, barangay, date_filed, date_of_transfer, status, remarks, encoded_by, transferor_landowner_id, transferee_landowner_id, applicant_name, applicant_type, authorized_representative_name, has_special_power_of_attorney, or_number, or_date, amount_paid, date_of_application, transfer_nature, is_succession_case, retention_certificate_required, landholding_review_notes, created_at, updated_at)
+    VALUES ('2026-DGT-0009', 'Felix Montealto', 'Ethan Sarmiento', 'Dumaguete City', 'Cadawinonan', CURRENT_DATE - INTERVAL '9 days', CURRENT_DATE, 'denied', 'Mock beta application for workflow and UI testing of the Dumaguete agricultural parcel cluster.', v_staff_id, v_lo9, NULL, 'Felix Montealto', 'Landowner', NULL, false, 'OR-DGT-0009', CURRENT_DATE, 500.00, CURRENT_DATE - INTERVAL '9 days', 'Sale / transfer review', false, false, 'Mock landholding review notes for beta testing.', now(), now())
+    RETURNING id INTO v_app9;
+
+    INSERT INTO landowners (first_name, middle_name, last_name, suffix, contact_number, address_line, barangay, municipality, province, user_id, registered_owner_status, spouse_name, created_at, updated_at)
+    VALUES ('Nena', 'Ramos', 'Escobal', NULL, '09999000010', 'Mock agricultural holding cluster, Cadawinonan', 'Cadawinonan', 'Dumaguete City', 'Negros Oriental', NULL, 'Registered Owner', NULL, now(), now())
+    RETURNING id INTO v_lo10;
+
+    INSERT INTO parcels (parcel_code, title_no, tax_decl_no, municipality, barangay, province, area_hectares, area_square_meters, geometry_geojson, status, agricultural_status, lot_number, survey_plan_number, title_type, rod_office, remarks, created_at, updated_at)
+    VALUES ('DGT-AGRI-010', 'T-2026-DGT-0010', 'TD-2026-DGT-0010', 'Dumaguete City', 'Cadawinonan', 'Negros Oriental', 3.0500, 30500.00, '{"type": "Polygon", "coordinates": [[[123.28378, 9.33834], [123.2843, 9.33818], [123.28523, 9.33826], [123.28548, 9.33896], [123.28508, 9.3396], [123.28424, 9.33952], [123.28375, 9.3389], [123.28378, 9.33834]]]}', 'active', 'private_agricultural', 'Lot 110-A', 'PSD-07-2026-010', 'TCT', 'ROD Dumaguete', 'Mock mapped agricultural parcel in a clustered Dumaguete agricultural area.', now(), now())
+    RETURNING id INTO v_p10;
+
+    INSERT INTO landholdings (landowner_id, parcel_id, area_hectares, status, date_acquired, source_reference_number, remarks, created_at, updated_at)
+    VALUES (v_lo10, v_p10, 3.0500, 'active', DATE '2019-01-15' + INTERVAL '300 days', 'LH-DGT-2026-010', 'Mock active agricultural landholding for Dumaguete clustered map testing.', now(), now())
+    RETURNING id INTO v_lh10;
+
+    INSERT INTO source_record_packages (package_code, status, source_record_scope, parcel_id, encoded_by_user_id, parcel_code, title_number, landholding_reference_number, landowner_name, lot_number, survey_number, area_hectares, crop_or_land_use, barangay, municipality, province, source_book, page_number, transcribed_by, transcription_date, source_notes, remarks, landowner_id, created_at, updated_at)
+    VALUES ('SRC-DGT-2026-010', 'encoded', 'current_active', v_p10, v_staff_id, 'DGT-AGRI-010', 'T-2026-DGT-0010', 'LH-DGT-2026-010', 'Nena Escobal', 'Lot 110-A', 'PSD-07-2026-010', 3.0500, 'Mixed agricultural crops', 'Cadawinonan', 'Dumaguete City', 'Negros Oriental', 'Dumaguete Mock Agri Map 2026', 'P-210', 'DAR-LTCMS Beta Encoder', CURRENT_DATE, 'Mock source package for clustered Dumaguete agricultural parcels.', 'Created for beta testing only.', v_lo10, now(), now())
+    RETURNING id INTO v_sp10;
+
+    INSERT INTO legacy_records (record_type, origin, encoded_by_user_id, title_number, tax_declaration_number, lot_number, survey_number, landowner_name, area_hectares, crop_or_land_use, barangay, municipality, province, record_date, decision_status, previous_dar_reference_number, remarks, source_book, page_number, transcribed_by, transcription_date, source_notes, parcel_id, source_record_scope, parcel_code, landholding_reference_number, source_record_package_id, landowner_id, created_at, updated_at)
+    VALUES ('title', 'encoded', v_staff_id, 'T-2026-DGT-0010', 'TD-2026-DGT-0010', 'Lot 110-A', 'PSD-07-2026-010', 'Nena Escobal', 3.0500, 'Mixed agricultural crops', 'Cadawinonan', 'Dumaguete City', 'Negros Oriental', CURRENT_DATE, 'active', 'DAR-DGT-0010', 'Mock source record generated under the source package workspace.', 'Dumaguete Mock Agri Map 2026', 'P-210', 'DAR-LTCMS Beta Encoder', CURRENT_DATE, 'Mock beta source record for mapped Dumaguete parcels.', v_p10, 'current_active', 'DGT-AGRI-010', 'LH-DGT-2026-010', v_sp10, v_lo10, now(), now());
+
+    INSERT INTO land_transfer_applications (application_code, transferor_name, transferee_name, municipality, barangay, date_filed, date_of_transfer, status, remarks, encoded_by, transferor_landowner_id, transferee_landowner_id, applicant_name, applicant_type, authorized_representative_name, has_special_power_of_attorney, or_number, or_date, amount_paid, date_of_application, transfer_nature, is_succession_case, retention_certificate_required, landholding_review_notes, created_at, updated_at)
+    VALUES ('2026-DGT-0010', 'Nena Escobal', 'Bea Rosillo', 'Dumaguete City', 'Cadawinonan', CURRENT_DATE - INTERVAL '10 days', CURRENT_DATE, 'pending_review_legal', 'Mock beta application for workflow and UI testing of the Dumaguete agricultural parcel cluster.', v_staff_id, v_lo10, NULL, 'Nena Escobal', 'Landowner', NULL, false, 'OR-DGT-0010', CURRENT_DATE, 500.00, CURRENT_DATE - INTERVAL '10 days', 'Sale / transfer review', false, false, 'Mock landholding review notes for beta testing.', now(), now())
+    RETURNING id INTO v_app10;
+
+    INSERT INTO landowners (first_name, middle_name, last_name, suffix, contact_number, address_line, barangay, municipality, province, user_id, registered_owner_status, spouse_name, created_at, updated_at)
+    VALUES ('Gerardo', 'Uy', 'Bacalso', NULL, '09999000011', 'Mock agricultural holding cluster, Cadawinonan', 'Cadawinonan', 'Dumaguete City', 'Negros Oriental', NULL, 'Registered Owner', 'Liza Bacalso', now(), now())
+    RETURNING id INTO v_lo11;
+
+    INSERT INTO parcels (parcel_code, title_no, tax_decl_no, municipality, barangay, province, area_hectares, area_square_meters, geometry_geojson, status, agricultural_status, lot_number, survey_plan_number, title_type, rod_office, remarks, created_at, updated_at)
+    VALUES ('DGT-AGRI-011', 'T-2026-DGT-0011', 'TD-2026-DGT-0011', 'Dumaguete City', 'Cadawinonan', 'Negros Oriental', 2.2500, 22500.00, '{"type": "Polygon", "coordinates": [[[123.28556, 9.33834], [123.28608, 9.33818], [123.28701, 9.33826], [123.28726, 9.33896], [123.28686, 9.3396], [123.28602, 9.33952], [123.28553, 9.3389], [123.28556, 9.33834]]]}', 'active', 'private_agricultural', 'Lot 111-A', 'PSD-07-2026-011', 'TCT', 'ROD Dumaguete', 'Mock mapped agricultural parcel in a clustered Dumaguete agricultural area.', now(), now())
+    RETURNING id INTO v_p11;
+
+    INSERT INTO landholdings (landowner_id, parcel_id, area_hectares, status, date_acquired, source_reference_number, remarks, created_at, updated_at)
+    VALUES (v_lo11, v_p11, 2.2500, 'active', DATE '2019-01-15' + INTERVAL '330 days', 'LH-DGT-2026-011', 'Mock active agricultural landholding for Dumaguete clustered map testing.', now(), now())
+    RETURNING id INTO v_lh11;
+
+    INSERT INTO source_record_packages (package_code, status, source_record_scope, parcel_id, encoded_by_user_id, parcel_code, title_number, landholding_reference_number, landowner_name, lot_number, survey_number, area_hectares, crop_or_land_use, barangay, municipality, province, source_book, page_number, transcribed_by, transcription_date, source_notes, remarks, landowner_id, created_at, updated_at)
+    VALUES ('SRC-DGT-2026-011', 'encoded', 'current_active', v_p11, v_staff_id, 'DGT-AGRI-011', 'T-2026-DGT-0011', 'LH-DGT-2026-011', 'Gerardo Bacalso', 'Lot 111-A', 'PSD-07-2026-011', 2.2500, 'Cassava / corn', 'Cadawinonan', 'Dumaguete City', 'Negros Oriental', 'Dumaguete Mock Agri Map 2026', 'P-211', 'DAR-LTCMS Beta Encoder', CURRENT_DATE, 'Mock source package for clustered Dumaguete agricultural parcels.', 'Created for beta testing only.', v_lo11, now(), now())
+    RETURNING id INTO v_sp11;
+
+    INSERT INTO legacy_records (record_type, origin, encoded_by_user_id, title_number, tax_declaration_number, lot_number, survey_number, landowner_name, area_hectares, crop_or_land_use, barangay, municipality, province, record_date, decision_status, previous_dar_reference_number, remarks, source_book, page_number, transcribed_by, transcription_date, source_notes, parcel_id, source_record_scope, parcel_code, landholding_reference_number, source_record_package_id, landowner_id, created_at, updated_at)
+    VALUES ('title', 'encoded', v_staff_id, 'T-2026-DGT-0011', 'TD-2026-DGT-0011', 'Lot 111-A', 'PSD-07-2026-011', 'Gerardo Bacalso', 2.2500, 'Cassava / corn', 'Cadawinonan', 'Dumaguete City', 'Negros Oriental', CURRENT_DATE, 'active', 'DAR-DGT-0011', 'Mock source record generated under the source package workspace.', 'Dumaguete Mock Agri Map 2026', 'P-211', 'DAR-LTCMS Beta Encoder', CURRENT_DATE, 'Mock beta source record for mapped Dumaguete parcels.', v_p11, 'current_active', 'DGT-AGRI-011', 'LH-DGT-2026-011', v_sp11, v_lo11, now(), now());
+
+    INSERT INTO land_transfer_applications (application_code, transferor_name, transferee_name, municipality, barangay, date_filed, date_of_transfer, status, remarks, encoded_by, transferor_landowner_id, transferee_landowner_id, applicant_name, applicant_type, authorized_representative_name, has_special_power_of_attorney, or_number, or_date, amount_paid, date_of_application, transfer_nature, is_succession_case, retention_certificate_required, landholding_review_notes, created_at, updated_at)
+    VALUES ('2026-DGT-0011', 'Gerardo Bacalso', 'Daniel Corvera', 'Dumaguete City', 'Cadawinonan', CURRENT_DATE - INTERVAL '11 days', CURRENT_DATE, 'for_releasing', 'Mock beta application for workflow and UI testing of the Dumaguete agricultural parcel cluster.', v_staff_id, v_lo11, NULL, 'Gerardo Bacalso', 'Landowner', NULL, false, 'OR-DGT-0011', CURRENT_DATE, 500.00, CURRENT_DATE - INTERVAL '11 days', 'Sale / transfer review', false, false, 'Mock landholding review notes for beta testing.', now(), now())
+    RETURNING id INTO v_app11;
+
+    INSERT INTO landowners (first_name, middle_name, last_name, suffix, contact_number, address_line, barangay, municipality, province, user_id, registered_owner_status, spouse_name, created_at, updated_at)
+    VALUES ('Teresita', 'Flores', 'Mabunay', NULL, '09999000012', 'Mock agricultural holding cluster, Cadawinonan', 'Cadawinonan', 'Dumaguete City', 'Negros Oriental', NULL, 'Registered Owner', NULL, now(), now())
+    RETURNING id INTO v_lo12;
+
+    INSERT INTO parcels (parcel_code, title_no, tax_decl_no, municipality, barangay, province, area_hectares, area_square_meters, geometry_geojson, status, agricultural_status, lot_number, survey_plan_number, title_type, rod_office, remarks, created_at, updated_at)
+    VALUES ('DGT-AGRI-012', 'T-2026-DGT-0012', 'TD-2026-DGT-0012', 'Dumaguete City', 'Cadawinonan', 'Negros Oriental', 3.4500, 34500.00, '{"type": "Polygon", "coordinates": [[[123.28734, 9.33834], [123.28786, 9.33818], [123.28879, 9.33826], [123.28904, 9.33896], [123.28864, 9.3396], [123.2878, 9.33952], [123.28731, 9.3389], [123.28734, 9.33834]]]}', 'active', 'private_agricultural', 'Lot 112-A', 'PSD-07-2026-012', 'TCT', 'ROD Dumaguete', 'Mock mapped agricultural parcel in a clustered Dumaguete agricultural area.', now(), now())
+    RETURNING id INTO v_p12;
+
+    INSERT INTO landholdings (landowner_id, parcel_id, area_hectares, status, date_acquired, source_reference_number, remarks, created_at, updated_at)
+    VALUES (v_lo12, v_p12, 3.4500, 'active', DATE '2019-01-15' + INTERVAL '360 days', 'LH-DGT-2026-012', 'Mock active agricultural landholding for Dumaguete clustered map testing.', now(), now())
+    RETURNING id INTO v_lh12;
+
+    INSERT INTO source_record_packages (package_code, status, source_record_scope, parcel_id, encoded_by_user_id, parcel_code, title_number, landholding_reference_number, landowner_name, lot_number, survey_number, area_hectares, crop_or_land_use, barangay, municipality, province, source_book, page_number, transcribed_by, transcription_date, source_notes, remarks, landowner_id, created_at, updated_at)
+    VALUES ('SRC-DGT-2026-012', 'encoded', 'current_active', v_p12, v_staff_id, 'DGT-AGRI-012', 'T-2026-DGT-0012', 'LH-DGT-2026-012', 'Teresita Mabunay', 'Lot 112-A', 'PSD-07-2026-012', 3.4500, 'Banana / coconut', 'Cadawinonan', 'Dumaguete City', 'Negros Oriental', 'Dumaguete Mock Agri Map 2026', 'P-212', 'DAR-LTCMS Beta Encoder', CURRENT_DATE, 'Mock source package for clustered Dumaguete agricultural parcels.', 'Created for beta testing only.', v_lo12, now(), now())
+    RETURNING id INTO v_sp12;
+
+    INSERT INTO legacy_records (record_type, origin, encoded_by_user_id, title_number, tax_declaration_number, lot_number, survey_number, landowner_name, area_hectares, crop_or_land_use, barangay, municipality, province, record_date, decision_status, previous_dar_reference_number, remarks, source_book, page_number, transcribed_by, transcription_date, source_notes, parcel_id, source_record_scope, parcel_code, landholding_reference_number, source_record_package_id, landowner_id, created_at, updated_at)
+    VALUES ('title', 'encoded', v_staff_id, 'T-2026-DGT-0012', 'TD-2026-DGT-0012', 'Lot 112-A', 'PSD-07-2026-012', 'Teresita Mabunay', 3.4500, 'Banana / coconut', 'Cadawinonan', 'Dumaguete City', 'Negros Oriental', CURRENT_DATE, 'active', 'DAR-DGT-0012', 'Mock source record generated under the source package workspace.', 'Dumaguete Mock Agri Map 2026', 'P-212', 'DAR-LTCMS Beta Encoder', CURRENT_DATE, 'Mock beta source record for mapped Dumaguete parcels.', v_p12, 'current_active', 'DGT-AGRI-012', 'LH-DGT-2026-012', v_sp12, v_lo12, now(), now());
+
+    INSERT INTO land_transfer_applications (application_code, transferor_name, transferee_name, municipality, barangay, date_filed, date_of_transfer, status, remarks, encoded_by, transferor_landowner_id, transferee_landowner_id, applicant_name, applicant_type, authorized_representative_name, has_special_power_of_attorney, or_number, or_date, amount_paid, date_of_application, transfer_nature, is_succession_case, retention_certificate_required, landholding_review_notes, created_at, updated_at)
+    VALUES ('2026-DGT-0012', 'Teresita Mabunay', 'Angela Matic', 'Dumaguete City', 'Cadawinonan', CURRENT_DATE - INTERVAL '12 days', CURRENT_DATE, 'released', 'Mock beta application for workflow and UI testing of the Dumaguete agricultural parcel cluster.', v_staff_id, v_lo12, NULL, 'Teresita Mabunay', 'Landowner', NULL, false, 'OR-DGT-0012', CURRENT_DATE, 500.00, CURRENT_DATE - INTERVAL '12 days', 'Sale / transfer review', false, false, 'Mock landholding review notes for beta testing.', now(), now())
+    RETURNING id INTO v_app12;
+
+    IF to_regclass('public.application_parcels') IS NOT NULL THEN
+        INSERT INTO application_parcels (land_transfer_application_id, parcel_id, area_hectares, parcel_code, title_no, tax_decl_no, lot_number, survey_plan_number, title_type, rod_office, area_square_meters, created_at, updated_at)
+        VALUES (v_app1, v_p1, 2.1000, 'DGT-AGRI-001', 'T-2026-DGT-0001', 'TD-2026-DGT-0001', 'Lot 101-A', 'PSD-07-2026-001', 'TCT', 'ROD Dumaguete', 21000.00, now(), now());
+
+        INSERT INTO application_parcels (land_transfer_application_id, parcel_id, area_hectares, parcel_code, title_no, tax_decl_no, lot_number, survey_plan_number, title_type, rod_office, area_square_meters, created_at, updated_at)
+        VALUES (v_app2, v_p2, 2.4000, 'DGT-AGRI-002', 'T-2026-DGT-0002', 'TD-2026-DGT-0002', 'Lot 102-A', 'PSD-07-2026-002', 'TCT', 'ROD Dumaguete', 24000.00, now(), now());
+
+        INSERT INTO application_parcels (land_transfer_application_id, parcel_id, area_hectares, parcel_code, title_no, tax_decl_no, lot_number, survey_plan_number, title_type, rod_office, area_square_meters, created_at, updated_at)
+        VALUES (v_app3, v_p3, 2.8500, 'DGT-AGRI-003', 'T-2026-DGT-0003', 'TD-2026-DGT-0003', 'Lot 103-A', 'PSD-07-2026-003', 'TCT', 'ROD Dumaguete', 28500.00, now(), now());
+
+        INSERT INTO application_parcels (land_transfer_application_id, parcel_id, area_hectares, parcel_code, title_no, tax_decl_no, lot_number, survey_plan_number, title_type, rod_office, area_square_meters, created_at, updated_at)
+        VALUES (v_app4, v_p4, 3.2000, 'DGT-AGRI-004', 'T-2026-DGT-0004', 'TD-2026-DGT-0004', 'Lot 104-A', 'PSD-07-2026-004', 'TCT', 'ROD Dumaguete', 32000.00, now(), now());
+
+        INSERT INTO application_parcels (land_transfer_application_id, parcel_id, area_hectares, parcel_code, title_no, tax_decl_no, lot_number, survey_plan_number, title_type, rod_office, area_square_meters, created_at, updated_at)
+        VALUES (v_app5, v_p5, 1.9500, 'DGT-AGRI-005', 'T-2026-DGT-0005', 'TD-2026-DGT-0005', 'Lot 105-A', 'PSD-07-2026-005', 'TCT', 'ROD Dumaguete', 19500.00, now(), now());
+
+        INSERT INTO application_parcels (land_transfer_application_id, parcel_id, area_hectares, parcel_code, title_no, tax_decl_no, lot_number, survey_plan_number, title_type, rod_office, area_square_meters, created_at, updated_at)
+        VALUES (v_app6, v_p6, 2.3000, 'DGT-AGRI-006', 'T-2026-DGT-0006', 'TD-2026-DGT-0006', 'Lot 106-A', 'PSD-07-2026-006', 'TCT', 'ROD Dumaguete', 23000.00, now(), now());
+
+        INSERT INTO application_parcels (land_transfer_application_id, parcel_id, area_hectares, parcel_code, title_no, tax_decl_no, lot_number, survey_plan_number, title_type, rod_office, area_square_meters, created_at, updated_at)
+        VALUES (v_app7, v_p7, 3.7500, 'DGT-AGRI-007', 'T-2026-DGT-0007', 'TD-2026-DGT-0007', 'Lot 107-A', 'PSD-07-2026-007', 'TCT', 'ROD Dumaguete', 37500.00, now(), now());
+
+        INSERT INTO application_parcels (land_transfer_application_id, parcel_id, area_hectares, parcel_code, title_no, tax_decl_no, lot_number, survey_plan_number, title_type, rod_office, area_square_meters, created_at, updated_at)
+        VALUES (v_app8, v_p8, 4.1000, 'DGT-AGRI-008', 'T-2026-DGT-0008', 'TD-2026-DGT-0008', 'Lot 108-A', 'PSD-07-2026-008', 'TCT', 'ROD Dumaguete', 41000.00, now(), now());
+
+        INSERT INTO application_parcels (land_transfer_application_id, parcel_id, area_hectares, parcel_code, title_no, tax_decl_no, lot_number, survey_plan_number, title_type, rod_office, area_square_meters, created_at, updated_at)
+        VALUES (v_app9, v_p9, 2.6500, 'DGT-AGRI-009', 'T-2026-DGT-0009', 'TD-2026-DGT-0009', 'Lot 109-A', 'PSD-07-2026-009', 'TCT', 'ROD Dumaguete', 26500.00, now(), now());
+
+        INSERT INTO application_parcels (land_transfer_application_id, parcel_id, area_hectares, parcel_code, title_no, tax_decl_no, lot_number, survey_plan_number, title_type, rod_office, area_square_meters, created_at, updated_at)
+        VALUES (v_app10, v_p10, 3.0500, 'DGT-AGRI-010', 'T-2026-DGT-0010', 'TD-2026-DGT-0010', 'Lot 110-A', 'PSD-07-2026-010', 'TCT', 'ROD Dumaguete', 30500.00, now(), now());
+
+        INSERT INTO application_parcels (land_transfer_application_id, parcel_id, area_hectares, parcel_code, title_no, tax_decl_no, lot_number, survey_plan_number, title_type, rod_office, area_square_meters, created_at, updated_at)
+        VALUES (v_app11, v_p11, 2.2500, 'DGT-AGRI-011', 'T-2026-DGT-0011', 'TD-2026-DGT-0011', 'Lot 111-A', 'PSD-07-2026-011', 'TCT', 'ROD Dumaguete', 22500.00, now(), now());
+
+        INSERT INTO application_parcels (land_transfer_application_id, parcel_id, area_hectares, parcel_code, title_no, tax_decl_no, lot_number, survey_plan_number, title_type, rod_office, area_square_meters, created_at, updated_at)
+        VALUES (v_app12, v_p12, 3.4500, 'DGT-AGRI-012', 'T-2026-DGT-0012', 'TD-2026-DGT-0012', 'Lot 112-A', 'PSD-07-2026-012', 'TCT', 'ROD Dumaguete', 34500.00, now(), now());
+
+    END IF;
+END $$;
+
+SELECT setval('landowners_id_seq', COALESCE((SELECT MAX(id) FROM landowners), 1), true);
+SELECT setval('parcels_id_seq', COALESCE((SELECT MAX(id) FROM parcels), 1), true);
+SELECT setval('landholdings_id_seq', COALESCE((SELECT MAX(id) FROM landholdings), 1), true);
+SELECT setval('source_record_packages_id_seq', COALESCE((SELECT MAX(id) FROM source_record_packages), 1), true);
+SELECT setval('legacy_records_id_seq', COALESCE((SELECT MAX(id) FROM legacy_records), 1), true);
+SELECT setval('land_transfer_applications_id_seq', COALESCE((SELECT MAX(id) FROM land_transfer_applications), 1), true);
+DO $$
+BEGIN
+    IF to_regclass('public.application_parcels') IS NOT NULL AND to_regclass('public.application_parcels_id_seq') IS NOT NULL THEN
+        PERFORM setval('application_parcels_id_seq', COALESCE((SELECT MAX(id) FROM application_parcels), 1), true);
+    END IF;
+END $$;
+
+
+COMMIT;
+
+-- Quick verification
+SELECT COUNT(*) AS total_dumaguete_mock_parcels FROM parcels WHERE parcel_code LIKE 'DGT-AGRI-%';
+SELECT COUNT(*) AS mapped_dumaguete_mock_parcels FROM parcels WHERE parcel_code LIKE 'DGT-AGRI-%' AND geometry_geojson IS NOT NULL AND geometry_geojson::text <> '';
+SELECT parcel_code, barangay, municipality, area_hectares FROM parcels WHERE parcel_code LIKE 'DGT-AGRI-%' ORDER BY parcel_code;

@@ -3,12 +3,7 @@
     active="applications"
     maxWidth="max-w-6xl"
 >
-    <x-slot name="actions">
-        <a href="{{ route('staff.applications.index') }}" class="staff-button staff-button-light">
-            <i class="fa-solid fa-arrow-left"></i>
-            Back to Applications
-        </a>
-    </x-slot>
+    
 
     <x-slot name="styles">
         <style>
@@ -173,6 +168,11 @@
             .application-create-page .subsection-card .field-grid {
                 gap: 14px 16px;
             }
+            .repeatable-list { display:grid; gap:12px; }
+            .repeatable-item { border:1px solid #e5e7eb; border-radius:12px; background:#fff; padding:14px; }
+            .repeatable-item-head { display:flex; justify-content:space-between; gap:12px; margin-bottom:12px; color:#14532d; font-size:12px; font-weight:900; text-transform:uppercase; }
+            .mini-remove { border:1px solid #fecaca; border-radius:999px; background:#fff1f2; color:#b91c1c; font-size:11px; font-weight:900; padding:5px 9px; cursor:pointer; }
+            .mini-add { margin-top:12px; border:1px dashed #86efac; border-radius:10px; background:#f0fdf4; color:#166534; font-size:12px; font-weight:900; padding:9px 12px; cursor:pointer; }
 
             .application-create-page .form-footer {
                 display: flex;
@@ -323,64 +323,54 @@
                 </div>
             </section>
 
-            <section class="form-section">
-                <div class="section-head">
-                    <div>
-                        <h3 class="section-title">Party Records</h3>
-                        <p class="section-copy">Link existing landowner records when available, then encode the names used in the application.</p>
-                    </div>
-                </div>
+<section class="form-section">
+    <div class="section-head">
+        <div>
+            <h3 class="section-title">Party Records</h3>
+            <p class="section-copy">Encode one or more transferors and transferees. Link existing landowner records when available.</p>
+        </div>
+    </div>
 
-                <div class="field-grid">
-                    <div class="subsection-card">
-                        <div class="field-grid">
-                            <div class="field-group field-span-2">
-                                <label for="transferor_landowner_id" class="field-label">Transferor Landowner Record</label>
-                                <select id="transferor_landowner_id" name="transferor_landowner_id" class="staff-select">
-                                    <option value="">No linked landowner record</option>
-                                    @foreach ($landowners as $landowner)
-                                        <option value="{{ $landowner->id }}" data-name="{{ $landowner->full_name }}" @selected(old('transferor_landowner_id') == $landowner->id)>
-                                            {{ $landowner->full_name }} — {{ $landowner->municipality ?? 'No municipality' }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                                <p class="field-help">Optional, but recommended for validation and traceability.</p>
+    @php
+        $oldTransferors = old('transferors', [['landowner_id' => old('transferor_landowner_id'), 'name' => old('transferor_name')]]);
+        $oldTransferees = old('transferees', [['landowner_id' => old('transferee_landowner_id'), 'name' => old('transferee_name')]]);
+    @endphp
+
+    <div class="field-grid">
+        @foreach (['transferors' => ['label' => 'Transferor', 'items' => $oldTransferors], 'transferees' => ['label' => 'Transferee', 'items' => $oldTransferees]] as $partyKey => $partyGroup)
+            <div class="subsection-card">
+                <div class="repeatable-list" data-party-list="{{ $partyKey }}">
+                    @foreach ($partyGroup['items'] as $index => $party)
+                        <div class="repeatable-item" data-party-item>
+                            <div class="repeatable-item-head">
+                                <span>{{ $partyGroup['label'] }} #<span data-party-number>{{ $index + 1 }}</span></span>
+                                <button type="button" class="mini-remove" data-remove-party>Remove</button>
                             </div>
-
-                            <div class="field-group field-span-2">
-                                <label for="transferor_name" class="field-label">
-                                    Transferor Name <span class="required-mark">*</span>
-                                </label>
-                                <input id="transferor_name" type="text" name="transferor_name" value="{{ old('transferor_name') }}" required class="staff-input" placeholder="Enter transferor name">
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="subsection-card">
-                        <div class="field-grid">
-                            <div class="field-group field-span-2">
-                                <label for="transferee_landowner_id" class="field-label">Transferee Landowner Record</label>
-                                <select id="transferee_landowner_id" name="transferee_landowner_id" class="staff-select">
-                                    <option value="">No linked landowner record</option>
-                                    @foreach ($landowners as $landowner)
-                                        <option value="{{ $landowner->id }}" data-name="{{ $landowner->full_name }}" @selected(old('transferee_landowner_id') == $landowner->id)>
-                                            {{ $landowner->full_name }} — {{ $landowner->municipality ?? 'No municipality' }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                                <p class="field-help">Used for assistive validation such as landholding area checks.</p>
-                            </div>
-
-                            <div class="field-group field-span-2">
-                                <label for="transferee_name" class="field-label">
-                                    Transferee Name <span class="required-mark">*</span>
-                                </label>
-                                <input id="transferee_name" type="text" name="transferee_name" value="{{ old('transferee_name') }}" required class="staff-input" placeholder="Enter transferee name">
+                            <div class="field-grid">
+                                <div class="field-group field-span-2">
+                                    <label class="field-label">{{ $partyGroup['label'] }} Landowner Record</label>
+                                    <select name="{{ $partyKey }}[{{ $index }}][landowner_id]" class="staff-select" data-party-landowner-select>
+                                        <option value="">No linked landowner record</option>
+                                        @foreach ($landowners as $landowner)
+                                            <option value="{{ $landowner->id }}" data-name="{{ $landowner->full_name }}" @selected(($party['landowner_id'] ?? null) == $landowner->id)>
+                                                {{ $landowner->full_name }} — {{ $landowner->municipality ?? 'No municipality' }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="field-group field-span-2">
+                                    <label class="field-label">{{ $partyGroup['label'] }} Name <span class="required-mark">*</span></label>
+                                    <input type="text" name="{{ $partyKey }}[{{ $index }}][name]" value="{{ $party['name'] ?? '' }}" class="staff-input" required data-party-name-input placeholder="Name as written in the application">
+                                </div>
                             </div>
                         </div>
-                    </div>
+                    @endforeach
                 </div>
-            </section>
+                <button type="button" class="mini-add" data-add-party="{{ $partyKey }}">+ Add another {{ strtolower($partyGroup['label']) }}</button>
+            </div>
+        @endforeach
+    </div>
+</section>
 
             <section class="form-section">
                 <div class="section-head">
@@ -393,18 +383,27 @@
                 <div class="field-grid">
                     <div class="field-group">
                         <label for="municipality" class="field-label">Municipality</label>
-                        <input id="municipality" type="text" name="municipality" value="{{ old('municipality') }}" class="staff-input" placeholder="Example: Dumaguete City">
+                        <select id="municipality" name="municipality" class="staff-select" data-location-municipality>
+                            <option value="">Select municipality/city</option>
+                            @foreach (array_keys($locationOptions ?? []) as $municipality)
+                                <option value="{{ $municipality }}" @selected(old('municipality') === $municipality)>{{ $municipality }}</option>
+                            @endforeach
+                        </select>
                     </div>
 
                     <div class="field-group">
                         <label for="barangay" class="field-label">Barangay</label>
-                        <input id="barangay" type="text" name="barangay" value="{{ old('barangay') }}" class="staff-input" placeholder="Example: Barangay Alpha">
+                        <select id="barangay" name="barangay" class="staff-select" data-location-barangay data-old-barangay="{{ old('barangay') }}">
+                            <option value="">Select barangay</option>
+                        </select>
                     </div>
 
                     <div class="field-group">
-                        <label for="date_of_transfer" class="field-label">Date of Intended Transfer</label>
-                        <input id="date_of_transfer" type="date" name="date_of_transfer" value="{{ old('date_of_transfer') }}" class="staff-input">
+                        <label for="date_of_clearance_release" class="field-label">Date of Releasing of Clearance</label>
+                        <input id="date_of_clearance_release" type="date" name="date_of_clearance_release" value="{{ old('date_of_clearance_release') }}" class="staff-input">
+                        <p class="field-help">For clearance output tracking only; this does not finalize ownership transfer.</p>
                     </div>
+
                 </div>
             </section>
 
@@ -412,19 +411,26 @@
                 <div class="section-head">
                     <div>
                         <h3 class="section-title">Landholding Review Context</h3>
-                        <p class="section-copy">Record 5-hectare, succession, and retention-certificate review context for staff evaluation.</p>
+                        <p class="section-copy">Encode the transfer instrument/s directly, then record succession and retention-certificate review context for staff evaluation.</p>
                     </div>
                 </div>
 
-                <div class="mt-4 field-grid">
-                    <div class="field-group">
-                        <label for="transfer_nature" class="field-label">Transfer Nature / Instrument Context</label>
-                        <select id="transfer_nature" name="transfer_nature" class="staff-select">
-                            <option value="" @selected(old('transfer_nature') === null)>Not specified</option>
-                            @foreach (\App\Models\LandTransferApplication::transferNatureOptions() as $value => $label)
-                                <option value="{{ $value }}" @selected(old('transfer_nature') === $value)>{{ $label }}</option>
+                <div class="mt-4 field-grid">                    <div class="field-group field-span-2">
+                        <label class="field-label">Transfer Instrument/s</label>
+                        @php($oldInstruments = old('transfer_instruments', [['name' => old('transfer_nature') ? (\App\Models\LandTransferApplication::transferNatureOptions()[old('transfer_nature')] ?? old('transfer_nature')) : '']]))
+                        <div class="repeatable-list" data-instrument-list>
+                            @foreach ($oldInstruments as $index => $instrument)
+                                <div class="repeatable-item" data-instrument-item>
+                                    <div class="repeatable-item-head">
+                                        <span>Instrument #<span data-instrument-number>{{ $index + 1 }}</span></span>
+                                        <button type="button" class="mini-remove" data-remove-instrument>Remove</button>
+                                    </div>
+                                    <input type="text" name="transfer_instruments[{{ $index }}][name]" value="{{ $instrument['name'] ?? '' }}" class="staff-input" placeholder="Example: Deed of Sale, Extrajudicial Settlement, Waiver of Rights">
+                                </div>
                             @endforeach
-                        </select>
+                        </div>
+                        <button type="button" class="mini-add" data-add-instrument>+ Add another transfer instrument</button>
+                        <p class="field-help">Use this for the deed or instrument shown in the clearance output. Add more when the application has more than one instrument.</p>
                     </div>
 
                     <div class="field-group">
@@ -523,40 +529,121 @@
         </form>
     </div>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            function wireNameAutofill(selectId, inputId) {
-                const select = document.getElementById(selectId);
-                const input = document.getElementById(inputId);
-                if (!select || !input) return;
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const landownerOptionsHtml = @json(view('staff.applications.partials.landowner-options', ['landowners' => $landowners])->render());
+        const locationOptions = @json($locationOptions ?? []);
 
-                select.addEventListener('change', function () {
-                    const selected = select.options[select.selectedIndex];
-                    const name = selected ? selected.dataset.name : '';
-                    if (name) input.value = name;
+        function refreshPartyList(list) {
+            if (!list) return;
+            const type = list.dataset.partyList;
+            const label = type === 'transferors' ? 'Transferor' : 'Transferee';
+            list.querySelectorAll('[data-party-item]').forEach(function (item, index) {
+                item.querySelector('[data-party-number]').textContent = index + 1;
+                item.querySelectorAll('[name]').forEach(function (input) {
+                    input.name = input.name.replace(/(transferors|transferees)\[\d+\]/, type + '[' + index + ']');
                 });
+                const remove = item.querySelector('[data-remove-party]');
+                if (remove) remove.style.display = list.querySelectorAll('[data-party-item]').length > 1 ? '' : 'none';
+            });
+        }
 
+        function wirePartyItem(item) {
+            const select = item.querySelector('[data-party-landowner-select]');
+            const input = item.querySelector('[data-party-name-input]');
+            if (!select || !input) return;
+            select.addEventListener('change', function () {
                 const selected = select.options[select.selectedIndex];
-                if (selected && selected.dataset.name && !input.value) {
-                    input.value = selected.dataset.name;
-                }
-            }
+                if (selected && selected.dataset.name) input.value = selected.dataset.name;
+            });
+        }
 
-            wireNameAutofill('transferor_landowner_id', 'transferor_name');
-            wireNameAutofill('transferee_landowner_id', 'transferee_name');
-
-            const parcelSelect = document.getElementById('parcel_id');
-            const areaInput = document.getElementById('area_hectares');
-            if (parcelSelect && areaInput) {
-                parcelSelect.addEventListener('change', function () {
-                    const selected = parcelSelect.options[parcelSelect.selectedIndex];
-                    if (selected && selected.dataset.area && !areaInput.value) {
-                        areaInput.value = parseFloat(selected.dataset.area).toFixed(4);
-                    }
-                });
+        document.querySelectorAll('[data-party-item]').forEach(wirePartyItem);
+        document.querySelectorAll('[data-party-list]').forEach(refreshPartyList);
+        document.querySelectorAll('[data-add-party]').forEach(function (button) {
+            button.addEventListener('click', function () {
+                const type = button.dataset.addParty;
+                const list = document.querySelector('[data-party-list="' + type + '"]');
+                const label = type === 'transferors' ? 'Transferor' : 'Transferee';
+                const index = list.querySelectorAll('[data-party-item]').length;
+                const item = document.createElement('div');
+                item.className = 'repeatable-item';
+                item.setAttribute('data-party-item', '');
+                item.innerHTML = `<div class="repeatable-item-head"><span>${label} #<span data-party-number>${index + 1}</span></span><button type="button" class="mini-remove" data-remove-party>Remove</button></div><div class="field-grid"><div class="field-group field-span-2"><label class="field-label">${label} Landowner Record</label><select name="${type}[${index}][landowner_id]" class="staff-select" data-party-landowner-select>${landownerOptionsHtml}</select></div><div class="field-group field-span-2"><label class="field-label">${label} Name <span class="required-mark">*</span></label><input type="text" name="${type}[${index}][name]" class="staff-input" required data-party-name-input placeholder="Name as written in the application"></div></div>`;
+                list.appendChild(item);
+                wirePartyItem(item);
+                refreshPartyList(list);
+            });
+        });
+        document.addEventListener('click', function (event) {
+            const removeParty = event.target.closest('[data-remove-party]');
+            if (removeParty) {
+                const item = removeParty.closest('[data-party-item]');
+                const list = item.closest('[data-party-list]');
+                if (list.querySelectorAll('[data-party-item]').length > 1) item.remove();
+                refreshPartyList(list);
             }
         });
-    </script>
+
+        function refreshInstruments() {
+            const list = document.querySelector('[data-instrument-list]');
+            if (!list) return;
+            list.querySelectorAll('[data-instrument-item]').forEach(function (item, index) {
+                item.querySelector('[data-instrument-number]').textContent = index + 1;
+                item.querySelector('input').name = 'transfer_instruments[' + index + '][name]';
+                item.querySelector('[data-remove-instrument]').style.display = list.querySelectorAll('[data-instrument-item]').length > 1 ? '' : 'none';
+            });
+        }
+        const addInstrument = document.querySelector('[data-add-instrument]');
+        if (addInstrument) addInstrument.addEventListener('click', function () {
+            const list = document.querySelector('[data-instrument-list]');
+            const index = list.querySelectorAll('[data-instrument-item]').length;
+            const item = document.createElement('div');
+            item.className = 'repeatable-item';
+            item.setAttribute('data-instrument-item', '');
+            item.innerHTML = `<div class="repeatable-item-head"><span>Instrument #<span data-instrument-number>${index + 1}</span></span><button type="button" class="mini-remove" data-remove-instrument>Remove</button></div><input type="text" name="transfer_instruments[${index}][name]" class="staff-input" placeholder="Example: Deed of Absolute Sale, Extrajudicial Settlement, Waiver of Rights">`;
+            list.appendChild(item);
+            refreshInstruments();
+        });
+        document.addEventListener('click', function (event) {
+            const remove = event.target.closest('[data-remove-instrument]');
+            if (remove) {
+                const item = remove.closest('[data-instrument-item]');
+                const list = item.closest('[data-instrument-list]');
+                if (list.querySelectorAll('[data-instrument-item]').length > 1) item.remove();
+                refreshInstruments();
+            }
+        });
+        refreshInstruments();
+
+        const municipalitySelect = document.querySelector('[data-location-municipality]');
+        const barangaySelect = document.querySelector('[data-location-barangay]');
+        function refreshBarangays() {
+            if (!municipalitySelect || !barangaySelect) return;
+            const oldBarangay = barangaySelect.dataset.oldBarangay || '';
+            barangaySelect.innerHTML = '<option value="">Select barangay</option>';
+            (locationOptions[municipalitySelect.value] || []).forEach(function (barangay) {
+                const option = document.createElement('option');
+                option.value = barangay;
+                option.textContent = barangay;
+                option.selected = oldBarangay === barangay;
+                barangaySelect.appendChild(option);
+            });
+        }
+        if (municipalitySelect) municipalitySelect.addEventListener('change', function () { barangaySelect.dataset.oldBarangay = ''; refreshBarangays(); });
+        refreshBarangays();
+
+        const parcelSelect = document.getElementById('parcel_id');
+        const areaInput = document.getElementById('area_hectares');
+        if (parcelSelect && areaInput) {
+            parcelSelect.addEventListener('change', function () {
+                const selected = parcelSelect.options[parcelSelect.selectedIndex];
+                if (selected && selected.dataset.area && !areaInput.value) areaInput.value = parseFloat(selected.dataset.area).toFixed(4);
+            });
+        }
+    });
+</script>
+
 
     @include('staff.partials.form-autosave')
 

@@ -30,6 +30,15 @@ class AuthenticatedSessionController extends Controller
 
     $user = Auth::user();
 
+    $request->session()->put(
+        'auth_password_changed_at',
+        $user?->password_changed_at?->format('Y-m-d H:i:s.u')
+    );
+
+    if ($user?->must_change_password) {
+        return redirect()->route('password.required');
+    }
+
     return match ($user?->role) {
         'staff' => redirect()->intended('/staff/dashboard'),
         'geodetic' => redirect()->intended('/geodetic/dashboard'),

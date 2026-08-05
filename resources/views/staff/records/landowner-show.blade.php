@@ -2,12 +2,7 @@
     title="Landowner Details"
     active="landowner-records"
 >
-    <x-slot name="actions">
-        <a href="{{ route('staff.records.landowners.index') }}" class="staff-button staff-button-light">
-            <i class="fa-solid fa-arrow-left"></i>
-            Back to Landowners
-        </a>
-    </x-slot>
+    
 
     <style>
         .landowner-page {
@@ -1035,7 +1030,7 @@
                 <p class="staff-panel-subtitle">Applications where this record appears as transferor or transferee.</p>
 
                 <div class="related-card-list">
-                    @forelse ($landowner->transferorApplications->merge($landowner->transfereeApplications)->unique('id')->sortByDesc('created_at') as $application)
+                    @forelse ($relatedApplications as $application)
                         <a href="{{ route('staff.applications.show', $application) }}" class="related-item">
                             <p class="related-item-title">{{ $application->application_code }}</p>
                             <p class="related-item-meta">{{ ucwords(str_replace('_', ' ', $application->status)) }} · {{ $application->created_at?->format('M d, Y') }}</p>

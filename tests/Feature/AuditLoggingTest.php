@@ -206,6 +206,7 @@ class AuditLoggingTest extends TestCase
         $this->actingAs($staffUser)->post(
             route('staff.applications.approve', $application),
             [
+                'final_decision_confirmation' => '1',
                 'decision_reason' => 'Audit release reason',
                 'decision_notes' => 'Audit release notes',
             ]
