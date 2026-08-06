@@ -51,12 +51,17 @@ jobs:
             /.env,
             /node_modules/,
             /vendor/,
-            /public/storage/,
+            /tests/,
+            /storage/backups/,
             /storage/app/public/,
             /storage/logs/,
             /storage/framework/cache/data/,
             /storage/framework/sessions/,
-            /storage/framework/views/
+            /storage/framework/views/,
+            /public/storage/,
+            /*.sql,
+            /*_audit.txt,
+            /seed_mock_*.txt
 
           SCRIPT_AFTER: |
             set -e
@@ -65,6 +70,11 @@ jobs:
 
             test -f .env || {
               echo "Production .env is missing."
+              exit 1
+            }
+
+            php -m | grep -q pdo_pgsql || {
+              echo "PHP PostgreSQL driver is missing."
               exit 1
             }
 
@@ -83,10 +93,16 @@ jobs:
               --prefer-dist \
               --optimize-autoloader
 
-            php artisan optimize:clear
+            php artisan config:clear
+            php artisan route:clear
+            php artisan view:clear
+
             php artisan migrate --force
+
+            php artisan cache:clear
             php artisan storage:link || true
             php artisan config:cache
+            php artisan route:cache
             php artisan view:cache
 
             chmod -R ug+rwX storage bootstrap/cache
