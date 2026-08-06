@@ -1,20 +1,97 @@
-name: Deploy to CloudPanel
+name: Deploy DAR-LTCMS to CloudPanel
 
 on:
   push:
-    branches: [ main ]
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: darltcms-production
+  cancel-in-progress: true
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout Code
+      - name: Checkout source code
         uses: actions/checkout@v4
 
-      - name: Sync Files via SSH/rsync
-        uses: easingthemes/ssh-deploy@main
-        env:
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Build frontend assets
+        run: |
+          npm ci
+          npm run build
+
+      - name: Deploy to CloudPanel
+        uses: easingthemes/ssh-deploy@v5.1.0
+        with:
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
           REMOTE_HOST: ${{ secrets.SSH_HOST }}
           REMOTE_USER: ${{ secrets.SSH_USERNAME }}
-          TARGET: "/home/darltcms/htdocs/darltcms.me/public"
+          REMOTE_PORT: "22"
+
+          SOURCE: "./"
+          TARGET: "/home/darltcms/htdocs/darltcms.me"
+
+          ARGS: "-rlzvc"
+
+          EXCLUDE: >-
+            /.git/,
+            /.github/,
+            /.env,
+            /node_modules/,
+            /vendor/,
+            /public/storage/,
+            /storage/app/public/,
+            /storage/logs/,
+            /storage/framework/cache/data/,
+            /storage/framework/sessions/,
+            /storage/framework/views/
+
+          SCRIPT_AFTER: |
+            set -e
+
+            cd /home/darltcms/htdocs/darltcms.me
+
+            test -f .env || {
+              echo "Production .env is missing."
+              exit 1
+            }
+
+            mkdir -p bootstrap/cache
+            mkdir -p storage/app/public
+            mkdir -p storage/logs
+            mkdir -p storage/framework/cache/data
+            mkdir -p storage/framework/sessions
+            mkdir -p storage/framework/views
+
+            chmod -R ug+rwX storage bootstrap/cache
+
+            composer install \
+              --no-dev \
+              --no-interaction \
+              --prefer-dist \
+              --optimize-autoloader
+
+            php artisan optimize:clear
+            php artisan migrate --force
+            php artisan storage:link || true
+            php artisan config:cache
+            php artisan view:cache
+
+            chmod -R ug+rwX storage bootstrap/cache
+
+            php artisan about
+            php artisan migrate:status
+
+          SCRIPT_AFTER_REQUIRED: true
