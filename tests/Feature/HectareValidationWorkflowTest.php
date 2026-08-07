@@ -97,7 +97,7 @@ class HectareValidationWorkflowTest extends TestCase
             'transferee_landowner_id' => $transferee->id,
             'municipality' => 'Dumaguete City',
             'barangay' => 'Bantayan',
-            'status' => LandTransferApplication::STATUS_PENDING_REVIEW,
+            'status' => LandTransferApplication::STATUS_FOR_RELEASING,
             'encoded_by' => $staffUser->id,
         ]);
 
@@ -117,7 +117,35 @@ class HectareValidationWorkflowTest extends TestCase
 
         $this->assertDatabaseHas('land_transfer_applications', [
             'id' => $application->id,
-            'status' => LandTransferApplication::STATUS_PENDING_REVIEW,
+            'status' => LandTransferApplication::STATUS_FOR_RELEASING,
         ]);
     }
+    public function test_legacy_pending_review_application_cannot_be_released_directly(): void
+{
+    $staffUser = User::factory()->create([
+        'role' => User::ROLE_STAFF,
+        'is_active' => true,
+    ]);
+
+    $application = LandTransferApplication::create([
+        'application_code' => 'LEGACY-PENDING-001',
+        'transferor_name' => 'Transferor',
+        'transferee_name' => 'Transferee',
+        'municipality' => 'Dumaguete City',
+        'barangay' => 'Bantayan',
+        'status' => LandTransferApplication::STATUS_PENDING_REVIEW,
+        'encoded_by' => $staffUser->id,
+    ]);
+
+    $this->actingAs($staffUser)
+        ->post(route('staff.applications.approve', $application), [
+            'final_decision_confirmation' => '1',
+        ])
+        ->assertSessionHasErrors('status');
+
+    $this->assertDatabaseHas('land_transfer_applications', [
+        'id' => $application->id,
+        'status' => LandTransferApplication::STATUS_PENDING_REVIEW,
+    ]);
+}
 }

@@ -232,11 +232,18 @@ class UserManagementTest extends TestCase
             ->assertSessionHas('temporary_password_username', 'reset_target');
 
         $temporaryPassword = $response->getSession()->get('temporary_password');
-        $target->refresh();
 
-        $this->assertNotSame($oldHash, $target->password);
-        $this->assertTrue(Hash::check($temporaryPassword, $target->password));
-        $this->assertTrue($target->must_change_password);
+$this->assertMatchesRegularExpression('/[a-z]/', $temporaryPassword);
+$this->assertMatchesRegularExpression('/[A-Z]/', $temporaryPassword);
+$this->assertMatchesRegularExpression('/[0-9]/', $temporaryPassword);
+$this->assertMatchesRegularExpression('/[^A-Za-z0-9]/', $temporaryPassword);
+$this->assertGreaterThanOrEqual(8, strlen($temporaryPassword));
+
+$target->refresh();
+
+$this->assertNotSame($oldHash, $target->password);
+$this->assertTrue(Hash::check($temporaryPassword, $target->password));
+$this->assertTrue($target->must_change_password);
         $this->assertNotNull($target->password_changed_at);
         $this->assertDatabaseHas('audit_logs', [
             'actor_user_id' => $staff->id,

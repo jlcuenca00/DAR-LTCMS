@@ -86,10 +86,7 @@ class ApplicationWorkflowController extends Controller
             return back()->withErrors(['status' => 'This application already has a final decision and cannot be released again.']);
         }
 
-        if (! in_array($application->status, [
-            LandTransferApplication::STATUS_FOR_RELEASING,
-            LandTransferApplication::STATUS_PENDING_REVIEW,
-        ], true)) {
+        if ($application->status !== LandTransferApplication::STATUS_FOR_RELEASING) {
             return back()->withErrors(['status' => 'Only applications marked For Releasing can be released.']);
         }
 
@@ -138,10 +135,7 @@ class ApplicationWorkflowController extends Controller
                     throw new \RuntimeException('This application was already finalized by another request.');
                 }
 
-                if (! in_array($application->status, [
-                    LandTransferApplication::STATUS_FOR_RELEASING,
-                    LandTransferApplication::STATUS_PENDING_REVIEW,
-                ], true)) {
+                if ($application->status !== LandTransferApplication::STATUS_FOR_RELEASING) {
                     throw new \RuntimeException('The application status changed before release. Refresh the page and review the current stage.');
                 }
 
