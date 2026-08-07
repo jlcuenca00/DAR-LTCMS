@@ -1721,16 +1721,42 @@
                 right: 24px;
                 bottom: 22px;
                 z-index: 74;
-                border-color: #166534;
+                min-width: 190px;
+                min-height: 48px;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                gap: 10px;
+                padding: 0 16px;
+                border: 1px solid #14532d;
+                border-radius: 9px;
                 background: #166534;
                 color: #ffffff;
-                box-shadow: 0 16px 34px rgba(15, 23, 42, 0.20);
+                box-shadow: 0 8px 20px rgba(15, 23, 42, 0.18);
+                font-size: 13px;
+                font-weight: 900;
+                letter-spacing: 0;
+                transition: background-color 140ms ease, box-shadow 140ms ease, transform 140ms ease;
             }
 
-            .workflow-fab:hover {
+            .workflow-fab > i:first-child {
+                font-size: 13px;
+            }
+
+            .workflow-fab .workflow-fab-arrow {
+                margin-left: 2px;
+                font-size: 11px;
+                opacity: 0.9;
+            }
+
+            .workflow-fab:hover,
+            .workflow-fab:focus-visible {
                 background: #14532d;
-                border-color: #14532d;
                 color: #ffffff;
+                box-shadow: 0 10px 24px rgba(15, 23, 42, 0.22);
+                transform: translateY(-1px);
+                outline: 3px solid rgba(21, 128, 61, 0.16);
+                outline-offset: 2px;
             }
 
             .requirement-group-panel.transferor-group {
@@ -2990,12 +3016,12 @@
 
                     <div class="landowner-link-save-row">
                         <p class="landowner-link-save-note">
-                            Links and hectare shares support administrative review only. Approval does not transfer ownership or mutate registry records.
+                            Link selections and hectare-share edits are not autosaved. Press Save Link Changes to record them. This supports administrative review only and does not transfer ownership or mutate registry records.
                         </p>
 
                         <button type="submit" class="staff-button staff-button-primary" @disabled($isFinal)>
                             <i class="fa-solid fa-link"></i>
-                            Save Party Links
+                            Save Link Changes
                         </button>
                     </div>
                 </form>
@@ -3104,16 +3130,6 @@
         </aside>
 
 
-        <div class="requirement-section-tools" aria-label="Requirement section controls">
-            <button type="button" class="staff-button staff-button-light" id="requirements-expand-all">
-                <i class="fa-solid fa-angles-down" aria-hidden="true"></i>
-                Expand All Requirements
-            </button>
-            <button type="button" class="staff-button staff-button-light" id="requirements-collapse-all">
-                <i class="fa-solid fa-angles-up" aria-hidden="true"></i>
-                Collapse All Requirements
-            </button>
-        </div>
 
         @foreach ($requirementGroups as $group)
             @php
@@ -3879,9 +3895,15 @@
         </div>
     </div>
 
-    <button type="button" class="staff-button workflow-fab" id="workflow-modal-open">
-        <i class="fa-solid fa-bolt"></i>
-        Application Actions
+    <button
+        type="button"
+        class="staff-button workflow-fab"
+        id="workflow-modal-open"
+        aria-label="Open application actions"
+    >
+        <i class="fa-solid fa-list-check" aria-hidden="true"></i>
+        <span>Application Actions</span>
+        <i class="fa-solid fa-chevron-right workflow-fab-arrow" aria-hidden="true"></i>
     </button>
 
         <div id="decision-confirm-modal" class="decision-modal-backdrop" aria-hidden="true">
@@ -4032,13 +4054,6 @@
                 setRequirementGroupCollapsed(panel, true);
             });
 
-            document.getElementById('requirements-expand-all')?.addEventListener('click', function () {
-                requirementGroupPanels.forEach(function (panel) { setRequirementGroupCollapsed(panel, false); });
-            });
-
-            document.getElementById('requirements-collapse-all')?.addEventListener('click', function () {
-                requirementGroupPanels.forEach(function (panel) { setRequirementGroupCollapsed(panel, true); });
-            });
 
             if (window.location.hash && window.location.hash.startsWith('#required-document-')) {
                 const hashTarget = document.querySelector(window.location.hash);

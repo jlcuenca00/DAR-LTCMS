@@ -70,6 +70,8 @@ Route::middleware(['auth', 'role:staff'])
     ->group(function () {
         Route::get('/audit-logs', [AuditLogController::class, 'index'])
             ->name('audit-logs.index');
+        Route::get('/audit-logs/print', [AuditLogController::class, 'print'])
+            ->name('audit-logs.print');
 
         Route::resource('users', UserManagementController::class)
             ->only(['index', 'create', 'store', 'edit', 'update']);

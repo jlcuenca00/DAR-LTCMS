@@ -147,7 +147,7 @@
         }
 
         .profile-panel-body {
-            padding: 18px 22px 22px;
+            padding: 22px 22px 25px;
         }
 
         .profile-form {
@@ -158,12 +158,14 @@
         .profile-form-grid {
             display: grid;
             grid-template-columns: repeat(2, minmax(0, 1fr));
-            gap: 14px 16px;
+            column-gap: 18px;
+            row-gap: 24px;
         }
 
         .profile-field {
             display: grid;
-            gap: 7px;
+            gap: 9px;
+            align-content: start;
         }
 
         .profile-field.full { grid-column: 1 / -1; }

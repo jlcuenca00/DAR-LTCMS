@@ -130,7 +130,9 @@
                     <input id="password_confirmation" name="password_confirmation" type="password" required autocomplete="new-password">
                 </div>
 
-                <p class="note">Use at least eight characters. Do not reuse the temporary password or share the new password with staff.</p>
+                <x-password-requirements password-id="password" confirmation-id="password_confirmation" />
+
+                <p class="note">Use at least eight characters with uppercase, lowercase, a number, and a symbol. Do not reuse the temporary password or share the new password with staff.</p>
 
                 <div class="actions">
                     <button type="submit" class="primary">Change Password and Continue</button>

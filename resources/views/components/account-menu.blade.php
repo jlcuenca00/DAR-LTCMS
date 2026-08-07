@@ -25,7 +25,6 @@
     <details class="account-menu" data-account-menu>
         <summary class="account-menu-trigger" aria-label="Open account menu for {{ $accountName }}" title="Account menu">
             <span class="account-menu-name">{{ $accountName }}</span>
-            <span class="account-menu-divider" aria-hidden="true"></span>
             <span class="account-menu-avatar" aria-hidden="true">
                 @if ($accountPhotoUrl)
                     <img src="{{ $accountPhotoUrl }}" alt="">
