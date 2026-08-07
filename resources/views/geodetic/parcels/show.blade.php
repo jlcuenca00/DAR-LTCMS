@@ -188,7 +188,7 @@
                         <div class="geo-info-row"><dt class="geo-info-label">ROD Office</dt><dd class="geo-info-value">{{ $parcel->rod_office ?? 'N/A' }}</dd></div>
                         <div class="geo-info-row"><dt class="geo-info-label">Parcel Area</dt><dd class="geo-info-value">{{ $parcel->area_hectares ? number_format((float) $parcel->area_hectares, 4).' ha' : 'N/A' }}</dd></div>
                         <div class="geo-info-row"><dt class="geo-info-label">Square Meters</dt><dd class="geo-info-value">{{ $parcel->area_square_meters ? number_format((float) $parcel->area_square_meters, 2).' sq. m.' : 'N/A' }}</dd></div>
-                        <div class="geo-info-row"><dt class="geo-info-label">Agricultural Status</dt><dd class="geo-info-value">{{ $parcel->agricultural_status ? ucwords(str_replace('_', ' ', $parcel->agricultural_status)) : 'N/A' }}</dd></div>
+                        <div class="geo-info-row"><dt class="geo-info-label">DAR Clearance Scope</dt><dd class="geo-info-value">Agricultural land record</dd></div>
                         <div class="geo-info-row"><dt class="geo-info-label">Parcel Status</dt><dd class="geo-info-value">{{ $parcel->status ? ucwords(str_replace('_', ' ', $parcel->status)) : 'N/A' }}</dd></div>
                         <div class="geo-info-row full"><dt class="geo-info-label">Remarks</dt><dd class="geo-info-value">{{ $parcel->remarks ?? 'No remarks recorded.' }}</dd></div>
                     </dl>

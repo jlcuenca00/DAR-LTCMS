@@ -172,6 +172,7 @@ class ApplicationWorkflowController extends Controller
                         'validated_at' => optional($application->validated_at)->toDateTimeString(),
                         'has_validation_snapshot' => ! empty($application->validation_snapshot),
                         'ownership_transfer_performed' => false,
+                        'registry_mutation_performed' => false,
                         'scope_note' => 'Final clearance decision only; no ownership transfer or registry alteration was performed.',
                     ]
                 );
@@ -253,6 +254,7 @@ class ApplicationWorkflowController extends Controller
                         'validated_at' => optional($application->validated_at)->toDateTimeString(),
                         'has_validation_snapshot' => ! empty($application->validation_snapshot),
                         'ownership_transfer_performed' => false,
+                        'registry_mutation_performed' => false,
                         'scope_note' => 'Final clearance decision only; no ownership transfer or registry alteration was performed.',
                     ]
                 );

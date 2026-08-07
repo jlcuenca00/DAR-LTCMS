@@ -167,7 +167,7 @@
                         <div class="lo-info-row"><dt class="lo-info-label">Survey Plan</dt><dd class="lo-info-value">{{ $parcel->survey_plan_number ?? 'N/A' }}</dd></div>
                         <div class="lo-info-row"><dt class="lo-info-label">ROD Office</dt><dd class="lo-info-value">{{ $parcel->rod_office ?? 'N/A' }}</dd></div>
                         <div class="lo-info-row"><dt class="lo-info-label">Parcel Area</dt><dd class="lo-info-value">{{ $parcel->area_hectares ? number_format((float) $parcel->area_hectares, 4).' ha' : 'N/A' }}</dd></div>
-                        <div class="lo-info-row"><dt class="lo-info-label">Agricultural Status</dt><dd class="lo-info-value">{{ $parcel->agricultural_status ? ucwords(str_replace('_', ' ', $parcel->agricultural_status)) : 'N/A' }}</dd></div>
+                        <div class="lo-info-row"><dt class="lo-info-label">DAR Clearance Scope</dt><dd class="lo-info-value">Agricultural land record</dd></div>
                         <div class="lo-info-row full"><dt class="lo-info-label">Remarks</dt><dd class="lo-info-value">{{ $parcel->remarks ?? 'No remarks recorded.' }}</dd></div>
                     </dl>
                 </div>

@@ -154,6 +154,19 @@
                 white-space: nowrap;
             }
 
+            .lo-denial-reason {
+                margin-top: 8px;
+                max-width: 260px;
+                border-left: 3px solid #dc2626;
+                border-radius: 7px;
+                background: #fef2f2;
+                padding: 8px 10px;
+                color: #7f1d1d;
+                font-size: 11px;
+                line-height: 1.45;
+            }
+            .lo-denial-reason strong { display: block; margin-bottom: 2px; font-size: 10px; text-transform: uppercase; letter-spacing: .06em; }
+
             .lo-output-state {
                 display: inline-flex;
                 align-items: center;
@@ -237,7 +250,15 @@
                                             @endforelse
                                         </div>
                                     </td>
-                                    <td><span class="lo-status-badge {{ $statusClass($application->status) }}">{{ $application->statusLabel() }}</span></td>
+                                    <td>
+                                        <span class="lo-status-badge {{ $statusClass($application->status) }}">{{ $application->statusLabel() }}</span>
+                                        @if (in_array($application->status, [LandTransferApplication::STATUS_DENIED, LandTransferApplication::STATUS_NOT_APPROVED], true) && filled($application->decision_reason))
+                                            <div class="lo-denial-reason">
+                                                <strong>Reason for denial</strong>
+                                                {{ $application->decision_reason }}
+                                            </div>
+                                        @endif
+                                    </td>
                                     <td class="lo-app-date">
                                         {{ $application->updated_at?->format('M d, Y') ?? 'N/A' }}
                                         <small>{{ $application->updated_at?->format('h:i A') ?? '' }}</small>

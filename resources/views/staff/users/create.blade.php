@@ -617,7 +617,7 @@
                         <div class="user-card-body user-form-grid">
                             <div class="user-field">
                                 <label class="user-label">Password</label>
-                                <input type="password" name="password" required class="user-input">
+                                <input id="staff_user_password" type="password" name="password" required class="user-input" autocomplete="new-password">
                                 @error('password')
                                     <p class="user-error">{{ $message }}</p>
                                 @enderror
@@ -625,9 +625,56 @@
 
                             <div class="user-field">
                                 <label class="user-label">Confirm Password</label>
-                                <input type="password" name="password_confirmation" required class="user-input">
+                                <input id="staff_user_password_confirmation" type="password" name="password_confirmation" required class="user-input" autocomplete="new-password">
                             </div>
+
+                            <x-password-requirements
+                                password-id="staff_user_password"
+                                confirmation-id="staff_user_password_confirmation"
+                            />
                         </div>
+OLD, 'add live password checklist to user creation');
+
+    // ---------------------------------------------------------------------
+    // 10) Shared clickable account/profile menus in all role shells.
+    // ---------------------------------------------------------------------
+    replaceLiteral('resources/views/components/staff-shell.blade.php', <<<'OLD'
+            <div class="staff-sidebar-footer">
+                <div class="staff-side-utility-label">Administration</div>
+                <nav class="staff-side-utility" aria-label="Staff administration navigation">
+                    @foreach ($utilityItems as $item)
+                        @if (\Illuminate\Support\Facades\Route::has($item['route']))
+                            <a href="{{ route($item['route']) }}"
+                               @class(['staff-side-link', 'active' => $active === $item['active']])>
+                                <i class="fa-solid {{ $item['icon'] }}"></i>
+                                <span>{{ $item['label'] }}</span>
+                            </a>
+                        @endif
+                    @endforeach
+                </nav>
+
+                <div class="staff-footer-divider"></div>
+
+                <form method="POST" action="{{ route('logout') }}">
+                    @csrf
+                    <button type="submit" class="staff-logout-button">
+                        <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                        Logout
+                    </button>
+                </form>
+            </div>
+OLD, '', 'remove sidebar administration and logout');
+
+    replaceLiteral('resources/views/components/staff-shell.blade.php', <<<'OLD'
+                    <div class="staff-user-chip">
+                        <div class="staff-avatar">{{ strtoupper(substr(auth()->user()->name ?? 'S', 0, 1)) }}</div>
+                        <span>{{ auth()->user()->name ?? 'Staff User' }}</span>
+                    </div>
+OLD, <<<'NEW'
+                    <x-account-menu
+                        :user="auth()->user()"
+                        :administration-route="route('staff.users.index')"
+                    />
                     </section>
                 </main>
 

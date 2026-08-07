@@ -36,6 +36,8 @@ class User extends Authenticatable
         'is_active',
         'must_change_password',
         'password_changed_at',
+        'profile_photo_path',
+        'last_login_at',
     ];
 
     /**
@@ -61,6 +63,7 @@ class User extends Authenticatable
             'is_active' => 'boolean',
             'must_change_password' => 'boolean',
             'password_changed_at' => 'datetime',
+            'last_login_at' => 'datetime',
         ];
     }
 

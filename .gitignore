@@ -22,3 +22,8 @@
 Homestead.json
 Homestead.yaml
 Thumbs.db
+
+# DAR-LTCMS local/exported database and backup artifacts
+*.sql
+*.dump
+/storage/backups/

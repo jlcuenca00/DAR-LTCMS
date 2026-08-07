@@ -21,3 +21,253 @@ h6,
 .font-heading {
     font-family: var(--font-heading) !important;
 }
+
+/* DAR-LTCMS Patch 1: shared account/accessibility/password UI */
+:where(a, button, summary, input, select, textarea):focus-visible {
+    outline: 3px solid rgba(21, 128, 61, 0.42) !important;
+    outline-offset: 2px !important;
+}
+
+.account-topbar-cluster {
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+    min-width: 0;
+}
+
+.account-admin-link,
+.account-menu-trigger {
+    min-height: 40px;
+    border: 1px solid #d7ded9;
+    border-radius: 999px;
+    background: #ffffff;
+    color: #1f2937;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 5px 10px;
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 850;
+    cursor: pointer;
+}
+
+.account-admin-link:hover,
+.account-menu-trigger:hover,
+.account-menu[open] .account-menu-trigger {
+    border-color: #86efac;
+    background: #f0fdf4;
+    color: #14532d;
+}
+
+.account-menu {
+    position: relative;
+}
+
+.account-menu > summary {
+    list-style: none;
+}
+
+.account-menu > summary::-webkit-details-marker {
+    display: none;
+}
+
+.account-menu-name {
+    max-width: 190px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.account-menu-divider {
+    width: 1px;
+    height: 20px;
+    background: #d1d5db;
+}
+
+.account-menu-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 999px;
+    overflow: hidden;
+    display: inline-grid;
+    place-items: center;
+    background: #166534;
+    color: #ffffff;
+    font-weight: 900;
+    flex: 0 0 auto;
+}
+
+.account-menu-avatar img {
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: cover;
+}
+
+.account-menu-chevron {
+    font-size: 10px;
+    color: #64748b;
+    transition: transform 150ms ease;
+}
+
+.account-menu[open] .account-menu-chevron {
+    transform: rotate(180deg);
+}
+
+.account-menu-panel {
+    position: absolute;
+    top: calc(100% + 9px);
+    right: 0;
+    z-index: 100;
+    width: 210px;
+    overflow: hidden;
+    border: 1px solid #d7ded9;
+    border-radius: 12px;
+    background: #ffffff;
+    box-shadow: 0 18px 42px rgba(15, 23, 42, .16);
+}
+
+.account-menu-item {
+    width: 100%;
+    min-height: 44px;
+    border: 0;
+    background: #ffffff;
+    color: #1f2937;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 13px;
+    text-decoration: none;
+    text-align: left;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.account-menu-item:hover,
+.account-menu-item:focus-visible {
+    background: #f0fdf4;
+    color: #14532d;
+}
+
+.account-menu-form {
+    margin: 0;
+    border-top: 1px solid #eef2f0;
+}
+
+.profile-photo-control {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 14px;
+    align-items: center;
+    border: 1px solid #d7ded9;
+    border-radius: 12px;
+    background: #f8faf9;
+    padding: 14px;
+}
+
+.profile-photo-preview {
+    width: 72px;
+    height: 72px;
+    border-radius: 999px;
+    overflow: hidden;
+    display: grid;
+    place-items: center;
+    background: #166534;
+    color: #ffffff;
+    font-size: 24px;
+    font-weight: 900;
+}
+
+.profile-photo-preview img {
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: cover;
+}
+
+.profile-photo-actions {
+    display: grid;
+    gap: 8px;
+    min-width: 0;
+}
+
+.profile-photo-remove {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    color: #475569;
+    font-size: 12px;
+    font-weight: 750;
+}
+
+.password-checklist {
+    grid-column: 1 / -1;
+    border: 1px solid #d7ded9;
+    border-radius: 10px;
+    background: #f8faf9;
+    padding: 11px 12px;
+}
+
+.password-checklist-title {
+    margin: 0 0 7px;
+    color: #334155;
+    font-size: 11px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: .07em;
+}
+
+.password-rule-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 5px 12px;
+}
+
+.password-rule {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    color: #64748b;
+    font-size: 12px;
+    line-height: 1.4;
+}
+
+.password-rule-icon {
+    width: 16px;
+    text-align: center;
+    color: #64748b;
+    font-weight: 900;
+}
+
+.password-rule.is-valid {
+    color: #166534;
+    font-weight: 750;
+}
+
+.password-rule.is-valid .password-rule-icon {
+    color: #15803d;
+}
+
+@media (max-width: 720px) {
+    .account-admin-link span { display: none; }
+    .account-menu-name { max-width: 130px; }
+    .password-rule-list { grid-template-columns: 1fr; }
+    .profile-photo-control { grid-template-columns: 1fr; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        scroll-behavior: auto !important;
+        animation-duration: 0.001ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.001ms !important;
+    }
+}

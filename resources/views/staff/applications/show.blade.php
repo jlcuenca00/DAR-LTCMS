@@ -1749,6 +1749,83 @@
                 background: linear-gradient(90deg, #eff6ff 0%, #ffffff 82%);
             }
 
+            .requirement-section-tools {
+                display: flex;
+                flex-wrap: wrap;
+                justify-content: flex-end;
+                gap: 8px;
+                margin-bottom: 2px;
+            }
+
+            .requirement-group-actions {
+                display: inline-flex;
+                align-items: center;
+                gap: 8px;
+                flex-wrap: wrap;
+                justify-content: flex-end;
+            }
+
+            .requirement-group-toggle {
+                min-height: 34px;
+                border: 1px solid #cbd5e1;
+                border-radius: 8px;
+                background: #ffffff;
+                color: #334155;
+                display: inline-flex;
+                align-items: center;
+                gap: 7px;
+                padding: 6px 10px;
+                font-size: 11px;
+                font-weight: 900;
+                cursor: pointer;
+            }
+
+            .requirement-group-toggle:hover,
+            .requirement-group-toggle:focus-visible {
+                border-color: #86efac;
+                background: #f0fdf4;
+                color: #14532d;
+            }
+
+            .requirement-group-toggle i { transition: transform 150ms ease; }
+            .requirement-group-panel.is-collapsed > .review-panel-body { display: none; }
+            .requirement-group-panel.is-collapsed > .review-panel-header { border-bottom-color: transparent; }
+            .requirement-group-panel:not(.is-collapsed) .requirement-group-toggle i { transform: rotate(180deg); }
+
+            .requirement-rail-legend {
+                margin-top: 9px;
+                display: grid;
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+                gap: 5px;
+            }
+
+            .requirement-legend-item {
+                display: inline-flex;
+                align-items: center;
+                gap: 5px;
+                color: #475569;
+                font-size: 9.5px;
+                font-weight: 850;
+                line-height: 1.2;
+            }
+
+            .requirement-legend-mark {
+                width: 16px;
+                height: 16px;
+                border-radius: 999px;
+                display: inline-grid;
+                place-items: center;
+                color: #ffffff;
+                font-size: 8px;
+                font-weight: 950;
+                flex: 0 0 auto;
+            }
+
+            .requirement-legend-mark.uploaded { background: #16a34a; }
+            .requirement-legend-mark.required { background: #dc2626; }
+            .requirement-legend-mark.reference { background: #64748b; }
+            .requirement-card.requirement-focus-flash { box-shadow: 0 0 0 3px rgba(21, 128, 61, .24); }
+
             .party-heading-block {
                 display: flex;
                 align-items: flex-start;
@@ -2978,6 +3055,12 @@
                             <div class="requirement-rail-progress-bar" style="width: {{ $blockingProgressPercent }}%;"></div>
                         </div>
                     </div>
+
+                    <div class="requirement-rail-legend" aria-label="Requirement status legend">
+                        <span class="requirement-legend-item"><span class="requirement-legend-mark uploaded" aria-hidden="true">✓</span>Uploaded</span>
+                        <span class="requirement-legend-item"><span class="requirement-legend-mark required" aria-hidden="true">!</span>Required</span>
+                        <span class="requirement-legend-item"><span class="requirement-legend-mark reference" aria-hidden="true">○</span>Reference</span>
+                    </div>
                 </div>
 
                 <div class="requirement-rail-scroll">
@@ -3020,6 +3103,17 @@
             </div>
         </aside>
 
+
+        <div class="requirement-section-tools" aria-label="Requirement section controls">
+            <button type="button" class="staff-button staff-button-light" id="requirements-expand-all">
+                <i class="fa-solid fa-angles-down" aria-hidden="true"></i>
+                Expand All Requirements
+            </button>
+            <button type="button" class="staff-button staff-button-light" id="requirements-collapse-all">
+                <i class="fa-solid fa-angles-up" aria-hidden="true"></i>
+                Collapse All Requirements
+            </button>
+        </div>
 
         @foreach ($requirementGroups as $group)
             @php
@@ -3850,6 +3944,7 @@
                             const requirementCard = document.getElementById(state.requirementCardId);
 
                             if (requirementCard) {
+                                setRequirementGroupCollapsed(requirementCard.closest('.requirement-group-panel'), false);
                                 requirementCard.scrollIntoView({
                                     block: 'start',
                                     behavior: 'auto'
@@ -3899,6 +3994,57 @@
             const requirementRail = document.querySelector('.requirement-rail');
             const requirementRailPanel = document.querySelector('.requirement-rail-panel');
             const requirementRailScroll = document.querySelector('.requirement-rail-scroll');
+            const requirementGroupPanels = Array.from(document.querySelectorAll('.requirement-group-panel'));
+
+            function setRequirementGroupCollapsed(panel, collapsed) {
+                if (!panel) return;
+                panel.classList.toggle('is-collapsed', collapsed);
+                const toggle = panel.querySelector('[data-requirement-group-toggle]');
+                const label = panel.querySelector('[data-requirement-group-toggle-label]');
+                toggle?.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+                if (label) label.textContent = collapsed ? 'Expand' : 'Collapse';
+            }
+
+            requirementGroupPanels.forEach(function (panel) {
+                const heading = panel.querySelector('.party-heading-block');
+                const badge = heading?.querySelector('.party-group-badge');
+
+                if (heading && badge && !heading.querySelector('[data-requirement-group-toggle]')) {
+                    const actions = document.createElement('div');
+                    actions.className = 'requirement-group-actions';
+
+                    const toggle = document.createElement('button');
+                    toggle.type = 'button';
+                    toggle.className = 'requirement-group-toggle';
+                    toggle.setAttribute('data-requirement-group-toggle', '');
+                    toggle.setAttribute('aria-expanded', 'false');
+                    toggle.innerHTML = '<span data-requirement-group-toggle-label>Expand</span><i class="fa-solid fa-chevron-down" aria-hidden="true"></i>';
+
+                    badge.replaceWith(actions);
+                    actions.appendChild(badge);
+                    actions.appendChild(toggle);
+
+                    toggle.addEventListener('click', function () {
+                        setRequirementGroupCollapsed(panel, !panel.classList.contains('is-collapsed'));
+                    });
+                }
+
+                setRequirementGroupCollapsed(panel, true);
+            });
+
+            document.getElementById('requirements-expand-all')?.addEventListener('click', function () {
+                requirementGroupPanels.forEach(function (panel) { setRequirementGroupCollapsed(panel, false); });
+            });
+
+            document.getElementById('requirements-collapse-all')?.addEventListener('click', function () {
+                requirementGroupPanels.forEach(function (panel) { setRequirementGroupCollapsed(panel, true); });
+            });
+
+            if (window.location.hash && window.location.hash.startsWith('#required-document-')) {
+                const hashTarget = document.querySelector(window.location.hash);
+                if (hashTarget) setRequirementGroupCollapsed(hashTarget.closest('.requirement-group-panel'), false);
+            }
+
             function markRequirementRailOpening() {
                 if (! requirementRail) return;
 
@@ -3944,6 +4090,9 @@
                     }
 
                     event.preventDefault();
+                    setRequirementGroupCollapsed(target.closest('.requirement-group-panel'), false);
+                    target.classList.add('requirement-focus-flash');
+                    window.setTimeout(function () { target.classList.remove('requirement-focus-flash'); }, 1200);
                     const targetTop = target.getBoundingClientRect().top + window.scrollY - 92;
                     window.scrollTo({ top: Math.max(targetTop, 0), behavior: 'smooth' });
 

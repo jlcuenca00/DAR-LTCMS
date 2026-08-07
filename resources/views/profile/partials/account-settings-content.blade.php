@@ -24,11 +24,37 @@
                 </div>
 
                 <div class="profile-panel-body">
-                    <form method="post" action="{{ route('profile.update') }}" class="profile-form">
+                    <form method="post" action="{{ route('profile.update') }}" class="profile-form" enctype="multipart/form-data">
                         @csrf
                         @method('patch')
 
                         <div class="profile-form-grid">
+                            <div class="profile-field full">
+                                <label class="profile-label" for="profile_photo">Profile Picture</label>
+                                <div class="profile-photo-control">
+                                    <div class="profile-photo-preview">
+                                        @if ($user->profile_photo_path)
+                                            <img src="{{ asset('storage/' . ltrim($user->profile_photo_path, '/')) }}" alt="Profile picture for {{ $user->name }}">
+                                        @else
+                                            {{ strtoupper(substr($user->name ?? 'U', 0, 1)) }}
+                                        @endif
+                                    </div>
+                                    <div class="profile-photo-actions">
+                                        <input id="profile_photo" name="profile_photo" type="file" accept="image/jpeg,image/png,image/webp" class="profile-input">
+                                        <div class="text-xs text-gray-500">JPEG, PNG, or WebP. Maximum 2 MB.</div>
+                                        @if ($user->profile_photo_path)
+                                            <label class="profile-photo-remove">
+                                                <input type="checkbox" name="remove_profile_photo" value="1">
+                                                Remove current profile picture
+                                            </label>
+                                        @endif
+                                        @error('profile_photo')
+                                            <div class="profile-error">{{ $message }}</div>
+                                        @enderror
+                                    </div>
+                                </div>
+                            </div>
+
                             <div class="profile-field">
                                 <label class="profile-label" for="name">Name</label>
                                 <input id="name" name="name" type="text" class="profile-input" value="{{ old('name', $user->name) }}" required autofocus autocomplete="name">
@@ -101,7 +127,23 @@
                                     <div class="profile-error">{{ $message }}</div>
                                 @enderror
                             </div>
+
+                            <x-password-requirements
+                                password-id="update_password_password"
+                                confirmation-id="update_password_password_confirmation"
+                            />
                         </div>
+OLD, 'add live password checklist to profile');
+
+    // ---------------------------------------------------------------------
+    // 9) Forced first-login password UI + staff-created account UI.
+    // ---------------------------------------------------------------------
+    replaceLiteral('resources/views/auth/force-password-change.blade.php', <<<'OLD'
+                <p class="note">Use at least eight characters. Do not reuse the temporary password or share the new password with staff.</p>
+OLD, <<<'NEW'
+                <x-password-requirements password-id="password" confirmation-id="password_confirmation" />
+
+                <p class="note">Use at least eight characters with uppercase, lowercase, a number, and a symbol. Do not reuse the temporary password or share the new password with staff.</p>
 
                         <div class="profile-actions">
                             <button type="submit" class="profile-button">

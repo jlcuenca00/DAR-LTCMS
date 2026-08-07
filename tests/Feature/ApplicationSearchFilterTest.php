@@ -35,7 +35,7 @@ class ApplicationSearchFilterTest extends TestCase
 
         $response->assertOk();
         $response->assertSee('Land Transfer Clearance Applications');
-        $response->assertSee('Search and Filter Applications');
+        $response->assertSee('Application Records');
         $response->assertSee('SEARCH-APP-001');
         $response->assertSee('Search Transferor');
         $response->assertSee('Search Transferee');

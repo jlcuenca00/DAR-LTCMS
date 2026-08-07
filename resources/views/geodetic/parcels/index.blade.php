@@ -164,6 +164,7 @@
                                 <th>Linked Landowner</th>
                                 <th>Location</th>
                                 <th>Recorded Area</th>
+                                <th>Clearance Scope</th>
                                 <th>Record State</th>
                                 <th class="geo-record-action-column">Action</th>
                             </tr>
@@ -195,6 +196,13 @@
                                     <td>
                                         <div class="geo-area-main">{{ number_format((float) $holding->area_hectares, 4) }} ha</div>
                                         <div class="geo-area-sub">Landholding reference</div>
+                                    </td>
+                                    <td>
+                                        @if ($parcel?->agricultural_status === 'non_agricultural')
+                                            <span class="geo-state-badge">Outside DAR clearance scope</span>
+                                        @else
+                                            <span class="geo-state-badge is-active">Agricultural land record</span>
+                                        @endif
                                     </td>
                                     <td>
                                         <div class="geo-state-stack">

@@ -743,27 +743,6 @@
                     </a>
                 </nav>
             </div>
-
-            <div class="lo-side-section account">
-                <div class="lo-side-label">Account</div>
-
-                <nav class="lo-nav" aria-label="Account navigation">
-                    <a href="{{ route('profile.edit') }}" class="lo-nav-link {{ $active === 'profile' ? 'active' : '' }}">
-                        <i class="fa-solid fa-user-gear"></i>
-                        Profile Settings
-                    </a>
-                </nav>
-            </div>
-
-            <div class="lo-sidebar-footer">
-                <form method="POST" action="{{ route('logout') }}">
-                    @csrf
-                    <button type="submit" class="lo-logout-button">
-                        <i class="fa-solid fa-arrow-right-from-bracket"></i>
-                        Logout
-                    </button>
-                </form>
-            </div>
         </aside>
 
         <main id="main-content" class="lo-main" tabindex="-1">
@@ -793,12 +772,7 @@
                         Own Records Only
                     </div>
 
-                    <div class="lo-user-chip">
-                        <div class="lo-avatar">
-                            {{ strtoupper(substr(auth()->user()->name, 0, 1)) }}
-                        </div>
-                        <span class="lo-user-name">{{ auth()->user()->name }}</span>
-                    </div>
+                    <x-account-menu :user="auth()->user()" />
                 </div>
             </header>
 
