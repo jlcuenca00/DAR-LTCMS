@@ -44,6 +44,7 @@ Route::get('/dashboard', function () {
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::get('/profile/photo/{user}', [ProfileController::class, 'photo'])->name('profile.photo');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
 
     Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');

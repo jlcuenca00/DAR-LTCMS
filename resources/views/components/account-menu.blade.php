@@ -6,8 +6,10 @@
 @php
     $accountName = $user?->name ?? 'User';
     $accountInitial = strtoupper(substr($accountName, 0, 1));
-    $accountPhotoUrl = $user?->profile_photo_path
-        ? asset('storage/' . ltrim($user->profile_photo_path, '/'))
+    $accountPhotoExists = $user?->profile_photo_path
+        && \Illuminate\Support\Facades\Storage::disk('public')->exists($user->profile_photo_path);
+    $accountPhotoUrl = $accountPhotoExists
+        ? route('profile.photo', $user)
         : null;
 @endphp
 
