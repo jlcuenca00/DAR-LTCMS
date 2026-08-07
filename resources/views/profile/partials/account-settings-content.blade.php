@@ -24,11 +24,124 @@
                 </div>
 
                 <div class="profile-panel-body">
-                    <form method="post" action="{{ route('profile.update') }}" class="profile-form">
+                    <form method="post" action="{{ route('profile.update') }}" class="profile-form" enctype="multipart/form-data">
                         @csrf
                         @method('patch')
 
                         <div class="profile-form-grid">
+                            <div class="profile-field full">
+                                <label class="profile-label" for="profile_photo">Profile Picture</label>
+
+                                <div class="profile-photo-control profile-photo-control-clean" data-profile-photo-editor>
+                                    <div class="profile-photo-current" data-profile-photo-current>
+                                        @if ($user->profile_photo_path)
+                                            <img
+                                                src="{{ asset('storage/' . ltrim($user->profile_photo_path, '/')) }}"
+                                                alt="Profile picture for {{ $user->name }}"
+                                                data-profile-photo-current-image
+                                            >
+                                            <div class="profile-photo-empty" data-profile-photo-empty hidden>
+                                                <i class="fa-regular fa-user" aria-hidden="true"></i>
+                                                <span>No photo</span>
+                                            </div>
+                                        @else
+                                            <img
+                                                src=""
+                                                alt="Profile picture preview for {{ $user->name }}"
+                                                data-profile-photo-current-image
+                                                hidden
+                                            >
+                                            <div class="profile-photo-empty" data-profile-photo-empty>
+                                                <i class="fa-regular fa-user" aria-hidden="true"></i>
+                                                <span>No photo</span>
+                                            </div>
+                                        @endif
+                                    </div>
+
+                                    <div class="profile-photo-actions">
+                                        <button type="button" class="profile-button secondary profile-photo-choose" data-profile-photo-choose>
+                                            <i class="fa-solid fa-image" aria-hidden="true"></i>
+                                            Choose Photo
+                                        </button>
+
+                                        <input
+                                            id="profile_photo"
+                                            name="profile_photo"
+                                            type="file"
+                                            accept="image/jpeg,image/png,image/webp"
+                                            class="profile-photo-hidden-input"
+                                            data-profile-photo-input
+                                        >
+
+                                        <p class="profile-photo-help">
+                                            JPEG, PNG, or WebP. After choosing a file, crop and resize it before saving your profile.
+                                        </p>
+
+                                        @if ($user->profile_photo_path)
+                                            <label class="profile-photo-remove">
+                                                <input type="checkbox" name="remove_profile_photo" value="1">
+                                                Remove current profile picture
+                                            </label>
+                                        @endif
+
+                                        @error('profile_photo')
+                                            <div class="profile-error">{{ $message }}</div>
+                                        @enderror
+                                    </div>
+
+                                    <div class="profile-crop-modal" data-profile-crop-modal hidden>
+                                        <div class="profile-crop-dialog" role="dialog" aria-modal="true" aria-labelledby="profile-crop-title">
+                                            <header class="profile-crop-header">
+                                                <div>
+                                                    <h3 id="profile-crop-title">Crop Profile Picture</h3>
+                                                    <p>Drag the image to reposition it, then use the zoom control.</p>
+                                                </div>
+
+                                                <button type="button" class="profile-crop-close" data-profile-crop-cancel aria-label="Close profile photo cropper">
+                                                    <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+                                                </button>
+                                            </header>
+
+                                            <div class="profile-crop-body">
+                                                <div class="profile-crop-stage" data-profile-crop-stage>
+                                                    <img src="" alt="Image being cropped" data-profile-crop-image draggable="false">
+                                                    <div class="profile-crop-guide" aria-hidden="true"></div>
+                                                </div>
+
+                                                <div class="profile-crop-controls">
+                                                    <div class="profile-crop-control-heading">
+                                                        <label for="profile_crop_zoom">Zoom</label>
+                                                        <output for="profile_crop_zoom" data-profile-crop-zoom-output>100%</output>
+                                                    </div>
+
+                                                    <input
+                                                        id="profile_crop_zoom"
+                                                        type="range"
+                                                        min="1"
+                                                        max="3"
+                                                        step="0.01"
+                                                        value="1"
+                                                        data-profile-crop-zoom
+                                                    >
+
+                                                    <p>The square inside the editor is exactly what will be saved as your profile picture.</p>
+                                                </div>
+                                            </div>
+
+                                            <footer class="profile-crop-footer">
+                                                <button type="button" class="profile-button secondary" data-profile-crop-cancel>
+                                                    Cancel
+                                                </button>
+                                                <button type="button" class="profile-button" data-profile-crop-save>
+                                                    <i class="fa-solid fa-crop-simple" aria-hidden="true"></i>
+                                                    Save Crop
+                                                </button>
+                                            </footer>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
                             <div class="profile-field">
                                 <label class="profile-label" for="name">Name</label>
                                 <input id="name" name="name" type="text" class="profile-input" value="{{ old('name', $user->name) }}" required autofocus autocomplete="name">
@@ -101,6 +214,11 @@
                                     <div class="profile-error">{{ $message }}</div>
                                 @enderror
                             </div>
+
+                            <x-password-requirements
+                                password-id="update_password_password"
+                                confirmation-id="update_password_password_confirmation"
+                            />
                         </div>
 
                         <div class="profile-actions">

@@ -161,6 +161,7 @@
                                 <th>References</th>
                                 <th>Location</th>
                                 <th>Linked Area</th>
+                                <th>Clearance Scope</th>
                                 <th>Record State</th>
                                 <th class="lo-parcel-action-column">Action</th>
                             </tr>
@@ -191,6 +192,13 @@
                                     <td>
                                         <div class="lo-area-main">{{ number_format((float) $holding->area_hectares, 4) }} ha</div>
                                         <div class="lo-area-sub">Landholding reference</div>
+                                    </td>
+                                    <td>
+                                        @if ($parcel?->agricultural_status === 'non_agricultural')
+                                            <span class="lo-state-badge">Outside DAR clearance scope</span>
+                                        @else
+                                            <span class="lo-state-badge is-active">Agricultural land record</span>
+                                        @endif
                                     </td>
                                     <td>
                                         <div class="lo-state-stack">

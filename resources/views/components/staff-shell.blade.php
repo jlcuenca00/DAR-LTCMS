@@ -1181,31 +1181,6 @@
                     @endforeach
                 </nav>
             </div>
-
-            <div class="staff-sidebar-footer">
-                <div class="staff-side-utility-label">Administration</div>
-                <nav class="staff-side-utility" aria-label="Staff administration navigation">
-                    @foreach ($utilityItems as $item)
-                        @if (\Illuminate\Support\Facades\Route::has($item['route']))
-                            <a href="{{ route($item['route']) }}"
-                               @class(['staff-side-link', 'active' => $active === $item['active']])>
-                                <i class="fa-solid {{ $item['icon'] }}"></i>
-                                <span>{{ $item['label'] }}</span>
-                            </a>
-                        @endif
-                    @endforeach
-                </nav>
-
-                <div class="staff-footer-divider"></div>
-
-                <form method="POST" action="{{ route('logout') }}">
-                    @csrf
-                    <button type="submit" class="staff-logout-button">
-                        <i class="fa-solid fa-arrow-right-from-bracket"></i>
-                        Logout
-                    </button>
-                </form>
-            </div>
         </aside>
 
         <main id="main-content" class="staff-main" tabindex="-1">
@@ -1233,10 +1208,10 @@
                         </details>
                     @endif
                     {{ $actions ?? '' }}
-                    <div class="staff-user-chip">
-                        <div class="staff-avatar">{{ strtoupper(substr(auth()->user()->name ?? 'S', 0, 1)) }}</div>
-                        <span>{{ auth()->user()->name ?? 'Staff User' }}</span>
-                    </div>
+                    <x-account-menu
+                        :user="auth()->user()"
+                        :administration-route="route('staff.users.index')"
+                    />
                 </div>
             </header>
 

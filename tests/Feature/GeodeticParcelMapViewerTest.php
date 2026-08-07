@@ -46,11 +46,11 @@ class GeodeticParcelMapViewerTest extends TestCase
         $response->assertSee('Parcel Map Viewer');
         $response->assertSee('Map Tools');
         $response->assertSee('Reset View');
-        $response->assertSee('Parcel List');
+        $response->assertSee('Parcel References');
         $response->assertSee($parcel->parcel_code);
         $response->assertSee('T-GEO-001');
         $response->assertSee('TD-GEO-001');
-        $response->assertSee('Read-only');
+        $response->assertSee('Read-only Access');
     }
 
     public function test_geodetic_user_can_view_read_only_parcel_details(): void
@@ -113,7 +113,7 @@ class GeodeticParcelMapViewerTest extends TestCase
             ->get(route('geodetic.dashboard'));
 
         $response->assertOk();
-        $response->assertSee('Open Map');
+        $response->assertSee('Open Parcel Map');
         $response->assertSee(route('geodetic.parcel-map.index'));
         $response->assertDontSee('/geodetic/applications');
     }

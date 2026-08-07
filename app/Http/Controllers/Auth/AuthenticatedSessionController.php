@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
+use App\Services\AuditLogger;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -30,6 +31,23 @@ class AuthenticatedSessionController extends Controller
 
     $user = Auth::user();
 
+    if ($user) {
+        $user->forceFill(['last_login_at' => now()])->save();
+
+        AuditLogger::record(
+            'user_login',
+            null,
+            $user,
+            [
+                'user_id' => $user->id,
+                'username' => $user->username,
+                'role' => $user->role,
+                'login_at' => $user->last_login_at?->toDateTimeString(),
+            ],
+            $user->id
+        );
+    }
+
     $request->session()->put(
         'auth_password_changed_at',
         $user?->password_changed_at?->format('Y-m-d H:i:s.u')
@@ -51,6 +69,22 @@ class AuthenticatedSessionController extends Controller
      */
     public function destroy(Request $request): RedirectResponse
     {
+        $user = $request->user();
+
+        if ($user) {
+            AuditLogger::record(
+                'user_logout',
+                null,
+                $user,
+                [
+                    'user_id' => $user->id,
+                    'username' => $user->username,
+                    'role' => $user->role,
+                ],
+                $user->id
+            );
+        }
+
         Auth::guard('web')->logout();
 
         $request->session()->invalidate();

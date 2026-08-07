@@ -67,6 +67,7 @@
                         <th>Role</th>
                         <th>Status</th>
                         <th>Linked Landowner</th>
+                        <th>Last Login</th>
                         <th>Created</th>
                         <th class="staff-table-action">Action</th>
                     </tr>
@@ -84,8 +85,12 @@
                         <tr>
                             <td>
                                 <div class="flex items-center gap-3">
-                                    <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-green-800 text-xs font-bold text-white">
-                                        {{ strtoupper(substr($user->name, 0, 1)) }}
+                                    <div class="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-green-800 text-xs font-bold text-white">
+                                        @if ($user->profile_photo_path)
+                                            <img src="{{ asset('storage/' . ltrim($user->profile_photo_path, '/')) }}" alt="" class="h-full w-full object-cover">
+                                        @else
+                                            {{ strtoupper(substr($user->name, 0, 1)) }}
+                                        @endif
                                     </div>
                                     <div>
                                         <div class="font-bold text-gray-950">{{ $user->name }}</div>
@@ -116,6 +121,14 @@
                                     <span class="text-gray-500">N/A</span>
                                 @endif
                             </td>
+                            <td class="whitespace-nowrap">
+                                @if ($user->last_login_at)
+                                    <div class="font-semibold text-gray-900">{{ $user->last_login_at->timezone('Asia/Manila')->format('M d, Y') }}</div>
+                                    <div class="mt-0.5 text-xs text-gray-500">{{ $user->last_login_at->timezone('Asia/Manila')->format('h:i A') }}</div>
+                                @else
+                                    <span class="text-gray-500">Never</span>
+                                @endif
+                            </td>
                             <td class="whitespace-nowrap">{{ $user->created_at?->timezone('Asia/Manila')->format('M d, Y') ?? 'N/A' }}</td>
                             <td class="staff-table-action">
                                 <div class="staff-table-action-group">
@@ -128,7 +141,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="py-10 text-center text-gray-500">
+                            <td colspan="7" class="py-10 text-center text-gray-500">
                                 No user accounts found for the selected filters.
                             </td>
                         </tr>

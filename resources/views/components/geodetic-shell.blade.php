@@ -721,27 +721,6 @@
                     </a>
                 </nav>
             </div>
-
-            <div class="geo-side-section account">
-                <div class="geo-side-label">Account</div>
-
-                <nav class="geo-nav" aria-label="Account navigation">
-                    <a href="{{ route('profile.edit') }}" class="geo-nav-link {{ $active === 'profile' ? 'active' : '' }}">
-                        <i class="fa-solid fa-user-gear"></i>
-                        Profile Settings
-                    </a>
-                </nav>
-            </div>
-
-            <div class="geo-sidebar-footer">
-                <form method="POST" action="{{ route('logout') }}">
-                    @csrf
-                    <button type="submit" class="geo-logout-button">
-                        <i class="fa-solid fa-arrow-right-from-bracket"></i>
-                        Logout
-                    </button>
-                </form>
-            </div>
         </aside>
 
         <main id="main-content" class="geo-main" tabindex="-1">
@@ -771,12 +750,7 @@
                         Read-only Access
                     </div>
 
-                    <div class="geo-user-chip">
-                        <div class="geo-avatar">
-                            {{ strtoupper(substr(auth()->user()->name, 0, 1)) }}
-                        </div>
-                        <span>{{ auth()->user()->name }}</span>
-                    </div>
+                    <x-account-menu :user="auth()->user()" />
                 </div>
             </header>
 

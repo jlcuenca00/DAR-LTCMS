@@ -21,3 +21,619 @@ h6,
 .font-heading {
     font-family: var(--font-heading) !important;
 }
+
+/* DAR-LTCMS Patch 1: shared account/accessibility/password UI */
+:where(a, button, summary, input, select, textarea):focus-visible {
+    outline: 3px solid rgba(21, 128, 61, 0.42) !important;
+    outline-offset: 2px !important;
+}
+
+.account-topbar-cluster {
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+    min-width: 0;
+}
+
+.account-admin-link,
+.account-menu-trigger {
+    min-height: 40px;
+    border: 1px solid #d7ded9;
+    border-radius: 999px;
+    background: #ffffff;
+    color: #1f2937;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 5px 10px;
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 850;
+    cursor: pointer;
+}
+
+.account-admin-link:hover,
+.account-menu-trigger:hover,
+.account-menu[open] .account-menu-trigger {
+    border-color: #86efac;
+    background: #f0fdf4;
+    color: #14532d;
+}
+
+.account-menu {
+    position: relative;
+}
+
+.account-menu > summary {
+    list-style: none;
+}
+
+.account-menu > summary::-webkit-details-marker {
+    display: none;
+}
+
+.account-menu-name {
+    max-width: 190px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.account-menu-divider {
+    width: 1px;
+    height: 20px;
+    background: #d1d5db;
+}
+
+.account-menu-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 999px;
+    overflow: hidden;
+    display: inline-grid;
+    place-items: center;
+    background: #166534;
+    color: #ffffff;
+    font-weight: 900;
+    flex: 0 0 auto;
+}
+
+.account-menu-avatar img {
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: cover;
+}
+
+.account-menu-chevron {
+    font-size: 10px;
+    color: #64748b;
+    transition: transform 150ms ease;
+}
+
+.account-menu[open] .account-menu-chevron {
+    transform: rotate(180deg);
+}
+
+.account-menu-panel {
+    position: absolute;
+    top: calc(100% + 9px);
+    right: 0;
+    z-index: 100;
+    width: 210px;
+    overflow: hidden;
+    border: 1px solid #d7ded9;
+    border-radius: 12px;
+    background: #ffffff;
+    box-shadow: 0 18px 42px rgba(15, 23, 42, .16);
+}
+
+.account-menu-item {
+    width: 100%;
+    min-height: 44px;
+    border: 0;
+    background: #ffffff;
+    color: #1f2937;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 13px;
+    text-decoration: none;
+    text-align: left;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.account-menu-item:hover,
+.account-menu-item:focus-visible {
+    background: #f0fdf4;
+    color: #14532d;
+}
+
+.account-menu-form {
+    margin: 0;
+    border-top: 1px solid #eef2f0;
+}
+
+.profile-photo-control {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 14px;
+    align-items: center;
+    border: 1px solid #d7ded9;
+    border-radius: 12px;
+    background: #f8faf9;
+    padding: 14px;
+}
+
+.profile-photo-preview {
+    width: 72px;
+    height: 72px;
+    border-radius: 999px;
+    overflow: hidden;
+    display: grid;
+    place-items: center;
+    background: #166534;
+    color: #ffffff;
+    font-size: 24px;
+    font-weight: 900;
+}
+
+.profile-photo-preview img {
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: cover;
+}
+
+.profile-photo-actions {
+    display: grid;
+    gap: 8px;
+    min-width: 0;
+}
+
+.profile-photo-remove {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    color: #475569;
+    font-size: 12px;
+    font-weight: 750;
+}
+
+.password-checklist {
+    grid-column: 1 / -1;
+    border: 1px solid #d7ded9;
+    border-radius: 10px;
+    background: #f8faf9;
+    padding: 11px 12px;
+}
+
+.password-checklist-title {
+    margin: 0 0 7px;
+    color: #334155;
+    font-size: 11px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: .07em;
+}
+
+.password-rule-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 5px 12px;
+}
+
+.password-rule {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    color: #64748b;
+    font-size: 12px;
+    line-height: 1.4;
+}
+
+.password-rule-icon {
+    width: 16px;
+    text-align: center;
+    color: #64748b;
+    font-weight: 900;
+}
+
+.password-rule.is-valid {
+    color: #166534;
+    font-weight: 750;
+}
+
+.password-rule.is-valid .password-rule-icon {
+    color: #15803d;
+}
+
+@media (max-width: 720px) {
+    .account-admin-link span { display: none; }
+    .account-menu-name { max-width: 130px; }
+    .password-rule-list { grid-template-columns: 1fr; }
+    .profile-photo-control { grid-template-columns: 1fr; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        scroll-behavior: auto !important;
+        animation-duration: 0.001ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.001ms !important;
+    }
+}
+
+/* DAR-LTCMS Patch 1 cleanup: controls, profile photo editor, skip-link */
+
+/* All native checkable checkboxes use the DAR green accent throughout the system. */
+input[type="checkbox"] {
+    accent-color: #15803d !important;
+}
+
+/* Keep the accessibility skip link available to keyboard users without
+   letting ordinary mouse focus leave it visibly stuck on-screen. */
+.skip-link:focus:not(:focus-visible) {
+    top: -64px !important;
+}
+
+.skip-link:focus-visible {
+    top: 12px !important;
+}
+
+/* Shared profile-photo file picker across Staff, Landowner, and Geodetic. */
+.profile-photo-actions .profile-file-input[type="file"] {
+    width: 100%;
+    min-height: 44px;
+    padding: 5px;
+    border: 1px solid #cbd5e1;
+    border-radius: 9px;
+    background: #ffffff;
+    color: #475569;
+    font-size: 13px;
+    cursor: pointer;
+}
+
+.profile-photo-actions .profile-file-input[type="file"]::file-selector-button {
+    min-height: 32px;
+    margin-right: 10px;
+    padding: 0 12px;
+    border: 1px solid #15803d;
+    border-radius: 7px;
+    background: #15803d;
+    color: #ffffff;
+    font: inherit;
+    font-size: 12px;
+    font-weight: 850;
+    cursor: pointer;
+}
+
+.profile-photo-actions .profile-file-input[type="file"]::file-selector-button:hover {
+    border-color: #14532d;
+    background: #14532d;
+}
+
+.profile-photo-preview img {
+    transform-origin: center center;
+    will-change: transform;
+}
+
+.profile-photo-resize {
+    display: grid;
+    gap: 7px;
+    padding: 10px 11px;
+    border: 1px solid #d7ded9;
+    border-radius: 9px;
+    background: #ffffff;
+}
+
+.profile-photo-resize[hidden] {
+    display: none !important;
+}
+
+.profile-photo-resize-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    color: #334155;
+    font-size: 11px;
+    font-weight: 900;
+}
+
+.profile-photo-resize-heading label {
+    margin: 0;
+}
+
+.profile-photo-resize-heading output {
+    color: #166534;
+}
+
+.profile-photo-resize input[type="range"] {
+    width: 100%;
+    accent-color: #15803d;
+    cursor: pointer;
+}
+
+.profile-photo-resize p {
+    margin: 0;
+    color: #64748b;
+    font-size: 11px;
+    line-height: 1.45;
+}
+
+/* DAR-LTCMS Phase 1 visual fix: exact profile crop modal */
+.profile-photo-control-clean {
+    grid-template-columns: 138px minmax(0, 1fr);
+    align-items: stretch;
+    gap: 18px;
+    padding: 16px;
+}
+
+.profile-photo-current {
+    width: 138px;
+    min-height: 138px;
+    overflow: hidden;
+    display: grid;
+    place-items: center;
+    border: 1px solid #d7ded9;
+    border-radius: 12px;
+    background: #ffffff;
+}
+
+.profile-photo-current > img {
+    width: 100%;
+    height: 100%;
+    min-height: 138px;
+    object-fit: cover;
+    display: block;
+}
+
+.profile-photo-current > img[hidden] {
+    display: none !important;
+}
+
+.profile-photo-empty {
+    width: 100%;
+    min-height: 138px;
+    display: grid;
+    place-items: center;
+    align-content: center;
+    gap: 8px;
+    color: #64748b;
+    background: #f8faf9;
+    font-size: 12px;
+    font-weight: 850;
+}
+
+.profile-photo-empty[hidden] {
+    display: none !important;
+}
+
+.profile-photo-empty i {
+    font-size: 24px;
+    color: #94a3b8;
+}
+
+.profile-photo-hidden-input {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    padding: 0 !important;
+    margin: -1px !important;
+    overflow: hidden !important;
+    clip: rect(0, 0, 0, 0) !important;
+    white-space: nowrap !important;
+    border: 0 !important;
+}
+
+.profile-photo-choose {
+    width: fit-content;
+}
+
+.profile-photo-help {
+    margin: 0;
+    color: #64748b;
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+body.profile-crop-open {
+    overflow: hidden;
+}
+
+.profile-crop-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 150;
+    display: grid;
+    place-items: center;
+    padding: 24px;
+    background: rgba(15, 23, 42, 0.66);
+    backdrop-filter: blur(3px);
+}
+
+.profile-crop-modal[hidden] {
+    display: none !important;
+}
+
+.profile-crop-dialog {
+    width: min(620px, 100%);
+    max-height: calc(100vh - 48px);
+    overflow: hidden;
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    border: 1px solid #d7ded9;
+    border-radius: 16px;
+    background: #ffffff;
+    box-shadow: 0 28px 80px rgba(15, 23, 42, 0.30);
+}
+
+.profile-crop-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 18px;
+    padding: 18px 20px 16px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.profile-crop-header h3 {
+    margin: 0;
+    color: #0f172a;
+    font-size: 18px;
+    font-weight: 900;
+}
+
+.profile-crop-header p {
+    margin: 5px 0 0;
+    color: #64748b;
+    font-size: 12px;
+    line-height: 1.45;
+}
+
+.profile-crop-close {
+    width: 36px;
+    height: 36px;
+    flex: 0 0 auto;
+    display: grid;
+    place-items: center;
+    border: 1px solid #d1d5db;
+    border-radius: 999px;
+    background: #ffffff;
+    color: #475569;
+    cursor: pointer;
+}
+
+.profile-crop-close:hover {
+    background: #f8fafc;
+    color: #111827;
+}
+
+.profile-crop-body {
+    overflow-y: auto;
+    display: grid;
+    gap: 18px;
+    justify-items: center;
+    padding: 20px;
+    background: #f8faf9;
+}
+
+.profile-crop-stage {
+    position: relative;
+    width: min(420px, 100%);
+    aspect-ratio: 1 / 1;
+    overflow: hidden;
+    touch-action: none;
+    cursor: grab;
+    user-select: none;
+    border-radius: 10px;
+    background: #111827;
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.15);
+}
+
+.profile-crop-stage.is-dragging {
+    cursor: grabbing;
+}
+
+.profile-crop-stage > img {
+    position: absolute;
+    max-width: none !important;
+    user-select: none;
+    pointer-events: none;
+}
+
+.profile-crop-guide {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    border: 2px solid rgba(255, 255, 255, 0.92);
+    border-radius: 10px;
+    box-shadow:
+        inset 0 0 0 1px rgba(15, 23, 42, 0.35),
+        inset 0 0 80px rgba(15, 23, 42, 0.12);
+}
+
+.profile-crop-controls {
+    width: min(420px, 100%);
+    display: grid;
+    gap: 8px;
+}
+
+.profile-crop-control-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    color: #334155;
+    font-size: 12px;
+    font-weight: 900;
+}
+
+.profile-crop-control-heading label {
+    margin: 0;
+}
+
+.profile-crop-control-heading output {
+    color: #166534;
+}
+
+.profile-crop-controls input[type="range"] {
+    width: 100%;
+    accent-color: #15803d;
+    cursor: pointer;
+}
+
+.profile-crop-controls p {
+    margin: 0;
+    color: #64748b;
+    font-size: 11px;
+    line-height: 1.45;
+}
+
+.profile-crop-footer {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 10px;
+    padding: 15px 20px 18px;
+    border-top: 1px solid #e5e7eb;
+    background: #ffffff;
+}
+
+@media (max-width: 640px) {
+    .profile-photo-control-clean {
+        grid-template-columns: 1fr;
+    }
+
+    .profile-photo-current {
+        width: 100%;
+        min-height: 180px;
+    }
+
+    .profile-photo-current > img,
+    .profile-photo-empty {
+        min-height: 180px;
+    }
+
+    .profile-crop-modal {
+        padding: 12px;
+    }
+
+    .profile-crop-footer {
+        align-items: stretch;
+        flex-direction: column-reverse;
+    }
+
+    .profile-crop-footer .profile-button {
+        width: 100%;
+    }
+}
