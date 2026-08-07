@@ -81,13 +81,15 @@
                                 'landowner' => 'border-slate-200 bg-slate-50 text-slate-700',
                                 default => 'border-slate-200 bg-slate-50 text-slate-700',
                             };
+                            $profilePhotoExists = filled($user->profile_photo_path)
+                                && \Illuminate\Support\Facades\Storage::disk('public')->exists($user->profile_photo_path);
                         @endphp
                         <tr>
                             <td>
                                 <div class="flex items-center gap-3">
                                     <div class="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-green-800 text-xs font-bold text-white">
-                                        @if ($user->profile_photo_path)
-                                            <img src="{{ asset('storage/' . ltrim($user->profile_photo_path, '/')) }}" alt="" class="h-full w-full object-cover">
+                                        @if ($profilePhotoExists)
+                                            <img src="{{ route('profile.photo', $user) }}" alt="" class="h-full w-full object-cover">
                                         @else
                                             {{ strtoupper(substr($user->name, 0, 1)) }}
                                         @endif

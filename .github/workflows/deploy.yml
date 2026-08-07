@@ -100,7 +100,38 @@ jobs:
             php artisan migrate --force
 
             php artisan cache:clear
-            php artisan storage:link || true
+
+            # Rebuild the public storage symlink deterministically.
+            # Uploaded files remain in storage/app/public, which rsync excludes.
+            if [ -L public/storage ]; then
+              rm public/storage
+            elif [ -e public/storage ]; then
+              echo "public/storage exists but is not a symbolic link. Refusing to overwrite it."
+              exit 1
+            fi
+
+            php artisan storage:link
+
+            test -L public/storage || {
+              echo "public/storage symlink was not created."
+              exit 1
+            }
+
+            EXPECTED_STORAGE_TARGET="$(readlink -f storage/app/public)"
+            PUBLIC_STORAGE_TARGET="$(readlink -f public/storage)"
+
+            test "$PUBLIC_STORAGE_TARGET" = "$EXPECTED_STORAGE_TARGET" || {
+              echo "public/storage points to an unexpected target."
+              echo "Expected: $EXPECTED_STORAGE_TARGET"
+              echo "Actual:   $PUBLIC_STORAGE_TARGET"
+              exit 1
+            }
+
+            test -w storage/app/public || {
+              echo "storage/app/public is not writable by the deployment user."
+              exit 1
+            }
+
             php artisan config:cache
             php artisan route:cache
             php artisan view:cache

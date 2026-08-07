@@ -3,20 +3,53 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\ProfileUpdateRequest;
+use App\Models\User;
 use App\Services\AuditLogger;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ProfileController extends Controller
 {
     public function edit(Request $request): View
     {
+        $user = $request->user();
+
         return view('profile.edit', [
-            'user' => $request->user(),
+            'user' => $user,
+            'profilePhotoExists' => filled($user->profile_photo_path)
+                && Storage::disk('public')->exists($user->profile_photo_path),
         ]);
+    }
+
+    public function photo(Request $request, User $user): StreamedResponse
+    {
+        $viewer = $request->user();
+
+        abort_unless(
+            $viewer && ($viewer->id === $user->id || $viewer->isStaff()),
+            403
+        );
+
+        $path = $user->profile_photo_path;
+
+        abort_if(
+            blank($path) || ! Storage::disk('public')->exists($path),
+            404
+        );
+
+        return Storage::disk('public')->response(
+            $path,
+            basename($path),
+            [
+                'Cache-Control' => 'private, max-age=300',
+                'X-Content-Type-Options' => 'nosniff',
+            ],
+            'inline'
+        );
     }
 
     public function update(ProfileUpdateRequest $request): RedirectResponse

@@ -34,9 +34,9 @@
 
                                 <div class="profile-photo-control profile-photo-control-clean" data-profile-photo-editor>
                                     <div class="profile-photo-current" data-profile-photo-current>
-                                        @if ($user->profile_photo_path)
+                                        @if ($profilePhotoExists ?? false)
                                             <img
-                                                src="{{ asset('storage/' . ltrim($user->profile_photo_path, '/')) }}"
+                                                src="{{ route('profile.photo', $user) }}"
                                                 alt="Profile picture for {{ $user->name }}"
                                                 data-profile-photo-current-image
                                             >
@@ -78,6 +78,12 @@
                                         </p>
 
                                         @if ($user->profile_photo_path)
+                                            @unless ($profilePhotoExists ?? false)
+                                                <p class="text-xs font-semibold text-amber-700">
+                                                    The previously stored photo file is unavailable. Choose a replacement or remove the missing photo reference.
+                                                </p>
+                                            @endunless
+
                                             <label class="profile-photo-remove">
                                                 <input type="checkbox" name="remove_profile_photo" value="1">
                                                 Remove current profile picture
