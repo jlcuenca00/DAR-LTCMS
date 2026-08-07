@@ -279,7 +279,7 @@ class UserManagementController extends Controller
             return back()->with('error', 'Use your profile settings to change your own password.');
         }
 
-        $temporaryPassword = Str::password(12, true, true, false, false);
+        $temporaryPassword = Str::password(12, true, true, true, false);
 
         DB::transaction(function () use ($user, $temporaryPassword, $request) {
             $user->forceFill([
