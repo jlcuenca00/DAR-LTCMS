@@ -411,3 +411,58 @@ if (document.readyState === 'loading') {
 } else {
     initDarLtcmsResponsiveStaffNavigation();
 }
+
+// DAR-LTCMS Phase 3: compact public landing-page navigation.
+function initDarLtcmsResponsivePublicNavigation() {
+    const header = document.querySelector('.site-header');
+    const headerInner = header?.querySelector('.header-inner');
+    const nav = header?.querySelector('.nav');
+
+    if (!header || !headerInner || !nav || headerInner.querySelector('.public-mobile-nav-toggle')) {
+        return;
+    }
+
+    const toggle = document.createElement('button');
+    toggle.type = 'button';
+    toggle.className = 'public-mobile-nav-toggle';
+    toggle.setAttribute('aria-label', 'Open site navigation');
+    toggle.setAttribute('aria-expanded', 'false');
+    toggle.innerHTML = '<span aria-hidden="true">☰</span>';
+    headerInner.insertBefore(toggle, nav);
+
+    const setOpen = (open) => {
+        header.classList.toggle('is-mobile-open', open);
+        toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+        toggle.setAttribute('aria-label', open ? 'Close site navigation' : 'Open site navigation');
+        toggle.innerHTML = open
+            ? '<span aria-hidden="true">✕</span>'
+            : '<span aria-hidden="true">☰</span>';
+    };
+
+    toggle.addEventListener('click', () => {
+        setOpen(!header.classList.contains('is-mobile-open'));
+    });
+
+    nav.querySelectorAll('a').forEach((link) => {
+        link.addEventListener('click', () => setOpen(false));
+    });
+
+    document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && header.classList.contains('is-mobile-open')) {
+            setOpen(false);
+            toggle.focus();
+        }
+    });
+
+    window.addEventListener('resize', () => {
+        if (window.innerWidth > 920 && header.classList.contains('is-mobile-open')) {
+            setOpen(false);
+        }
+    });
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initDarLtcmsResponsivePublicNavigation, { once: true });
+} else {
+    initDarLtcmsResponsivePublicNavigation();
+}
