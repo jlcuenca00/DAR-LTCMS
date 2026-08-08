@@ -51,7 +51,7 @@ class ApplicationClearanceController extends Controller
         ])->loadView('staff.clearances.pdf', [
             'application' => $application,
             'clearance' => $application->clearance,
-        ])->setPaper('a4');
+        ])->setPaper([0, 0, 612, 936]);
 
         return $pdf->stream('LTC-Form-No-5-' . $safeApplicationCode . '.pdf');
     }
