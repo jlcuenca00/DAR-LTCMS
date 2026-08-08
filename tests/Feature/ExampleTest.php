@@ -12,13 +12,13 @@ class ExampleTest extends TestCase
 
         $response
             ->assertOk()
-            ->assertSee('Land transfer clearance, made easier to understand and monitor.')
+            ->assertSee('Land transfer clearance, without the guesswork.')
+            ->assertSee('Skip to main content')
             ->assertSee('Transferor requirements')
             ->assertSee('Transferee requirements')
-            ->assertSee('Case-dependent or additional documents')
+            ->assertSee('Additional documents')
             ->assertSee('Frequently asked questions')
             ->assertSee('No online self-application.')
-            ->assertSee('Clearance approval and generation through DAR-LTCMS does not itself execute the legal transfer of land ownership')
             ->assertSee('DAR Negros Oriental Legal Assistance Division')
             ->assertSee('522-7144')
             ->assertSee('0916-876-3071')
