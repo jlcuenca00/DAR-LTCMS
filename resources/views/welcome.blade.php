@@ -284,20 +284,48 @@
         .faq-answer { padding: 0 3rem 1.35rem 0; color: var(--muted); max-width: 850px; }
         .faq-answer p { margin: 0; }
 
-        .office-card {
+        .office-grid {
             margin-top: 2rem;
             display: grid;
-            grid-template-columns: 1fr auto;
-            gap: 2rem;
-            align-items: center;
-            padding: 1.4rem 1.5rem;
+            grid-template-columns: minmax(0, 1fr) minmax(280px, .62fr);
+            gap: 1rem;
+        }
+        .office-card {
+            padding: 1.5rem;
             background: #fff;
             border: 1px solid var(--border);
             border-radius: .7rem;
         }
-        .office-card h3 { margin: 0; }
-        .office-card p { margin: .4rem 0 0; color: var(--muted); }
-        .verification-badge { font-size: .78rem; color: #6f5d12; background: #fff9dc; border: 1px solid #eadb8e; border-radius: 999px; padding: .35rem .6rem; white-space: nowrap; }
+        .office-card h3 { margin: 0; font-size: 1.15rem; }
+        .office-card > p { margin: .4rem 0 0; color: var(--muted); }
+        .contact-list { margin: 1.35rem 0 0; padding: 0; list-style: none; border-top: 1px solid var(--border); }
+        .contact-list li {
+            display: grid;
+            grid-template-columns: 125px minmax(0, 1fr);
+            gap: 1rem;
+            padding: .85rem 0;
+            border-bottom: 1px solid #edf1ee;
+        }
+        .contact-label { color: var(--muted); font-size: .84rem; font-weight: 700; }
+        .contact-value { overflow-wrap: anywhere; }
+        .contact-value a { color: var(--green-800); font-weight: 700; text-decoration: none; }
+        .contact-value a:hover { text-decoration: underline; }
+        .office-links { display: grid; gap: .75rem; margin-top: 1.25rem; }
+        .office-link {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            padding: .9rem 1rem;
+            border: 1px solid var(--border);
+            border-radius: .55rem;
+            text-decoration: none;
+            color: var(--green-900);
+            font-weight: 700;
+            background: #fff;
+        }
+        .office-link:hover { border-color: #99b7a4; background: var(--green-50); }
+        .office-source-note { margin-top: 1rem; color: var(--muted); font-size: .82rem; }
 
         footer { background: #071f14; color: #dce9e1; border-top: 1px solid #113522; }
         .footer-top { padding: 3rem 0 2rem; display: grid; grid-template-columns: 1fr auto; gap: 2rem; }
@@ -316,6 +344,7 @@
             .section-grid { grid-template-columns: 1fr; gap: 2.2rem; }
             .side-note { position: static; }
             .role-grid { grid-template-columns: 1fr; }
+            .office-grid { grid-template-columns: 1fr; }
         }
         @media (max-width: 640px) {
             .container { width: min(100% - 1.25rem, 1200px); }
@@ -328,8 +357,7 @@
             .section { padding: 4.5rem 0; }
             .hero-actions .button { width: 100%; }
             .requirement-head { align-items: flex-start; flex-direction: column; }
-            .office-card { grid-template-columns: 1fr; gap: 1rem; }
-            .verification-badge { justify-self: start; white-space: normal; }
+            .contact-list li { grid-template-columns: 1fr; gap: .2rem; }
             .footer-top { grid-template-columns: 1fr; }
         }
     </style>
@@ -351,6 +379,7 @@
                 <a href="#process">Process</a>
                 <a href="#access">Who can log in</a>
                 <a href="#faq">FAQ</a>
+                <a href="#office">Office</a>
                 <a href="{{ route('login') }}" class="sign-in">Sign In</a>
             </nav>
         </div>
@@ -608,15 +637,48 @@
         <section class="section" id="office">
             <div class="container">
                 <p class="section-kicker">Office information</p>
-                <h2 class="section-title">DAR Negros Oriental Provincial Office</h2>
-                <p class="section-intro">Official address, contact number, office hours, email, and map information should be published here only after they are verified against the office's current official details.</p>
+                <h2 class="section-title">DAR Negros Oriental Legal Assistance Division</h2>
+                <p class="section-intro">For land transfer clearance concerns and related legal assistance inquiries, use the contact information provided by the DAR Negros Oriental Legal Assistance Division.</p>
 
-                <div class="office-card">
-                    <div>
-                        <h3>Department of Agrarian Reform</h3>
-                        <p>Negros Oriental Provincial Office · Land Transfer Clearance and Monitoring System</p>
+                <div class="office-grid">
+                    <div class="office-card">
+                        <h3>Legal Assistance Division</h3>
+                        <p>Department of Agrarian Reform · Negros Oriental</p>
+                        <ul class="contact-list">
+                            <li>
+                                <span class="contact-label">Telephone</span>
+                                <span class="contact-value"><a href="tel:5227144">522-7144</a></span>
+                            </li>
+                            <li>
+                                <span class="contact-label">Cellphone</span>
+                                <span class="contact-value"><a href="tel:+639168763071">0916-876-3071</a></span>
+                            </li>
+                            <li>
+                                <span class="contact-label">Email</span>
+                                <span class="contact-value"><a href="mailto:dar_legal_orneg@yahoo.com">dar_legal_orneg@yahoo.com</a></span>
+                            </li>
+                            <li>
+                                <span class="contact-label">Regional Office</span>
+                                <span class="contact-value"><a href="tel:+63322536498">(032) 253-6498</a></span>
+                            </li>
+                        </ul>
+                        <p class="office-source-note">Contact details shown here are based on the Legal Assistance Division information provided for the DAR-LTCMS public landing page.</p>
                     </div>
-                    <span class="verification-badge">Contact details pending official verification</span>
+
+                    <div class="office-card">
+                        <h3>Online channels</h3>
+                        <p>Visit DAR's public channels for office updates and general Department information.</p>
+                        <div class="office-links">
+                            <a class="office-link" href="https://www.facebook.com/DARLegalNegor" target="_blank" rel="noopener noreferrer">
+                                <span>DAR Legal Negros Oriental</span>
+                                <span aria-hidden="true">↗</span>
+                            </a>
+                            <a class="office-link" href="https://www.dar.gov.ph/home" target="_blank" rel="noopener noreferrer">
+                                <span>Department of Agrarian Reform Website</span>
+                                <span aria-hidden="true">↗</span>
+                            </a>
+                        </div>
+                    </div>
                 </div>
             </div>
         </section>
@@ -635,6 +697,7 @@
                 <a href="#requirements">Requirements</a>
                 <a href="#process">Process</a>
                 <a href="#faq">FAQ</a>
+                <a href="#office">Office</a>
                 <a href="{{ route('login') }}">Sign In</a>
             </div>
         </div>
