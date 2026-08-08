@@ -5,6 +5,9 @@
     <title>{{ $clearance->clearance_number }}</title>
 </head>
 <body class="pdf-output">
-    @include('staff.clearances.partials.form5-content', ['showToolbar' => false])
+    @include('staff.clearances.partials.form5-content', [
+        'showToolbar' => false,
+        'pdfMode' => true,
+    ])
 </body>
 </html>
