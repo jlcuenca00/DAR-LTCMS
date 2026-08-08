@@ -31,11 +31,18 @@
         body { margin: 0; font-family: 'Google Sans', Arial, sans-serif; color: var(--ink); background: var(--page); line-height: 1.55; }
         a { color: inherit; }
         img { max-width: 100%; }
+        [hidden] { display: none !important; }
         .container { width: min(1160px, calc(100% - 2rem)); margin: 0 auto; }
 
         .skip-link { position: fixed; left: 1rem; top: 1rem; z-index: 100; transform: translateY(-170%); padding: .7rem 1rem; background: #fff; color: var(--green-950); border: 2px solid var(--focus); border-radius: 8px; font-weight: 700; text-decoration: none; }
         .skip-link:focus { transform: translateY(0); }
-        :where(a, summary):focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; border-radius: 6px; }
+        :where(a, summary, button):focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; border-radius: 6px; }
+
+        .development-notice { background: #f2c94c; color: #1d291f; border-bottom: 1px solid rgba(0,0,0,.12); }
+        .development-notice-inner { min-height: 44px; display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 1rem; }
+        .development-notice p { margin: 0; font-size: .88rem; font-weight: 600; }
+        .development-dismiss { width: 44px; height: 44px; display: inline-flex; align-items: center; justify-content: center; padding: 0; border: 0; border-radius: 8px; background: transparent; color: #1d291f; cursor: pointer; font-size: 1.35rem; line-height: 1; }
+        .development-dismiss:hover { background: rgba(0,0,0,.08); }
 
         .site-header { position: sticky; top: 0; z-index: 50; background: rgba(8,45,27,.97); border-bottom: 1px solid rgba(255,255,255,.12); color: #fff; }
         .header-inner { min-height: 72px; display: flex; align-items: center; justify-content: space-between; gap: 1.25rem; }
@@ -175,6 +182,7 @@
             .additional { grid-column: auto; grid-template-columns: 1fr; }
             .contact-list li { grid-template-columns: 1fr; gap: .15rem; }
             .footer-inner { align-items: flex-start; flex-direction: column; }
+            .development-notice p { font-size: .82rem; }
         }
 
         @media (prefers-reduced-motion: reduce) {
@@ -185,6 +193,13 @@
 </head>
 <body>
     <a class="skip-link" href="#main-content">Skip to main content</a>
+
+    <div class="development-notice" id="development-notice" role="status">
+        <div class="container development-notice-inner">
+            <p>This site is still undergoing development. Please bear with us.</p>
+            <button type="button" class="development-dismiss" id="dismiss-development-notice" aria-label="Dismiss development notice">&times;</button>
+        </div>
+    </div>
 
     <header class="site-header">
         <div class="container header-inner">
@@ -382,5 +397,31 @@
             </nav>
         </div>
     </footer>
+
+    <script>
+        (() => {
+            const notice = document.getElementById('development-notice');
+            const dismissButton = document.getElementById('dismiss-development-notice');
+            const storageKey = 'darltcms-development-notice-dismissed';
+
+            try {
+                if (sessionStorage.getItem(storageKey) === '1') {
+                    notice.hidden = true;
+                }
+            } catch (error) {
+                // The notice remains visible when session storage is unavailable.
+            }
+
+            dismissButton?.addEventListener('click', () => {
+                notice.hidden = true;
+
+                try {
+                    sessionStorage.setItem(storageKey, '1');
+                } catch (error) {
+                    // Dismissal still works for the current page when storage is unavailable.
+                }
+            });
+        })();
+    </script>
 </body>
 </html>
