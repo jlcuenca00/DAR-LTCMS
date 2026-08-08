@@ -14,16 +14,6 @@
 @endphp
 
 <div class="account-topbar-cluster">
-    @if ($administrationRoute)
-        <a href="{{ $administrationRoute }}"
-           class="account-admin-link"
-           aria-label="Open Administration / User Management"
-           title="Administration / User Management">
-            <i class="fa-solid fa-user-gear" aria-hidden="true"></i>
-            <span>Administration</span>
-        </a>
-    @endif
-
     <details class="account-menu" data-account-menu>
         <summary class="account-menu-trigger" aria-label="Open account menu for {{ $accountName }}" title="Account menu">
             <span class="account-menu-name">{{ $accountName }}</span>
@@ -38,6 +28,13 @@
         </summary>
 
         <div class="account-menu-panel">
+            @if ($administrationRoute)
+                <a href="{{ $administrationRoute }}" class="account-menu-item">
+                    <i class="fa-solid fa-user-gear" aria-hidden="true"></i>
+                    <span>Administration</span>
+                </a>
+            @endif
+
             <a href="{{ route('profile.edit') }}" class="account-menu-item">
                 <i class="fa-solid fa-user-pen" aria-hidden="true"></i>
                 <span>Manage Profile</span>
