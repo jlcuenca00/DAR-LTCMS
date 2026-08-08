@@ -13,8 +13,7 @@ class ApplicationClearanceController extends Controller
     public function show(LandTransferApplication $application)
     {
         $this->authorizeLandownerApplication($application);
-
-        $application->load(['clearance', 'documents.requiredDocument', 'applicationParcels.parcel']);
+        $application->load(['clearance']);
 
         if (! $application->isFinalized()) {
             return redirect()
@@ -28,12 +27,7 @@ class ApplicationClearanceController extends Controller
                 ->with('error', 'Decision output record is not yet available for this application.');
         }
 
-        return view('staff.clearances.show', [
-            'application' => $application,
-            'clearance' => $application->clearance,
-            'returnRoute' => route('landowner.applications.index'),
-            'returnLabel' => 'Back to My Applications',
-        ]);
+        return redirect()->route('landowner.applications.clearance.pdf', $application);
     }
 
     public function pdf(LandTransferApplication $application)
