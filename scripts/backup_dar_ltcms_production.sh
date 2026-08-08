@@ -165,8 +165,15 @@ pg_restore --list "$DB_DUMP" >/dev/null
 unset PGPASSWORD DB_PASSWORD
 
 GIT_COMMIT="unknown"
-if command -v git >/dev/null 2>&1 && git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
-    GIT_COMMIT="$(git rev-parse --short HEAD 2>/dev/null || echo unknown)"
+RELEASE_COMMIT_FILE="$PROJECT_ROOT/.release-commit"
+
+if [ -f "$RELEASE_COMMIT_FILE" ]; then
+    RELEASE_COMMIT="$(tr -d '[:space:]' < "$RELEASE_COMMIT_FILE")"
+    if [[ "$RELEASE_COMMIT" =~ ^[0-9a-fA-F]{40}$ ]]; then
+        GIT_COMMIT="$RELEASE_COMMIT"
+    fi
+elif command -v git >/dev/null 2>&1 && git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    GIT_COMMIT="$(git rev-parse HEAD 2>/dev/null || echo unknown)"
 fi
 
 cat > "$MANIFEST" <<EOF
