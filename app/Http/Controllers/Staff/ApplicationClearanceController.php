@@ -3,14 +3,30 @@
 namespace App\Http\Controllers\Staff;
 
 use App\Http\Controllers\Controller;
+use App\Models\ApplicationDocument;
 use App\Models\LandTransferApplication;
 use App\Models\RequiredDocument;
-use App\Models\ApplicationDocument;
+use App\Services\ClearanceBrowserPdfRenderer;
 use Barryvdh\DomPDF\Facade\Pdf;
 
 class ApplicationClearanceController extends Controller
 {
     public function show(LandTransferApplication $application)
+    {
+        $application->load(['clearance']);
+
+        if (! $application->isFinalized()) {
+            return back()->with('error', 'Decision output is only available for released or denied applications.');
+        }
+
+        if (! $application->clearance) {
+            return back()->with('error', 'Decision output record not found for this application.');
+        }
+
+        return redirect()->route('staff.applications.clearance.pdf', $application);
+    }
+
+    public function pdf(LandTransferApplication $application, ClearanceBrowserPdfRenderer $renderer)
     {
         $application->load(['clearance', 'documents.requiredDocument', 'applicationParcels.parcel']);
 
@@ -22,17 +38,22 @@ class ApplicationClearanceController extends Controller
             return back()->with('error', 'Decision output record not found for this application.');
         }
 
-        return view('staff.clearances.show', [
+        $safeApplicationCode = str_replace(['/', '\\', ' '], '-', (string) $application->application_code);
+        $filename = 'LTC-Form-No-5-' . $safeApplicationCode . '.pdf';
+
+        $html = view('staff.clearances.pdf', [
             'application' => $application,
             'clearance' => $application->clearance,
-        ]);
-    }
+        ])->render();
 
-    public function pdf(LandTransferApplication $application)
-    {
-        return redirect()
-            ->route('staff.applications.clearance.show', $application)
-            ->with('info', 'PDF output uses the official print view. Use the Print button, then choose Save as PDF if needed.');
+        $pdf = $renderer->render($html);
+
+        return response($pdf, 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="' . $filename . '"',
+            'Content-Length' => (string) strlen($pdf),
+            'Cache-Control' => 'private, no-store, max-age=0',
+        ]);
     }
 
     public function acknowledgementPdf(LandTransferApplication $application)
