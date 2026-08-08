@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Landowner;
 use App\Http\Controllers\Controller;
 use App\Models\Landowner;
 use App\Models\LandTransferApplication;
-use App\Services\ClearanceBrowserPdfRenderer;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Auth;
 
 class ApplicationClearanceController extends Controller
@@ -30,7 +30,7 @@ class ApplicationClearanceController extends Controller
         return redirect()->route('landowner.applications.clearance.pdf', $application);
     }
 
-    public function pdf(LandTransferApplication $application, ClearanceBrowserPdfRenderer $renderer)
+    public function pdf(LandTransferApplication $application)
     {
         $this->authorizeLandownerApplication($application);
         $application->load(['clearance', 'documents.requiredDocument', 'applicationParcels.parcel']);
@@ -48,21 +48,19 @@ class ApplicationClearanceController extends Controller
         }
 
         $safeApplicationCode = str_replace(['/', '\\', ' '], '-', (string) $application->application_code);
-        $filename = 'LTC-Form-No-5-' . $safeApplicationCode . '.pdf';
 
-        $html = view('staff.clearances.pdf', [
+        $pdf = Pdf::setOption([
+            'defaultMediaType' => 'print',
+            'isRemoteEnabled' => true,
+            'allowedRemoteHosts' => [
+                'raw.githubusercontent.com',
+            ],
+        ])->loadView('staff.clearances.pdf', [
             'application' => $application,
             'clearance' => $application->clearance,
-        ])->render();
+        ])->setPaper('a4');
 
-        $pdf = $renderer->render($html);
-
-        return response($pdf, 200, [
-            'Content-Type' => 'application/pdf',
-            'Content-Disposition' => 'inline; filename="' . $filename . '"',
-            'Content-Length' => (string) strlen($pdf),
-            'Cache-Control' => 'private, no-store, max-age=0',
-        ]);
+        return $pdf->stream('LTC-Form-No-5-' . $safeApplicationCode . '.pdf');
     }
 
     private function authorizeLandownerApplication(LandTransferApplication $application): void
