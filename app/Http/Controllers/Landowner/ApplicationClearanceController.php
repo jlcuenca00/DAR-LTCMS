@@ -50,6 +50,7 @@ class ApplicationClearanceController extends Controller
         $safeApplicationCode = str_replace(['/', '\\', ' '], '-', (string) $application->application_code);
 
         $pdf = Pdf::setOption([
+            'defaultMediaType' => 'print',
             'isRemoteEnabled' => true,
             'allowedRemoteHosts' => [
                 'raw.githubusercontent.com',
