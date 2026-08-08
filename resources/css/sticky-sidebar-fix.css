@@ -1,0 +1,30 @@
+/* Phase 3: preserve sticky sidebars while preventing horizontal overflow.
+   `overflow-x: hidden` on html/body can create a scroll container in Chromium,
+   which prevents position: sticky descendants from sticking to the viewport. */
+
+html,
+body {
+    overflow-x: clip !important;
+}
+
+@media screen and (min-width: 921px) {
+    .staff-shell,
+    .geo-shell,
+    .lo-shell {
+        overflow: visible !important;
+    }
+
+    .staff-sidebar,
+    .geo-sidebar,
+    .lo-sidebar {
+        position: sticky !important;
+        top: 0 !important;
+        height: 100vh !important;
+        height: 100dvh !important;
+        max-height: 100vh !important;
+        max-height: 100dvh !important;
+        align-self: start !important;
+        overflow-x: hidden !important;
+        overflow-y: auto !important;
+    }
+}

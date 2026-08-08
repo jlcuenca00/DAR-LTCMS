@@ -17,18 +17,18 @@
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
     <body class="font-sans text-gray-900 antialiased">
-        <div class="min-h-screen bg-gradient-to-br from-green-950 via-green-900 to-slate-950 px-4 py-8 flex items-center justify-center">
-            <div class="w-full max-w-md">
-                <div class="mb-6 text-center text-white">
-                    <a href="/" class="mx-auto mb-4 grid h-20 w-20 place-items-center rounded-2xl border border-white/20 bg-white shadow-xl">
-                        <x-application-logo class="h-14 w-14 fill-current text-green-800" />
+        <div class="flex min-h-screen min-w-0 items-center justify-center bg-gradient-to-br from-green-950 via-green-900 to-slate-950 px-3 py-6 sm:px-4 sm:py-8">
+            <div class="w-full max-w-md min-w-0">
+                <div class="mb-5 px-2 text-center text-white sm:mb-6">
+                    <a href="/" class="mx-auto mb-4 grid h-16 w-16 place-items-center rounded-2xl border border-white/20 bg-white shadow-xl sm:h-20 sm:w-20">
+                        <x-application-logo class="h-11 w-11 fill-current text-green-800 sm:h-14 sm:w-14" />
                     </a>
-                    <p class="text-xs font-black uppercase tracking-[0.24em] text-green-100">DAR Negros Oriental</p>
-                    <h1 class="mt-2 text-2xl font-black tracking-tight">DAR-LTCMS</h1>
-                    <p class="mt-1 text-sm font-semibold text-green-100">Land Transfer Clearance and Monitoring System</p>
+                    <p class="text-[11px] font-black uppercase tracking-[0.18em] text-green-100 sm:text-xs sm:tracking-[0.24em]">DAR Negros Oriental</p>
+                    <h1 class="mt-2 text-xl font-black tracking-tight sm:text-2xl">DAR-LTCMS</h1>
+                    <p class="mt-1 text-xs font-semibold leading-relaxed text-green-100 sm:text-sm">Land Transfer Clearance and Monitoring System</p>
                 </div>
 
-                <div class="w-full rounded-2xl border border-white/15 bg-white p-7 shadow-2xl">
+                <div class="w-full min-w-0 rounded-2xl border border-white/15 bg-white p-4 shadow-2xl sm:p-7">
                     {{ $slot }}
                 </div>
             </div>

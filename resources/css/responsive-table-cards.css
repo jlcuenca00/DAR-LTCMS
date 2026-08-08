@@ -1,0 +1,246 @@
+/* DAR-LTCMS Phase 3: mobile record cards + sticky desktop portal sidebars. */
+
+@media screen and (min-width: 921px) {
+    .staff-shell,
+    .geo-shell,
+    .lo-shell {
+        min-height: 100vh;
+        align-items: start;
+    }
+
+    /* Keep the actual navigation fixed to the viewport while the shell
+       paints the sidebar column for the full document height. */
+    .staff-shell {
+        --portal-sidebar-width: 260px;
+        background: linear-gradient(
+            to right,
+            #14532d 0,
+            #14532d var(--portal-sidebar-width),
+            var(--page-bg) var(--portal-sidebar-width),
+            var(--page-bg) 100%
+        ) !important;
+    }
+
+    .geo-shell {
+        --portal-sidebar-width: 250px;
+        background: linear-gradient(
+            to right,
+            #0f4b25 0,
+            #0f4b25 var(--portal-sidebar-width),
+            var(--geo-bg) var(--portal-sidebar-width),
+            var(--geo-bg) 100%
+        ) !important;
+    }
+
+    .lo-shell {
+        --portal-sidebar-width: 250px;
+        background: linear-gradient(
+            to right,
+            #0f4b25 0,
+            #0f4b25 var(--portal-sidebar-width),
+            var(--lo-bg) var(--portal-sidebar-width),
+            var(--lo-bg) 100%
+        ) !important;
+    }
+
+    .staff-sidebar,
+    .geo-sidebar,
+    .lo-sidebar {
+        position: sticky !important;
+        top: 0 !important;
+        height: 100vh !important;
+        height: 100dvh !important;
+        min-height: 0 !important;
+        max-height: 100vh;
+        max-height: 100dvh;
+        align-self: start !important;
+        overflow-y: auto;
+    }
+}
+
+@media screen and (min-width: 921px) and (max-width: 1180px) {
+    .staff-shell {
+        --portal-sidebar-width: 230px;
+    }
+}
+
+@media screen and (max-width: 640px) {
+    /* Give the public landing page a standard 16px mobile gutter. */
+    body .site-header .header-inner,
+    body .hero-grid,
+    body .section .container,
+    body footer .container {
+        width: min(calc(100% - 2rem), 1160px) !important;
+    }
+
+    .staff-shell .responsive-card-table,
+    .geo-shell .responsive-card-table,
+    .lo-shell .responsive-card-table {
+        width: 100% !important;
+        display: block !important;
+        border-collapse: separate !important;
+        border-spacing: 0 !important;
+        table-layout: auto !important;
+    }
+
+    .staff-shell .responsive-card-table thead,
+    .geo-shell .responsive-card-table thead,
+    .lo-shell .responsive-card-table thead {
+        position: absolute !important;
+        width: 1px !important;
+        height: 1px !important;
+        padding: 0 !important;
+        margin: -1px !important;
+        overflow: hidden !important;
+        clip: rect(0, 0, 0, 0) !important;
+        white-space: nowrap !important;
+        border: 0 !important;
+    }
+
+    .staff-shell .responsive-card-table tbody,
+    .geo-shell .responsive-card-table tbody,
+    .lo-shell .responsive-card-table tbody {
+        display: grid !important;
+        width: 100% !important;
+        gap: 12px;
+        padding: 0 !important;
+    }
+
+    .staff-shell .responsive-card-table tbody > tr,
+    .geo-shell .responsive-card-table tbody > tr,
+    .lo-shell .responsive-card-table tbody > tr {
+        display: grid !important;
+        width: 100% !important;
+        min-width: 0 !important;
+        gap: 0;
+        overflow: hidden;
+        border: 1px solid #d8e0db;
+        border-radius: 12px;
+        background: #ffffff;
+        box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+    }
+
+    .staff-shell .responsive-card-table tbody > tr > td,
+    .staff-shell .responsive-card-table tbody > tr > th,
+    .geo-shell .responsive-card-table tbody > tr > td,
+    .geo-shell .responsive-card-table tbody > tr > th,
+    .lo-shell .responsive-card-table tbody > tr > td,
+    .lo-shell .responsive-card-table tbody > tr > th {
+        display: grid !important;
+        grid-template-columns: minmax(92px, 34%) minmax(0, 1fr);
+        align-items: start;
+        gap: 12px;
+        width: 100% !important;
+        min-width: 0 !important;
+        max-width: 100% !important;
+        padding: 11px 13px !important;
+        border: 0 !important;
+        border-bottom: 1px solid #edf1ee !important;
+        background: transparent !important;
+        text-align: left !important;
+        white-space: normal !important;
+        overflow-wrap: anywhere !important;
+        vertical-align: top !important;
+    }
+
+    .staff-shell .responsive-card-table tbody > tr > td:last-child,
+    .staff-shell .responsive-card-table tbody > tr > th:last-child,
+    .geo-shell .responsive-card-table tbody > tr > td:last-child,
+    .geo-shell .responsive-card-table tbody > tr > th:last-child,
+    .lo-shell .responsive-card-table tbody > tr > td:last-child,
+    .lo-shell .responsive-card-table tbody > tr > th:last-child {
+        border-bottom: 0 !important;
+    }
+
+    .staff-shell .responsive-card-table tbody > tr > td::before,
+    .staff-shell .responsive-card-table tbody > tr > th::before,
+    .geo-shell .responsive-card-table tbody > tr > td::before,
+    .geo-shell .responsive-card-table tbody > tr > th::before,
+    .lo-shell .responsive-card-table tbody > tr > td::before,
+    .lo-shell .responsive-card-table tbody > tr > th::before {
+        content: attr(data-mobile-label);
+        min-width: 0;
+        color: #64748b;
+        font-size: 10px;
+        font-weight: 900;
+        line-height: 1.35;
+        letter-spacing: .08em;
+        text-transform: uppercase;
+    }
+
+    .staff-shell .responsive-card-table .responsive-card-empty-row,
+    .geo-shell .responsive-card-table .responsive-card-empty-row,
+    .lo-shell .responsive-card-table .responsive-card-empty-row {
+        display: block !important;
+        padding: 0 !important;
+    }
+
+    .staff-shell .responsive-card-table .responsive-card-empty-row > td,
+    .geo-shell .responsive-card-table .responsive-card-empty-row > td,
+    .lo-shell .responsive-card-table .responsive-card-empty-row > td {
+        display: block !important;
+        padding: 22px 14px !important;
+        text-align: center !important;
+    }
+
+    .staff-shell .responsive-card-table .responsive-card-empty-row > td::before,
+    .geo-shell .responsive-card-table .responsive-card-empty-row > td::before,
+    .lo-shell .responsive-card-table .responsive-card-empty-row > td::before {
+        content: none !important;
+    }
+
+    .staff-shell .responsive-card-table .staff-table-action,
+    .geo-shell .responsive-card-table .staff-table-action,
+    .lo-shell .responsive-card-table .staff-table-action {
+        width: 100% !important;
+    }
+
+    .staff-shell .responsive-card-table .staff-table-action-group,
+    .geo-shell .responsive-card-table .staff-table-action-group,
+    .lo-shell .responsive-card-table .staff-table-action-group {
+        width: 100%;
+        display: grid !important;
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+
+    .staff-shell .responsive-card-table .staff-table-action-group .staff-button,
+    .geo-shell .responsive-card-table .staff-table-action-group .staff-button,
+    .lo-shell .responsive-card-table .staff-table-action-group .staff-button {
+        width: 100%;
+        min-height: 44px;
+    }
+
+    .staff-shell .responsive-card-table .staff-badge,
+    .geo-shell .responsive-card-table .staff-badge,
+    .lo-shell .responsive-card-table .staff-badge {
+        max-width: 100%;
+        white-space: normal !important;
+    }
+
+    .dashboard-table-wrap,
+    .staff-table-wrap,
+    .report-table-wrap,
+    .table-wrap,
+    .source-table-wrap,
+    .timeline-table-wrap {
+        overflow: visible !important;
+    }
+
+    .dashboard-table-wrap {
+        padding: 12px !important;
+    }
+}
+
+@media screen and (max-width: 390px) {
+    .staff-shell .responsive-card-table tbody > tr > td,
+    .staff-shell .responsive-card-table tbody > tr > th,
+    .geo-shell .responsive-card-table tbody > tr > td,
+    .geo-shell .responsive-card-table tbody > tr > th,
+    .lo-shell .responsive-card-table tbody > tr > td,
+    .lo-shell .responsive-card-table tbody > tr > th {
+        grid-template-columns: 82px minmax(0, 1fr);
+        gap: 9px;
+        padding: 10px 11px !important;
+    }
+}

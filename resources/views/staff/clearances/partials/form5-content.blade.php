@@ -75,37 +75,46 @@
     $returnRoute = $returnRoute ?? route('staff.applications.show', $application);
     $returnLabel = $returnLabel ?? 'Back to Application';
 
-    $logoDataUri = function (array $filenames) {
+    $logoAsset = function (array $filenames) {
+        foreach ($filenames as $filename) {
+            foreach ([$filename, 'images/' . $filename, 'logos/' . $filename, 'clearance/' . $filename, 'clearances/' . $filename] as $storagePath) {
+                if (\Illuminate\Support\Facades\Storage::disk('public')->exists($storagePath)) {
+                    return asset('storage/' . $storagePath);
+                }
+            }
+        }
+
         foreach ($filenames as $filename) {
             $path = public_path('images/' . $filename);
             if (is_file($path)) {
                 return asset('images/' . $filename);
             }
         }
+
         return null;
     };
 
-    $darLogo = $logoDataUri(['dar-logo.png', 'dar-logo.jpg', 'dar-logo.svg']);
-    $bagongLogo = $logoDataUri(['bagong-pilipinas.png', 'bagong-pilipinas.jpg', 'bagong-pilipinas.svg', 'bagong-pilipinas-logo.svg']);
+    $darLogo = $logoAsset(['dar-logo.png', 'dar-logo.jpg', 'dar-logo.svg', 'dar_logo.png', 'DAR-logo.png']);
+    $bagongLogo = $logoAsset(['bagong-pilipinas.png', 'bagong-pilipinas.jpg', 'bagong-pilipinas.svg', 'bagong-pilipinas-logo.svg', 'bagong_pilipinas.png']);
 @endphp
 
 <style>
     @page { size: A4; margin: 8mm 11mm; }
-    /* Use the locally installed Century Gothic family for screen and print output. */
+
     @font-face {
-        font-family: 'LTC Century Gothic';
-        src: local('Century Gothic'), local('CenturyGothic'), local('Century Gothic Regular');
+        font-family: 'LTC Gilroy';
+        src: local('Gilroy'), local('Gilroy Regular'), local('Gilroy-Regular');
         font-weight: 400;
         font-style: normal;
     }
     @font-face {
-        font-family: 'LTC Century Gothic';
-        src: local('Century Gothic Bold'), local('CenturyGothic-Bold'), local('Century Gothic');
+        font-family: 'LTC Gilroy';
+        src: local('Gilroy Bold'), local('Gilroy-Bold'), local('Gilroy SemiBold'), local('Gilroy-SemiBold');
         font-weight: 700;
         font-style: normal;
     }
 
-    :root { --ltc-font: 'LTC Century Gothic', 'Century Gothic', CenturyGothic, AppleGothic, Arial, sans-serif; }
+    :root { --ltc-font: 'LTC Gilroy', 'Gilroy', 'Gilroy Regular', Arial, sans-serif; }
     html,
     body,
     main,
@@ -193,7 +202,7 @@
     </div>
 @endif
 
-<main class="ltc-page" style="font-family: 'LTC Century Gothic', 'Century Gothic', CenturyGothic, AppleGothic, Arial, sans-serif !important; font-weight: 400;">
+<main class="ltc-page" style="font-family: 'LTC Gilroy', 'Gilroy', 'Gilroy Regular', Arial, sans-serif !important; font-weight: 400;">
     <div class="top-form-no">LTC Form No. 5</div>
 
     <header class="official-header">
