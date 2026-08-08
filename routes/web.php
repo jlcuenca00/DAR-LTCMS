@@ -28,9 +28,7 @@ use App\Http\Controllers\Staff\StaffDashboardController;
 use App\Http\Controllers\Staff\UserManagementController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
-    return redirect()->route('login');
-});
+Route::view('/', 'welcome')->name('home');
 
 Route::get('/dashboard', function () {
     $user = request()->user();

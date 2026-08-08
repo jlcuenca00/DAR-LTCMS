@@ -6,10 +6,14 @@ use Tests\TestCase;
 
 class ExampleTest extends TestCase
 {
-    public function test_the_application_redirects_to_login_from_root(): void
+    public function test_the_public_landing_page_is_available(): void
     {
         $response = $this->get('/');
 
-        $response->assertRedirect(route('login'));
+        $response
+            ->assertOk()
+            ->assertSee('Land Transfer Clearance and Monitoring System')
+            ->assertSee('Authorized User Login')
+            ->assertSee(route('login'), false);
     }
 }
