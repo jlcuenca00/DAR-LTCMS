@@ -3,6 +3,7 @@ import './responsive-tables';
 import '../css/responsive.css';
 import '../css/responsive-no-scroll.css';
 import '../css/responsive-table-cards.css';
+import '../css/sticky-sidebar-fix.css';
 
 import Alpine from 'alpinejs';
 
@@ -192,7 +193,7 @@ function initDarLtcmsProfileCropper() {
                     resetCrop();
                     saveButton.focus();
                 });
-            };
+            }
 
             image.onerror = () => {
                 sourceImage = null;
