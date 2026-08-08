@@ -65,6 +65,14 @@
 }
 
 @media screen and (max-width: 640px) {
+    /* Give the public landing page a standard 16px mobile gutter. */
+    body .site-header .header-inner,
+    body .hero-grid,
+    body .section .container,
+    body footer .container {
+        width: min(calc(100% - 2rem), 1160px) !important;
+    }
+
     .staff-shell .responsive-card-table,
     .geo-shell .responsive-card-table,
     .lo-shell .responsive-card-table {
