@@ -38,13 +38,16 @@
         .skip-link:focus { transform: translateY(0); }
         :where(a, summary, button):focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; border-radius: 6px; }
 
-        .development-notice { background: #f2c94c; color: #1d291f; border-bottom: 1px solid rgba(0,0,0,.12); }
+        .sticky-shell { position: sticky; top: 0; z-index: 50; }
+        .development-notice { background: #fff6cf; color: #4a3b00; border-bottom: 1px solid #eadb8e; }
         .development-notice-inner { min-height: 44px; display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 1rem; }
+        .development-message { display: flex; align-items: center; gap: .65rem; min-width: 0; }
+        .development-icon { width: 19px; height: 19px; flex: 0 0 auto; color: #9a6a00; }
         .development-notice p { margin: 0; font-size: .88rem; font-weight: 600; }
-        .development-dismiss { width: 44px; height: 44px; display: inline-flex; align-items: center; justify-content: center; padding: 0; border: 0; border-radius: 8px; background: transparent; color: #1d291f; cursor: pointer; font-size: 1.35rem; line-height: 1; }
-        .development-dismiss:hover { background: rgba(0,0,0,.08); }
+        .development-dismiss { width: 44px; height: 44px; display: inline-flex; align-items: center; justify-content: center; padding: 0; border: 0; border-radius: 8px; background: transparent; color: #4a3b00; cursor: pointer; font-size: 1.35rem; line-height: 1; }
+        .development-dismiss:hover { background: rgba(154,106,0,.09); }
 
-        .site-header { position: sticky; top: 0; z-index: 50; background: rgba(8,45,27,.97); border-bottom: 1px solid rgba(255,255,255,.12); color: #fff; }
+        .site-header { position: relative; background: rgba(8,45,27,.97); border-bottom: 1px solid rgba(255,255,255,.12); color: #fff; }
         .header-inner { min-height: 72px; display: flex; align-items: center; justify-content: space-between; gap: 1.25rem; }
         .brand { min-height: 48px; display: inline-flex; align-items: center; gap: .75rem; text-decoration: none; }
         .brand img { width: 44px; height: 44px; object-fit: contain; }
@@ -194,32 +197,41 @@
 <body>
     <a class="skip-link" href="#main-content">Skip to main content</a>
 
-    <div class="development-notice" id="development-notice" role="status">
-        <div class="container development-notice-inner">
-            <p>This site is still undergoing development. Please bear with us.</p>
-            <button type="button" class="development-dismiss" id="dismiss-development-notice" aria-label="Dismiss development notice">&times;</button>
+    <div class="sticky-shell">
+        <div class="development-notice" id="development-notice" role="status">
+            <div class="container development-notice-inner">
+                <div class="development-message">
+                    <svg class="development-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"></circle>
+                        <path d="M12 7.5V13" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
+                        <circle cx="12" cy="16.5" r="1" fill="currentColor"></circle>
+                    </svg>
+                    <p>This site is still undergoing development. Please bear with us.</p>
+                </div>
+                <button type="button" class="development-dismiss" id="dismiss-development-notice" aria-label="Dismiss development notice">&times;</button>
+            </div>
         </div>
-    </div>
 
-    <header class="site-header">
-        <div class="container header-inner">
-            <a href="{{ route('home') }}" class="brand" aria-label="DAR-LTCMS home">
-                <img src="{{ asset('images/dar-logo.svg') }}" alt="Department of Agrarian Reform logo">
-                <span>
-                    <span class="brand-name">DAR-LTCMS</span>
-                    <span class="brand-office">DAR Negros Oriental Provincial Office</span>
-                </span>
-            </a>
-            <nav class="nav" aria-label="Public information">
-                <a href="#about">About</a>
-                <a href="#requirements">Requirements</a>
-                <a href="#process">Process</a>
-                <a href="#faq">FAQ</a>
-                <a href="#office">Office</a>
-                <a href="{{ route('login') }}" class="sign-in">Sign In</a>
-            </nav>
-        </div>
-    </header>
+        <header class="site-header">
+            <div class="container header-inner">
+                <a href="{{ route('home') }}" class="brand" aria-label="DAR-LTCMS home">
+                    <img src="{{ asset('images/dar-logo.svg') }}" alt="Department of Agrarian Reform logo">
+                    <span>
+                        <span class="brand-name">DAR-LTCMS</span>
+                        <span class="brand-office">DAR Negros Oriental Provincial Office</span>
+                    </span>
+                </a>
+                <nav class="nav" aria-label="Public information">
+                    <a href="#about">About</a>
+                    <a href="#requirements">Requirements</a>
+                    <a href="#process">Process</a>
+                    <a href="#faq">FAQ</a>
+                    <a href="#office">Office</a>
+                    <a href="{{ route('login') }}" class="sign-in">Sign In</a>
+                </nav>
+            </div>
+        </header>
+    </div>
 
     <main id="main-content">
         <section class="hero" aria-labelledby="hero-title">
