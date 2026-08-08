@@ -1,5 +1,6 @@
 import './bootstrap';
 import '../css/responsive.css';
+import '../css/responsive-no-scroll.css';
 
 import Alpine from 'alpinejs';
 
