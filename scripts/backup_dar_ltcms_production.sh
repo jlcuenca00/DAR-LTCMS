@@ -5,8 +5,9 @@ umask 077
 # DAR-LTCMS encrypted production backup.
 #
 # This script intentionally keeps only a temporary PostgreSQL dump on the
-# application server. The database dump and user-generated storage files are
-# backed up into an encrypted restic repository stored off-server.
+# application server. The database dump, production Laravel configuration,
+# and user-generated storage files are backed up into an encrypted restic
+# repository stored off-server.
 #
 # Required backup configuration is loaded from:
 #   $BACKUP_ENV_FILE
@@ -124,7 +125,7 @@ trap cleanup EXIT INT TERM
 export PGPASSWORD="$DB_PASSWORD"
 
 # Optional conservative disk-space check. Only the database dump is staged
-# locally; storage/app files are streamed directly to the encrypted repository.
+# locally; storage/app files and .env are streamed directly to the repository.
 if command -v psql >/dev/null 2>&1; then
     DB_SIZE_BYTES="$(psql \
         --host="$DB_HOST" \
@@ -176,6 +177,7 @@ Application commit: $GIT_COMMIT
 Database: $DB_DATABASE
 Database host: $DB_HOST:$DB_PORT
 Database format: PostgreSQL custom dump
+Laravel .env included: $([ -f "$PROJECT_ROOT/.env" ] && echo yes || echo no)
 Restic tag: $BACKUP_TAG
 EOF
 
@@ -184,6 +186,7 @@ BACKUP_TARGETS=(
     "$MANIFEST"
 )
 
+[ -f "$PROJECT_ROOT/.env" ] && BACKUP_TARGETS+=("$PROJECT_ROOT/.env")
 [ -d "$PROJECT_ROOT/storage/app/private" ] && BACKUP_TARGETS+=("$PROJECT_ROOT/storage/app/private")
 [ -d "$PROJECT_ROOT/storage/app/public" ] && BACKUP_TARGETS+=("$PROJECT_ROOT/storage/app/public")
 
