@@ -1,19 +1,66 @@
-/* DAR-LTCMS Phase 3: mobile record cards + full-height desktop portal sidebars. */
+/* DAR-LTCMS Phase 3: mobile record cards + sticky desktop portal sidebars. */
 
 @media screen and (min-width: 921px) {
     .staff-shell,
     .geo-shell,
     .lo-shell {
-        align-items: stretch;
         min-height: 100vh;
+        align-items: start;
+    }
+
+    /* Keep the actual navigation fixed to the viewport while the shell
+       paints the sidebar column for the full document height. */
+    .staff-shell {
+        --portal-sidebar-width: 260px;
+        background: linear-gradient(
+            to right,
+            #14532d 0,
+            #14532d var(--portal-sidebar-width),
+            var(--page-bg) var(--portal-sidebar-width),
+            var(--page-bg) 100%
+        ) !important;
+    }
+
+    .geo-shell {
+        --portal-sidebar-width: 250px;
+        background: linear-gradient(
+            to right,
+            #0f4b25 0,
+            #0f4b25 var(--portal-sidebar-width),
+            var(--geo-bg) var(--portal-sidebar-width),
+            var(--geo-bg) 100%
+        ) !important;
+    }
+
+    .lo-shell {
+        --portal-sidebar-width: 250px;
+        background: linear-gradient(
+            to right,
+            #0f4b25 0,
+            #0f4b25 var(--portal-sidebar-width),
+            var(--lo-bg) var(--portal-sidebar-width),
+            var(--lo-bg) 100%
+        ) !important;
     }
 
     .staff-sidebar,
     .geo-sidebar,
     .lo-sidebar {
-        height: auto !important;
-        min-height: 100vh;
-        align-self: stretch;
+        position: sticky !important;
+        top: 0 !important;
+        height: 100vh !important;
+        height: 100dvh !important;
+        min-height: 0 !important;
+        max-height: 100vh;
+        max-height: 100dvh;
+        align-self: start !important;
+        overflow-y: auto;
+    }
+}
+
+@media screen and (min-width: 921px) and (max-width: 1180px) {
+    .staff-shell {
+        --portal-sidebar-width: 230px;
     }
 }
 
