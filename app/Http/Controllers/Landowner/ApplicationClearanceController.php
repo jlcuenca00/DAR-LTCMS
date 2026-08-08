@@ -49,12 +49,36 @@ class ApplicationClearanceController extends Controller
 
         $safeApplicationCode = str_replace(['/', '\\', ' '], '-', (string) $application->application_code);
 
-        $pdf = Pdf::loadView('staff.clearances.pdf', [
-            'application' => $application,
-            'clearance' => $application->clearance,
-        ])->setPaper('a4');
+        $html = $this->renderClearancePdfHtml($application);
+        $pdf = Pdf::loadHTML($html)->setPaper('a4');
 
         return $pdf->stream('LTC-Form-No-5-' . $safeApplicationCode . '.pdf');
+    }
+
+    private function renderClearancePdfHtml(LandTransferApplication $application): string
+    {
+        $html = view('staff.clearances.pdf', [
+            'application' => $application,
+            'clearance' => $application->clearance,
+        ])->render();
+
+        $bagongSvgPath = public_path('images/bagong-pilipinas-logo.svg');
+
+        if (is_file($bagongSvgPath)) {
+            $svgContents = file_get_contents($bagongSvgPath);
+
+            if ($svgContents !== false) {
+                $svgDataUri = 'data:image/svg+xml;base64,' . base64_encode($svgContents);
+                $html = preg_replace(
+                    '/data:image\/png;base64,[A-Za-z0-9+\/=]+/',
+                    $svgDataUri,
+                    $html,
+                    1
+                ) ?? $html;
+            }
+        }
+
+        return $html;
     }
 
     private function authorizeLandownerApplication(LandTransferApplication $application): void
