@@ -69,6 +69,129 @@
             font-size: .76rem;
         }
 
+        .application-mobile-list {
+            display: none;
+        }
+
+        .application-mobile-card {
+            display: grid;
+            gap: 14px;
+            padding: 16px;
+            border-top: 1px solid #e5e7eb;
+            background: #ffffff;
+        }
+
+        .application-mobile-card:first-child {
+            border-top: 0;
+        }
+
+        .application-mobile-head {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .application-mobile-code {
+            display: inline-block;
+            color: #166534;
+            font-size: .92rem;
+            font-weight: 900;
+            text-decoration: none;
+        }
+
+        .application-mobile-code:hover {
+            text-decoration: underline;
+            text-underline-offset: 3px;
+        }
+
+        .application-mobile-reference {
+            margin-top: 3px;
+            color: #64748b;
+            font-size: .72rem;
+        }
+
+        .application-mobile-section {
+            display: grid;
+            gap: 7px;
+        }
+
+        .application-mobile-label {
+            color: #64748b;
+            font-size: .65rem;
+            font-weight: 900;
+            letter-spacing: .08em;
+            text-transform: uppercase;
+        }
+
+        .application-mobile-party {
+            display: grid;
+            grid-template-columns: 44px minmax(0, 1fr);
+            gap: 8px;
+            align-items: start;
+        }
+
+        .application-mobile-party-direction {
+            color: #64748b;
+            font-size: .67rem;
+            font-weight: 900;
+            letter-spacing: .05em;
+            text-transform: uppercase;
+        }
+
+        .application-mobile-party-name {
+            min-width: 0;
+            color: #0f172a;
+            font-size: .88rem;
+            font-weight: 750;
+            line-height: 1.4;
+            overflow-wrap: anywhere;
+        }
+
+        .application-mobile-meta {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+        }
+
+        .application-mobile-meta-item {
+            min-width: 0;
+            padding: 11px 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            background: #f8fafc;
+        }
+
+        .application-mobile-value {
+            margin-top: 4px;
+            color: #0f172a;
+            font-size: .83rem;
+            font-weight: 750;
+            line-height: 1.4;
+            overflow-wrap: anywhere;
+        }
+
+        .application-mobile-location-sub {
+            display: block;
+            margin-top: 2px;
+            color: #64748b;
+            font-size: .75rem;
+            font-weight: 650;
+        }
+
+        .application-mobile-action .staff-button {
+            width: 100%;
+            min-height: 44px;
+        }
+
+        .application-mobile-empty {
+            padding: 28px 16px;
+            border-top: 1px solid #e5e7eb;
+            color: #64748b;
+            font-size: .88rem;
+            text-align: center;
+        }
+
         @media (max-width: 1280px) {
             .application-filter-grid {
                 grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -89,6 +212,46 @@
             .records-toolbar-actions .staff-button {
                 flex: 1 1 auto;
                 justify-content: center;
+            }
+
+            .application-desktop-table {
+                display: none !important;
+            }
+
+            .application-mobile-list {
+                display: block;
+            }
+        }
+
+        @media (max-width: 430px) {
+            .application-mobile-card {
+                padding: 14px;
+            }
+
+            .application-mobile-head {
+                display: grid;
+                grid-template-columns: minmax(0, 1fr);
+            }
+
+            .application-mobile-head .staff-badge {
+                width: fit-content;
+                max-width: 100%;
+                white-space: normal;
+            }
+
+            .application-mobile-meta {
+                grid-template-columns: 1fr;
+            }
+
+            .application-filter-actions,
+            .records-toolbar-actions {
+                display: grid;
+                grid-template-columns: 1fr;
+            }
+
+            .application-filter-actions .staff-button,
+            .records-toolbar-actions .staff-button {
+                width: 100%;
             }
         }
     </style>
@@ -210,7 +373,7 @@
             </div>
         </div>
 
-        <div class="staff-table-wrap">
+        <div class="staff-table-wrap application-desktop-table">
             <table class="staff-table">
                 <thead>
                     <tr>
@@ -253,7 +416,7 @@
                             <td class="staff-table-action">
                                 <div class="staff-table-action-group">
                                     <a href="{{ route('staff.applications.show', $application) }}" class="staff-button staff-button-light">
-                                    Open
+                                        Open
                                         <i class="fa-solid fa-arrow-right"></i>
                                     </a>
                                 </div>
@@ -264,6 +427,58 @@
                     @endforelse
                 </tbody>
             </table>
+        </div>
+
+        <div class="application-mobile-list" aria-label="Application working list">
+            @forelse ($applications as $application)
+                @php $badge = $statusBadges[$application->status] ?? 'staff-badge-slate'; @endphp
+                <article class="application-mobile-card">
+                    <div class="application-mobile-head">
+                        <div>
+                            <a href="{{ route('staff.applications.show', $application) }}" class="application-mobile-code">
+                                {{ $application->application_code }}
+                            </a>
+                            <div class="application-mobile-reference">Application record #{{ $application->id }}</div>
+                        </div>
+                        <span class="staff-badge {{ $badge }}">{{ $application->statusLabel() }}</span>
+                    </div>
+
+                    <div class="application-mobile-section">
+                        <div class="application-mobile-label">Parties</div>
+                        <div class="application-mobile-party">
+                            <span class="application-mobile-party-direction">From</span>
+                            <span class="application-mobile-party-name">{{ $application->transferor_name }}</span>
+                        </div>
+                        <div class="application-mobile-party">
+                            <span class="application-mobile-party-direction">To</span>
+                            <span class="application-mobile-party-name">{{ $application->transferee_name }}</span>
+                        </div>
+                    </div>
+
+                    <div class="application-mobile-meta">
+                        <div class="application-mobile-meta-item">
+                            <div class="application-mobile-label">Location</div>
+                            <div class="application-mobile-value">
+                                {{ $application->municipality ?? 'N/A' }}
+                                <span class="application-mobile-location-sub">{{ $application->barangay ?? 'N/A' }}</span>
+                            </div>
+                        </div>
+                        <div class="application-mobile-meta-item">
+                            <div class="application-mobile-label">Date Encoded</div>
+                            <div class="application-mobile-value">{{ $application->created_at?->timezone('Asia/Manila')->format('M d, Y') ?? 'N/A' }}</div>
+                        </div>
+                    </div>
+
+                    <div class="application-mobile-action">
+                        <a href="{{ route('staff.applications.show', $application) }}" class="staff-button staff-button-light">
+                            Open Application
+                            <i class="fa-solid fa-arrow-right"></i>
+                        </a>
+                    </div>
+                </article>
+            @empty
+                <div class="application-mobile-empty">No clearance applications found.</div>
+            @endforelse
         </div>
 
         <div class="border-t border-gray-200 px-5 py-4">
