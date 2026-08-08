@@ -32,7 +32,7 @@
             $replacement = '<img src="' . e($bagongAbsolutePath) . '" class="logo-img" alt="Bagong Pilipinas Logo">';
 
             $form5Html = preg_replace(
-                '/<img\s+src="[^"]*"\s+class="logo-img"\s+alt="Bagong Pilipinas Logo">/i',
+                '/(?:<img\s+src="[^"]*"\s+class="logo-img"\s+alt="Bagong Pilipinas Logo">|<div\s+class="logo-fallback">BAGONG<br\s*\/?>PILIPINAS<\/div>)/i',
                 $replacement,
                 $form5Html,
                 1
