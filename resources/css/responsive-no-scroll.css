@@ -1,0 +1,171 @@
+/* DAR-LTCMS Phase 3 correction: responsive layouts must reflow instead of horizontally scroll. */
+
+html,
+body {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden !important;
+}
+
+@media screen and (max-width: 920px) {
+    /* Public landing page: wrap navigation inside the viewport. */
+    body .site-header .header-inner {
+        width: 100%;
+        min-width: 0;
+    }
+
+    body .site-header .nav {
+        width: 100% !important;
+        max-width: 100% !important;
+        display: grid !important;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: .3rem !important;
+        overflow: visible !important;
+        padding-bottom: 0 !important;
+    }
+
+    body .site-header .nav a {
+        width: 100%;
+        min-width: 0;
+        justify-content: center;
+        text-align: center;
+        white-space: normal;
+        overflow-wrap: anywhere;
+        padding-inline: .45rem !important;
+    }
+
+    body .site-header .nav .sign-in {
+        margin-left: 0 !important;
+    }
+
+    /* Staff workspace: everything must fit the viewport. */
+    html body .staff-shell,
+    html body .staff-main,
+    html body .staff-content,
+    html body .staff-content-inner,
+    html body .staff-panel,
+    html body .staff-panel-pad {
+        width: 100%;
+        max-width: 100%;
+        min-width: 0 !important;
+    }
+
+    html body .staff-table-wrap,
+    html body .report-table-wrap,
+    html body .table-wrap,
+    html body .source-table-wrap,
+    html body .timeline-table-wrap {
+        width: 100%;
+        max-width: 100%;
+        overflow-x: hidden !important;
+    }
+
+    html body .staff-content-inner table:not(.no-responsive-table) {
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        table-layout: fixed !important;
+    }
+
+    html body .staff-content-inner table:not(.no-responsive-table) th,
+    html body .staff-content-inner table:not(.no-responsive-table) td {
+        min-width: 0 !important;
+        max-width: none !important;
+        white-space: normal !important;
+        overflow-wrap: anywhere !important;
+        word-break: normal;
+    }
+
+    html body .staff-content-inner .staff-table {
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        table-layout: fixed !important;
+    }
+
+    html body .staff-table th.staff-table-action,
+    html body .staff-table td.staff-table-action {
+        width: auto !important;
+        min-width: 0 !important;
+        white-space: normal !important;
+    }
+
+    html body .staff-table-action-group {
+        width: 100%;
+        max-width: 100%;
+        display: flex !important;
+        flex-wrap: wrap !important;
+        justify-content: center;
+    }
+
+    html body .staff-content-inner img,
+    html body .staff-content-inner svg,
+    html body .staff-content-inner canvas,
+    html body .staff-content-inner video,
+    html body .staff-content-inner iframe {
+        max-width: 100% !important;
+    }
+
+    html body .staff-content-inner [style*="width:"] {
+        max-width: 100%;
+    }
+
+    html body .staff-shell nav[role="navigation"],
+    html body .staff-shell nav[aria-label="Pagination Navigation"] {
+        width: 100%;
+        max-width: 100%;
+        overflow-x: hidden !important;
+        flex-wrap: wrap !important;
+        justify-content: center !important;
+        gap: .25rem;
+    }
+}
+
+@media screen and (max-width: 640px) {
+    body .site-header .nav {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    body .site-header .nav .sign-in {
+        grid-column: 1 / -1;
+    }
+
+    /* On phones, remove fixed table assumptions completely. */
+    html body .staff-content-inner .staff-table,
+    html body .staff-content-inner table:not(.no-responsive-table) {
+        min-width: 0 !important;
+        font-size: 12px !important;
+    }
+
+    html body .staff-content-inner table:not(.no-responsive-table) th,
+    html body .staff-content-inner table:not(.no-responsive-table) td {
+        padding-left: 7px !important;
+        padding-right: 7px !important;
+    }
+
+    html body .staff-table th:first-child,
+    html body .staff-table td:first-child {
+        padding-left: 9px !important;
+    }
+
+    html body .staff-table th:last-child,
+    html body .staff-table td:last-child {
+        padding-right: 9px !important;
+    }
+
+    html body .staff-content-inner .staff-button,
+    html body .staff-content-inner button,
+    html body .staff-content-inner a {
+        overflow-wrap: anywhere;
+    }
+}
+
+@media screen and (max-width: 390px) {
+    body .site-header .nav {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    body .site-header .nav a {
+        font-size: .76rem !important;
+    }
+}
