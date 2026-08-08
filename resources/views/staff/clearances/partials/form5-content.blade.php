@@ -72,14 +72,17 @@
     $transfereeNames = $clearance->transferee_name ?: $application->transfereeDisplayName();
 
     $showToolbar = $showToolbar ?? false;
+    $pdfMode = $pdfMode ?? false;
     $returnRoute = $returnRoute ?? route('staff.applications.show', $application);
     $returnLabel = $returnLabel ?? 'Back to Application';
 
-    $logoAsset = function (array $filenames) {
+    $logoAsset = function (array $filenames) use ($pdfMode) {
         foreach ($filenames as $filename) {
             foreach ([$filename, 'images/' . $filename, 'logos/' . $filename, 'clearance/' . $filename, 'clearances/' . $filename] as $storagePath) {
                 if (\Illuminate\Support\Facades\Storage::disk('public')->exists($storagePath)) {
-                    return asset('storage/' . $storagePath);
+                    return $pdfMode
+                        ? \Illuminate\Support\Facades\Storage::disk('public')->path($storagePath)
+                        : asset('storage/' . $storagePath);
                 }
             }
         }
@@ -87,34 +90,38 @@
         foreach ($filenames as $filename) {
             $path = public_path('images/' . $filename);
             if (is_file($path)) {
-                return asset('images/' . $filename);
+                return $pdfMode ? $path : asset('images/' . $filename);
             }
         }
 
         return null;
     };
 
-    $darLogo = $logoAsset(['dar-logo.png', 'dar-logo.jpg', 'dar-logo.svg', 'dar_logo.png', 'DAR-logo.png']);
-    $bagongLogo = $logoAsset(['bagong-pilipinas.png', 'bagong-pilipinas.jpg', 'bagong-pilipinas.svg', 'bagong-pilipinas-logo.svg', 'bagong_pilipinas.png']);
+    $darLogo = $logoAsset($pdfMode
+        ? ['dar-logo.svg']
+        : ['dar-logo.png', 'dar-logo.jpg', 'dar-logo.svg', 'dar_logo.png', 'DAR-logo.png']);
+    $bagongLogo = $logoAsset($pdfMode
+        ? ['bagong-pilipinas.svg', 'bagong-pilipinas-logo.svg']
+        : ['bagong-pilipinas.png', 'bagong-pilipinas.jpg', 'bagong-pilipinas.svg', 'bagong-pilipinas-logo.svg', 'bagong_pilipinas.png']);
 @endphp
 
 <style>
     @page { size: A4; margin: 8mm 11mm; }
 
     @font-face {
-        font-family: 'LTC Gilroy';
-        src: local('Gilroy'), local('Gilroy Regular'), local('Gilroy-Regular');
+        font-family: 'LTC Montserrat';
+        src: url('https://raw.githubusercontent.com/JulietaUla/Montserrat/master/fonts/ttf/Montserrat-Regular.ttf') format('truetype');
         font-weight: 400;
         font-style: normal;
     }
     @font-face {
-        font-family: 'LTC Gilroy';
-        src: local('Gilroy Bold'), local('Gilroy-Bold'), local('Gilroy SemiBold'), local('Gilroy-SemiBold');
+        font-family: 'LTC Montserrat';
+        src: url('https://raw.githubusercontent.com/JulietaUla/Montserrat/master/fonts/ttf/Montserrat-Bold.ttf') format('truetype');
         font-weight: 700;
         font-style: normal;
     }
 
-    :root { --ltc-font: 'LTC Gilroy', 'Gilroy', 'Gilroy Regular', Arial, sans-serif; }
+    :root { --ltc-font: 'LTC Montserrat', 'Montserrat', Arial, sans-serif; }
     html,
     body,
     main,
@@ -187,6 +194,28 @@
     .green-bars { width: 610px; margin: 3px auto 6px; display: grid; grid-template-columns: 1fr 1fr; gap: 105px; border-bottom: 3px solid #4b5563; }
     .green-bar { background: #79c35a; color: #fff; font-size: 11px; font-weight: 700; text-align: center; padding: 4px 6px; text-transform: uppercase; }
     .footer { width: 610px; margin: 0 auto; display: grid; grid-template-columns: 1fr 190px; gap: 20px; font-size: 11px; color: #4b5563; }
+
+    @if ($pdfMode)
+        .official-header { display: table; width: 100%; table-layout: fixed; }
+        .logos { display: table-cell; width: 168px; vertical-align: middle; white-space: nowrap; }
+        .agency-lines { display: table-cell; vertical-align: middle; }
+        .logo-img { display: inline-block; margin-right: 8px; }
+        .ltc-number-row { display: block; text-align: right; }
+        .ltc-number { display: inline-block; }
+        .decision-line { display: block; }
+        .decision-box { display: inline-block; margin-left: 12px; }
+        .lower-area { display: table; width: 610px; table-layout: fixed; }
+        .lower-area > div { display: table-cell; vertical-align: bottom; }
+        .lower-area > div:first-child { width: 310px; padding-right: 22px; }
+        .green-bars { display: block; overflow: hidden; }
+        .green-bar { width: 252px; box-sizing: border-box; }
+        .green-bar:first-child { float: left; }
+        .green-bar:last-child { float: right; }
+        .footer { display: table; width: 610px; table-layout: fixed; }
+        .footer > div { display: table-cell; vertical-align: top; }
+        .footer > div:last-child { width: 190px; }
+    @endif
+
     @media print { body { background: #fff; } .print-toolbar { display: none !important; } .ltc-page { margin: 0; padding: 0; box-shadow: none; width: auto; min-height: auto; } }
 </style>
 
@@ -202,7 +231,7 @@
     </div>
 @endif
 
-<main class="ltc-page" style="font-family: 'LTC Gilroy', 'Gilroy', 'Gilroy Regular', Arial, sans-serif !important; font-weight: 400;">
+<main class="ltc-page" style="font-family: 'LTC Montserrat', 'Montserrat', Arial, sans-serif !important; font-weight: 400;">
     <div class="top-form-no">LTC Form No. 5</div>
 
     <header class="official-header">
