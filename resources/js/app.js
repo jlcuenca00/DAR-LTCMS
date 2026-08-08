@@ -1,4 +1,5 @@
 import './bootstrap';
+import '../css/responsive.css';
 
 import Alpine from 'alpinejs';
 
@@ -352,4 +353,60 @@ if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initDarLtcmsProfileCropper, { once: true });
 } else {
     initDarLtcmsProfileCropper();
+}
+
+// DAR-LTCMS Phase 3: compact staff navigation for tablets and phones.
+function initDarLtcmsResponsiveStaffNavigation() {
+    document.querySelectorAll('.staff-sidebar').forEach((sidebar) => {
+        const brand = sidebar.querySelector('.staff-brand');
+        const navSection = sidebar.querySelector('.staff-side-section');
+
+        if (!brand || !navSection || brand.querySelector('.staff-mobile-nav-toggle')) {
+            return;
+        }
+
+        const toggle = document.createElement('button');
+        toggle.type = 'button';
+        toggle.className = 'staff-mobile-nav-toggle';
+        toggle.setAttribute('aria-label', 'Open staff navigation');
+        toggle.setAttribute('aria-expanded', 'false');
+        toggle.innerHTML = '<i class="fa-solid fa-bars" aria-hidden="true"></i>';
+        brand.appendChild(toggle);
+
+        const setOpen = (open) => {
+            sidebar.classList.toggle('is-mobile-open', open);
+            toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+            toggle.setAttribute('aria-label', open ? 'Close staff navigation' : 'Open staff navigation');
+            toggle.innerHTML = open
+                ? '<i class="fa-solid fa-xmark" aria-hidden="true"></i>'
+                : '<i class="fa-solid fa-bars" aria-hidden="true"></i>';
+        };
+
+        toggle.addEventListener('click', () => {
+            setOpen(!sidebar.classList.contains('is-mobile-open'));
+        });
+
+        navSection.querySelectorAll('a').forEach((link) => {
+            link.addEventListener('click', () => setOpen(false));
+        });
+
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape' && sidebar.classList.contains('is-mobile-open')) {
+                setOpen(false);
+                toggle.focus();
+            }
+        });
+
+        window.addEventListener('resize', () => {
+            if (window.innerWidth > 900 && sidebar.classList.contains('is-mobile-open')) {
+                setOpen(false);
+            }
+        });
+    });
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initDarLtcmsResponsiveStaffNavigation, { once: true });
+} else {
+    initDarLtcmsResponsiveStaffNavigation();
 }
