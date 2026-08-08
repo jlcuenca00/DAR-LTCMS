@@ -67,7 +67,8 @@
         }
 
         .pdf-output .top-form-no {
-            margin: 0 0 5px !important;
+            margin: 0 4px 5px 0 !important;
+            padding-top: 2px !important;
             font-size: 7px !important;
             line-height: 1 !important;
         }
@@ -136,8 +137,7 @@
         }
 
         .pdf-output .ltc-number-row {
-            margin: 8px 0 14px !important;
-            padding-right: 2px !important;
+            margin: 8px 2px 14px 0 !important;
         }
 
         .pdf-output .ltc-number {
@@ -155,8 +155,8 @@
 
         /* Keep the lower official elements compact and fully inside one folio page. */
         .pdf-output .issued-line {
-            margin-top: 15px !important;
-            margin-bottom: 10px !important;
+            margin-top: 13px !important;
+            margin-bottom: 8px !important;
         }
 
         .pdf-output .lower-area {
@@ -176,61 +176,70 @@
             padding-right: 24px !important;
         }
 
+        .pdf-output .payment-table {
+            margin-bottom: 0 !important;
+        }
+
         .pdf-output .signature {
-            padding-bottom: 2px !important;
+            padding-bottom: 3px !important;
         }
 
         .pdf-output .warning-box {
             width: 610px !important;
             box-sizing: border-box !important;
-            margin: 6px auto 0 !important;
+            margin: 5px auto 0 !important;
             padding: 5px 8px !important;
             font-size: 9.5px !important;
             line-height: 1.2 !important;
         }
 
-        /* DomPDF does not reliably retain floated children. Render the two
-           official green validity boxes as inline blocks so they stay visible. */
+        /* Render the official green validity strip with table cells. DomPDF
+           handles table layout much more reliably than flex/float/inline-block. */
         .pdf-output .green-bars {
-            display: block !important;
+            display: table !important;
             width: 610px !important;
-            height: 27px !important;
-            margin: 3px auto 5px !important;
+            table-layout: fixed !important;
+            margin: 3px auto 0 !important;
             padding: 0 !important;
+            border-collapse: separate !important;
+            border-spacing: 0 !important;
             border-bottom: 3px solid #4b5563 !important;
             overflow: visible !important;
-            white-space: nowrap !important;
             box-sizing: border-box !important;
         }
 
         .pdf-output .green-bar {
-            display: inline-block !important;
+            display: table-cell !important;
             float: none !important;
-            width: 248px !important;
-            min-height: 20px !important;
+            width: 251px !important;
+            height: 25px !important;
             margin: 0 !important;
             padding: 3px 5px !important;
             box-sizing: border-box !important;
-            vertical-align: bottom !important;
+            vertical-align: middle !important;
             background: #79c35a !important;
             color: #fff !important;
-            font-size: 9px !important;
+            font-size: 8.6px !important;
+            font-weight: 700 !important;
             line-height: 1.05 !important;
             text-align: center !important;
+            text-transform: uppercase !important;
         }
 
         .pdf-output .green-bar:last-child {
-            margin-left: 108px !important;
+            border-left: 108px solid #fff !important;
         }
 
-        /* Keep each footer line together; no isolated “The” between columns. */
+        /* Keep the footer clearly separated from the validity strip and keep
+           office/address information on the left and contact details on right. */
         .pdf-output .footer {
             display: table !important;
             width: 610px !important;
             table-layout: fixed !important;
-            margin: 0 auto !important;
+            margin: 7px auto 0 !important;
             font-size: 9.5px !important;
-            line-height: 1.28 !important;
+            line-height: 1.35 !important;
+            color: #4b5563 !important;
         }
 
         .pdf-output .footer > div {
@@ -240,12 +249,13 @@
 
         .pdf-output .footer > div:first-child {
             width: 430px !important;
+            padding-right: 12px !important;
             white-space: nowrap !important;
         }
 
         .pdf-output .footer > div:last-child {
             width: 150px !important;
-            padding-left: 30px !important;
+            padding-left: 18px !important;
             text-align: right !important;
             white-space: nowrap !important;
         }
