@@ -1,6 +1,8 @@
 import './bootstrap';
+import './responsive-tables';
 import '../css/responsive.css';
 import '../css/responsive-no-scroll.css';
+import '../css/responsive-table-cards.css';
 
 import Alpine from 'alpinejs';
 
