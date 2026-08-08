@@ -35,4 +35,8 @@ return [
         ],
     ],
 
+    'clearance_pdf' => [
+        'browser_path' => env('CLEARANCE_PDF_BROWSER_PATH'),
+    ],
+
 ];
