@@ -13,47 +13,22 @@
             'pdfMode' => true,
         ])->render();
 
-        // For the official PDF, prefer the Bagong Pilipinas logo kept in
-        // storage/app/public. This deliberately happens after the shared Form 5
-        // partial renders so the normal browser/print view remains unchanged.
+        // Form No. 5 must use the official seal-style Bagong Pilipinas PNG.
+        // Prefer the public storage copy, then fall back to public/images.
         $storageDisk = \Illuminate\Support\Facades\Storage::disk('public');
-        $bagongStoragePath = null;
-        $bagongFilenames = [
-            'bagong-pilipinas-logo.svg',
-            'bagong-pilipinas.svg',
-            'bagong-pilipinas-logo.jpg',
-            'bagong-pilipinas.jpg',
-            'bagong-pilipinas-logo.jpeg',
-            'bagong-pilipinas.jpeg',
-            'bagong-pilipinas-logo.png',
+        $bagongStoragePath = collect([
             'bagong-pilipinas.png',
-            'bagong_pilipinas_logo.png',
-            'bagong_pilipinas.png',
-        ];
+            'images/bagong-pilipinas.png',
+            'logos/bagong-pilipinas.png',
+            'clearance/bagong-pilipinas.png',
+            'clearances/bagong-pilipinas.png',
+        ])->first(fn ($candidate) => $storageDisk->exists($candidate));
 
-        foreach ($bagongFilenames as $filename) {
-            foreach ([$filename, 'images/' . $filename, 'logos/' . $filename, 'clearance/' . $filename, 'clearances/' . $filename] as $candidate) {
-                if ($storageDisk->exists($candidate)) {
-                    $bagongStoragePath = $candidate;
-                    break 2;
-                }
-            }
-        }
+        $bagongAbsolutePath = $bagongStoragePath
+            ? $storageDisk->path($bagongStoragePath)
+            : public_path('images/bagong-pilipinas.png');
 
-        if (! $bagongStoragePath) {
-            $bagongStoragePath = collect($storageDisk->allFiles())
-                ->first(function ($path) {
-                    $basename = strtolower(pathinfo($path, PATHINFO_FILENAME));
-                    $extension = strtolower(pathinfo($path, PATHINFO_EXTENSION));
-
-                    return str_contains($basename, 'bagong')
-                        && str_contains($basename, 'pilipinas')
-                        && in_array($extension, ['svg', 'jpg', 'jpeg', 'png'], true);
-                });
-        }
-
-        if ($bagongStoragePath) {
-            $bagongAbsolutePath = $storageDisk->path($bagongStoragePath);
+        if (is_file($bagongAbsolutePath)) {
             $replacement = '<img src="' . e($bagongAbsolutePath) . '" class="logo-img" alt="Bagong Pilipinas Logo">';
 
             $form5Html = preg_replace(
