@@ -80,8 +80,7 @@
             width: 100%;
         }
 
-        /* @page already owns the physical folio margins. The Form 5 canvas
-           must fill only that printable area, not another full 8.5-inch page. */
+        /* @page owns the physical folio margins. */
         .pdf-output .ltc-page {
             width: auto !important;
             max-width: 100% !important;
@@ -92,9 +91,73 @@
             box-sizing: border-box !important;
         }
 
+        /* Match the official DAR Form No. 5 reference more closely. */
         .pdf-output .official-header {
+            display: table !important;
             width: 100% !important;
+            table-layout: fixed !important;
             box-sizing: border-box !important;
+            padding: 3px 0 6px !important;
+        }
+
+        .pdf-output .logos {
+            display: table-cell !important;
+            width: 142px !important;
+            padding-left: 10px !important;
+            padding-right: 8px !important;
+            vertical-align: middle !important;
+            white-space: nowrap !important;
+            box-sizing: border-box !important;
+        }
+
+        .pdf-output .agency-lines {
+            display: table-cell !important;
+            vertical-align: middle !important;
+            padding-left: 2px !important;
+        }
+
+        .pdf-output .logo-img {
+            display: inline-block !important;
+            vertical-align: middle !important;
+            margin-right: 5px !important;
+            object-fit: contain !important;
+        }
+
+        .pdf-output .logo-img[alt="DAR Logo"] {
+            height: 54px !important;
+            max-width: 63px !important;
+        }
+
+        .pdf-output .logo-img[alt="Bagong Pilipinas Logo"] {
+            height: 47px !important;
+            max-width: 60px !important;
+        }
+
+        .pdf-output .agency-lines .republic {
+            font-size: 13px !important;
+            line-height: 1.05 !important;
+            white-space: nowrap !important;
+        }
+
+        .pdf-output .agency-lines .department {
+            font-size: 18px !important;
+            line-height: 1.05 !important;
+            letter-spacing: .005em !important;
+            white-space: nowrap !important;
+        }
+
+        .pdf-output .agency-lines .tagline {
+            font-size: 12px !important;
+            line-height: 1.05 !important;
+            white-space: nowrap !important;
+        }
+
+        .pdf-output .ltc-number-row {
+            margin: 7px 0 10px !important;
+        }
+
+        .pdf-output .title {
+            margin-top: 4px !important;
         }
     </style>
 </body>
