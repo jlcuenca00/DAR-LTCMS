@@ -12,11 +12,11 @@ class ExampleTest extends TestCase
 
         $response
             ->assertOk()
-            ->assertSee('Land transfer clearance, without the guesswork.')
+            ->assertSee('Land Transfer Clearance and Monitoring System')
             ->assertSee('Skip to main content')
             ->assertSee('Transferor requirements')
             ->assertSee('Transferee requirements')
-            ->assertSee('Additional documents')
+            ->assertSee('Additional / case-dependent')
             ->assertSee('Frequently asked questions')
             ->assertSee('No online self-application.')
             ->assertSee('DAR Negros Oriental Legal Assistance Division')
