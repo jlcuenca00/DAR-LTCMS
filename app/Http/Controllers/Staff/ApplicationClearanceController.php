@@ -12,21 +12,6 @@ class ApplicationClearanceController extends Controller
 {
     public function show(LandTransferApplication $application)
     {
-        $application->load(['clearance']);
-
-        if (! $application->isFinalized()) {
-            return back()->with('error', 'Decision output is only available for released or denied applications.');
-        }
-
-        if (! $application->clearance) {
-            return back()->with('error', 'Decision output record not found for this application.');
-        }
-
-        return redirect()->route('staff.applications.clearance.pdf', $application);
-    }
-
-    public function pdf(LandTransferApplication $application)
-    {
         $application->load(['clearance', 'documents.requiredDocument', 'applicationParcels.parcel']);
 
         if (! $application->isFinalized()) {
@@ -37,12 +22,17 @@ class ApplicationClearanceController extends Controller
             return back()->with('error', 'Decision output record not found for this application.');
         }
 
-        $safeApplicationCode = str_replace(['/', '\\', ' '], '-', (string) $application->application_code);
+        return view('staff.clearances.show', [
+            'application' => $application,
+            'clearance' => $application->clearance,
+        ]);
+    }
 
-        $html = $this->renderClearancePdfHtml($application);
-        $pdf = Pdf::loadHTML($html)->setPaper('a4');
-
-        return $pdf->stream('LTC-Form-No-5-' . $safeApplicationCode . '.pdf');
+    public function pdf(LandTransferApplication $application)
+    {
+        return redirect()
+            ->route('staff.applications.clearance.show', $application)
+            ->with('info', 'PDF output uses the official print view. Use the Print button, then choose Save as PDF if needed.');
     }
 
     public function acknowledgementPdf(LandTransferApplication $application)
@@ -108,31 +98,5 @@ class ApplicationClearanceController extends Controller
         $safeApplicationCode = str_replace(['/', '\\', ' '], '-', (string) $application->application_code);
 
         return $pdf->stream('LTC-Form-No-4-' . $safeApplicationCode . '.pdf');
-    }
-
-    private function renderClearancePdfHtml(LandTransferApplication $application): string
-    {
-        $html = view('staff.clearances.pdf', [
-            'application' => $application,
-            'clearance' => $application->clearance,
-        ])->render();
-
-        $bagongSvgPath = public_path('images/bagong-pilipinas-logo.svg');
-
-        if (is_file($bagongSvgPath)) {
-            $svgContents = file_get_contents($bagongSvgPath);
-
-            if ($svgContents !== false) {
-                $svgDataUri = 'data:image/svg+xml;base64,' . base64_encode($svgContents);
-                $html = preg_replace(
-                    '/data:image\/png;base64,[A-Za-z0-9+\/=]+/',
-                    $svgDataUri,
-                    $html,
-                    1
-                ) ?? $html;
-            }
-        }
-
-        return $html;
     }
 }
