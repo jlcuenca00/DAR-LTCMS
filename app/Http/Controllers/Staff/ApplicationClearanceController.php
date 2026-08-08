@@ -7,6 +7,7 @@ use App\Models\ApplicationDocument;
 use App\Models\LandTransferApplication;
 use App\Models\RequiredDocument;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\File;
 
 class ApplicationClearanceController extends Controller
 {
@@ -36,6 +37,8 @@ class ApplicationClearanceController extends Controller
         if (! $application->clearance) {
             return back()->with('error', 'Decision output record not found for this application.');
         }
+
+        File::ensureDirectoryExists(storage_path('fonts'), 0755, true);
 
         $safeApplicationCode = str_replace(['/', '\\', ' '], '-', (string) $application->application_code);
 

@@ -80,6 +80,7 @@ jobs:
 
             mkdir -p bootstrap/cache
             mkdir -p storage/app/public
+            mkdir -p storage/fonts
             mkdir -p storage/logs
             mkdir -p storage/framework/cache/data
             mkdir -p storage/framework/sessions
@@ -129,6 +130,11 @@ jobs:
 
             test -w storage/app/public || {
               echo "storage/app/public is not writable by the deployment user."
+              exit 1
+            }
+
+            test -w storage/fonts || {
+              echo "storage/fonts is not writable by the deployment user."
               exit 1
             }
 

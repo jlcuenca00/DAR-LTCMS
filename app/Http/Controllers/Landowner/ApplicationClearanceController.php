@@ -7,6 +7,7 @@ use App\Models\Landowner;
 use App\Models\LandTransferApplication;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\File;
 
 class ApplicationClearanceController extends Controller
 {
@@ -46,6 +47,8 @@ class ApplicationClearanceController extends Controller
                 ->route('landowner.applications.index')
                 ->with('error', 'Decision output record is not yet available for this application.');
         }
+
+        File::ensureDirectoryExists(storage_path('fonts'), 0755, true);
 
         $safeApplicationCode = str_replace(['/', '\\', ' '], '-', (string) $application->application_code);
 
