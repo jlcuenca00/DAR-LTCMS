@@ -141,4 +141,10 @@ jobs:
             php artisan about
             php artisan migrate:status
 
+            # Production intentionally excludes .git. Persist the exact deployed
+            # source revision so backups can retain application-version traceability.
+            printf '%s\n' '${{ github.sha }}' > .release-commit
+            chmod 644 .release-commit
+            echo "Recorded deployed commit: $(cat .release-commit)"
+
           SCRIPT_AFTER_REQUIRED: true
