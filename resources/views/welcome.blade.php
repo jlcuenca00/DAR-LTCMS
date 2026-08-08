@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="Public information for the DAR Negros Oriental Land Transfer Clearance and Monitoring System, including clearance preparation guidance, processing steps, and authorized access information.">
+    <meta name="description" content="DAR-LTCMS public information for land transfer clearance requirements, processing, application monitoring, and DAR Negros Oriental contact channels.">
     <title>DAR-LTCMS | DAR Negros Oriental</title>
     <link rel="icon" type="image/png" href="{{ asset('images/favicon.png') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -13,22 +13,23 @@
 
     <style>
         :root {
-            --green-950: #082d1b;
-            --green-900: #0b3b23;
-            --green-800: #0d502c;
+            --green-950: #062719;
+            --green-900: #0a3923;
+            --green-800: #0f5330;
             --green-700: #166b3a;
-            --green-100: #dff1e5;
-            --green-50: #f1f8f3;
-            --ink: #18231d;
-            --muted: #5f6d64;
-            --border: #d7e1da;
+            --green-100: #dcefe3;
+            --green-50: #f0f7f2;
+            --ink: #162019;
+            --muted: #5d6961;
+            --border: #d9e2dc;
             --surface: #ffffff;
-            --page: #f6f8f6;
-            --yellow: #f5c842;
+            --page: #f5f7f5;
+            --focus: #f6c945;
+            --radius: 18px;
         }
 
         * { box-sizing: border-box; }
-        html { scroll-behavior: smooth; scroll-padding-top: 86px; }
+        html { scroll-behavior: smooth; scroll-padding-top: 96px; }
         body {
             margin: 0;
             font-family: 'Google Sans', Arial, sans-serif;
@@ -36,94 +37,131 @@
             background: var(--page);
             line-height: 1.6;
         }
+        img { max-width: 100%; }
         a { color: inherit; }
-        button, input { font: inherit; }
-        .container { width: min(1200px, calc(100% - 2rem)); margin: 0 auto; }
+        button, input, summary { font: inherit; }
+        .container { width: min(1180px, calc(100% - 2rem)); margin: 0 auto; }
+
+        .skip-link {
+            position: fixed;
+            left: 1rem;
+            top: 1rem;
+            z-index: 100;
+            transform: translateY(-160%);
+            padding: .7rem 1rem;
+            background: #fff;
+            color: var(--green-950);
+            border: 2px solid var(--focus);
+            border-radius: 10px;
+            font-weight: 700;
+            text-decoration: none;
+        }
+        .skip-link:focus { transform: translateY(0); }
+
+        :where(a, summary):focus-visible {
+            outline: 3px solid var(--focus);
+            outline-offset: 3px;
+            border-radius: 6px;
+        }
 
         .site-header {
             position: sticky;
             top: 0;
-            z-index: 50;
-            background: rgba(8, 45, 27, .97);
+            z-index: 40;
+            background: rgba(6, 39, 25, .97);
             border-bottom: 1px solid rgba(255,255,255,.12);
             color: #fff;
         }
         .header-inner {
-            min-height: 72px;
+            min-height: 76px;
             display: flex;
             align-items: center;
             justify-content: space-between;
             gap: 1.5rem;
         }
         .brand {
+            min-height: 48px;
             display: inline-flex;
             align-items: center;
-            gap: .75rem;
+            gap: .8rem;
             text-decoration: none;
             flex-shrink: 0;
         }
         .brand img { width: 44px; height: 44px; object-fit: contain; }
-        .brand-name { display: block; font-weight: 700; line-height: 1.15; }
-        .brand-office { display: block; color: #c7d8cd; font-size: .72rem; margin-top: .12rem; }
-        .nav { display: flex; align-items: center; justify-content: flex-end; gap: 1.2rem; }
-        .nav a { text-decoration: none; color: #dce9e0; font-size: .88rem; font-weight: 600; }
-        .nav a:hover { color: #fff; }
-        .nav .sign-in {
-            color: #102117;
-            background: #fff;
-            border: 1px solid #fff;
-            border-radius: .45rem;
-            padding: .55rem .85rem;
+        .brand-name { display: block; font-weight: 700; line-height: 1.1; }
+        .brand-office { display: block; margin-top: .18rem; color: #bfd0c5; font-size: .72rem; }
+        .nav {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: .25rem;
         }
+        .nav a {
+            min-height: 44px;
+            display: inline-flex;
+            align-items: center;
+            padding: 0 .72rem;
+            color: #d9e7de;
+            text-decoration: none;
+            border-radius: 10px;
+            font-size: .88rem;
+            font-weight: 600;
+        }
+        .nav a:hover { background: rgba(255,255,255,.08); color: #fff; }
+        .nav .sign-in { margin-left: .4rem; background: #fff; color: #10291b; }
+        .nav .sign-in:hover { background: #edf5ef; color: #10291b; }
 
         .hero {
             position: relative;
             overflow: hidden;
             color: #fff;
             background: var(--green-950);
-            border-bottom: 1px solid #123e29;
         }
         .hero::before {
             content: "";
             position: absolute;
             inset: 0;
             pointer-events: none;
-            opacity: .12;
-            background-image:
-                linear-gradient(rgba(255,255,255,.18) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(255,255,255,.18) 1px, transparent 1px);
-            background-size: 64px 64px;
-            mask-image: linear-gradient(to bottom right, black, transparent 72%);
+            background:
+                radial-gradient(circle at 82% 18%, rgba(67, 146, 91, .24), transparent 30%),
+                radial-gradient(circle at 18% 90%, rgba(255,255,255,.08), transparent 28%);
         }
         .hero-grid {
             position: relative;
-            min-height: 650px;
             display: grid;
-            grid-template-columns: minmax(0, 1.35fr) minmax(320px, .65fr);
-            gap: 5rem;
+            grid-template-columns: minmax(0, 1.3fr) minmax(330px, .7fr);
             align-items: center;
-            padding: 5.5rem 0;
+            gap: 4.5rem;
+            min-height: 620px;
+            padding: 5.25rem 0;
         }
-        .eyebrow {
-            margin: 0 0 1rem;
-            color: #b8d9c3;
-            text-transform: uppercase;
-            letter-spacing: .1em;
-            font-size: .82rem;
+        .hero-badge {
+            width: fit-content;
+            display: inline-flex;
+            align-items: center;
+            gap: .5rem;
+            margin-bottom: 1.1rem;
+            padding: .42rem .72rem;
+            border: 1px solid rgba(255,255,255,.2);
+            border-radius: 999px;
+            background: rgba(255,255,255,.06);
+            color: #cce0d2;
+            font-size: .8rem;
             font-weight: 700;
         }
+        .hero-badge::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: #69c383; }
         h1 {
+            max-width: 820px;
             margin: 0;
-            max-width: 860px;
-            font-size: clamp(3rem, 6.2vw, 5.5rem);
-            line-height: .98;
-            letter-spacing: -.05em;
+            font-size: clamp(3rem, 6vw, 5.15rem);
+            line-height: 1;
+            letter-spacing: -.055em;
         }
         .hero-copy {
-            max-width: 760px;
-            margin: 1.6rem 0 0;
-            color: #d4e3d9;
-            font-size: clamp(1rem, 1.7vw, 1.22rem);
+            max-width: 720px;
+            margin: 1.5rem 0 0;
+            color: #d2e0d6;
+            font-size: clamp(1.02rem, 1.6vw, 1.2rem);
         }
         .hero-actions { display: flex; flex-wrap: wrap; gap: .8rem; margin-top: 2rem; }
         .button {
@@ -131,238 +169,192 @@
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            padding: .75rem 1.05rem;
-            border-radius: .5rem;
+            padding: .78rem 1.1rem;
+            border-radius: 11px;
             text-decoration: none;
             font-weight: 700;
         }
-        .button-light { background: #fff; color: #153020; border: 1px solid #fff; }
-        .button-outline { color: #fff; border: 1px solid rgba(255,255,255,.42); background: rgba(255,255,255,.04); }
-        .button-outline:hover { border-color: #fff; background: rgba(255,255,255,.08); }
-        .hero-panel {
-            background: rgba(255,255,255,.06);
-            border: 1px solid rgba(255,255,255,.17);
-            border-radius: .75rem;
+        .button-primary { background: #fff; color: var(--green-950); }
+        .button-secondary { border: 1px solid rgba(255,255,255,.32); color: #fff; background: rgba(255,255,255,.05); }
+        .button-secondary:hover { background: rgba(255,255,255,.1); }
+
+        .service-card {
             overflow: hidden;
-            box-shadow: 0 28px 70px rgba(0,0,0,.18);
+            background: rgba(255,255,255,.07);
+            border: 1px solid rgba(255,255,255,.18);
+            border-radius: 22px;
+            box-shadow: 0 30px 70px rgba(0,0,0,.2);
         }
-        .hero-panel-head {
+        .service-card-top {
             display: flex;
             align-items: center;
-            gap: .8rem;
-            padding: 1.15rem 1.25rem;
+            gap: .9rem;
+            padding: 1.35rem;
             border-bottom: 1px solid rgba(255,255,255,.12);
-            background: rgba(255,255,255,.04);
         }
-        .hero-panel-head img { width: 50px; height: 50px; object-fit: contain; }
-        .panel-title { font-weight: 700; line-height: 1.2; }
-        .panel-sub { color: #b9cec0; font-size: .78rem; margin-top: .15rem; }
-        .hero-panel-body { padding: .4rem 1.25rem 1.1rem; }
-        .panel-row { padding: 1rem 0; border-bottom: 1px solid rgba(255,255,255,.11); }
-        .panel-row:last-child { border-bottom: 0; }
-        .panel-label { color: #9fc5ab; font-size: .76rem; text-transform: uppercase; letter-spacing: .07em; font-weight: 700; }
-        .panel-value { margin-top: .2rem; color: #fff; font-size: .94rem; }
+        .service-card-top img { width: 54px; height: 54px; object-fit: contain; }
+        .service-card-title { font-weight: 700; font-size: 1.05rem; }
+        .service-card-sub { margin-top: .15rem; color: #b6cabd; font-size: .8rem; }
+        .service-list { list-style: none; margin: 0; padding: .45rem 1.35rem 1rem; }
+        .service-list li { padding: .9rem 0; border-bottom: 1px solid rgba(255,255,255,.1); }
+        .service-list li:last-child { border-bottom: 0; }
+        .service-label { display: block; color: #9fc5ab; font-size: .73rem; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; }
+        .service-value { display: block; margin-top: .2rem; color: #fff; font-size: .92rem; }
+
+        .quick-strip {
+            position: relative;
+            z-index: 2;
+            margin-top: -46px;
+        }
+        .quick-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+        }
+        .quick-card {
+            min-height: 155px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 1.25rem;
+            background: #fff;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            box-shadow: 0 14px 34px rgba(21, 43, 29, .08);
+            text-decoration: none;
+        }
+        .quick-card:hover { border-color: #a9c3b1; transform: translateY(-2px); }
+        .quick-label { color: var(--green-700); font-size: .78rem; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; }
+        .quick-title { margin-top: .35rem; font-size: 1.15rem; font-weight: 700; }
+        .quick-arrow { color: var(--green-800); font-size: 1.2rem; }
 
         .section { padding: 6rem 0; }
         .section-white { background: #fff; }
-        .section-dark { background: #0d3421; color: #fff; }
-        .section-grid {
+        .section-dark { background: #0b3120; color: #fff; }
+        .section-header { max-width: 760px; margin-bottom: 2.2rem; }
+        .kicker { margin: 0 0 .55rem; color: var(--green-700); font-size: .82rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; }
+        .section-dark .kicker { color: #abd0b7; }
+        .section-title { margin: 0; font-size: clamp(2rem, 4vw, 3.35rem); line-height: 1.08; letter-spacing: -.035em; }
+        .section-copy { margin: .9rem 0 0; color: var(--muted); font-size: 1rem; }
+        .section-dark .section-copy { color: #c6d8cd; }
+
+        .about-grid {
             display: grid;
-            grid-template-columns: 300px minmax(0, 1fr);
-            gap: 5rem;
-        }
-        .section-kicker { margin: 0 0 .55rem; color: var(--green-700); font-weight: 700; font-size: .84rem; text-transform: uppercase; letter-spacing: .08em; }
-        .section-dark .section-kicker { color: #a9d2b6; }
-        .section-title { margin: 0; font-size: clamp(2rem, 4vw, 3.25rem); line-height: 1.07; letter-spacing: -.035em; }
-        .section-intro { margin: 1rem 0 0; color: var(--muted); max-width: 780px; font-size: 1.02rem; }
-        .section-dark .section-intro { color: #c8d8ce; }
-        .side-note { position: sticky; top: 110px; align-self: start; }
-        .side-note p { color: var(--muted); font-size: .92rem; margin: .8rem 0 0; }
-
-        .scope-callout {
-            margin-top: 2rem;
-            border: 1px solid #bcd3c3;
-            border-left: 4px solid var(--green-700);
-            border-radius: .55rem;
-            background: var(--green-50);
-            padding: 1.15rem 1.25rem;
-        }
-        .scope-callout strong { color: var(--green-900); }
-        .scope-callout p { margin: .35rem 0 0; color: #46574d; }
-
-        .requirement-groups { display: grid; gap: 1rem; }
-        .requirement-card {
-            background: #fff;
-            border: 1px solid var(--border);
-            border-radius: .7rem;
-            overflow: hidden;
-        }
-        .requirement-head {
-            padding: 1.2rem 1.35rem;
-            border-bottom: 1px solid var(--border);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
+            grid-template-columns: 1.1fr .9fr;
             gap: 1rem;
         }
+        .about-main, .about-side {
+            padding: 1.5rem;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            background: #fff;
+        }
+        .about-main { min-height: 250px; display: flex; flex-direction: column; justify-content: space-between; }
+        .about-main p { margin: 0; max-width: 760px; color: var(--muted); font-size: 1.06rem; }
+        .about-points { display: grid; grid-template-columns: repeat(2, 1fr); gap: .75rem; margin-top: 1.4rem; }
+        .about-point { padding: .9rem; border-radius: 13px; background: var(--green-50); }
+        .about-point strong { display: block; color: var(--green-900); }
+        .about-point span { display: block; margin-top: .25rem; color: var(--muted); font-size: .86rem; }
+        .about-side { background: var(--green-900); border-color: var(--green-900); color: #fff; }
+        .about-side h3 { margin: 0; font-size: 1.25rem; }
+        .about-side p { margin: .75rem 0 0; color: #c7d8ce; }
+        .about-side a { min-height: 44px; display: inline-flex; align-items: center; margin-top: 1.35rem; color: #fff; font-weight: 700; }
+
+        .requirement-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
+        .requirement-card {
+            overflow: hidden;
+            background: #fff;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+        }
+        .requirement-head { padding: 1.25rem; border-bottom: 1px solid var(--border); }
         .requirement-head h3 { margin: 0; font-size: 1.08rem; }
-        .tag { border-radius: 999px; padding: .3rem .55rem; font-size: .72rem; font-weight: 700; background: var(--green-100); color: var(--green-900); white-space: nowrap; }
-        .requirement-list { list-style: none; margin: 0; padding: .45rem 1.35rem 1rem; }
-        .requirement-list li {
-            position: relative;
-            padding: .8rem 0 .8rem 1.7rem;
-            border-bottom: 1px solid #edf1ee;
-        }
+        .tag { display: inline-flex; margin-top: .55rem; padding: .25rem .5rem; border-radius: 999px; background: var(--green-100); color: var(--green-900); font-size: .72rem; font-weight: 700; }
+        .requirement-list { list-style: none; margin: 0; padding: .4rem 1.25rem 1rem; }
+        .requirement-list li { position: relative; padding: .75rem 0 .75rem 1.55rem; border-bottom: 1px solid #edf1ee; font-size: .92rem; }
         .requirement-list li:last-child { border-bottom: 0; }
-        .requirement-list li::before {
-            content: "✓";
-            position: absolute;
-            left: 0;
-            top: .78rem;
-            width: 1.15rem;
-            height: 1.15rem;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 50%;
-            background: var(--green-100);
-            color: var(--green-800);
-            font-size: .72rem;
-            font-weight: 700;
-        }
-        .requirement-note { margin: 1rem 0 0; color: var(--muted); font-size: .9rem; }
+        .requirement-list li::before { content: "✓"; position: absolute; left: 0; top: .76rem; color: var(--green-700); font-weight: 700; }
+        .requirements-note { margin: 1rem 0 0; color: var(--muted); font-size: .9rem; }
 
-        .timeline { position: relative; margin-top: .4rem; }
-        .timeline::before {
-            content: "";
-            position: absolute;
-            left: 20px;
-            top: 25px;
-            bottom: 25px;
-            width: 2px;
-            background: #cfe0d4;
-        }
-        .timeline-step { position: relative; display: grid; grid-template-columns: 42px 1fr; gap: 1rem; padding: .45rem 0 1.6rem; }
-        .timeline-step:last-child { padding-bottom: 0; }
-        .timeline-number {
-            position: relative;
-            z-index: 1;
-            width: 42px;
-            height: 42px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 50%;
-            background: var(--green-800);
-            color: #fff;
-            font-weight: 700;
-            border: 5px solid #fff;
-            box-shadow: 0 0 0 1px #bcd3c3;
-        }
-        .timeline-copy { padding-top: .4rem; }
-        .timeline-copy h3 { margin: 0; font-size: 1.04rem; }
-        .timeline-copy p { margin: .25rem 0 0; color: var(--muted); }
+        .process-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
+        .process-card { padding: 1.25rem; border: 1px solid var(--border); border-radius: var(--radius); background: #fff; }
+        .step-number { width: 38px; height: 38px; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; background: var(--green-800); color: #fff; font-weight: 700; }
+        .process-card h3 { margin: .9rem 0 0; font-size: 1.03rem; }
+        .process-card p { margin: .45rem 0 0; color: var(--muted); font-size: .9rem; }
+        .process-note { margin-top: 1rem; padding: 1rem 1.1rem; border-radius: 14px; background: var(--green-50); color: #405147; }
 
-        .role-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-top: 2.2rem; }
-        .role-card { border: 1px solid rgba(255,255,255,.16); border-radius: .7rem; padding: 1.4rem; background: rgba(255,255,255,.04); }
-        .role-card h3 { margin: 0; font-size: 1.05rem; }
-        .role-card p { margin: .6rem 0 0; color: #c8d8ce; font-size: .92rem; }
-        .no-apply { margin-top: 1.4rem; padding: 1rem 1.15rem; border-radius: .55rem; background: rgba(245,200,66,.1); border: 1px solid rgba(245,200,66,.38); color: #f6e8ad; }
+        .role-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
+        .role-card { padding: 1.35rem; border: 1px solid rgba(255,255,255,.16); border-radius: var(--radius); background: rgba(255,255,255,.05); }
+        .role-card h3 { margin: 0; }
+        .role-card p { margin: .55rem 0 0; color: #c8d9ce; font-size: .92rem; }
+        .no-apply { margin-top: 1rem; padding: 1rem 1.1rem; border: 1px solid rgba(246,201,69,.38); border-radius: 14px; background: rgba(246,201,69,.08); color: #f8ebbd; }
 
+        .faq-grid { display: grid; grid-template-columns: .72fr 1.28fr; gap: 3rem; align-items: start; }
         .faq-list { border-top: 1px solid var(--border); }
         details { border-bottom: 1px solid var(--border); background: #fff; }
-        summary {
-            list-style: none;
-            cursor: pointer;
-            padding: 1.35rem 3rem 1.35rem 0;
-            font-weight: 700;
-            position: relative;
-        }
+        summary { min-height: 60px; display: flex; align-items: center; cursor: pointer; list-style: none; position: relative; padding: 1rem 3rem 1rem 0; font-weight: 700; }
         summary::-webkit-details-marker { display: none; }
-        summary::after { content: "+"; position: absolute; right: .3rem; top: 1.1rem; color: var(--green-700); font-size: 1.5rem; font-weight: 400; }
+        summary::after { content: "+"; position: absolute; right: .4rem; font-size: 1.5rem; color: var(--green-700); font-weight: 400; }
         details[open] summary::after { content: "−"; }
-        .faq-answer { padding: 0 3rem 1.35rem 0; color: var(--muted); max-width: 850px; }
+        .faq-answer { max-width: 850px; padding: 0 3rem 1.2rem 0; color: var(--muted); }
         .faq-answer p { margin: 0; }
 
-        .office-grid {
-            margin-top: 2rem;
-            display: grid;
-            grid-template-columns: minmax(0, 1fr) minmax(280px, .62fr);
-            gap: 1rem;
-        }
-        .office-card {
-            padding: 1.5rem;
-            background: #fff;
-            border: 1px solid var(--border);
-            border-radius: .7rem;
-        }
-        .office-card h3 { margin: 0; font-size: 1.15rem; }
+        .office-grid { display: grid; grid-template-columns: 1.15fr .85fr; gap: 1rem; }
+        .office-card { padding: 1.45rem; border: 1px solid var(--border); border-radius: var(--radius); background: #fff; }
+        .office-card h3 { margin: 0; }
         .office-card > p { margin: .4rem 0 0; color: var(--muted); }
-        .contact-list { margin: 1.35rem 0 0; padding: 0; list-style: none; border-top: 1px solid var(--border); }
-        .contact-list li {
-            display: grid;
-            grid-template-columns: 125px minmax(0, 1fr);
-            gap: 1rem;
-            padding: .85rem 0;
-            border-bottom: 1px solid #edf1ee;
-        }
-        .contact-label { color: var(--muted); font-size: .84rem; font-weight: 700; }
+        .contact-list { list-style: none; margin: 1.15rem 0 0; padding: 0; border-top: 1px solid var(--border); }
+        .contact-list li { display: grid; grid-template-columns: 120px 1fr; gap: 1rem; padding: .8rem 0; border-bottom: 1px solid #edf1ee; }
+        .contact-label { color: var(--muted); font-size: .82rem; font-weight: 700; }
         .contact-value { overflow-wrap: anywhere; }
-        .contact-value a { color: var(--green-800); font-weight: 700; text-decoration: none; }
+        .contact-value a { min-height: 44px; display: inline-flex; align-items: center; color: var(--green-800); font-weight: 700; text-decoration: none; }
         .contact-value a:hover { text-decoration: underline; }
-        .office-links { display: grid; gap: .75rem; margin-top: 1.25rem; }
-        .office-link {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 1rem;
-            padding: .9rem 1rem;
-            border: 1px solid var(--border);
-            border-radius: .55rem;
-            text-decoration: none;
-            color: var(--green-900);
-            font-weight: 700;
-            background: #fff;
-        }
-        .office-link:hover { border-color: #99b7a4; background: var(--green-50); }
-        .office-source-note { margin-top: 1rem; color: var(--muted); font-size: .82rem; }
+        .office-links { display: grid; gap: .75rem; margin-top: 1.1rem; }
+        .office-link { min-height: 54px; display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: .8rem 1rem; border: 1px solid var(--border); border-radius: 12px; text-decoration: none; color: var(--green-900); font-weight: 700; }
+        .office-link:hover { background: var(--green-50); border-color: #a8c0b0; }
 
-        footer { background: #071f14; color: #dce9e1; border-top: 1px solid #113522; }
-        .footer-top { padding: 3rem 0 2rem; display: grid; grid-template-columns: 1fr auto; gap: 2rem; }
-        .footer-brand { display: flex; gap: .8rem; align-items: center; }
-        .footer-brand img { width: 50px; height: 50px; object-fit: contain; }
+        footer { background: #061f14; color: #dce9e1; }
+        .footer-top { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 2rem; padding: 2.5rem 0 1.75rem; }
+        .footer-brand { display: flex; align-items: center; gap: .8rem; }
+        .footer-brand img { width: 48px; height: 48px; object-fit: contain; }
         .footer-title { font-weight: 700; }
-        .footer-sub { color: #9db7a7; font-size: .8rem; }
-        .footer-links { display: flex; flex-wrap: wrap; align-items: center; gap: 1rem; }
-        .footer-links a { text-decoration: none; color: #bcd0c3; font-size: .85rem; }
-        .footer-bottom { padding: 1rem 0 1.5rem; border-top: 1px solid rgba(255,255,255,.09); color: #8fa99a; font-size: .78rem; }
+        .footer-sub { color: #9eb5a6; font-size: .8rem; }
+        .footer-links { display: flex; flex-wrap: wrap; gap: .25rem; }
+        .footer-links a { min-height: 44px; display: inline-flex; align-items: center; padding: 0 .6rem; color: #bdd0c3; text-decoration: none; border-radius: 8px; font-size: .84rem; }
+        .footer-links a:hover { color: #fff; background: rgba(255,255,255,.06); }
+        .footer-bottom { padding: 1rem 0 1.4rem; border-top: 1px solid rgba(255,255,255,.09); color: #8fa99a; font-size: .78rem; }
 
         @media (max-width: 980px) {
-            .nav a:not(.sign-in) { display: none; }
-            .hero-grid { grid-template-columns: 1fr; gap: 2.5rem; min-height: auto; }
-            .hero-panel { max-width: 620px; }
-            .section-grid { grid-template-columns: 1fr; gap: 2.2rem; }
-            .side-note { position: static; }
-            .role-grid { grid-template-columns: 1fr; }
-            .office-grid { grid-template-columns: 1fr; }
+            .header-inner { align-items: flex-start; flex-direction: column; gap: .45rem; padding: .7rem 0; }
+            .nav { width: 100%; justify-content: flex-start; overflow-x: auto; padding-bottom: .2rem; scrollbar-width: thin; }
+            .nav .sign-in { margin-left: 0; }
+            .hero-grid { grid-template-columns: 1fr; gap: 2rem; min-height: auto; padding: 4.5rem 0 5.5rem; }
+            .service-card { max-width: 640px; }
+            .quick-grid, .requirement-grid, .process-grid, .role-grid { grid-template-columns: 1fr 1fr; }
+            .about-grid, .faq-grid, .office-grid { grid-template-columns: 1fr; }
         }
         @media (max-width: 640px) {
-            .container { width: min(100% - 1.25rem, 1200px); }
+            html { scroll-padding-top: 126px; }
+            .container { width: min(100% - 1.25rem, 1180px); }
             .brand-office { display: none; }
-            .header-inner { min-height: 64px; }
-            .brand img { width: 38px; height: 38px; }
-            .nav .sign-in { padding: .48rem .7rem; font-size: .82rem; }
-            .hero-grid { padding: 4rem 0; }
-            h1 { font-size: clamp(2.7rem, 14vw, 4rem); }
-            .section { padding: 4.5rem 0; }
+            .nav a { padding: 0 .6rem; font-size: .82rem; }
+            .hero-grid { padding-top: 3.6rem; }
+            h1 { font-size: clamp(2.65rem, 13vw, 4rem); }
             .hero-actions .button { width: 100%; }
-            .requirement-head { align-items: flex-start; flex-direction: column; }
+            .quick-grid, .requirement-grid, .process-grid, .role-grid, .about-points { grid-template-columns: 1fr; }
+            .section { padding: 4.5rem 0; }
             .contact-list li { grid-template-columns: 1fr; gap: .2rem; }
             .footer-top { grid-template-columns: 1fr; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            html { scroll-behavior: auto; }
+            *, *::before, *::after { transition-duration: .01ms !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; }
         }
     </style>
 </head>
 <body>
+    <a class="skip-link" href="#main-content">Skip to main content</a>
+
     <header class="site-header">
         <div class="container header-inner">
             <a href="{{ route('home') }}" class="brand" aria-label="DAR-LTCMS home">
@@ -373,11 +365,10 @@
                 </span>
             </a>
 
-            <nav class="nav" aria-label="Public information navigation">
-                <a href="#about">About</a>
+            <nav class="nav" aria-label="Public information">
                 <a href="#requirements">Requirements</a>
                 <a href="#process">Process</a>
-                <a href="#access">Who can log in</a>
+                <a href="#access">Access</a>
                 <a href="#faq">FAQ</a>
                 <a href="#office">Office</a>
                 <a href="{{ route('login') }}" class="sign-in">Sign In</a>
@@ -385,300 +376,251 @@
         </div>
     </header>
 
-    <main>
-        <section class="hero" id="about">
+    <main id="main-content">
+        <section class="hero" aria-labelledby="hero-title">
             <div class="container hero-grid">
                 <div>
-                    <p class="eyebrow">Department of Agrarian Reform · Negros Oriental Provincial Office</p>
-                    <h1>Land transfer clearance, made easier to understand and monitor.</h1>
+                    <div class="hero-badge">DAR Negros Oriental public service information</div>
+                    <h1 id="hero-title">Land transfer clearance, without the guesswork.</h1>
                     <p class="hero-copy">
-                        DAR-LTCMS is the web-based administrative processing and monitoring platform used to support land transfer clearance records, document review, application progress, clearance generation, and reporting within the DAR Negros Oriental Provincial Office.
+                        Find the documents to prepare, understand the clearance process, and access DAR-LTCMS if you already have an authorized account.
                     </p>
                     <div class="hero-actions">
-                        <a href="{{ route('login') }}" class="button button-light">Sign In</a>
-                        <a href="#requirements" class="button button-outline">View Clearance Requirements</a>
+                        <a href="#requirements" class="button button-primary">View Requirements</a>
+                        <a href="{{ route('login') }}" class="button button-secondary">Sign In to DAR-LTCMS</a>
                     </div>
                 </div>
 
-                <aside class="hero-panel" aria-label="Service overview">
-                    <div class="hero-panel-head">
+                <aside class="service-card" aria-label="DAR-LTCMS service summary">
+                    <div class="service-card-top">
                         <img src="{{ asset('images/dar-logo.svg') }}" alt="">
                         <div>
-                            <div class="panel-title">DAR-LTCMS</div>
-                            <div class="panel-sub">Public service information</div>
+                            <div class="service-card-title">DAR-LTCMS</div>
+                            <div class="service-card-sub">Land Transfer Clearance and Monitoring System</div>
                         </div>
                     </div>
-                    <div class="hero-panel-body">
-                        <div class="panel-row">
-                            <div class="panel-label">Service</div>
-                            <div class="panel-value">Land Transfer Clearance processing and monitoring</div>
-                        </div>
-                        <div class="panel-row">
-                            <div class="panel-label">Office</div>
-                            <div class="panel-value">DAR Negros Oriental Provincial Office</div>
-                        </div>
-                        <div class="panel-row">
-                            <div class="panel-label">Applications</div>
-                            <div class="panel-value">Encoded and processed by authorized DAR personnel</div>
-                        </div>
-                        <div class="panel-row">
-                            <div class="panel-label">Public portal</div>
-                            <div class="panel-value">Information and preparation guidance; no online self-application</div>
-                        </div>
-                    </div>
+                    <ul class="service-list">
+                        <li>
+                            <span class="service-label">Office</span>
+                            <span class="service-value">DAR Negros Oriental Provincial Office</span>
+                        </li>
+                        <li>
+                            <span class="service-label">Applications</span>
+                            <span class="service-value">Encoded and processed by authorized DAR staff</span>
+                        </li>
+                        <li>
+                            <span class="service-label">Landowner access</span>
+                            <span class="service-value">View linked records, status, decision information, and available output</span>
+                        </li>
+                    </ul>
                 </aside>
             </div>
         </section>
 
-        <section class="section section-white">
-            <div class="container section-grid">
-                <div class="side-note">
-                    <p class="section-kicker">About the service</p>
-                    <h2 class="section-title">A digital front desk for clearance information.</h2>
-                </div>
-                <div>
-                    <p class="section-intro" style="margin-top:0; font-size:1.1rem;">
-                        Land transfer clearance processing involves the administrative review of records and supporting documents before DAR issues the appropriate clearance decision or output. DAR-LTCMS helps authorized personnel organize that work, preserve traceable records, and monitor each application through the office workflow.
-                    </p>
-                    <div class="scope-callout">
-                        <strong>Important scope reminder</strong>
-                        <p>
-                            Clearance approval and generation through DAR-LTCMS does not itself execute the legal transfer of land ownership or alter registry ownership records. Any actual transfer, registry alteration, or ownership mutation remains subject to separate legal and administrative procedures.
-                        </p>
+        <section class="quick-strip" aria-label="Quick links">
+            <div class="container quick-grid">
+                <a class="quick-card" href="#requirements">
+                    <div>
+                        <span class="quick-label">Prepare</span>
+                        <div class="quick-title">What documents should I bring?</div>
                     </div>
-                </div>
+                    <span class="quick-arrow" aria-hidden="true">→</span>
+                </a>
+                <a class="quick-card" href="#process">
+                    <div>
+                        <span class="quick-label">Understand</span>
+                        <div class="quick-title">How does clearance processing work?</div>
+                    </div>
+                    <span class="quick-arrow" aria-hidden="true">→</span>
+                </a>
+                <a class="quick-card" href="#office">
+                    <div>
+                        <span class="quick-label">Contact</span>
+                        <div class="quick-title">How do I reach DAR Legal Negros Oriental?</div>
+                    </div>
+                    <span class="quick-arrow" aria-hidden="true">→</span>
+                </a>
             </div>
         </section>
 
-        <section class="section" id="requirements">
-            <div class="container section-grid">
-                <div class="side-note">
-                    <p class="section-kicker">Clearance requirements</p>
-                    <h2 class="section-title">Prepare before visiting DAR.</h2>
-                    <p>
-                        This is a curated public preparation guide based on the current DAR-LTCMS clearance configuration. It is not an automatic publication of internal database records.
-                    </p>
-                </div>
-
-                <div>
-                    <div class="requirement-groups">
-                        <article class="requirement-card">
-                            <div class="requirement-head">
-                                <h3>Transferor requirements</h3>
-                                <span class="tag">Core preparation</span>
-                            </div>
-                            <ul class="requirement-list">
-                                <li>Official Receipt for LTC fee payment</li>
-                                <li>Electronic Copy of Title</li>
-                                <li>Deed or Document to be Registered</li>
-                                <li>Affidavit of Transferor</li>
-                                <li>Municipal Assessor's Certificate of Aggregate Landholding</li>
-                                <li>Provincial Assessor's Certificate of Aggregate Landholding</li>
-                            </ul>
-                        </article>
-
-                        <article class="requirement-card">
-                            <div class="requirement-head">
-                                <h3>Transferee requirements</h3>
-                                <span class="tag">Core preparation</span>
-                            </div>
-                            <ul class="requirement-list">
-                                <li>Affidavit of Transferee</li>
-                                <li>Municipal Assessor's Certificate of Aggregate Landholding</li>
-                                <li>Provincial Assessor's Certificate of Aggregate Landholding</li>
-                                <li>MARPO Certification (LTC Form No. 2)</li>
-                            </ul>
-                        </article>
-
-                        <article class="requirement-card">
-                            <div class="requirement-head">
-                                <h3>Case-dependent or additional documents</h3>
-                                <span class="tag">When applicable</span>
-                            </div>
-                            <ul class="requirement-list">
-                                <li>Death Certificate, when applicable to a person identified in the transfer instrument</li>
-                                <li>City Assessor's Certificate of Aggregate Landholding, depending on location or jurisdiction</li>
-                                <li>Recent Tax Declaration, when available, as a supporting reference document</li>
-                                <li>Other documents requested by authorized DAR personnel after official review of the transaction circumstances</li>
-                            </ul>
-                        </article>
-                    </div>
-
-                    <p class="requirement-note">
-                        Additional documents may be required depending on the circumstances of the transaction. DAR personnel remain responsible for official document review, validation, and determination of applicable requirements.
-                    </p>
-                </div>
-            </div>
-        </section>
-
-        <section class="section section-white" id="process">
-            <div class="container section-grid">
-                <div class="side-note">
-                    <p class="section-kicker">How processing works</p>
-                    <h2 class="section-title">From preparation to clearance output.</h2>
-                    <p>The application itself is encoded by authorized DAR staff. Landowners do not create clearance applications through this website.</p>
-                </div>
-
-                <div class="timeline" aria-label="Public clearance processing overview">
-                    <div class="timeline-step">
-                        <div class="timeline-number">1</div>
-                        <div class="timeline-copy">
-                            <h3>Prepare Requirements</h3>
-                            <p>Gather the core and applicable supporting documents before coordinating with the DAR office.</p>
-                        </div>
-                    </div>
-                    <div class="timeline-step">
-                        <div class="timeline-number">2</div>
-                        <div class="timeline-copy">
-                            <h3>Visit or Coordinate with DAR Negros Oriental</h3>
-                            <p>Present the transaction information and documents for the appropriate office process.</p>
-                        </div>
-                    </div>
-                    <div class="timeline-step">
-                        <div class="timeline-number">3</div>
-                        <div class="timeline-copy">
-                            <h3>DAR Staff Encodes the Application</h3>
-                            <p>Authorized staff create and maintain the application record in DAR-LTCMS.</p>
-                        </div>
-                    </div>
-                    <div class="timeline-step">
-                        <div class="timeline-number">4</div>
-                        <div class="timeline-copy">
-                            <h3>Requirements and Records Are Reviewed</h3>
-                            <p>DAR personnel review submitted documents, parcel information, landholding records, and other applicable references.</p>
-                        </div>
-                    </div>
-                    <div class="timeline-step">
-                        <div class="timeline-number">5</div>
-                        <div class="timeline-copy">
-                            <h3>Application Progress Is Monitored</h3>
-                            <p>The system records and presents the administrative status as the application proceeds through authorized office review.</p>
-                        </div>
-                    </div>
-                    <div class="timeline-step">
-                        <div class="timeline-number">6</div>
-                        <div class="timeline-copy">
-                            <h3>Clearance Decision or Output</h3>
-                            <p>The final clearance result is recorded and, where applicable, the official clearance output is generated for authorized access.</p>
-                        </div>
-                    </div>
-
-                    <div class="scope-callout" style="margin-left:58px;">
-                        <strong>After DAR-LTCMS</strong>
-                        <p>Any further legal, conveyance, registration, or registry procedures required to complete an actual land ownership transfer occur separately from DAR-LTCMS.</p>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <section class="section section-dark" id="access">
+        <section class="section section-white" id="about" aria-labelledby="about-title">
             <div class="container">
-                <p class="section-kicker">Authorized access</p>
-                <h2 class="section-title">Who can sign in?</h2>
-                <p class="section-intro">DAR-LTCMS is intended for office processing and authorized stakeholder access. Accounts are created and managed by authorized DAR personnel.</p>
+                <div class="section-header">
+                    <p class="kicker">About the service</p>
+                    <h2 class="section-title" id="about-title">One place to understand the clearance process.</h2>
+                    <p class="section-copy">DAR-LTCMS supports the administrative processing, record management, document review, status monitoring, clearance generation, reporting, and audit trail needs of the DAR Negros Oriental Provincial Office.</p>
+                </div>
+
+                <div class="about-grid">
+                    <article class="about-main">
+                        <p>For visitors, this page acts as a public information desk. For authorized users, DAR-LTCMS provides role-based access to the records and actions appropriate to their work or linked landowner account.</p>
+                        <div class="about-points">
+                            <div class="about-point"><strong>Clear requirements</strong><span>See the core documents to prepare before coordinating with DAR.</span></div>
+                            <div class="about-point"><strong>Clear process</strong><span>Know what happens from preparation through the clearance decision or output.</span></div>
+                            <div class="about-point"><strong>Role-based access</strong><span>Staff, landowners, and geodetic personnel see only the functions allowed for their role.</span></div>
+                            <div class="about-point"><strong>Traceable records</strong><span>Authorized actions and final decisions are preserved for accountability and monitoring.</span></div>
+                        </div>
+                    </article>
+                    <aside class="about-side">
+                        <h3>Already have an account?</h3>
+                        <p>Use the secure sign-in page to access the DAR-LTCMS functions available to your assigned role.</p>
+                        <a href="{{ route('login') }}">Go to Sign In →</a>
+                    </aside>
+                </div>
+            </div>
+        </section>
+
+        <section class="section" id="requirements" aria-labelledby="requirements-title">
+            <div class="container">
+                <div class="section-header">
+                    <p class="kicker">Clearance requirements</p>
+                    <h2 class="section-title" id="requirements-title">Prepare before visiting DAR.</h2>
+                    <p class="section-copy">This public preparation guide is curated from the current DAR-LTCMS clearance configuration. DAR personnel remain responsible for determining the official and applicable requirements for each transaction.</p>
+                </div>
+
+                <div class="requirement-grid">
+                    <article class="requirement-card">
+                        <div class="requirement-head">
+                            <h3>Transferor requirements</h3>
+                            <span class="tag">Core preparation</span>
+                        </div>
+                        <ul class="requirement-list">
+                            <li>Official Receipt for LTC fee payment</li>
+                            <li>Electronic Copy of Title</li>
+                            <li>Deed or Document to be Registered</li>
+                            <li>Affidavit of Transferor</li>
+                            <li>Municipal Assessor's Certificate of Aggregate Landholding</li>
+                            <li>Provincial Assessor's Certificate of Aggregate Landholding</li>
+                        </ul>
+                    </article>
+
+                    <article class="requirement-card">
+                        <div class="requirement-head">
+                            <h3>Transferee requirements</h3>
+                            <span class="tag">Core preparation</span>
+                        </div>
+                        <ul class="requirement-list">
+                            <li>Affidavit of Transferee</li>
+                            <li>Municipal Assessor's Certificate of Aggregate Landholding</li>
+                            <li>Provincial Assessor's Certificate of Aggregate Landholding</li>
+                            <li>MARPO Certification (LTC Form No. 2)</li>
+                        </ul>
+                    </article>
+
+                    <article class="requirement-card">
+                        <div class="requirement-head">
+                            <h3>Additional documents</h3>
+                            <span class="tag">When applicable</span>
+                        </div>
+                        <ul class="requirement-list">
+                            <li>Death Certificate, when applicable</li>
+                            <li>City Assessor's Certificate of Aggregate Landholding, depending on jurisdiction</li>
+                            <li>Recent Tax Declaration, when available</li>
+                            <li>Other documents requested after official DAR review</li>
+                        </ul>
+                    </article>
+                </div>
+
+                <p class="requirements-note">Additional documents may be required depending on the circumstances of the transaction.</p>
+            </div>
+        </section>
+
+        <section class="section section-white" id="process" aria-labelledby="process-title">
+            <div class="container">
+                <div class="section-header">
+                    <p class="kicker">How processing works</p>
+                    <h2 class="section-title" id="process-title">Six steps from preparation to clearance output.</h2>
+                    <p class="section-copy">Landowners do not create applications themselves. Authorized DAR staff encode and process applications in DAR-LTCMS.</p>
+                </div>
+
+                <div class="process-grid">
+                    <article class="process-card"><span class="step-number">1</span><h3>Prepare requirements</h3><p>Gather the core and applicable supporting documents.</p></article>
+                    <article class="process-card"><span class="step-number">2</span><h3>Coordinate with DAR</h3><p>Present the transaction information and documents through the appropriate office process.</p></article>
+                    <article class="process-card"><span class="step-number">3</span><h3>Staff encodes the application</h3><p>Authorized DAR personnel create and maintain the application record.</p></article>
+                    <article class="process-card"><span class="step-number">4</span><h3>Requirements are reviewed</h3><p>Documents, parcel information, landholding records, and applicable references are reviewed.</p></article>
+                    <article class="process-card"><span class="step-number">5</span><h3>Progress is monitored</h3><p>DAR-LTCMS records the administrative status through the authorized review workflow.</p></article>
+                    <article class="process-card"><span class="step-number">6</span><h3>Decision or output</h3><p>The final clearance result is recorded and the appropriate output may be generated.</p></article>
+                </div>
+
+                <div class="process-note">Any legal conveyance, registration, or ownership-record change required after the clearance process remains subject to the separate procedures of the appropriate offices.</div>
+            </div>
+        </section>
+
+        <section class="section section-dark" id="access" aria-labelledby="access-title">
+            <div class="container">
+                <div class="section-header">
+                    <p class="kicker">Authorized access</p>
+                    <h2 class="section-title" id="access-title">Different roles, different access.</h2>
+                    <p class="section-copy">Accounts are created and managed by authorized DAR personnel.</p>
+                </div>
 
                 <div class="role-grid">
-                    <article class="role-card">
-                        <h3>DAR Staff</h3>
-                        <p>Encode applications, manage authorized records and documents, process clearance applications, record workflow actions, and prepare monitoring outputs and reports.</p>
-                    </article>
-                    <article class="role-card">
-                        <h3>Landowners</h3>
-                        <p>View only their own linked parcel records, application status, final decision information, and available clearance output. Landowners cannot create applications themselves.</p>
-                    </article>
-                    <article class="role-card">
-                        <h3>Geodetic Personnel</h3>
-                        <p>Use limited, read-only access for parcel, reference, and map-based review. This role is not a primary approval or broad record-editing role.</p>
-                    </article>
+                    <article class="role-card"><h3>DAR Staff</h3><p>Encode and process applications, manage authorized records and documents, record workflow actions, and prepare monitoring outputs and reports.</p></article>
+                    <article class="role-card"><h3>Landowners</h3><p>View only their own linked parcel records, application status, final decision information, and available clearance output.</p></article>
+                    <article class="role-card"><h3>Geodetic Personnel</h3><p>Use limited read-only access for parcel, reference, and map-based review.</p></article>
                 </div>
-
-                <div class="no-apply">
-                    <strong>No online self-application.</strong> The public landing page provides information and preparation guidance only. Clearance applications are encoded by authorized DAR staff.
-                </div>
+                <div class="no-apply"><strong>No online self-application.</strong> Clearance applications are encoded by authorized DAR staff.</div>
             </div>
         </section>
 
-        <section class="section section-white" id="faq">
-            <div class="container section-grid">
-                <div class="side-note">
-                    <p class="section-kicker">Frequently asked questions</p>
-                    <h2 class="section-title">Common questions before you proceed.</h2>
+        <section class="section section-white" id="faq" aria-labelledby="faq-title">
+            <div class="container faq-grid">
+                <div class="section-header">
+                    <p class="kicker">Frequently asked questions</p>
+                    <h2 class="section-title" id="faq-title">Quick answers before you proceed.</h2>
                 </div>
 
                 <div class="faq-list">
                     <details>
                         <summary>Can I submit a land transfer clearance application online?</summary>
-                        <div class="faq-answer"><p>No. Landowners do not create applications through DAR-LTCMS. Authorized DAR staff encode and process clearance applications through the office workflow.</p></div>
+                        <div class="faq-answer"><p>No. Authorized DAR staff encode and process clearance applications. The public landing page is for information and preparation guidance.</p></div>
                     </details>
                     <details>
                         <summary>Can I see my application status?</summary>
-                        <div class="faq-answer"><p>Yes. A landowner account may view its own linked application status and records when the account has been properly associated with the relevant landowner record. It cannot access another landowner's records.</p></div>
+                        <div class="faq-answer"><p>Yes, when your landowner account is properly linked to your record. Landowner accounts cannot view records belonging to other landowners.</p></div>
                     </details>
                     <details>
                         <summary>Does an approved or released clearance mean ownership has already transferred?</summary>
-                        <div class="faq-answer"><p>No. A clearance decision or generated output does not itself execute a legal transfer of ownership or alter registry ownership records. Those actions remain subject to separate legal and administrative procedures.</p></div>
+                        <div class="faq-answer"><p>No. The clearance decision or generated output does not itself change land ownership or registry ownership records.</p></div>
                     </details>
                     <details>
                         <summary>What should I bring to DAR?</summary>
-                        <div class="faq-answer"><p>Start with the transferor and transferee preparation lists shown on this page, plus any case-dependent documents that apply to your transaction. DAR personnel make the official determination of complete and applicable requirements.</p></div>
+                        <div class="faq-answer"><p>Start with the transferor and transferee requirements listed on this page, plus any additional documents that apply to your transaction. DAR personnel determine the official applicable requirements.</p></div>
                     </details>
                     <details>
                         <summary>Can the system decide whether my transaction is legally valid?</summary>
-                        <div class="faq-answer"><p>No. DAR-LTCMS supports administrative processing, record management, validation assistance, monitoring, and clearance generation. Official legal and administrative determinations remain with authorized DAR personnel and the applicable government procedures.</p></div>
-                    </details>
-                    <details>
-                        <summary>I have an account but cannot access another person's parcel or application. Is that expected?</summary>
-                        <div class="faq-answer"><p>Yes. Access is role-based. Landowner accounts are restricted to records tied to their own authorized profile, while geodetic personnel have limited read-only access appropriate to their role.</p></div>
+                        <div class="faq-answer"><p>No. DAR-LTCMS supports administrative processing, records management, monitoring, validation assistance, and clearance generation. Official legal and administrative determinations remain with authorized personnel and the applicable government procedures.</p></div>
                     </details>
                 </div>
             </div>
         </section>
 
-        <section class="section" id="office">
+        <section class="section" id="office" aria-labelledby="office-title">
             <div class="container">
-                <p class="section-kicker">Office information</p>
-                <h2 class="section-title">DAR Negros Oriental Legal Assistance Division</h2>
-                <p class="section-intro">For land transfer clearance concerns and related legal assistance inquiries, use the contact information provided by the DAR Negros Oriental Legal Assistance Division.</p>
+                <div class="section-header">
+                    <p class="kicker">Office information</p>
+                    <h2 class="section-title" id="office-title">DAR Negros Oriental Legal Assistance Division</h2>
+                </div>
 
                 <div class="office-grid">
-                    <div class="office-card">
-                        <h3>Legal Assistance Division</h3>
-                        <p>Department of Agrarian Reform · Negros Oriental</p>
+                    <article class="office-card">
+                        <h3>Contact details</h3>
                         <ul class="contact-list">
-                            <li>
-                                <span class="contact-label">Telephone</span>
-                                <span class="contact-value"><a href="tel:5227144">522-7144</a></span>
-                            </li>
-                            <li>
-                                <span class="contact-label">Cellphone</span>
-                                <span class="contact-value"><a href="tel:+639168763071">0916-876-3071</a></span>
-                            </li>
-                            <li>
-                                <span class="contact-label">Email</span>
-                                <span class="contact-value"><a href="mailto:dar_legal_orneg@yahoo.com">dar_legal_orneg@yahoo.com</a></span>
-                            </li>
-                            <li>
-                                <span class="contact-label">Regional Office</span>
-                                <span class="contact-value"><a href="tel:+63322536498">(032) 253-6498</a></span>
-                            </li>
+                            <li><span class="contact-label">Telephone</span><span class="contact-value"><a href="tel:5227144">522-7144</a></span></li>
+                            <li><span class="contact-label">Cellphone</span><span class="contact-value"><a href="tel:+639168763071">0916-876-3071</a></span></li>
+                            <li><span class="contact-label">Email</span><span class="contact-value"><a href="mailto:dar_legal_orneg@yahoo.com">dar_legal_orneg@yahoo.com</a></span></li>
+                            <li><span class="contact-label">Regional Office</span><span class="contact-value"><a href="tel:+63322536498">(032) 253-6498</a></span></li>
                         </ul>
-                        <p class="office-source-note">Contact details shown here are based on the Legal Assistance Division information provided for the DAR-LTCMS public landing page.</p>
-                    </div>
+                    </article>
 
-                    <div class="office-card">
+                    <article class="office-card">
                         <h3>Online channels</h3>
-                        <p>Visit DAR's public channels for office updates and general Department information.</p>
+                        <p>Use these public channels for DAR information and office updates.</p>
                         <div class="office-links">
-                            <a class="office-link" href="https://www.facebook.com/DARLegalNegor" target="_blank" rel="noopener noreferrer">
-                                <span>DAR Legal Negros Oriental</span>
-                                <span aria-hidden="true">↗</span>
-                            </a>
-                            <a class="office-link" href="https://www.dar.gov.ph/home" target="_blank" rel="noopener noreferrer">
-                                <span>Department of Agrarian Reform Website</span>
-                                <span aria-hidden="true">↗</span>
-                            </a>
+                            <a class="office-link" href="https://www.facebook.com/DARLegalNegor" target="_blank" rel="noopener noreferrer"><span>DAR Legal Negros Oriental</span><span aria-hidden="true">↗</span></a>
+                            <a class="office-link" href="https://www.dar.gov.ph/home" target="_blank" rel="noopener noreferrer"><span>Department of Agrarian Reform Website</span><span aria-hidden="true">↗</span></a>
                         </div>
-                    </div>
+                    </article>
                 </div>
             </div>
         </section>
@@ -693,17 +635,15 @@
                     <div class="footer-sub">Negros Oriental Provincial Office · DAR-LTCMS</div>
                 </div>
             </div>
-            <div class="footer-links">
+            <nav class="footer-links" aria-label="Footer navigation">
                 <a href="#requirements">Requirements</a>
                 <a href="#process">Process</a>
                 <a href="#faq">FAQ</a>
                 <a href="#office">Office</a>
                 <a href="{{ route('login') }}">Sign In</a>
-            </div>
+            </nav>
         </div>
-        <div class="container footer-bottom">
-            © {{ now()->year }} Department of Agrarian Reform. DAR-LTCMS is an administrative clearance processing and monitoring platform for authorized use within the DAR Negros Oriental Provincial Office.
-        </div>
+        <div class="container footer-bottom">© {{ now()->year }} Department of Agrarian Reform. DAR-LTCMS supports administrative land transfer clearance processing and monitoring for the DAR Negros Oriental Provincial Office.</div>
     </footer>
 </body>
 </html>
