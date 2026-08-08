@@ -40,11 +40,11 @@
 
         .sticky-shell { position: sticky; top: 0; z-index: 50; }
         .development-notice { background: #fff6cf; color: #4a3b00; border-bottom: 1px solid #eadb8e; }
-        .development-notice-inner { min-height: 44px; display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 1rem; }
-        .development-message { display: flex; align-items: center; gap: .65rem; min-width: 0; }
+        .development-notice-inner { position: relative; min-height: 44px; display: flex; align-items: center; justify-content: center; padding-inline: 52px; }
+        .development-message { display: inline-flex; align-items: center; justify-content: center; gap: .65rem; text-align: center; }
         .development-icon { width: 19px; height: 19px; flex: 0 0 auto; color: #9a6a00; }
         .development-notice p { margin: 0; font-size: .88rem; font-weight: 600; }
-        .development-dismiss { width: 44px; height: 44px; display: inline-flex; align-items: center; justify-content: center; padding: 0; border: 0; border-radius: 8px; background: transparent; color: #4a3b00; cursor: pointer; font-size: 1.35rem; line-height: 1; }
+        .development-dismiss { position: absolute; right: 0; top: 50%; transform: translateY(-50%); width: 44px; height: 44px; display: inline-flex; align-items: center; justify-content: center; padding: 0; border: 0; border-radius: 8px; background: transparent; color: #4a3b00; cursor: pointer; font-size: 1.35rem; line-height: 1; }
         .development-dismiss:hover { background: rgba(154,106,0,.09); }
 
         .site-header { position: relative; background: rgba(8,45,27,.97); border-bottom: 1px solid rgba(255,255,255,.12); color: #fff; }
@@ -185,6 +185,8 @@
             .additional { grid-column: auto; grid-template-columns: 1fr; }
             .contact-list li { grid-template-columns: 1fr; gap: .15rem; }
             .footer-inner { align-items: flex-start; flex-direction: column; }
+            .development-notice-inner { padding-inline: 48px; }
+            .development-message { gap: .5rem; }
             .development-notice p { font-size: .82rem; }
         }
 
