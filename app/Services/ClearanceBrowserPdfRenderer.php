@@ -11,6 +11,21 @@ class ClearanceBrowserPdfRenderer
 {
     public function render(string $html): string
     {
+        // The local development server is single-process. If headless Chromium
+        // requests /storage or /images from the same Laravel request, both sides
+        // wait on each other until PHP times out. Embed those local images first.
+        $html = $this->embedLocalImages($html);
+
+        $cacheDirectory = storage_path('app/private/clearance-pdf-cache');
+        File::ensureDirectoryExists($cacheDirectory, 0700, true);
+
+        $cacheKey = hash('sha256', $html);
+        $cachePath = $cacheDirectory . DIRECTORY_SEPARATOR . $cacheKey . '.pdf';
+
+        if (is_file($cachePath) && filesize($cachePath) > 0) {
+            return File::get($cachePath);
+        }
+
         $browser = $this->resolveBrowserExecutable();
         $workingDirectory = storage_path('app/tmp/clearance-pdf');
 
@@ -27,9 +42,15 @@ class ClearanceBrowserPdfRenderer
         try {
             $process = new Process([
                 $browser,
-                '--headless',
+                '--headless=new',
                 '--disable-gpu',
                 '--disable-extensions',
+                '--disable-background-networking',
+                '--disable-component-update',
+                '--disable-default-apps',
+                '--disable-sync',
+                '--metrics-recording-only',
+                '--mute-audio',
                 '--no-first-run',
                 '--no-default-browser-check',
                 '--no-pdf-header-footer',
@@ -40,7 +61,9 @@ class ClearanceBrowserPdfRenderer
                 $this->fileUri($htmlPath),
             ]);
 
-            $process->setTimeout(60);
+            // A simple local Form No. 5 render should complete in a few seconds.
+            // Fail fast instead of ever reaching PHP's request timeout.
+            $process->setTimeout(15);
             $process->run();
 
             if (! $process->isSuccessful() || ! is_file($pdfPath) || filesize($pdfPath) === 0) {
@@ -56,12 +79,71 @@ class ClearanceBrowserPdfRenderer
                 throw new RuntimeException('The browser renderer generated an empty clearance PDF.');
             }
 
+            // Final clearance records are locked. Cache by exact rendered HTML,
+            // so repeated opens are instant and any real content/template change
+            // naturally produces a different cache key.
+            File::put($cachePath, $pdf);
+
             return $pdf;
         } finally {
             File::delete($htmlPath);
             File::delete($pdfPath);
             File::deleteDirectory($profilePath);
         }
+    }
+
+    private function embedLocalImages(string $html): string
+    {
+        return preg_replace_callback(
+            '/(<img\b[^>]*\bsrc=["\'])([^"\']+)(["\'][^>]*>)/i',
+            function (array $matches): string {
+                $source = html_entity_decode($matches[2], ENT_QUOTES | ENT_HTML5);
+                $path = parse_url($source, PHP_URL_PATH);
+
+                if (! is_string($path) || $path === '') {
+                    return $matches[0];
+                }
+
+                $localPath = null;
+
+                if (str_starts_with($path, '/storage/')) {
+                    $relative = ltrim(substr($path, strlen('/storage/')), '/');
+                    $candidate = storage_path('app/public/' . str_replace('/', DIRECTORY_SEPARATOR, $relative));
+                    if (is_file($candidate)) {
+                        $localPath = $candidate;
+                    }
+                } elseif (str_starts_with($path, '/images/')) {
+                    $relative = ltrim(substr($path, strlen('/images/')), '/');
+                    $candidate = public_path('images/' . str_replace('/', DIRECTORY_SEPARATOR, $relative));
+                    if (is_file($candidate)) {
+                        $localPath = $candidate;
+                    }
+                }
+
+                if ($localPath === null) {
+                    return $matches[0];
+                }
+
+                $contents = @file_get_contents($localPath);
+                if ($contents === false) {
+                    return $matches[0];
+                }
+
+                $extension = strtolower(pathinfo($localPath, PATHINFO_EXTENSION));
+                $mime = match ($extension) {
+                    'svg' => 'image/svg+xml',
+                    'jpg', 'jpeg' => 'image/jpeg',
+                    'gif' => 'image/gif',
+                    'webp' => 'image/webp',
+                    default => 'image/png',
+                };
+
+                $dataUri = 'data:' . $mime . ';base64,' . base64_encode($contents);
+
+                return $matches[1] . $dataUri . $matches[3];
+            },
+            $html
+        ) ?? $html;
     }
 
     private function resolveBrowserExecutable(): string
