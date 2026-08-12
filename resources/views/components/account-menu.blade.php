@@ -13,6 +13,26 @@
         : null;
 @endphp
 
+@once
+    <style>
+        /* Keep dashboard attention counters readable at high browser zoom. */
+        .stale-callout .stale-label {
+            min-width: 0;
+            overflow-wrap: anywhere;
+        }
+
+        .stale-callout .stale-value {
+            flex: 0 0 auto;
+            min-width: 2.5ch;
+            white-space: nowrap;
+            word-break: normal;
+            overflow-wrap: normal;
+            text-align: right;
+            line-height: 1;
+        }
+    </style>
+@endonce
+
 <div class="account-topbar-cluster">
     <details class="account-menu" data-account-menu>
         <summary class="account-menu-trigger" aria-label="Open account menu for {{ $accountName }}" title="Account menu">
