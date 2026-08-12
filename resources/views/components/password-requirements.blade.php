@@ -4,6 +4,7 @@
 ])
 
 <div class="password-checklist"
+     style="margin-top: 0.75rem;"
      data-password-checklist
      data-password-input="{{ $passwordId }}"
      @if($confirmationId) data-password-confirmation="{{ $confirmationId }}" @endif>
