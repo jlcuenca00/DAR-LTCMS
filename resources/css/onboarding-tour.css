@@ -11,7 +11,7 @@
     font: inherit;
     font-size: 16px;
     cursor: pointer;
-    transition: background 180ms ease, border-color 180ms ease, transform 180ms ease, box-shadow 180ms ease;
+    transition: background 160ms ease, border-color 160ms ease, transform 160ms ease, box-shadow 160ms ease;
 }
 
 .onboarding-help-button:hover {
@@ -24,30 +24,26 @@
 .onboarding-help-button:focus-visible,
 .onboarding-button:focus-visible,
 .onboarding-skip-link:focus-visible {
-    outline: 3px solid rgba(21, 128, 61, 0.35);
+    outline: 3px solid rgba(21, 128, 61, 0.3);
     outline-offset: 2px;
 }
 
 .onboarding-welcome-layer {
     position: fixed;
     inset: 0;
-    z-index: 9998;
+    z-index: 10050;
     display: grid;
     place-items: center;
     padding: 20px;
-    background: rgba(15, 23, 42, 0.68);
+    background: rgba(15, 23, 42, 0.52);
     backdrop-filter: blur(2px);
     opacity: 0;
-    transition: opacity 360ms ease;
+    pointer-events: auto;
+    transition: opacity 180ms ease;
 }
 
 .onboarding-welcome-layer.is-visible {
     opacity: 1;
-}
-
-.onboarding-welcome-layer[hidden],
-.onboarding-tour-layer[hidden] {
-    display: none !important;
 }
 
 .onboarding-welcome-card {
@@ -56,14 +52,12 @@
     border-radius: 18px;
     background: #ffffff;
     padding: 25px;
-    box-shadow: 0 28px 80px rgba(15, 23, 42, 0.28);
-    opacity: 0;
-    transform: translateY(14px) scale(0.975);
-    transition: opacity 360ms ease, transform 420ms cubic-bezier(.22, 1, .36, 1);
+    box-shadow: 0 28px 80px rgba(15, 23, 42, 0.24);
+    transform: translateY(8px) scale(0.99);
+    transition: transform 200ms cubic-bezier(.22, 1, .36, 1);
 }
 
 .onboarding-welcome-layer.is-visible .onboarding-welcome-card {
-    opacity: 1;
     transform: translateY(0) scale(1);
 }
 
@@ -83,7 +77,7 @@
 .onboarding-popover h2 {
     margin: 0;
     color: #0f172a;
-    font-family: 'Google Sans', Arial, sans-serif;
+    font-family: 'Google Sans', 'Product Sans', Arial, sans-serif;
     font-weight: 900;
     letter-spacing: -0.01em;
 }
@@ -121,15 +115,11 @@
     font-size: 13px;
     font-weight: 900;
     cursor: pointer;
-    transition: background 160ms ease, border-color 160ms ease, color 160ms ease, transform 160ms ease, box-shadow 160ms ease;
+    transition: background 150ms ease, border-color 150ms ease, transform 150ms ease, box-shadow 150ms ease;
 }
 
 .onboarding-button:hover:not(:disabled) {
     transform: translateY(-1px);
-}
-
-.onboarding-button:active:not(:disabled) {
-    transform: translateY(0);
 }
 
 .onboarding-button:disabled {
@@ -146,7 +136,7 @@
 .onboarding-button-primary:hover:not(:disabled) {
     background: #14532d;
     border-color: #14532d;
-    box-shadow: 0 6px 16px rgba(20, 83, 45, 0.18);
+    box-shadow: 0 6px 16px rgba(20, 83, 45, 0.16);
 }
 
 .onboarding-button-secondary {
@@ -163,86 +153,73 @@
 .onboarding-tour-layer {
     position: fixed;
     inset: 0;
-    z-index: 9997;
+    z-index: 10040;
     pointer-events: none;
     opacity: 0;
-    transition: opacity 360ms ease;
+    transition: opacity 180ms ease;
 }
 
-.onboarding-tour-layer.is-visible {
+.onboarding-tour-layer.is-ready {
     opacity: 1;
+}
+
+.onboarding-tour-layer.is-leaving {
+    opacity: 0;
 }
 
 .onboarding-shade {
     position: fixed;
-    z-index: 9997;
-    background: rgba(15, 23, 42, 0.72);
+    z-index: 10040;
+    background: rgba(15, 23, 42, 0.52);
     pointer-events: auto;
     transition:
-        left 420ms cubic-bezier(.22, 1, .36, 1),
-        top 420ms cubic-bezier(.22, 1, .36, 1),
-        width 420ms cubic-bezier(.22, 1, .36, 1),
-        height 420ms cubic-bezier(.22, 1, .36, 1),
-        background 320ms ease;
+        left 360ms cubic-bezier(.22, 1, .36, 1),
+        top 360ms cubic-bezier(.22, 1, .36, 1),
+        width 360ms cubic-bezier(.22, 1, .36, 1),
+        height 360ms cubic-bezier(.22, 1, .36, 1);
 }
 
 .onboarding-focus-ring {
     position: fixed;
-    z-index: 9998;
+    z-index: 10041;
     border: 3px solid #ffffff;
     border-radius: 12px;
-    box-shadow: 0 0 0 3px rgba(21, 128, 61, 0.78), 0 12px 30px rgba(15, 23, 42, 0.24);
+    box-shadow: 0 0 0 3px rgba(21, 128, 61, 0.72), 0 12px 30px rgba(15, 23, 42, 0.20);
     pointer-events: none;
-    opacity: 1;
-    transform: scale(1);
-    transform-origin: center;
     transition:
-        left 440ms cubic-bezier(.22, 1, .36, 1),
-        top 440ms cubic-bezier(.22, 1, .36, 1),
-        width 440ms cubic-bezier(.22, 1, .36, 1),
-        height 440ms cubic-bezier(.22, 1, .36, 1),
-        opacity 260ms ease,
-        transform 340ms cubic-bezier(.22, 1, .36, 1);
-}
-
-.onboarding-target-blocker {
-    position: fixed;
-    z-index: 9999;
-    background: transparent;
-    pointer-events: auto;
+        left 360ms cubic-bezier(.22, 1, .36, 1),
+        top 360ms cubic-bezier(.22, 1, .36, 1),
+        width 360ms cubic-bezier(.22, 1, .36, 1),
+        height 360ms cubic-bezier(.22, 1, .36, 1),
+        opacity 160ms ease;
 }
 
 .onboarding-popover {
     position: fixed;
-    z-index: 10000;
-    width: min(350px, calc(100vw - 28px));
+    z-index: 10042;
+    width: min(360px, calc(100vw - 28px));
     border: 1px solid #dbe3dd;
     border-radius: 15px;
     background: #ffffff;
     padding: 18px;
-    box-shadow: 0 24px 68px rgba(15, 23, 42, 0.30);
+    box-shadow: 0 24px 68px rgba(15, 23, 42, 0.28);
     pointer-events: auto;
     opacity: 1;
     transform: translateY(0) scale(1);
     transition:
-        left 440ms cubic-bezier(.22, 1, .36, 1),
-        top 440ms cubic-bezier(.22, 1, .36, 1),
-        opacity 260ms ease,
-        transform 340ms cubic-bezier(.22, 1, .36, 1);
+        left 320ms cubic-bezier(.22, 1, .36, 1),
+        top 320ms cubic-bezier(.22, 1, .36, 1),
+        opacity 150ms ease,
+        transform 180ms ease;
 }
 
-.onboarding-tour-layer.is-step-changing .onboarding-popover {
+.onboarding-tour-layer.is-moving .onboarding-popover {
     opacity: 0;
-    transform: translateY(14px) scale(0.97);
+    transform: translateY(7px) scale(0.99);
 }
 
-.onboarding-tour-layer.is-step-changing .onboarding-focus-ring {
-    opacity: 0;
-    transform: scale(0.97);
-}
-
-.onboarding-tour-layer.is-step-changing .onboarding-shade {
-    background: rgba(15, 23, 42, 0.78);
+.onboarding-tour-layer.is-moving .onboarding-focus-ring {
+    opacity: 0.45;
 }
 
 .onboarding-step-count {
@@ -255,7 +232,8 @@
 }
 
 .onboarding-popover h2 {
-    font-size: 17px;
+    font-size: 18px;
+    line-height: 1.25;
 }
 
 .onboarding-step-copy {
@@ -286,7 +264,6 @@
     font-size: 12px;
     font-weight: 850;
     cursor: pointer;
-    transition: color 150ms ease, opacity 150ms ease;
 }
 
 .onboarding-skip-link:hover {
@@ -295,83 +272,17 @@
     text-underline-offset: 3px;
 }
 
-.onboarding-page-handoff {
-    position: fixed;
-    inset: 0;
-    z-index: 11000;
-    display: grid;
-    place-items: center;
-    padding: 20px;
-    background: rgba(15, 23, 42, 0.82);
-    backdrop-filter: blur(4px);
-    opacity: 0;
-    pointer-events: auto;
-    transition: opacity 360ms ease;
+.onboarding-tour-active .notification-dropdown[data-onboarding-tour-open] > .notification-dropdown-panel {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    animation: onboarding-notification-open 180ms cubic-bezier(.22, 1, .36, 1) both;
 }
 
-.onboarding-page-handoff.is-visible {
-    opacity: 1;
-}
-
-.onboarding-page-handoff-card {
-    width: min(320px, 100%);
-    border: 1px solid rgba(255, 255, 255, 0.16);
-    border-radius: 16px;
-    background: rgba(15, 23, 42, 0.94);
-    padding: 19px 20px;
-    color: #ffffff;
-    text-align: center;
-    box-shadow: 0 24px 70px rgba(0, 0, 0, 0.28);
-    opacity: 0;
-    transform: translateY(14px) scale(0.97);
-    transition: opacity 360ms ease, transform 420ms cubic-bezier(.22, 1, .36, 1);
-}
-
-.onboarding-page-handoff.is-visible .onboarding-page-handoff-card {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-}
-
-.onboarding-page-handoff-kicker {
-    display: block;
-    color: #86efac;
-    font-size: 10px;
-    font-weight: 900;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-}
-
-.onboarding-page-handoff-title {
-    display: block;
-    margin-top: 6px;
-    font-size: 15px;
-    font-weight: 900;
-    line-height: 1.35;
-}
-
-.onboarding-page-handoff-note {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 7px;
-    margin-top: 9px;
-    color: #cbd5e1;
-    font-size: 11px;
-    font-weight: 750;
-}
-
-.onboarding-page-handoff-note i {
-    color: #86efac;
-}
-
-.onboarding-tour-active .notification-dropdown[data-onboarding-forced-open][open] .notification-dropdown-panel {
-    animation: onboarding-notification-panel-in 420ms cubic-bezier(.22, 1, .36, 1) both;
-}
-
-@keyframes onboarding-notification-panel-in {
+@keyframes onboarding-notification-open {
     from {
         opacity: 0;
-        transform: translateY(-12px) scale(0.97);
+        transform: translateY(-5px) scale(.99);
     }
     to {
         opacity: 1;
@@ -384,25 +295,26 @@
         padding: 21px;
     }
 
-    .onboarding-welcome-actions,
-    .onboarding-step-actions {
-        align-items: stretch;
+    .onboarding-welcome-actions {
         flex-direction: column-reverse;
     }
 
-    .onboarding-welcome-actions .onboarding-button,
-    .onboarding-step-nav,
-    .onboarding-step-nav .onboarding-button {
+    .onboarding-welcome-actions .onboarding-button {
         width: 100%;
     }
 
-    .onboarding-step-nav {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+    .onboarding-popover {
+        width: min(340px, calc(100vw - 20px));
+        padding: 16px;
     }
 
-    .onboarding-skip-link {
-        text-align: center;
+    .onboarding-step-actions {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .onboarding-step-nav {
+        justify-content: flex-end;
     }
 }
 
@@ -410,15 +322,11 @@
     .onboarding-help-button,
     .onboarding-welcome-layer,
     .onboarding-welcome-card,
-    .onboarding-button,
     .onboarding-tour-layer,
     .onboarding-shade,
     .onboarding-focus-ring,
     .onboarding-popover,
-    .onboarding-skip-link,
-    .onboarding-page-handoff,
-    .onboarding-page-handoff-card,
-    .notification-dropdown-panel {
+    .onboarding-tour-active .notification-dropdown[data-onboarding-tour-open] > .notification-dropdown-panel {
         transition: none !important;
         animation: none !important;
     }
