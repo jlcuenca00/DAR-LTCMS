@@ -107,7 +107,7 @@ function saveProgress(key, version, index) {
             index: Number(index),
         }));
     } catch {
-        // The tour still works on the current page if session storage is unavailable.
+        // Keep the tour usable even if session storage is unavailable.
     }
 }
 
@@ -155,7 +155,7 @@ function navigateWithTourTransition(targetPath, title = 'Next view') {
 
     window.setTimeout(() => {
         window.location.assign(targetPath);
-    }, motionDelay(220));
+    }, motionDelay(520));
 }
 
 function mountHelpButton(key, definition) {
@@ -208,7 +208,7 @@ function dismissWelcome(layer, callback = null) {
     window.setTimeout(() => {
         layer.remove();
         if (callback) callback();
-    }, motionDelay(180));
+    }, motionDelay(360));
 }
 
 function buildTourLayer() {
@@ -250,14 +250,16 @@ function resolveTarget(step) {
 }
 
 function prepareStep(step) {
-    document.querySelectorAll('.notification-dropdown[open]').forEach((dropdown) => {
-        if (step.prepare !== 'open-notifications') dropdown.removeAttribute('open');
-    });
+    if (step.prepare !== 'open-notifications') return null;
 
-    if (step.prepare === 'open-notifications') {
-        const dropdown = document.querySelector('[data-notification-dropdown]');
-        if (dropdown) dropdown.setAttribute('open', '');
-    }
+    const dropdown = document.querySelector('[data-notification-dropdown]');
+    if (!dropdown) return null;
+
+    // This runs after the click that advanced the tour has finished bubbling,
+    // so the shell's outside-click handler cannot immediately close it again.
+    dropdown.dataset.onboardingForcedOpen = 'true';
+    dropdown.setAttribute('open', '');
+    return dropdown;
 }
 
 function beginTour(key, definition, version, index = 0) {
@@ -305,11 +307,28 @@ function startConfiguredTour(key, definition, version, initialIndex = 0) {
         body: JSON.stringify({ version, status }),
     }).catch(() => undefined);
 
+    const preventTourNotificationRead = () => {
+        if (!preparedNotificationDropdown) return;
+        preparedNotificationDropdown.dataset.readTriggered = 'true';
+        window.setTimeout(() => {
+            if (preparedNotificationDropdown) {
+                delete preparedNotificationDropdown.dataset.readTriggered;
+            }
+        }, 650);
+    };
+
     const cleanupPreparedState = () => {
-        if (preparedNotificationDropdown) {
-            preparedNotificationDropdown.removeAttribute('open');
-            preparedNotificationDropdown = null;
-        }
+        if (!preparedNotificationDropdown) return;
+
+        preventTourNotificationRead();
+        preparedNotificationDropdown.removeAttribute('data-onboarding-forced-open');
+        preparedNotificationDropdown.removeAttribute('open');
+
+        const dropdown = preparedNotificationDropdown;
+        preparedNotificationDropdown = null;
+        window.setTimeout(() => {
+            delete dropdown.dataset.readTriggered;
+        }, 650);
     };
 
     function refreshPosition() {
@@ -319,20 +338,21 @@ function startConfiguredTour(key, definition, version, initialIndex = 0) {
     const close = (status = null) => {
         if (closing) return;
         closing = true;
+        preventTourNotificationRead();
         cleanupPreparedState();
         clearProgress(key);
         if (transitionTimer) window.clearTimeout(transitionTimer);
         if (status) persist(status);
 
+        layer.classList.add('is-step-changing');
         layer.classList.remove('is-visible');
-        layer.classList.remove('is-step-changing');
         document.body.classList.remove('onboarding-tour-active');
         activeTarget = null;
         window.removeEventListener('resize', refreshPosition);
         window.removeEventListener('scroll', refreshPosition);
-        if (escapeHandler) document.removeEventListener('keydown', escapeHandler);
+        if (escapeHandler) document.removeEventListener('keydown', escapeHandler, true);
 
-        window.setTimeout(() => layer.remove(), motionDelay(180));
+        window.setTimeout(() => layer.remove(), motionDelay(380));
     };
 
     const position = () => {
@@ -373,28 +393,11 @@ function startConfiguredTour(key, definition, version, initialIndex = 0) {
         popover.style.top = `${top}px`;
     };
 
-    const showStep = (requestedIndex, { initial = false } = {}) => {
-        const steps = definition.steps;
-        const resolved = Math.max(0, Math.min(Number(requestedIndex), steps.length - 1));
-        const step = steps[resolved];
-        const targetPath = normalizedPath(step.path || window.location.pathname);
-
-        saveProgress(key, version, resolved);
-
-        if (normalizedPath() !== targetPath) {
-            cleanupPreparedState();
-            layer.classList.add('is-step-changing');
-            navigateWithTourTransition(targetPath, step.title);
-            return;
-        }
-
-        if (transitionTimer) window.clearTimeout(transitionTimer);
-        layer.classList.add('is-step-changing');
+    const applyStep = (resolved, step, { initial = false } = {}) => {
         cleanupPreparedState();
-        prepareStep(step);
 
         if (step.prepare === 'open-notifications') {
-            preparedNotificationDropdown = document.querySelector('[data-notification-dropdown]');
+            preparedNotificationDropdown = prepareStep(step);
         }
 
         index = resolved;
@@ -405,14 +408,14 @@ function startConfiguredTour(key, definition, version, initialIndex = 0) {
             return;
         }
 
-        layer.querySelector('.onboarding-step-count').textContent = `Step ${index + 1} of ${steps.length}`;
+        layer.querySelector('.onboarding-step-count').textContent = `Step ${index + 1} of ${definition.steps.length}`;
         layer.querySelector('#onboarding-step-title').textContent = step.title;
         layer.querySelector('.onboarding-step-copy').textContent = step.copy;
 
         const back = layer.querySelector('[data-onboarding-back]');
         const next = layer.querySelector('[data-onboarding-next]');
         back.disabled = index === 0;
-        next.textContent = index === steps.length - 1 ? 'Finish' : 'Next';
+        next.textContent = index === definition.steps.length - 1 ? 'Finish' : 'Next';
 
         activeTarget.scrollIntoView({
             behavior: reducedMotion() ? 'auto' : 'smooth',
@@ -423,11 +426,48 @@ function startConfiguredTour(key, definition, version, initialIndex = 0) {
         transitionTimer = window.setTimeout(() => {
             position();
             window.requestAnimationFrame(() => {
-                layer.classList.add('is-visible');
-                layer.classList.remove('is-step-changing');
-                next.focus({ preventScroll: true });
+                window.requestAnimationFrame(() => {
+                    layer.classList.add('is-visible');
+                    layer.classList.remove('is-step-changing');
+                    next.focus({ preventScroll: true });
+                });
             });
-        }, motionDelay(initial ? 90 : 280));
+        }, motionDelay(initial ? 130 : 430));
+    };
+
+    const showStep = (requestedIndex, { initial = false } = {}) => {
+        const steps = definition.steps;
+        const resolved = Math.max(0, Math.min(Number(requestedIndex), steps.length - 1));
+        const step = steps[resolved];
+        const targetPath = normalizedPath(step.path || window.location.pathname);
+
+        saveProgress(key, version, resolved);
+
+        if (normalizedPath() !== targetPath) {
+            preventTourNotificationRead();
+            layer.classList.add('is-step-changing');
+            window.setTimeout(() => {
+                cleanupPreparedState();
+                navigateWithTourTransition(targetPath, step.title);
+            }, motionDelay(240));
+            return;
+        }
+
+        if (transitionTimer) window.clearTimeout(transitionTimer);
+
+        if (initial) {
+            layer.classList.add('is-step-changing');
+            applyStep(resolved, step, { initial: true });
+            return;
+        }
+
+        // Deliberate two-phase transition: first fade the current step out,
+        // then change/scroll the target, then fade the new step back in.
+        preventTourNotificationRead();
+        layer.classList.add('is-step-changing');
+        transitionTimer = window.setTimeout(() => {
+            applyStep(resolved, step);
+        }, motionDelay(240));
     };
 
     const moveToStep = (requestedIndex) => {
@@ -439,24 +479,35 @@ function startConfiguredTour(key, definition, version, initialIndex = 0) {
         showStep(requestedIndex);
     };
 
-    layer.querySelector('[data-onboarding-back]').addEventListener('click', () => moveToStep(index - 1));
+    layer.querySelector('[data-onboarding-back]').addEventListener('click', () => {
+        preventTourNotificationRead();
+        moveToStep(index - 1);
+    });
+
     layer.querySelector('[data-onboarding-next]').addEventListener('click', () => {
+        preventTourNotificationRead();
         if (index >= definition.steps.length - 1) {
             close('completed');
             return;
         }
         moveToStep(index + 1);
     });
-    layer.querySelector('[data-onboarding-skip]').addEventListener('click', () => close('skipped'));
+
+    layer.querySelector('[data-onboarding-skip]').addEventListener('click', () => {
+        preventTourNotificationRead();
+        close('skipped');
+    });
 
     window.addEventListener('resize', refreshPosition, { passive: true });
     window.addEventListener('scroll', refreshPosition, { passive: true });
 
     escapeHandler = (event) => {
         if (event.key !== 'Escape' || layer.hidden) return;
+        preventTourNotificationRead();
+        event.stopPropagation();
         close();
     };
-    document.addEventListener('keydown', escapeHandler);
+    document.addEventListener('keydown', escapeHandler, true);
 
     document.body.classList.add('onboarding-tour-active');
     layer.hidden = false;
