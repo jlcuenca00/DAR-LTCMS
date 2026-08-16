@@ -40,23 +40,28 @@ function openReplayConfirmation(helpButton) {
 
     const cancel = layer.querySelector('[data-onboarding-replay-cancel]');
     const start = layer.querySelector('[data-onboarding-replay-start]');
+    let escapeHandler = null;
 
-    const close = () => dismissConfirmation(layer);
+    const close = () => {
+        if (escapeHandler) document.removeEventListener('keydown', escapeHandler, true);
+        dismissConfirmation(layer);
+    };
 
     cancel.addEventListener('click', close);
     layer.addEventListener('click', (event) => {
         if (event.target === layer) close();
     });
 
-    const escapeHandler = (event) => {
+    escapeHandler = (event) => {
         if (event.key !== 'Escape') return;
-        document.removeEventListener('keydown', escapeHandler, true);
+        event.preventDefault();
+        event.stopPropagation();
         close();
     };
     document.addEventListener('keydown', escapeHandler, true);
 
     start.addEventListener('click', () => {
-        document.removeEventListener('keydown', escapeHandler, true);
+        if (escapeHandler) document.removeEventListener('keydown', escapeHandler, true);
         dismissConfirmation(layer);
         helpButton.dataset.onboardingReplayConfirmed = 'true';
         window.setTimeout(() => helpButton.click(), 180);
