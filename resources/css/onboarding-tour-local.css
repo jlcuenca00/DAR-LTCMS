@@ -63,6 +63,12 @@
     color: #0f172a;
 }
 
+/* Our component styles use flex displays, so explicitly preserve the native
+   meaning of the hidden attribute for tour-only controls and instructions. */
+.onboarding-tour-layer.onboarding-local [hidden] {
+    display: none !important;
+}
+
 .onboarding-tour-layer.onboarding-local .onboarding-interaction-note {
     display: inline-flex;
     align-items: center;
@@ -74,6 +80,18 @@
     color: #166534;
     font-size: 11px;
     font-weight: 900;
+}
+
+.onboarding-tour-layer.onboarding-local .onboarding-target-blocker[data-onboarding-interaction-proxy] {
+    cursor: pointer;
+}
+
+/* During the notification-panel step the tour must show the real <details>
+   contents, not just measure a hidden descendant. */
+.onboarding-tour-active .notification-dropdown[data-onboarding-forced-open] > .notification-dropdown-panel {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
 }
 
 .onboarding-tour-active .notification-dropdown[data-onboarding-forced-open][open] .notification-dropdown-panel {
