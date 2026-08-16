@@ -8,37 +8,56 @@ const tourDefinitions = {
         helpMount: '.lo-topbar-right',
         helpLabel: 'Portal Tour',
         welcomeTitle: 'Welcome to DAR-LTCMS',
-        welcomeCopy: 'Take a quick tour of the Landowner Portal to learn where to view your parcels, application progress, notifications, and clearance results.',
+        welcomeCopy: 'Take a guided tour of the Landowner Portal. The tour will move between your dashboard, parcel records, map, applications, and notifications so you can see how the portal works.',
         steps: [
             {
-                selector: '.lo-nav a[href$="/landowner/dashboard"]',
+                path: '/landowner/dashboard',
+                selectors: ['.lo-dashboard-hero'],
                 title: 'Your Dashboard',
-                copy: 'This is your main portal overview for your own DAR-LTCMS records and clearance activity.',
+                copy: 'This is your main portal overview. It summarizes only the DAR-LTCMS records and clearance activity linked to your landowner account.',
             },
             {
-                selector: '.lo-nav a[href$="/landowner/parcels"]',
+                path: '/landowner/dashboard',
+                selectors: ['.lo-dashboard-grid'],
+                title: 'Your Activity at a Glance',
+                copy: 'Use these panels to quickly review recent application status, linked parcel references, and the current application-stage overview.',
+            },
+            {
+                path: '/landowner/parcels',
+                selectors: ['.lo-parcel-panel', '.lo-parcel-page'],
                 title: 'My Parcel Records',
-                copy: 'View parcel records associated with your landowner account. Other landowners’ records are not shown here.',
+                copy: 'This page shows parcel and landholding references connected to your account, including title references, location, linked area, record state, and map availability.',
             },
             {
-                selector: '.lo-nav a[href$="/landowner/parcel-map"]',
+                path: '/landowner/parcel-map',
+                selectors: ['.lo-map-sidebar'],
+                title: 'Find and Review Mapped Parcels',
+                copy: 'Use the parcel search and map tools to find mapped parcel references associated with your records.',
+            },
+            {
+                path: '/landowner/parcel-map',
+                selectors: ['#parcel-map', '.lo-map-panel'],
                 title: 'My Parcel Map',
-                copy: 'Open the map to view available mapped geometry and location information for parcels associated with your records.',
+                copy: 'The map displays available parcel geometry and location references linked to your account. Map information supports review and monitoring only.',
             },
             {
-                selector: '.lo-nav a[href$="/landowner/applications"]',
-                title: 'My Applications',
-                copy: 'Monitor the status and progress of clearance applications associated with your landowner record.',
+                path: '/landowner/applications',
+                selectors: ['.lo-app-card', '.lo-app-empty', '.lo-app-overview'],
+                title: 'My Clearance Applications',
+                copy: 'Here you can monitor applications linked to your landowner record, see their current status, and open the decision output when a finalized clearance result is available.',
             },
             {
-                selector: '.notification-bell-link',
+                path: '/landowner/applications',
+                selectors: ['.notification-dropdown-panel'],
+                prepare: 'open-notifications',
                 title: 'Notifications',
-                copy: 'Application updates and other relevant system notifications appear here.',
+                copy: 'Important application updates and other relevant system notifications appear here. Opening the panel lets you review recent notices without leaving the page.',
             },
             {
-                selector: '[data-onboarding-help="landowner_portal"]',
+                path: '/landowner/applications',
+                selectors: ['[data-onboarding-help="landowner_portal"]'],
                 title: 'Replay This Tour Anytime',
-                copy: 'Use this information button whenever you want to view the Landowner Portal guide again.',
+                copy: 'Use this information button whenever you want to run the Landowner Portal guide again.',
             },
         ],
     },
@@ -46,6 +65,50 @@ const tourDefinitions = {
 
 function csrfToken() {
     return document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+}
+
+function normalizedPath(path = window.location.pathname) {
+    const normalized = path.replace(/\/+$/, '');
+    return normalized || '/';
+}
+
+function progressStorageKey(key) {
+    return `darltcms:onboarding:${key}`;
+}
+
+function readProgress(key, version) {
+    try {
+        const raw = window.sessionStorage.getItem(progressStorageKey(key));
+        if (!raw) return null;
+        const progress = JSON.parse(raw);
+        if (!progress?.active || Number(progress.version) !== Number(version)) {
+            window.sessionStorage.removeItem(progressStorageKey(key));
+            return null;
+        }
+        return progress;
+    } catch {
+        return null;
+    }
+}
+
+function saveProgress(key, version, index) {
+    try {
+        window.sessionStorage.setItem(progressStorageKey(key), JSON.stringify({
+            active: true,
+            version: Number(version),
+            index: Number(index),
+        }));
+    } catch {
+        // The tour still works on the current page if session storage is unavailable.
+    }
+}
+
+function clearProgress(key) {
+    try {
+        window.sessionStorage.removeItem(progressStorageKey(key));
+    } catch {
+        // No action required.
+    }
 }
 
 function createElement(tag, className, attributes = {}) {
@@ -125,9 +188,46 @@ function buildTourLayer() {
     return layer;
 }
 
-function startConfiguredTour(key, definition, version) {
-    let index = 0;
+function resolveTarget(step) {
+    const selectors = step.selectors || (step.selector ? [step.selector] : []);
+
+    for (const selector of selectors) {
+        const target = document.querySelector(selector);
+        if (target) return target;
+    }
+
+    return document.querySelector('.lo-content');
+}
+
+function prepareStep(step) {
+    document.querySelectorAll('.notification-dropdown[open]').forEach((dropdown) => {
+        if (step.prepare !== 'open-notifications') dropdown.removeAttribute('open');
+    });
+
+    if (step.prepare === 'open-notifications') {
+        const dropdown = document.querySelector('[data-notification-dropdown]');
+        if (dropdown) dropdown.setAttribute('open', '');
+    }
+}
+
+function beginTour(key, definition, version, index = 0) {
+    const step = definition.steps[index] || definition.steps[0];
+    const targetPath = normalizedPath(step.path || window.location.pathname);
+
+    saveProgress(key, version, index);
+
+    if (normalizedPath() !== targetPath) {
+        window.location.assign(targetPath);
+        return;
+    }
+
+    startConfiguredTour(key, definition, version, index);
+}
+
+function startConfiguredTour(key, definition, version, initialIndex = 0) {
+    let index = Number(initialIndex) || 0;
     let activeTarget = null;
+    let preparedNotificationDropdown = null;
     const layer = buildTourLayer();
     const popover = layer.querySelector('.onboarding-popover');
     const ring = layer.querySelector('.onboarding-focus-ring');
@@ -151,10 +251,21 @@ function startConfiguredTour(key, definition, version) {
         body: JSON.stringify({ version, status }),
     }).catch(() => undefined);
 
+    const cleanupPreparedState = () => {
+        if (preparedNotificationDropdown) {
+            preparedNotificationDropdown.removeAttribute('open');
+            preparedNotificationDropdown = null;
+        }
+    };
+
     const close = (status = null) => {
+        cleanupPreparedState();
+        clearProgress(key);
         layer.remove();
         document.body.classList.remove('onboarding-tour-active');
         activeTarget = null;
+        window.removeEventListener('resize', refreshPosition);
+        window.removeEventListener('scroll', refreshPosition);
         if (status) persist(status);
     };
 
@@ -198,23 +309,31 @@ function startConfiguredTour(key, definition, version) {
 
     const showStep = (requestedIndex) => {
         const steps = definition.steps;
-        let resolved = requestedIndex;
-        let target = null;
+        const resolved = Math.max(0, Math.min(Number(requestedIndex), steps.length - 1));
+        const step = steps[resolved];
+        const targetPath = normalizedPath(step.path || window.location.pathname);
 
-        while (resolved >= 0 && resolved < steps.length) {
-            target = document.querySelector(steps[resolved].selector);
-            if (target) break;
-            resolved += requestedIndex >= index ? 1 : -1;
-        }
+        saveProgress(key, version, resolved);
 
-        if (!target) {
-            close('completed');
+        if (normalizedPath() !== targetPath) {
+            cleanupPreparedState();
+            window.location.assign(targetPath);
             return;
         }
 
+        cleanupPreparedState();
+        prepareStep(step);
+        if (step.prepare === 'open-notifications') {
+            preparedNotificationDropdown = document.querySelector('[data-notification-dropdown]');
+        }
+
         index = resolved;
-        activeTarget = target;
-        const step = steps[index];
+        activeTarget = resolveTarget(step);
+
+        if (!activeTarget) {
+            close();
+            return;
+        }
 
         layer.querySelector('.onboarding-step-count').textContent = `Step ${index + 1} of ${steps.length}`;
         layer.querySelector('#onboarding-step-title').textContent = step.title;
@@ -225,26 +344,36 @@ function startConfiguredTour(key, definition, version) {
         back.disabled = index === 0;
         next.textContent = index === steps.length - 1 ? 'Finish' : 'Next';
 
-        target.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
+        activeTarget.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
         window.setTimeout(() => {
             position();
             next.focus({ preventScroll: true });
-        }, 220);
+        }, 260);
     };
 
-    layer.querySelector('[data-onboarding-back]').addEventListener('click', () => showStep(index - 1));
+    const moveToStep = (requestedIndex) => {
+        if (requestedIndex < 0) return;
+        if (requestedIndex >= definition.steps.length) {
+            close('completed');
+            return;
+        }
+        showStep(requestedIndex);
+    };
+
+    layer.querySelector('[data-onboarding-back]').addEventListener('click', () => moveToStep(index - 1));
     layer.querySelector('[data-onboarding-next]').addEventListener('click', () => {
         if (index >= definition.steps.length - 1) {
             close('completed');
             return;
         }
-        showStep(index + 1);
+        moveToStep(index + 1);
     });
     layer.querySelector('[data-onboarding-skip]').addEventListener('click', () => close('skipped'));
 
-    const refreshPosition = () => {
+    function refreshPosition() {
         if (!layer.hidden) window.requestAnimationFrame(position);
-    };
+    }
+
     window.addEventListener('resize', refreshPosition, { passive: true });
     window.addEventListener('scroll', refreshPosition, { passive: true });
 
@@ -256,7 +385,7 @@ function startConfiguredTour(key, definition, version) {
 
     document.body.classList.add('onboarding-tour-active');
     layer.hidden = false;
-    showStep(0);
+    showStep(index);
 }
 
 async function initTour(key, definition) {
@@ -278,7 +407,13 @@ async function initTour(key, definition) {
     }
 
     const version = Number(status.version || 1);
-    helpButton.addEventListener('click', () => startConfiguredTour(key, definition, version));
+    helpButton.addEventListener('click', () => beginTour(key, definition, version, 0));
+
+    const progress = readProgress(key, version);
+    if (progress) {
+        beginTour(key, definition, version, Number(progress.index || 0));
+        return;
+    }
 
     if (status.seen || !definition.autoPromptPath.test(window.location.pathname)) return;
 
@@ -300,10 +435,11 @@ async function initTour(key, definition) {
 
     start.addEventListener('click', () => {
         welcome.remove();
-        startConfiguredTour(key, definition, version);
+        beginTour(key, definition, version, 0);
     });
 
     skip.addEventListener('click', () => {
+        clearProgress(key);
         persistSkip();
         welcome.remove();
     });
