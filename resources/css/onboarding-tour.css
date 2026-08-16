@@ -11,13 +11,14 @@
     font: inherit;
     font-size: 16px;
     cursor: pointer;
-    transition: background 150ms ease, border-color 150ms ease, transform 150ms ease;
+    transition: background 180ms ease, border-color 180ms ease, transform 180ms ease, box-shadow 180ms ease;
 }
 
 .onboarding-help-button:hover {
     background: #dcfce7;
     border-color: #86efac;
     transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(21, 128, 61, 0.12);
 }
 
 .onboarding-help-button:focus-visible,
@@ -36,6 +37,12 @@
     padding: 20px;
     background: rgba(15, 23, 42, 0.68);
     backdrop-filter: blur(2px);
+    opacity: 0;
+    transition: opacity 220ms ease;
+}
+
+.onboarding-welcome-layer.is-visible {
+    opacity: 1;
 }
 
 .onboarding-welcome-layer[hidden],
@@ -50,6 +57,14 @@
     background: #ffffff;
     padding: 25px;
     box-shadow: 0 28px 80px rgba(15, 23, 42, 0.28);
+    opacity: 0;
+    transform: translateY(10px) scale(0.985);
+    transition: opacity 220ms ease, transform 260ms cubic-bezier(.22, 1, .36, 1);
+}
+
+.onboarding-welcome-layer.is-visible .onboarding-welcome-card {
+    opacity: 1;
+    transform: translateY(0) scale(1);
 }
 
 .onboarding-welcome-icon {
@@ -106,6 +121,15 @@
     font-size: 13px;
     font-weight: 900;
     cursor: pointer;
+    transition: background 160ms ease, border-color 160ms ease, color 160ms ease, transform 160ms ease, box-shadow 160ms ease;
+}
+
+.onboarding-button:hover:not(:disabled) {
+    transform: translateY(-1px);
+}
+
+.onboarding-button:active:not(:disabled) {
+    transform: translateY(0);
 }
 
 .onboarding-button:disabled {
@@ -122,6 +146,7 @@
 .onboarding-button-primary:hover:not(:disabled) {
     background: #14532d;
     border-color: #14532d;
+    box-shadow: 0 6px 16px rgba(20, 83, 45, 0.18);
 }
 
 .onboarding-button-secondary {
@@ -132,6 +157,7 @@
 
 .onboarding-button-secondary:hover:not(:disabled) {
     background: #f8fafc;
+    border-color: #94a3b8;
 }
 
 .onboarding-tour-layer {
@@ -146,6 +172,17 @@
     z-index: 9997;
     background: rgba(15, 23, 42, 0.72);
     pointer-events: auto;
+    opacity: 0;
+    transition:
+        left 220ms cubic-bezier(.22, 1, .36, 1),
+        top 220ms cubic-bezier(.22, 1, .36, 1),
+        width 220ms cubic-bezier(.22, 1, .36, 1),
+        height 220ms cubic-bezier(.22, 1, .36, 1),
+        opacity 180ms ease;
+}
+
+.onboarding-tour-layer.is-visible .onboarding-shade {
+    opacity: 1;
 }
 
 .onboarding-focus-ring {
@@ -155,7 +192,21 @@
     border-radius: 12px;
     box-shadow: 0 0 0 3px rgba(21, 128, 61, 0.78), 0 12px 30px rgba(15, 23, 42, 0.24);
     pointer-events: none;
-    transition: left 160ms ease, top 160ms ease, width 160ms ease, height 160ms ease;
+    opacity: 0;
+    transform: scale(0.985);
+    transform-origin: center;
+    transition:
+        left 260ms cubic-bezier(.22, 1, .36, 1),
+        top 260ms cubic-bezier(.22, 1, .36, 1),
+        width 260ms cubic-bezier(.22, 1, .36, 1),
+        height 260ms cubic-bezier(.22, 1, .36, 1),
+        opacity 180ms ease,
+        transform 220ms cubic-bezier(.22, 1, .36, 1);
+}
+
+.onboarding-tour-layer.is-visible .onboarding-focus-ring {
+    opacity: 1;
+    transform: scale(1);
 }
 
 .onboarding-target-blocker {
@@ -175,6 +226,28 @@
     padding: 18px;
     box-shadow: 0 24px 68px rgba(15, 23, 42, 0.30);
     pointer-events: auto;
+    opacity: 0;
+    transform: translateY(10px) scale(0.985);
+    transition:
+        left 260ms cubic-bezier(.22, 1, .36, 1),
+        top 260ms cubic-bezier(.22, 1, .36, 1),
+        opacity 170ms ease,
+        transform 220ms cubic-bezier(.22, 1, .36, 1);
+}
+
+.onboarding-tour-layer.is-visible .onboarding-popover {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+}
+
+.onboarding-tour-layer.is-step-changing .onboarding-popover {
+    opacity: 0;
+    transform: translateY(8px) scale(0.985);
+}
+
+.onboarding-tour-layer.is-step-changing .onboarding-focus-ring {
+    opacity: 0.38;
+    transform: scale(0.99);
 }
 
 .onboarding-step-count {
@@ -218,12 +291,97 @@
     font-size: 12px;
     font-weight: 850;
     cursor: pointer;
+    transition: color 150ms ease, opacity 150ms ease;
 }
 
 .onboarding-skip-link:hover {
     color: #334155;
     text-decoration: underline;
     text-underline-offset: 3px;
+}
+
+.onboarding-page-handoff {
+    position: fixed;
+    inset: 0;
+    z-index: 11000;
+    display: grid;
+    place-items: center;
+    padding: 20px;
+    background: rgba(15, 23, 42, 0.78);
+    backdrop-filter: blur(3px);
+    opacity: 0;
+    pointer-events: auto;
+    transition: opacity 200ms ease;
+}
+
+.onboarding-page-handoff.is-visible {
+    opacity: 1;
+}
+
+.onboarding-page-handoff-card {
+    width: min(320px, 100%);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: 16px;
+    background: rgba(15, 23, 42, 0.92);
+    padding: 19px 20px;
+    color: #ffffff;
+    text-align: center;
+    box-shadow: 0 24px 70px rgba(0, 0, 0, 0.28);
+    opacity: 0;
+    transform: translateY(8px) scale(0.985);
+    transition: opacity 200ms ease, transform 240ms cubic-bezier(.22, 1, .36, 1);
+}
+
+.onboarding-page-handoff.is-visible .onboarding-page-handoff-card {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+}
+
+.onboarding-page-handoff-kicker {
+    display: block;
+    color: #86efac;
+    font-size: 10px;
+    font-weight: 900;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+.onboarding-page-handoff-title {
+    display: block;
+    margin-top: 6px;
+    font-size: 15px;
+    font-weight: 900;
+    line-height: 1.35;
+}
+
+.onboarding-page-handoff-note {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    margin-top: 9px;
+    color: #cbd5e1;
+    font-size: 11px;
+    font-weight: 750;
+}
+
+.onboarding-page-handoff-note i {
+    color: #86efac;
+}
+
+.onboarding-tour-active .notification-dropdown[open] .notification-dropdown-panel {
+    animation: onboarding-notification-panel-in 220ms cubic-bezier(.22, 1, .36, 1) both;
+}
+
+@keyframes onboarding-notification-panel-in {
+    from {
+        opacity: 0;
+        transform: translateY(-6px) scale(0.985);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
 }
 
 @media (max-width: 640px) {
@@ -254,8 +412,17 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+    .onboarding-help-button,
+    .onboarding-welcome-layer,
+    .onboarding-welcome-card,
+    .onboarding-button,
+    .onboarding-shade,
     .onboarding-focus-ring,
-    .onboarding-help-button {
-        transition: none;
+    .onboarding-popover,
+    .onboarding-skip-link,
+    .onboarding-page-handoff,
+    .onboarding-page-handoff-card {
+        transition: none !important;
+        animation: none !important;
     }
 }
