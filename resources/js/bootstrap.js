@@ -1,5 +1,6 @@
 import axios from 'axios';
 import './onboarding-tour-local';
+import './onboarding-tour-notifications';
 
 window.axios = axios;
 
