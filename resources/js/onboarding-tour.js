@@ -72,6 +72,14 @@ function normalizedPath(path = window.location.pathname) {
     return normalized || '/';
 }
 
+function reducedMotion() {
+    return window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
+}
+
+function motionDelay(milliseconds) {
+    return reducedMotion() ? 0 : milliseconds;
+}
+
 function progressStorageKey(key) {
     return `darltcms:onboarding:${key}`;
 }
@@ -126,6 +134,30 @@ function createElement(tag, className, attributes = {}) {
     return element;
 }
 
+function navigateWithTourTransition(targetPath, title = 'Next view') {
+    const handoff = createElement('div', 'onboarding-page-handoff');
+    handoff.innerHTML = `
+        <div class="onboarding-page-handoff-card" role="status" aria-live="polite">
+            <span class="onboarding-page-handoff-kicker">Continuing tour</span>
+            <strong class="onboarding-page-handoff-title"></strong>
+            <span class="onboarding-page-handoff-note">
+                <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
+                Opening the next portal view
+            </span>
+        </div>
+    `;
+    handoff.querySelector('.onboarding-page-handoff-title').textContent = title;
+    document.body.appendChild(handoff);
+
+    window.requestAnimationFrame(() => {
+        window.requestAnimationFrame(() => handoff.classList.add('is-visible'));
+    });
+
+    window.setTimeout(() => {
+        window.location.assign(targetPath);
+    }, motionDelay(220));
+}
+
 function mountHelpButton(key, definition) {
     const mount = document.querySelector(definition.helpMount);
     if (!mount || mount.querySelector(`[data-onboarding-help="${key}"]`)) return null;
@@ -159,6 +191,24 @@ function buildWelcome(definition) {
     layer.querySelector('.onboarding-welcome-copy').textContent = definition.welcomeCopy;
     document.body.appendChild(layer);
     return layer;
+}
+
+function revealWelcome(layer, focusTarget = null) {
+    layer.hidden = false;
+    window.requestAnimationFrame(() => {
+        window.requestAnimationFrame(() => {
+            layer.classList.add('is-visible');
+            if (focusTarget) focusTarget.focus();
+        });
+    });
+}
+
+function dismissWelcome(layer, callback = null) {
+    layer.classList.remove('is-visible');
+    window.setTimeout(() => {
+        layer.remove();
+        if (callback) callback();
+    }, motionDelay(180));
 }
 
 function buildTourLayer() {
@@ -217,7 +267,7 @@ function beginTour(key, definition, version, index = 0) {
     saveProgress(key, version, index);
 
     if (normalizedPath() !== targetPath) {
-        window.location.assign(targetPath);
+        navigateWithTourTransition(targetPath, step.title);
         return;
     }
 
@@ -228,6 +278,10 @@ function startConfiguredTour(key, definition, version, initialIndex = 0) {
     let index = Number(initialIndex) || 0;
     let activeTarget = null;
     let preparedNotificationDropdown = null;
+    let transitionTimer = null;
+    let closing = false;
+    let escapeHandler = null;
+
     const layer = buildTourLayer();
     const popover = layer.querySelector('.onboarding-popover');
     const ring = layer.querySelector('.onboarding-focus-ring');
@@ -258,15 +312,27 @@ function startConfiguredTour(key, definition, version, initialIndex = 0) {
         }
     };
 
+    function refreshPosition() {
+        if (!layer.hidden && !closing) window.requestAnimationFrame(position);
+    }
+
     const close = (status = null) => {
+        if (closing) return;
+        closing = true;
         cleanupPreparedState();
         clearProgress(key);
-        layer.remove();
+        if (transitionTimer) window.clearTimeout(transitionTimer);
+        if (status) persist(status);
+
+        layer.classList.remove('is-visible');
+        layer.classList.remove('is-step-changing');
         document.body.classList.remove('onboarding-tour-active');
         activeTarget = null;
         window.removeEventListener('resize', refreshPosition);
         window.removeEventListener('scroll', refreshPosition);
-        if (status) persist(status);
+        if (escapeHandler) document.removeEventListener('keydown', escapeHandler);
+
+        window.setTimeout(() => layer.remove(), motionDelay(180));
     };
 
     const position = () => {
@@ -307,7 +373,7 @@ function startConfiguredTour(key, definition, version, initialIndex = 0) {
         popover.style.top = `${top}px`;
     };
 
-    const showStep = (requestedIndex) => {
+    const showStep = (requestedIndex, { initial = false } = {}) => {
         const steps = definition.steps;
         const resolved = Math.max(0, Math.min(Number(requestedIndex), steps.length - 1));
         const step = steps[resolved];
@@ -317,12 +383,16 @@ function startConfiguredTour(key, definition, version, initialIndex = 0) {
 
         if (normalizedPath() !== targetPath) {
             cleanupPreparedState();
-            window.location.assign(targetPath);
+            layer.classList.add('is-step-changing');
+            navigateWithTourTransition(targetPath, step.title);
             return;
         }
 
+        if (transitionTimer) window.clearTimeout(transitionTimer);
+        layer.classList.add('is-step-changing');
         cleanupPreparedState();
         prepareStep(step);
+
         if (step.prepare === 'open-notifications') {
             preparedNotificationDropdown = document.querySelector('[data-notification-dropdown]');
         }
@@ -344,15 +414,24 @@ function startConfiguredTour(key, definition, version, initialIndex = 0) {
         back.disabled = index === 0;
         next.textContent = index === steps.length - 1 ? 'Finish' : 'Next';
 
-        activeTarget.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
-        window.setTimeout(() => {
+        activeTarget.scrollIntoView({
+            behavior: reducedMotion() ? 'auto' : 'smooth',
+            block: 'center',
+            inline: 'nearest',
+        });
+
+        transitionTimer = window.setTimeout(() => {
             position();
-            next.focus({ preventScroll: true });
-        }, 260);
+            window.requestAnimationFrame(() => {
+                layer.classList.add('is-visible');
+                layer.classList.remove('is-step-changing');
+                next.focus({ preventScroll: true });
+            });
+        }, motionDelay(initial ? 90 : 280));
     };
 
     const moveToStep = (requestedIndex) => {
-        if (requestedIndex < 0) return;
+        if (requestedIndex < 0 || closing) return;
         if (requestedIndex >= definition.steps.length) {
             close('completed');
             return;
@@ -370,22 +449,18 @@ function startConfiguredTour(key, definition, version, initialIndex = 0) {
     });
     layer.querySelector('[data-onboarding-skip]').addEventListener('click', () => close('skipped'));
 
-    function refreshPosition() {
-        if (!layer.hidden) window.requestAnimationFrame(position);
-    }
-
     window.addEventListener('resize', refreshPosition, { passive: true });
     window.addEventListener('scroll', refreshPosition, { passive: true });
 
-    document.addEventListener('keydown', function escapeHandler(event) {
+    escapeHandler = (event) => {
         if (event.key !== 'Escape' || layer.hidden) return;
         close();
-        document.removeEventListener('keydown', escapeHandler);
-    });
+    };
+    document.addEventListener('keydown', escapeHandler);
 
     document.body.classList.add('onboarding-tour-active');
     layer.hidden = false;
-    showStep(index);
+    showStep(index, { initial: true });
 }
 
 async function initTour(key, definition) {
@@ -434,18 +509,16 @@ async function initTour(key, definition) {
     }).catch(() => undefined);
 
     start.addEventListener('click', () => {
-        welcome.remove();
-        beginTour(key, definition, version, 0);
+        dismissWelcome(welcome, () => beginTour(key, definition, version, 0));
     });
 
     skip.addEventListener('click', () => {
         clearProgress(key);
         persistSkip();
-        welcome.remove();
+        dismissWelcome(welcome);
     });
 
-    welcome.hidden = false;
-    window.setTimeout(() => start.focus(), 0);
+    revealWelcome(welcome, start);
 }
 
 function initOnboardingTours() {
