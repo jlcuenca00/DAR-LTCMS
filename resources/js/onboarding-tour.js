@@ -11,7 +11,7 @@ const tours = {
         helpMount: '.lo-topbar-right',
         helpLabel: 'Portal Tour',
         welcomeTitle: 'Welcome to DAR-LTCMS',
-        welcomeCopy: 'Take a quick guided tour of the Landowner Portal. The guide will move through the actual pages so you can see where your records, map, applications, and notifications are located.',
+        welcomeCopy: 'Take a quick guided tour of the Landowner Portal. The guide moves through the actual pages so you can see where your records, map, applications, and notifications are located.',
         steps: [
             {
                 path: '/landowner/dashboard',
@@ -64,7 +64,7 @@ const tours = {
                 prepare: 'notifications',
                 noScroll: true,
                 title: 'Notifications',
-                copy: 'Recent system notices appear in this panel. The tour opens it automatically so you can see the actual notification area without having to click anything.',
+                copy: 'Recent system notices appear here. The tour opens the real notification panel automatically so you can see its contents without interrupting the guide.',
                 side: 'left',
             },
             {
@@ -92,6 +92,13 @@ function reducedMotion() {
 
 function wait(milliseconds) {
     return new Promise((resolve) => window.setTimeout(resolve, reducedMotion() ? 0 : milliseconds));
+}
+
+// Always wait for the next event-loop turn. This is intentionally separate
+// from reduced-motion timing because the notification dropdown must be opened
+// after the click that advanced the previous tour step has finished bubbling.
+function nextTask() {
+    return new Promise((resolve) => window.setTimeout(resolve, 0));
 }
 
 function nextFrame() {
@@ -131,7 +138,7 @@ function saveProgress(key, version, index) {
             index: Number(index),
         }));
     } catch {
-        // The current-page tour remains usable if session storage is unavailable.
+        // The current-page tour remains usable if sessionStorage is unavailable.
     }
 }
 
@@ -209,6 +216,7 @@ function buildTourLayer() {
         <div class="onboarding-shade onboarding-shade-right" aria-hidden="true"></div>
         <div class="onboarding-shade onboarding-shade-bottom" aria-hidden="true"></div>
         <div class="onboarding-focus-ring" aria-hidden="true"></div>
+        <div class="onboarding-target-blocker" aria-hidden="true"></div>
         <section class="onboarding-popover" role="dialog" aria-modal="true" aria-labelledby="onboarding-step-title">
             <div class="onboarding-step-count"></div>
             <h2 id="onboarding-step-title"></h2>
@@ -246,11 +254,12 @@ function closeTourOpenedNotifications() {
         suppressNotificationRead(dropdown);
         dropdown.removeAttribute('data-onboarding-tour-open');
         dropdown.removeAttribute('open');
+
         window.setTimeout(() => {
             if (!dropdown.hasAttribute('data-onboarding-tour-open')) {
                 delete dropdown.dataset.readTriggered;
             }
-        }, 250);
+        }, 300);
     });
 }
 
@@ -258,6 +267,11 @@ async function prepareStep(step) {
     closeTourOpenedNotifications();
 
     if (step.prepare !== 'notifications') return null;
+
+    // Let the click that advanced into this step finish first. The Landowner
+    // shell has an outside-click listener for notification dropdowns; opening
+    // the <details> before that click finishes would cause it to close again.
+    await nextTask();
 
     const dropdown = document.querySelector('[data-notification-dropdown]');
     if (!dropdown) return null;
@@ -267,9 +281,20 @@ async function prepareStep(step) {
     dropdown.setAttribute('open', '');
 
     await nextFrame();
-    await wait(80);
+    await wait(120);
 
-    return dropdown.querySelector('.notification-dropdown-panel');
+    // Reassert the open state after layout. This also makes resumed tours
+    // deterministic if another page script changed the details state.
+    if (dropdown.hasAttribute('data-onboarding-tour-open')) {
+        dropdown.setAttribute('open', '');
+    }
+
+    await nextFrame();
+
+    const panel = dropdown.querySelector('.notification-dropdown-panel');
+    if (!panel || panel.getClientRects().length === 0) return null;
+
+    return panel;
 }
 
 function persistStatus(definition, version, status) {
@@ -278,7 +303,7 @@ function persistStatus(definition, version, status) {
         credentials: 'same-origin',
         headers: {
             'Content-Type': 'application/json',
-            'Accept': 'application/json',
+            Accept: 'application/json',
             'X-Requested-With': 'XMLHttpRequest',
             'X-CSRF-TOKEN': csrfToken(),
         },
@@ -316,16 +341,19 @@ function placeSpotlight(layer, rect) {
     const rightShade = layer.querySelector('.onboarding-shade-right');
     const bottomShade = layer.querySelector('.onboarding-shade-bottom');
     const ring = layer.querySelector('.onboarding-focus-ring');
+    const blocker = layer.querySelector('.onboarding-target-blocker');
 
     topShade.style.cssText = `left:0;top:0;width:100vw;height:${rect.top}px`;
     bottomShade.style.cssText = `left:0;top:${rect.bottom}px;width:100vw;height:${Math.max(0, window.innerHeight - rect.bottom)}px`;
     leftShade.style.cssText = `left:0;top:${rect.top}px;width:${rect.left}px;height:${rect.height}px`;
     rightShade.style.cssText = `left:${rect.right}px;top:${rect.top}px;width:${Math.max(0, window.innerWidth - rect.right)}px;height:${rect.height}px`;
 
-    ring.style.left = `${rect.left}px`;
-    ring.style.top = `${rect.top}px`;
-    ring.style.width = `${rect.width}px`;
-    ring.style.height = `${rect.height}px`;
+    [ring, blocker].forEach((element) => {
+        element.style.left = `${rect.left}px`;
+        element.style.top = `${rect.top}px`;
+        element.style.width = `${rect.width}px`;
+        element.style.height = `${rect.height}px`;
+    });
 }
 
 function placePopover(layer, rect, preferredSide = 'bottom') {
@@ -346,7 +374,9 @@ function placePopover(layer, rect, preferredSide = 'bottom') {
         left: { top: centeredTop, left: rect.left - popRect.width - gap },
     };
 
-    const order = [preferredSide, 'bottom', 'top', 'right', 'left'].filter((side, index, array) => array.indexOf(side) === index);
+    const order = [preferredSide, 'bottom', 'top', 'right', 'left']
+        .filter((side, index, array) => array.indexOf(side) === index);
+
     let chosen = null;
 
     for (const side of order) {
@@ -409,6 +439,7 @@ async function runTour(key, definition, version, initialIndex) {
 
     const closeTour = async (status = null) => {
         if (closed) return;
+
         closed = true;
         moving = true;
         closeTourOpenedNotifications();
@@ -424,33 +455,30 @@ async function runTour(key, definition, version, initialIndex) {
         window.removeEventListener('scroll', refreshPosition);
         document.removeEventListener('keydown', escapeHandler, true);
 
-        if (activeTour?.layer === layer) activeTour = null;
+        if (activeTour?.close === closeTour) activeTour = null;
     };
-
-    activeTour = { layer, close: closeTour };
 
     const showStep = async (requestedIndex, initial = false) => {
         if (moving || closed) return;
 
-        const resolved = clamp(Number(requestedIndex), 0, definition.steps.length - 1);
-        const step = definition.steps[resolved];
-        saveProgress(key, version, resolved);
+        const nextIndex = clamp(Number(requestedIndex), 0, definition.steps.length - 1);
+        const step = definition.steps[nextIndex];
+        saveProgress(key, version, nextIndex);
 
         if (normalizedPath() !== normalizedPath(step.path)) {
             moving = true;
             closeTourOpenedNotifications();
             layer.classList.add('is-leaving');
-            window.setTimeout(() => window.location.assign(step.path), reducedMotion() ? 0 : 90);
+            await wait(120);
+            window.location.assign(step.path);
             return;
         }
 
         moving = true;
-        back.disabled = true;
-        next.disabled = true;
         layer.classList.add('is-moving');
 
         const preparedTarget = await prepareStep(step);
-        index = resolved;
+        index = nextIndex;
         activeStep = step;
         activeTarget = preparedTarget || resolveTarget(step);
 
@@ -475,18 +503,15 @@ async function runTour(key, definition, version, initialIndex) {
             });
             await wait(initial ? 80 : 260);
         } else {
-            await wait(40);
+            await wait(initial ? 40 : 100);
         }
 
-        positionTour(layer, activeTarget, step);
+        positionTour(layer, activeTarget, activeStep);
         await nextFrame();
 
         if (initial) layer.classList.add('is-ready');
         layer.classList.remove('is-moving');
-
         moving = false;
-        back.disabled = index === 0;
-        next.disabled = false;
         next.focus({ preventScroll: true });
     };
 
@@ -496,10 +521,12 @@ async function runTour(key, definition, version, initialIndex) {
 
     next.addEventListener('click', () => {
         if (moving) return;
+
         if (index >= definition.steps.length - 1) {
             void closeTour('completed');
             return;
         }
+
         void showStep(index + 1);
     });
 
@@ -509,16 +536,16 @@ async function runTour(key, definition, version, initialIndex) {
 
     const escapeHandler = (event) => {
         if (event.key !== 'Escape' || closed) return;
-        event.preventDefault();
         event.stopPropagation();
-        void closeTour(null);
+        void closeTour();
     };
 
+    document.body.classList.add('onboarding-tour-active');
     window.addEventListener('resize', refreshPosition, { passive: true });
     window.addEventListener('scroll', refreshPosition, { passive: true });
     document.addEventListener('keydown', escapeHandler, true);
-    document.body.classList.add('onboarding-tour-active');
 
+    activeTour = { close: closeTour };
     await showStep(index, true);
 }
 
@@ -529,17 +556,19 @@ async function initTour(key, definition) {
     if (!helpButton) return;
 
     let version = DEFAULT_TOUR_VERSION;
+    let status = null;
 
+    // Replay is attached immediately so the help button is never dependent on
+    // the status request succeeding.
     helpButton.addEventListener('click', () => {
         void beginTour(key, definition, version, 0);
     });
 
-    let status = null;
     try {
         const response = await fetch(definition.statusUrl, {
             credentials: 'same-origin',
             headers: {
-                'Accept': 'application/json',
+                Accept: 'application/json',
                 'X-Requested-With': 'XMLHttpRequest',
             },
         });
@@ -549,7 +578,7 @@ async function initTour(key, definition) {
             version = Number(status.version || DEFAULT_TOUR_VERSION);
         }
     } catch {
-        // The replay button remains available even if status lookup fails.
+        // Replay still works with the configured version.
     }
 
     const progress = readProgress(key, version);
@@ -562,14 +591,14 @@ async function initTour(key, definition) {
 
     const welcome = buildWelcome(definition);
     const start = welcome.querySelector('[data-onboarding-welcome-start]');
-    const skipWelcome = welcome.querySelector('[data-onboarding-welcome-skip]');
+    const skip = welcome.querySelector('[data-onboarding-welcome-skip]');
 
     start.addEventListener('click', async () => {
         await dismissWelcome(welcome);
         await beginTour(key, definition, version, 0);
     });
 
-    skipWelcome.addEventListener('click', async () => {
+    skip.addEventListener('click', async () => {
         clearProgress(key);
         persistStatus(definition, version, 'skipped');
         await dismissWelcome(welcome);
