@@ -1,0 +1,64 @@
+.onboarding-v3-route-curtain {
+    position: fixed;
+    inset: 0;
+    z-index: 12000;
+    background: #111827;
+    opacity: 0;
+    pointer-events: all;
+}
+
+.onboarding-v3-step-curtain {
+    position: fixed;
+    inset: 0;
+    z-index: 10001;
+    background: #0f172a;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.onboarding-tour-layer.onboarding-v3 {
+    opacity: 0;
+}
+
+.onboarding-tour-layer.onboarding-v3 .onboarding-popover,
+.onboarding-tour-layer.onboarding-v3 .onboarding-focus-ring,
+.onboarding-tour-layer.onboarding-v3 .onboarding-shade {
+    transition: none !important;
+}
+
+.onboarding-tour-layer.onboarding-v3 .onboarding-popover,
+.onboarding-tour-layer.onboarding-v3 .onboarding-focus-ring {
+    opacity: 1;
+    transform: none;
+}
+
+.onboarding-tour-layer.onboarding-v3 .onboarding-shade {
+    opacity: 1;
+}
+
+.onboarding-tour-active .notification-dropdown[data-onboarding-forced-open][open] .notification-dropdown-panel {
+    animation: onboarding-v3-notification-open 360ms cubic-bezier(.22, 1, .36, 1) both !important;
+}
+
+@keyframes onboarding-v3-notification-open {
+    from {
+        opacity: 0;
+        transform: translateY(-10px) scale(0.98);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .onboarding-v3-route-curtain,
+    .onboarding-v3-step-curtain,
+    .onboarding-tour-layer.onboarding-v3 .onboarding-popover,
+    .onboarding-tour-layer.onboarding-v3 .onboarding-focus-ring,
+    .onboarding-tour-layer.onboarding-v3 .onboarding-shade,
+    .onboarding-tour-active .notification-dropdown[data-onboarding-forced-open][open] .notification-dropdown-panel {
+        animation: none !important;
+        transition: none !important;
+    }
+}
