@@ -1,0 +1,256 @@
+:root {
+    --driver-popover-font-family: 'Google Sans', 'Product Sans', Arial, sans-serif;
+}
+
+.onboarding-help-button {
+    width: 38px;
+    height: 38px;
+    flex: 0 0 auto;
+    display: inline-grid;
+    place-items: center;
+    border: 1px solid #bbf7d0;
+    border-radius: 999px;
+    background: #f0fdf4;
+    color: #166534;
+    font: inherit;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background 160ms ease, border-color 160ms ease, transform 160ms ease, box-shadow 160ms ease;
+}
+
+.onboarding-help-button:hover {
+    background: #dcfce7;
+    border-color: #86efac;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(21, 128, 61, 0.12);
+}
+
+.onboarding-help-button:focus-visible,
+.onboarding-button:focus-visible,
+.dar-tour-skip:focus-visible {
+    outline: 3px solid rgba(21, 128, 61, 0.28);
+    outline-offset: 2px;
+}
+
+.onboarding-welcome-layer {
+    position: fixed;
+    inset: 0;
+    z-index: 10020;
+    display: grid;
+    place-items: center;
+    padding: 20px;
+    background: rgba(15, 23, 42, 0.52);
+    backdrop-filter: blur(2px);
+    opacity: 0;
+    transition: opacity 220ms ease;
+}
+
+.onboarding-welcome-layer.is-visible {
+    opacity: 1;
+}
+
+.onboarding-welcome-card {
+    width: min(440px, 100%);
+    border: 1px solid #dbe3dd;
+    border-radius: 18px;
+    background: #ffffff;
+    padding: 25px;
+    box-shadow: 0 28px 80px rgba(15, 23, 42, 0.24);
+    transform: translateY(8px) scale(0.99);
+    transition: transform 240ms cubic-bezier(.22, 1, .36, 1);
+}
+
+.onboarding-welcome-layer.is-visible .onboarding-welcome-card {
+    transform: translateY(0) scale(1);
+}
+
+.onboarding-welcome-icon {
+    width: 44px;
+    height: 44px;
+    display: grid;
+    place-items: center;
+    margin-bottom: 15px;
+    border-radius: 12px;
+    background: #dcfce7;
+    color: #166534;
+    font-size: 19px;
+}
+
+.onboarding-welcome-card h2 {
+    margin: 0;
+    color: #0f172a;
+    font-size: 22px;
+    font-weight: 900;
+    letter-spacing: -0.01em;
+}
+
+.onboarding-welcome-copy {
+    margin: 9px 0 0;
+    color: #475569;
+    font-size: 14px;
+    line-height: 1.55;
+}
+
+.onboarding-welcome-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 22px;
+}
+
+.onboarding-button {
+    min-height: 40px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 9px;
+    padding: 0 14px;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 900;
+    cursor: pointer;
+}
+
+.onboarding-button-primary {
+    border: 1px solid #166534;
+    background: #166534;
+    color: #ffffff;
+}
+
+.onboarding-button-primary:hover {
+    background: #14532d;
+    border-color: #14532d;
+}
+
+.onboarding-button-secondary {
+    border: 1px solid #cbd5e1;
+    background: #ffffff;
+    color: #334155;
+}
+
+.onboarding-button-secondary:hover {
+    background: #f8fafc;
+}
+
+.driver-popover.dar-tour-popover {
+    width: min(360px, calc(100vw - 28px));
+    max-width: 360px;
+    border: 1px solid #dbe3dd;
+    border-radius: 15px;
+    padding: 18px;
+    background: #ffffff;
+    box-shadow: 0 24px 68px rgba(15, 23, 42, 0.26);
+}
+
+.driver-popover.dar-tour-popover .driver-popover-title {
+    color: #0f172a;
+    font-size: 17px;
+    line-height: 1.25;
+    font-weight: 900;
+}
+
+.driver-popover.dar-tour-popover .driver-popover-description {
+    margin-top: 7px;
+    color: #475569;
+    font-size: 13px;
+    line-height: 1.55;
+}
+
+.driver-popover.dar-tour-popover .driver-popover-footer {
+    align-items: center;
+    gap: 8px;
+    margin-top: 16px;
+}
+
+.driver-popover.dar-tour-popover .driver-popover-progress-text,
+.driver-popover.dar-tour-popover .dar-tour-progress {
+    color: #15803d;
+    font-size: 10px;
+    font-weight: 900;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.driver-popover.dar-tour-popover .driver-popover-footer button {
+    font-family: inherit;
+}
+
+.driver-popover.dar-tour-popover .driver-popover-prev-btn,
+.driver-popover.dar-tour-popover .driver-popover-next-btn {
+    min-height: 38px;
+    border-radius: 9px;
+    padding: 0 13px;
+    font-size: 12px;
+    font-weight: 900;
+    text-shadow: none;
+}
+
+.driver-popover.dar-tour-popover .driver-popover-prev-btn {
+    border: 1px solid #cbd5e1;
+    background: #ffffff;
+    color: #334155;
+}
+
+.driver-popover.dar-tour-popover .driver-popover-next-btn {
+    border: 1px solid #166534;
+    background: #166534;
+    color: #ffffff;
+}
+
+.driver-popover.dar-tour-popover .driver-popover-next-btn:hover {
+    background: #14532d;
+    border-color: #14532d;
+}
+
+.dar-tour-skip {
+    margin-right: auto;
+    border: 0;
+    background: transparent;
+    color: #64748b;
+    padding: 6px 2px;
+    font: inherit;
+    font-size: 12px;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.dar-tour-skip:hover {
+    color: #334155;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+.driver-active-element.notification-bell-link {
+    cursor: pointer !important;
+}
+
+@media (max-width: 640px) {
+    .onboarding-welcome-card {
+        padding: 21px;
+    }
+
+    .onboarding-welcome-actions {
+        flex-direction: column-reverse;
+    }
+
+    .onboarding-welcome-actions .onboarding-button {
+        width: 100%;
+    }
+
+    .driver-popover.dar-tour-popover {
+        width: min(340px, calc(100vw - 20px));
+        padding: 16px;
+    }
+
+    .driver-popover.dar-tour-popover .driver-popover-footer {
+        flex-wrap: wrap;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .onboarding-help-button,
+    .onboarding-welcome-layer,
+    .onboarding-welcome-card {
+        transition: none !important;
+    }
+}
