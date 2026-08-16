@@ -51,7 +51,7 @@
             @if ($administrationRoute)
                 <a href="{{ $administrationRoute }}" class="account-menu-item">
                     <i class="fa-solid fa-user-gear" aria-hidden="true"></i>
-                    <span>Administration</span>
+                    <span>Manage Users</span>
                 </a>
             @endif
 
