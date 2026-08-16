@@ -5,6 +5,7 @@ use App\Http\Controllers\Auth\ConfirmablePasswordController;
 use App\Http\Controllers\Auth\ForcedPasswordController;
 use App\Http\Controllers\Auth\PasswordController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
+use App\Http\Controllers\OnboardingTourController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -39,6 +40,11 @@ Route::middleware('auth')->group(function () {
 
     Route::put('password', [PasswordController::class, 'update'])
         ->name('password.update');
+
+    Route::get('onboarding-tours/{tourKey}', [OnboardingTourController::class, 'show'])
+        ->name('onboarding-tours.show');
+    Route::patch('onboarding-tours/{tourKey}', [OnboardingTourController::class, 'store'])
+        ->name('onboarding-tours.store');
 
     Route::post('logout', [AuthenticatedSessionController::class, 'destroy'])
         ->name('logout');

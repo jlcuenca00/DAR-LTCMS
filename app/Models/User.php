@@ -38,6 +38,7 @@ class User extends Authenticatable
         'password_changed_at',
         'profile_photo_path',
         'last_login_at',
+        'onboarding_state',
     ];
 
     /**
@@ -64,6 +65,7 @@ class User extends Authenticatable
             'must_change_password' => 'boolean',
             'password_changed_at' => 'datetime',
             'last_login_at' => 'datetime',
+            'onboarding_state' => 'array',
         ];
     }
 
