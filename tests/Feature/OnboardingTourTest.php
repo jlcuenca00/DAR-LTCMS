@@ -19,32 +19,54 @@ class OnboardingTourTest extends TestCase
             ->assertOk()
             ->assertJson([
                 'tour_key' => 'landowner_portal',
-                'version' => 1,
+                'version' => 2,
                 'seen' => false,
             ]);
 
         $this->actingAs($user)
             ->patchJson('/onboarding-tours/landowner_portal', [
-                'version' => 1,
+                'version' => 2,
                 'status' => 'completed',
             ])
             ->assertOk()
             ->assertJson([
                 'saved' => true,
                 'tour_key' => 'landowner_portal',
-                'version' => 1,
+                'version' => 2,
                 'status' => 'completed',
             ]);
 
         $user->refresh();
 
-        $this->assertSame(1, data_get($user->onboarding_state, 'landowner_portal.version'));
+        $this->assertSame(2, data_get($user->onboarding_state, 'landowner_portal.version'));
         $this->assertSame('completed', data_get($user->onboarding_state, 'landowner_portal.status'));
 
         $this->actingAs($user)
             ->getJson('/onboarding-tours/landowner_portal')
             ->assertOk()
             ->assertJson(['seen' => true]);
+    }
+
+    public function test_older_tour_version_is_offered_again_when_current_version_increases(): void
+    {
+        $user = User::factory()->create([
+            'role' => User::ROLE_LANDOWNER,
+            'onboarding_state' => [
+                'landowner_portal' => [
+                    'version' => 1,
+                    'status' => 'completed',
+                    'seen_at' => now()->subDay()->toIso8601String(),
+                ],
+            ],
+        ]);
+
+        $this->actingAs($user)
+            ->getJson('/onboarding-tours/landowner_portal')
+            ->assertOk()
+            ->assertJson([
+                'version' => 2,
+                'seen' => false,
+            ]);
     }
 
     public function test_other_roles_cannot_use_landowner_portal_tour_state(): void
@@ -57,7 +79,7 @@ class OnboardingTourTest extends TestCase
 
         $this->actingAs($staff)
             ->patchJson('/onboarding-tours/landowner_portal', [
-                'version' => 1,
+                'version' => 2,
                 'status' => 'skipped',
             ])
             ->assertForbidden();
