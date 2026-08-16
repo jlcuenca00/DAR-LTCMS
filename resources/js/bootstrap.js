@@ -1,5 +1,5 @@
 import axios from 'axios';
-import './onboarding-tour-driver';
+import './onboarding-tour-local';
 
 window.axios = axios;
 
