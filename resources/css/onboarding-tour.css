@@ -179,9 +179,21 @@
         height 360ms cubic-bezier(.22, 1, .36, 1);
 }
 
+.onboarding-target-blocker {
+    position: fixed;
+    z-index: 10042;
+    background: transparent;
+    pointer-events: auto;
+    transition:
+        left 360ms cubic-bezier(.22, 1, .36, 1),
+        top 360ms cubic-bezier(.22, 1, .36, 1),
+        width 360ms cubic-bezier(.22, 1, .36, 1),
+        height 360ms cubic-bezier(.22, 1, .36, 1);
+}
+
 .onboarding-focus-ring {
     position: fixed;
-    z-index: 10041;
+    z-index: 10043;
     border: 3px solid #ffffff;
     border-radius: 12px;
     box-shadow: 0 0 0 3px rgba(21, 128, 61, 0.72), 0 12px 30px rgba(15, 23, 42, 0.20);
@@ -196,7 +208,7 @@
 
 .onboarding-popover {
     position: fixed;
-    z-index: 10042;
+    z-index: 10044;
     width: min(360px, calc(100vw - 28px));
     border: 1px solid #dbe3dd;
     border-radius: 15px;
@@ -272,10 +284,18 @@
     text-underline-offset: 3px;
 }
 
+/* While the tour owns the notification dropdown, keep the real panel above
+   the dimming shades. The transparent target blocker still prevents accidental
+   clicks on notification links while the coach mark is active. */
+.onboarding-tour-active .notification-dropdown[data-onboarding-tour-open] {
+    z-index: 10041;
+}
+
 .onboarding-tour-active .notification-dropdown[data-onboarding-tour-open] > .notification-dropdown-panel {
     display: block !important;
     visibility: visible !important;
     opacity: 1 !important;
+    z-index: 10041 !important;
     animation: onboarding-notification-open 180ms cubic-bezier(.22, 1, .36, 1) both;
 }
 
@@ -324,6 +344,7 @@
     .onboarding-welcome-card,
     .onboarding-tour-layer,
     .onboarding-shade,
+    .onboarding-target-blocker,
     .onboarding-focus-ring,
     .onboarding-popover,
     .onboarding-tour-active .notification-dropdown[data-onboarding-tour-open] > .notification-dropdown-panel {
