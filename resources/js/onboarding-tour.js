@@ -1,6 +1,9 @@
 import '../css/onboarding-tour.css';
 
-const tourDefinitions = {
+const DEFAULT_TOUR_VERSION = 3;
+const PROGRESS_PREFIX = 'darltcms:onboarding:';
+
+const tours = {
     landowner_portal: {
         roleRoot: '.lo-shell',
         statusUrl: '/onboarding-tours/landowner_portal',
@@ -8,91 +11,112 @@ const tourDefinitions = {
         helpMount: '.lo-topbar-right',
         helpLabel: 'Portal Tour',
         welcomeTitle: 'Welcome to DAR-LTCMS',
-        welcomeCopy: 'Take a guided tour of the Landowner Portal. The tour will move between your dashboard, parcel records, map, applications, and notifications so you can see how the portal works.',
+        welcomeCopy: 'Take a quick guided tour of the Landowner Portal. The guide will move through the actual pages so you can see where your records, map, applications, and notifications are located.',
         steps: [
             {
                 path: '/landowner/dashboard',
-                selectors: ['.lo-dashboard-hero'],
+                selectors: ['.lo-dashboard-hero', '.lo-content'],
                 title: 'Your Dashboard',
-                copy: 'This is your main portal overview. It summarizes only the DAR-LTCMS records and clearance activity linked to your landowner account.',
+                copy: 'This is your main overview. It summarizes only the DAR-LTCMS records and clearance activity linked to your landowner account.',
+                side: 'bottom',
             },
             {
                 path: '/landowner/dashboard',
-                selectors: ['.lo-dashboard-grid'],
-                title: 'Your Activity at a Glance',
-                copy: 'Use these panels to quickly review recent application status, linked parcel references, and the current application-stage overview.',
+                selectors: ['.lo-dashboard-grid', '.lo-content'],
+                title: 'Activity at a Glance',
+                copy: 'These panels show recent application activity, linked parcel references, and an overview of your application stages.',
+                nextLabel: 'Open Parcel Records',
+                side: 'top',
             },
             {
                 path: '/landowner/parcels',
-                selectors: ['.lo-parcel-panel', '.lo-parcel-page'],
+                selectors: ['.lo-parcel-panel', '.lo-parcel-page', '.lo-content'],
                 title: 'My Parcel Records',
-                copy: 'This page shows parcel and landholding references connected to your account, including title references, location, linked area, record state, and map availability.',
+                copy: 'Review parcel and landholding references connected to your account, including location, area, record state, and map availability.',
+                nextLabel: 'Open Parcel Map',
+                side: 'top',
             },
             {
                 path: '/landowner/parcel-map',
-                selectors: ['.lo-map-sidebar'],
-                title: 'Find and Review Mapped Parcels',
-                copy: 'Use the parcel search and map tools to find mapped parcel references associated with your records.',
+                selectors: ['.lo-map-sidebar', '.lo-content'],
+                title: 'Map Tools',
+                copy: 'Use these tools to search your linked parcels, reset the map view, or return to the parcel records list.',
+                side: 'right',
             },
             {
                 path: '/landowner/parcel-map',
-                selectors: ['#parcel-map', '.lo-map-panel'],
+                selectors: ['#parcel-map', '.lo-map-panel', '.lo-content'],
                 title: 'My Parcel Map',
-                copy: 'The map displays available parcel geometry and location references linked to your account. Map information supports review and monitoring only.',
+                copy: 'Mapped parcel geometry and location references appear here when geometry is available for records linked to your account.',
+                nextLabel: 'Open Applications',
+                side: 'left',
             },
             {
                 path: '/landowner/applications',
-                selectors: ['.lo-app-card', '.lo-app-empty', '.lo-app-overview'],
+                selectors: ['.lo-app-card', '.lo-app-overview', '.lo-app-page', '.lo-content'],
                 title: 'My Clearance Applications',
-                copy: 'Here you can monitor applications linked to your landowner record, see their current status, and open the decision output when a finalized clearance result is available.',
+                copy: 'Monitor applications linked to your landowner record, review their current status, and open a decision output when a finalized result is available.',
+                side: 'top',
             },
             {
                 path: '/landowner/applications',
                 selectors: ['.notification-dropdown-panel'],
-                prepare: 'open-notifications',
+                prepare: 'notifications',
+                noScroll: true,
                 title: 'Notifications',
-                copy: 'Important application updates and other relevant system notifications appear here. Opening the panel lets you review recent notices without leaving the page.',
+                copy: 'Recent system notices appear in this panel. The tour opens it automatically so you can see the actual notification area without having to click anything.',
+                side: 'left',
             },
             {
                 path: '/landowner/applications',
                 selectors: ['[data-onboarding-help="landowner_portal"]'],
-                title: 'Replay This Tour Anytime',
+                noScroll: true,
+                title: 'Replay the Tour Anytime',
                 copy: 'Use this information button whenever you want to run the Landowner Portal guide again.',
+                side: 'bottom',
             },
         ],
     },
 };
 
-function csrfToken() {
-    return document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
-}
+let activeTour = null;
 
 function normalizedPath(path = window.location.pathname) {
-    const normalized = path.replace(/\/+$/, '');
-    return normalized || '/';
+    const clean = String(path || '/').replace(/\/+$/, '');
+    return clean || '/';
 }
 
 function reducedMotion() {
     return window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
 }
 
-function motionDelay(milliseconds) {
-    return reducedMotion() ? 0 : milliseconds;
+function wait(milliseconds) {
+    return new Promise((resolve) => window.setTimeout(resolve, reducedMotion() ? 0 : milliseconds));
 }
 
-function progressStorageKey(key) {
-    return `darltcms:onboarding:${key}`;
+function nextFrame() {
+    return new Promise((resolve) => window.requestAnimationFrame(() => window.requestAnimationFrame(resolve)));
+}
+
+function csrfToken() {
+    return document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+}
+
+function progressKey(key) {
+    return `${PROGRESS_PREFIX}${key}`;
 }
 
 function readProgress(key, version) {
     try {
-        const raw = window.sessionStorage.getItem(progressStorageKey(key));
+        const raw = window.sessionStorage.getItem(progressKey(key));
         if (!raw) return null;
+
         const progress = JSON.parse(raw);
         if (!progress?.active || Number(progress.version) !== Number(version)) {
-            window.sessionStorage.removeItem(progressStorageKey(key));
+            window.sessionStorage.removeItem(progressKey(key));
             return null;
         }
+
         return progress;
     } catch {
         return null;
@@ -101,19 +125,19 @@ function readProgress(key, version) {
 
 function saveProgress(key, version, index) {
     try {
-        window.sessionStorage.setItem(progressStorageKey(key), JSON.stringify({
+        window.sessionStorage.setItem(progressKey(key), JSON.stringify({
             active: true,
             version: Number(version),
             index: Number(index),
         }));
     } catch {
-        // Keep the tour usable even if session storage is unavailable.
+        // The current-page tour remains usable if session storage is unavailable.
     }
 }
 
 function clearProgress(key) {
     try {
-        window.sessionStorage.removeItem(progressStorageKey(key));
+        window.sessionStorage.removeItem(progressKey(key));
     } catch {
         // No action required.
     }
@@ -123,44 +147,20 @@ function createElement(tag, className, attributes = {}) {
     const element = document.createElement(tag);
     if (className) element.className = className;
 
-    Object.entries(attributes).forEach(([key, value]) => {
-        if (key === 'text') {
-            element.textContent = value;
-        } else {
-            element.setAttribute(key, value);
-        }
+    Object.entries(attributes).forEach(([name, value]) => {
+        if (name === 'text') element.textContent = value;
+        else element.setAttribute(name, value);
     });
 
     return element;
 }
 
-function navigateWithTourTransition(targetPath, title = 'Next view') {
-    const handoff = createElement('div', 'onboarding-page-handoff');
-    handoff.innerHTML = `
-        <div class="onboarding-page-handoff-card" role="status" aria-live="polite">
-            <span class="onboarding-page-handoff-kicker">Continuing tour</span>
-            <strong class="onboarding-page-handoff-title"></strong>
-            <span class="onboarding-page-handoff-note">
-                <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
-                Opening the next portal view
-            </span>
-        </div>
-    `;
-    handoff.querySelector('.onboarding-page-handoff-title').textContent = title;
-    document.body.appendChild(handoff);
-
-    window.requestAnimationFrame(() => {
-        window.requestAnimationFrame(() => handoff.classList.add('is-visible'));
-    });
-
-    window.setTimeout(() => {
-        window.location.assign(targetPath);
-    }, motionDelay(520));
-}
-
 function mountHelpButton(key, definition) {
     const mount = document.querySelector(definition.helpMount);
-    if (!mount || mount.querySelector(`[data-onboarding-help="${key}"]`)) return null;
+    if (!mount) return null;
+
+    const existing = mount.querySelector(`[data-onboarding-help="${key}"]`);
+    if (existing) return existing;
 
     const button = createElement('button', 'onboarding-help-button', {
         type: 'button',
@@ -168,6 +168,7 @@ function mountHelpButton(key, definition) {
         'aria-label': `Start ${definition.helpLabel}`,
         'data-onboarding-help': key,
     });
+
     button.innerHTML = '<i class="fa-solid fa-circle-info" aria-hidden="true"></i>';
     mount.insertBefore(button, mount.firstChild);
     return button;
@@ -175,7 +176,6 @@ function mountHelpButton(key, definition) {
 
 function buildWelcome(definition) {
     const layer = createElement('div', 'onboarding-welcome-layer');
-    layer.hidden = true;
     layer.innerHTML = `
         <section class="onboarding-welcome-card" role="dialog" aria-modal="true" aria-labelledby="onboarding-welcome-title">
             <div class="onboarding-welcome-icon" aria-hidden="true"><i class="fa-solid fa-compass"></i></div>
@@ -187,40 +187,28 @@ function buildWelcome(definition) {
             </div>
         </section>
     `;
+
     layer.querySelector('#onboarding-welcome-title').textContent = definition.welcomeTitle;
     layer.querySelector('.onboarding-welcome-copy').textContent = definition.welcomeCopy;
     document.body.appendChild(layer);
+    requestAnimationFrame(() => requestAnimationFrame(() => layer.classList.add('is-visible')));
     return layer;
 }
 
-function revealWelcome(layer, focusTarget = null) {
-    layer.hidden = false;
-    window.requestAnimationFrame(() => {
-        window.requestAnimationFrame(() => {
-            layer.classList.add('is-visible');
-            if (focusTarget) focusTarget.focus();
-        });
-    });
-}
-
-function dismissWelcome(layer, callback = null) {
+async function dismissWelcome(layer) {
     layer.classList.remove('is-visible');
-    window.setTimeout(() => {
-        layer.remove();
-        if (callback) callback();
-    }, motionDelay(360));
+    await wait(180);
+    layer.remove();
 }
 
 function buildTourLayer() {
     const layer = createElement('div', 'onboarding-tour-layer');
-    layer.hidden = true;
     layer.innerHTML = `
         <div class="onboarding-shade onboarding-shade-top" aria-hidden="true"></div>
         <div class="onboarding-shade onboarding-shade-left" aria-hidden="true"></div>
         <div class="onboarding-shade onboarding-shade-right" aria-hidden="true"></div>
         <div class="onboarding-shade onboarding-shade-bottom" aria-hidden="true"></div>
         <div class="onboarding-focus-ring" aria-hidden="true"></div>
-        <div class="onboarding-target-blocker" aria-hidden="true"></div>
         <section class="onboarding-popover" role="dialog" aria-modal="true" aria-labelledby="onboarding-step-title">
             <div class="onboarding-step-count"></div>
             <h2 id="onboarding-step-title"></h2>
@@ -234,14 +222,13 @@ function buildTourLayer() {
             </div>
         </section>
     `;
+
     document.body.appendChild(layer);
     return layer;
 }
 
 function resolveTarget(step) {
-    const selectors = step.selectors || (step.selector ? [step.selector] : []);
-
-    for (const selector of selectors) {
+    for (const selector of step.selectors || []) {
         const target = document.querySelector(selector);
         if (target) return target;
     }
@@ -249,53 +236,44 @@ function resolveTarget(step) {
     return document.querySelector('.lo-content');
 }
 
-function prepareStep(step) {
-    if (step.prepare !== 'open-notifications') return null;
+function suppressNotificationRead(dropdown) {
+    if (!dropdown) return;
+    dropdown.dataset.readTriggered = 'true';
+}
+
+function closeTourOpenedNotifications() {
+    document.querySelectorAll('[data-notification-dropdown][data-onboarding-tour-open]').forEach((dropdown) => {
+        suppressNotificationRead(dropdown);
+        dropdown.removeAttribute('data-onboarding-tour-open');
+        dropdown.removeAttribute('open');
+        window.setTimeout(() => {
+            if (!dropdown.hasAttribute('data-onboarding-tour-open')) {
+                delete dropdown.dataset.readTriggered;
+            }
+        }, 250);
+    });
+}
+
+async function prepareStep(step) {
+    closeTourOpenedNotifications();
+
+    if (step.prepare !== 'notifications') return null;
 
     const dropdown = document.querySelector('[data-notification-dropdown]');
     if (!dropdown) return null;
 
-    // This runs after the click that advanced the tour has finished bubbling,
-    // so the shell's outside-click handler cannot immediately close it again.
-    dropdown.dataset.onboardingForcedOpen = 'true';
+    suppressNotificationRead(dropdown);
+    dropdown.dataset.onboardingTourOpen = 'true';
     dropdown.setAttribute('open', '');
-    return dropdown;
+
+    await nextFrame();
+    await wait(80);
+
+    return dropdown.querySelector('.notification-dropdown-panel');
 }
 
-function beginTour(key, definition, version, index = 0) {
-    const step = definition.steps[index] || definition.steps[0];
-    const targetPath = normalizedPath(step.path || window.location.pathname);
-
-    saveProgress(key, version, index);
-
-    if (normalizedPath() !== targetPath) {
-        navigateWithTourTransition(targetPath, step.title);
-        return;
-    }
-
-    startConfiguredTour(key, definition, version, index);
-}
-
-function startConfiguredTour(key, definition, version, initialIndex = 0) {
-    let index = Number(initialIndex) || 0;
-    let activeTarget = null;
-    let preparedNotificationDropdown = null;
-    let transitionTimer = null;
-    let closing = false;
-    let escapeHandler = null;
-
-    const layer = buildTourLayer();
-    const popover = layer.querySelector('.onboarding-popover');
-    const ring = layer.querySelector('.onboarding-focus-ring');
-    const blocker = layer.querySelector('.onboarding-target-blocker');
-    const shades = {
-        top: layer.querySelector('.onboarding-shade-top'),
-        left: layer.querySelector('.onboarding-shade-left'),
-        right: layer.querySelector('.onboarding-shade-right'),
-        bottom: layer.querySelector('.onboarding-shade-bottom'),
-    };
-
-    const persist = (status) => fetch(definition.statusUrl, {
+function persistStatus(definition, version, status) {
+    return fetch(definition.statusUrl, {
         method: 'PATCH',
         credentials: 'same-origin',
         headers: {
@@ -306,105 +284,179 @@ function startConfiguredTour(key, definition, version, initialIndex = 0) {
         },
         body: JSON.stringify({ version, status }),
     }).catch(() => undefined);
+}
 
-    const preventTourNotificationRead = () => {
-        if (!preparedNotificationDropdown) return;
-        preparedNotificationDropdown.dataset.readTriggered = 'true';
-        window.setTimeout(() => {
-            if (preparedNotificationDropdown) {
-                delete preparedNotificationDropdown.dataset.readTriggered;
-            }
-        }, 650);
+function clamp(value, minimum, maximum) {
+    return Math.max(minimum, Math.min(value, maximum));
+}
+
+function targetRect(target) {
+    const raw = target.getBoundingClientRect();
+    const padding = 8;
+    const margin = 6;
+
+    const left = clamp(raw.left - padding, margin, window.innerWidth - margin);
+    const top = clamp(raw.top - padding, margin, window.innerHeight - margin);
+    const right = clamp(raw.right + padding, margin, window.innerWidth - margin);
+    const bottom = clamp(raw.bottom + padding, margin, window.innerHeight - margin);
+
+    return {
+        left,
+        top,
+        right,
+        bottom,
+        width: Math.max(1, right - left),
+        height: Math.max(1, bottom - top),
+    };
+}
+
+function placeSpotlight(layer, rect) {
+    const topShade = layer.querySelector('.onboarding-shade-top');
+    const leftShade = layer.querySelector('.onboarding-shade-left');
+    const rightShade = layer.querySelector('.onboarding-shade-right');
+    const bottomShade = layer.querySelector('.onboarding-shade-bottom');
+    const ring = layer.querySelector('.onboarding-focus-ring');
+
+    topShade.style.cssText = `left:0;top:0;width:100vw;height:${rect.top}px`;
+    bottomShade.style.cssText = `left:0;top:${rect.bottom}px;width:100vw;height:${Math.max(0, window.innerHeight - rect.bottom)}px`;
+    leftShade.style.cssText = `left:0;top:${rect.top}px;width:${rect.left}px;height:${rect.height}px`;
+    rightShade.style.cssText = `left:${rect.right}px;top:${rect.top}px;width:${Math.max(0, window.innerWidth - rect.right)}px;height:${rect.height}px`;
+
+    ring.style.left = `${rect.left}px`;
+    ring.style.top = `${rect.top}px`;
+    ring.style.width = `${rect.width}px`;
+    ring.style.height = `${rect.height}px`;
+}
+
+function placePopover(layer, rect, preferredSide = 'bottom') {
+    const popover = layer.querySelector('.onboarding-popover');
+    const popRect = popover.getBoundingClientRect();
+    const margin = 14;
+    const gap = 14;
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+
+    const centeredLeft = clamp(rect.left + (rect.width - popRect.width) / 2, margin, viewportWidth - popRect.width - margin);
+    const centeredTop = clamp(rect.top + (rect.height - popRect.height) / 2, margin, viewportHeight - popRect.height - margin);
+
+    const candidates = {
+        bottom: { top: rect.bottom + gap, left: centeredLeft },
+        top: { top: rect.top - popRect.height - gap, left: centeredLeft },
+        right: { top: centeredTop, left: rect.right + gap },
+        left: { top: centeredTop, left: rect.left - popRect.width - gap },
     };
 
-    const cleanupPreparedState = () => {
-        if (!preparedNotificationDropdown) return;
+    const order = [preferredSide, 'bottom', 'top', 'right', 'left'].filter((side, index, array) => array.indexOf(side) === index);
+    let chosen = null;
 
-        preventTourNotificationRead();
-        preparedNotificationDropdown.removeAttribute('data-onboarding-forced-open');
-        preparedNotificationDropdown.removeAttribute('open');
+    for (const side of order) {
+        const candidate = candidates[side];
+        const fits = candidate.top >= margin
+            && candidate.left >= margin
+            && candidate.top + popRect.height <= viewportHeight - margin
+            && candidate.left + popRect.width <= viewportWidth - margin;
 
-        const dropdown = preparedNotificationDropdown;
-        preparedNotificationDropdown = null;
-        window.setTimeout(() => {
-            delete dropdown.dataset.readTriggered;
-        }, 650);
-    };
-
-    function refreshPosition() {
-        if (!layer.hidden && !closing) window.requestAnimationFrame(position);
+        if (fits) {
+            chosen = candidate;
+            break;
+        }
     }
 
-    const close = (status = null) => {
-        if (closing) return;
-        closing = true;
-        preventTourNotificationRead();
-        cleanupPreparedState();
-        clearProgress(key);
-        if (transitionTimer) window.clearTimeout(transitionTimer);
-        if (status) persist(status);
+    chosen ??= candidates[preferredSide] || candidates.bottom;
+    popover.style.left = `${clamp(chosen.left, margin, viewportWidth - popRect.width - margin)}px`;
+    popover.style.top = `${clamp(chosen.top, margin, viewportHeight - popRect.height - margin)}px`;
+}
 
-        layer.classList.add('is-step-changing');
-        layer.classList.remove('is-visible');
+function positionTour(layer, target, step) {
+    const rect = targetRect(target);
+    placeSpotlight(layer, rect);
+    placePopover(layer, rect, step.side || 'bottom');
+}
+
+async function beginTour(key, definition, version, initialIndex = 0) {
+    if (activeTour?.close) {
+        await activeTour.close(null);
+    }
+
+    const index = clamp(Number(initialIndex) || 0, 0, definition.steps.length - 1);
+    const step = definition.steps[index];
+    saveProgress(key, version, index);
+
+    if (normalizedPath() !== normalizedPath(step.path)) {
+        window.location.assign(step.path);
+        return;
+    }
+
+    await runTour(key, definition, version, index);
+}
+
+async function runTour(key, definition, version, initialIndex) {
+    let index = initialIndex;
+    let activeTarget = null;
+    let activeStep = null;
+    let moving = false;
+    let closed = false;
+
+    const layer = buildTourLayer();
+    const back = layer.querySelector('[data-onboarding-back]');
+    const next = layer.querySelector('[data-onboarding-next]');
+    const skip = layer.querySelector('[data-onboarding-skip]');
+
+    const refreshPosition = () => {
+        if (!activeTarget || !activeStep || moving || closed) return;
+        window.requestAnimationFrame(() => positionTour(layer, activeTarget, activeStep));
+    };
+
+    const closeTour = async (status = null) => {
+        if (closed) return;
+        closed = true;
+        moving = true;
+        closeTourOpenedNotifications();
+        clearProgress(key);
+
+        if (status) persistStatus(definition, version, status);
+
+        layer.classList.add('is-leaving');
+        await wait(160);
+        layer.remove();
         document.body.classList.remove('onboarding-tour-active');
-        activeTarget = null;
         window.removeEventListener('resize', refreshPosition);
         window.removeEventListener('scroll', refreshPosition);
-        if (escapeHandler) document.removeEventListener('keydown', escapeHandler, true);
+        document.removeEventListener('keydown', escapeHandler, true);
 
-        window.setTimeout(() => layer.remove(), motionDelay(380));
+        if (activeTour?.layer === layer) activeTour = null;
     };
 
-    const position = () => {
-        if (!activeTarget || !document.body.contains(activeTarget)) return;
+    activeTour = { layer, close: closeTour };
 
-        const raw = activeTarget.getBoundingClientRect();
-        const pad = 7;
-        const rect = {
-            top: Math.max(6, raw.top - pad),
-            left: Math.max(6, raw.left - pad),
-            right: Math.min(window.innerWidth - 6, raw.right + pad),
-            bottom: Math.min(window.innerHeight - 6, raw.bottom + pad),
-        };
-        rect.width = Math.max(1, rect.right - rect.left);
-        rect.height = Math.max(1, rect.bottom - rect.top);
+    const showStep = async (requestedIndex, initial = false) => {
+        if (moving || closed) return;
 
-        shades.top.style.cssText = `left:0;top:0;width:100vw;height:${rect.top}px`;
-        shades.bottom.style.cssText = `left:0;top:${rect.bottom}px;width:100vw;height:${Math.max(0, window.innerHeight - rect.bottom)}px`;
-        shades.left.style.cssText = `left:0;top:${rect.top}px;width:${rect.left}px;height:${rect.height}px`;
-        shades.right.style.cssText = `left:${rect.right}px;top:${rect.top}px;width:${Math.max(0, window.innerWidth - rect.right)}px;height:${rect.height}px`;
+        const resolved = clamp(Number(requestedIndex), 0, definition.steps.length - 1);
+        const step = definition.steps[resolved];
+        saveProgress(key, version, resolved);
 
-        ring.style.cssText = `left:${rect.left}px;top:${rect.top}px;width:${rect.width}px;height:${rect.height}px`;
-        blocker.style.cssText = `left:${rect.left}px;top:${rect.top}px;width:${rect.width}px;height:${rect.height}px`;
-
-        const popRect = popover.getBoundingClientRect();
-        const gap = 14;
-        const margin = 14;
-        let top = rect.bottom + gap;
-
-        if (top + popRect.height > window.innerHeight - margin) {
-            top = rect.top - popRect.height - gap;
-        }
-        top = Math.max(margin, Math.min(top, window.innerHeight - popRect.height - margin));
-
-        let left = rect.left;
-        left = Math.max(margin, Math.min(left, window.innerWidth - popRect.width - margin));
-        popover.style.left = `${left}px`;
-        popover.style.top = `${top}px`;
-    };
-
-    const applyStep = (resolved, step, { initial = false } = {}) => {
-        cleanupPreparedState();
-
-        if (step.prepare === 'open-notifications') {
-            preparedNotificationDropdown = prepareStep(step);
+        if (normalizedPath() !== normalizedPath(step.path)) {
+            moving = true;
+            closeTourOpenedNotifications();
+            layer.classList.add('is-leaving');
+            window.setTimeout(() => window.location.assign(step.path), reducedMotion() ? 0 : 90);
+            return;
         }
 
+        moving = true;
+        back.disabled = true;
+        next.disabled = true;
+        layer.classList.add('is-moving');
+
+        const preparedTarget = await prepareStep(step);
         index = resolved;
-        activeTarget = resolveTarget(step);
+        activeStep = step;
+        activeTarget = preparedTarget || resolveTarget(step);
 
         if (!activeTarget) {
-            close();
+            moving = false;
+            layer.classList.remove('is-moving');
             return;
         }
 
@@ -412,106 +464,62 @@ function startConfiguredTour(key, definition, version, initialIndex = 0) {
         layer.querySelector('#onboarding-step-title').textContent = step.title;
         layer.querySelector('.onboarding-step-copy').textContent = step.copy;
 
-        const back = layer.querySelector('[data-onboarding-back]');
-        const next = layer.querySelector('[data-onboarding-next]');
         back.disabled = index === 0;
-        next.textContent = index === definition.steps.length - 1 ? 'Finish' : 'Next';
+        next.textContent = index === definition.steps.length - 1 ? 'Finish' : (step.nextLabel || 'Next');
 
-        activeTarget.scrollIntoView({
-            behavior: reducedMotion() ? 'auto' : 'smooth',
-            block: 'center',
-            inline: 'nearest',
-        });
-
-        transitionTimer = window.setTimeout(() => {
-            position();
-            window.requestAnimationFrame(() => {
-                window.requestAnimationFrame(() => {
-                    layer.classList.add('is-visible');
-                    layer.classList.remove('is-step-changing');
-                    next.focus({ preventScroll: true });
-                });
+        if (!step.noScroll) {
+            activeTarget.scrollIntoView({
+                behavior: reducedMotion() ? 'auto' : 'smooth',
+                block: 'center',
+                inline: 'nearest',
             });
-        }, motionDelay(initial ? 130 : 430));
-    };
-
-    const showStep = (requestedIndex, { initial = false } = {}) => {
-        const steps = definition.steps;
-        const resolved = Math.max(0, Math.min(Number(requestedIndex), steps.length - 1));
-        const step = steps[resolved];
-        const targetPath = normalizedPath(step.path || window.location.pathname);
-
-        saveProgress(key, version, resolved);
-
-        if (normalizedPath() !== targetPath) {
-            preventTourNotificationRead();
-            layer.classList.add('is-step-changing');
-            window.setTimeout(() => {
-                cleanupPreparedState();
-                navigateWithTourTransition(targetPath, step.title);
-            }, motionDelay(240));
-            return;
+            await wait(initial ? 80 : 260);
+        } else {
+            await wait(40);
         }
 
-        if (transitionTimer) window.clearTimeout(transitionTimer);
+        positionTour(layer, activeTarget, step);
+        await nextFrame();
 
-        if (initial) {
-            layer.classList.add('is-step-changing');
-            applyStep(resolved, step, { initial: true });
-            return;
-        }
+        if (initial) layer.classList.add('is-ready');
+        layer.classList.remove('is-moving');
 
-        // Deliberate two-phase transition: first fade the current step out,
-        // then change/scroll the target, then fade the new step back in.
-        preventTourNotificationRead();
-        layer.classList.add('is-step-changing');
-        transitionTimer = window.setTimeout(() => {
-            applyStep(resolved, step);
-        }, motionDelay(240));
+        moving = false;
+        back.disabled = index === 0;
+        next.disabled = false;
+        next.focus({ preventScroll: true });
     };
 
-    const moveToStep = (requestedIndex) => {
-        if (requestedIndex < 0 || closing) return;
-        if (requestedIndex >= definition.steps.length) {
-            close('completed');
-            return;
-        }
-        showStep(requestedIndex);
-    };
-
-    layer.querySelector('[data-onboarding-back]').addEventListener('click', () => {
-        preventTourNotificationRead();
-        moveToStep(index - 1);
+    back.addEventListener('click', () => {
+        if (!moving && index > 0) void showStep(index - 1);
     });
 
-    layer.querySelector('[data-onboarding-next]').addEventListener('click', () => {
-        preventTourNotificationRead();
+    next.addEventListener('click', () => {
+        if (moving) return;
         if (index >= definition.steps.length - 1) {
-            close('completed');
+            void closeTour('completed');
             return;
         }
-        moveToStep(index + 1);
+        void showStep(index + 1);
     });
 
-    layer.querySelector('[data-onboarding-skip]').addEventListener('click', () => {
-        preventTourNotificationRead();
-        close('skipped');
+    skip.addEventListener('click', () => {
+        if (!moving) void closeTour('skipped');
     });
+
+    const escapeHandler = (event) => {
+        if (event.key !== 'Escape' || closed) return;
+        event.preventDefault();
+        event.stopPropagation();
+        void closeTour(null);
+    };
 
     window.addEventListener('resize', refreshPosition, { passive: true });
     window.addEventListener('scroll', refreshPosition, { passive: true });
-
-    escapeHandler = (event) => {
-        if (event.key !== 'Escape' || layer.hidden) return;
-        preventTourNotificationRead();
-        event.stopPropagation();
-        close();
-    };
     document.addEventListener('keydown', escapeHandler, true);
-
     document.body.classList.add('onboarding-tour-active');
-    layer.hidden = false;
-    showStep(index, { initial: true });
+
+    await showStep(index, true);
 }
 
 async function initTour(key, definition) {
@@ -520,64 +528,64 @@ async function initTour(key, definition) {
     const helpButton = mountHelpButton(key, definition);
     if (!helpButton) return;
 
-    let status;
+    let version = DEFAULT_TOUR_VERSION;
+
+    helpButton.addEventListener('click', () => {
+        void beginTour(key, definition, version, 0);
+    });
+
+    let status = null;
     try {
         const response = await fetch(definition.statusUrl, {
-            headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
             credentials: 'same-origin',
+            headers: {
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+            },
         });
-        if (!response.ok) return;
-        status = await response.json();
-    } catch {
-        return;
-    }
 
-    const version = Number(status.version || 1);
-    helpButton.addEventListener('click', () => beginTour(key, definition, version, 0));
+        if (response.ok) {
+            status = await response.json();
+            version = Number(status.version || DEFAULT_TOUR_VERSION);
+        }
+    } catch {
+        // The replay button remains available even if status lookup fails.
+    }
 
     const progress = readProgress(key, version);
     if (progress) {
-        beginTour(key, definition, version, Number(progress.index || 0));
+        await beginTour(key, definition, version, Number(progress.index || 0));
         return;
     }
 
-    if (status.seen || !definition.autoPromptPath.test(window.location.pathname)) return;
+    if (!status || status.seen || !definition.autoPromptPath.test(window.location.pathname)) return;
 
     const welcome = buildWelcome(definition);
     const start = welcome.querySelector('[data-onboarding-welcome-start]');
-    const skip = welcome.querySelector('[data-onboarding-welcome-skip]');
+    const skipWelcome = welcome.querySelector('[data-onboarding-welcome-skip]');
 
-    const persistSkip = () => fetch(definition.statusUrl, {
-        method: 'PATCH',
-        credentials: 'same-origin',
-        headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-            'X-Requested-With': 'XMLHttpRequest',
-            'X-CSRF-TOKEN': csrfToken(),
-        },
-        body: JSON.stringify({ version, status: 'skipped' }),
-    }).catch(() => undefined);
-
-    start.addEventListener('click', () => {
-        dismissWelcome(welcome, () => beginTour(key, definition, version, 0));
+    start.addEventListener('click', async () => {
+        await dismissWelcome(welcome);
+        await beginTour(key, definition, version, 0);
     });
 
-    skip.addEventListener('click', () => {
+    skipWelcome.addEventListener('click', async () => {
         clearProgress(key);
-        persistSkip();
-        dismissWelcome(welcome);
+        persistStatus(definition, version, 'skipped');
+        await dismissWelcome(welcome);
     });
 
-    revealWelcome(welcome, start);
+    start.focus();
 }
 
-function initOnboardingTours() {
-    Object.entries(tourDefinitions).forEach(([key, definition]) => initTour(key, definition));
+async function initOnboardingTours() {
+    await Promise.all(Object.entries(tours).map(([key, definition]) => initTour(key, definition)));
 }
 
 if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initOnboardingTours, { once: true });
+    document.addEventListener('DOMContentLoaded', () => {
+        void initOnboardingTours();
+    }, { once: true });
 } else {
-    initOnboardingTours();
+    void initOnboardingTours();
 }
