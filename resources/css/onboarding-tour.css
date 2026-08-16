@@ -1,0 +1,261 @@
+.onboarding-help-button {
+    width: 38px;
+    height: 38px;
+    flex: 0 0 auto;
+    display: inline-grid;
+    place-items: center;
+    border: 1px solid #bbf7d0;
+    border-radius: 999px;
+    background: #f0fdf4;
+    color: #166534;
+    font: inherit;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background 150ms ease, border-color 150ms ease, transform 150ms ease;
+}
+
+.onboarding-help-button:hover {
+    background: #dcfce7;
+    border-color: #86efac;
+    transform: translateY(-1px);
+}
+
+.onboarding-help-button:focus-visible,
+.onboarding-button:focus-visible,
+.onboarding-skip-link:focus-visible {
+    outline: 3px solid rgba(21, 128, 61, 0.35);
+    outline-offset: 2px;
+}
+
+.onboarding-welcome-layer {
+    position: fixed;
+    inset: 0;
+    z-index: 9998;
+    display: grid;
+    place-items: center;
+    padding: 20px;
+    background: rgba(15, 23, 42, 0.68);
+    backdrop-filter: blur(2px);
+}
+
+.onboarding-welcome-layer[hidden],
+.onboarding-tour-layer[hidden] {
+    display: none !important;
+}
+
+.onboarding-welcome-card {
+    width: min(440px, 100%);
+    border: 1px solid #dbe3dd;
+    border-radius: 18px;
+    background: #ffffff;
+    padding: 25px;
+    box-shadow: 0 28px 80px rgba(15, 23, 42, 0.28);
+}
+
+.onboarding-welcome-icon {
+    width: 44px;
+    height: 44px;
+    display: grid;
+    place-items: center;
+    margin-bottom: 15px;
+    border-radius: 12px;
+    background: #dcfce7;
+    color: #166534;
+    font-size: 19px;
+}
+
+.onboarding-welcome-card h2,
+.onboarding-popover h2 {
+    margin: 0;
+    color: #0f172a;
+    font-family: 'Google Sans', Arial, sans-serif;
+    font-weight: 900;
+    letter-spacing: -0.01em;
+}
+
+.onboarding-welcome-card h2 {
+    font-size: 22px;
+}
+
+.onboarding-welcome-copy,
+.onboarding-step-copy {
+    color: #475569;
+    line-height: 1.55;
+}
+
+.onboarding-welcome-copy {
+    margin: 9px 0 0;
+    font-size: 14px;
+}
+
+.onboarding-welcome-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 22px;
+}
+
+.onboarding-button {
+    min-height: 40px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 9px;
+    padding: 0 14px;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 900;
+    cursor: pointer;
+}
+
+.onboarding-button:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+.onboarding-button-primary {
+    border: 1px solid #166534;
+    background: #166534;
+    color: #ffffff;
+}
+
+.onboarding-button-primary:hover:not(:disabled) {
+    background: #14532d;
+    border-color: #14532d;
+}
+
+.onboarding-button-secondary {
+    border: 1px solid #cbd5e1;
+    background: #ffffff;
+    color: #334155;
+}
+
+.onboarding-button-secondary:hover:not(:disabled) {
+    background: #f8fafc;
+}
+
+.onboarding-tour-layer {
+    position: fixed;
+    inset: 0;
+    z-index: 9997;
+    pointer-events: none;
+}
+
+.onboarding-shade {
+    position: fixed;
+    z-index: 9997;
+    background: rgba(15, 23, 42, 0.72);
+    pointer-events: auto;
+}
+
+.onboarding-focus-ring {
+    position: fixed;
+    z-index: 9998;
+    border: 3px solid #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 0 0 3px rgba(21, 128, 61, 0.78), 0 12px 30px rgba(15, 23, 42, 0.24);
+    pointer-events: none;
+    transition: left 160ms ease, top 160ms ease, width 160ms ease, height 160ms ease;
+}
+
+.onboarding-target-blocker {
+    position: fixed;
+    z-index: 9999;
+    background: transparent;
+    pointer-events: auto;
+}
+
+.onboarding-popover {
+    position: fixed;
+    z-index: 10000;
+    width: min(350px, calc(100vw - 28px));
+    border: 1px solid #dbe3dd;
+    border-radius: 15px;
+    background: #ffffff;
+    padding: 18px;
+    box-shadow: 0 24px 68px rgba(15, 23, 42, 0.30);
+    pointer-events: auto;
+}
+
+.onboarding-step-count {
+    margin-bottom: 7px;
+    color: #15803d;
+    font-size: 10px;
+    font-weight: 900;
+    letter-spacing: 0.11em;
+    text-transform: uppercase;
+}
+
+.onboarding-popover h2 {
+    font-size: 17px;
+}
+
+.onboarding-step-copy {
+    margin: 7px 0 0;
+    font-size: 13px;
+}
+
+.onboarding-step-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 17px;
+}
+
+.onboarding-step-nav {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.onboarding-skip-link {
+    border: 0;
+    background: transparent;
+    color: #64748b;
+    padding: 7px 0;
+    font: inherit;
+    font-size: 12px;
+    font-weight: 850;
+    cursor: pointer;
+}
+
+.onboarding-skip-link:hover {
+    color: #334155;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+@media (max-width: 640px) {
+    .onboarding-welcome-card {
+        padding: 21px;
+    }
+
+    .onboarding-welcome-actions,
+    .onboarding-step-actions {
+        align-items: stretch;
+        flex-direction: column-reverse;
+    }
+
+    .onboarding-welcome-actions .onboarding-button,
+    .onboarding-step-nav,
+    .onboarding-step-nav .onboarding-button {
+        width: 100%;
+    }
+
+    .onboarding-step-nav {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .onboarding-skip-link {
+        text-align: center;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .onboarding-focus-ring,
+    .onboarding-help-button {
+        transition: none;
+    }
+}
