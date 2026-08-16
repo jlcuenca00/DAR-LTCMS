@@ -4,7 +4,7 @@ return [
     'tours' => [
         'landowner_portal' => [
             'role' => 'landowner',
-            'version' => 2,
+            'version' => 3,
         ],
     ],
 ];
