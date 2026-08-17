@@ -1,0 +1,98 @@
+/* Staff dashboard hero spacing refinement.
+   Scoped overrides keep the dashboard compact without changing its content or workflow. */
+
+.staff-dashboard .dashboard-hero {
+    grid-template-columns: minmax(0, 1fr) minmax(390px, 460px);
+    gap: clamp(30px, 4vw, 58px);
+    align-items: center;
+    padding: 22px 30px;
+}
+
+.staff-dashboard .dashboard-hero > :first-child {
+    display: grid;
+    align-content: center;
+    justify-items: start;
+    min-width: 0;
+}
+
+.staff-dashboard .hero-title {
+    max-width: 680px;
+}
+
+.staff-dashboard .hero-actions {
+    margin-top: 14px;
+}
+
+.staff-dashboard .hero-queue {
+    width: 100%;
+    max-width: 460px;
+    justify-self: end;
+    padding: 12px;
+}
+
+.staff-dashboard .hero-queue-title {
+    margin-bottom: 6px;
+    padding-inline: 4px;
+}
+
+.staff-dashboard .queue-row {
+    grid-template-columns: 30px minmax(0, 1fr) auto;
+    gap: 10px;
+    min-height: 44px;
+    padding: 6px 7px;
+}
+
+.staff-dashboard .queue-icon {
+    width: 30px;
+    height: 30px;
+}
+
+.staff-dashboard .queue-label {
+    font-size: 10.5px;
+    line-height: 1.2;
+}
+
+.staff-dashboard .queue-description {
+    margin-top: 1px;
+    line-height: 1.2;
+}
+
+.staff-dashboard .queue-value {
+    min-width: 28px;
+    text-align: right;
+    font-size: 20px;
+}
+
+@media (max-width: 1120px) {
+    .staff-dashboard .dashboard-hero {
+        grid-template-columns: 1fr;
+        gap: 18px;
+        padding: 22px 24px;
+    }
+
+    .staff-dashboard .hero-queue {
+        max-width: none;
+        justify-self: stretch;
+    }
+
+    .staff-dashboard .queue-row {
+        min-height: 52px;
+        padding: 9px 10px;
+    }
+}
+
+@media (max-width: 560px) {
+    .staff-dashboard .dashboard-hero {
+        gap: 16px;
+        padding: 18px 17px;
+    }
+
+    .staff-dashboard .hero-actions,
+    .staff-dashboard .hero-action {
+        width: 100%;
+    }
+
+    .staff-dashboard .hero-queue {
+        padding: 10px;
+    }
+}
