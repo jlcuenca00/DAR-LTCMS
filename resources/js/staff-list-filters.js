@@ -173,6 +173,7 @@ function renderActiveFilters(form, resetLink) {
     form.parentElement?.querySelector(':scope > .staff-active-filters')?.remove();
 
     const controls = activeControls(form);
+    form.classList.toggle('has-active-filters', controls.length > 0);
     if (!controls.length) return;
 
     const row = document.createElement('div');
