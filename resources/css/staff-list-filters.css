@@ -1,7 +1,7 @@
 /* Shared search/filter/add pattern for staff list screens. */
 .staff-list-filter {
     display: grid !important;
-    grid-template-columns: minmax(300px, 2fr) repeat(var(--staff-filter-columns, 3), minmax(150px, 1fr)) auto !important;
+    grid-template-columns: minmax(320px, 2fr) repeat(var(--staff-filter-columns, 3), minmax(160px, 1fr)) !important;
     gap: 10px 12px !important;
     align-items: end !important;
 }
@@ -42,13 +42,14 @@
 }
 
 .staff-list-filter-actions {
-    grid-column: auto !important;
+    grid-column: 1 / -1 !important;
     display: flex !important;
     align-items: center !important;
     justify-content: flex-end !important;
     gap: 7px !important;
-    flex-wrap: nowrap !important;
-    min-width: max-content;
+    flex-wrap: wrap !important;
+    min-width: 0;
+    margin-top: 1px;
 }
 
 .staff-list-filter .staff-filter-apply {
@@ -88,6 +89,10 @@
     background: transparent !important;
     color: #64748b !important;
     white-space: nowrap;
+}
+
+.staff-list-filter:not(.has-active-filters) .staff-filter-clear {
+    display: none !important;
 }
 
 .staff-list-filter .staff-filter-clear:hover {
@@ -179,7 +184,6 @@
     }
 
     .staff-list-filter-actions {
-        grid-column: 1 / -1 !important;
         justify-content: flex-start !important;
     }
 }
