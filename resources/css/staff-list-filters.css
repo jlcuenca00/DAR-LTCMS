@@ -7,7 +7,7 @@
     display: flex;
     align-items: end;
     gap: 10px;
-    margin-top: 1.15rem;
+    margin-top: 0;
 }
 
 .staff-list-search-field {
@@ -187,6 +187,10 @@
     border-color: transparent !important;
     color: #64748b !important;
     box-shadow: none !important;
+}
+
+.staff-filter-clear[hidden] {
+    display: none !important;
 }
 
 .staff-filter-clear:hover {
