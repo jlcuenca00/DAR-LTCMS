@@ -39,6 +39,66 @@
 @endphp
 
 <style>
+    #ltc-form-no-3-acknowledgement > summary {
+        cursor: pointer;
+        list-style: none;
+    }
+
+    #ltc-form-no-3-acknowledgement > summary::-webkit-details-marker {
+        display: none;
+    }
+
+    #ltc-form-no-3-acknowledgement:not([open]) > .review-panel-header {
+        border-bottom: 0;
+    }
+
+    #ltc-form-no-3-acknowledgement .ltc-form-accordion-meta {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-shrink: 0;
+    }
+
+    #ltc-form-no-3-acknowledgement .ltc-form-accordion-status {
+        display: inline-flex;
+        align-items: center;
+        min-height: 28px;
+        border-radius: 999px;
+        padding: 5px 10px;
+        font-size: 11px;
+        font-weight: 900;
+        line-height: 1;
+        white-space: nowrap;
+    }
+
+    #ltc-form-no-3-acknowledgement .ltc-form-accordion-status.is-complete {
+        border: 1px solid #bbf7d0;
+        background: #f0fdf4;
+        color: #166534;
+    }
+
+    #ltc-form-no-3-acknowledgement .ltc-form-accordion-status.needs-attention {
+        border: 1px solid #fed7aa;
+        background: #fff7ed;
+        color: #9a3412;
+    }
+
+    #ltc-form-no-3-acknowledgement .ltc-form-accordion-chevron {
+        color: #64748b;
+        font-size: 14px;
+        transition: transform 160ms ease;
+    }
+
+    #ltc-form-no-3-acknowledgement[open] .ltc-form-accordion-chevron {
+        transform: rotate(180deg);
+    }
+
+    #ltc-form-no-3-acknowledgement .ltc-form-accordion-actions {
+        display: flex;
+        justify-content: flex-end;
+        margin-bottom: 14px;
+    }
+
     #ltc-form-no-3-acknowledgement .ltc-form3-workspace {
         display: grid;
         gap: 14px;
@@ -131,17 +191,23 @@
         white-space: nowrap;
     }
 
-
     @media (max-width: 980px) {
         #ltc-form-no-3-acknowledgement .ltc-form3-summary-grid,
         #ltc-form-no-3-acknowledgement .ltc-form3-checklist-grid {
             grid-template-columns: 1fr;
         }
+
+        #ltc-form-no-3-acknowledgement > .review-panel-header {
+            align-items: center;
+        }
     }
 </style>
 
-<section class="review-panel" id="ltc-form-no-3-acknowledgement">
-    <div class="review-panel-header">
+<details class="review-panel ltc-form-accordion"
+         id="ltc-form-no-3-acknowledgement"
+         name="ltc-review-form"
+         @if (! $isFinal && ! $acknowledgementComplete) open @endif>
+    <summary class="review-panel-header">
         <div>
             <h2 class="review-panel-title">LTC Form No. 3 — Acknowledgement Receipt</h2>
             <p class="review-panel-subtitle">
@@ -149,15 +215,28 @@
             </p>
         </div>
 
-        <a href="{{ route('staff.applications.acknowledgement.pdf', $application) }}"
-           class="staff-button staff-button-primary"
-           target="_blank">
-            <i class="fa-solid fa-file-pdf"></i>
-            Open Form No. 3 PDF
-        </a>
-    </div>
+        <div class="ltc-form-accordion-meta">
+            @if ($acknowledgementComplete)
+                <span class="ltc-form-accordion-status is-complete">Complete</span>
+            @else
+                <span class="ltc-form-accordion-status needs-attention">
+                    {{ $acknowledgementMissingRequirements->count() }} missing
+                </span>
+            @endif
+            <i class="fa-solid fa-chevron-down ltc-form-accordion-chevron" aria-hidden="true"></i>
+        </div>
+    </summary>
 
     <div class="review-panel-body">
+        <div class="ltc-form-accordion-actions">
+            <a href="{{ route('staff.applications.acknowledgement.pdf', $application) }}"
+               class="staff-button staff-button-primary"
+               target="_blank">
+                <i class="fa-solid fa-file-pdf"></i>
+                Open Form No. 3 PDF
+            </a>
+        </div>
+
         <div class="ltc-form3-workspace">
             <div class="ltc-form3-summary-grid">
                 <div class="ltc-form3-summary-card">
@@ -203,7 +282,6 @@
                     </div>
                 </div>
             </div>
-
         </div>
     </div>
-</section>
+</details>
