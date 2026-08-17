@@ -1,0 +1,143 @@
+/* Applications index: keep the intake card informational and leave one primary create action. */
+.intake-entry-card.intake-entry-card-guidance-only {
+    padding-block: 20px;
+}
+
+.intake-entry-card-guidance-only .intake-entry-copy {
+    align-self: center;
+}
+
+/* Application review: compact 5-hectare assistive validation without changing calculations. */
+.five-hectare-compact .review-panel-header {
+    padding: 14px 18px;
+    align-items: center;
+}
+
+.five-hectare-compact .review-panel-subtitle {
+    margin-top: 3px;
+}
+
+.five-hectare-compact .review-panel-body {
+    padding: 14px 18px;
+    display: grid;
+    gap: 10px;
+}
+
+.five-hectare-compact .five-hectare-primary-grid {
+    grid-template-columns: minmax(180px, 1.35fr) repeat(3, minmax(130px, 1fr));
+    gap: 8px;
+}
+
+.five-hectare-compact .five-hectare-primary-grid .validation-item {
+    min-height: 0;
+    padding: 9px 11px;
+    border-radius: 8px;
+    background: #ffffff;
+}
+
+.five-hectare-compact .five-hectare-primary-grid .validation-item strong {
+    margin-bottom: 3px;
+    font-size: 10px;
+    line-height: 1.25;
+}
+
+.five-hectare-details {
+    overflow: hidden;
+    border: 1px solid #e2e8f0;
+    border-radius: 9px;
+    background: #ffffff;
+}
+
+.five-hectare-details > summary {
+    min-height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 8px 12px;
+    list-style: none;
+    cursor: pointer;
+    color: #334155;
+    font-size: 12px;
+    font-weight: 900;
+}
+
+.five-hectare-details > summary::-webkit-details-marker {
+    display: none;
+}
+
+.five-hectare-details > summary span {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+}
+
+.five-hectare-details-chevron {
+    transition: transform 150ms ease;
+}
+
+.five-hectare-details[open] .five-hectare-details-chevron {
+    transform: rotate(180deg);
+}
+
+.five-hectare-details-body {
+    display: grid;
+    gap: 12px;
+    padding: 0 12px 12px;
+    border-top: 1px solid #eef2f7;
+}
+
+.five-hectare-detail-group {
+    padding-top: 10px;
+}
+
+.five-hectare-detail-group + .five-hectare-detail-group {
+    border-top: 1px solid #eef2f7;
+}
+
+.five-hectare-detail-heading {
+    margin: 0 0 7px;
+    color: #475569;
+    font-size: 11px;
+    font-weight: 900;
+}
+
+.five-hectare-detail-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+}
+
+.five-hectare-detail-grid .validation-item {
+    min-height: 0;
+    padding: 9px 10px;
+    border-radius: 8px;
+}
+
+.five-hectare-detail-grid .validation-item strong {
+    margin-bottom: 3px;
+    font-size: 10px;
+}
+
+.five-hectare-assistive-note {
+    padding: 9px 11px;
+    border-radius: 8px;
+    font-size: 12px;
+    line-height: 1.45;
+}
+
+@media (max-width: 1050px) {
+    .five-hectare-compact .five-hectare-primary-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 720px) {
+    .five-hectare-compact .review-panel-header {
+        align-items: flex-start;
+    }
+
+    .five-hectare-compact .five-hectare-primary-grid,
+    .five-hectare-detail-grid {
+        grid-template-columns: 1fr;
+    }
+}
