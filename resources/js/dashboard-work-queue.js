@@ -14,6 +14,11 @@ function initializeDashboardWorkQueue() {
             'draft',
             'pending_review',
         ]),
+        active_workflow: new Set([
+            'endorsed_lti',
+            'endorsed_chief_legal',
+            'endorsed_parpo',
+        ]),
         for_releasing: new Set(['for_releasing']),
     };
 
@@ -45,11 +50,11 @@ function initializeDashboardWorkQueue() {
     filterButtons.forEach((button) => {
         button.addEventListener('click', (event) => {
             event.stopImmediatePropagation();
-            applyFilter(button.dataset.dashboardFilter || 'all');
+            applyFilter(button.dataset.dashboardFilter || 'active_workflow');
         }, { capture: true });
     });
 
-    applyFilter('all');
+    applyFilter('active_workflow');
 }
 
 if (document.readyState === 'loading') {
