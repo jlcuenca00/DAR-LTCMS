@@ -7,8 +7,7 @@ function simplifyApplicationsIndex() {
     const intakeCard = document.querySelector('[data-application-intake-entry]');
     if (!intakeCard) return;
 
-    intakeCard.querySelector('.intake-entry-actions')?.remove();
-    intakeCard.classList.add('intake-entry-card-guidance-only');
+    intakeCard.remove();
 }
 
 function itemLabel(item) {
