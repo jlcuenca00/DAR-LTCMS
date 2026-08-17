@@ -1,0 +1,91 @@
+/* Normalize the shared search/filter control scale across list screens. */
+:root {
+    --ltcms-filter-control-height: 44px;
+    --ltcms-filter-control-radius: 9px;
+}
+
+/* Search/filter toolbars use one consistent vertical rhythm. */
+.staff-filter-toolbar,
+.application-table-toolbar {
+    align-items: center !important;
+    gap: 10px !important;
+}
+
+.staff-list-filter .staff-list-search-control input,
+.application-records-toolbar-form .application-table-search .staff-list-search-control input {
+    height: var(--ltcms-filter-control-height) !important;
+    min-height: var(--ltcms-filter-control-height) !important;
+    border-radius: var(--ltcms-filter-control-radius) !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    line-height: 1.25rem !important;
+}
+
+.staff-list-filter .staff-filter-search-submit,
+.staff-list-filter .staff-filter-toggle,
+.application-records-toolbar-form .application-search-button,
+.application-records-toolbar-form .application-filter-toggle,
+.application-records-header .records-toolbar-actions .staff-button {
+    height: var(--ltcms-filter-control-height) !important;
+    min-height: var(--ltcms-filter-control-height) !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    border-radius: var(--ltcms-filter-control-radius) !important;
+    line-height: 1 !important;
+}
+
+/* Popover fields and actions match each other as well. */
+.staff-filter-popover-grid input,
+.staff-filter-popover-grid select,
+.application-filter-popover-grid input,
+.application-filter-popover-grid select {
+    height: var(--ltcms-filter-control-height) !important;
+    min-height: var(--ltcms-filter-control-height) !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    border-radius: var(--ltcms-filter-control-radius) !important;
+}
+
+.staff-filter-popover-action-group .staff-filter-apply,
+.staff-filter-popover-footer > .staff-filter-apply,
+.staff-filter-popover-action-group .staff-filter-clear,
+.staff-filter-popover-footer > .staff-filter-clear,
+.application-filter-popover-actions .application-filter-apply,
+.application-filter-popover-actions .application-filter-clear {
+    height: var(--ltcms-filter-control-height) !important;
+    min-height: var(--ltcms-filter-control-height) !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    border-radius: var(--ltcms-filter-control-radius) !important;
+    line-height: 1 !important;
+}
+
+/* Count badges remain compact but are vertically centered inside the 44px controls. */
+.staff-filter-toggle-count,
+.application-filter-count {
+    flex: 0 0 auto;
+    align-self: center;
+}
+
+/* Active-filter chips are intentionally tokens, not full-size controls. */
+.staff-filter-chip {
+    height: 28px;
+    min-height: 28px;
+}
+
+@media (max-width: 760px) {
+    .staff-list-filter .staff-filter-search-submit,
+    .staff-list-filter .staff-filter-toggle,
+    .application-records-toolbar-form .application-search-button,
+    .application-records-toolbar-form .application-filter-toggle,
+    .application-records-header .records-toolbar-actions .staff-button {
+        height: var(--ltcms-filter-control-height) !important;
+        min-height: var(--ltcms-filter-control-height) !important;
+    }
+}
