@@ -1,18 +1,30 @@
-/* Shared search/filter/add pattern for staff list screens. */
-.staff-list-filter {
-    display: grid !important;
-    grid-template-columns: minmax(320px, 2fr) repeat(var(--staff-filter-columns, 3), minmax(160px, 1fr)) !important;
-    gap: 10px 12px !important;
-    align-items: end !important;
+/* Compact shared search + filter drawer for staff list screens. */
+.staff-list-filter.staff-list-filter-compact {
+    display: block !important;
 }
 
-.staff-list-filter > .staff-filter-field,
-.staff-list-filter > div:not(.staff-list-filter-actions):not(.staff-filter-secondary-panel) {
-    min-width: 0;
+.staff-filter-toolbar {
+    display: flex;
+    align-items: end;
+    gap: 10px;
+    margin-top: 1.15rem;
 }
 
 .staff-list-search-field {
+    flex: 1 1 520px;
     min-width: 280px;
+}
+
+.staff-list-search-label {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    padding: 0 !important;
+    margin: -1px !important;
+    overflow: hidden !important;
+    clip: rect(0, 0, 0, 0) !important;
+    white-space: nowrap !important;
+    border: 0 !important;
 }
 
 .staff-list-search-control {
@@ -21,7 +33,7 @@
 
 .staff-list-search-icon {
     position: absolute;
-    left: 12px;
+    left: 14px;
     top: 50%;
     transform: translateY(-50%);
     z-index: 1;
@@ -33,86 +45,153 @@
 }
 
 .staff-list-search-control input {
-    padding-left: 36px !important;
+    min-height: 46px !important;
+    padding-left: 40px !important;
+    border-radius: 10px !important;
 }
 
-.staff-list-filter input,
-.staff-list-filter select {
+.staff-filter-search-submit,
+.staff-filter-toggle {
+    min-height: 46px !important;
+    flex: 0 0 auto;
+    white-space: nowrap;
+}
+
+.staff-filter-search-submit {
+    background: #0f172a !important;
+    border-color: #0f172a !important;
+    color: #fff !important;
+}
+
+.staff-filter-search-submit:hover {
+    background: #1e293b !important;
+    border-color: #1e293b !important;
+}
+
+.staff-filter-toggle {
+    background: #fff !important;
+    border: 1px solid #cbd5e1 !important;
+    color: #334155 !important;
+    box-shadow: none !important;
+}
+
+.staff-filter-toggle:hover,
+.staff-filter-toggle[aria-expanded="true"] {
+    background: #f8fafc !important;
+    border-color: #94a3b8 !important;
+    color: #0f172a !important;
+}
+
+.staff-filter-toggle-count {
+    min-width: 20px;
+    height: 20px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 6px;
+    border-radius: 999px;
+    background: #166534;
+    color: #fff;
+    font-size: 10px;
+    font-weight: 900;
+}
+
+.staff-filter-toggle-count[hidden] {
+    display: none !important;
+}
+
+.staff-filter-drawer {
+    margin-top: 12px;
+    overflow: hidden;
+    border: 1px solid #dbe4dd;
+    border-radius: 12px;
+    background: #f8fafc;
+}
+
+.staff-filter-drawer[hidden] {
+    display: none !important;
+}
+
+.staff-filter-drawer-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 12px 14px;
+    border-bottom: 1px solid #e2e8f0;
+    background: #fff;
+}
+
+.staff-filter-drawer-title {
+    margin: 0;
+    color: #0f172a;
+    font-size: 13px;
+    font-weight: 900;
+}
+
+.staff-filter-drawer-hint {
+    margin: 2px 0 0;
+    color: #64748b;
+    font-size: 11.5px;
+    line-height: 1.35;
+}
+
+.staff-filter-drawer-count {
+    flex: 0 0 auto;
+    color: #64748b;
+    font-size: 11px;
+    font-weight: 800;
+}
+
+.staff-filter-drawer-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 10px 12px;
+    padding: 14px;
+}
+
+.staff-filter-drawer-grid > * {
+    min-width: 0;
+}
+
+.staff-filter-drawer-grid input,
+.staff-filter-drawer-grid select {
     min-height: 42px !important;
 }
 
-.staff-list-filter-actions {
-    grid-column: 1 / -1 !important;
+.staff-filter-drawer-actions {
     display: flex !important;
     align-items: center !important;
     justify-content: flex-end !important;
-    gap: 7px !important;
-    flex-wrap: wrap !important;
-    min-width: 0;
-    margin-top: 1px;
+    gap: 8px !important;
+    padding: 0 14px 14px;
+    flex-wrap: wrap;
 }
 
-.staff-list-filter .staff-filter-apply {
-    min-height: 42px !important;
-    background: #ffffff !important;
-    color: #14532d !important;
-    border: 1px solid #9ac5a8 !important;
+.staff-filter-drawer-actions .staff-filter-apply {
+    min-height: 40px !important;
+    background: #166534 !important;
+    border-color: #166534 !important;
+    color: #fff !important;
     box-shadow: none !important;
-    white-space: nowrap;
 }
 
-.staff-list-filter .staff-filter-apply:hover {
-    background: #f0fdf4 !important;
-    border-color: #4f9d68 !important;
-    color: #0f4b28 !important;
+.staff-filter-drawer-actions .staff-filter-apply:hover {
+    background: #14532d !important;
+    border-color: #14532d !important;
 }
 
-.staff-list-filter .staff-filter-more {
-    min-height: 42px !important;
-    background: #ffffff;
-    border: 1px solid #d1d5db;
-    color: #334155;
-    white-space: nowrap;
-}
-
-.staff-list-filter .staff-filter-more:hover,
-.staff-list-filter .staff-filter-more[aria-expanded="true"] {
-    background: #f8fafc;
-    border-color: #94a3b8;
-    color: #0f172a;
-}
-
-.staff-list-filter .staff-filter-clear {
-    min-height: 42px !important;
-    padding-inline: 9px !important;
-    border-color: transparent !important;
+.staff-filter-clear {
+    min-height: 40px !important;
     background: transparent !important;
+    border-color: transparent !important;
     color: #64748b !important;
-    white-space: nowrap;
+    box-shadow: none !important;
 }
 
-.staff-list-filter:not(.has-active-filters) .staff-filter-clear {
-    display: none !important;
-}
-
-.staff-list-filter .staff-filter-clear:hover {
-    background: #f8fafc !important;
+.staff-filter-clear:hover {
+    background: #eef2f7 !important;
     color: #334155 !important;
-}
-
-.staff-filter-secondary-panel {
-    grid-column: 1 / -1 !important;
-    display: grid;
-    grid-template-columns: repeat(3, minmax(180px, 1fr));
-    gap: 10px 12px;
-    padding: 12px;
-    border: 1px solid #e2e8f0;
-    border-radius: 10px;
-    background: #f8fafc;
-}
-
-.staff-filter-secondary-panel[hidden] {
-    display: none !important;
 }
 
 .staff-active-filters {
@@ -123,26 +202,18 @@
     margin-top: 10px;
 }
 
-.staff-active-filters-label {
-    color: #64748b;
-    font-size: 11px;
-    font-weight: 900;
-    letter-spacing: .07em;
-    text-transform: uppercase;
-}
-
 .staff-filter-chip {
-    min-height: 30px;
+    min-height: 28px;
     display: inline-flex;
     align-items: center;
     gap: 7px;
-    padding: 5px 9px 5px 10px;
+    padding: 5px 9px;
     border: 1px solid #bbd7c4;
     border-radius: 999px;
     background: #f0fdf4;
     color: #166534;
     text-decoration: none;
-    font-size: 11.5px;
+    font-size: 11px;
     font-weight: 700;
     line-height: 1.2;
 }
@@ -161,9 +232,8 @@
 }
 
 .staff-filter-clear-all {
-    margin-left: 2px;
     color: #475569;
-    font-size: 11.5px;
+    font-size: 11px;
     font-weight: 850;
     text-decoration: none;
 }
@@ -174,41 +244,43 @@
     text-underline-offset: 3px;
 }
 
-@media (max-width: 1320px) {
-    .staff-list-filter {
-        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-    }
-
-    .staff-list-search-field {
-        min-width: 0;
-    }
-
-    .staff-list-filter-actions {
-        justify-content: flex-start !important;
+@media (max-width: 1100px) {
+    .staff-filter-drawer-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 }
 
-@media (max-width: 720px) {
-    .staff-list-filter,
-    .staff-filter-secondary-panel {
-        grid-template-columns: 1fr !important;
+@media (max-width: 760px) {
+    .staff-filter-toolbar {
+        align-items: stretch;
+        flex-wrap: wrap;
     }
 
-    .staff-list-filter-actions {
-        width: 100%;
-        flex-wrap: wrap !important;
+    .staff-list-search-field {
+        flex: 1 1 100%;
+        min-width: 0;
     }
 
-    .staff-list-filter-actions .staff-button {
-        flex: 1 1 auto;
+    .staff-filter-search-submit,
+    .staff-filter-toggle {
+        flex: 1 1 calc(50% - 5px);
         justify-content: center;
     }
 
-    .staff-list-filter .staff-filter-clear {
-        flex: 0 0 auto;
+    .staff-filter-drawer-header {
+        align-items: flex-start;
     }
 
-    .staff-active-filters {
-        align-items: flex-start;
+    .staff-filter-drawer-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .staff-filter-drawer-actions {
+        justify-content: stretch !important;
+    }
+
+    .staff-filter-drawer-actions .staff-button {
+        flex: 1 1 auto;
+        justify-content: center;
     }
 }
