@@ -29,16 +29,23 @@ class StaffDashboardController extends Controller
             LandTransferApplication::STATUS_PENDING_REVIEW,
         ]));
 
+        // Keep the three dashboard work queues mutually exclusive. Active Workflow
+        // represents only the endorsement stages between initial legal review and release.
+        $workflowStatuses = [
+            LandTransferApplication::STATUS_ENDORSED_LTI,
+            LandTransferApplication::STATUS_ENDORSED_CHIEF_LEGAL,
+            LandTransferApplication::STATUS_ENDORSED_PARPO,
+        ];
+
+        // This broader set is still useful for office-wide stale-record monitoring.
         $activeStatuses = array_values(array_unique(array_merge(
-            LandTransferApplication::ACTIVE_STATUSES,
-            [
-                LandTransferApplication::STATUS_DRAFT,
-                LandTransferApplication::STATUS_PENDING_REVIEW,
-            ]
+            $pendingLegalStatuses,
+            $workflowStatuses,
+            [LandTransferApplication::STATUS_FOR_RELEASING]
         )));
 
         $pendingLegalReview = $countStatuses($pendingLegalStatuses);
-        $activeWorkflow = $countStatuses($activeStatuses);
+        $activeWorkflow = $countStatuses($workflowStatuses);
         $forReleasing = (int) (
             $statusCounts[LandTransferApplication::STATUS_FOR_RELEASING] ?? 0
         );
@@ -53,10 +60,10 @@ class StaffDashboardController extends Controller
             ],
             [
                 'label' => 'Active Workflow',
-                'description' => 'Applications still being processed',
+                'description' => 'Applications in endorsement stages',
                 'value' => $activeWorkflow,
                 'icon' => 'fa-arrows-rotate',
-                'filter' => 'all',
+                'filter' => 'active_workflow',
             ],
             [
                 'label' => 'For Releasing',
@@ -67,37 +74,22 @@ class StaffDashboardController extends Controller
             ],
         ];
 
-        $prioritizedActiveQuery = function () use ($activeStatuses) {
-            return LandTransferApplication::query()
-                ->whereIn('status', $activeStatuses)
-                ->orderByRaw(
-                    'CASE
-                        WHEN status = ? THEN 0
-                        WHEN status = ? THEN 1
-                        WHEN status = ? THEN 2
-                        WHEN status = ? THEN 3
-                        WHEN status = ? THEN 4
-                        WHEN status = ? THEN 5
-                        WHEN status = ? THEN 6
-                        ELSE 7
-                    END',
-                    [
-                        LandTransferApplication::STATUS_FOR_RELEASING,
-                        LandTransferApplication::STATUS_PENDING_LEGAL_REVIEW,
-                        LandTransferApplication::STATUS_DRAFT,
-                        LandTransferApplication::STATUS_PENDING_REVIEW,
-                        LandTransferApplication::STATUS_ENDORSED_PARPO,
-                        LandTransferApplication::STATUS_ENDORSED_CHIEF_LEGAL,
-                        LandTransferApplication::STATUS_ENDORSED_LTI,
-                    ]
-                )
-                ->latest('updated_at');
-        };
-
-        // Preload a small preview for every clickable queue. The old implementation
-        // loaded only six mixed active rows, then filtered those six in the browser;
-        // a queue could therefore have a non-zero count but no row in the preview.
-        $activePreview = $prioritizedActiveQuery()
+        $activeWorkflowPreview = LandTransferApplication::query()
+            ->whereIn('status', $workflowStatuses)
+            ->orderByRaw(
+                'CASE
+                    WHEN status = ? THEN 0
+                    WHEN status = ? THEN 1
+                    WHEN status = ? THEN 2
+                    ELSE 3
+                END',
+                [
+                    LandTransferApplication::STATUS_ENDORSED_PARPO,
+                    LandTransferApplication::STATUS_ENDORSED_CHIEF_LEGAL,
+                    LandTransferApplication::STATUS_ENDORSED_LTI,
+                ]
+            )
+            ->latest('updated_at')
             ->limit(6)
             ->get();
 
@@ -113,7 +105,9 @@ class StaffDashboardController extends Controller
             ->limit(6)
             ->get();
 
-        $actionApplications = $activePreview
+        // Each queue contributes its own preview candidates. The browser then shows
+        // only the selected queue, capped at six visible rows.
+        $actionApplications = $activeWorkflowPreview
             ->concat($pendingLegalPreview)
             ->concat($forReleasingPreview)
             ->unique('id')
