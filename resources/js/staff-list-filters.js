@@ -1,24 +1,9 @@
 const STAFF_LIST_FILTER_CONFIG = {
-    '/staff/applications': {
-        form: '.application-filter-grid',
-        secondary: ['document_reference_number'],
-    },
-    '/staff/records/landowners': {
-        form: '.landowner-filter-grid',
-        secondary: [],
-    },
-    '/staff/records/parcels': {
-        form: '.parcel-filter-grid',
-        secondary: [],
-    },
-    '/staff/users': {
-        form: 'form[method="GET"][action*="/staff/users"]',
-        secondary: [],
-    },
-    '/staff/legacy-records': {
-        form: '.source-filter-grid',
-        secondary: [],
-    },
+    '/staff/applications': '.application-filter-grid',
+    '/staff/records/landowners': '.landowner-filter-grid',
+    '/staff/records/parcels': '.parcel-filter-grid',
+    '/staff/users': 'form[method="GET"][action*="/staff/users"]',
+    '/staff/legacy-records': '.source-filter-grid',
 };
 
 function normalizedPath() {
@@ -27,12 +12,11 @@ function normalizedPath() {
 }
 
 function fieldWrapper(control, form) {
+    const marked = control.closest('[data-staff-filter-field="true"]');
+    if (marked) return marked;
+
     let node = control.parentElement;
-
-    while (node && node.parentElement !== form) {
-        node = node.parentElement;
-    }
-
+    while (node && node.parentElement !== form) node = node.parentElement;
     return node && node.parentElement === form ? node : control.parentElement;
 }
 
@@ -41,15 +25,12 @@ function displayValue(control) {
         const option = control.selectedOptions?.[0];
         return option && control.value !== '' ? option.textContent.trim() : '';
     }
-
     return String(control.value || '').trim();
 }
 
 function fieldLabel(control, wrapper) {
-    const explicit = control.id ? wrapper?.querySelector(`label[for="${CSS.escape(control.id)}"]`) : null;
-    const label = explicit || wrapper?.querySelector('label');
+    const label = wrapper?.querySelector('label');
     const text = label?.textContent?.trim();
-
     if (text) return text.replace(/\s+/g, ' ');
 
     return control.name
@@ -57,110 +38,16 @@ function fieldLabel(control, wrapper) {
         .replace(/\b\w/g, (char) => char.toUpperCase());
 }
 
-function addSearchIcon(form) {
-    const search = form.querySelector('input[name="search"]');
-    if (!search || search.closest('.staff-list-search-control')) return;
-
-    const wrapper = fieldWrapper(search, form);
-    wrapper?.classList.add('staff-list-search-field');
-
-    const control = document.createElement('div');
-    control.className = 'staff-list-search-control';
-    search.parentNode.insertBefore(control, search);
-    control.appendChild(search);
-
-    const icon = document.createElement('span');
-    icon.className = 'staff-list-search-icon';
-    icon.setAttribute('aria-hidden', 'true');
-    icon.innerHTML = '<i class="fa-solid fa-magnifying-glass"></i>';
-    control.insertBefore(icon, search);
-}
-
-function actionContainer(form) {
-    const submit = form.querySelector('button[type="submit"], input[type="submit"]');
-    if (!submit) return null;
-
-    const wrapper = fieldWrapper(submit, form);
-    wrapper?.classList.add('staff-list-filter-actions');
-    return wrapper;
-}
-
-function secondaryPanel(form, names, actions) {
-    if (!names.length) return null;
-
-    const wrappers = names
-        .map((name) => form.querySelector(`[name="${CSS.escape(name)}"]`))
-        .filter(Boolean)
-        .map((control) => ({ control, wrapper: fieldWrapper(control, form) }))
-        .filter(({ wrapper }) => wrapper && wrapper !== actions);
-
-    if (!wrappers.length) return null;
-
-    const panel = document.createElement('div');
-    panel.className = 'staff-filter-secondary-panel';
-    panel.hidden = true;
-
-    wrappers.forEach(({ wrapper }) => panel.appendChild(wrapper));
-    form.insertBefore(panel, actions || null);
-
-    const hasActiveSecondary = wrappers.some(({ control }) => displayValue(control) !== '');
-
-    const toggle = document.createElement('button');
-    toggle.type = 'button';
-    toggle.className = 'staff-button staff-filter-more';
-    toggle.setAttribute('aria-expanded', hasActiveSecondary ? 'true' : 'false');
-    toggle.innerHTML = '<i class="fa-solid fa-sliders"></i><span>More Filters</span>';
-
-    if (hasActiveSecondary) {
-        panel.hidden = false;
-        form.classList.add('show-secondary-filters');
-    }
-
-    toggle.addEventListener('click', () => {
-        const willOpen = panel.hidden;
-        panel.hidden = !willOpen;
-        form.classList.toggle('show-secondary-filters', willOpen);
-        toggle.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
-    });
-
-    actions?.insertBefore(toggle, actions.firstChild);
-    return panel;
-}
-
-function standardizeActions(form, actions) {
-    const submit = form.querySelector('button[type="submit"]');
-    if (submit) {
-        submit.classList.add('staff-filter-apply');
-
-        const textNodes = Array.from(submit.childNodes).filter((node) => node.nodeType === Node.TEXT_NODE);
-        if (textNodes.length) {
-            textNodes.forEach((node) => {
-                if (node.textContent.trim()) node.textContent = ' Apply Filters';
-            });
-        } else if (!submit.querySelector('span')) {
-            submit.append(document.createTextNode(' Apply Filters'));
-        }
-    }
-
-    const reset = Array.from(actions?.querySelectorAll('a') || []).find((link) => {
-        return /^(reset|clear)$/i.test(link.textContent.trim());
-    });
-
-    if (reset) {
-        reset.textContent = 'Clear';
-        reset.classList.add('staff-filter-clear');
-    }
-
-    return reset;
-}
-
-function activeControls(form) {
+function namedControls(form) {
     return Array.from(form.elements).filter((control) => {
         if (!(control instanceof HTMLInputElement || control instanceof HTMLSelectElement || control instanceof HTMLTextAreaElement)) return false;
         if (!control.name || control.disabled) return false;
-        if (control.type === 'hidden' || control.type === 'submit' || control.type === 'button') return false;
-        return displayValue(control) !== '';
+        return !['hidden', 'submit', 'button'].includes(control.type);
     });
+}
+
+function activeControls(form) {
+    return namedControls(form).filter((control) => displayValue(control) !== '');
 }
 
 function chipHref(control) {
@@ -169,28 +56,59 @@ function chipHref(control) {
     return `${url.pathname}${url.search}${url.hash}`;
 }
 
-function renderActiveFilters(form, resetLink) {
-    form.parentElement?.querySelector(':scope > .staff-active-filters')?.remove();
+function addSearchIcon(search) {
+    if (!search || search.closest('.staff-list-search-control')) return;
+
+    const holder = document.createElement('div');
+    holder.className = 'staff-list-search-control';
+    search.parentNode.insertBefore(holder, search);
+    holder.appendChild(search);
+
+    const icon = document.createElement('span');
+    icon.className = 'staff-list-search-icon';
+    icon.setAttribute('aria-hidden', 'true');
+    icon.innerHTML = '<i class="fa-solid fa-magnifying-glass"></i>';
+    holder.insertBefore(icon, search);
+}
+
+function findResetLink(form) {
+    return Array.from(form.querySelectorAll('a')).find((link) => /^(reset|clear|clear all)$/i.test(link.textContent.trim()));
+}
+
+function renderActiveFilters(form, toolbar, drawer, resetLink) {
+    form.querySelector('.staff-active-filters')?.remove();
 
     const controls = activeControls(form);
+    const filterControls = controls.filter((control) => control.name !== 'search');
+
     form.classList.toggle('has-active-filters', controls.length > 0);
+
+    const badge = toolbar.querySelector('.staff-filter-toggle-count');
+    if (badge) {
+        badge.textContent = String(filterControls.length);
+        badge.hidden = filterControls.length === 0;
+    }
+
+    const drawerCount = drawer.querySelector('.staff-filter-drawer-count');
+    if (drawerCount) {
+        drawerCount.textContent = filterControls.length
+            ? `${filterControls.length} active`
+            : 'No active filters';
+    }
+
+    if (resetLink) resetLink.hidden = controls.length === 0;
     if (!controls.length) return;
 
     const row = document.createElement('div');
     row.className = 'staff-active-filters';
-    row.setAttribute('aria-label', 'Active filters');
-
-    const label = document.createElement('span');
-    label.className = 'staff-active-filters-label';
-    label.textContent = 'Active';
-    row.appendChild(label);
+    row.setAttribute('aria-label', 'Active search and filters');
 
     controls.forEach((control) => {
         const wrapper = fieldWrapper(control, form);
         const chip = document.createElement('a');
         chip.className = 'staff-filter-chip';
         chip.href = chipHref(control);
-        chip.title = `Remove ${fieldLabel(control, wrapper)} filter`;
+        chip.title = `Remove ${fieldLabel(control, wrapper)}`;
         chip.innerHTML = `<span>${fieldLabel(control, wrapper)}: <strong>${displayValue(control)}</strong></span><i class="fa-solid fa-xmark" aria-hidden="true"></i>`;
         row.appendChild(chip);
     });
@@ -203,38 +121,111 @@ function renderActiveFilters(form, resetLink) {
         row.appendChild(clear);
     }
 
-    form.insertAdjacentElement('afterend', row);
-}
-
-function setGridColumns(form, secondaryNames) {
-    const primaryControls = Array.from(form.elements).filter((control) => {
-        if (!(control instanceof HTMLInputElement || control instanceof HTMLSelectElement || control instanceof HTMLTextAreaElement)) return false;
-        if (!control.name || control.type === 'hidden') return false;
-        if (secondaryNames.includes(control.name)) return false;
-        return !['submit', 'button'].includes(control.type);
-    });
-
-    const hasSearch = primaryControls.some((control) => control.name === 'search');
-    const nonSearchCount = Math.max(0, primaryControls.length - (hasSearch ? 1 : 0));
-    form.style.setProperty('--staff-filter-columns', String(Math.max(1, nonSearchCount)));
+    form.insertBefore(row, drawer);
 }
 
 function enhanceStaffListFilters() {
-    const config = STAFF_LIST_FILTER_CONFIG[normalizedPath()];
-    if (!config) return;
+    const selector = STAFF_LIST_FILTER_CONFIG[normalizedPath()];
+    if (!selector) return;
 
-    const form = document.querySelector(config.form);
-    if (!form || form.dataset.staffListEnhanced === 'true') return;
+    const form = document.querySelector(selector);
+    if (!form || form.dataset.staffListEnhanced === 'compact-drawer') return;
 
-    form.dataset.staffListEnhanced = 'true';
-    form.classList.add('staff-list-filter');
+    form.dataset.staffListEnhanced = 'compact-drawer';
+    form.classList.add('staff-list-filter', 'staff-list-filter-compact');
 
-    const actions = actionContainer(form);
-    addSearchIcon(form);
-    setGridColumns(form, config.secondary);
-    secondaryPanel(form, config.secondary, actions);
-    const reset = standardizeActions(form, actions);
-    renderActiveFilters(form, reset);
+    const controls = namedControls(form);
+    const search = controls.find((control) => control.name === 'search');
+    const filterControls = controls.filter((control) => control.name !== 'search');
+
+    const wrappers = new Map();
+    controls.forEach((control) => {
+        const wrapper = fieldWrapper(control, form);
+        if (wrapper) {
+            wrapper.dataset.staffFilterField = 'true';
+            wrappers.set(control, wrapper);
+        }
+    });
+
+    const originalSubmit = form.querySelector('button[type="submit"]');
+    const actionWrapper = originalSubmit ? fieldWrapper(originalSubmit, form) : null;
+    if (actionWrapper) actionWrapper.dataset.staffFilterActions = 'true';
+
+    const resetLink = findResetLink(form);
+    if (resetLink) {
+        resetLink.textContent = 'Clear all';
+        resetLink.classList.add('staff-filter-clear');
+    }
+
+    const toolbar = document.createElement('div');
+    toolbar.className = 'staff-filter-toolbar';
+    form.insertBefore(toolbar, form.firstChild);
+
+    if (search && wrappers.get(search)) {
+        const searchWrapper = wrappers.get(search);
+        searchWrapper.classList.add('staff-list-search-field');
+        searchWrapper.querySelector('label')?.classList.add('staff-list-search-label');
+        toolbar.appendChild(searchWrapper);
+        addSearchIcon(search);
+    }
+
+    const searchSubmit = document.createElement('button');
+    searchSubmit.type = 'submit';
+    searchSubmit.className = 'staff-button staff-filter-search-submit';
+    searchSubmit.innerHTML = '<i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i><span>Search</span>';
+    toolbar.appendChild(searchSubmit);
+
+    const toggle = document.createElement('button');
+    toggle.type = 'button';
+    toggle.className = 'staff-button staff-filter-toggle';
+    toggle.setAttribute('aria-expanded', 'false');
+    toggle.innerHTML = '<i class="fa-solid fa-sliders" aria-hidden="true"></i><span>Filters</span><span class="staff-filter-toggle-count" hidden>0</span>';
+    toolbar.appendChild(toggle);
+
+    const drawer = document.createElement('section');
+    drawer.className = 'staff-filter-drawer';
+    drawer.hidden = true;
+    drawer.innerHTML = `
+        <div class="staff-filter-drawer-header">
+            <div>
+                <p class="staff-filter-drawer-title">Filter records</p>
+                <p class="staff-filter-drawer-hint">Narrow the working list, then apply the selected criteria.</p>
+            </div>
+            <span class="staff-filter-drawer-count">No active filters</span>
+        </div>
+        <div class="staff-filter-drawer-grid"></div>
+    `;
+
+    const drawerGrid = drawer.querySelector('.staff-filter-drawer-grid');
+    const uniqueWrappers = [];
+    filterControls.forEach((control) => {
+        const wrapper = wrappers.get(control);
+        if (wrapper && !uniqueWrappers.includes(wrapper)) uniqueWrappers.push(wrapper);
+    });
+    uniqueWrappers.forEach((wrapper) => drawerGrid.appendChild(wrapper));
+
+    if (originalSubmit) {
+        originalSubmit.classList.add('staff-filter-apply');
+        originalSubmit.innerHTML = '<i class="fa-solid fa-filter" aria-hidden="true"></i><span>Apply Filters</span>';
+    }
+
+    if (actionWrapper) {
+        actionWrapper.classList.add('staff-filter-drawer-actions');
+        drawer.appendChild(actionWrapper);
+    }
+
+    form.appendChild(drawer);
+
+    if (!filterControls.length) toggle.hidden = true;
+
+    toggle.addEventListener('click', () => {
+        const opening = drawer.hidden;
+        drawer.hidden = !opening;
+        toggle.setAttribute('aria-expanded', opening ? 'true' : 'false');
+        form.classList.toggle('filters-open', opening);
+    });
+
+    renderActiveFilters(form, toolbar, drawer, resetLink);
 }
 
 if (document.readyState === 'loading') {
