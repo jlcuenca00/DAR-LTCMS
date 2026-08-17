@@ -211,6 +211,7 @@ function enhanceStaffListFilters() {
 
     if (actionWrapper) {
         actionWrapper.classList.add('staff-filter-drawer-actions');
+        if (resetLink && originalSubmit) actionWrapper.insertBefore(resetLink, originalSubmit);
         drawer.appendChild(actionWrapper);
     }
 
