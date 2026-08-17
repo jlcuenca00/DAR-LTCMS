@@ -90,6 +90,6 @@
         }
 
         firstRequirementGroup.parentNode.insertBefore(toolbar, firstRequirementGroup);
-        toolbar.style.display = '';
+        toolbar.style.display = 'block';
     });
 </script>
