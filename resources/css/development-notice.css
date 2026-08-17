@@ -1,0 +1,92 @@
+/* Shared development notice for authenticated DAR-LTCMS workspaces. */
+.system-development-notice {
+    position: relative;
+    width: 100%;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-bottom: 1px solid #eadb8e;
+    background: #fff6cf;
+    color: #4a3b00;
+    padding: 8px 58px;
+    flex: 0 0 auto;
+}
+
+.system-development-message {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    min-width: 0;
+    text-align: center;
+}
+
+.system-development-icon {
+    width: 19px;
+    height: 19px;
+    flex: 0 0 auto;
+    color: #9a6a00;
+}
+
+.system-development-message p {
+    margin: 0;
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1.4;
+}
+
+.system-development-dismiss {
+    position: absolute;
+    top: 50%;
+    right: 10px;
+    transform: translateY(-50%);
+    width: 38px;
+    height: 38px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: #4a3b00;
+    font: inherit;
+    font-size: 21px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.system-development-dismiss:hover {
+    background: rgba(154, 106, 0, 0.09);
+}
+
+.system-development-dismiss:focus-visible {
+    outline: 3px solid rgba(154, 106, 0, 0.28) !important;
+    outline-offset: 1px !important;
+}
+
+.system-development-notice[hidden] {
+    display: none !important;
+}
+
+@media (max-width: 640px) {
+    .system-development-notice {
+        min-height: 48px;
+        padding: 8px 48px 8px 16px;
+        justify-content: flex-start;
+    }
+
+    .system-development-message {
+        justify-content: flex-start;
+        text-align: left;
+        gap: 8px;
+    }
+
+    .system-development-message p {
+        font-size: 12px;
+    }
+
+    .system-development-dismiss {
+        right: 5px;
+    }
+}
