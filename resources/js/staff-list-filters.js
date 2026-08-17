@@ -71,10 +71,10 @@ function addSearchIcon(search) {
 }
 
 function findResetLink(form) {
-    return Array.from(form.querySelectorAll('a')).find((link) => /^(reset|clear|clear all)$/i.test(link.textContent.trim()));
+    return Array.from(form.querySelectorAll('a')).find((link) => /^(reset|clear|clear all|clear filters)$/i.test(link.textContent.trim()));
 }
 
-function renderActiveFilters(form, toolbar, drawer, resetLink) {
+function renderActiveFilters(form, toolbar, popover, resetLink) {
     form.querySelector('.staff-active-filters')?.remove();
 
     const controls = activeControls(form);
@@ -88,9 +88,9 @@ function renderActiveFilters(form, toolbar, drawer, resetLink) {
         badge.hidden = filterControls.length === 0;
     }
 
-    const drawerCount = drawer.querySelector('.staff-filter-drawer-count');
-    if (drawerCount) {
-        drawerCount.textContent = filterControls.length
+    const popoverCount = popover.querySelector('.staff-filter-popover-count');
+    if (popoverCount) {
+        popoverCount.textContent = filterControls.length
             ? `${filterControls.length} active`
             : 'No active filters';
     }
@@ -120,7 +120,7 @@ function renderActiveFilters(form, toolbar, drawer, resetLink) {
         row.appendChild(clear);
     }
 
-    form.insertBefore(row, drawer);
+    toolbar.insertAdjacentElement('afterend', row);
 }
 
 function renderApplicationActiveFilters(form, toolbar, resetLink) {
@@ -299,14 +299,19 @@ function enhanceApplicationTableToolbar() {
     renderApplicationActiveFilters(form, toolbar, resetLink);
 }
 
-function enhanceStaffListFilters() {
+function configuredListFilterForm() {
     const selector = STAFF_LIST_FILTER_CONFIG[normalizedPath()];
-    if (!selector) return;
+    if (selector) return document.querySelector(selector);
 
-    const form = document.querySelector(selector);
-    if (!form || form.dataset.staffListEnhanced === 'compact-drawer') return;
+    // Role-agnostic opt-in for future Landowner/Geodetic list filters.
+    return document.querySelector('form[data-floating-filter-form]');
+}
 
-    form.dataset.staffListEnhanced = 'compact-drawer';
+function enhanceSharedListFilters() {
+    const form = configuredListFilterForm();
+    if (!form || form.dataset.staffListEnhanced === 'floating-popover') return;
+
+    form.dataset.staffListEnhanced = 'floating-popover';
     form.classList.add('staff-list-filter', 'staff-list-filter-compact');
 
     const controls = namedControls(form);
@@ -324,13 +329,7 @@ function enhanceStaffListFilters() {
 
     const originalSubmit = form.querySelector('button[type="submit"]');
     const actionWrapper = originalSubmit ? fieldWrapper(originalSubmit, form) : null;
-    if (actionWrapper) actionWrapper.dataset.staffFilterActions = 'true';
-
     const resetLink = findResetLink(form);
-    if (resetLink) {
-        resetLink.textContent = 'Clear all';
-        resetLink.classList.add('staff-filter-clear');
-    }
 
     const toolbar = document.createElement('div');
     toolbar.className = 'staff-filter-toolbar';
@@ -350,34 +349,47 @@ function enhanceStaffListFilters() {
     searchSubmit.innerHTML = '<i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i><span>Search</span>';
     toolbar.appendChild(searchSubmit);
 
+    const menu = document.createElement('div');
+    menu.className = 'staff-filter-menu';
+    toolbar.appendChild(menu);
+
     const toggle = document.createElement('button');
     toggle.type = 'button';
     toggle.className = 'staff-button staff-filter-toggle';
     toggle.setAttribute('aria-expanded', 'false');
     toggle.innerHTML = '<i class="fa-solid fa-sliders" aria-hidden="true"></i><span>Filters</span><span class="staff-filter-toggle-count" hidden>0</span>';
-    toolbar.appendChild(toggle);
+    menu.appendChild(toggle);
 
-    const drawer = document.createElement('section');
-    drawer.className = 'staff-filter-drawer';
-    drawer.hidden = true;
-    drawer.innerHTML = `
-        <div class="staff-filter-drawer-header">
+    const popover = document.createElement('section');
+    popover.className = 'staff-filter-popover';
+    popover.hidden = true;
+    popover.innerHTML = `
+        <div class="staff-filter-popover-header">
             <div>
-                <p class="staff-filter-drawer-title">Filter records</p>
-                <p class="staff-filter-drawer-hint">Narrow the working list, then apply the selected criteria.</p>
+                <p class="staff-filter-popover-title">Filter records</p>
+                <p class="staff-filter-popover-hint">Use one or more criteria to narrow the list.</p>
             </div>
-            <span class="staff-filter-drawer-count">No active filters</span>
+            <span class="staff-filter-popover-count">No active filters</span>
         </div>
-        <div class="staff-filter-drawer-grid"></div>
+        <div class="staff-filter-popover-grid"></div>
+        <div class="staff-filter-popover-footer"></div>
     `;
+    menu.appendChild(popover);
 
-    const drawerGrid = drawer.querySelector('.staff-filter-drawer-grid');
+    const grid = popover.querySelector('.staff-filter-popover-grid');
     const uniqueWrappers = [];
     filterControls.forEach((control) => {
         const wrapper = wrappers.get(control);
         if (wrapper && !uniqueWrappers.includes(wrapper)) uniqueWrappers.push(wrapper);
     });
-    uniqueWrappers.forEach((wrapper) => drawerGrid.appendChild(wrapper));
+    uniqueWrappers.forEach((wrapper) => grid.appendChild(wrapper));
+
+    const footer = popover.querySelector('.staff-filter-popover-footer');
+
+    if (resetLink) {
+        resetLink.textContent = 'Clear filters';
+        resetLink.classList.add('staff-filter-clear');
+    }
 
     if (originalSubmit) {
         originalSubmit.classList.add('staff-filter-apply');
@@ -385,28 +397,48 @@ function enhanceStaffListFilters() {
     }
 
     if (actionWrapper) {
-        actionWrapper.classList.add('staff-filter-drawer-actions');
-        if (resetLink && originalSubmit) actionWrapper.insertBefore(resetLink, originalSubmit);
-        drawer.appendChild(actionWrapper);
+        actionWrapper.dataset.staffFilterActions = 'true';
+        actionWrapper.classList.add('staff-filter-popover-action-group');
+        if (resetLink && originalSubmit && resetLink.parentElement === actionWrapper) {
+            actionWrapper.insertBefore(resetLink, originalSubmit);
+        }
+        footer.appendChild(actionWrapper);
+    } else {
+        if (resetLink) footer.appendChild(resetLink);
+        if (originalSubmit) footer.appendChild(originalSubmit);
     }
 
-    form.appendChild(drawer);
+    if (!filterControls.length) {
+        menu.hidden = true;
+        popover.hidden = true;
+    }
 
-    if (!filterControls.length) toggle.hidden = true;
+    const setOpen = (open) => {
+        if (menu.hidden) return;
+        popover.hidden = !open;
+        toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+        menu.classList.toggle('is-open', open);
+    };
 
-    toggle.addEventListener('click', () => {
-        const opening = drawer.hidden;
-        drawer.hidden = !opening;
-        toggle.setAttribute('aria-expanded', opening ? 'true' : 'false');
-        form.classList.toggle('filters-open', opening);
+    toggle.addEventListener('click', () => setOpen(popover.hidden));
+
+    document.addEventListener('click', (event) => {
+        if (!popover.hidden && !menu.contains(event.target)) setOpen(false);
     });
 
-    renderActiveFilters(form, toolbar, drawer, resetLink);
+    document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && !popover.hidden) {
+            setOpen(false);
+            toggle.focus();
+        }
+    });
+
+    renderActiveFilters(form, toolbar, popover, resetLink);
 }
 
 function initializeStaffListFilters() {
     enhanceApplicationTableToolbar();
-    enhanceStaffListFilters();
+    enhanceSharedListFilters();
 }
 
 if (document.readyState === 'loading') {
