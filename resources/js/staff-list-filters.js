@@ -1,5 +1,4 @@
 const STAFF_LIST_FILTER_CONFIG = {
-    '/staff/applications': '.application-filter-grid',
     '/staff/records/landowners': '.landowner-filter-grid',
     '/staff/records/parcels': '.parcel-filter-grid',
     '/staff/users': 'form[method="GET"][action*="/staff/users"]',
@@ -124,6 +123,182 @@ function renderActiveFilters(form, toolbar, drawer, resetLink) {
     form.insertBefore(row, drawer);
 }
 
+function renderApplicationActiveFilters(form, toolbar, resetLink) {
+    form.querySelector('.application-active-filters')?.remove();
+
+    const controls = activeControls(form);
+    const filters = controls.filter((control) => control.name !== 'search');
+    const badge = toolbar.querySelector('.application-filter-count');
+
+    if (badge) {
+        badge.textContent = String(filters.length);
+        badge.hidden = filters.length === 0;
+    }
+
+    if (!controls.length) return;
+
+    const row = document.createElement('div');
+    row.className = 'application-active-filters';
+    row.setAttribute('aria-label', 'Active application search and filters');
+
+    controls.forEach((control) => {
+        const wrapper = fieldWrapper(control, form);
+        const chip = document.createElement('a');
+        chip.className = 'staff-filter-chip';
+        chip.href = chipHref(control);
+        chip.title = `Remove ${fieldLabel(control, wrapper)}`;
+        chip.innerHTML = `<span>${fieldLabel(control, wrapper)}: <strong>${displayValue(control)}</strong></span><i class="fa-solid fa-xmark" aria-hidden="true"></i>`;
+        row.appendChild(chip);
+    });
+
+    if (resetLink?.href) {
+        const clear = document.createElement('a');
+        clear.className = 'staff-filter-clear-all';
+        clear.href = resetLink.href;
+        clear.textContent = 'Clear all';
+        row.appendChild(clear);
+    }
+
+    toolbar.insertAdjacentElement('afterend', row);
+}
+
+function enhanceApplicationTableToolbar() {
+    if (normalizedPath() !== '/staff/applications') return;
+
+    const form = document.querySelector('.application-filter-grid');
+    const desktopTable = document.querySelector('.application-desktop-table');
+    const listPanel = desktopTable?.closest('section.staff-panel');
+    const sourcePanel = form?.closest('section.staff-panel');
+    if (!form || !listPanel || !sourcePanel || sourcePanel === listPanel) return;
+
+    const sourceToolbar = sourcePanel.querySelector('.records-toolbar');
+    const titleBlock = sourceToolbar?.firstElementChild;
+    const primaryActions = sourceToolbar?.querySelector('.records-toolbar-actions');
+    const listHeader = listPanel.querySelector(':scope > .staff-panel-pad');
+
+    if (listHeader) {
+        const listSubtitle = listHeader.querySelector('.staff-panel-subtitle')?.textContent?.trim();
+        listHeader.replaceChildren();
+        listHeader.classList.add('application-records-header');
+
+        if (titleBlock) {
+            const subtitle = titleBlock.querySelector('.staff-panel-subtitle');
+            if (subtitle && listSubtitle) subtitle.textContent = listSubtitle;
+            listHeader.appendChild(titleBlock);
+        }
+
+        if (primaryActions) listHeader.appendChild(primaryActions);
+    }
+
+    listPanel.classList.add('application-records-panel');
+    form.classList.remove('mt-5');
+    form.classList.add('application-records-toolbar-form');
+    listPanel.insertBefore(form, desktopTable);
+    sourcePanel.remove();
+
+    const controls = namedControls(form);
+    const search = controls.find((control) => control.name === 'search');
+    const filters = controls.filter((control) => control.name !== 'search');
+    const originalSubmit = form.querySelector('button[type="submit"]');
+    const resetLink = findResetLink(form);
+    const oldActions = originalSubmit ? fieldWrapper(originalSubmit, form) : null;
+
+    const wrappers = new Map();
+    controls.forEach((control) => {
+        const wrapper = fieldWrapper(control, form);
+        if (wrapper) {
+            wrapper.dataset.staffFilterField = 'true';
+            wrappers.set(control, wrapper);
+        }
+    });
+
+    const toolbar = document.createElement('div');
+    toolbar.className = 'application-table-toolbar';
+    form.insertBefore(toolbar, form.firstChild);
+
+    if (search && wrappers.get(search)) {
+        const searchWrapper = wrappers.get(search);
+        searchWrapper.classList.add('application-table-search');
+        searchWrapper.querySelector('label')?.classList.add('staff-list-search-label');
+        toolbar.appendChild(searchWrapper);
+        addSearchIcon(search);
+    }
+
+    const searchButton = document.createElement('button');
+    searchButton.type = 'submit';
+    searchButton.className = 'staff-button application-search-button';
+    searchButton.innerHTML = '<i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i><span>Search</span>';
+    toolbar.appendChild(searchButton);
+
+    const menu = document.createElement('div');
+    menu.className = 'application-filter-menu';
+    toolbar.appendChild(menu);
+
+    const toggle = document.createElement('button');
+    toggle.type = 'button';
+    toggle.className = 'staff-button application-filter-toggle';
+    toggle.setAttribute('aria-expanded', 'false');
+    toggle.innerHTML = '<i class="fa-solid fa-sliders" aria-hidden="true"></i><span>Filters</span><span class="application-filter-count" hidden>0</span>';
+    menu.appendChild(toggle);
+
+    const popover = document.createElement('div');
+    popover.className = 'application-filter-popover';
+    popover.hidden = true;
+    popover.innerHTML = `
+        <div class="application-filter-popover-head">
+            <div>
+                <p class="application-filter-popover-title">Filter applications</p>
+                <p class="application-filter-popover-hint">Use one or more criteria to narrow the list.</p>
+            </div>
+        </div>
+        <div class="application-filter-popover-grid"></div>
+        <div class="application-filter-popover-actions"></div>
+    `;
+    menu.appendChild(popover);
+
+    const grid = popover.querySelector('.application-filter-popover-grid');
+    const uniqueWrappers = [];
+    filters.forEach((control) => {
+        const wrapper = wrappers.get(control);
+        if (wrapper && !uniqueWrappers.includes(wrapper)) uniqueWrappers.push(wrapper);
+    });
+    uniqueWrappers.forEach((wrapper) => grid.appendChild(wrapper));
+
+    const footer = popover.querySelector('.application-filter-popover-actions');
+    if (resetLink) {
+        resetLink.textContent = 'Clear filters';
+        resetLink.classList.add('application-filter-clear');
+        footer.appendChild(resetLink);
+    }
+    if (originalSubmit) {
+        originalSubmit.classList.add('application-filter-apply');
+        originalSubmit.innerHTML = '<i class="fa-solid fa-filter" aria-hidden="true"></i><span>Apply Filters</span>';
+        footer.appendChild(originalSubmit);
+    }
+    oldActions?.remove();
+
+    const setOpen = (open) => {
+        popover.hidden = !open;
+        toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+        menu.classList.toggle('is-open', open);
+    };
+
+    toggle.addEventListener('click', () => setOpen(popover.hidden));
+
+    document.addEventListener('click', (event) => {
+        if (!popover.hidden && !menu.contains(event.target)) setOpen(false);
+    });
+
+    document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && !popover.hidden) {
+            setOpen(false);
+            toggle.focus();
+        }
+    });
+
+    renderApplicationActiveFilters(form, toolbar, resetLink);
+}
+
 function enhanceStaffListFilters() {
     const selector = STAFF_LIST_FILTER_CONFIG[normalizedPath()];
     if (!selector) return;
@@ -229,8 +404,13 @@ function enhanceStaffListFilters() {
     renderActiveFilters(form, toolbar, drawer, resetLink);
 }
 
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', enhanceStaffListFilters, { once: true });
-} else {
+function initializeStaffListFilters() {
+    enhanceApplicationTableToolbar();
     enhanceStaffListFilters();
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeStaffListFilters, { once: true });
+} else {
+    initializeStaffListFilters();
 }
