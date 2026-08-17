@@ -4,6 +4,7 @@ import './onboarding-replay-confirmation';
 import './application-intake-flow';
 import './application-page-cleanup';
 import './staff-list-filters';
+import './dashboard-work-queue';
 import './parcel-map-single-tooltip';
 import './development-notice';
 import '../css/staff-dashboard-hero.css';
