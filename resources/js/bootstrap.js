@@ -9,6 +9,7 @@ import './development-notice';
 import '../css/staff-dashboard-hero.css';
 import '../css/application-page-cleanup.css';
 import '../css/staff-list-filters.css';
+import '../css/application-table-toolbar.css';
 import '../css/development-notice.css';
 
 window.axios = axios;
