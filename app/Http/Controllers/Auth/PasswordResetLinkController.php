@@ -283,6 +283,24 @@ class PasswordResetLinkController extends Controller
 
     private function sendRecoveryCode(Request $request, User $user): bool
     {
+        if (
+            app()->environment('production')
+            && in_array(config('mail.default'), ['log', 'array'], true)
+        ) {
+            AuditLogger::record(
+                'password_recovery_mail_unavailable',
+                null,
+                $user,
+                [
+                    'user_id' => $user->id,
+                    'username' => $user->username,
+                    'configured_mailer' => config('mail.default'),
+                ]
+            );
+
+            return false;
+        }
+
         $code = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
         $recovery = $request->session()->get('password_recovery', []);
 
