@@ -126,6 +126,82 @@ function initializeGeodeticParcelGeometryAction() {
     header.appendChild(editLink);
 }
 
+function initializeGeodeticGeometryPointPrefill() {
+    const page = document.querySelector('.geo-map-editor-page');
+    if (!page) return;
+
+    const editor = page.querySelector('[data-geojson-helper]');
+    if (!editor) return;
+
+    const target = document.getElementById(editor.dataset.target);
+    const pointsWrap = editor.querySelector('[data-geojson-points]');
+    const message = editor.querySelector('[data-geojson-message]');
+
+    if (!target || !pointsWrap || !target.value.trim()) return;
+
+    let geometry;
+    try {
+        geometry = JSON.parse(target.value);
+    } catch (error) {
+        return;
+    }
+
+    if (geometry?.type !== 'Polygon' || !Array.isArray(geometry.coordinates?.[0])) return;
+
+    let points = geometry.coordinates[0].filter((point) => {
+        return Array.isArray(point)
+            && point.length >= 2
+            && Number.isFinite(Number(point[0]))
+            && Number.isFinite(Number(point[1]));
+    });
+
+    if (points.length > 1) {
+        const first = points[0];
+        const last = points[points.length - 1];
+        if (Number(first[0]) === Number(last[0]) && Number(first[1]) === Number(last[1])) {
+            points = points.slice(0, -1);
+        }
+    }
+
+    if (points.length === 0) return;
+
+    const createPointRow = (index) => {
+        const row = document.createElement('div');
+        row.className = 'geojson-point-row';
+        row.innerHTML = '<span>Point ' + index + '</span>'
+            + '<input type="number" step="0.000001" placeholder="Longitude / X" data-geojson-lng>'
+            + '<input type="number" step="0.000001" placeholder="Latitude / Y" data-geojson-lat>';
+        return row;
+    };
+
+    let rows = Array.from(pointsWrap.querySelectorAll('.geojson-point-row'));
+    while (rows.length < points.length) {
+        pointsWrap.appendChild(createPointRow(rows.length + 1));
+        rows = Array.from(pointsWrap.querySelectorAll('.geojson-point-row'));
+    }
+
+    rows.forEach((row, index) => {
+        const lngInput = row.querySelector('[data-geojson-lng]');
+        const latInput = row.querySelector('[data-geojson-lat]');
+        const label = row.querySelector('span');
+
+        if (label) label.textContent = `Point ${index + 1}`;
+
+        if (index < points.length) {
+            if (lngInput) lngInput.value = points[index][0];
+            if (latInput) latInput.value = points[index][1];
+        } else {
+            if (lngInput) lngInput.value = '';
+            if (latInput) latInput.value = '';
+        }
+    });
+
+    if (message) {
+        message.textContent = `${points.length} saved polygon point${points.length === 1 ? '' : 's'} loaded. Adjust only the coordinates that need changes.`;
+        message.classList.remove('is-error');
+    }
+}
+
 function initializeGeodeticAccessScopeLabel() {
     const accessChip = document.querySelector('.geo-access-chip');
     if (accessChip && accessChip.textContent.trim() === 'Read-only Access') {
@@ -137,6 +213,7 @@ function initializeGeodeticGeometryWorkflow() {
     initializeGeodeticAccessScopeLabel();
     initializeGeodeticDashboardQueue();
     initializeGeodeticParcelGeometryAction();
+    initializeGeodeticGeometryPointPrefill();
 }
 
 if (document.readyState === 'loading') {
