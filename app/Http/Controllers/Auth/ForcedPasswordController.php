@@ -21,7 +21,7 @@ class ForcedPasswordController extends Controller
         }
 
         return view('auth.force-password-change', [
-            'passwordRecoveryVerified' => $request->session()->boolean('password_recovery_verified'),
+            'passwordRecoveryVerified' => $request->session()->get('password_recovery_verified', false) === true,
         ]);
     }
 
@@ -32,7 +32,7 @@ class ForcedPasswordController extends Controller
         ]);
 
         $user = $request->user();
-        $passwordRecoveryVerified = $request->session()->boolean('password_recovery_verified');
+        $passwordRecoveryVerified = $request->session()->get('password_recovery_verified', false) === true;
 
         if (Hash::check($validated['password'], $user->password)) {
             return back()->withErrors([
