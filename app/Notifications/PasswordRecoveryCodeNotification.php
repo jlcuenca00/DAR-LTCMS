@@ -24,10 +24,11 @@ class PasswordRecoveryCodeNotification extends Notification
     {
         return (new MailMessage)
             ->subject('DAR-LTCMS Password Recovery Code')
-            ->greeting('DAR-LTCMS Password Recovery')
-            ->line('A password recovery request was made for your DAR-LTCMS account.')
-            ->line("Your 6-digit verification code is: {$this->code}")
-            ->line('This code expires in 10 minutes and can only be used once.')
-            ->line('If you did not request a password reset, you may ignore this email and keep your current password.');
+            ->view('emails.password-recovery-code', [
+                'code' => $this->code,
+                'name' => $notifiable->name ?? null,
+                'username' => $notifiable->username ?? null,
+                'logoUrl' => asset('images/favicon.png'),
+            ]);
     }
 }
