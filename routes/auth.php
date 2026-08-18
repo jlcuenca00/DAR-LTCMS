@@ -14,8 +14,9 @@ use Illuminate\Support\Facades\Route;
 |--------------------------------------------------------------------------
 |
 | DAR-LTCMS accounts are created and managed only by authorized DAR Staff.
-| Public registration and email-based password recovery are intentionally
-| unavailable because username is the account identifier.
+| Username remains the account identifier. Accounts with a registered email
+| may use email-confirmed OTP password recovery; accounts without email use
+| the existing DAR Staff-assisted reset process.
 |
 */
 Route::middleware('guest')->group(function () {
@@ -26,6 +27,25 @@ Route::middleware('guest')->group(function () {
 
     Route::get('forgot-password', [PasswordResetLinkController::class, 'create'])
         ->name('password.request');
+
+    Route::post('forgot-password/identify', [PasswordResetLinkController::class, 'identify'])
+        ->middleware('throttle:5,1')
+        ->name('password.recovery.identify');
+
+    Route::post('forgot-password/confirm-email', [PasswordResetLinkController::class, 'confirmEmail'])
+        ->middleware('throttle:10,1')
+        ->name('password.recovery.confirm-email');
+
+    Route::post('forgot-password/verify-code', [PasswordResetLinkController::class, 'verifyCode'])
+        ->middleware('throttle:10,10')
+        ->name('password.recovery.verify-code');
+
+    Route::post('forgot-password/resend-code', [PasswordResetLinkController::class, 'resendCode'])
+        ->middleware('throttle:5,15')
+        ->name('password.recovery.resend-code');
+
+    Route::post('forgot-password/restart', [PasswordResetLinkController::class, 'restart'])
+        ->name('password.recovery.restart');
 });
 
 Route::middleware('auth')->group(function () {

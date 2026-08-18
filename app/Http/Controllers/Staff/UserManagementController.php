@@ -93,11 +93,13 @@ class UserManagementController extends Controller
             }
         }
 
-        $user = DB::transaction(function () use ($validated) {
+        $email = $this->normalizeEmail($validated['email'] ?? null);
+
+        $user = DB::transaction(function () use ($validated, $email) {
             $user = User::create([
                 'name' => $validated['name'],
                 'username' => $validated['username'],
-                'email' => $validated['email'] ?? ($validated['username'] . '@dar-ltcms.local'),
+                'email' => $email,
                 'password' => $validated['password'],
                 'role' => $validated['role'],
                 'is_active' => (bool) ($validated['is_active'] ?? false),
@@ -121,6 +123,7 @@ class UserManagementController extends Controller
                     'created_user_username' => $user->username,
                     'created_user_role' => $user->role,
                     'is_active' => $user->is_active,
+                    'has_recovery_email' => filled($user->email),
                     'linked_landowner_id' => $validated['landowner_id'] ?? null,
                     'must_change_password' => true,
                 ]
@@ -216,7 +219,9 @@ class UserManagementController extends Controller
             }
         }
 
-        DB::transaction(function () use ($validated, $user, $requestedIsActive) {
+        $email = $this->normalizeEmail($validated['email'] ?? null);
+
+        DB::transaction(function () use ($validated, $user, $requestedIsActive, $email) {
             $oldValues = [
                 'name' => $user->name,
                 'email' => $user->email,
@@ -225,13 +230,19 @@ class UserManagementController extends Controller
                 'linked_landowner_id' => optional($user->landowner)->id,
             ];
 
+            $emailChanged = mb_strtolower((string) $user->email) !== mb_strtolower((string) $email);
+
             $user->fill([
                 'name' => $validated['name'],
                 'username' => $validated['username'],
-                'email' => $validated['email'] ?? ($validated['username'] . '@dar-ltcms.local'),
+                'email' => $email,
                 'role' => $validated['role'],
                 'is_active' => $requestedIsActive,
             ]);
+
+            if ($emailChanged) {
+                $user->email_verified_at = null;
+            }
 
             $user->save();
 
@@ -264,6 +275,7 @@ class UserManagementController extends Controller
                         'is_active' => $user->is_active,
                         'linked_landowner_id' => optional($user->landowner)->id,
                     ],
+                    'email_verification_reset' => $emailChanged,
                 ]
             );
         });
@@ -277,6 +289,13 @@ class UserManagementController extends Controller
     {
         if ((int) $request->user()->id === (int) $user->id) {
             return back()->with('error', 'Use your profile settings to change your own password.');
+        }
+
+        if ($this->hasRecoveryEmail($user)) {
+            return back()->with(
+                'error',
+                'This account has a registered email address. Ask the user to use Forgot Password and the email verification-code recovery flow instead of generating a temporary password.'
+            );
         }
 
         $temporaryPassword = Str::password(12, true, true, true, false);
@@ -298,6 +317,7 @@ class UserManagementController extends Controller
                     'reset_username' => $user->username,
                     'account_active' => $user->is_active,
                     'force_change_on_next_login' => true,
+                    'reset_method' => 'staff_assisted_temporary_password',
                 ],
                 $request->user()->id
             );
@@ -313,4 +333,16 @@ class UserManagementController extends Controller
             ->with('temporary_password_username', $user->username);
     }
 
+    private function normalizeEmail(?string $email): ?string
+    {
+        $email = trim((string) $email);
+
+        return $email === '' ? null : Str::lower($email);
+    }
+
+    private function hasRecoveryEmail(User $user): bool
+    {
+        return filled($user->email)
+            && ! str_ends_with(Str::lower($user->email), '@dar-ltcms.local');
+    }
 }

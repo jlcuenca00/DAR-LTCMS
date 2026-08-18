@@ -20,7 +20,9 @@ class ForcedPasswordController extends Controller
             return $this->redirectForRole($request->user());
         }
 
-        return view('auth.force-password-change');
+        return view('auth.force-password-change', [
+            'passwordRecoveryVerified' => $request->session()->boolean('password_recovery_verified'),
+        ]);
     }
 
     public function update(Request $request): RedirectResponse
@@ -30,10 +32,13 @@ class ForcedPasswordController extends Controller
         ]);
 
         $user = $request->user();
+        $passwordRecoveryVerified = $request->session()->boolean('password_recovery_verified');
 
         if (Hash::check($validated['password'], $user->password)) {
             return back()->withErrors([
-                'password' => 'Choose a new password that is different from the temporary password.',
+                'password' => $passwordRecoveryVerified
+                    ? 'Choose a new password that is different from your current password.'
+                    : 'Choose a new password that is different from the temporary password.',
             ], 'forcedPassword');
         }
 
@@ -50,14 +55,16 @@ class ForcedPasswordController extends Controller
             'auth_password_changed_at',
             $user->password_changed_at?->format('Y-m-d H:i:s.u')
         );
+        $request->session()->forget('password_recovery_verified');
 
         AuditLogger::record(
-            'password_changed_after_reset',
+            $passwordRecoveryVerified ? 'password_recovery_completed' : 'password_changed_after_reset',
             null,
             $user,
             [
                 'user_id' => $user->id,
                 'username' => $user->username,
+                'recovery_method' => $passwordRecoveryVerified ? 'email_otp' : 'forced_password_change',
             ]
         );
 
