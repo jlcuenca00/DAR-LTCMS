@@ -100,7 +100,6 @@ class UserManagementController extends Controller
                 'name' => $validated['name'],
                 'username' => $validated['username'],
                 'email' => $email,
-                'email_verified_at' => null,
                 'password' => $validated['password'],
                 'role' => $validated['role'],
                 'is_active' => (bool) ($validated['is_active'] ?? false),
@@ -292,6 +291,13 @@ class UserManagementController extends Controller
             return back()->with('error', 'Use your profile settings to change your own password.');
         }
 
+        if ($this->hasRecoveryEmail($user)) {
+            return back()->with(
+                'error',
+                'This account has a registered email address. Ask the user to use Forgot Password and the email verification-code recovery flow instead of generating a temporary password.'
+            );
+        }
+
         $temporaryPassword = Str::password(12, true, true, true, false);
 
         DB::transaction(function () use ($user, $temporaryPassword, $request) {
@@ -332,5 +338,11 @@ class UserManagementController extends Controller
         $email = trim((string) $email);
 
         return $email === '' ? null : Str::lower($email);
+    }
+
+    private function hasRecoveryEmail(User $user): bool
+    {
+        return filled($user->email)
+            && ! str_ends_with(Str::lower($user->email), '@dar-ltcms.local');
     }
 }
