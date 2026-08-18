@@ -1,0 +1,217 @@
+.geo-mapping-queue {
+    overflow: hidden;
+    border: 1px solid var(--geo-line, #d7ded9);
+    border-radius: 14px;
+    background: #ffffff;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, .07);
+}
+
+.geo-mapping-queue-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 17px 20px 14px;
+    border-bottom: 1px solid #e8eeea;
+}
+
+.geo-mapping-queue-title {
+    margin: 0;
+    color: var(--geo-ink, #17221b);
+    font-size: 17px;
+    font-weight: 900;
+}
+
+.geo-mapping-queue-copy {
+    margin: 4px 0 0;
+    color: var(--geo-muted, #667085);
+    font-size: 12px;
+    line-height: 1.45;
+}
+
+.geo-mapping-queue-count {
+    display: inline-flex;
+    min-width: 34px;
+    min-height: 30px;
+    align-items: center;
+    justify-content: center;
+    padding: 0 10px;
+    border: 1px solid #fed7aa;
+    border-radius: 999px;
+    background: #fff7ed;
+    color: #c2410c;
+    font-size: 12px;
+    font-weight: 900;
+}
+
+.geo-mapping-queue-loading,
+.geo-mapping-queue-error,
+.geo-mapping-queue-empty {
+    padding: 22px 20px;
+    color: #667085;
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+.geo-mapping-queue-empty {
+    color: #166534;
+    background: #f7fbf8;
+}
+
+.geo-mapping-queue-error {
+    color: #b42318;
+    background: #fff8f7;
+}
+
+.geo-mapping-queue-list {
+    display: grid;
+}
+
+.geo-mapping-queue-row {
+    display: grid;
+    grid-template-columns: minmax(170px, .8fr) minmax(220px, 1.1fr) auto auto;
+    gap: 16px;
+    align-items: center;
+    padding: 14px 20px;
+    border-bottom: 1px solid #edf1ee;
+}
+
+.geo-mapping-queue-row:last-child {
+    border-bottom: 0;
+}
+
+.geo-mapping-queue-identity,
+.geo-mapping-queue-location {
+    min-width: 0;
+}
+
+.geo-mapping-queue-code {
+    color: var(--geo-green-900, #14532d);
+    font-size: 12px;
+    font-weight: 900;
+    text-decoration: none;
+}
+
+.geo-mapping-queue-code:hover {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+.geo-mapping-queue-sub {
+    overflow: hidden;
+    margin-top: 3px;
+    color: #667085;
+    font-size: 10.5px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.geo-mapping-queue-location {
+    display: grid;
+    gap: 3px;
+    color: #344054;
+    font-size: 11px;
+}
+
+.geo-mapping-queue-location strong {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.geo-mapping-queue-location span {
+    color: #667085;
+}
+
+.geo-mapping-queue-state {
+    display: inline-flex;
+    min-height: 27px;
+    align-items: center;
+    padding: 0 9px;
+    border: 1px solid #fed7aa;
+    border-radius: 999px;
+    background: #fff7ed;
+    color: #c2410c;
+    font-size: 9.5px;
+    font-weight: 900;
+    white-space: nowrap;
+}
+
+.geo-mapping-queue-action,
+.geo-geometry-edit-link {
+    display: inline-flex;
+    min-height: 36px;
+    align-items: center;
+    justify-content: center;
+    padding: 0 12px;
+    border: 1px solid var(--geo-green-800, #166534);
+    border-radius: 9px;
+    background: var(--geo-green-800, #166534);
+    color: #ffffff;
+    font-size: 10.5px;
+    font-weight: 900;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.geo-mapping-queue-action:hover,
+.geo-geometry-edit-link:hover {
+    background: var(--geo-green-900, #14532d);
+}
+
+.geo-mapping-queue-footer {
+    padding: 10px 20px 12px;
+    border-top: 1px solid #edf1ee;
+    background: #fbfcfb;
+    color: #667085;
+    font-size: 10.5px;
+}
+
+.geo-geometry-edit-link {
+    min-height: 34px;
+    padding-inline: 11px;
+}
+
+@media (max-width: 900px) {
+    .geo-mapping-queue-row {
+        grid-template-columns: 1fr auto;
+    }
+
+    .geo-mapping-queue-location {
+        grid-column: 1 / 2;
+    }
+
+    .geo-mapping-queue-state {
+        grid-column: 2 / 3;
+        grid-row: 1 / 2;
+    }
+
+    .geo-mapping-queue-action {
+        grid-column: 2 / 3;
+        grid-row: 2 / 3;
+    }
+}
+
+@media (max-width: 620px) {
+    .geo-mapping-queue-header {
+        align-items: center;
+    }
+
+    .geo-mapping-queue-row {
+        grid-template-columns: 1fr;
+        gap: 7px;
+        padding: 14px 16px;
+    }
+
+    .geo-mapping-queue-location,
+    .geo-mapping-queue-state,
+    .geo-mapping-queue-action {
+        grid-column: auto;
+        grid-row: auto;
+    }
+
+    .geo-mapping-queue-state,
+    .geo-mapping-queue-action {
+        width: fit-content;
+    }
+}
