@@ -1,9 +1,12 @@
+@php
+    $passwordRecoveryVerified = $passwordRecoveryVerified ?? false;
+@endphp
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Change Temporary Password | DAR-LTCMS</title>
+    <title>{{ $passwordRecoveryVerified ? 'Reset Password' : 'Change Temporary Password' }} | DAR-LTCMS</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -110,7 +113,13 @@
             </div>
 
             <h1>Create a New Password</h1>
-            <p class="intro">Your account is using a temporary password. Create a private password before continuing to the system.</p>
+            <p class="intro">
+                @if ($passwordRecoveryVerified)
+                    Your registered email and verification code were confirmed. Create a new private password to complete account recovery.
+                @else
+                    Your account is using a temporary password. Create a private password before continuing to the system.
+                @endif
+            </p>
             <div class="username">Username: {{ auth()->user()->username }}</div>
 
             <form method="POST" action="{{ route('password.required.update') }}">
@@ -132,7 +141,11 @@
 
                 <x-password-requirements password-id="password" confirmation-id="password_confirmation" />
 
-                <p class="note">Use at least eight characters with uppercase, lowercase, a number, and a symbol. Do not reuse the temporary password or share the new password with staff.</p>
+                <p class="note">
+                    Use at least eight characters with uppercase, lowercase, a number, and a symbol.
+                    {{ $passwordRecoveryVerified ? 'Do not reuse your current password.' : 'Do not reuse the temporary password.' }}
+                    Never share your password with staff.
+                </p>
 
                 <div class="actions">
                     <button type="submit" class="primary">Change Password and Continue</button>
