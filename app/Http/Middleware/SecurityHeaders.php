@@ -42,10 +42,23 @@ class SecurityHeaders
         }
 
         $contentType = (string) $response->headers->get('Content-Type', '');
+        $isHtml = str_starts_with(strtolower($contentType), 'text/html');
+        $isSensitiveAuthPage = $request->routeIs(
+            'login',
+            'password.request',
+            'password.recovery.*',
+            'password.required',
+            'password.required.update',
+            'password.confirm'
+        );
 
-        if ($request->user() && str_starts_with(strtolower($contentType), 'text/html')) {
-            $response->headers->set('Cache-Control', 'no-store, private, max-age=0');
+        // Never cache authenticated pages or guest authentication/recovery forms.
+        // Recovery forms contain session-bound CSRF tokens, so caching an older
+        // response can surface a stale token and cause a 419 Page Expired error.
+        if ($isHtml && ($request->user() || $isSensitiveAuthPage)) {
+            $response->headers->set('Cache-Control', 'no-store, no-cache, must-revalidate, private, max-age=0');
             $response->headers->set('Pragma', 'no-cache');
+            $response->headers->set('Expires', '0');
         }
 
         return $response;
