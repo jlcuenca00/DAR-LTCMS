@@ -16,6 +16,7 @@ import '../css/filter-control-normalization.css';
 import '../css/active-filter-alignment.css';
 import '../css/geodetic-geometry-workflow.css';
 import '../css/development-notice.css';
+import '../css/password-recovery-spacing.css';
 
 window.axios = axios;
 
