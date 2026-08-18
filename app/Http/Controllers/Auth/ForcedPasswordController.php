@@ -64,7 +64,7 @@ class ForcedPasswordController extends Controller
             [
                 'user_id' => $user->id,
                 'username' => $user->username,
-                'recovery_method' => $passwordRecoveryVerified ? 'email_otp' : 'staff_assisted_temporary_password',
+                'recovery_method' => $passwordRecoveryVerified ? 'email_otp' : 'forced_password_change',
             ]
         );
 
