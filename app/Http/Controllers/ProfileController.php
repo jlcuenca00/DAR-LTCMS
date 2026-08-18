@@ -63,10 +63,19 @@ class ProfileController extends Controller
             'profile_photo_path' => $oldPhotoPath,
         ];
 
+        $newEmail = filled($validated['email'] ?? null)
+            ? mb_strtolower(trim($validated['email']))
+            : null;
+        $emailChanged = mb_strtolower((string) $user->email) !== mb_strtolower((string) $newEmail);
+
         $user->fill([
             'name' => $validated['name'],
-            'email' => $validated['email'] ?? null,
+            'email' => $newEmail,
         ]);
+
+        if ($emailChanged) {
+            $user->email_verified_at = null;
+        }
 
         $photoChanged = false;
 
@@ -104,6 +113,7 @@ class ProfileController extends Controller
                     'profile_photo_path' => $user->profile_photo_path,
                 ],
                 'profile_photo_changed' => $photoChanged,
+                'email_verification_reset' => $emailChanged,
             ]
         );
 
