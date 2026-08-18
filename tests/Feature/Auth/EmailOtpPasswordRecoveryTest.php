@@ -2,7 +2,6 @@
 
 namespace Tests\Feature\Auth;
 
-use App\Models\AuditLog;
 use App\Models\User;
 use App\Notifications\PasswordRecoveryCodeNotification;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -150,9 +149,21 @@ class EmailOtpPasswordRecoveryTest extends TestCase
             'email' => $user->email,
         ]);
 
+        $sentCode = null;
+        Notification::assertSentTo(
+            $user,
+            PasswordRecoveryCodeNotification::class,
+            function (PasswordRecoveryCodeNotification $notification) use (&$sentCode) {
+                $sentCode = $notification->code;
+                return true;
+            }
+        );
+
+        $wrongCode = $sentCode === '000000' ? '000001' : '000000';
+
         $this->from(route('password.request'))
             ->post(route('password.recovery.verify-code'), [
-                'code' => '000000',
+                'code' => $wrongCode,
             ])
             ->assertRedirect(route('password.request'))
             ->assertSessionHasErrors('code');
@@ -183,5 +194,30 @@ class EmailOtpPasswordRecoveryTest extends TestCase
             'username' => 'no_email_staff',
             'email' => null,
         ]);
+    }
+
+    public function test_staff_temporary_password_reset_is_blocked_when_user_has_recovery_email(): void
+    {
+        $staff = User::factory()->create([
+            'role' => User::ROLE_STAFF,
+            'is_active' => true,
+        ]);
+        $user = User::factory()->create([
+            'role' => User::ROLE_GEODETIC,
+            'email' => 'geodetic@example.com',
+        ]);
+        $originalPassword = $user->password;
+
+        $this->actingAs($staff)
+            ->from(route('staff.users.edit', $user))
+            ->post(route('staff.users.reset-password', $user))
+            ->assertRedirect(route('staff.users.edit', $user))
+            ->assertSessionHas('error', function (string $error) {
+                return str_contains($error, 'registered email address');
+            });
+
+        $fresh = $user->fresh();
+        $this->assertSame($originalPassword, $fresh->password);
+        $this->assertFalse($fresh->must_change_password);
     }
 }
