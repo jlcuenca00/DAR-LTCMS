@@ -233,6 +233,12 @@ Route::middleware(['auth', 'role:geodetic'])
             ->name('parcels.index');
         Route::get('/parcel-map', [GeodeticParcelMapController::class, 'index'])
             ->name('parcel-map.index');
+        Route::get('/parcels/awaiting-geometry', [GeodeticParcelMapController::class, 'awaitingGeometry'])
+            ->name('parcels.awaiting-geometry');
+        Route::get('/parcels/{parcel}/geometry/edit', [GeodeticParcelMapController::class, 'editGeometry'])
+            ->name('parcels.geometry.edit');
+        Route::patch('/parcels/{parcel}/geometry', [GeodeticParcelMapController::class, 'updateGeometry'])
+            ->name('parcels.geometry.update');
         Route::get('/parcels/{parcel}', [GeodeticParcelMapController::class, 'show'])
             ->name('parcels.show');
     });
