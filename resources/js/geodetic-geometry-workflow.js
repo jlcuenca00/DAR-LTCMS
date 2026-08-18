@@ -126,7 +126,15 @@ function initializeGeodeticParcelGeometryAction() {
     header.appendChild(editLink);
 }
 
+function initializeGeodeticAccessScopeLabel() {
+    const accessChip = document.querySelector('.geo-access-chip');
+    if (accessChip && accessChip.textContent.trim() === 'Read-only Access') {
+        accessChip.textContent = 'Limited Mapping Access';
+    }
+}
+
 function initializeGeodeticGeometryWorkflow() {
+    initializeGeodeticAccessScopeLabel();
     initializeGeodeticDashboardQueue();
     initializeGeodeticParcelGeometryAction();
 }

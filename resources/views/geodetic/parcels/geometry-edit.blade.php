@@ -36,22 +36,6 @@
         .geo-map-editor-panel-title { margin: 0; color: var(--geo-ink); font-size: 16px; font-weight: 900; }
         .geo-map-editor-panel-copy { margin: 4px 0 0; color: var(--geo-muted); font-size: 11px; line-height: 1.5; }
         .geo-map-editor-panel-body { padding: 18px 20px 20px; }
-        .geo-map-editor-label { display: block; color: #344054; font-size: 11px; font-weight: 900; margin-bottom: 7px; }
-        .geo-map-editor-textarea {
-            width: 100%;
-            min-height: 360px;
-            resize: vertical;
-            border: 1px solid #cfd8d2;
-            border-radius: 10px;
-            padding: 13px 14px;
-            background: #fbfcfb;
-            color: #1f2937;
-            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-            font-size: 12px;
-            line-height: 1.55;
-        }
-        .geo-map-editor-textarea:focus { outline: 2px solid rgba(22, 101, 52, .18); border-color: var(--geo-green-700); }
-        .geo-map-editor-error { margin-top: 7px; color: #b42318; font-size: 11px; font-weight: 750; }
         .geo-map-editor-note {
             margin-top: 12px;
             padding: 12px 13px;
@@ -95,6 +79,11 @@
             font-size: 11px;
             line-height: 1.5;
         }
+
+        /* Keep the shared Staff/Geodetic coordinate editor compact on this focused mapping page. */
+        .geo-map-editor-panel .geojson-helper { border: 0; padding: 0; background: transparent; }
+        .geo-map-editor-panel .geojson-textarea-wrap textarea { min-height: 120px; resize: vertical; }
+
         @media (max-width: 960px) {
             .geo-map-editor-grid { grid-template-columns: 1fr; }
         }
@@ -117,36 +106,30 @@
         <section class="geo-map-editor-grid">
             <article class="geo-map-editor-panel">
                 <header class="geo-map-editor-panel-header">
-                    <h2 class="geo-map-editor-panel-title">Parcel GeoJSON</h2>
-                    <p class="geo-map-editor-panel-copy">Encode or update the parcel Polygon geometry used by the map viewer.</p>
+                    <h2 class="geo-map-editor-panel-title">Parcel Boundary Coordinates</h2>
+                    <p class="geo-map-editor-panel-copy">Enter simple longitude and latitude points. The system builds the Polygon GeoJSON automatically, using the same mapping helper available to DAR Staff.</p>
                 </header>
                 <div class="geo-map-editor-panel-body">
                     <form method="POST" action="{{ route('geodetic.parcels.geometry.update', $parcel) }}">
                         @csrf
                         @method('PATCH')
 
-                        <label for="geometry_geojson" class="geo-map-editor-label">GeoJSON Polygon</label>
-                        <textarea
-                            id="geometry_geojson"
-                            name="geometry_geojson"
-                            class="geo-map-editor-textarea"
-                            required
-                            spellcheck="false"
-                            placeholder='{"type":"Polygon","coordinates":[[[123.30,9.30],[123.31,9.30],[123.31,9.31],[123.30,9.30]]]}'
-                        >{{ old('geometry_geojson', $parcel->geometry_geojson ? json_encode($parcel->geometry_geojson, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) : '') }}</textarea>
-
-                        @error('geometry_geojson')
-                            <div class="geo-map-editor-error">{{ $message }}</div>
-                        @enderror
+                        @include('staff.partials.geojson-polygon-editor', [
+                            'fieldName' => 'geometry_geojson',
+                            'fieldId' => 'geometry_geojson',
+                            'value' => old('geometry_geojson', $parcel->geometry_geojson ? json_encode($parcel->geometry_geojson, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) : ''),
+                            'errorClass' => 'geo-map-editor-error',
+                            'rows' => 5,
+                        ])
 
                         <div class="geo-map-editor-note">
-                            Only GeoJSON <strong>Polygon</strong> geometry is accepted. Saving this form updates the parcel's map geometry only; it does not alter ownership, landholding, application, title, registry, or clearance records.
+                            Use at least <strong>3 coordinate points</strong>. The first point is automatically repeated to close the polygon. Only the parcel's map geometry is saved; ownership, landholding, application, title, registry, and clearance records are not changed.
                         </div>
 
                         <div class="geo-map-editor-actions">
                             <button type="submit" class="geo-map-editor-button">
                                 <i class="fa-solid fa-floppy-disk" aria-hidden="true"></i>
-                                Save GeoJSON
+                                Save Geometry
                             </button>
                             <a href="{{ route('geodetic.parcels.show', $parcel) }}" class="geo-map-editor-button secondary">Back to Parcel</a>
                             <a href="{{ route('geodetic.parcel-map.index') }}" class="geo-map-editor-button secondary">Open Parcel Map</a>
@@ -171,7 +154,7 @@
                     </div>
 
                     <div class="geo-map-editor-scope">
-                        <strong>Geodetic permission scope:</strong> GeoJSON/map geometry only. All administrative, ownership, application, and clearance information remains protected from Geodetic edits.
+                        <strong>Geodetic permission scope:</strong> map geometry only. All administrative, ownership, application, and clearance information remains protected from Geodetic edits.
                     </div>
                 </div>
             </aside>
