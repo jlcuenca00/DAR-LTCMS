@@ -235,21 +235,22 @@
             flex-wrap: wrap;
         }
 
-        .link-row a,
-        .link-button {
+        .recovery-footer-action {
             border: 0;
             background: transparent;
             color: #166534;
-            font: inherit;
-            font-size: .84rem;
-            font-weight: 850;
+            font-family: 'Google Sans', system-ui, sans-serif;
+            font-size: 13px;
+            font-style: normal;
+            font-weight: 700;
+            line-height: 20px;
+            letter-spacing: 0;
             text-decoration: none;
             cursor: pointer;
             padding: 0;
         }
 
-        .link-row a:hover,
-        .link-button:hover { text-decoration: underline; }
+        .recovery-footer-action:hover { text-decoration: underline; }
 
         .inline-form { margin: 0; }
 
@@ -307,9 +308,9 @@
                     <div class="link-row">
                         <form method="POST" action="{{ route('password.recovery.restart') }}" class="inline-form">
                             @csrf
-                            <button type="submit" class="link-button">Start over</button>
+                            <button type="submit" class="link-button recovery-footer-action">Start over</button>
                         </form>
-                        <a href="{{ route('login') }}">Back to login</a>
+                        <a href="{{ route('login') }}" class="recovery-footer-action">Back to login</a>
                     </div>
                 @elseif ($step === 'otp')
                     <span class="step-chip">Step 3 of 3 · Verify Code</span>
@@ -333,9 +334,9 @@
                     <div class="link-row">
                         <form method="POST" action="{{ route('password.recovery.restart') }}" class="inline-form">
                             @csrf
-                            <button type="submit" class="link-button">Start over</button>
+                            <button type="submit" class="link-button recovery-footer-action">Start over</button>
                         </form>
-                        <a href="{{ route('login') }}">Back to login</a>
+                        <a href="{{ route('login') }}" class="recovery-footer-action">Back to login</a>
                     </div>
                 @else
                     <span class="step-chip">Step 1 of 3 · Identify Account</span>
@@ -352,7 +353,7 @@
                     <p class="note">If your account has no registered email address, the system will direct you to authorized DAR Staff for password assistance.</p>
 
                     <div class="link-row">
-                        <a href="{{ route('login') }}">Back to login</a>
+                        <a href="{{ route('login') }}" class="recovery-footer-action">Back to login</a>
                     </div>
                 @endif
             </section>
