@@ -151,6 +151,8 @@ function initializeGeodeticGeometryPointPrefill() {
     let points = geometry.coordinates[0].filter((point) => {
         return Array.isArray(point)
             && point.length >= 2
+            && point[0] !== null
+            && point[1] !== null
             && Number.isFinite(Number(point[0]))
             && Number.isFinite(Number(point[1]));
     });
@@ -195,6 +197,37 @@ function initializeGeodeticGeometryPointPrefill() {
             if (latInput) latInput.value = '';
         }
     });
+
+    const syncGeometryFromPointFields = () => {
+        const coordinates = [];
+
+        pointsWrap.querySelectorAll('.geojson-point-row').forEach((row) => {
+            const lng = row.querySelector('[data-geojson-lng]')?.value;
+            const lat = row.querySelector('[data-geojson-lat]')?.value;
+
+            if (lng !== '' && lat !== '') {
+                coordinates.push([Number(lng), Number(lat)]);
+            }
+        });
+
+        if (coordinates.length < 3) return;
+
+        const first = coordinates[0];
+        const last = coordinates[coordinates.length - 1];
+        if (first[0] !== last[0] || first[1] !== last[1]) {
+            coordinates.push([...first]);
+        }
+
+        target.value = JSON.stringify({ type: 'Polygon', coordinates: [coordinates] }, null, 2);
+    };
+
+    pointsWrap.addEventListener('input', (event) => {
+        if (event.target.matches('[data-geojson-lng], [data-geojson-lat]')) {
+            syncGeometryFromPointFields();
+        }
+    });
+
+    editor.closest('form')?.addEventListener('submit', syncGeometryFromPointFields);
 
     if (message) {
         message.textContent = `${points.length} saved polygon point${points.length === 1 ? '' : 's'} loaded. Adjust only the coordinates that need changes.`;
