@@ -1,11 +1,12 @@
-/* Staff dashboard hero spacing refinement.
-   Scoped overrides keep the dashboard compact without changing its content or workflow. */
+/* Staff dashboard operational hero.
+   Presentation-only overrides: existing queue data, filtering, routes, and workflow logic remain unchanged. */
 
 .staff-dashboard .dashboard-hero {
-    grid-template-columns: minmax(0, 1fr) minmax(390px, 460px);
-    gap: clamp(30px, 4vw, 58px);
+    grid-template-columns: minmax(280px, .78fr) minmax(560px, 1.22fr);
+    gap: clamp(28px, 3vw, 46px);
     align-items: center;
-    padding: 22px 30px;
+    padding: 22px 28px;
+    min-height: 188px;
 }
 
 .staff-dashboard .dashboard-hero > :first-child {
@@ -15,36 +16,137 @@
     min-width: 0;
 }
 
+.staff-dashboard .hero-eyebrow {
+    margin: 0 0 8px;
+    color: #bbf7d0;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: .14em;
+    line-height: 1.2;
+    text-transform: uppercase;
+}
+
 .staff-dashboard .hero-title {
-    max-width: 680px;
+    max-width: 620px;
+    font-size: clamp(25px, 2.1vw, 30px);
+}
+
+.staff-dashboard .hero-copy {
+    max-width: 560px;
+    margin: 9px 0 0;
+    color: #d7f1df;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.5;
 }
 
 .staff-dashboard .hero-actions {
-    margin-top: 14px;
+    margin-top: 16px;
+}
+
+.staff-dashboard .hero-action {
+    min-height: 44px;
+    padding: 0 16px;
+    border-radius: 10px;
+    font-size: 12px;
 }
 
 .staff-dashboard .hero-queue {
     width: 100%;
-    max-width: 460px;
-    justify-self: end;
-    padding: 12px;
+    max-width: none;
+    justify-self: stretch;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+    padding: 13px;
+    border: 1px solid rgba(255, 255, 255, .16);
+    border-radius: 15px;
+    background: rgba(7, 52, 30, .28);
+}
+
+.staff-dashboard .hero-queue-title,
+.staff-dashboard .hero-queue-summary {
+    grid-column: 1 / -1;
 }
 
 .staff-dashboard .hero-queue-title {
-    margin-bottom: 6px;
-    padding-inline: 4px;
+    margin: 0;
+    padding: 0 2px;
+    color: #ffffff;
+    font-size: 12px;
+    font-weight: 800;
+    line-height: 1.25;
+}
+
+.staff-dashboard .hero-queue-summary {
+    margin: -3px 0 2px;
+    padding: 0 2px;
+    color: #ccebd7;
+    font-size: 9.5px;
+    font-weight: 600;
+    line-height: 1.4;
 }
 
 .staff-dashboard .queue-row {
-    grid-template-columns: 30px minmax(0, 1fr) auto;
-    gap: 10px;
-    min-height: 44px;
-    padding: 6px 7px;
+    position: relative;
+    display: grid;
+    grid-template-columns: 34px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 9px;
+    width: 100%;
+    min-width: 0;
+    min-height: 82px;
+    padding: 11px;
+    border: 1px solid rgba(255, 255, 255, .15);
+    border-radius: 11px;
+    background: rgba(255, 255, 255, .055);
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition: transform 140ms ease, border-color 140ms ease, background 140ms ease;
+}
+
+.staff-dashboard .queue-row:last-child {
+    border-bottom: 1px solid rgba(255, 255, 255, .15);
+}
+
+.staff-dashboard .queue-row:hover {
+    transform: translateY(-1px);
+    border-color: rgba(255, 255, 255, .34);
+    background: rgba(255, 255, 255, .085);
+}
+
+.staff-dashboard .queue-row.is-active {
+    border-color: rgba(255, 255, 255, .78);
+    background: rgba(255, 255, 255, .075);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .18);
+}
+
+.staff-dashboard .queue-row.is-active::after {
+    content: 'Showing below';
+    position: absolute;
+    right: 9px;
+    bottom: 7px;
+    color: #d9f7e2;
+    font-size: 7.5px;
+    font-weight: 800;
+    letter-spacing: .03em;
+    line-height: 1;
+    text-transform: uppercase;
+}
+
+.staff-dashboard .queue-row:focus-visible {
+    outline: 2px solid #ffffff;
+    outline-offset: 2px;
 }
 
 .staff-dashboard .queue-icon {
-    width: 30px;
-    height: 30px;
+    width: 34px;
+    height: 34px;
+    border-radius: 9px;
+    background: rgba(255, 255, 255, .13);
+    font-size: 12px;
 }
 
 .staff-dashboard .queue-label {
@@ -53,20 +155,43 @@
 }
 
 .staff-dashboard .queue-description {
-    margin-top: 1px;
-    line-height: 1.2;
+    margin-top: 2px;
+    max-width: 150px;
+    font-size: 8.5px;
+    line-height: 1.3;
 }
 
 .staff-dashboard .queue-value {
-    min-width: 28px;
+    align-self: start;
+    min-width: 30px;
+    padding-top: 2px;
     text-align: right;
-    font-size: 20px;
+    font-size: 23px;
+}
+
+@media (max-width: 1260px) {
+    .staff-dashboard .dashboard-hero {
+        grid-template-columns: minmax(260px, .7fr) minmax(500px, 1.3fr);
+        gap: 24px;
+    }
+
+    .staff-dashboard .queue-row {
+        grid-template-columns: 30px minmax(0, 1fr) auto;
+        gap: 8px;
+        padding: 10px 9px;
+    }
+
+    .staff-dashboard .queue-icon {
+        width: 30px;
+        height: 30px;
+    }
 }
 
 @media (max-width: 1120px) {
     .staff-dashboard .dashboard-hero {
         grid-template-columns: 1fr;
         gap: 18px;
+        min-height: 0;
         padding: 22px 24px;
     }
 
@@ -76,15 +201,37 @@
     }
 
     .staff-dashboard .queue-row {
-        min-height: 52px;
-        padding: 9px 10px;
+        min-height: 78px;
+    }
+}
+
+@media (max-width: 760px) {
+    .staff-dashboard .hero-queue {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+
+    .staff-dashboard .queue-row {
+        min-height: 68px;
+        padding: 10px 11px;
+        border-right: 1px solid rgba(255, 255, 255, .15);
+        border-bottom: 1px solid rgba(255, 255, 255, .15);
+    }
+
+    .staff-dashboard .queue-description {
+        max-width: none;
     }
 }
 
 @media (max-width: 560px) {
     .staff-dashboard .dashboard-hero {
         gap: 16px;
-        padding: 18px 17px;
+        padding: 18px 16px;
+        border-radius: 14px;
+    }
+
+    .staff-dashboard .hero-title {
+        font-size: 25px;
     }
 
     .staff-dashboard .hero-actions,
@@ -94,5 +241,9 @@
 
     .staff-dashboard .hero-queue {
         padding: 10px;
+    }
+
+    .staff-dashboard .queue-row.is-active::after {
+        display: none;
     }
 }
