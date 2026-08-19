@@ -9,6 +9,7 @@ import './parcel-map-single-tooltip';
 import './geodetic-geometry-workflow';
 import './geodetic-responsive';
 import './site-responsive';
+import './account-panel';
 import './development-notice';
 import '../css/staff-dashboard-hero.css';
 import '../css/application-page-cleanup.css';
