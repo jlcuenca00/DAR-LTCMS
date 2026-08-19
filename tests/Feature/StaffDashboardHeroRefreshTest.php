@@ -18,9 +18,13 @@ class StaffDashboardHeroRefreshTest extends TestCase
 
         $this->assertStringContainsString("import './staff-dashboard-hero';", $bootstrap);
         $this->assertStringContainsString('grid-template-columns: repeat(3, minmax(0, 1fr));', $css);
-        $this->assertStringContainsString("content: 'Showing below';", $css);
-        $this->assertStringContainsString('Here is the current land transfer clearance processing workload', $script);
-        $this->assertStringContainsString('Select a queue to filter the preview below.', $script);
+        $this->assertStringNotContainsString("content: 'Showing below';", $css);
+        $this->assertStringContainsString('Process and monitor clearance applications.', $script);
+        $this->assertStringContainsString('active application', $script);
+        $this->assertStringContainsString('Awaiting legal review', $script);
+        $this->assertStringContainsString('In endorsement', $script);
+        $this->assertStringContainsString('Ready for release', $script);
+        $this->assertStringNotContainsString('Select a queue to filter the preview below.', $script);
     }
 
     public function test_staff_dashboard_hero_keeps_mobile_edge_spacing(): void

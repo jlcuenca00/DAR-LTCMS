@@ -17,7 +17,7 @@ function initializeStaffDashboardHeroContext() {
     if (intro && title && !intro.querySelector('.hero-copy')) {
         const copy = document.createElement('p');
         copy.className = 'hero-copy';
-        copy.textContent = 'Here is the current land transfer clearance processing workload requiring staff attention.';
+        copy.textContent = 'Process and monitor clearance applications.';
         title.insertAdjacentElement('afterend', copy);
     }
 
@@ -31,10 +31,25 @@ function initializeStaffDashboardHeroContext() {
         const summary = document.createElement('p');
         summary.className = 'hero-queue-summary';
         summary.id = 'staff-work-queue-summary';
-        summary.textContent = `${total.toLocaleString()} application${total === 1 ? '' : 's'} across the active processing queues. Select a queue to filter the preview below.`;
+        summary.textContent = `${total.toLocaleString()} active application${total === 1 ? '' : 's'}`;
         queueTitle.insertAdjacentElement('afterend', summary);
         queue.setAttribute('aria-describedby', summary.id);
     }
+
+    const shortDescriptions = {
+        pending_legal_review: 'Awaiting legal review',
+        active_workflow: 'In endorsement',
+        for_releasing: 'Ready for release',
+    };
+
+    queue?.querySelectorAll('[data-dashboard-filter]').forEach((button) => {
+        const description = button.querySelector('.queue-description');
+        const replacement = shortDescriptions[button.dataset.dashboardFilter];
+
+        if (description && replacement) {
+            description.textContent = replacement;
+        }
+    });
 }
 
 if (document.readyState === 'loading') {
