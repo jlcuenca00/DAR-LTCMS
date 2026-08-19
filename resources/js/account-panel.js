@@ -24,8 +24,23 @@ function initializeAccountPanelProfileAnchors() {
     });
 }
 
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initializeAccountPanelProfileAnchors, { once: true });
-} else {
+function initializeAccountPanelSwitchSemantics() {
+    document.querySelectorAll('[data-account-reduce-motion]').forEach((control) => {
+        if (!(control instanceof HTMLInputElement) || control.type !== 'checkbox') return;
+
+        // WAI-ARIA APG switch semantics on the existing native checkbox.
+        // The checkbox keeps its native checked state and Space-key behavior.
+        control.setAttribute('role', 'switch');
+    });
+}
+
+function initializeAccountPanel() {
     initializeAccountPanelProfileAnchors();
+    initializeAccountPanelSwitchSemantics();
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeAccountPanel, { once: true });
+} else {
+    initializeAccountPanel();
 }
