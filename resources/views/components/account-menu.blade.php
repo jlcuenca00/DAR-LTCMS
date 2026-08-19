@@ -79,6 +79,86 @@
             line-height: 1;
         }
 
+        /* Staff phone header: keep the two persistent utilities on one clean
+           44px row. Any page-specific topbar action is promoted to a separate
+           full-width row rather than forcing the account control to stretch. */
+        @media screen and (max-width: 640px) {
+            .staff-topbar {
+                padding-left: 16px !important;
+                padding-right: 16px !important;
+            }
+
+            .staff-topbar-actions {
+                width: 100% !important;
+                display: grid !important;
+                grid-template-columns: 44px minmax(0, 1fr) auto !important;
+                align-items: center !important;
+                gap: 10px !important;
+                flex-wrap: nowrap !important;
+            }
+
+            .staff-topbar-actions > .notification-dropdown {
+                grid-column: 1 !important;
+                grid-row: 1 !important;
+                width: 44px !important;
+                min-width: 44px !important;
+                justify-self: start;
+            }
+
+            .staff-topbar-actions > .account-topbar-cluster {
+                grid-column: 3 !important;
+                grid-row: 1 !important;
+                width: auto !important;
+                max-width: 100% !important;
+                min-width: 0 !important;
+                flex: 0 1 auto !important;
+                justify-self: end;
+            }
+
+            .staff-topbar-actions > .account-topbar-cluster .account-menu {
+                width: auto !important;
+                max-width: 100% !important;
+                min-width: 0 !important;
+            }
+
+            .staff-topbar-actions > .account-topbar-cluster .account-menu-trigger {
+                width: auto !important;
+                max-width: 100% !important;
+                min-width: 0 !important;
+                justify-content: flex-start !important;
+            }
+
+            .staff-topbar-actions > .account-topbar-cluster .account-menu-name {
+                max-width: min(170px, 42vw) !important;
+                min-width: 0 !important;
+                flex: 0 1 auto !important;
+                text-align: left;
+            }
+
+            .staff-topbar-actions > :not(.notification-dropdown):not(.account-topbar-cluster) {
+                grid-column: 1 / -1 !important;
+                width: 100% !important;
+                min-width: 0 !important;
+            }
+
+            .staff-topbar-actions > :not(.notification-dropdown):not(.account-topbar-cluster) :where(.staff-button, button, a) {
+                max-width: 100%;
+            }
+
+            .staff-content {
+                padding-left: 16px !important;
+                padding-right: 16px !important;
+            }
+
+            .staff-topbar-actions .notification-dropdown-panel,
+            .staff-topbar-actions .account-menu-panel {
+                left: 16px !important;
+                right: 16px !important;
+                width: auto !important;
+                max-width: none !important;
+            }
+        }
+
         /* Keep dashboard attention counters readable at high browser zoom. */
         .stale-callout .stale-label {
             min-width: 0;
