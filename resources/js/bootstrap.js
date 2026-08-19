@@ -7,6 +7,7 @@ import './staff-list-filters';
 import './dashboard-work-queue';
 import './parcel-map-single-tooltip';
 import './geodetic-geometry-workflow';
+import './geodetic-responsive';
 import './development-notice';
 import '../css/staff-dashboard-hero.css';
 import '../css/application-page-cleanup.css';
@@ -15,6 +16,7 @@ import '../css/application-table-toolbar.css';
 import '../css/filter-control-normalization.css';
 import '../css/active-filter-alignment.css';
 import '../css/geodetic-geometry-workflow.css';
+import '../css/geodetic-responsive.css';
 import '../css/development-notice.css';
 import '../css/password-recovery-spacing.css';
 
