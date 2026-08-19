@@ -5,6 +5,7 @@ import './application-intake-flow';
 import './application-page-cleanup';
 import './staff-list-filters';
 import './dashboard-work-queue';
+import './staff-dashboard-hero';
 import './parcel-map-single-tooltip';
 import './geodetic-geometry-workflow';
 import './geodetic-responsive';
