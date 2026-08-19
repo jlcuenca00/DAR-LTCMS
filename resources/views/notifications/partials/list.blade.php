@@ -32,14 +32,14 @@
     };
 @endphp
 
-<div class="space-y-4">
+<div class="notification-center-page space-y-4">
     @if (session('success'))
         <div class="rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm font-semibold text-green-800">
             {{ session('success') }}
         </div>
     @endif
 
-    <div class="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+    <div class="notification-center-summary flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
         <div>
             <p class="text-xs font-black uppercase tracking-[0.18em] text-green-700">Notification Center</p>
             <h2 class="mt-1 text-xl font-black text-slate-950">System Notifications</h2>
@@ -57,7 +57,7 @@
         </form>
     </div>
 
-    <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+    <div class="notification-center-list overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
         @forelse ($notifications as $notification)
             @php
                 $typeLabel = $notificationTypeLabels[$notification->type] ?? str_replace('_', ' ', $notification->type);
@@ -65,7 +65,7 @@
                 $message = $cleanNotificationText($notification->message);
             @endphp
 
-            <div class="flex flex-col gap-4 border-b border-slate-100 p-5 last:border-b-0 md:flex-row md:items-start md:justify-between {{ $notification->read_at ? 'bg-white' : 'bg-green-50/70' }}">
+            <div class="notification-center-item flex flex-col gap-4 border-b border-slate-100 p-5 last:border-b-0 md:flex-row md:items-start md:justify-between {{ $notification->read_at ? 'bg-white' : 'bg-green-50/70' }}">
                 <div class="min-w-0 flex-1">
                     <div class="flex flex-wrap items-center gap-2">
                         @if (! $notification->read_at)
@@ -93,7 +93,7 @@
                     </p>
                 </div>
 
-                <div class="flex shrink-0 flex-wrap gap-2">
+                <div class="notification-center-actions flex shrink-0 flex-wrap gap-2">
                     <a href="{{ route('notifications.open', $notification) }}" class="inline-flex min-h-9 items-center justify-center rounded-lg border border-green-700 bg-green-700 px-3 text-xs font-black text-white hover:bg-green-900">
                         Open
                     </a>

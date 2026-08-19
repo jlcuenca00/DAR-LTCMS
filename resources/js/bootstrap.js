@@ -8,6 +8,7 @@ import './dashboard-work-queue';
 import './parcel-map-single-tooltip';
 import './geodetic-geometry-workflow';
 import './geodetic-responsive';
+import './site-responsive';
 import './development-notice';
 import '../css/staff-dashboard-hero.css';
 import '../css/application-page-cleanup.css';
@@ -19,6 +20,8 @@ import '../css/geodetic-geometry-workflow.css';
 import '../css/geodetic-responsive.css';
 import '../css/development-notice.css';
 import '../css/password-recovery-spacing.css';
+import '../css/site-responsive-system.css';
+import '../css/site-responsive-refinements.css';
 
 window.axios = axios;
 
