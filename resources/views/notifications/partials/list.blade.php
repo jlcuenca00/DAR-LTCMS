@@ -3,7 +3,7 @@
         'application_created' => 'Application encoded',
         'application_submitted' => 'Application updated',
         'application_status_updated' => 'Application status updated',
-        'application_approved' => 'Clearance released',
+        'application_approved' => 'Application approved',
         'application_released' => 'Clearance released',
         'application_not_approved' => 'Application denied',
         'application_denied' => 'Application denied',
@@ -17,16 +17,9 @@
         $value = (string) $value;
 
         return str($value)
-            ->replace('Approved Clearance', 'Released Clearance')
-            ->replace('Approved clearance', 'Released clearance')
-            ->replace('Application approved', 'Clearance released')
-            ->replace('application approved', 'clearance released')
-            ->replace('approved clearance', 'released clearance')
-            ->replace('approved application', 'released application')
             ->replace('Not Approved', 'Denied')
             ->replace('not approved', 'denied')
             ->replace('not-approved', 'denied')
-            ->replace('APPROVED', 'RELEASED')
             ->replace('NOT APPROVED', 'DENIED')
             ->toString();
     };
@@ -34,7 +27,7 @@
 
 <div class="notification-center-page space-y-4">
     @if (session('success'))
-        <div class="rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm font-semibold text-green-800">
+        <div class="rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm font-semibold text-green-800" role="status" aria-live="polite">
             {{ session('success') }}
         </div>
     @endif
@@ -89,7 +82,7 @@
                     </p>
 
                     <p class="mt-3 text-xs font-bold text-slate-400">
-                        {{ $notification->created_at?->timezone('Asia/Manila')->format('M d, Y h:i A') }}
+                        {{ $notification->created_at?->timezone('Asia/Manila')->format('M d, Y h:i A') }} PHT
                     </p>
                 </div>
 
