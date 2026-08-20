@@ -20,7 +20,8 @@ class ParcelMapController extends Controller
                 ->with('parcel')
                 ->where('landowner_id', $landowner->id)
                 ->whereHas('parcel', function ($query) {
-                    $query->whereNotNull('geometry_geojson');
+                    $query->where('status', 'active')
+                        ->whereNotNull('geometry_geojson');
                 })
                 ->orderByDesc('created_at')
                 ->get();
@@ -53,7 +54,7 @@ class ParcelMapController extends Controller
                         'municipality' => $parcel->municipality ?: 'N/A',
                         'barangay' => $parcel->barangay ?: 'N/A',
                         'area_hectares' => $landholding->area_hectares ?: $parcel->area_hectares ?: 'N/A',
-                        'status' => $landholding->status ?: $parcel->status ?: 'active',
+                        'status' => 'active',
                     ],
                     'geometry' => $geometry,
                 ];

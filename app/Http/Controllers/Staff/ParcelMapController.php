@@ -11,6 +11,7 @@ class ParcelMapController extends Controller
     {
         $parcelFeatures = Parcel::query()
             ->with(['landholdings.landowner', 'legacyRecords.landowner', 'sourceRecordPackages.landowner'])
+            ->where('status', 'active')
             ->whereNotNull('geometry_geojson')
             ->orderBy('municipality')
             ->orderBy('barangay')
@@ -67,7 +68,9 @@ class ParcelMapController extends Controller
                         'municipality' => $parcel->municipality ?: 'N/A',
                         'barangay' => $parcel->barangay ?: 'N/A',
                         'area_hectares' => $parcel->area_hectares ?: 'N/A',
-                        'status' => $parcel->status ?: 'active',
+                        'status' => $parcel->is_flagged ? 'flagged' : 'active',
+                        'is_flagged' => (bool) $parcel->is_flagged,
+                        'flag_reason' => $parcel->is_flagged ? $parcel->flag_reason_label : null,
                     ],
                     'geometry' => $geometry,
                 ];

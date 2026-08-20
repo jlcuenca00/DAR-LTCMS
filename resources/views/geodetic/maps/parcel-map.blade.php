@@ -132,6 +132,7 @@
             .parcel-tooltip-title { color: var(--geo-green-900); font-size: 12px; font-weight: 900; margin-bottom: 6px; }
             .parcel-tooltip-row { margin-top: 4px; color: #344054; font-size: 10px; line-height: 1.4; }
             .parcel-tooltip-label { color: #667085; font-weight: 900; }
+            .parcel-tooltip-row.is-flagged { color: #b91c1c; font-weight: 800; }
 
             @media (max-width: 1100px) {
                 .geo-map-layout { grid-template-columns: 1fr; }
@@ -166,10 +167,8 @@
             <article class="geo-map-card">
                 <h2 class="geo-map-title">Legend</h2>
                 <div class="geo-legend-list">
-                    <div class="geo-legend-row"><span class="geo-legend-dot" style="background:#15803d;"></span>Active parcel record</div>
-                    <div class="geo-legend-row"><span class="geo-legend-dot" style="background:#ea580c;"></span>Pending review reference</div>
-                    <div class="geo-legend-row"><span class="geo-legend-dot" style="background:#2563eb;"></span>Linked application reference</div>
-                    <div class="geo-legend-row"><span class="geo-legend-dot" style="background:#dc2626;"></span>Flagged record</div>
+                    <div class="geo-legend-row"><span class="geo-legend-dot" style="background:#15803d;"></span>Mapped parcel record</div>
+                    <div class="geo-legend-row"><span class="geo-legend-dot" style="background:#dc2626;"></span>Flagged for review</div>
                 </div>
             </article>
         </aside>
@@ -182,7 +181,7 @@
     @push('scripts')
         <script
             src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-            integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+            integrity="sha256-20nQCchB9coqIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
             crossorigin="">
         </script>
 
@@ -218,10 +217,7 @@
                 }
 
                 function parcelColor(status) {
-                    if (status === 'pending_legal_review') return '#ea580c';
-                    if (status === 'linked_application') return '#2563eb';
-                    if (status === 'flagged') return '#dc2626';
-                    return '#15803d';
+                    return status === 'flagged' ? '#dc2626' : '#15803d';
                 }
 
                 function parcelStyle(feature) {
@@ -235,6 +231,10 @@
                 }
 
                 function tooltipContent(properties) {
+                    const flagRow = properties.is_flagged
+                        ? `<div class="parcel-tooltip-row is-flagged"><span class="parcel-tooltip-label">Review flag:</span> ${escapeHtml(properties.flag_reason || 'Requires verification')}</div>`
+                        : '';
+
                     return `
                         <div class="parcel-tooltip-card">
                             <div class="parcel-tooltip-title">${escapeHtml(properties.parcel_code)}</div>
@@ -243,6 +243,7 @@
                             <div class="parcel-tooltip-row"><span class="parcel-tooltip-label">Area:</span> ${escapeHtml(properties.area_hectares)} hectares</div>
                             <div class="parcel-tooltip-row"><span class="parcel-tooltip-label">Title:</span> ${escapeHtml(properties.title_no)}</div>
                             <div class="parcel-tooltip-row"><span class="parcel-tooltip-label">Tax declaration:</span> ${escapeHtml(properties.tax_decl_no)}</div>
+                            ${flagRow}
                             <div class="parcel-tooltip-row"><span class="parcel-tooltip-label">Select:</span> open technical details</div>
                         </div>`;
                 }
