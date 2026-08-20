@@ -82,8 +82,28 @@ jobs:
           cp .env.example .env
           php artisan key:generate
           php artisan migrate --force
-          php artisan tinker --trust-project --execute="\App\Models\User::query()->updateOrCreate(['username' => 'responsive.staff'], ['name' => 'Responsive Test Staff', 'email' => 'responsive.staff@example.test', 'password' => 'ResponsiveTest321!', 'role' => 'staff', 'is_active' => true, 'must_change_password' => false]);"
-          php artisan tinker --trust-project --execute="if (! \App\Models\User::query()->where('username', 'responsive.staff')->exists()) { throw new \RuntimeException('Responsive E2E Staff account was not created.'); }"
+          php <<'PHP'
+          <?php
+          require 'vendor/autoload.php';
+          $app = require 'bootstrap/app.php';
+          $app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
+
+          App\Models\User::query()->updateOrCreate(
+              ['username' => 'responsive.staff'],
+              [
+                  'name' => 'Responsive Test Staff',
+                  'email' => 'responsive.staff@example.test',
+                  'password' => Illuminate\Support\Facades\Hash::make('ResponsiveTest321!'),
+                  'role' => 'staff',
+                  'is_active' => true,
+                  'must_change_password' => false,
+              ]
+          );
+
+          if (! App\Models\User::query()->where('username', 'responsive.staff')->exists()) {
+              throw new RuntimeException('Responsive E2E Staff account was not created.');
+          }
+          PHP
 
       - name: Run responsive and UI UX feature regressions
         run: |
