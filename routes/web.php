@@ -20,6 +20,7 @@ use App\Http\Controllers\Staff\LandTransferApplicationController;
 use App\Http\Controllers\Staff\LegacyRecordController;
 use App\Http\Controllers\Staff\MonitoringReportController;
 use App\Http\Controllers\Staff\ParcelMapController;
+use App\Http\Controllers\Staff\ParcelReviewFlagController;
 use App\Http\Controllers\Staff\RecordSearchController;
 use App\Http\Controllers\Staff\SourceRecordLandownerLinkController;
 use App\Http\Controllers\Staff\SourceRecordPackageController;
@@ -105,6 +106,12 @@ Route::middleware(['auth', 'role:staff'])
             ->name('records.parcels.edit');
         Route::patch('/records/parcels/{parcel}', [RecordSearchController::class, 'updateParcel'])
             ->name('records.parcels.update');
+        Route::get('/records/parcels/{parcel}/review-flag', [ParcelReviewFlagController::class, 'edit'])
+            ->name('records.parcels.review-flag.edit');
+        Route::patch('/records/parcels/{parcel}/review-flag', [ParcelReviewFlagController::class, 'flag'])
+            ->name('records.parcels.review-flag.flag');
+        Route::patch('/records/parcels/{parcel}/review-flag/resolve', [ParcelReviewFlagController::class, 'resolve'])
+            ->name('records.parcels.review-flag.resolve');
         Route::delete('/records/parcels/{parcel}', [RecordSearchController::class, 'destroyParcel'])
             ->name('records.parcels.destroy');
         Route::get('/records/parcels/{parcel}', [RecordSearchController::class, 'showParcel'])
