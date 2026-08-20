@@ -143,10 +143,31 @@ class StaffDashboardController extends Controller
             ],
         ];
 
-        $blockingRequirementIds = RequiredDocument::query()
-            ->acceptanceBlocking()
+        // Use the exact same deduplicated review requirement set shown on the
+        // Application Review page so dashboard counts cannot drift from the checklist.
+        $transferorRequirements = RequiredDocument::deduplicateForApplicationReview(
+            RequiredDocument::query()
+                ->where('applies_to', 'transferor')
+                ->orderBy('blocks_acceptance', 'desc')
+                ->orderBy('requirement_classification')
+                ->orderBy('name')
+                ->get()
+        );
+        $transfereeRequirements = RequiredDocument::deduplicateForApplicationReview(
+            RequiredDocument::query()
+                ->where('applies_to', 'transferee')
+                ->orderBy('blocks_acceptance', 'desc')
+                ->orderBy('requirement_classification')
+                ->orderBy('name')
+                ->get()
+        );
+
+        $blockingRequirementIds = $transferorRequirements
+            ->concat($transfereeRequirements)
+            ->filter(fn (RequiredDocument $requirement) => $requirement->blocksAcceptance())
             ->pluck('id')
             ->map(fn ($id) => (int) $id)
+            ->unique()
             ->values();
         $blockingRequirementTotal = $blockingRequirementIds->count();
 
