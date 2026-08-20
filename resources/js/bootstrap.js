@@ -13,6 +13,7 @@ import './geodetic-geometry-workflow';
 import './geodetic-responsive';
 import './site-responsive';
 import './account-panel';
+import './user-management-linked-records';
 import './development-notice';
 import '../css/staff-dashboard-hero.css';
 import '../css/application-page-cleanup.css';
@@ -27,6 +28,7 @@ import '../css/password-recovery-spacing.css';
 import '../css/site-responsive-system.css';
 import '../css/site-responsive-refinements.css';
 import '../css/account-panel-polish.css';
+import '../css/user-management-linked-records.css';
 
 window.axios = axios;
 window.L = L;
