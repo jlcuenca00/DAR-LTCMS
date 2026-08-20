@@ -105,7 +105,7 @@ class RecordSearchController extends Controller
             'search' => ['nullable', 'string', 'max:255'],
             'municipality' => ['nullable', 'string', 'max:255'],
             'barangay' => ['nullable', 'string', 'max:255'],
-            'status' => ['nullable', 'string', 'max:50'],
+            'status' => ['nullable', Rule::in(array_keys(Parcel::statusOptions()))],
         ]);
 
         $parcelsQuery = Parcel::query()
@@ -137,7 +137,6 @@ class RecordSearchController extends Controller
             $parcelsQuery->where('status', $filters['status']);
         }
 
-
         $parcels = $parcelsQuery
             ->paginate(15)
             ->withQueryString();
@@ -159,12 +158,7 @@ class RecordSearchController extends Controller
             ->orderBy('barangay')
             ->pluck('barangay');
 
-        $statuses = Parcel::query()
-            ->whereNotNull('status')
-            ->select('status')
-            ->distinct()
-            ->orderBy('status')
-            ->pluck('status');
+        $statuses = collect(array_keys(Parcel::statusOptions()));
 
         return view('staff.records.parcels', compact(
             'parcels',
@@ -178,12 +172,7 @@ class RecordSearchController extends Controller
     public function createParcel()
     {
         return view('staff.records.parcel-create', [
-            'parcelStatuses' => [
-                'active' => 'Active',
-                'inactive' => 'Inactive',
-                'linked_application' => 'Linked to Application',
-                'flagged' => 'Flagged for Review',
-            ],
+            'parcelStatuses' => Parcel::statusOptions(),
             'titleTypes' => Parcel::titleTypeOptions(),
             'rodOffices' => Parcel::rodOfficeOptions(),
         ]);
@@ -204,7 +193,7 @@ class RecordSearchController extends Controller
             'barangay' => ['nullable', 'string', 'max:255'],
             'area_hectares' => ['nullable', 'numeric', 'min:0', 'max:999999.9999'],
             'area_square_meters' => ['nullable', 'numeric', 'min:0', 'max:999999999.99'],
-            'status' => ['required', Rule::in(['active', 'inactive', 'linked_application', 'flagged'])],
+            'status' => ['required', Rule::in(array_keys(Parcel::statusOptions()))],
             'geometry_geojson' => ['nullable', 'string', 'max:200000'],
             'remarks' => ['nullable', 'string', 'max:5000'],
             'reference_photo' => ['nullable', 'image', 'max:5120'],
@@ -245,6 +234,7 @@ class RecordSearchController extends Controller
             ->route('staff.records.parcels.show', $parcel)
             ->with('success', 'Parcel record created successfully.');
     }
+
     public function showParcel(Parcel $parcel)
     {
         $parcel->load([
@@ -261,12 +251,7 @@ class RecordSearchController extends Controller
     {
         return view('staff.records.parcel-edit', [
             'parcel' => $parcel,
-            'parcelStatuses' => [
-                'active' => 'Active',
-                'inactive' => 'Inactive',
-                'linked_application' => 'Linked to Application',
-                'flagged' => 'Flagged for Review',
-            ],
+            'parcelStatuses' => Parcel::statusOptions(),
             'titleTypes' => Parcel::titleTypeOptions(),
             'rodOffices' => Parcel::rodOfficeOptions(),
         ]);
@@ -287,7 +272,7 @@ class RecordSearchController extends Controller
             'barangay' => ['nullable', 'string', 'max:255'],
             'area_hectares' => ['nullable', 'numeric', 'min:0', 'max:999999.9999'],
             'area_square_meters' => ['nullable', 'numeric', 'min:0', 'max:999999999.99'],
-            'status' => ['required', Rule::in(['active', 'inactive', 'linked_application', 'flagged'])],
+            'status' => ['required', Rule::in(array_keys(Parcel::statusOptions()))],
             'remarks' => ['nullable', 'string', 'max:5000'],
             'geometry_geojson' => ['nullable', 'string', 'max:200000'],
             'reference_photo' => ['nullable', 'image', 'max:5120'],
@@ -379,7 +364,6 @@ class RecordSearchController extends Controller
         return $data;
     }
 
-
     private function decodeParcelGeoJson(?string $value): ?array
     {
         if (! filled($value)) {
@@ -407,5 +391,4 @@ class RecordSearchController extends Controller
 
         return $decoded;
     }
-
 }
