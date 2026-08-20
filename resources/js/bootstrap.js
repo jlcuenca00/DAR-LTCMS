@@ -1,4 +1,6 @@
 import axios from 'axios';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 import './onboarding-tour';
 import './onboarding-replay-confirmation';
 import './application-intake-flow';
@@ -27,5 +29,6 @@ import '../css/site-responsive-refinements.css';
 import '../css/account-panel-polish.css';
 
 window.axios = axios;
+window.L = L;
 
 window.axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
