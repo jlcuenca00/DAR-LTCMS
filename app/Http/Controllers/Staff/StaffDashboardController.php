@@ -5,11 +5,13 @@ namespace App\Http\Controllers\Staff;
 use App\Http\Controllers\Controller;
 use App\Models\ApplicationClearance;
 use App\Models\LandTransferApplication;
+use App\Models\RequiredDocument;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class StaffDashboardController extends Controller
 {
-    public function __invoke()
+    public function __invoke(Request $request)
     {
         $statusCounts = LandTransferApplication::query()
             ->select('status', DB::raw('COUNT(*) as total'))
@@ -37,7 +39,7 @@ class StaffDashboardController extends Controller
             LandTransferApplication::STATUS_ENDORSED_PARPO,
         ];
 
-        // This broader set is still useful for office-wide stale-record monitoring.
+        // This broader set is used for operational attention and stale-record monitoring.
         $activeStatuses = array_values(array_unique(array_merge(
             $pendingLegalStatuses,
             $workflowStatuses,
@@ -141,40 +143,120 @@ class StaffDashboardController extends Controller
             ],
         ];
 
-        $oldestPendingReview = LandTransferApplication::query()
-            ->whereIn('status', $pendingLegalStatuses)
-            ->oldest('updated_at')
-            ->first();
+        $blockingRequirementIds = RequiredDocument::query()
+            ->acceptanceBlocking()
+            ->pluck('id')
+            ->map(fn ($id) => (int) $id)
+            ->values();
+        $blockingRequirementTotal = $blockingRequirementIds->count();
 
-        $oldestForReleasing = LandTransferApplication::query()
-            ->where('status', LandTransferApplication::STATUS_FOR_RELEASING)
-            ->oldest('updated_at')
-            ->first();
+        $completeRequirementApplicationIds = function () use ($blockingRequirementIds, $blockingRequirementTotal) {
+            return DB::table('application_documents')
+                ->select('land_transfer_application_id')
+                ->whereIn('required_document_id', $blockingRequirementIds)
+                ->groupBy('land_transfer_application_id')
+                ->havingRaw('COUNT(DISTINCT required_document_id) >= ?', [$blockingRequirementTotal]);
+        };
+
+        $activeApplicationCount = LandTransferApplication::query()
+            ->whereIn('status', $activeStatuses)
+            ->count();
+
+        if ($blockingRequirementTotal > 0) {
+            $incompleteRequirementsCount = LandTransferApplication::query()
+                ->whereIn('status', $activeStatuses)
+                ->whereNotIn('id', $completeRequirementApplicationIds())
+                ->count();
+
+            $requirementsCompleteCount = LandTransferApplication::query()
+                ->whereIn('status', $activeStatuses)
+                ->whereIn('id', $completeRequirementApplicationIds())
+                ->count();
+        } else {
+            $incompleteRequirementsCount = 0;
+            $requirementsCompleteCount = $activeApplicationCount;
+        }
 
         $staleActiveCount = LandTransferApplication::query()
             ->whereIn('status', $activeStatuses)
             ->where('updated_at', '<', now()->subDays(7))
             ->count();
 
+        $attentionFilter = (string) $request->query('attention', '');
+        $allowedAttentionFilters = ['missing_requirements', 'requirements_complete', 'stale'];
+        if (! in_array($attentionFilter, $allowedAttentionFilters, true)) {
+            $attentionFilter = '';
+        }
+
         $attentionItems = [
             [
-                'label' => 'Oldest Legal Review',
-                'application' => $oldestPendingReview,
-                'empty' => 'No applications waiting for legal review.',
+                'key' => 'missing_requirements',
+                'label' => 'Incomplete Requirements',
+                'description' => 'Active applications with required entries still missing.',
+                'value' => $incompleteRequirementsCount,
+                'icon' => 'fa-file-circle-exclamation',
+                'action' => 'Review requirements',
+                'tone' => 'warning',
+                'href' => route('staff.dashboard', ['attention' => 'missing_requirements']),
             ],
             [
-                'label' => 'Oldest For Releasing',
-                'application' => $oldestForReleasing,
-                'empty' => 'No applications currently for releasing.',
+                'key' => 'requirements_complete',
+                'label' => 'Requirements Complete',
+                'description' => 'Required entries are encoded; continue the current stage review.',
+                'value' => $requirementsCompleteCount,
+                'icon' => 'fa-list-check',
+                'action' => 'View applications',
+                'tone' => 'success',
+                'href' => route('staff.dashboard', ['attention' => 'requirements_complete']),
+            ],
+            [
+                'key' => 'stale',
+                'label' => 'No Update for More Than 7 Days',
+                'description' => 'Active records that may require staff follow-up.',
+                'value' => $staleActiveCount,
+                'icon' => 'fa-clock-rotate-left',
+                'action' => 'Review follow-up',
+                'tone' => 'warning',
+                'href' => route('staff.dashboard', ['attention' => 'stale']),
             ],
         ];
+
+        $attentionFocusLabel = null;
+
+        if ($attentionFilter !== '') {
+            $attentionQuery = LandTransferApplication::query()
+                ->whereIn('status', $activeStatuses);
+
+            if ($attentionFilter === 'missing_requirements') {
+                if ($blockingRequirementTotal > 0) {
+                    $attentionQuery->whereNotIn('id', $completeRequirementApplicationIds());
+                } else {
+                    $attentionQuery->whereRaw('1 = 0');
+                }
+            } elseif ($attentionFilter === 'requirements_complete') {
+                if ($blockingRequirementTotal > 0) {
+                    $attentionQuery->whereIn('id', $completeRequirementApplicationIds());
+                }
+            } elseif ($attentionFilter === 'stale') {
+                $attentionQuery->where('updated_at', '<', now()->subDays(7));
+            }
+
+            $actionApplications = $attentionQuery
+                ->oldest('updated_at')
+                ->limit(12)
+                ->get();
+
+            $attentionFocusLabel = collect($attentionItems)
+                ->firstWhere('key', $attentionFilter)['label'] ?? null;
+        }
 
         return view('dashboards.staff', compact(
             'workQueue',
             'actionApplications',
             'todaySummary',
             'attentionItems',
-            'staleActiveCount'
+            'attentionFilter',
+            'attentionFocusLabel'
         ));
     }
 }
