@@ -9,6 +9,9 @@ on:
       - 'resources/css/**'
       - 'resources/js/**'
       - 'resources/views/**'
+      - 'tests/Feature/*Responsive*'
+      - 'tests/Feature/*MobilePortal*'
+      - 'tests/Feature/*Map*'
       - 'tests/e2e/**'
       - 'playwright.config.mjs'
       - '.github/workflows/responsive-e2e.yml'
@@ -78,20 +81,33 @@ jobs:
           php artisan migrate --force
           php artisan tinker --execute="\App\Models\User::query()->create(['name' => 'Responsive Test Staff', 'username' => 'responsive.staff', 'email' => 'responsive.staff@example.test', 'password' => 'ResponsiveTest321!', 'role' => 'staff', 'is_active' => true, 'must_change_password' => false]);"
 
+      - name: Run responsive feature regressions
+        run: |
+          php artisan test \
+            tests/Feature/ResponsiveUiFoundationTest.php \
+            tests/Feature/StaffMobilePortalNavigationTest.php \
+            tests/Feature/RoleMobilePortalNavigationTest.php \
+            tests/Feature/ApplicationReviewResponsiveHardeningTest.php \
+            tests/Feature/ParcelMapResponsiveHardeningTest.php \
+            tests/Feature/StaffParcelMapResilienceTest.php \
+            tests/Feature/LandownerMapUiCleanupTest.php
+
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '22'
           cache: npm
 
-      - name: Install frontend and Playwright dependencies
-        run: |
-          npm ci
-          npm install --no-save --package-lock=false @playwright/test@1.55.0
-          npx playwright install --with-deps chromium
+      - name: Install frontend dependencies
+        run: npm ci
 
       - name: Build frontend assets
         run: npm run build
+
+      - name: Install Playwright after build
+        run: |
+          npm install --no-save --package-lock=false @playwright/test@1.55.0
+          npx playwright install --with-deps chromium
 
       - name: Start Laravel test server
         run: |
