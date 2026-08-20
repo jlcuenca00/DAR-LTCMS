@@ -3,8 +3,8 @@
     "private": true,
     "type": "module",
     "scripts": {
-        "build": "vite build",
-        "dev": "vite"
+        "build": "npm install --no-save --package-lock=false leaflet@1.9.4 && vite build",
+        "dev": "npm install --no-save --package-lock=false leaflet@1.9.4 && vite"
     },
     "devDependencies": {
         "@tailwindcss/forms": "^0.5.2",
