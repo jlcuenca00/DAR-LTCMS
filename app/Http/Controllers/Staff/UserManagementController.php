@@ -24,15 +24,21 @@ class UserManagementController extends Controller
             'search' => ['nullable', 'string', 'max:255'],
         ]);
 
+        // Keep the operational list focused on accounts that can currently sign in.
+        // Inactive accounts remain preserved and are available through the dedicated tab.
+        $filters['status'] = $filters['status'] ?? 'active';
+
+        $accountCounts = [
+            'active' => User::query()->where('is_active', true)->count(),
+            'inactive' => User::query()->where('is_active', false)->count(),
+        ];
+
         $usersQuery = User::with('landowner')
+            ->where('is_active', $filters['status'] === 'active')
             ->latest();
 
         if (! empty($filters['role'])) {
             $usersQuery->where('role', $filters['role']);
-        }
-
-        if (! empty($filters['status'])) {
-            $usersQuery->where('is_active', $filters['status'] === 'active');
         }
 
         if (! empty($filters['search'])) {
@@ -47,7 +53,7 @@ class UserManagementController extends Controller
             ->paginate(15)
             ->withQueryString();
 
-        return view('staff.users.index', compact('users', 'filters'));
+        return view('staff.users.index', compact('users', 'filters', 'accountCounts'));
     }
 
     public function create()
