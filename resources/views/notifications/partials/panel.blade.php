@@ -8,7 +8,8 @@
         return match ((string) $type) {
             'application_created' => 'Application encoded',
             'application_submitted', 'application_status_updated' => 'Application status updated',
-            'application_approved', 'application_released' => 'Clearance released',
+            'application_approved' => 'Application approved',
+            'application_released' => 'Clearance released',
             'application_not_approved', 'application_denied' => 'Application denied',
             default => ucwords(str_replace('_', ' ', (string) $type)),
         };
@@ -21,15 +22,6 @@
             'NOT APPROVED' => 'DENIED',
             'not-approved' => 'denied',
             'Not-approved' => 'Denied',
-            'Approved Clearance' => 'Released Clearance',
-            'approved clearance' => 'released clearance',
-            'APPROVED CLEARANCE' => 'RELEASED CLEARANCE',
-            'Application approved' => 'Clearance released',
-            'application approved' => 'clearance released',
-            'APPLICATION APPROVED' => 'CLEARANCE RELEASED',
-            'approved' => 'released',
-            'Approved' => 'Released',
-            'APPROVED' => 'RELEASED',
         ]);
     };
 @endphp

@@ -1,0 +1,511 @@
+/* DAR-LTCMS unified UI/UX system.
+   Screen-only visual and interaction normalization layered after the existing
+   responsive hardening. No print/PDF or business-workflow semantics here. */
+
+@media screen {
+    :root {
+        --dar-brand-950: #0b3d22;
+        --dar-brand-900: #14532d;
+        --dar-brand-800: #166534;
+        --dar-brand-700: #15803d;
+        --dar-brand-100: #dcfce7;
+        --dar-brand-50: #f0fdf4;
+        --dar-ink: #0f172a;
+        --dar-text: #334155;
+        --dar-muted: #64748b;
+        --dar-line: #d8e0dc;
+        --dar-line-soft: #e8eeea;
+        --dar-surface: #ffffff;
+        --dar-surface-subtle: #f8faf9;
+        --dar-page: #f3f5f4;
+        --dar-danger: #b91c1c;
+        --dar-danger-bg: #fef2f2;
+        --dar-warning: #c2410c;
+        --dar-warning-bg: #fff7ed;
+        --dar-info: #1d4ed8;
+        --dar-info-bg: #eff6ff;
+        --dar-radius-control: 8px;
+        --dar-radius-panel: 12px;
+        --dar-radius-feature: 16px;
+        --dar-control-height: 44px;
+        --dar-shadow-panel: 0 1px 3px rgba(15, 23, 42, .07);
+        --dar-shadow-float: 0 18px 46px rgba(15, 23, 42, .16);
+    }
+
+    :where(.staff-shell, .lo-shell, .geo-shell) {
+        color: var(--dar-text);
+        background: var(--dar-page);
+    }
+
+    :where(.staff-shell, .lo-shell, .geo-shell) :where(p, li, td, dd, input, select, textarea) {
+        line-height: 1.5;
+    }
+
+    /* Readable, sentence-case field labels across legacy and newer pages. */
+    :where(.staff-shell, .lo-shell, .geo-shell) :where(
+        .field-label,
+        .staff-form-label,
+        .user-label,
+        .parcel-create-field > label,
+        .profile-label,
+        .review-panel label,
+        .staff-content-inner label
+    ) {
+        color: #334155 !important;
+        font-size: 13px !important;
+        font-weight: 750 !important;
+        line-height: 1.35 !important;
+        letter-spacing: 0 !important;
+        text-transform: none !important;
+    }
+
+    :where(.staff-shell, .lo-shell, .geo-shell) :where(
+        .field-help,
+        .parcel-create-helper,
+        .profile-panel-subtitle,
+        .user-card-copy,
+        .review-panel-subtitle,
+        .staff-panel-subtitle
+    ) {
+        color: var(--dar-muted) !important;
+        font-size: 12.5px !important;
+        line-height: 1.5 !important;
+    }
+
+    /* One control anatomy. Page-specific widths/layouts remain intact. */
+    :where(.staff-shell, .lo-shell, .geo-shell) :where(
+        .staff-input,
+        .staff-select,
+        .staff-textarea,
+        .user-input,
+        .user-select,
+        .parcel-create-input,
+        .profile-input,
+        .review-input,
+        input[type="text"],
+        input[type="email"],
+        input[type="password"],
+        input[type="number"],
+        input[type="date"],
+        input[type="search"],
+        input[type="tel"],
+        select,
+        textarea
+    ) {
+        border: 1px solid #b8c5be !important;
+        border-radius: var(--dar-radius-control) !important;
+        background: #ffffff;
+        color: var(--dar-ink);
+        font-size: 14px !important;
+        box-shadow: none !important;
+    }
+
+    :where(.staff-shell, .lo-shell, .geo-shell) :where(
+        .staff-input,
+        .staff-select,
+        .user-input,
+        .user-select,
+        .parcel-create-input:not(textarea),
+        .profile-input,
+        .review-input,
+        input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="hidden"]),
+        select
+    ) {
+        min-height: var(--dar-control-height) !important;
+    }
+
+    :where(.staff-shell, .lo-shell, .geo-shell) textarea {
+        min-height: 108px;
+        resize: vertical;
+    }
+
+    :where(.staff-shell, .lo-shell, .geo-shell) :where(input, select, textarea):focus {
+        border-color: var(--dar-brand-700) !important;
+        box-shadow: 0 0 0 3px rgba(21, 128, 61, .14) !important;
+        outline: none !important;
+    }
+
+    :where(.staff-shell, .lo-shell, .geo-shell) :where(input, select, textarea)[aria-invalid="true"] {
+        border-color: #dc2626 !important;
+        box-shadow: 0 0 0 2px rgba(220, 38, 38, .08) !important;
+    }
+
+    :where(.staff-shell, .lo-shell, .geo-shell) :where(input[readonly], textarea[readonly]) {
+        background: #f8fafc !important;
+        color: #475569 !important;
+    }
+
+    :where(.staff-shell, .lo-shell, .geo-shell) :where(input:disabled, select:disabled, textarea:disabled) {
+        opacity: 1;
+        background: #f1f5f9 !important;
+        color: #64748b !important;
+        cursor: not-allowed;
+    }
+
+    /* Consistent action hierarchy. */
+    :where(.staff-shell, .lo-shell, .geo-shell, .login-card, .auth-card) :where(
+        .staff-button,
+        .profile-button,
+        .hero-action,
+        .geo-dashboard-action,
+        .login-button,
+        button[type="submit"]
+    ) {
+        min-height: var(--dar-control-height);
+        border-radius: var(--dar-radius-control) !important;
+        font-size: 13px !important;
+        font-weight: 800 !important;
+        line-height: 1.2;
+    }
+
+    .staff-button-primary,
+    .profile-button:not(.secondary),
+    .login-button {
+        border-color: var(--dar-brand-800) !important;
+        background: var(--dar-brand-800) !important;
+        color: #ffffff !important;
+    }
+
+    .staff-button-primary:hover,
+    .profile-button:not(.secondary):hover,
+    .login-button:hover {
+        border-color: var(--dar-brand-950) !important;
+        background: var(--dar-brand-950) !important;
+    }
+
+    .staff-button-light,
+    .profile-button.secondary {
+        border-color: #cbd5e1 !important;
+        background: #ffffff !important;
+        color: #334155 !important;
+    }
+
+    .staff-button-light:hover,
+    .profile-button.secondary:hover {
+        border-color: #94a3b8 !important;
+        background: #f8fafc !important;
+    }
+
+    .staff-button-danger {
+        border-color: var(--dar-danger) !important;
+        background: var(--dar-danger) !important;
+        color: #fff !important;
+    }
+
+    /* Calm panel language: consistent radii and lighter elevation. */
+    :where(.staff-shell, .lo-shell, .geo-shell) :where(
+        .staff-panel,
+        .review-panel,
+        .lo-dashboard-panel,
+        .geo-dashboard-panel,
+        .dashboard-panel,
+        .parcel-create-card,
+        .parcel-create-note,
+        .parcel-create-save-card,
+        .user-card,
+        .notification-center-summary,
+        .notification-center-list
+    ) {
+        border-color: var(--dar-line) !important;
+        border-radius: var(--dar-radius-panel) !important;
+        box-shadow: var(--dar-shadow-panel) !important;
+    }
+
+    /* Keep feature/hero surfaces distinctive without oversized marketing treatment. */
+    :where(.dashboard-hero, .lo-dashboard-hero, .geo-dashboard-hero) {
+        border-radius: var(--dar-radius-feature) !important;
+        padding-block: clamp(18px, 2.2vw, 22px) !important;
+        box-shadow: 0 8px 22px rgba(15, 81, 50, .11) !important;
+    }
+
+    :where(.hero-title, .lo-dashboard-welcome, .geo-dashboard-title) {
+        font-size: clamp(24px, 2.4vw, 30px) !important;
+        line-height: 1.14 !important;
+    }
+
+    /* Status indicators: semantic color is always paired with visible text. */
+    :where(.staff-badge, .dashboard-status, .lo-status-badge, .geo-state-badge, .lo-state-badge, .lo-output-state) {
+        min-height: 28px;
+        align-items: center;
+        padding: 5px 9px !important;
+        font-size: 11px !important;
+        font-weight: 800 !important;
+        line-height: 1.25 !important;
+        letter-spacing: 0 !important;
+        text-transform: none !important;
+    }
+
+    /* Tables: keep data density, improve legibility. */
+    :where(.staff-table, .dashboard-table, .audit-table, .report-table, .no-responsive-table) th {
+        color: #526171 !important;
+        font-size: 11.5px !important;
+        line-height: 1.3 !important;
+        letter-spacing: .04em !important;
+    }
+
+    :where(.staff-table, .dashboard-table, .audit-table, .report-table, .no-responsive-table) td {
+        font-size: 13px !important;
+        line-height: 1.45 !important;
+    }
+
+    :where(.staff-table, .dashboard-table, .audit-table, .report-table) tbody tr:focus-within td {
+        background: var(--dar-brand-50);
+    }
+
+    /* Error/success feedback follows one visual contract. */
+    :where(.ui-error-summary, .review-alert-error, .error-box, [data-ui-alert="error"]) {
+        border: 1px solid #fecaca !important;
+        border-left: 4px solid #dc2626 !important;
+        border-radius: 10px !important;
+        background: var(--dar-danger-bg) !important;
+        color: #991b1b !important;
+    }
+
+    :where(.ui-status-message, .review-alert-success, [data-ui-alert="success"]) {
+        border: 1px solid #bbf7d0 !important;
+        border-left: 4px solid #16a34a !important;
+        border-radius: 10px !important;
+        background: var(--dar-brand-50) !important;
+        color: var(--dar-brand-900) !important;
+    }
+
+    .ui-field-error {
+        margin: 6px 0 0;
+        color: #b91c1c;
+        font-size: 12.5px;
+        font-weight: 750;
+        line-height: 1.4;
+    }
+
+    /* Progressive disclosure generated by ui-ux-system.js. */
+    .ui-conditional-field[hidden] {
+        display: none !important;
+    }
+
+    .ui-radio-group {
+        min-width: 0;
+        margin: 0;
+        padding: 0;
+        border: 0;
+    }
+
+    .ui-radio-group legend {
+        width: 100%;
+        margin-bottom: 7px;
+        color: #334155;
+        font-size: 13px;
+        font-weight: 750;
+    }
+
+    .ui-radio-options {
+        display: grid;
+        gap: 8px;
+    }
+
+    .ui-radio-option {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-height: 44px;
+        padding: 9px 11px;
+        border: 1px solid #cbd5e1;
+        border-radius: 9px;
+        background: #fff;
+        color: #334155;
+        cursor: pointer;
+    }
+
+    .ui-radio-option:hover {
+        border-color: #86efac;
+        background: #fbfefc;
+    }
+
+    .ui-radio-option:has(input:checked) {
+        border-color: var(--dar-brand-700);
+        background: var(--dar-brand-50);
+        color: var(--dar-brand-900);
+    }
+
+    .ui-radio-option input[type="radio"] {
+        width: 20px;
+        height: 20px;
+        margin: 0;
+        accent-color: var(--dar-brand-700);
+    }
+
+    .ui-native-select-fallback[hidden] {
+        display: none !important;
+    }
+
+    /* Application intake orientation without turning staff encoding into a wizard. */
+    .ui-section-nav {
+        position: sticky;
+        top: calc(var(--dar-safe-top, 0px) + 82px);
+        z-index: 8;
+        display: flex;
+        gap: 6px;
+        max-width: 100%;
+        overflow-x: auto;
+        padding: 9px;
+        border: 1px solid var(--dar-line);
+        border-radius: 11px;
+        background: rgba(255, 255, 255, .96);
+        box-shadow: 0 6px 20px rgba(15, 23, 42, .06);
+        scrollbar-width: thin;
+    }
+
+    .ui-section-nav a {
+        flex: 0 0 auto;
+        display: inline-flex;
+        align-items: center;
+        min-height: 36px;
+        padding: 0 11px;
+        border-radius: 8px;
+        color: #475569;
+        text-decoration: none;
+        font-size: 12px;
+        font-weight: 800;
+        white-space: nowrap;
+    }
+
+    .ui-section-nav a:hover,
+    .ui-section-nav a:focus-visible {
+        background: var(--dar-brand-50);
+        color: var(--dar-brand-900);
+    }
+
+    .application-create-page .form-section {
+        scroll-margin-top: 150px;
+    }
+
+    /* Repeatable records should feel like form groups, not separate mini-apps. */
+    .application-create-page :where(.subsection-card, .repeatable-item) {
+        border-radius: 10px !important;
+        box-shadow: none !important;
+    }
+
+    .application-create-page .subsection-card {
+        background: #fbfcfb !important;
+    }
+
+    .application-create-page .repeatable-item {
+        border-color: #dfe6e2 !important;
+    }
+
+    .application-create-page :where(.mini-add, .mini-remove) {
+        min-height: 40px;
+        border-radius: 8px !important;
+        font-size: 12px !important;
+        font-weight: 800 !important;
+    }
+
+    /* User editor: reserve cards for meaningful sections and make controls quieter. */
+    .user-editor-summary {
+        border-radius: var(--dar-radius-panel) !important;
+        box-shadow: var(--dar-shadow-panel) !important;
+    }
+
+    .user-card-icon,
+    .user-editor-avatar {
+        border-radius: 10px !important;
+    }
+
+    .user-disclosure summary {
+        min-height: 44px;
+    }
+
+    /* Notification center: explicit state actions, calmer hierarchy. */
+    .notification-center-item {
+        transition: background-color 120ms ease;
+    }
+
+    .notification-center-actions :where(a, button) {
+        min-height: 40px !important;
+        border-radius: 8px !important;
+        font-size: 12px !important;
+        font-weight: 800 !important;
+    }
+
+    /* Login: conventional checkboxes and calmer government-service styling. */
+    .login-card {
+        border-radius: 12px !important;
+        box-shadow: 0 18px 52px rgba(15, 23, 42, .13) !important;
+    }
+
+    .login-title {
+        letter-spacing: .09em !important;
+    }
+
+    .remember-control {
+        width: 18px !important;
+        height: 18px !important;
+        border-radius: 4px !important;
+    }
+
+    .remember-control::after {
+        width: 8px !important;
+        height: 5px !important;
+        border: solid #ffffff;
+        border-width: 0 0 2px 2px;
+        border-radius: 0 !important;
+        background: transparent !important;
+        transform: rotate(-45deg) scale(0) !important;
+    }
+
+    .remember-checkbox:checked + .remember-control::after {
+        transform: rotate(-45deg) scale(1) !important;
+    }
+
+    /* Read-only/finalized areas should look intentional, not broken. */
+    .ui-locked-state {
+        display: grid;
+        gap: 5px;
+        padding: 13px 14px;
+        border: 1px solid #cbd5e1;
+        border-radius: 10px;
+        background: #f8fafc;
+        color: #334155;
+    }
+
+    .ui-locked-state strong {
+        color: #0f172a;
+        font-size: 13px;
+    }
+
+    .ui-locked-state span {
+        color: #64748b;
+        font-size: 12px;
+        line-height: 1.45;
+    }
+
+    @media (max-width: 1100px) {
+        .ui-section-nav {
+            top: calc(var(--dar-mobile-header-offset, 122px) + var(--dar-safe-top, 0px) + 6px);
+        }
+    }
+
+    @media (max-width: 760px) {
+        :where(.dashboard-hero, .lo-dashboard-hero, .geo-dashboard-hero) {
+            padding-inline: 16px !important;
+        }
+
+        .ui-section-nav {
+            margin-inline: -2px;
+        }
+    }
+
+    @media (pointer: coarse) {
+        .ui-radio-option,
+        .ui-section-nav a,
+        .application-create-page :where(.mini-add, .mini-remove) {
+            min-height: 48px;
+        }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .notification-center-item,
+        .ui-radio-option {
+            transition: none !important;
+        }
+    }
+}
