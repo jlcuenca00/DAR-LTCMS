@@ -16,8 +16,8 @@
             gap: 20px;
         }
         .geo-map-editor-kicker { margin: 0; color: var(--geo-green-800); font-size: 10px; font-weight: 900; letter-spacing: .15em; text-transform: uppercase; }
-        .geo-map-editor-title { margin: 7px 0 0; color: var(--geo-ink); font-size: 28px; line-height: 1.1; font-weight: 900; }
-        .geo-map-editor-copy { margin: 8px 0 0; color: var(--geo-muted); font-size: 12px; line-height: 1.55; }
+        .geo-map-editor-title { margin: 7px 0 0; color: var(--geo-ink); font-size: 28px; line-height: 1.1; font-weight: 900; overflow-wrap: anywhere; }
+        .geo-map-editor-copy { margin: 8px 0 0; color: var(--geo-muted); font-size: 12px; line-height: 1.55; overflow-wrap: anywhere; }
         .geo-map-editor-status {
             display: inline-flex;
             align-items: center;
@@ -32,10 +32,11 @@
             white-space: nowrap;
         }
         .geo-map-editor-grid { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(320px, .65fr); gap: 18px; align-items: start; }
+        .geo-map-editor-grid > * { min-width: 0; }
         .geo-map-editor-panel-header { padding: 17px 20px 14px; border-bottom: 1px solid #e8eeea; }
         .geo-map-editor-panel-title { margin: 0; color: var(--geo-ink); font-size: 16px; font-weight: 900; }
         .geo-map-editor-panel-copy { margin: 4px 0 0; color: var(--geo-muted); font-size: 11px; line-height: 1.5; }
-        .geo-map-editor-panel-body { padding: 18px 20px 20px; }
+        .geo-map-editor-panel-body { padding: 18px 20px 20px; min-width: 0; }
         .geo-map-editor-note {
             margin-top: 12px;
             padding: 12px 13px;
@@ -52,7 +53,7 @@
             align-items: center;
             justify-content: center;
             gap: 8px;
-            min-height: 42px;
+            min-height: 44px;
             padding: 0 14px;
             border-radius: 9px;
             border: 1px solid var(--geo-green-800);
@@ -62,13 +63,14 @@
             font-size: 11px;
             font-weight: 900;
             cursor: pointer;
+            touch-action: manipulation;
         }
         .geo-map-editor-button.secondary { background: #ffffff; color: var(--geo-green-900); border-color: #cfd8d2; }
         .geo-map-editor-info { display: grid; }
-        .geo-map-editor-info-row { padding: 11px 0; border-bottom: 1px solid #edf1ee; }
+        .geo-map-editor-info-row { padding: 11px 0; border-bottom: 1px solid #edf1ee; min-width: 0; }
         .geo-map-editor-info-row:last-child { border-bottom: 0; }
         .geo-map-editor-info-label { color: #667085; font-size: 9px; font-weight: 900; letter-spacing: .09em; text-transform: uppercase; }
-        .geo-map-editor-info-value { margin-top: 4px; color: #1f2937; font-size: 12px; font-weight: 800; line-height: 1.45; }
+        .geo-map-editor-info-value { margin-top: 4px; color: #1f2937; font-size: 12px; font-weight: 800; line-height: 1.45; overflow-wrap: anywhere; }
         .geo-map-editor-scope {
             margin-top: 14px;
             padding: 13px;
@@ -84,12 +86,22 @@
         .geo-map-editor-panel .geojson-helper { border: 0; padding: 0; background: transparent; }
         .geo-map-editor-panel .geojson-textarea-wrap textarea { min-height: 120px; resize: vertical; }
 
-        @media (max-width: 960px) {
+        @media (pointer: coarse) {
+            .geo-map-editor-button { min-height: 48px; }
+        }
+
+        @media (max-width: 1100px) {
             .geo-map-editor-grid { grid-template-columns: 1fr; }
         }
+
         @media (max-width: 640px) {
-            .geo-map-editor-hero { flex-direction: column; padding: 19px; }
-            .geo-map-editor-panel-body { padding: 16px; }
+            .geo-map-editor-hero { flex-direction: column; padding: 18px 16px; }
+            .geo-map-editor-title { font-size: clamp(22px, 8vw, 28px); }
+            .geo-map-editor-status { white-space: normal; }
+            .geo-map-editor-panel-header,
+            .geo-map-editor-panel-body { padding-left: 16px; padding-right: 16px; }
+            .geo-map-editor-actions { display: grid; grid-template-columns: 1fr; }
+            .geo-map-editor-button { width: 100%; }
         }
     </style>
 

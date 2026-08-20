@@ -1,0 +1,84 @@
+/* DAR-LTCMS responsive hardening: final verified edge-case overrides.
+   Screen-only; no print/PDF behavior is changed. */
+
+@media screen {
+    /* Keyboard users must always see the skip target immediately after Tab.
+       Avoid animating from the off-screen resting position through an unusable
+       intermediate position. */
+    html body .skip-link {
+        transition: none !important;
+    }
+
+    html body .skip-link:focus,
+    html body .skip-link:focus-visible {
+        top: max(12px, env(safe-area-inset-top, 0px)) !important;
+        z-index: 9999 !important;
+    }
+}
+
+@media screen and (max-width: 390px) {
+    /* Source Records has two intrinsically wide tab labels. At the 320px
+       baseline they become a one-column control instead of widening body. */
+    html body .source-page,
+    html body .source-page > *,
+    html body .source-toolbar,
+    html body .source-toolbar > *,
+    html body .source-toolbar-actions,
+    html body .source-mode-tabs,
+    html body .source-view-card,
+    html body .source-view-header,
+    html body .source-package-list,
+    html body .source-package-row {
+        min-width: 0 !important;
+        max-width: 100% !important;
+    }
+
+    html body .source-mode-tabs {
+        width: 100% !important;
+        display: grid !important;
+        grid-template-columns: minmax(0, 1fr) !important;
+        gap: 6px !important;
+    }
+
+    html body .source-mode-tab {
+        width: 100% !important;
+        min-width: 0 !important;
+        white-space: normal !important;
+        overflow-wrap: anywhere !important;
+        text-align: center !important;
+    }
+
+    html body .source-toolbar-actions,
+    html body .source-filter-actions {
+        width: 100% !important;
+        display: grid !important;
+        grid-template-columns: minmax(0, 1fr) !important;
+    }
+
+    html body .source-toolbar-actions .staff-button,
+    html body .source-filter-actions .staff-button {
+        width: 100% !important;
+        min-width: 0 !important;
+    }
+
+    html body .source-view-header {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+    }
+
+    html body .source-view-count {
+        max-width: 100% !important;
+        white-space: normal !important;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    /* Chromium reports 0.001ms as 1e-06s. Make the canonical portal controls
+       explicitly transition-free so the behavior and computed value are exact. */
+    html body .dar-mobile-portal-nav-item,
+    html body .dar-mobile-portal-more > summary,
+    html body .dar-mobile-portal-more-link {
+        transition-duration: 0s !important;
+        animation-duration: 0s !important;
+    }
+}

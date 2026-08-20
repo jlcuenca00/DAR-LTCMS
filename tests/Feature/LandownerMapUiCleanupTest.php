@@ -15,15 +15,17 @@ class LandownerMapUiCleanupTest extends TestCase
         $this->assertStringNotContainsString('lo-legend-list', $view);
     }
 
-    public function test_landowner_mobile_context_controls_are_compact(): void
+    public function test_landowner_mobile_context_is_governed_by_canonical_responsive_contract(): void
     {
         $bootstrap = file_get_contents(resource_path('js/bootstrap.js'));
-        $css = file_get_contents(resource_path('css/landowner-mobile-context-compact.css'));
+        $script = file_get_contents(resource_path('js/responsive-hardening.js'));
+        $css = file_get_contents(resource_path('css/responsive-hardening.css'));
 
-        $this->assertStringContainsString("import '../css/landowner-mobile-context-compact.css';", $bootstrap);
+        $this->assertStringContainsString("import './responsive-hardening';", $bootstrap);
+        $this->assertStringNotContainsString("import '../css/landowner-mobile-context-compact.css';", $bootstrap);
+        $this->assertStringContainsString("key: 'landowner'", $script);
+        $this->assertStringContainsString('.dar-mobile-portal-nav.landowner', $css);
+        $this->assertStringContainsString('--dar-touch-target: 44px;', $css);
         $this->assertStringContainsString('@media screen and (max-width: 1100px)', $css);
-        $this->assertStringContainsString('.lo-topbar-right .onboarding-help-button', $css);
-        $this->assertStringContainsString('.lo-topbar-right .lo-access-chip', $css);
-        $this->assertStringContainsString('height: 34px !important;', $css);
     }
 }

@@ -1,0 +1,1091 @@
+/* DAR-LTCMS responsive hardening contract
+   Screen-only. Print/PDF templates are intentionally excluded.
+   Targets: 320px reflow, safe-area/dynamic-viewport support, predictable
+   1100px portal breakpoint, touch-safe controls, bounded overlays, and
+   local scrolling only for genuine two-dimensional content. */
+
+@media screen {
+    :root {
+        --dar-responsive-breakpoint: 1100px;
+        --dar-phone-gutter: 16px;
+        --dar-tablet-gutter: 22px;
+        --dar-touch-target: 44px;
+        --dar-touch-target-coarse: 48px;
+        --dar-mobile-header-offset: 122px;
+        --dar-safe-top: env(safe-area-inset-top, 0px);
+        --dar-safe-right: env(safe-area-inset-right, 0px);
+        --dar-safe-bottom: env(safe-area-inset-bottom, 0px);
+        --dar-safe-left: env(safe-area-inset-left, 0px);
+    }
+
+    html,
+    body {
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+        overflow-x: clip;
+    }
+
+    @supports not (overflow: clip) {
+        html,
+        body {
+            overflow-x: hidden;
+        }
+    }
+
+    body {
+        min-height: 100vh;
+        min-height: 100dvh;
+    }
+
+    img,
+    svg,
+    video,
+    canvas,
+    iframe {
+        max-width: 100%;
+    }
+
+    :where(.staff-shell, .lo-shell, .geo-shell) :where(main, section, article, aside, header, footer, form, fieldset, div) {
+        min-width: 0;
+    }
+
+    :where(.staff-shell, .lo-shell, .geo-shell) :where(h1, h2, h3, h4, h5, h6, p, span, strong, a, td, th, dd, dt, label) {
+        overflow-wrap: anywhere;
+    }
+
+    :where(.staff-shell, .lo-shell, .geo-shell) :where(input, select, textarea, button) {
+        max-width: 100%;
+    }
+
+    :where(.staff-shell, .lo-shell, .geo-shell) :where(button, summary, a, input, select, textarea):focus-visible,
+    :where(.login-page, .auth-page, .page > .card) :where(button, summary, a, input, select, textarea):focus-visible {
+        outline: 3px solid rgba(21, 128, 61, .42) !important;
+        outline-offset: 2px !important;
+    }
+
+    :where(.staff-shell, .lo-shell, .geo-shell) :where(h1, h2, h3, h4, [id], input, select, textarea, button, summary, a) {
+        scroll-margin-top: calc(var(--dar-mobile-header-offset) + var(--dar-safe-top) + 12px);
+    }
+
+    :where(.staff-shell, .lo-shell, .geo-shell) :where(.staff-button, .lo-button, .geo-button, button, summary) {
+        touch-action: manipulation;
+    }
+
+    /* Auth views must remain scrollable when text is enlarged or the software keyboard opens. */
+    body:has(.login-page),
+    body:has(.auth-page),
+    body:has(.page > .card) {
+        min-height: 100dvh !important;
+        overflow-x: hidden !important;
+        overflow-y: auto !important;
+    }
+
+    .login-page,
+    .auth-page,
+    .page:has(> .card) {
+        width: 100%;
+        min-width: 0;
+        min-height: 100dvh !important;
+    }
+
+    .login-content,
+    .auth-content,
+    .page > .card {
+        min-width: 0;
+        max-width: min(100%, 500px) !important;
+    }
+
+    .login-card,
+    .auth-card,
+    .page > .card {
+        max-width: 100%;
+    }
+
+    /* Genuine two-dimensional regions scroll locally, never the page. */
+    :where(.staff-table-wrap, .report-table-wrap, .table-wrap, .source-table-wrap, .timeline-table-wrap, .responsive-local-scroll):has(.no-responsive-table),
+    :where(.staff-table-wrap, .report-table-wrap, .table-wrap, .source-table-wrap, .timeline-table-wrap).responsive-local-scroll {
+        max-width: 100%;
+        overflow-x: auto !important;
+        overscroll-behavior-inline: contain;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-gutter: stable;
+    }
+
+    :where(.staff-shell, .lo-shell, .geo-shell) .no-responsive-table {
+        width: max-content;
+        max-width: none;
+    }
+
+    .responsive-scroll-hint {
+        display: none;
+        margin: 0 0 8px;
+        color: #64748b;
+        font-size: 11px;
+        font-weight: 800;
+        line-height: 1.4;
+    }
+
+    /* Maps remain two-dimensional, but their surrounding page must reflow. */
+    :where(.staff-shell, .lo-shell, .geo-shell) :where(.leaflet-container, #map, #parcel-map, [id$="-map"], [id*="parcel-map"]) {
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+
+    :where(.staff-shell, .lo-shell, .geo-shell) .leaflet-control a {
+        min-width: var(--dar-touch-target);
+        min-height: var(--dar-touch-target);
+        display: grid;
+        place-items: center;
+        line-height: 1 !important;
+    }
+
+    :where(.staff-shell, .lo-shell, .geo-shell) .leaflet-popup-content-wrapper {
+        max-width: min(320px, calc(100vw - 40px));
+    }
+
+    :where(.staff-shell, .lo-shell, .geo-shell) .leaflet-popup-content {
+        max-width: min(280px, calc(100vw - 72px));
+        overflow-wrap: anywhere;
+    }
+
+    /* Overlay contract: bounded to the dynamic viewport and safe areas. */
+    :where(.notification-dropdown-panel, .account-menu-panel, .decision-modal-card, .workflow-modal-card, .profile-crop-dialog, [role="dialog"]) {
+        max-width: calc(100vw - var(--dar-safe-left) - var(--dar-safe-right) - 24px) !important;
+    }
+
+    :where(.decision-modal-backdrop, .workflow-modal-backdrop, .profile-crop-modal) {
+        padding-top: max(12px, var(--dar-safe-top)) !important;
+        padding-right: max(12px, var(--dar-safe-right)) !important;
+        padding-bottom: max(12px, var(--dar-safe-bottom)) !important;
+        padding-left: max(12px, var(--dar-safe-left)) !important;
+    }
+
+    :where(.decision-modal-card, .workflow-modal-card, .profile-crop-dialog) {
+        max-height: calc(100dvh - var(--dar-safe-top) - var(--dar-safe-bottom) - 24px) !important;
+    }
+
+    .profile-crop-dialog {
+        max-height: calc(100dvh - var(--dar-safe-top) - var(--dar-safe-bottom) - 24px) !important;
+    }
+
+    .profile-crop-close {
+        width: var(--dar-touch-target) !important;
+        height: var(--dar-touch-target) !important;
+        min-width: var(--dar-touch-target) !important;
+        min-height: var(--dar-touch-target) !important;
+    }
+
+    /* New canonical mobile portal navigation. It is progressive enhancement:
+       sidebars are hidden only after JS successfully creates the replacement. */
+    .dar-mobile-portal-header {
+        display: none;
+    }
+
+    .dar-mobile-portal-brand,
+    .dar-mobile-portal-nav-item,
+    .dar-mobile-portal-more-link {
+        text-decoration: none;
+    }
+
+    .dar-legacy-responsive-sentinel {
+        display: none !important;
+    }
+}
+
+/* Coarse pointers get larger common controls without assuming every narrow screen is touch. */
+@media (pointer: coarse) {
+    :where(.staff-shell, .lo-shell, .geo-shell, .login-card, .auth-card, .page > .card) :where(
+        .staff-button,
+        .lo-button,
+        .geo-button,
+        .account-menu-trigger,
+        .account-admin-link,
+        .notification-bell-link,
+        .geo-mapping-queue-action,
+        .geo-geometry-edit-link,
+        .requirement-group-toggle,
+        .details-summary,
+        button,
+        summary
+    ) {
+        min-height: var(--dar-touch-target-coarse) !important;
+    }
+
+    :where(.staff-shell, .lo-shell, .geo-shell) :where(input:not([type="checkbox"]):not([type="radio"]), select, textarea) {
+        min-height: var(--dar-touch-target-coarse) !important;
+    }
+
+    :where(.staff-shell, .lo-shell, .geo-shell) :where(input[type="checkbox"], input[type="radio"]) {
+        min-width: 24px;
+        min-height: 24px;
+    }
+
+    :where(.staff-shell, .lo-shell, .geo-shell) label:has(> input[type="checkbox"]),
+    :where(.staff-shell, .lo-shell, .geo-shell) label:has(> input[type="radio"]) {
+        min-height: var(--dar-touch-target-coarse);
+    }
+
+    :where(.staff-shell, .lo-shell, .geo-shell) .leaflet-control a {
+        min-width: var(--dar-touch-target-coarse) !important;
+        min-height: var(--dar-touch-target-coarse) !important;
+    }
+}
+
+/* ---------- Tablet / compact desktop ---------- */
+@media screen and (max-width: 1100px) {
+    :root {
+        --dar-mobile-header-offset: 122px;
+    }
+
+    html body :is(.staff-shell, .lo-shell, .geo-shell) {
+        display: block !important;
+        grid-template-columns: 1fr !important;
+        width: 100% !important;
+        min-width: 0 !important;
+        min-height: 100dvh;
+    }
+
+    /* Fallback remains available when JS does not initialize. */
+    html body :is(.staff-shell, .lo-shell, .geo-shell):not(.dar-responsive-ready) :is(.staff-sidebar, .lo-sidebar, .geo-sidebar) {
+        position: static !important;
+        width: 100% !important;
+        height: auto !important;
+        max-height: none !important;
+    }
+
+    html body :is(.staff-shell, .lo-shell, .geo-shell):not(.dar-responsive-ready) :is(.staff-side-section, .lo-side-section, .geo-side-section) {
+        display: block !important;
+    }
+
+    html body :is(.staff-shell, .lo-shell, .geo-shell).dar-responsive-ready > :is(.staff-sidebar, .lo-sidebar, .geo-sidebar) {
+        display: none !important;
+    }
+
+    html body .dar-mobile-portal-header {
+        position: sticky;
+        top: 0;
+        z-index: 1500;
+        display: block;
+        width: 100%;
+        padding-top: var(--dar-safe-top);
+        background: #ffffff;
+        border-bottom: 1px solid #d9dee5;
+        box-shadow: 0 5px 18px rgba(15, 23, 42, .10);
+        isolation: isolate;
+    }
+
+    .dar-mobile-portal-top {
+        min-height: 62px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 8px max(var(--dar-phone-gutter), var(--dar-safe-right)) 8px max(var(--dar-phone-gutter), var(--dar-safe-left));
+        background: #ffffff;
+    }
+
+    .dar-mobile-portal-brand {
+        min-width: 0;
+        flex: 1 1 auto;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        color: inherit;
+    }
+
+    .dar-mobile-portal-brand-mark {
+        width: 38px !important;
+        height: 38px !important;
+        flex: 0 0 38px !important;
+        padding: 5px !important;
+        border: 1px solid #dcfce7 !important;
+        border-radius: 10px !important;
+        background: #ffffff !important;
+        box-shadow: none !important;
+    }
+
+    .dar-mobile-portal-brand-copy {
+        min-width: 0;
+        display: grid;
+        gap: 1px;
+        line-height: 1.1;
+    }
+
+    .dar-mobile-portal-brand-copy strong,
+    .dar-mobile-portal-brand-copy small {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .dar-mobile-portal-brand-copy strong {
+        color: #14532d;
+        font-size: 14px;
+        font-weight: 900;
+    }
+
+    .dar-mobile-portal-brand-copy small {
+        color: #64748b;
+        font-size: 10px;
+        font-weight: 700;
+    }
+
+    .dar-mobile-portal-actions {
+        position: relative;
+        z-index: 1610;
+        flex: 0 0 auto;
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 8px;
+    }
+
+    .dar-mobile-portal-actions :is(.notification-dropdown, .account-topbar-cluster, .account-menu) {
+        position: relative !important;
+        width: auto !important;
+        min-width: 0 !important;
+        flex: 0 0 auto !important;
+    }
+
+    .dar-mobile-portal-actions :is(.notification-bell-link, .account-menu-trigger) {
+        width: var(--dar-touch-target) !important;
+        min-width: var(--dar-touch-target) !important;
+        height: var(--dar-touch-target) !important;
+        min-height: var(--dar-touch-target) !important;
+        box-sizing: border-box !important;
+    }
+
+    .dar-mobile-portal-actions .account-menu-trigger {
+        justify-content: center !important;
+        gap: 0 !important;
+        padding: 5px !important;
+        border-radius: 999px !important;
+    }
+
+    .dar-mobile-portal-actions :is(.account-menu-name, .account-menu-chevron, .account-admin-link) {
+        display: none !important;
+    }
+
+    .dar-mobile-portal-actions .account-menu-avatar {
+        width: 32px !important;
+        height: 32px !important;
+        flex: 0 0 32px !important;
+    }
+
+    .dar-mobile-portal-nav {
+        position: relative;
+        z-index: 1510;
+        display: grid;
+        width: 100%;
+        min-height: 58px;
+        border-top: 1px solid #eef2f0;
+        background: #ffffff;
+        padding-right: var(--dar-safe-right);
+        padding-left: var(--dar-safe-left);
+    }
+
+    .dar-mobile-portal-nav.staff {
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+    }
+
+    .dar-mobile-portal-nav.landowner {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .dar-mobile-portal-nav.geodetic {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .dar-mobile-portal-nav-item,
+    .dar-mobile-portal-more > summary {
+        position: relative;
+        min-width: 0;
+        min-height: 58px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 5px;
+        padding: 6px 4px 5px;
+        border: 0;
+        border-radius: 0;
+        background: transparent;
+        color: #64748b;
+        text-align: center;
+        list-style: none;
+        cursor: pointer;
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    .dar-mobile-portal-more > summary::-webkit-details-marker {
+        display: none;
+    }
+
+    .dar-mobile-portal-nav-item:hover,
+    .dar-mobile-portal-nav-item:focus-visible,
+    .dar-mobile-portal-more > summary:hover,
+    .dar-mobile-portal-more > summary:focus-visible {
+        background: #f8faf9;
+        color: #166534;
+    }
+
+    .dar-mobile-portal-nav-item i,
+    .dar-mobile-portal-more > summary i {
+        font-size: 17px;
+        line-height: 1;
+    }
+
+    .dar-mobile-portal-nav-item > span,
+    .dar-mobile-portal-more > summary > span {
+        max-width: 100%;
+        overflow: hidden;
+        font-size: 9.5px;
+        font-weight: 800;
+        line-height: 1.15;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .dar-mobile-portal-nav-item.is-active,
+    .dar-mobile-portal-more > summary.is-active {
+        color: #15803d;
+        background: #fbfefc;
+    }
+
+    .dar-mobile-portal-nav-item.is-active::after,
+    .dar-mobile-portal-more > summary.is-active::after {
+        content: '';
+        position: absolute;
+        right: 14%;
+        bottom: 0;
+        left: 14%;
+        height: 3px;
+        border-radius: 999px 999px 0 0;
+        background: #15803d;
+    }
+
+    .dar-mobile-portal-more {
+        position: relative;
+        min-width: 0;
+    }
+
+    .dar-mobile-portal-more-panel {
+        position: fixed;
+        top: calc(var(--dar-safe-top) + 120px);
+        right: max(10px, var(--dar-safe-right));
+        left: max(10px, var(--dar-safe-left));
+        z-index: 1760;
+        max-height: calc(100dvh - var(--dar-safe-top) - var(--dar-safe-bottom) - 140px);
+        overflow-y: auto;
+        border: 1px solid #d9dee5;
+        border-radius: 14px;
+        background: #ffffff;
+        box-shadow: 0 24px 60px rgba(15, 23, 42, .20);
+    }
+
+    .dar-mobile-portal-more-title {
+        display: grid;
+        gap: 2px;
+        padding: 14px 16px;
+        border-bottom: 1px solid #eef2f0;
+    }
+
+    .dar-mobile-portal-more-title strong {
+        color: #0f172a;
+        font-size: 14px;
+        font-weight: 900;
+    }
+
+    .dar-mobile-portal-more-title span {
+        color: #64748b;
+        font-size: 11px;
+        font-weight: 700;
+    }
+
+    .dar-mobile-portal-more-list {
+        display: grid;
+        padding: 6px;
+    }
+
+    .dar-mobile-portal-more-link {
+        min-height: var(--dar-touch-target);
+        display: grid;
+        grid-template-columns: 36px minmax(0, 1fr) auto;
+        gap: 10px;
+        align-items: center;
+        padding: 8px 10px;
+        border-radius: 9px;
+        color: #334155;
+        font-size: 13px;
+        font-weight: 850;
+    }
+
+    .dar-mobile-portal-more-link:hover,
+    .dar-mobile-portal-more-link:focus-visible,
+    .dar-mobile-portal-more-link.is-active {
+        background: #f0fdf4;
+        color: #14532d;
+    }
+
+    /* Original account/notification controls stay in the DOM as desktop/context fallback,
+       but clones in the mobile header are the mobile controls. */
+    html body :is(.staff-shell, .lo-shell, .geo-shell).dar-responsive-ready :is(.staff-topbar-actions, .lo-topbar-right, .geo-topbar-right) > :is(.notification-dropdown, .account-topbar-cluster) {
+        display: none !important;
+    }
+
+    html body :is(.lo-topbar, .geo-topbar) {
+        position: static !important;
+        z-index: 1 !important;
+        min-height: auto !important;
+        width: 100% !important;
+        align-items: flex-start !important;
+        flex-direction: column !important;
+        gap: 9px !important;
+        padding: 12px var(--dar-tablet-gutter) 9px !important;
+        border-bottom: 0 !important;
+        background: #f3f5f4 !important;
+        box-shadow: none !important;
+    }
+
+    html body .staff-topbar {
+        position: static !important;
+        z-index: 1 !important;
+        width: 100% !important;
+        min-height: auto !important;
+        padding: 12px var(--dar-tablet-gutter) 9px !important;
+        border-bottom: 0 !important;
+        background: #f3f4f6 !important;
+        box-shadow: none !important;
+    }
+
+    html body :is(.staff-topbar-actions, .lo-topbar-right, .geo-topbar-right) {
+        width: 100% !important;
+        min-width: 0 !important;
+        justify-content: flex-start !important;
+        align-items: center !important;
+        gap: 8px !important;
+        flex-wrap: wrap !important;
+    }
+
+    html body :is(.staff-content, .lo-content, .geo-content) {
+        width: 100% !important;
+        min-width: 0 !important;
+        padding-left: var(--dar-tablet-gutter) !important;
+        padding-right: var(--dar-tablet-gutter) !important;
+    }
+
+    html body .dar-mobile-portal-header .notification-dropdown-panel,
+    html body .dar-mobile-portal-header .account-menu-panel {
+        position: fixed !important;
+        top: calc(var(--dar-safe-top) + 64px) !important;
+        right: max(12px, var(--dar-safe-right)) !important;
+        left: auto !important;
+        bottom: auto !important;
+        z-index: 1770 !important;
+        max-height: calc(100dvh - var(--dar-safe-top) - var(--dar-safe-bottom) - 78px) !important;
+        overflow-y: auto !important;
+        overscroll-behavior: contain;
+    }
+
+    html body .dar-mobile-portal-header .notification-dropdown-panel {
+        width: min(380px, calc(100vw - var(--dar-safe-left) - var(--dar-safe-right) - 24px)) !important;
+    }
+
+    html body .dar-mobile-portal-header .account-menu-panel {
+        width: min(360px, calc(100vw - var(--dar-safe-left) - var(--dar-safe-right) - 24px)) !important;
+    }
+
+    /* Consistent tablet reflow. */
+    :where(.staff-shell, .lo-shell, .geo-shell) :where(
+        .lo-dashboard-hero,
+        .geo-dashboard-hero,
+        .lo-map-layout,
+        .geo-map-layout,
+        .geo-map-editor-grid,
+        .review-grid
+    ) {
+        grid-template-columns: 1fr !important;
+    }
+
+    :where(.staff-shell, .lo-shell, .geo-shell) :where(.staff-button, .lo-button, .geo-button) {
+        min-height: var(--dar-touch-target) !important;
+    }
+
+    .geo-mapping-queue-action,
+    .geo-geometry-edit-link,
+    .requirement-group-toggle {
+        min-height: var(--dar-touch-target) !important;
+    }
+
+    /* Application review: stop relying on a hover-only side rail on compact screens. */
+    .application-review-page {
+        padding-bottom: 24px !important;
+    }
+
+    .application-review-page .requirement-rail {
+        position: static !important;
+        inset: auto !important;
+        transform: none !important;
+        width: 100% !important;
+        pointer-events: auto !important;
+        order: -1;
+    }
+
+    .application-review-page .requirement-rail-panel,
+    .application-review-page .requirement-rail.is-expanded .requirement-rail-panel,
+    .application-review-page .requirement-rail:hover .requirement-rail-panel,
+    .application-review-page .requirement-rail:focus-within .requirement-rail-panel {
+        width: 100% !important;
+        max-height: none !important;
+        padding: 10px !important;
+        border: 1px solid #dbe4dd !important;
+        border-radius: 12px !important;
+        background: #f8faf9 !important;
+        box-shadow: none !important;
+        backdrop-filter: none !important;
+    }
+
+    .application-review-page .requirement-rail-collapsed {
+        display: none !important;
+    }
+
+    .application-review-page .requirement-rail-header,
+    .application-review-page .requirement-rail-scroll,
+    .application-review-page .requirement-rail-group-label,
+    .application-review-page .requirement-rail-text,
+    .application-review-page .requirement-rail-status {
+        display: block !important;
+        opacity: 1 !important;
+        visibility: visible !important;
+        position: static !important;
+        pointer-events: auto !important;
+    }
+
+    .application-review-page .requirement-rail-header {
+        padding: 0 4px 8px !important;
+        margin-bottom: 8px !important;
+    }
+
+    .application-review-page .requirement-rail-scroll {
+        max-height: min(36dvh, 320px) !important;
+        overflow-y: auto !important;
+        padding-right: 2px !important;
+    }
+
+    .application-review-page .requirement-rail-link {
+        min-height: var(--dar-touch-target) !important;
+    }
+
+    .application-review-page .workflow-fab {
+        position: static !important;
+        width: 100% !important;
+        min-width: 0 !important;
+        margin-top: 4px !important;
+        transform: none !important;
+    }
+
+    .application-review-page :where(.decision-modal-backdrop, .workflow-modal-backdrop) {
+        align-items: flex-start !important;
+        overflow-y: auto !important;
+    }
+
+    .application-review-page :where(.decision-modal-card, .workflow-modal-card) {
+        width: min(100%, 900px) !important;
+    }
+}
+
+/* ---------- Narrow tablet / large phone ---------- */
+@media screen and (max-width: 760px) {
+    :root {
+        --dar-mobile-header-offset: 116px;
+    }
+
+    html body :is(.staff-content, .lo-content, .geo-content) {
+        padding-left: var(--dar-phone-gutter) !important;
+        padding-right: var(--dar-phone-gutter) !important;
+    }
+
+    html body :is(.staff-topbar, .lo-topbar, .geo-topbar) {
+        padding-left: var(--dar-phone-gutter) !important;
+        padding-right: var(--dar-phone-gutter) !important;
+    }
+
+    .dar-mobile-portal-top {
+        min-height: 58px;
+        padding: 7px max(12px, var(--dar-safe-right)) 7px max(12px, var(--dar-safe-left));
+    }
+
+    .dar-mobile-portal-brand-mark {
+        width: 36px !important;
+        height: 36px !important;
+        flex-basis: 36px !important;
+    }
+
+    .dar-mobile-portal-brand-copy strong {
+        font-size: 13px;
+    }
+
+    .dar-mobile-portal-nav,
+    .dar-mobile-portal-nav-item,
+    .dar-mobile-portal-more > summary {
+        min-height: 56px;
+    }
+
+    .dar-mobile-portal-nav-item i,
+    .dar-mobile-portal-more > summary i {
+        font-size: 16px;
+    }
+
+    .dar-mobile-portal-nav-item > span,
+    .dar-mobile-portal-more > summary > span {
+        font-size: 8.8px;
+    }
+
+    html body .dar-mobile-portal-header .notification-dropdown-panel {
+        top: calc(var(--dar-safe-top) + 60px) !important;
+        right: max(8px, var(--dar-safe-right)) !important;
+        left: max(8px, var(--dar-safe-left)) !important;
+        width: auto !important;
+        max-width: none !important;
+    }
+
+    html body .dar-mobile-portal-header .account-menu-panel {
+        top: calc(var(--dar-safe-top) + 60px) !important;
+        right: max(8px, var(--dar-safe-right)) !important;
+        left: auto !important;
+        width: min(360px, calc(100vw - var(--dar-safe-left) - var(--dar-safe-right) - 16px)) !important;
+    }
+
+    :where(.staff-shell, .lo-shell, .geo-shell) :where(input:not([type="checkbox"]):not([type="radio"]), select, textarea) {
+        width: 100% !important;
+        min-width: 0 !important;
+        min-height: var(--dar-touch-target) !important;
+        font-size: max(16px, 1em) !important;
+    }
+
+    :where(.staff-shell, .lo-shell, .geo-shell) input[type="file"]::file-selector-button {
+        min-height: var(--dar-touch-target) !important;
+    }
+
+    /* Common grids and dense form layouts collapse by content. */
+    :where(.staff-shell, .lo-shell, .geo-shell) :where(
+        .lo-dashboard-grid,
+        .lo-parcel-grid,
+        .lo-application-grid,
+        .geo-dashboard-grid,
+        .geo-map-editor-grid,
+        .geo-detail-grid,
+        .summary-grid,
+        .application-summary-layout,
+        .application-summary-details,
+        .application-parcel-form,
+        .workflow-form-fields,
+        .workflow-decision-grid,
+        .final-lock-grid,
+        .final-clearance-actions,
+        .checklist-mini-stats,
+        .document-workflow-grid,
+        .upload-grid,
+        .document-detail-grid,
+        .document-file-review,
+        .validation-grid,
+        .landowner-link-grid,
+        .landowner-link-options,
+        .landowner-create-grid,
+        .profile-form-grid
+    ) {
+        grid-template-columns: 1fr !important;
+    }
+
+    :where(.staff-shell, .lo-shell, .geo-shell) :where(.grid-cols-2, .grid-cols-3, .grid-cols-4, .grid-cols-5, .grid-cols-6) {
+        grid-template-columns: 1fr !important;
+    }
+
+    :where(.staff-shell, .lo-shell, .geo-shell) :where(
+        .staff-panel-header,
+        .lo-panel-header,
+        .geo-dashboard-panel-header,
+        .geo-record-panel-header,
+        .geo-mapping-queue-header,
+        .review-panel-header,
+        .requirement-heading,
+        .timeline-entry-header,
+        .final-clearance-title-row,
+        .party-heading-block,
+        .landowner-link-save-row,
+        .workflow-modal-header,
+        .workflow-modal-footer,
+        .workflow-modal-summary
+    ) {
+        flex-wrap: wrap !important;
+        align-items: flex-start !important;
+        gap: 10px !important;
+    }
+
+    :where(.staff-shell, .lo-shell, .geo-shell) :where(.staff-filter-actions, .mobile-stack-actions, .geo-map-editor-actions, .profile-actions, .document-action-row, .document-button-row, .clearance-actions) {
+        width: 100% !important;
+        display: grid !important;
+        grid-template-columns: 1fr !important;
+        gap: 8px !important;
+    }
+
+    :where(.staff-shell, .lo-shell, .geo-shell) :where(.staff-filter-actions, .mobile-stack-actions, .geo-map-editor-actions, .profile-actions, .document-action-row, .document-button-row, .clearance-actions) > :where(a, button, form),
+    :where(.staff-shell, .lo-shell, .geo-shell) :where(.staff-filter-actions, .mobile-stack-actions, .geo-map-editor-actions, .profile-actions, .document-action-row, .document-button-row, .clearance-actions) > form > :where(a, button) {
+        width: 100% !important;
+    }
+
+    .geo-mapping-queue-row {
+        grid-template-columns: 1fr !important;
+        gap: 8px !important;
+    }
+
+    .geo-mapping-queue-location,
+    .geo-mapping-queue-state,
+    .geo-mapping-queue-action {
+        grid-column: auto !important;
+        grid-row: auto !important;
+    }
+
+    .geo-mapping-queue-action,
+    .geo-geometry-edit-link {
+        width: 100% !important;
+        min-height: var(--dar-touch-target) !important;
+    }
+
+    :where(.staff-shell, .lo-shell, .geo-shell) :where(.leaflet-container, #map, #parcel-map, [id$="-map"], [id*="parcel-map"]) {
+        min-height: 340px !important;
+        height: min(58dvh, 540px) !important;
+    }
+
+    .responsive-scroll-hint {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .responsive-scroll-hint::before {
+        content: '↔';
+        color: #166534;
+        font-weight: 900;
+    }
+
+    .login-page,
+    .auth-page,
+    .page:has(> .card) {
+        align-items: flex-start !important;
+        padding: max(24px, var(--dar-safe-top)) max(var(--dar-phone-gutter), var(--dar-safe-right)) max(32px, var(--dar-safe-bottom)) max(var(--dar-phone-gutter), var(--dar-safe-left)) !important;
+    }
+
+    .login-content,
+    .auth-content {
+        width: 100% !important;
+        margin-top: 0 !important;
+    }
+
+    .login-card,
+    .auth-card,
+    .page > .card {
+        width: 100% !important;
+        padding: clamp(16px, 5vw, 24px) !important;
+        border-radius: 14px !important;
+    }
+
+    .password-toggle,
+    .login-button,
+    .auth-card .primary,
+    .auth-card .secondary,
+    .page > .card .primary,
+    .page > .card .logout button {
+        min-height: var(--dar-touch-target) !important;
+    }
+
+    .profile-photo-control-clean {
+        grid-template-columns: 1fr !important;
+    }
+
+    .profile-photo-current {
+        width: min(180px, 100%) !important;
+    }
+
+    .profile-crop-modal {
+        place-items: start center !important;
+        overflow-y: auto !important;
+    }
+
+    .profile-crop-dialog {
+        width: 100% !important;
+    }
+
+    .profile-crop-header,
+    .profile-crop-body,
+    .profile-crop-actions {
+        padding-left: 16px !important;
+        padding-right: 16px !important;
+    }
+
+    .application-review-page .review-panel-body,
+    .application-review-page .review-panel-header,
+    .application-review-page .upload-form {
+        padding: 16px !important;
+    }
+
+    .application-review-page .requirement-main > :is(.document-status-panel, .document-upload-panel, .document-locked-note) {
+        margin: 12px !important;
+    }
+
+    .application-review-page .requirement-title-icon {
+        width: var(--dar-touch-target) !important;
+        height: var(--dar-touch-target) !important;
+    }
+
+    .application-review-page .workflow-modal-card,
+    .application-review-page .decision-modal-card {
+        max-height: calc(100dvh - var(--dar-safe-top) - var(--dar-safe-bottom) - 20px) !important;
+        overflow-y: auto !important;
+    }
+
+    .application-review-page .decision-modal-actions {
+        display: grid !important;
+        grid-template-columns: 1fr !important;
+        padding: 14px 16px max(16px, var(--dar-safe-bottom)) !important;
+    }
+
+    .application-review-page .decision-modal-actions .staff-button {
+        width: 100% !important;
+        min-width: 0 !important;
+    }
+}
+
+/* ---------- Phone ---------- */
+@media screen and (max-width: 640px) {
+    html body :is(.staff-content, .lo-content, .geo-content) {
+        padding-top: 14px !important;
+        padding-bottom: max(28px, var(--dar-safe-bottom)) !important;
+        gap: 14px !important;
+    }
+
+    .dar-mobile-portal-nav.staff {
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+    }
+
+    .dar-mobile-portal-nav-item > span,
+    .dar-mobile-portal-more > summary > span {
+        font-size: 8.2px;
+    }
+
+    .dar-mobile-portal-more-panel {
+        top: calc(var(--dar-safe-top) + 114px);
+        right: max(8px, var(--dar-safe-right));
+        left: max(8px, var(--dar-safe-left));
+        max-height: calc(100dvh - var(--dar-safe-top) - var(--dar-safe-bottom) - 126px);
+    }
+
+    :where(.staff-shell, .lo-shell, .geo-shell) :where(.staff-panel-pad, .lo-panel, .geo-panel, .geo-dashboard-panel, .geo-record-panel, .geo-map-editor-panel) {
+        max-width: 100%;
+    }
+
+    :where(.staff-shell, .lo-shell, .geo-shell) :where(.staff-button, .lo-button, .geo-button) {
+        min-height: var(--dar-touch-target) !important;
+    }
+
+    .notification-center-actions,
+    .lo-parcel-overview-actions,
+    .final-clearance-actions {
+        grid-template-columns: 1fr !important;
+    }
+
+    .notification-dropdown-header,
+    .notification-dropdown-item {
+        padding-left: 13px !important;
+        padding-right: 13px !important;
+    }
+
+    :where(.staff-shell, .lo-shell, .geo-shell) nav[role="navigation"],
+    :where(.staff-shell, .lo-shell, .geo-shell) nav[aria-label="Pagination Navigation"] {
+        max-width: 100%;
+        overflow-x: auto;
+        justify-content: flex-start !important;
+        padding-bottom: 4px;
+    }
+
+    .application-review-page .requirement-rail-scroll {
+        max-height: min(32dvh, 250px) !important;
+    }
+
+    .application-review-page .workflow-submit-card,
+    .application-review-page .workflow-decision-card {
+        grid-template-columns: 1fr !important;
+    }
+}
+
+@media screen and (max-width: 390px) {
+    .dar-mobile-portal-brand-copy small {
+        display: none;
+    }
+
+    .dar-mobile-portal-brand-copy strong {
+        font-size: 12.5px;
+    }
+
+    .dar-mobile-portal-top {
+        gap: 8px;
+        padding-right: max(9px, var(--dar-safe-right));
+        padding-left: max(9px, var(--dar-safe-left));
+    }
+
+    .dar-mobile-portal-actions {
+        gap: 6px;
+    }
+
+    .dar-mobile-portal-nav-item > span,
+    .dar-mobile-portal-more > summary > span {
+        font-size: 7.6px;
+    }
+
+    html body :is(.staff-content, .lo-content, .geo-content) {
+        padding-left: max(10px, var(--dar-safe-left)) !important;
+        padding-right: max(10px, var(--dar-safe-right)) !important;
+    }
+
+    .application-review-page .requirement-rail-link {
+        grid-template-columns: 24px minmax(0, 1fr) !important;
+    }
+
+    .application-review-page .requirement-rail-status {
+        grid-column: 2;
+        justify-self: start !important;
+        margin-top: 2px;
+    }
+}
+
+/* Container-aware cards: useful when a panel sits in a narrow column on a wide viewport. */
+@supports (container-type: inline-size) {
+    :where(.staff-panel, .lo-panel, .geo-panel, .review-panel, .geo-record-panel, .geo-dashboard-panel) {
+        container-type: inline-size;
+    }
+
+    @container (max-width: 520px) {
+        .summary-grid,
+        .document-detail-grid,
+        .validation-grid,
+        .workflow-form-fields,
+        .profile-form-grid {
+            grid-template-columns: 1fr !important;
+        }
+
+        .review-panel-header,
+        .document-indexing-header,
+        .final-clearance-title-row {
+            flex-wrap: wrap !important;
+        }
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        scroll-behavior: auto !important;
+        animation-duration: 0.001ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.001ms !important;
+    }
+}
