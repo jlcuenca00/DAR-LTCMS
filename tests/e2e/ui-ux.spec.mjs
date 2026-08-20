@@ -61,6 +61,7 @@ test.describe('authenticated UI UX behavior', () => {
         const radioGroups = page.locator('.ui-radio-group');
         expect(await radioGroups.count()).toBeGreaterThanOrEqual(3);
         await expect(page.locator('#retention_certificate_required')).toBeHidden();
+        await expect(page.locator('#retention_certificate_required')).toHaveAttribute('name', 'retention_certificate_required');
     });
 
     test('user role disclosure shows landowner linking only when relevant', async ({ page }) => {
@@ -81,7 +82,7 @@ test.describe('authenticated UI UX behavior', () => {
         await page.goto('/staff/applications');
         await waitForUiUx(page);
 
-        const firstApplication = page.locator('a[href*="/staff/applications/"]').filter({ hasNot: page.locator('[href$="/create"]') }).first();
+        const firstApplication = page.locator('.application-desktop-table tbody a.staff-link').first();
         if (!(await firstApplication.count())) test.skip(true, 'No application record is available for review.');
 
         await firstApplication.click();
