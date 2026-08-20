@@ -4,21 +4,16 @@
 
 <x-geodetic-shell title="Parcel Map Viewer" active="parcel-map">
     @push('styles')
-        <link
-            rel="stylesheet"
-            href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-            integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
-            crossorigin=""
-        />
-
         <style>
             .geo-map-layout {
                 display: grid;
                 grid-template-columns: 320px minmax(0, 1fr);
                 gap: 18px;
                 align-items: stretch;
+                min-width: 0;
             }
 
+            .geo-map-layout > * { min-width: 0; }
             .geo-map-sidebar { display: grid; gap: 14px; align-content: start; min-width: 0; }
 
             .geo-map-card,
@@ -30,7 +25,7 @@
             }
 
             .geo-map-card { padding: 17px; }
-            .geo-map-panel { min-width: 0; padding: 11px; }
+            .geo-map-panel { min-width: 0; padding: 11px; overflow: hidden; }
             .geo-map-title { margin: 0; color: var(--geo-ink); font-size: 16px; font-weight: 900; }
             .geo-map-subtitle { margin: 5px 0 0; color: var(--geo-muted); font-size: 12px; line-height: 1.45; }
 
@@ -39,8 +34,8 @@
                 display: inline-flex;
                 align-items: center;
                 gap: 7px;
-                min-height: 28px;
-                padding: 0 9px;
+                min-height: 30px;
+                padding: 4px 9px;
                 border: 1px solid #bbf7d0;
                 border-radius: 999px;
                 background: var(--geo-green-50);
@@ -53,20 +48,21 @@
             .geo-search-wrap i { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #667085; font-size: 12px; pointer-events: none; }
             .geo-search-input {
                 width: 100%;
-                min-height: 40px;
+                min-height: 44px;
                 border: 1px solid #cbd5d1;
                 border-radius: 9px;
                 background: #ffffff;
                 padding: 8px 10px 8px 34px;
                 color: #111827;
                 font: inherit;
-                font-size: 12px;
+                font-size: 13px;
             }
-            .geo-search-input:focus { outline: none; border-color: var(--geo-green-700); box-shadow: 0 0 0 3px rgba(21,128,61,.12); }
+            .geo-search-input:focus { outline: none; border-color: var(--geo-green-700); box-shadow: 0 0 0 3px rgba(21, 128, 61, .12); }
 
-            .geo-search-results { margin-top: 9px; display: grid; gap: 6px; max-height: 330px; overflow-y: auto; }
+            .geo-search-results { margin-top: 9px; display: grid; gap: 6px; max-height: min(330px, 40dvh); overflow-y: auto; overscroll-behavior: contain; }
             .geo-search-result {
                 width: 100%;
+                min-height: 44px;
                 border: 1px solid #e2e8f0;
                 border-radius: 9px;
                 background: #f8faf9;
@@ -74,17 +70,18 @@
                 text-align: left;
                 cursor: pointer;
                 transition: 140ms ease;
+                touch-action: manipulation;
             }
             .geo-search-result:hover,
-            .geo-search-result:focus { outline: none; border-color: #86efac; background: var(--geo-green-50); }
-            .geo-search-code { display: block; color: var(--geo-green-900); font-size: 11px; font-weight: 900; }
-            .geo-search-meta { display: block; margin-top: 3px; color: #667085; font-size: 10px; line-height: 1.35; }
+            .geo-search-result:focus-visible { outline: 3px solid rgba(21, 128, 61, .16); outline-offset: 1px; border-color: #86efac; background: var(--geo-green-50); }
+            .geo-search-code { display: block; color: var(--geo-green-900); font-size: 11px; font-weight: 900; overflow-wrap: anywhere; }
+            .geo-search-meta { display: block; margin-top: 3px; color: #667085; font-size: 10px; line-height: 1.35; overflow-wrap: anywhere; }
             .geo-search-empty { border: 1px dashed #cbd5d1; border-radius: 9px; padding: 11px; color: #667085; font-size: 11px; text-align: center; }
 
             .geo-map-tools { margin-top: 13px; display: grid; gap: 8px; }
             .geo-map-button {
                 width: 100%;
-                min-height: 39px;
+                min-height: 44px;
                 border: 1px solid #d7ded9;
                 border-radius: 9px;
                 background: #ffffff;
@@ -99,6 +96,7 @@
                 font-weight: 900;
                 text-decoration: none;
                 cursor: pointer;
+                touch-action: manipulation;
             }
             .geo-map-button:hover { background: #f8faf9; border-color: #bbf7d0; color: var(--geo-green-900); }
             .geo-map-button.primary { border-color: var(--geo-green-800); background: var(--geo-green-800); color: #ffffff; }
@@ -110,33 +108,48 @@
 
             #parcel-map {
                 width: 100%;
-                height: calc(100vh - 180px);
-                min-height: 620px;
+                height: clamp(520px, calc(100dvh - 180px), 820px);
+                min-height: 520px;
                 border: 1px solid #d7ded9;
                 border-radius: 11px;
                 overflow: hidden;
                 background: #eef2f0;
             }
 
+            .geo-map-fallback { height: 100%; min-height: 340px; display: grid; place-items: center; padding: 24px; text-align: center; color: #475569; background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 10px; }
+            .geo-map-fallback strong { display: block; color: #0f172a; margin-bottom: 6px; }
             .leaflet-control-zoom a { background: #ffffff !important; color: var(--geo-green-900) !important; border-color: #d7ded9 !important; }
             .leaflet-control-zoom a:hover { background: var(--geo-green-50) !important; }
-            .leaflet-control-attribution { background: rgba(255,255,255,.92) !important; color: #475569 !important; }
+            .leaflet-control-attribution { background: rgba(255, 255, 255, .92) !important; color: #475569 !important; }
             .leaflet-control-attribution a { color: var(--geo-green-800) !important; }
             .leaflet-popup-content-wrapper,
-            .leaflet-popup-tip { background: #ffffff; color: #111827; border: 1px solid #d7ded9; box-shadow: 0 18px 40px rgba(15,23,42,.18); }
+            .leaflet-popup-tip { background: #ffffff; color: #111827; border: 1px solid #d7ded9; box-shadow: 0 18px 40px rgba(15, 23, 42, .18); }
             .leaflet-popup-content { margin: 14px 16px; font-family: inherit; }
 
-            .parcel-tooltip { background: rgba(255,255,255,.98); color: #111827; border: 1px solid #bbf7d0; border-radius: 10px; padding: 0; box-shadow: 0 15px 30px rgba(15,23,42,.18); }
+            .parcel-tooltip { background: rgba(255, 255, 255, .98); color: #111827; border: 1px solid #bbf7d0; border-radius: 10px; padding: 0; box-shadow: 0 15px 30px rgba(15, 23, 42, .18); }
             .parcel-tooltip::before { border-top-color: #ffffff; }
-            .parcel-tooltip-card { min-width: 240px; padding: 12px; }
+            .parcel-tooltip-card { min-width: 0; width: min(240px, calc(100vw - 64px)); padding: 12px; }
             .parcel-tooltip-title { color: var(--geo-green-900); font-size: 12px; font-weight: 900; margin-bottom: 6px; }
-            .parcel-tooltip-row { margin-top: 4px; color: #344054; font-size: 10px; line-height: 1.4; }
+            .parcel-tooltip-row { margin-top: 4px; color: #344054; font-size: 10px; line-height: 1.4; overflow-wrap: anywhere; }
             .parcel-tooltip-label { color: #667085; font-weight: 900; }
             .parcel-tooltip-row.is-flagged { color: #b91c1c; font-weight: 800; }
 
+            @media (pointer: coarse) {
+                .geo-search-input,
+                .geo-search-result,
+                .geo-map-button { min-height: 48px; }
+            }
+
             @media (max-width: 1100px) {
                 .geo-map-layout { grid-template-columns: 1fr; }
-                #parcel-map { height: 580px; min-height: 480px; }
+                #parcel-map { height: min(60dvh, 620px); min-height: 440px; }
+            }
+
+            @media (max-width: 640px) {
+                .geo-map-card { padding: 16px; }
+                .geo-map-panel { padding: 8px; }
+                .geo-search-input { font-size: 16px; }
+                #parcel-map { height: min(56dvh, 520px); min-height: 340px; }
             }
         </style>
     @endpush
@@ -146,10 +159,10 @@
             <article class="geo-map-card">
                 <h2 class="geo-map-title">Find a Parcel</h2>
                 <p class="geo-map-subtitle">Search parcel code, title, tax declaration, landowner, or location.</p>
-                <span class="geo-map-count"><i class="fa-solid fa-draw-polygon"></i>{{ $mappedParcelCount }} mapped</span>
+                <span class="geo-map-count"><i class="fa-solid fa-draw-polygon" aria-hidden="true"></i>{{ $mappedParcelCount }} mapped</span>
 
                 <div class="geo-search-wrap">
-                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
                     <input id="parcel-search" type="search" class="geo-search-input" placeholder="Search parcel references" autocomplete="off">
                 </div>
                 <div id="parcel-search-results" class="geo-search-results" aria-live="polite"></div>
@@ -159,8 +172,8 @@
                 <h2 class="geo-map-title">Map Tools</h2>
                 <p class="geo-map-subtitle">Return to the provincial parcel extent or open the reference list.</p>
                 <div class="geo-map-tools">
-                    <button type="button" id="reset-map-view" class="geo-map-button primary"><i class="fa-solid fa-expand"></i>Reset View</button>
-                    <a href="{{ route('geodetic.parcels.index') }}" class="geo-map-button"><i class="fa-solid fa-list"></i>Parcel References</a>
+                    <button type="button" id="reset-map-view" class="geo-map-button primary"><i class="fa-solid fa-expand" aria-hidden="true"></i>Reset View</button>
+                    <a href="{{ route('geodetic.parcels.index') }}" class="geo-map-button"><i class="fa-solid fa-list" aria-hidden="true"></i>Parcel References</a>
                 </div>
             </article>
 
@@ -173,34 +186,71 @@
             </article>
         </aside>
 
-        <section class="geo-map-panel">
-            <div id="parcel-map"></div>
-        </section>
+        <section class="geo-map-panel"><div id="parcel-map"><div class="geo-map-fallback">Loading parcel map…</div></div></section>
     </section>
 
     @push('scripts')
-        <script
-            src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-            integrity="sha256-20nQCchB9coqIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
-            crossorigin="">
-        </script>
-
         <script>
             document.addEventListener('DOMContentLoaded', function () {
                 const mapContainer = document.getElementById('parcel-map');
-
-                if (typeof window.L === 'undefined') {
-                    if (mapContainer) {
-                        mapContainer.innerHTML = '<div style="height:100%;min-height:360px;display:grid;place-items:center;padding:24px;text-align:center;color:#475569;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:10px;"><div><strong style="display:block;color:#0f172a;margin-bottom:6px;">Map resources could not be loaded.</strong><span>Check the internet connection, then refresh the page. Parcel records remain available in the list and detail views.</span></div></div>';
-                    }
-                    return;
-                }
-                const negrosOrientalCenter = [9.3068, 123.3054];
                 const parcelGeoJson = @json($parcelGeoJson);
-                const parcelLayersById = {};
                 const searchInput = document.getElementById('parcel-search');
                 const searchResults = document.getElementById('parcel-search-results');
+                const parcelLayersById = {};
 
+                if (!mapContainer || !searchResults) return;
+
+                function escapeHtml(value) {
+                    return String(value ?? '').replace(/[&<>'"]/g, function (character) {
+                        return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#039;', '"': '&quot;' })[character];
+                    });
+                }
+
+                function searchText(feature) {
+                    const p = feature.properties || {};
+                    return [p.parcel_code, p.title_no, p.tax_decl_no, p.landowner, p.barangay, p.municipality].join(' ').toLowerCase();
+                }
+
+                let focusFeature = null;
+
+                function renderResults(query = '') {
+                    const normalized = query.trim().toLowerCase();
+                    const matches = (parcelGeoJson.features || []).filter(feature => !normalized || searchText(feature).includes(normalized)).slice(0, 9);
+                    searchResults.innerHTML = '';
+
+                    if (!matches.length) {
+                        searchResults.innerHTML = '<div class="geo-search-empty">No parcel reference matches the search.</div>';
+                        return;
+                    }
+
+                    matches.forEach(function (feature) {
+                        const p = feature.properties || {};
+                        const button = document.createElement('button');
+                        button.type = 'button';
+                        button.className = 'geo-search-result';
+                        button.innerHTML = `<span class="geo-search-code">${escapeHtml(p.parcel_code)}</span><span class="geo-search-meta">${escapeHtml(p.landowner)} · ${escapeHtml(p.barangay)}, ${escapeHtml(p.municipality)}</span>`;
+                        button.addEventListener('click', function () {
+                            if (focusFeature) {
+                                focusFeature(feature);
+                            } else if (feature.properties?.details_url) {
+                                window.location.href = feature.properties.details_url;
+                            }
+                        });
+                        searchResults.appendChild(button);
+                    });
+                }
+
+                searchInput?.addEventListener('input', function () { renderResults(searchInput.value); });
+                renderResults();
+
+                if (typeof window.L === 'undefined') {
+                    mapContainer.innerHTML = '<div class="geo-map-fallback"><div><strong>Map resources could not be initialized.</strong><span>Parcel records remain available in the list and detail views.</span></div></div>';
+                    return;
+                }
+
+                const L = window.L;
+                const negrosOrientalCenter = [9.3068, 123.3054];
+                mapContainer.innerHTML = '';
                 const map = L.map('parcel-map', { zoomControl: false, scrollWheelZoom: true }).setView(negrosOrientalCenter, 10);
                 L.control.zoom({ position: 'topright' }).addTo(map);
 
@@ -209,12 +259,6 @@
                     maxZoom: 20,
                     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
                 }).addTo(map);
-
-                function escapeHtml(value) {
-                    return String(value ?? '').replace(/[&<>'"]/g, function (character) {
-                        return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#039;', '"': '&quot;' })[character];
-                    });
-                }
 
                 function parcelColor(status) {
                     return status === 'flagged' ? '#dc2626' : '#15803d';
@@ -235,17 +279,7 @@
                         ? `<div class="parcel-tooltip-row is-flagged"><span class="parcel-tooltip-label">Review flag:</span> ${escapeHtml(properties.flag_reason || 'Requires verification')}</div>`
                         : '';
 
-                    return `
-                        <div class="parcel-tooltip-card">
-                            <div class="parcel-tooltip-title">${escapeHtml(properties.parcel_code)}</div>
-                            <div class="parcel-tooltip-row"><span class="parcel-tooltip-label">Landowner:</span> ${escapeHtml(properties.landowner)}</div>
-                            <div class="parcel-tooltip-row"><span class="parcel-tooltip-label">Location:</span> ${escapeHtml(properties.barangay)}, ${escapeHtml(properties.municipality)}</div>
-                            <div class="parcel-tooltip-row"><span class="parcel-tooltip-label">Area:</span> ${escapeHtml(properties.area_hectares)} hectares</div>
-                            <div class="parcel-tooltip-row"><span class="parcel-tooltip-label">Title:</span> ${escapeHtml(properties.title_no)}</div>
-                            <div class="parcel-tooltip-row"><span class="parcel-tooltip-label">Tax declaration:</span> ${escapeHtml(properties.tax_decl_no)}</div>
-                            ${flagRow}
-                            <div class="parcel-tooltip-row"><span class="parcel-tooltip-label">Select:</span> open technical details</div>
-                        </div>`;
+                    return `<div class="parcel-tooltip-card"><div class="parcel-tooltip-title">${escapeHtml(properties.parcel_code)}</div><div class="parcel-tooltip-row"><span class="parcel-tooltip-label">Landowner:</span> ${escapeHtml(properties.landowner)}</div><div class="parcel-tooltip-row"><span class="parcel-tooltip-label">Location:</span> ${escapeHtml(properties.barangay)}, ${escapeHtml(properties.municipality)}</div><div class="parcel-tooltip-row"><span class="parcel-tooltip-label">Area:</span> ${escapeHtml(properties.area_hectares)} hectares</div><div class="parcel-tooltip-row"><span class="parcel-tooltip-label">Title:</span> ${escapeHtml(properties.title_no)}</div><div class="parcel-tooltip-row"><span class="parcel-tooltip-label">Tax declaration:</span> ${escapeHtml(properties.tax_decl_no)}</div>${flagRow}<div class="parcel-tooltip-row"><span class="parcel-tooltip-label">Select:</span> open technical details</div></div>`;
                 }
 
                 let parcelLayer = null;
@@ -269,7 +303,7 @@
                     });
                 }
 
-                if (parcelGeoJson.features.length > 0) {
+                if ((parcelGeoJson.features || []).length > 0) {
                     parcelLayer = L.geoJSON(parcelGeoJson, {
                         style: parcelStyle,
                         pointToLayer: function (feature, latlng) {
@@ -287,7 +321,7 @@
                     L.popup().setLatLng(negrosOrientalCenter).setContent('<strong>No mapped parcel references are currently available.</strong>').openOn(map);
                 }
 
-                function focusFeature(feature) {
+                focusFeature = function (feature) {
                     const layer = parcelLayersById[String(feature.properties.id)];
                     if (!layer) return;
                     if (typeof layer.getBounds === 'function') {
@@ -296,38 +330,11 @@
                         map.setView(layer.getLatLng(), 17, { animate: true });
                     }
                     layer.openTooltip();
-                }
+                };
 
-                function searchText(feature) {
-                    const p = feature.properties || {};
-                    return [p.parcel_code, p.title_no, p.tax_decl_no, p.landowner, p.barangay, p.municipality].join(' ').toLowerCase();
-                }
+                renderResults(searchInput?.value || '');
 
-                function renderResults(query = '') {
-                    const normalized = query.trim().toLowerCase();
-                    const matches = parcelGeoJson.features.filter(feature => !normalized || searchText(feature).includes(normalized)).slice(0, 9);
-                    searchResults.innerHTML = '';
-
-                    if (!matches.length) {
-                        searchResults.innerHTML = '<div class="geo-search-empty">No parcel reference matches the search.</div>';
-                        return;
-                    }
-
-                    matches.forEach(function (feature) {
-                        const p = feature.properties;
-                        const button = document.createElement('button');
-                        button.type = 'button';
-                        button.className = 'geo-search-result';
-                        button.innerHTML = `<span class="geo-search-code">${escapeHtml(p.parcel_code)}</span><span class="geo-search-meta">${escapeHtml(p.landowner)} · ${escapeHtml(p.barangay)}, ${escapeHtml(p.municipality)}</span>`;
-                        button.addEventListener('click', function () { focusFeature(feature); });
-                        searchResults.appendChild(button);
-                    });
-                }
-
-                searchInput.addEventListener('input', function () { renderResults(searchInput.value); });
-                renderResults();
-
-                document.getElementById('reset-map-view').addEventListener('click', function () {
+                document.getElementById('reset-map-view')?.addEventListener('click', function () {
                     if (parcelLayer) {
                         map.fitBounds(parcelLayer.getBounds(), { padding: [40, 40], animate: true, duration: .65 });
                     } else {
