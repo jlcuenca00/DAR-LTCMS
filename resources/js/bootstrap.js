@@ -36,6 +36,7 @@ import '../css/staff-record-row-navigation.css';
 import '../css/staff-mobile-portal-nav.css';
 import '../css/staff-mobile-account-menu-position.css';
 import '../css/role-mobile-portal-nav.css';
+import '../css/landowner-mobile-context-compact.css';
 
 window.axios = axios;
 window.L = L;
