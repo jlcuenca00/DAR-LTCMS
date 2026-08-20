@@ -8,6 +8,21 @@ class Parcel extends Model
 {
     public const DEFAULT_AGRICULTURAL_STATUS = 'private_agricultural';
 
+    public const STATUSES = [
+        'active' => 'Active',
+        'inactive' => 'Inactive',
+    ];
+
+    public const REVIEW_FLAG_REASONS = [
+        'parcel_information_discrepancy' => 'Parcel information discrepancy',
+        'title_tax_declaration_discrepancy' => 'Title / Tax Declaration discrepancy',
+        'mapping_geometry_verification' => 'Mapping / geometry requires verification',
+        'conflicting_reference_information' => 'Conflicting reference information',
+        'possible_duplicate_record' => 'Possible duplicate record',
+        'other' => 'Other',
+        'legacy_status_migration' => 'Migrated legacy flag',
+    ];
+
     public const AGRICULTURAL_STATUSES = [
         'private_agricultural' => 'Private Agricultural Land',
         'awarded_cloa' => 'Awarded CLOA Land',
@@ -48,13 +63,48 @@ class Parcel extends Model
         'agricultural_status',
         'remarks',
         'reference_photo_path',
+        'is_flagged',
+        'flag_reason',
+        'flag_notes',
+        'flagged_by',
+        'flagged_at',
+        'flag_resolved_by',
+        'flag_resolved_at',
+        'flag_resolution_notes',
     ];
 
     protected $casts = [
         'geometry_geojson' => 'array',
         'area_hectares' => 'decimal:4',
         'area_square_meters' => 'decimal:2',
+        'is_flagged' => 'boolean',
+        'flagged_at' => 'datetime',
+        'flag_resolved_at' => 'datetime',
     ];
+
+    public static function statusOptions(): array
+    {
+        return self::STATUSES;
+    }
+
+    public static function reviewFlagReasonOptions(): array
+    {
+        return array_filter(
+            self::REVIEW_FLAG_REASONS,
+            fn ($label, $key) => $key !== 'legacy_status_migration',
+            ARRAY_FILTER_USE_BOTH
+        );
+    }
+
+    public static function reviewFlagReasonLabel(?string $reason): string
+    {
+        return self::REVIEW_FLAG_REASONS[$reason ?: ''] ?? 'Not specified';
+    }
+
+    public function getFlagReasonLabelAttribute(): string
+    {
+        return self::reviewFlagReasonLabel($this->flag_reason);
+    }
 
     public static function agriculturalStatusOptions(): array
     {
@@ -89,6 +139,16 @@ class Parcel extends Model
     public static function rodOfficeOptions(): array
     {
         return self::ROD_OFFICES;
+    }
+
+    public function flaggedBy()
+    {
+        return $this->belongsTo(User::class, 'flagged_by');
+    }
+
+    public function flagResolvedBy()
+    {
+        return $this->belongsTo(User::class, 'flag_resolved_by');
     }
 
     public function landholdings()
