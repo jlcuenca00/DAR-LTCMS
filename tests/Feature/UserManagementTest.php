@@ -22,7 +22,62 @@ class UserManagementTest extends TestCase
         $this->actingAs($staff)
             ->get(route('staff.users.index'))
             ->assertOk()
-            ->assertSee('User / Role Management');
+            ->assertSee('User Management')
+            ->assertSee('Active Accounts');
+    }
+
+    public function test_active_accounts_are_the_default_user_management_view(): void
+    {
+        $staff = User::factory()->create([
+            'name' => 'Current Staff',
+            'role' => User::ROLE_STAFF,
+            'is_active' => true,
+        ]);
+
+        User::factory()->create([
+            'name' => 'Visible Active User',
+            'role' => User::ROLE_GEODETIC,
+            'is_active' => true,
+        ]);
+
+        User::factory()->create([
+            'name' => 'Hidden Inactive User',
+            'role' => User::ROLE_GEODETIC,
+            'is_active' => false,
+        ]);
+
+        $this->actingAs($staff)
+            ->get(route('staff.users.index'))
+            ->assertOk()
+            ->assertSee('Visible Active User')
+            ->assertDontSee('Hidden Inactive User');
+    }
+
+    public function test_staff_can_open_the_preserved_inactive_accounts_view(): void
+    {
+        $staff = User::factory()->create([
+            'role' => User::ROLE_STAFF,
+            'is_active' => true,
+        ]);
+
+        User::factory()->create([
+            'name' => 'Active Account User',
+            'role' => User::ROLE_GEODETIC,
+            'is_active' => true,
+        ]);
+
+        User::factory()->create([
+            'name' => 'Inactive Account User',
+            'role' => User::ROLE_GEODETIC,
+            'is_active' => false,
+        ]);
+
+        $this->actingAs($staff)
+            ->get(route('staff.users.index', ['status' => 'inactive']))
+            ->assertOk()
+            ->assertSee('Inactive Account User')
+            ->assertDontSee('Active Account User')
+            ->assertSee('Inactive accounts cannot sign in.');
     }
 
     public function test_non_staff_users_cannot_view_user_management_page(): void
@@ -233,17 +288,17 @@ class UserManagementTest extends TestCase
 
         $temporaryPassword = $response->getSession()->get('temporary_password');
 
-$this->assertMatchesRegularExpression('/[a-z]/', $temporaryPassword);
-$this->assertMatchesRegularExpression('/[A-Z]/', $temporaryPassword);
-$this->assertMatchesRegularExpression('/[0-9]/', $temporaryPassword);
-$this->assertMatchesRegularExpression('/[^A-Za-z0-9]/', $temporaryPassword);
-$this->assertGreaterThanOrEqual(8, strlen($temporaryPassword));
+        $this->assertMatchesRegularExpression('/[a-z]/', $temporaryPassword);
+        $this->assertMatchesRegularExpression('/[A-Z]/', $temporaryPassword);
+        $this->assertMatchesRegularExpression('/[0-9]/', $temporaryPassword);
+        $this->assertMatchesRegularExpression('/[^A-Za-z0-9]/', $temporaryPassword);
+        $this->assertGreaterThanOrEqual(8, strlen($temporaryPassword));
 
-$target->refresh();
+        $target->refresh();
 
-$this->assertNotSame($oldHash, $target->password);
-$this->assertTrue(Hash::check($temporaryPassword, $target->password));
-$this->assertTrue($target->must_change_password);
+        $this->assertNotSame($oldHash, $target->password);
+        $this->assertTrue(Hash::check($temporaryPassword, $target->password));
+        $this->assertTrue($target->must_change_password);
         $this->assertNotNull($target->password_changed_at);
         $this->assertDatabaseHas('audit_logs', [
             'actor_user_id' => $staff->id,
