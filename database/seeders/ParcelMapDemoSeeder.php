@@ -19,6 +19,7 @@ class ParcelMapDemoSeeder extends Seeder
                 'province' => 'Negros Oriental',
                 'area_hectares' => 1.2500,
                 'status' => 'active',
+                'is_flagged' => false,
                 'remarks' => 'Demo mapped parcel for parcel map viewer testing.',
                 'geometry_geojson' => [
                     'type' => 'Polygon',
@@ -39,7 +40,8 @@ class ParcelMapDemoSeeder extends Seeder
                 'barangay' => 'Bantayan',
                 'province' => 'Negros Oriental',
                 'area_hectares' => 2.4000,
-                'status' => \App\Models\LandTransferApplication::STATUS_PENDING_LEGAL_REVIEW,
+                'status' => 'active',
+                'is_flagged' => false,
                 'remarks' => 'Demo mapped parcel for parcel map viewer testing.',
                 'geometry_geojson' => [
                     'type' => 'Polygon',
@@ -60,7 +62,8 @@ class ParcelMapDemoSeeder extends Seeder
                 'barangay' => 'Boloc-boloc',
                 'province' => 'Negros Oriental',
                 'area_hectares' => 3.1000,
-                'status' => 'linked_application',
+                'status' => 'active',
+                'is_flagged' => false,
                 'remarks' => 'Demo mapped parcel for parcel map viewer testing.',
                 'geometry_geojson' => [
                     'type' => 'Polygon',
@@ -81,7 +84,11 @@ class ParcelMapDemoSeeder extends Seeder
                 'barangay' => 'San Miguel',
                 'province' => 'Negros Oriental',
                 'area_hectares' => 0.9500,
-                'status' => 'flagged',
+                'status' => 'active',
+                'is_flagged' => true,
+                'flag_reason' => 'mapping_geometry_verification',
+                'flag_notes' => 'Demo review flag for parcel map viewer testing.',
+                'flagged_at' => now(),
                 'remarks' => 'Demo mapped parcel for parcel map viewer testing.',
                 'geometry_geojson' => [
                     'type' => 'Polygon',
