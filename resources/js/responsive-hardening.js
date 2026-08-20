@@ -86,50 +86,6 @@ function stripDuplicateIds(root) {
     });
 }
 
-function markNotificationDropdownAsRead(dropdown) {
-    if (!dropdown || dropdown.dataset.readTriggered === 'true') return;
-
-    const hasUnread = dropdown.querySelector('.notification-badge')
-        || dropdown.querySelector('.notification-dropdown-item.is-unread');
-
-    if (!hasUnread) return;
-
-    dropdown.dataset.readTriggered = 'true';
-    dropdown.querySelectorAll('.notification-badge').forEach((badge) => badge.remove());
-    dropdown.querySelectorAll('.notification-dropdown-count').forEach((count) => {
-        count.textContent = 'All caught up';
-        count.classList.add('is-clear');
-    });
-    dropdown.querySelectorAll('.notification-dropdown-item.is-unread').forEach((item) => {
-        item.classList.remove('is-unread');
-    });
-
-    const url = dropdown.dataset.readAllUrl;
-    const token = dropdown.dataset.csrfToken;
-    if (!url || !token) return;
-
-    fetch(url, {
-        method: 'PATCH',
-        headers: {
-            'X-CSRF-TOKEN': token,
-            Accept: 'application/json',
-            'X-Requested-With': 'XMLHttpRequest',
-        },
-        credentials: 'same-origin',
-    }).catch(() => {
-        // Server state is authoritative; a later page load restores the real count.
-    });
-}
-
-function wireNotificationClone(dropdown) {
-    if (!dropdown || dropdown.dataset.responsiveNotificationWired === 'true') return;
-    dropdown.dataset.responsiveNotificationWired = 'true';
-
-    dropdown.addEventListener('toggle', () => {
-        if (!dropdown.open) markNotificationDropdownAsRead(dropdown);
-    });
-}
-
 function closeMobileTransientUi(except = null) {
     document.querySelectorAll('.dar-mobile-portal-header details[open]').forEach((details) => {
         if (details !== except) details.removeAttribute('open');
@@ -232,16 +188,6 @@ function makeStaffMore(config, findLink, activeLabel) {
     return details;
 }
 
-function cloneMobileControl(actions, selector) {
-    const original = actions.querySelector(`:scope > ${selector}`);
-    if (!original) return null;
-
-    const clone = original.cloneNode(true);
-    clone.dataset.responsiveClone = 'true';
-    stripDuplicateIds(clone);
-    return clone;
-}
-
 function addLegacySentinel(brand, className) {
     if (!className || brand.querySelector(`.${className}`)) return;
     const sentinel = document.createElement('span');
@@ -280,19 +226,6 @@ function initPortal(config) {
 
     const controls = document.createElement('div');
     controls.className = 'dar-mobile-portal-actions';
-
-    const notification = cloneMobileControl(actions, '.notification-dropdown');
-    if (notification) {
-        wireNotificationClone(notification);
-        controls.appendChild(notification);
-    }
-
-    const account = cloneMobileControl(actions, '.account-topbar-cluster');
-    if (account) {
-        // Account is always appended last so profile/avatar remains the rightmost control.
-        controls.appendChild(account);
-    }
-
     top.appendChild(controls);
 
     const nav = document.createElement('nav');
@@ -310,6 +243,40 @@ function initPortal(config) {
 
     header.append(top, nav);
     topbar.parentNode.insertBefore(header, topbar);
+
+    const notification = actions.querySelector(':scope > .notification-dropdown');
+    const account = actions.querySelector(':scope > .account-topbar-cluster');
+
+    const notificationPlaceholder = document.createElement('span');
+    notificationPlaceholder.hidden = true;
+    notificationPlaceholder.dataset.darResponsivePlaceholder = `${config.key}-notifications`;
+
+    const accountPlaceholder = document.createElement('span');
+    accountPlaceholder.hidden = true;
+    accountPlaceholder.dataset.darResponsivePlaceholder = `${config.key}-account`;
+
+    if (notification) actions.insertBefore(notificationPlaceholder, notification);
+    if (account) actions.insertBefore(accountPlaceholder, account);
+
+    const syncControls = () => {
+        if (compactPortalQuery.matches) {
+            if (notification && notification.parentElement !== controls) controls.appendChild(notification);
+            if (account && account.parentElement !== controls) controls.appendChild(account);
+            return;
+        }
+
+        closeMobileTransientUi();
+        if (notification && notificationPlaceholder.parentNode) notificationPlaceholder.after(notification);
+        if (account && accountPlaceholder.parentNode) accountPlaceholder.after(account);
+    };
+
+    if (typeof compactPortalQuery.addEventListener === 'function') {
+        compactPortalQuery.addEventListener('change', syncControls);
+    } else {
+        compactPortalQuery.addListener(syncControls);
+    }
+
+    syncControls();
     shell.classList.add('dar-responsive-ready');
 }
 
@@ -365,8 +332,8 @@ function initResponsiveHardening() {
 }
 
 function bootResponsiveHardening() {
-    // Initialize the controller immediately so legacy DOMContentLoaded handlers
-    // see the sentinels/new portal markup before they can inject competing UI.
+    // Initialize immediately so legacy DOMContentLoaded handlers see the sentinel
+    // and the original account/notification controls keep their existing listeners.
     initResponsiveHardening();
 
     // Load the canonical CSS after legacy static responsive assets so this contract
