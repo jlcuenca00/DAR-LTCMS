@@ -130,7 +130,17 @@
 
 /* Staff User Management create/edit refinement. Business rules remain unchanged. */
 .user-editor-wrap {
-    max-width: 1180px !important;
+    max-width: 1160px !important;
+}
+
+.user-editor-layout {
+    grid-template-columns: minmax(0, 1fr) 340px !important;
+    gap: 1rem !important;
+}
+
+.user-editor-main,
+.user-editor-side {
+    gap: 1rem !important;
 }
 
 .user-editor-summary,
@@ -141,7 +151,22 @@
 }
 
 .user-editor-summary {
-    padding: 1.15rem 1.25rem !important;
+    padding: 1rem 1.15rem !important;
+}
+
+.user-editor-avatar {
+    width: 2.75rem !important;
+    height: 2.75rem !important;
+    border-radius: .85rem !important;
+}
+
+.user-editor-title {
+    font-size: 1.3rem !important;
+}
+
+.user-editor-muted {
+    margin-top: .2rem !important;
+    font-size: .84rem !important;
 }
 
 .user-editor-avatar,
@@ -152,11 +177,20 @@
 }
 
 .user-card-head {
-    padding: 1rem 1.15rem .85rem !important;
+    padding: .95rem 1.05rem .8rem !important;
 }
 
 .user-card-body {
-    padding: 1.15rem !important;
+    padding: 1.05rem !important;
+}
+
+.user-card-copy {
+    font-size: .82rem !important;
+    line-height: 1.45 !important;
+}
+
+.user-form-grid {
+    gap: .85rem !important;
 }
 
 .user-input,
@@ -169,6 +203,23 @@
     top: 5.8rem !important;
 }
 
+.user-side-panel .user-card-head {
+    padding: .95rem 1.05rem .65rem !important;
+}
+
+.user-side-panel .user-card-body {
+    padding: 0 1.05rem 1.05rem !important;
+}
+
+.user-disclosure {
+    border-radius: .8rem !important;
+}
+
+.user-disclosure summary {
+    min-height: 52px !important;
+}
+
+/* Make account availability read like a deliberate access switch rather than a generic checkbox. */
 .user-availability-card {
     transition: border-color .16s ease, background-color .16s ease, box-shadow .16s ease;
 }
@@ -179,32 +230,100 @@
 }
 
 .user-availability-card:has(input:not(:checked)) {
-    border-color: #fecaca !important;
-    background: #fffafa !important;
+    border-color: #e2e8f0 !important;
+    background: #ffffff !important;
 }
 
 .user-availability-control {
-    min-height: 72px;
+    min-height: 68px;
     align-items: center !important;
+    justify-content: space-between;
+    gap: 1rem !important;
+    padding: .9rem 1.05rem !important;
+}
+
+.user-availability-control .user-native-checkbox {
+    order: 2;
+    width: 44px !important;
+    height: 24px !important;
+    flex: 0 0 44px !important;
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 999px !important;
+    background: #e2e8f0 !important;
+    padding: 0 !important;
+    place-content: center start !important;
+    transition: background-color .16s ease, border-color .16s ease, box-shadow .16s ease !important;
+}
+
+.user-availability-control .user-native-checkbox::before {
+    width: 18px !important;
+    height: 18px !important;
+    margin-left: 2px !important;
+    border-radius: 999px !important;
+    background: #ffffff !important;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, .2) !important;
+    clip-path: none !important;
+    transform: translateX(0) scale(1) !important;
+    transition: transform .16s ease !important;
+}
+
+.user-availability-control .user-native-checkbox:checked {
+    border-color: #15803d !important;
+    background: #15803d !important;
+}
+
+.user-availability-control .user-native-checkbox:checked::before {
+    transform: translateX(20px) scale(1) !important;
+}
+
+.user-availability-control .user-native-checkbox:focus-visible {
+    outline: none !important;
+    box-shadow: 0 0 0 4px rgba(34, 197, 94, .16) !important;
+}
+
+.user-availability-text {
+    order: 1;
+    flex: 1 1 auto;
+}
+
+.user-actions {
+    gap: .55rem !important;
 }
 
 .user-actions .staff-button {
     min-height: 44px !important;
 }
 
-.user-disclosure {
-    border-radius: .8rem !important;
-}
-
 @media (max-width: 1120px) {
+    .user-editor-layout {
+        grid-template-columns: 1fr !important;
+    }
+
     .user-editor-side {
         position: static !important;
     }
 }
 
+@media (max-width: 720px) {
+    .user-editor-wrap {
+        width: 100% !important;
+    }
+
+    .user-editor-summary {
+        padding: .95rem !important;
+    }
+
+    .user-card-head,
+    .user-card-body {
+        padding-inline: .95rem !important;
+    }
+}
+
 @media (prefers-reduced-motion: reduce) {
     .account-menu-panel .account-panel-switch-track,
-    .account-menu-panel .account-panel-switch-track::after {
+    .account-menu-panel .account-panel-switch-track::after,
+    .user-availability-control .user-native-checkbox,
+    .user-availability-control .user-native-checkbox::before {
         transition: none !important;
     }
 }
