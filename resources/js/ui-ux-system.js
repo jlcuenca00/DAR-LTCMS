@@ -205,6 +205,52 @@ function addApplicationSectionNavigator() {
     form.before(nav);
 }
 
+function enhanceReviewDisclosures() {
+    const page = document.querySelector('.application-review-page');
+    if (!page) return;
+
+    const panels = Array.from(page.querySelectorAll('.review-panel'));
+    const formPanels = panels.filter((panel) => {
+        const heading = panel.querySelector('.review-panel-title, h2, h3, h4');
+        const title = heading?.textContent?.trim() || '';
+        return /LTC\s*Form\s*(No\.?\s*)?3|acknowledg(e)?ment receipt|LTC\s*Form\s*(No\.?\s*)?4|attestation.*recommendation/i.test(title);
+    });
+
+    formPanels.forEach((panel, index) => {
+        if (panel.dataset.uiDisclosureEnhanced === 'true') return;
+        const header = panel.querySelector('.review-panel-header');
+        const body = panel.querySelector('.review-panel-body');
+        if (!header || !body) return;
+
+        panel.dataset.uiDisclosureEnhanced = 'true';
+        panel.classList.add('ui-review-disclosure');
+        if (!body.id) body.id = `ui-review-form-panel-${index + 1}`;
+
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'ui-review-disclosure-toggle';
+        button.setAttribute('aria-expanded', 'false');
+        button.setAttribute('aria-controls', body.id);
+        button.innerHTML = '<span>Show details</span><span aria-hidden="true">⌄</span>';
+
+        body.hidden = true;
+        header.appendChild(button);
+
+        button.addEventListener('click', () => {
+            const willOpen = body.hidden;
+            body.hidden = !willOpen;
+            button.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+            button.querySelector('span:first-child').textContent = willOpen ? 'Hide details' : 'Show details';
+        });
+
+        if (window.location.hash && panel.querySelector(window.location.hash)) {
+            body.hidden = false;
+            button.setAttribute('aria-expanded', 'true');
+            button.querySelector('span:first-child').textContent = 'Hide details';
+        }
+    });
+}
+
 function enhanceUserRoleDisclosure() {
     const editor = document.querySelector('.user-editor-wrap');
     const roleSelect = editor?.querySelector('select[name="role"]');
@@ -221,6 +267,23 @@ function enhanceUserRoleDisclosure() {
 
     roleSelect.addEventListener('change', update);
     update();
+}
+
+function enhanceLogin() {
+    const page = document.querySelector('.login-page');
+    if (!page) return;
+
+    const submit = page.querySelector('.login-button');
+    if (submit && submit.textContent.trim().toLowerCase() === 'login') {
+        submit.textContent = 'Sign in';
+    }
+
+    if (document.title.startsWith('Login |')) {
+        document.title = document.title.replace('Login |', 'Sign in |');
+    }
+
+    const help = page.querySelector('.forgot-link');
+    if (help) help.textContent = 'Need help signing in?';
 }
 
 function addSubmitState() {
@@ -274,6 +337,22 @@ function enhanceReadOnlyContext() {
     });
 }
 
+function observeDynamicFormControls() {
+    const root = document.querySelector('.application-create-page, .user-editor-wrap');
+    if (!root || typeof MutationObserver === 'undefined') return;
+
+    const observer = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+            mutation.addedNodes.forEach((node) => {
+                if (!(node instanceof Element)) return;
+                ensureLabelAssociations(node);
+            });
+        });
+    });
+
+    observer.observe(root, { childList: true, subtree: true });
+}
+
 /* Existing role shells mark every unread dropdown item read when the dropdown
    closes. Block that close-triggered side effect. Individual notification open
    routes and the explicit “Mark all as read” action remain authoritative. */
@@ -293,9 +372,12 @@ function initUiUxSystem() {
     enhanceBinaryQuestions();
     syncConditionalFields();
     addApplicationSectionNavigator();
+    enhanceReviewDisclosures();
     enhanceUserRoleDisclosure();
+    enhanceLogin();
     addSubmitState();
     enhanceReadOnlyContext();
+    observeDynamicFormControls();
 }
 
 if (document.readyState === 'loading') {
