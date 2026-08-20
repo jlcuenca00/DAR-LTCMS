@@ -209,6 +209,33 @@ function statusItem({ state = 'neutral', icon, label, copy, actions = [] }) {
     `;
 }
 
+function revealApplicationReviewTarget(target) {
+    if (!(target instanceof Element)) return;
+
+    const requirementGroup = target.closest('.requirement-group-panel');
+    if (requirementGroup?.classList.contains('is-collapsed')) {
+        requirementGroup.classList.remove('is-collapsed');
+        const toggle = requirementGroup.querySelector('[data-requirement-group-toggle]');
+        const label = requirementGroup.querySelector('[data-requirement-group-toggle-label]');
+        toggle?.setAttribute('aria-expanded', 'true');
+        if (label) label.textContent = 'Collapse';
+    }
+
+    const disclosure = target.closest('details');
+    if (disclosure && !disclosure.open) {
+        disclosure.open = true;
+    }
+
+    target.classList.add('requirement-focus-flash');
+    target.setAttribute('tabindex', '-1');
+
+    requestAnimationFrame(() => {
+        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        target.focus({ preventScroll: true });
+        window.setTimeout(() => target.classList.remove('requirement-focus-flash'), 1200);
+    });
+}
+
 function initApplicationShow() {
     const root = document.querySelector('.application-review-page');
     const summaryPanel = root?.querySelector('.application-summary-panel');
@@ -228,6 +255,7 @@ function initApplicationShow() {
     const parcelReady = parcelRows.length > 0;
     const partyReady = partyCards.length > 0 && unlinkedPartyCards.length === 0;
     const firstRequirement = root.querySelector('.requirement-card[id]');
+    const firstRequirementNeedingAttention = missingBlockingCards[0] || firstRequirement;
 
     const panel = createElement('section', 'intake-readiness-panel');
     panel.dataset.intakeReadiness = 'true';
@@ -283,7 +311,7 @@ function initApplicationShow() {
         copy: requirementCards.length
             ? `${encodedRequirementCards.length} of ${requirementCards.length} requirement entries have details encoded; ${missingBlockingCards.length} required entr${missingBlockingCards.length === 1 ? 'y' : 'ies'} still need attention.`
             : 'No requirement checklist is available for this case.',
-        actions: firstRequirement ? [{ href: `#${firstRequirement.id}`, label: 'Open Requirements' }] : [],
+        actions: firstRequirementNeedingAttention ? [{ href: `#${firstRequirementNeedingAttention.id}`, label: 'Open Requirements' }] : [],
     }));
 
     panel.innerHTML = `
@@ -305,11 +333,19 @@ function initApplicationShow() {
 
     panel.querySelectorAll('a[href^="#"]').forEach((link) => {
         link.addEventListener('click', (event) => {
-            const target = document.querySelector(link.getAttribute('href'));
+            const href = link.getAttribute('href');
+            const target = href ? document.querySelector(href) : null;
             if (!target) return;
+
             event.preventDefault();
-            target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            window.history.replaceState(null, '', link.getAttribute('href'));
+
+            if (target.matches('.requirement-card')) {
+                revealApplicationReviewTarget(target);
+            } else {
+                target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+
+            window.history.replaceState(null, '', href);
         });
     });
 }
