@@ -20,13 +20,13 @@
         </div>
         <div class="geojson-actions">
             <button type="button" class="geojson-button" data-geojson-add-point>
-                <i class="fa-solid fa-plus"></i> Add point
+                <i class="fa-solid fa-plus" aria-hidden="true"></i> Add point
             </button>
             <button type="button" class="geojson-button" data-geojson-sample>
-                <i class="fa-solid fa-map-location-dot"></i> Sample
+                <i class="fa-solid fa-map-location-dot" aria-hidden="true"></i> Sample
             </button>
             <button type="button" class="geojson-button primary" data-geojson-build>
-                <i class="fa-solid fa-wand-magic-sparkles"></i> Apply Coordinates
+                <i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i> Apply Coordinates
             </button>
         </div>
     </div>
@@ -35,8 +35,8 @@
         @foreach ([1, 2, 3, 4] as $row)
             <div class="geojson-point-row">
                 <span>Point {{ $row }}</span>
-                <input type="number" step="0.000001" placeholder="Longitude / X" data-geojson-lng>
-                <input type="number" step="0.000001" placeholder="Latitude / Y" data-geojson-lat>
+                <input type="number" step="0.000001" inputmode="decimal" placeholder="Longitude / X" aria-label="Point {{ $row }} longitude" data-geojson-lng>
+                <input type="number" step="0.000001" inputmode="decimal" placeholder="Latitude / Y" aria-label="Point {{ $row }} latitude" data-geojson-lat>
             </div>
         @endforeach
     </div>
@@ -46,17 +46,17 @@
             <span>Map Geometry Output</span>
             <div class="geojson-actions compact">
                 <button type="button" class="geojson-button" data-geojson-format>
-                    <i class="fa-solid fa-code"></i> Format
+                    <i class="fa-solid fa-code" aria-hidden="true"></i> Format
                 </button>
                 <button type="button" class="geojson-button" data-geojson-clear>
-                    <i class="fa-solid fa-eraser"></i> Clear
+                    <i class="fa-solid fa-eraser" aria-hidden="true"></i> Clear
                 </button>
             </div>
         </div>
         <textarea id="{{ $geoFieldId }}" name="{{ $geoFieldName }}" rows="{{ $geoRows }}" class="{{ $geoInputClass }}" placeholder='Use Sample or Apply Coordinates to fill this map geometry field.'>{{ $geoValue }}</textarea>
     </div>
 
-    <p class="geojson-message" data-geojson-message></p>
+    <p class="geojson-message" data-geojson-message aria-live="polite"></p>
     @error($geoFieldName)<p class="{{ $geoErrorClass }}">{{ $message }}</p>@enderror
 </div>
 
@@ -105,7 +105,7 @@
         }
 
         .geojson-button {
-            min-height: 32px;
+            min-height: 44px;
             display: inline-flex;
             align-items: center;
             justify-content: center;
@@ -114,10 +114,11 @@
             background: #ffffff;
             color: #166534;
             border-radius: 9px;
-            padding: 0 10px;
+            padding: 0 12px;
             font-size: 11.5px;
             font-weight: 900;
             cursor: pointer;
+            touch-action: manipulation;
         }
 
         .geojson-button:hover {
@@ -159,7 +160,7 @@
 
         .geojson-point-row input {
             width: 100%;
-            min-height: 36px;
+            min-height: 44px;
             border-radius: 9px;
             font-size: 13px;
         }
@@ -189,6 +190,13 @@
             color: #b91c1c;
         }
 
+        @media (pointer: coarse) {
+            .geojson-button,
+            .geojson-point-row input {
+                min-height: 48px;
+            }
+        }
+
         @media (max-width: 760px) {
             .geojson-toolbar,
             .geojson-textarea-header,
@@ -201,8 +209,18 @@
                 justify-content: stretch;
             }
 
+            .geojson-actions.compact {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                display: grid;
+            }
+
             .geojson-button {
                 width: 100%;
+            }
+
+            .geojson-point-row input,
+            .geojson-textarea-wrap textarea {
+                font-size: 16px;
             }
         }
     </style>
@@ -227,16 +245,22 @@
                     const row = document.createElement('div');
                     row.className = 'geojson-point-row';
                     row.innerHTML = '<span>Point ' + index + '</span>'
-                        + '<input type="number" step="0.000001" placeholder="Longitude / X" data-geojson-lng>'
-                        + '<input type="number" step="0.000001" placeholder="Latitude / Y" data-geojson-lat>';
+                        + '<input type="number" step="0.000001" inputmode="decimal" placeholder="Longitude / X" aria-label="Point ' + index + ' longitude" data-geojson-lng>'
+                        + '<input type="number" step="0.000001" inputmode="decimal" placeholder="Latitude / Y" aria-label="Point ' + index + ' latitude" data-geojson-lat>';
                     row.querySelector('[data-geojson-lng]').value = lng;
                     row.querySelector('[data-geojson-lat]').value = lat;
                     pointsWrap.appendChild(row);
                 };
 
                 const renumberRows = function () {
-                    pointsWrap.querySelectorAll('.geojson-point-row span').forEach(function (label, index) {
-                        label.textContent = 'Point ' + (index + 1);
+                    pointsWrap.querySelectorAll('.geojson-point-row').forEach(function (row, index) {
+                        const number = index + 1;
+                        const label = row.querySelector('span');
+                        const lng = row.querySelector('[data-geojson-lng]');
+                        const lat = row.querySelector('[data-geojson-lat]');
+                        if (label) label.textContent = 'Point ' + number;
+                        if (lng) lng.setAttribute('aria-label', 'Point ' + number + ' longitude');
+                        if (lat) lat.setAttribute('aria-label', 'Point ' + number + ' latitude');
                     });
                 };
 
