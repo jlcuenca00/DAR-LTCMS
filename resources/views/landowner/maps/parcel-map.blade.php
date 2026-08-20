@@ -7,7 +7,7 @@
         <link
             rel="stylesheet"
             href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-            integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+            integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9D/miZyoHS5obTRR9BMY="
             crossorigin=""
         />
 
@@ -166,10 +166,7 @@
             <article class="lo-map-card">
                 <h2 class="lo-map-title">Legend</h2>
                 <div class="lo-legend-list">
-                    <div class="lo-legend-row"><span class="lo-legend-dot" style="background:#15803d;"></span>Active parcel record</div>
-                    <div class="lo-legend-row"><span class="lo-legend-dot" style="background:#ea580c;"></span>Pending review reference</div>
-                    <div class="lo-legend-row"><span class="lo-legend-dot" style="background:#2563eb;"></span>Linked application reference</div>
-                    <div class="lo-legend-row"><span class="lo-legend-dot" style="background:#dc2626;"></span>Flagged record</div>
+                    <div class="lo-legend-row"><span class="lo-legend-dot" style="background:#15803d;"></span>Your mapped parcel record</div>
                 </div>
             </article>
         </aside>
@@ -217,10 +214,7 @@
                     });
                 }
 
-                function parcelColor(status) {
-                    if (status === 'pending_legal_review') return '#ea580c';
-                    if (status === 'linked_application') return '#2563eb';
-                    if (status === 'flagged') return '#dc2626';
+                function parcelColor() {
                     return '#15803d';
                 }
 
