@@ -28,6 +28,7 @@ import '../css/password-recovery-spacing.css';
 import '../css/account-panel-polish.css';
 import '../css/user-management-linked-records.css';
 import '../css/staff-record-row-navigation.css';
+import '../css/responsive-hardening-last-mile.css';
 
 window.axios = axios;
 window.L = L;
