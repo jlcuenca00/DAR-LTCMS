@@ -33,6 +33,7 @@ import '../css/account-panel-polish.css';
 import '../css/user-management-linked-records.css';
 import '../css/staff-record-row-navigation.css';
 import '../css/staff-mobile-portal-nav.css';
+import '../css/staff-mobile-account-menu-position.css';
 
 window.axios = axios;
 window.L = L;

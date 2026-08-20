@@ -12,6 +12,7 @@ class StaffMobilePortalNavigationTest extends TestCase
 
         $this->assertStringContainsString("import './staff-mobile-portal-nav';", $bootstrap);
         $this->assertStringContainsString("import '../css/staff-mobile-portal-nav.css';", $bootstrap);
+        $this->assertStringContainsString("import '../css/staff-mobile-account-menu-position.css';", $bootstrap);
     }
 
     public function test_mobile_portal_navigation_is_limited_to_tablet_and_phone_widths(): void
@@ -53,5 +54,16 @@ class StaffMobilePortalNavigationTest extends TestCase
         $this->assertNotFalse($notificationAppend);
         $this->assertNotFalse($accountAppend);
         $this->assertLessThan($accountAppend, $notificationAppend);
+    }
+
+    public function test_phone_account_menu_stays_near_the_profile_control_instead_of_becoming_a_bottom_sheet(): void
+    {
+        $css = file_get_contents(resource_path('css/staff-mobile-account-menu-position.css'));
+
+        $this->assertStringContainsString('@media screen and (max-width: 640px)', $css);
+        $this->assertStringContainsString('top: 60px !important;', $css);
+        $this->assertStringContainsString('right: 8px !important;', $css);
+        $this->assertStringContainsString('bottom: auto !important;', $css);
+        $this->assertStringContainsString('left: auto !important;', $css);
     }
 }
