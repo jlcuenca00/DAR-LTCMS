@@ -32,10 +32,10 @@ class SecurityHeaders
                 "form-action 'self'",
                 "frame-ancestors 'self'",
                 "object-src 'none'",
-                "script-src 'self' 'unsafe-inline' https://unpkg.com",
-                "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com https://unpkg.com",
+                "script-src 'self' 'unsafe-inline' https://unpkg.com https://cdn.jsdelivr.net",
+                "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com https://unpkg.com https://cdn.jsdelivr.net",
                 "font-src 'self' data: https://fonts.gstatic.com https://cdnjs.cloudflare.com",
-                "img-src 'self' data: blob: https://unpkg.com https://*.basemaps.cartocdn.com",
+                "img-src 'self' data: blob: https://unpkg.com https://cdn.jsdelivr.net https://*.basemaps.cartocdn.com",
                 "connect-src 'self'",
                 "worker-src 'self' blob:",
             ]));
