@@ -2,7 +2,13 @@
    Screen-only; no print/PDF behavior is changed. */
 
 @media screen {
-    /* Keyboard users must always see the skip target after Tab focus. */
+    /* Keyboard users must always see the skip target immediately after Tab.
+       Avoid animating from the off-screen resting position through an unusable
+       intermediate position. */
+    html body .skip-link {
+        transition: none !important;
+    }
+
     html body .skip-link:focus,
     html body .skip-link:focus-visible {
         top: max(12px, env(safe-area-inset-top, 0px)) !important;
