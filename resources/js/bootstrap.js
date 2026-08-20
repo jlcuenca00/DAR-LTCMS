@@ -17,6 +17,7 @@ import './development-notice';
 import './responsive-hardening';
 import './ui-ux-system';
 import './ui-ux-last-mile';
+import './ui-ux-public';
 import '../css/staff-dashboard-hero.css';
 import '../css/application-page-cleanup.css';
 import '../css/staff-list-filters.css';
@@ -33,6 +34,7 @@ import '../css/staff-record-row-navigation.css';
 import '../css/responsive-hardening-last-mile.css';
 import '../css/ui-ux-system.css';
 import '../css/ui-ux-last-mile.css';
+import '../css/ui-ux-public.css';
 
 window.axios = axios;
 window.L = L;
