@@ -82,7 +82,8 @@ jobs:
           cp .env.example .env
           php artisan key:generate
           php artisan migrate --force
-          php artisan tinker --execute="\App\Models\User::query()->create(['name' => 'Responsive Test Staff', 'username' => 'responsive.staff', 'email' => 'responsive.staff@example.test', 'password' => 'ResponsiveTest321!', 'role' => 'staff', 'is_active' => true, 'must_change_password' => false]);"
+          php artisan tinker --trust-project --execute="\App\Models\User::query()->updateOrCreate(['username' => 'responsive.staff'], ['name' => 'Responsive Test Staff', 'email' => 'responsive.staff@example.test', 'password' => 'ResponsiveTest321!', 'role' => 'staff', 'is_active' => true, 'must_change_password' => false]);"
+          php artisan tinker --trust-project --execute="if (! \App\Models\User::query()->where('username', 'responsive.staff')->exists()) { throw new \RuntimeException('Responsive E2E Staff account was not created.'); }"
 
       - name: Run responsive and UI UX feature regressions
         run: |
