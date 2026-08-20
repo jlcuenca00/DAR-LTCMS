@@ -2,11 +2,14 @@
 
 namespace Tests\Feature;
 
+use App\Http\Controllers\Staff\StaffDashboardController;
 use App\Models\ApplicationDocument;
 use App\Models\LandTransferApplication;
 use App\Models\RequiredDocument;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Request;
+use Illuminate\View\View;
 use Tests\TestCase;
 
 class DashboardAttentionTest extends TestCase
@@ -63,26 +66,38 @@ class DashboardAttentionTest extends TestCase
         $stale->updated_at = now()->subDays(9);
         $stale->save();
 
-        $this->actingAs($staff)
-            ->get(route('staff.dashboard', ['attention' => 'missing_requirements']))
-            ->assertOk()
-            ->assertSee('Incomplete Requirements')
-            ->assertSee('APP-ATTN-INCOMPLETE')
-            ->assertSee('APP-ATTN-STALE')
-            ->assertDontSee('APP-ATTN-COMPLETE');
+        $this->actingAs($staff);
 
-        $this->actingAs($staff)
-            ->get(route('staff.dashboard', ['attention' => 'requirements_complete']))
-            ->assertOk()
-            ->assertSee('Requirements Complete')
-            ->assertSee('APP-ATTN-COMPLETE')
-            ->assertDontSee('APP-ATTN-INCOMPLETE');
+        $missing = $this->dashboardData('missing_requirements');
+        $this->assertSame('Incomplete Requirements', $missing['attentionFocusLabel']);
+        $this->assertEqualsCanonicalizing(
+            ['APP-ATTN-INCOMPLETE', 'APP-ATTN-STALE'],
+            $missing['actionApplications']->pluck('application_code')->all()
+        );
 
-        $this->actingAs($staff)
-            ->get(route('staff.dashboard', ['attention' => 'stale']))
-            ->assertOk()
-            ->assertSee('No Update for More Than 7 Days')
-            ->assertSee('APP-ATTN-STALE')
-            ->assertDontSee('APP-ATTN-COMPLETE');
+        $completeData = $this->dashboardData('requirements_complete');
+        $this->assertSame('Requirements Complete', $completeData['attentionFocusLabel']);
+        $this->assertSame(
+            ['APP-ATTN-COMPLETE'],
+            $completeData['actionApplications']->pluck('application_code')->all()
+        );
+
+        $staleData = $this->dashboardData('stale');
+        $this->assertSame('No Update for More Than 7 Days', $staleData['attentionFocusLabel']);
+        $this->assertSame(
+            ['APP-ATTN-STALE'],
+            $staleData['actionApplications']->pluck('application_code')->all()
+        );
+    }
+
+    private function dashboardData(string $attention): array
+    {
+        $request = Request::create('/staff/dashboard', 'GET', ['attention' => $attention]);
+        $view = app(StaffDashboardController::class)($request);
+
+        $this->assertInstanceOf(View::class, $view);
+        $this->assertSame('dashboards.staff', $view->name());
+
+        return $view->getData();
     }
 }
