@@ -65,7 +65,8 @@ class RoleMobilePortalNavigationTest extends TestCase
         $this->assertNotFalse($notificationAppend);
         $this->assertNotFalse($accountAppend);
         $this->assertLessThan($accountAppend, $notificationAppend);
-        $this->assertStringContainsString('profile/avatar remains the rightmost control', $script);
+        $this->assertStringContainsString('notificationPlaceholder.after(notification)', $script);
+        $this->assertStringContainsString('accountPlaceholder.after(account)', $script);
     }
 
     public function test_role_mobile_account_menu_is_bounded_near_the_top_controls(): void
