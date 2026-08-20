@@ -16,6 +16,7 @@ import './account-panel';
 import './user-management-linked-records';
 import './staff-record-row-navigation';
 import './staff-mobile-portal-nav';
+import './role-mobile-portal-nav';
 import './development-notice';
 import '../css/staff-dashboard-hero.css';
 import '../css/application-page-cleanup.css';
@@ -34,6 +35,7 @@ import '../css/user-management-linked-records.css';
 import '../css/staff-record-row-navigation.css';
 import '../css/staff-mobile-portal-nav.css';
 import '../css/staff-mobile-account-menu-position.css';
+import '../css/role-mobile-portal-nav.css';
 
 window.axios = axios;
 window.L = L;
