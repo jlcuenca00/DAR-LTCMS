@@ -9,10 +9,12 @@ on:
       - 'resources/css/**'
       - 'resources/js/**'
       - 'resources/views/**'
+      - 'app/Http/Controllers/Staff/StaffDashboardController.php'
       - 'tests/Feature/*Responsive*'
       - 'tests/Feature/*MobilePortal*'
       - 'tests/Feature/*Map*'
       - 'tests/Feature/UiUxSystemTest.php'
+      - 'tests/Feature/DashboardAttentionTest.php'
       - 'tests/e2e/**'
       - 'playwright.config.mjs'
       - '.github/workflows/responsive-e2e.yml'
@@ -92,7 +94,8 @@ jobs:
             tests/Feature/ParcelMapResponsiveHardeningTest.php \
             tests/Feature/StaffParcelMapResilienceTest.php \
             tests/Feature/LandownerMapUiCleanupTest.php \
-            tests/Feature/UiUxSystemTest.php
+            tests/Feature/UiUxSystemTest.php \
+            tests/Feature/DashboardAttentionTest.php
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
