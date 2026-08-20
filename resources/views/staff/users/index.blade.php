@@ -2,6 +2,21 @@
     title="User Management"
     active="users"
 >
+    @php
+        $currentStatus = $filters['status'] ?? 'active';
+        $activeTabUrl = route('staff.users.index', array_filter([
+            'status' => 'active',
+            'role' => $filters['role'] ?? null,
+            'search' => $filters['search'] ?? null,
+        ]));
+        $inactiveTabUrl = route('staff.users.index', array_filter([
+            'status' => 'inactive',
+            'role' => $filters['role'] ?? null,
+            'search' => $filters['search'] ?? null,
+        ]));
+        $clearUrl = route('staff.users.index', ['status' => $currentStatus]);
+    @endphp
+
     <style>
         .user-management-shell {
             display: grid;
@@ -13,7 +28,7 @@
             align-items: center;
             justify-content: space-between;
             gap: 1rem;
-            padding: 1.15rem 1.25rem;
+            padding: 1.1rem 1.2rem;
             border: 1px solid #d9e2dc;
             border-radius: 1rem;
             background: #ffffff;
@@ -39,6 +54,7 @@
 
         .user-management-copy {
             margin: .25rem 0 0;
+            max-width: 760px;
             color: #64748b;
             font-size: .83rem;
             line-height: 1.5;
@@ -52,34 +68,92 @@
             flex-wrap: wrap;
         }
 
-        .user-management-policy {
+        .user-management-workspace {
+            overflow: hidden;
+            border: 1px solid #d9e2dc;
+            border-radius: 1rem;
+            background: #ffffff;
+            box-shadow: 0 8px 22px rgba(15, 23, 42, .035);
+        }
+
+        .user-management-tabs {
+            display: flex;
+            align-items: center;
+            gap: .45rem;
+            padding: .75rem 1rem 0;
+            border-bottom: 1px solid #e5e7eb;
+            background: #ffffff;
+            overflow-x: auto;
+        }
+
+        .user-management-tab {
+            display: inline-flex;
+            align-items: center;
+            gap: .45rem;
+            min-height: 42px;
+            padding: .6rem .8rem;
+            border-bottom: 2px solid transparent;
+            color: #64748b;
+            font-size: .8rem;
+            font-weight: 850;
+            text-decoration: none;
+            white-space: nowrap;
+        }
+
+        .user-management-tab:hover {
+            color: #166534;
+        }
+
+        .user-management-tab.is-active {
+            border-bottom-color: #15803d;
+            color: #166534;
+        }
+
+        .user-management-tab-count {
+            display: inline-grid;
+            min-width: 1.6rem;
+            min-height: 1.6rem;
+            place-items: center;
+            padding: 0 .38rem;
+            border-radius: 999px;
+            background: #f1f5f9;
+            color: #475569;
+            font-size: .68rem;
+            font-weight: 900;
+        }
+
+        .user-management-tab.is-active .user-management-tab-count {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .user-management-context {
             display: flex;
             align-items: flex-start;
             gap: .65rem;
-            padding: .8rem .95rem;
-            border: 1px solid #dbe4de;
-            border-radius: .9rem;
-            background: #f8faf9;
+            padding: .7rem 1rem;
+            border-bottom: 1px solid #eef2f0;
+            background: {{ $currentStatus === 'inactive' ? '#fffafa' : '#f8faf9' }};
             color: #475569;
-            font-size: .78rem;
+            font-size: .76rem;
             line-height: 1.5;
         }
 
-        .user-management-policy i {
-            margin-top: .12rem;
-            color: #15803d;
+        .user-management-context i {
+            margin-top: .15rem;
+            color: {{ $currentStatus === 'inactive' ? '#dc2626' : '#15803d' }};
         }
 
         .user-management-filter-card {
-            padding: 1rem 1.15rem;
+            padding: .9rem 1rem;
             border-bottom: 1px solid #e5e7eb;
             background: #ffffff;
         }
 
         .user-management-filter-grid {
             display: grid;
-            grid-template-columns: minmax(240px, 1fr) 180px 180px auto;
-            gap: .75rem;
+            grid-template-columns: minmax(260px, 1fr) 190px auto;
+            gap: .7rem;
             align-items: end;
         }
 
@@ -183,7 +257,7 @@
             color: #166534;
         }
 
-        .user-management-status-stack {
+        .user-management-readiness {
             display: flex;
             flex-direction: column;
             align-items: flex-start;
@@ -191,21 +265,21 @@
         }
 
         .user-management-empty {
-            padding: 3rem 1rem !important;
+            padding: 3.5rem 1rem !important;
             text-align: center;
             color: #64748b;
         }
 
         .user-management-empty i {
             display: block;
-            margin-bottom: .6rem;
+            margin-bottom: .7rem;
             color: #94a3b8;
-            font-size: 1.4rem;
+            font-size: 1.5rem;
         }
 
-        @media (max-width: 1080px) {
+        @media (max-width: 960px) {
             .user-management-filter-grid {
-                grid-template-columns: 1fr 1fr;
+                grid-template-columns: 1fr 180px;
             }
 
             .user-management-filter-search,
@@ -261,11 +335,11 @@
             <div>
                 <p class="user-management-kicker">Account Administration</p>
                 <h2 class="user-management-title">Authorized User Accounts</h2>
-                <p class="user-management-copy">Create accounts, assign role-based access, and manage sign-in availability without removing historical records.</p>
+                <p class="user-management-copy">Manage current system access while keeping inactive account records preserved for auditability and historical traceability.</p>
             </div>
 
             <div class="user-management-hero-actions">
-                <span class="staff-badge staff-badge-green">{{ $users->total() }} account{{ $users->total() === 1 ? '' : 's' }}</span>
+                <span class="staff-badge staff-badge-green">{{ $accountCounts['active'] }} active</span>
                 <a href="{{ route('staff.users.create') }}" class="staff-button staff-button-primary">
                     <i class="fa-solid fa-user-plus"></i>
                     Create User
@@ -273,14 +347,33 @@
             </div>
         </section>
 
-        <div class="user-management-policy">
-            <i class="fa-solid fa-shield-halved" aria-hidden="true"></i>
-            <div><strong>Account records are preserved.</strong> Use Active/Inactive status to control access; historical actions and audit references remain traceable.</div>
-        </div>
+        <section class="user-management-workspace">
+            <nav class="user-management-tabs" aria-label="Account status views">
+                <a href="{{ $activeTabUrl }}" class="user-management-tab {{ $currentStatus === 'active' ? 'is-active' : '' }}">
+                    <i class="fa-solid fa-user-check" aria-hidden="true"></i>
+                    Active Accounts
+                    <span class="user-management-tab-count">{{ $accountCounts['active'] }}</span>
+                </a>
+                <a href="{{ $inactiveTabUrl }}" class="user-management-tab {{ $currentStatus === 'inactive' ? 'is-active' : '' }}">
+                    <i class="fa-solid fa-user-slash" aria-hidden="true"></i>
+                    Inactive Accounts
+                    <span class="user-management-tab-count">{{ $accountCounts['inactive'] }}</span>
+                </a>
+            </nav>
 
-        <section class="staff-panel overflow-hidden">
+            <div class="user-management-context">
+                <i class="fa-solid {{ $currentStatus === 'inactive' ? 'fa-circle-info' : 'fa-shield-halved' }}" aria-hidden="true"></i>
+                @if ($currentStatus === 'inactive')
+                    <div><strong>Inactive accounts cannot sign in.</strong> They remain available here so authorized Staff can review or reactivate them without deleting historical account references.</div>
+                @else
+                    <div><strong>Active accounts are shown by default.</strong> Use this list for day-to-day account administration; inactive accounts are kept in the separate view above.</div>
+                @endif
+            </div>
+
             <div class="user-management-filter-card">
                 <form method="GET" action="{{ route('staff.users.index') }}" class="user-management-filter-grid">
+                    <input type="hidden" name="status" value="{{ $currentStatus }}">
+
                     <div class="user-management-filter-search">
                         <label class="user-management-label" for="user-search">Search accounts</label>
                         <input
@@ -304,21 +397,12 @@
                         </select>
                     </div>
 
-                    <div>
-                        <label class="user-management-label" for="user-status">Status</label>
-                        <select id="user-status" name="status" class="user-management-control">
-                            <option value="">All statuses</option>
-                            <option value="active" @selected(($filters['status'] ?? '') === 'active')>Active</option>
-                            <option value="inactive" @selected(($filters['status'] ?? '') === 'inactive')>Inactive</option>
-                        </select>
-                    </div>
-
                     <div class="user-management-filter-actions">
                         <button type="submit" class="staff-button staff-button-dark">
-                            <i class="fa-solid fa-filter"></i>
-                            Apply
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                            Search
                         </button>
-                        <a href="{{ route('staff.users.index') }}" class="staff-button staff-button-light">Clear</a>
+                        <a href="{{ $clearUrl }}" class="staff-button staff-button-light">Clear</a>
                     </div>
                 </form>
             </div>
@@ -329,9 +413,9 @@
                         <tr>
                             <th>User</th>
                             <th>Access</th>
-                            <th>Account</th>
                             <th>Linked Record</th>
                             <th>Activity</th>
+                            <th>Sign-in</th>
                             <th class="staff-table-action">Action</th>
                         </tr>
                     </thead>
@@ -378,16 +462,6 @@
                                     </span>
                                 </td>
                                 <td>
-                                    <div class="user-management-status-stack">
-                                        <span class="staff-badge {{ $user->is_active ? 'staff-badge-green' : 'staff-badge-red' }}">
-                                            {{ $user->is_active ? 'Active' : 'Inactive' }}
-                                        </span>
-                                        @if ($user->must_change_password)
-                                            <span class="staff-badge staff-badge-amber">Password Change Required</span>
-                                        @endif
-                                    </div>
-                                </td>
-                                <td>
                                     @if ($user->landowner)
                                         <div class="user-management-primary">{{ $user->landowner->full_name }}</div>
                                         <div class="user-management-secondary">Landowner ID {{ $user->landowner->id }}</div>
@@ -404,6 +478,17 @@
                                     @endif
                                     <div class="user-management-secondary">Created {{ $user->created_at?->timezone('Asia/Manila')->format('M d, Y') ?? 'N/A' }}</div>
                                 </td>
+                                <td>
+                                    <div class="user-management-readiness">
+                                        @if ($currentStatus === 'inactive')
+                                            <span class="staff-badge staff-badge-red">Access Disabled</span>
+                                        @elseif ($user->must_change_password)
+                                            <span class="staff-badge staff-badge-amber">Password Change Required</span>
+                                        @else
+                                            <span class="staff-badge staff-badge-green">Ready</span>
+                                        @endif
+                                    </div>
+                                </td>
                                 <td class="staff-table-action">
                                     <div class="staff-table-action-group">
                                         <a href="{{ route('staff.users.edit', $user) }}" class="staff-button staff-button-light">
@@ -416,9 +501,14 @@
                         @empty
                             <tr>
                                 <td colspan="6" class="user-management-empty">
-                                    <i class="fa-regular fa-user" aria-hidden="true"></i>
-                                    <strong>No matching accounts.</strong>
-                                    <div class="mt-1 text-xs">Try clearing the current search or filters.</div>
+                                    <i class="fa-regular {{ $currentStatus === 'inactive' ? 'fa-circle-check' : 'fa-user' }}" aria-hidden="true"></i>
+                                    @if ($currentStatus === 'inactive' && empty($filters['search']) && empty($filters['role']))
+                                        <strong>No inactive accounts.</strong>
+                                        <div class="mt-1 text-xs">All preserved user accounts are currently active.</div>
+                                    @else
+                                        <strong>No matching {{ $currentStatus }} accounts.</strong>
+                                        <div class="mt-1 text-xs">Try clearing the current search or role filter.</div>
+                                    @endif
                                 </td>
                             </tr>
                         @endforelse
