@@ -198,6 +198,9 @@
                             <td>
                                 <div class="parcel-state-stack">
                                     <span class="staff-badge {{ $parcel->status === 'active' ? 'staff-badge-green' : 'staff-badge-slate' }}">{{ ucwords(str_replace('_', ' ', $parcel->status ?? 'Unspecified')) }}</span>
+                                    @if ($parcel->is_flagged)
+                                        <span class="staff-badge staff-badge-red">Flagged for Review</span>
+                                    @endif
                                     <span class="staff-badge {{ $parcel->geometry_geojson ? 'staff-badge-blue' : 'staff-badge-slate' }}">{{ $parcel->geometry_geojson ? 'Mapped' : 'No Geometry' }}</span>
                                 </div>
                             </td>
@@ -205,6 +208,10 @@
                                 <div class="staff-table-action-group">
                                     <a href="{{ route('staff.records.parcels.show', $parcel) }}" class="staff-button staff-button-light">Open</a>
                                     <a href="{{ route('staff.records.parcels.edit', $parcel) }}" class="staff-button staff-button-light">Edit</a>
+                                    <a href="{{ route('staff.records.parcels.review-flag.edit', $parcel) }}" class="staff-button {{ $parcel->is_flagged ? 'staff-button-danger' : 'staff-button-light' }}">
+                                        <i class="fa-solid fa-flag"></i>
+                                        {{ $parcel->is_flagged ? 'Review Flag' : 'Flag' }}
+                                    </a>
                                 </div>
                             </td>
                         </tr>
