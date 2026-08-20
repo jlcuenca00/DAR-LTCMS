@@ -46,9 +46,29 @@
     transform: translateY(-50%) translate(1px, -1px);
 }
 
+.user-management-table tbody tr[data-manage-url] {
+    cursor: pointer;
+    transition: background-color 140ms ease, box-shadow 140ms ease;
+}
+
+.user-management-table tbody tr[data-manage-url]:hover {
+    background: #f6fbf7;
+}
+
+.user-management-table tbody tr[data-manage-url]:focus-visible {
+    outline: none;
+    background: #f6fbf7;
+    box-shadow: inset 3px 0 0 #15803d, inset 0 0 0 1px rgba(21, 128, 61, .16);
+}
+
+.user-management-table tbody tr[data-manage-url] .user-management-linked-record {
+    cursor: pointer;
+}
+
 @media (prefers-reduced-motion: reduce) {
     .user-management-linked-record,
-    .user-management-linked-record-icon {
+    .user-management-linked-record-icon,
+    .user-management-table tbody tr[data-manage-url] {
         transition: none;
     }
 }
