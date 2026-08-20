@@ -73,6 +73,11 @@ function normalizedLabel(node) {
 }
 
 function stripDuplicateIds(root) {
+    if (root.id) root.removeAttribute('id');
+    root.removeAttribute('aria-controls');
+    root.removeAttribute('aria-describedby');
+    root.removeAttribute('aria-labelledby');
+
     root.querySelectorAll('[id]').forEach((node) => node.removeAttribute('id'));
     root.querySelectorAll('[aria-controls], [aria-describedby], [aria-labelledby]').forEach((node) => {
         node.removeAttribute('aria-controls');
@@ -360,11 +365,13 @@ function initResponsiveHardening() {
 }
 
 function bootResponsiveHardening() {
+    // Initialize the controller immediately so legacy DOMContentLoaded handlers
+    // see the sentinels/new portal markup before they can inject competing UI.
+    initResponsiveHardening();
+
     // Load the canonical CSS after legacy static responsive assets so this contract
     // becomes the final screen-layout authority while older files are retired safely.
-    import('../css/responsive-hardening.css')
-        .catch(() => null)
-        .finally(initResponsiveHardening);
+    import('../css/responsive-hardening.css').catch(() => null);
 }
 
 if (document.readyState === 'loading') {
