@@ -1,0 +1,108 @@
+.staff-record-row-link {
+    cursor: pointer;
+    transition: background-color 140ms ease, box-shadow 140ms ease;
+}
+
+.staff-record-row-link:hover {
+    background: #f7fcf8 !important;
+}
+
+.staff-record-row-link:focus-visible {
+    outline: none;
+    background: #f0fdf4 !important;
+    box-shadow: inset 3px 0 0 #15803d, inset 0 0 0 1px rgba(21, 128, 61, .18);
+}
+
+.staff-record-row-link td:first-child {
+    position: relative;
+}
+
+.staff-record-row-link:hover td:first-child::before,
+.staff-record-row-link:focus-visible td:first-child::before {
+    content: '';
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 3px;
+    background: #16a34a;
+}
+
+.source-package-row.staff-record-row-link,
+.application-mobile-card.staff-record-row-link {
+    cursor: pointer;
+}
+
+.source-package-row.staff-record-row-link:focus-visible,
+.application-mobile-card.staff-record-row-link:focus-visible {
+    outline: 3px solid rgba(21, 128, 61, .16);
+    outline-offset: -3px;
+}
+
+.parcel-review-shortcut-card {
+    display: grid;
+    gap: 14px;
+    border: 1px solid #fecaca;
+    border-radius: 18px;
+    padding: 18px;
+    background: linear-gradient(180deg, #fffafa 0%, #ffffff 100%);
+    box-shadow: 0 1px 2px rgba(15, 23, 42, .05);
+}
+
+.parcel-review-shortcut-heading {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 11px;
+    align-items: start;
+}
+
+.parcel-review-shortcut-icon {
+    display: inline-grid;
+    place-items: center;
+    width: 38px;
+    height: 38px;
+    border: 1px solid #fecaca;
+    border-radius: 12px;
+    background: #fef2f2;
+    color: #dc2626;
+}
+
+.parcel-review-shortcut-heading h3 {
+    margin: 1px 0 0;
+    color: #0f172a;
+    font-size: 15px;
+    font-weight: 900;
+    line-height: 1.25;
+}
+
+.parcel-review-shortcut-heading p {
+    margin: 5px 0 0;
+    color: #64748b;
+    font-size: 12.5px;
+    line-height: 1.5;
+}
+
+.parcel-review-shortcut-note {
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 10px 11px;
+    background: #f8fafc;
+    color: #475569;
+    font-size: 11.5px;
+    line-height: 1.45;
+}
+
+.parcel-review-shortcut-action {
+    min-height: 44px;
+    border-color: #fca5a5 !important;
+    color: #b91c1c !important;
+}
+
+.parcel-review-shortcut-action:hover {
+    border-color: #dc2626 !important;
+    background: #fef2f2 !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .staff-record-row-link {
+        transition: none;
+    }
+}
