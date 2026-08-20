@@ -15,6 +15,7 @@ import './user-management-linked-records';
 import './staff-record-row-navigation';
 import './development-notice';
 import './responsive-hardening';
+import './ui-ux-system';
 import '../css/staff-dashboard-hero.css';
 import '../css/application-page-cleanup.css';
 import '../css/staff-list-filters.css';
@@ -29,6 +30,7 @@ import '../css/account-panel-polish.css';
 import '../css/user-management-linked-records.css';
 import '../css/staff-record-row-navigation.css';
 import '../css/responsive-hardening-last-mile.css';
+import '../css/ui-ux-system.css';
 
 window.axios = axios;
 window.L = L;
