@@ -189,12 +189,14 @@ class NotificationService
             return;
         }
 
-        $packageLabel = $committedRows === 1 ? 'package was' : 'packages were';
+        $packageNoun = $committedRows === 1 ? 'package' : 'packages';
+        $importVerb = $committedRows === 1 ? 'was' : 'were';
+        $availabilityVerb = $committedRows === 1 ? 'is' : 'are';
 
         $this->notifyActiveGeodetic(
             'geodetic_reference_imported',
             'Source references imported',
-            $committedRows . ' source ' . $packageLabel . ' imported and are available for parcel/reference review.',
+            $committedRows . ' source ' . $packageNoun . ' ' . $importVerb . ' imported and ' . $availabilityVerb . ' available for parcel/reference review.',
             null,
             [
                 'committed_rows' => $committedRows,
