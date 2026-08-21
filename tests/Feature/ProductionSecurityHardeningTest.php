@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Http\Middleware\TrustHosts;
+use App\Http\Middleware\TrustProxies;
 use App\Models\SourceRecordPackage;
 use App\Models\User;
 use App\Services\ProductionReadinessScanner;
@@ -125,6 +126,23 @@ class ProductionSecurityHardeningTest extends TestCase
 
         $this->expectException(SuspiciousOperationException::class);
         Request::create('https://evil.example/login')->getHost();
+    }
+
+    public function test_trusted_proxy_wildcard_and_explicit_addresses_keep_framework_semantics(): void
+    {
+        $middleware = new class extends TrustProxies
+        {
+            public function resolvedProxies(): array|string|null
+            {
+                return $this->proxies();
+            }
+        };
+
+        config(['app.trusted_proxies' => ['*']]);
+        $this->assertSame('*', $middleware->resolvedProxies());
+
+        config(['app.trusted_proxies' => ['127.0.0.1', '10.0.0.0/8']]);
+        $this->assertSame(['127.0.0.1', '10.0.0.0/8'], $middleware->resolvedProxies());
     }
 
     public function test_production_readiness_scanner_passes_hardened_core_configuration(): void
