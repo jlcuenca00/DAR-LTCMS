@@ -79,6 +79,7 @@ class AuditLogIntegrityHardeningTest extends TestCase
             fn () => response()->noContent()
         );
         $route->name('audit.integrity.probe');
+        $route->bind($request);
         $request->setRouteResolver(fn () => $route);
         $this->app->instance('request', $request);
 
