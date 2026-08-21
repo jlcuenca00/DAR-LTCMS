@@ -36,7 +36,7 @@ class LandownerParcelMapViewerTest extends TestCase
             'first_name' => 'Bravo',
             'last_name' => 'Owner',
             'municipality' => 'Sibulan',
-            'barangay' => 'Boloc-boloc',
+            'barangay' => 'Bolocboloc',
             'province' => 'Negros Oriental',
             'user_id' => $userB->id,
         ]);
@@ -67,7 +67,7 @@ class LandownerParcelMapViewerTest extends TestCase
             'title_no' => 'T-BRAVO-001',
             'tax_decl_no' => 'TD-BRAVO-001',
             'municipality' => 'Sibulan',
-            'barangay' => 'Boloc-boloc',
+            'barangay' => 'Bolocboloc',
             'province' => 'Negros Oriental',
             'area_hectares' => 2.5000,
             'status' => 'active',
@@ -215,7 +215,7 @@ class LandownerParcelMapViewerTest extends TestCase
             'title_no' => 'T-PRIVATE-BRAVO',
             'tax_decl_no' => 'TD-PRIVATE-BRAVO',
             'municipality' => 'Sibulan',
-            'barangay' => 'Boloc-boloc',
+            'barangay' => 'Bolocboloc',
             'province' => 'Negros Oriental',
             'area_hectares' => 2.0000,
             'status' => 'active',
@@ -257,26 +257,27 @@ class LandownerParcelMapViewerTest extends TestCase
 
         $response->assertRedirect(route('login'));
     }
+
     public function test_landowner_dashboard_links_to_parcel_map_viewer(): void
-{
-    $user = User::factory()->create([
-        'role' => 'landowner',
-    ]);
+    {
+        $user = User::factory()->create([
+            'role' => 'landowner',
+        ]);
 
-    Landowner::create([
-        'first_name' => 'Alpha',
-        'last_name' => 'Owner',
-        'municipality' => 'Dumaguete City',
-        'barangay' => 'Calindagan',
-        'province' => 'Negros Oriental',
-        'user_id' => $user->id,
-    ]);
+        Landowner::create([
+            'first_name' => 'Alpha',
+            'last_name' => 'Owner',
+            'municipality' => 'Dumaguete City',
+            'barangay' => 'Calindagan',
+            'province' => 'Negros Oriental',
+            'user_id' => $user->id,
+        ]);
 
-    $response = $this->actingAs($user)
-        ->get(route('landowner.dashboard'));
+        $response = $this->actingAs($user)
+            ->get(route('landowner.dashboard'));
 
-    $response->assertOk();
-    $response->assertSee('My Parcel Map');
-    $response->assertSee(route('landowner.parcel-map.index'));
-}
+        $response->assertOk();
+        $response->assertSee('My Parcel Map');
+        $response->assertSee(route('landowner.parcel-map.index'));
+    }
 }
