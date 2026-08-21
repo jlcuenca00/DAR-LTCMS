@@ -3,8 +3,9 @@
 namespace App\Services;
 
 use App\Models\LandTransferApplication;
-use App\Models\SourceRecordPackage;
 use App\Models\Parcel;
+use App\Models\SourceRecordPackage;
+use App\Models\SourceRecordPackageImportBatch;
 use App\Models\SystemNotification;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
@@ -12,6 +13,21 @@ use Illuminate\Support\Collection;
 
 class NotificationService
 {
+    /**
+     * Approved Staff notification policy.
+     *
+     * Staff should only receive notices for application encoding, submission
+     * into review, and final released/denied decisions. Internal endorsement
+     * stage changes, document activity, metadata/indexing changes, and automatic
+     * clearance generation are intentionally excluded to avoid notification noise.
+     */
+    private const STAFF_ALLOWED_TYPES = [
+        'application_created',
+        'application_submitted',
+        'application_released',
+        'application_denied',
+    ];
+
     public function notifyUser(
         User|int|null $user,
         string $type,
@@ -20,14 +36,16 @@ class NotificationService
         ?Model $related = null,
         array $data = []
     ): ?SystemNotification {
-        $userId = $user instanceof User ? $user->id : $user;
+        $recipient = $user instanceof User
+            ? $user
+            : ($user ? User::query()->find($user) : null);
 
-        if (! $userId) {
+        if (! $recipient || ! $recipient->is_active) {
             return null;
         }
 
         return SystemNotification::create([
-            'user_id' => $userId,
+            'user_id' => $recipient->id,
             'type' => $type,
             'title' => $title,
             'message' => $message,
@@ -39,13 +57,22 @@ class NotificationService
 
     public function notifyUsers(iterable $users, string $type, string $title, string $message, ?Model $related = null, array $data = []): void
     {
-        foreach ($users as $user) {
-            $this->notifyUser($user, $type, $title, $message, $related, $data);
-        }
+        collect($users)
+            ->filter(fn ($user) => $user instanceof User)
+            ->unique('id')
+            ->each(fn (User $user) => $this->notifyUser($user, $type, $title, $message, $related, $data));
     }
 
     public function notifyActiveStaff(string $type, string $title, string $message, ?Model $related = null, array $data = []): void
     {
+        $normalized = $this->normalizeStaffNotification($type, $title, $message, $related, $data);
+
+        if ($normalized === null) {
+            return;
+        }
+
+        [$type, $title, $message, $data] = $normalized;
+
         User::query()
             ->where('role', User::ROLE_STAFF)
             ->where('is_active', true)
@@ -73,18 +100,18 @@ class NotificationService
             'Clearance application encoded',
             'Application ' . $application->application_code . ' was encoded and placed under ' . $application->statusLabel() . '.',
             $application,
-            $this->applicationData($application)
+            $this->staffApplicationData($application)
         );
     }
 
     public function notifyStaffApplicationSubmitted(LandTransferApplication $application): void
     {
         $this->notifyActiveStaff(
-            'application_status_updated',
-            'Application status updated',
-            'Application ' . $application->application_code . ' is now ' . $application->statusLabel() . '.',
+            'application_submitted',
+            'Application submitted for review',
+            'Application ' . $application->application_code . ' was submitted for review and is now ' . $application->statusLabel() . '.',
             $application,
-            $this->applicationData($application)
+            $this->staffApplicationData($application)
         );
     }
 
@@ -95,7 +122,7 @@ class NotificationService
             'Clearance released',
             'A final released clearance decision was recorded for application ' . $application->application_code . '.',
             $application,
-            $this->applicationData($application)
+            $this->staffApplicationData($application)
         );
     }
 
@@ -106,7 +133,7 @@ class NotificationService
             'Application denied',
             'A final denied clearance decision was recorded for application ' . $application->application_code . '.',
             $application,
-            $this->applicationData($application)
+            $this->staffApplicationData($application)
         );
     }
 
@@ -120,7 +147,7 @@ class NotificationService
             'Application status updated',
             'Your clearance application ' . $application->application_code . ' is now ' . $statusLabel . '.',
             $application,
-            $this->applicationData($application)
+            $this->landownerApplicationData($application)
         );
     }
 
@@ -135,7 +162,7 @@ class NotificationService
             'Final clearance decision recorded',
             'A final clearance decision has been recorded for application ' . $application->application_code . '. Decision status: ' . $statusLabel . '.',
             $application,
-            $this->applicationData($application)
+            $this->landownerApplicationData($application)
         );
     }
 
@@ -150,6 +177,25 @@ class NotificationService
                 'package_code' => $package->package_code,
                 'parcel_code' => $package->parcel_code,
                 'status' => $package->status,
+            ]
+        );
+    }
+
+    public function notifyGeodeticSourceImportCommitted(SourceRecordPackageImportBatch $batch): void
+    {
+        $committedRows = max(0, (int) $batch->committed_rows);
+
+        if ($committedRows === 0) {
+            return;
+        }
+
+        $this->notifyActiveGeodetic(
+            'geodetic_reference_imported',
+            'Source references imported',
+            $committedRows . ' source ' . str('package')->plural($committedRows) . ' were imported and are available for parcel/reference review.',
+            null,
+            [
+                'committed_rows' => $committedRows,
             ]
         );
     }
@@ -187,7 +233,43 @@ class NotificationService
             ->values();
     }
 
-    private function applicationData(LandTransferApplication $application): array
+    private function normalizeStaffNotification(
+        string $type,
+        string $title,
+        string $message,
+        ?Model $related,
+        array $data
+    ): ?array {
+        if ($type === 'application_status_updated') {
+            $oldStatus = $data['old_status'] ?? null;
+            $newStatus = $data['new_status'] ?? null;
+
+            $isSubmissionIntoReview = in_array($oldStatus, [
+                LandTransferApplication::STATUS_DRAFT,
+                LandTransferApplication::STATUS_PENDING_REVIEW,
+            ], true) && $newStatus === LandTransferApplication::STATUS_PENDING_LEGAL_REVIEW;
+
+            if (! $isSubmissionIntoReview) {
+                return null;
+            }
+
+            $applicationCode = $related instanceof LandTransferApplication
+                ? $related->application_code
+                : ($data['application_code'] ?? 'the application');
+
+            $type = 'application_submitted';
+            $title = 'Application submitted for review';
+            $message = 'Application ' . $applicationCode . ' was submitted for review and is now Pending Review by Legal Officer.';
+        }
+
+        if (! in_array($type, self::STAFF_ALLOWED_TYPES, true)) {
+            return null;
+        }
+
+        return [$type, $title, $message, $data];
+    }
+
+    private function staffApplicationData(LandTransferApplication $application): array
     {
         return [
             'application_id' => $application->id,
@@ -198,6 +280,16 @@ class NotificationService
             'transferee_name' => $application->transferee_name,
             'municipality' => $application->municipality,
             'barangay' => $application->barangay,
+        ];
+    }
+
+    private function landownerApplicationData(LandTransferApplication $application): array
+    {
+        return [
+            'application_id' => $application->id,
+            'application_code' => $application->application_code,
+            'status' => $application->status,
+            'status_label' => $application->statusLabel(),
         ];
     }
 
