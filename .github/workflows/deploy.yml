@@ -53,6 +53,7 @@ jobs:
             /vendor/,
             /tests/,
             /storage/backups/,
+            /storage/app/private/,
             /storage/app/public/,
             /storage/logs/,
             /storage/framework/cache/data/,
@@ -79,6 +80,7 @@ jobs:
             }
 
             mkdir -p bootstrap/cache
+            mkdir -p storage/app/private
             mkdir -p storage/app/public
             mkdir -p storage/fonts
             mkdir -p storage/logs
@@ -99,32 +101,24 @@ jobs:
             php artisan view:clear
 
             php artisan migrate --force
-
             php artisan cache:clear
 
-            # Rebuild the public storage symlink deterministically.
-            # Uploaded files remain in storage/app/public, which rsync excludes.
+            # Source-package scans and application documents are administrative
+            # records. They must never be exposed through a public storage symlink.
             if [ -L public/storage ]; then
               rm public/storage
             elif [ -e public/storage ]; then
-              echo "public/storage exists but is not a symbolic link. Refusing to overwrite it."
+              echo "public/storage exists but is not a symbolic link. Refusing to leave an unknown public storage path in production."
               exit 1
             fi
 
-            php artisan storage:link
-
-            test -L public/storage || {
-              echo "public/storage symlink was not created."
+            test ! -e public/storage && test ! -L public/storage || {
+              echo "public/storage must not exist in production."
               exit 1
             }
 
-            EXPECTED_STORAGE_TARGET="$(readlink -f storage/app/public)"
-            PUBLIC_STORAGE_TARGET="$(readlink -f public/storage)"
-
-            test "$PUBLIC_STORAGE_TARGET" = "$EXPECTED_STORAGE_TARGET" || {
-              echo "public/storage points to an unexpected target."
-              echo "Expected: $EXPECTED_STORAGE_TARGET"
-              echo "Actual:   $PUBLIC_STORAGE_TARGET"
+            test -w storage/app/private || {
+              echo "storage/app/private is not writable by the deployment user."
               exit 1
             }
 
@@ -137,6 +131,12 @@ jobs:
               echo "storage/fonts is not writable by the deployment user."
               exit 1
             }
+
+            # Blocks unsafe runtime settings (debug, HTTP URL, insecure session
+            # cookies, public document exposure, etc.). Delivery/logging warnings
+            # are reported but do not interrupt routine deployment; --strict is
+            # reserved for the final v1.0 release gate.
+            php artisan dar:check-production-readiness
 
             php artisan config:cache
             php artisan route:cache
