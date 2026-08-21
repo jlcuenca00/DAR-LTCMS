@@ -62,7 +62,15 @@ class MonitoringReportController extends Controller
         $applications = LandTransferApplication::query();
         $this->applyApplicationFilters($applications, $filters);
 
+        $validDecisionStatuses = [
+            LandTransferApplication::STATUS_RELEASED,
+            LandTransferApplication::STATUS_DENIED,
+            LandTransferApplication::STATUS_APPROVED,
+            LandTransferApplication::STATUS_NOT_APPROVED,
+        ];
+
         $clearances = ApplicationClearance::query()
+            ->whereIn('decision_status', $validDecisionStatuses)
             ->whereHas('application', function (Builder $query) use ($filters) {
                 $this->applyApplicationFilters($query, $filters);
             });
