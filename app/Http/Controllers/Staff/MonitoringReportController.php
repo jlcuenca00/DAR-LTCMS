@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class MonitoringReportController extends Controller
 {
@@ -38,10 +39,18 @@ class MonitoringReportController extends Controller
 
         $validated = $request->validate([
             'date_from' => ['nullable', 'date_format:Y-m-d'],
-            'date_to' => ['nullable', 'date_format:Y-m-d', 'after_or_equal:date_from'],
+            'date_to' => ['nullable', 'date_format:Y-m-d'],
             'status' => ['nullable', Rule::in(array_keys($statusOptions))],
             'municipality' => ['nullable', Rule::in($municipalities)],
         ]);
+
+        if (filled($validated['date_from'] ?? null)
+            && filled($validated['date_to'] ?? null)
+            && strcmp($validated['date_to'], $validated['date_from']) < 0) {
+            throw ValidationException::withMessages([
+                'date_to' => 'Date To must be the same as or later than Date From.',
+            ]);
+        }
 
         $filters = [
             'date_from' => filled($validated['date_from'] ?? null) ? $validated['date_from'] : null,
