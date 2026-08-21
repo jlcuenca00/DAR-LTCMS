@@ -3,6 +3,9 @@
 namespace Tests\Feature;
 
 use App\Http\Middleware\TrustHosts;
+use App\Models\Landholding;
+use App\Models\Landowner;
+use App\Models\Parcel;
 use App\Models\SourceRecordPackage;
 use App\Models\User;
 use App\Services\ProductionReadinessScanner;
@@ -74,7 +77,59 @@ class ProductionSecurityHardeningTest extends TestCase
         $this->get($url)->assertRedirect(route('login'));
     }
 
-    public function test_protected_storage_rejects_unregistered_or_non_source_paths(): void
+    public function test_registered_landholding_reference_photo_keeps_legacy_url_but_remains_staff_only(): void
+    {
+        Storage::fake('public');
+
+        $staff = User::factory()->create([
+            'role' => User::ROLE_STAFF,
+            'is_active' => true,
+        ]);
+        $landownerUser = User::factory()->create([
+            'role' => User::ROLE_LANDOWNER,
+            'is_active' => true,
+        ]);
+        $geodetic = User::factory()->create([
+            'role' => User::ROLE_GEODETIC,
+            'is_active' => true,
+        ]);
+
+        $recordOwner = Landowner::create([
+            'first_name' => 'Reference',
+            'last_name' => 'Owner',
+            'province' => 'Negros Oriental',
+        ]);
+        $parcel = Parcel::create([
+            'parcel_code' => 'PAR-SECURITY-REF-001',
+            'municipality' => 'Dumaguete City',
+            'barangay' => 'Bantayan',
+            'area_hectares' => 1.0000,
+            'status' => 'active',
+        ]);
+        $path = 'reference-photos/landholdings/registered-reference.png';
+        Landholding::create([
+            'landowner_id' => $recordOwner->id,
+            'parcel_id' => $parcel->id,
+            'area_hectares' => 1.0000,
+            'status' => Landholding::STATUS_ACTIVE,
+            'reference_photo_path' => $path,
+        ]);
+        Storage::disk('public')->put($path, base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII='));
+
+        $legacyUrl = '/storage/'.$path;
+
+        $staffResponse = $this->actingAs($staff)->get($legacyUrl);
+        $staffResponse->assertOk();
+        $this->assertStringContainsString('no-store', (string) $staffResponse->headers->get('Cache-Control'));
+
+        $this->actingAs($landownerUser)->get($legacyUrl)->assertForbidden();
+        $this->actingAs($geodetic)->get($legacyUrl)->assertForbidden();
+
+        auth()->logout();
+        $this->get($legacyUrl)->assertRedirect(route('login'));
+    }
+
+    public function test_protected_storage_rejects_unregistered_or_unsupported_paths(): void
     {
         Storage::fake('public');
 
@@ -84,10 +139,15 @@ class ProductionSecurityHardeningTest extends TestCase
         ]);
 
         Storage::disk('public')->put('source-record-packages/unregistered.pdf', 'not registered');
-        Storage::disk('public')->put('profile-photos/other-user.jpg', 'not a source scan');
+        Storage::disk('public')->put('reference-photos/landholdings/unregistered.png', 'not registered');
+        Storage::disk('public')->put('profile-photos/other-user.jpg', 'unsupported path');
 
         $this->actingAs($staff)
             ->get('/staff/protected-storage/source-record-packages/unregistered.pdf')
+            ->assertNotFound();
+
+        $this->actingAs($staff)
+            ->get('/storage/reference-photos/landholdings/unregistered.png')
             ->assertNotFound();
 
         $this->actingAs($staff)
