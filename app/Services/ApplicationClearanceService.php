@@ -82,7 +82,7 @@ class ApplicationClearanceService
             $pageNumber = max(1, (int) ($application->ltc_page_number ?: 1));
 
             /*
-             * LTC numbers are issued as 1803-YEAR-XXXX ( page ). Serialize
+             * LTC numbers are issued as 1803-YEAR-XXXX (page). Serialize
              * number allocation on PostgreSQL so two releases cannot receive
              * the same annual sequence. Existing final clearances are never
              * renumbered because of the create-once rule above.
@@ -95,7 +95,7 @@ class ApplicationClearanceService
                 ->where('clearance_number', 'LIKE', '1803-' . $decisionYear . '-%')
                 ->pluck('clearance_number')
                 ->map(function ($number) use ($decisionYear): ?int {
-                    $pattern = '/^1803-' . preg_quote($decisionYear, '/') . '-(\d{4})\s*\(/';
+                    $pattern = '/^1803-' . preg_quote($decisionYear, '/') . '-(\d+)\s*\(/';
 
                     return preg_match($pattern, (string) $number, $matches)
                         ? (int) $matches[1]
@@ -106,7 +106,7 @@ class ApplicationClearanceService
             $sequence = max(1, ((int) $existingSequences->max()) + 1);
 
             do {
-                $clearanceNumber = sprintf('1803-%s-%04d ( %d )', $decisionYear, $sequence, $pageNumber);
+                $clearanceNumber = sprintf('1803-%s-%04d (%d)', $decisionYear, $sequence, $pageNumber);
                 $sequence++;
             } while (ApplicationClearance::where('clearance_number', $clearanceNumber)->exists());
 
