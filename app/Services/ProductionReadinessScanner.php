@@ -11,7 +11,7 @@ class ProductionReadinessScanner
         $appHost = parse_url($appUrl, PHP_URL_HOST);
         $appScheme = parse_url($appUrl, PHP_URL_SCHEME);
 
-        $this->require($issues, app()->environment('production'), 'environment_not_production', 'APP_ENV must be production.');
+        $this->require($issues, config('app.env') === 'production', 'environment_not_production', 'APP_ENV must be production.');
         $this->require($issues, config('app.debug') === false, 'debug_enabled', 'APP_DEBUG must be false in production.');
         $this->require($issues, $appScheme === 'https' && filled($appHost), 'app_url_not_https', 'APP_URL must be a complete HTTPS URL for the deployed DAR-LTCMS host.');
         $this->require($issues, filled(config('app.key')), 'app_key_missing', 'APP_KEY must be configured before production deployment.');
