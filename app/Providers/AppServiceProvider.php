@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Models\LandTransferApplication;
+use App\Observers\LandTransferApplicationObserver;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\ServiceProvider;
@@ -21,6 +23,8 @@ class AppServiceProvider extends ServiceProvider
             ->mixedCase()
             ->numbers()
             ->symbols());
+
+        LandTransferApplication::observe(LandTransferApplicationObserver::class);
 
         // Use the shared DAR-LTCMS pagination UI across all paginated lists.
         // Desktop shows numbered pages with the first/last page visible, while
