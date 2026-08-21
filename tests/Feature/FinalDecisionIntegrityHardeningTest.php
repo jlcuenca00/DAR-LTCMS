@@ -334,7 +334,7 @@ class FinalDecisionIntegrityHardeningTest extends TestCase
             'lot_number' => 'LOT-' . $code,
             'municipality' => 'Dumaguete City',
             'barangay' => 'Bantayan',
-            'area_hectares' => 1.0000,
+            'area_hectares' => 10.0000,
             'status' => 'active',
         ]);
     }

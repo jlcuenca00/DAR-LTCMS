@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\NormalizesDarLocation;
 use Illuminate\Database\Eloquent\Model;
 
 class SourceRecordPackage extends Model
 {
+    use NormalizesDarLocation;
+
     public const STATUS_ENCODED = 'encoded';
     public const STATUS_LINKED = 'linked';
     public const STATUS_PARCEL_CREATED = 'parcel_created';
@@ -23,34 +26,27 @@ class SourceRecordPackage extends Model
         'parcel_id',
         'landowner_id',
         'encoded_by_user_id',
-
         'parcel_code',
         'title_number',
         'landholding_reference_number',
         'control_number',
-
         'landowner_name',
         'transferor_name',
         'transferee_name',
-
         'lot_number',
         'survey_number',
         'area_hectares',
         'crop_or_land_use',
-
         'barangay',
         'municipality',
         'province',
-
         'source_geometry_geojson',
         'boundary_description',
-
         'source_file_path',
         'source_file_original_filename',
         'source_file_mime_type',
         'source_file_uploaded_by_user_id',
         'source_file_uploaded_at',
-
         'source_book',
         'page_number',
         'transcribed_by',
@@ -85,8 +81,6 @@ class SourceRecordPackage extends Model
     {
         return $this->belongsTo(User::class, 'encoded_by_user_id');
     }
-
-
 
     public function sourceFileUploadedBy()
     {

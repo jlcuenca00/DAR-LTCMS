@@ -20,6 +20,7 @@ return Application::configure(basePath: dirname(__DIR__))
             \App\Http\Middleware\EnsurePasswordIsCurrent::class,
             \App\Http\Middleware\SecurityHeaders::class,
             \App\Http\Middleware\LockApplicationMutation::class,
+            \App\Http\Middleware\EnsureReleaseDataIntegrity::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

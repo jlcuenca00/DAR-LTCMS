@@ -2,10 +2,14 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\NormalizesDarLocation;
+use App\Services\SourceRecordReferenceIntegrityService;
 use Illuminate\Database\Eloquent\Model;
 
 class LegacyRecord extends Model
 {
+    use NormalizesDarLocation;
+
     public const TYPE_TITLE = 'title';
     public const TYPE_LANDHOLDING = 'landholding';
     public const TYPE_PARCEL_SOURCE = 'parcel_source';
@@ -46,7 +50,6 @@ class LegacyRecord extends Model
         'parcel_id',
         'landowner_id',
         'encoded_by_user_id',
-
         'parcel_code',
         'title_number',
         'control_number',
@@ -54,27 +57,21 @@ class LegacyRecord extends Model
         'tax_declaration_number',
         'lot_number',
         'survey_number',
-
         'landowner_name',
         'transferor_name',
         'transferee_name',
-
         'area_hectares',
         'crop_or_land_use',
-
         'barangay',
         'municipality',
         'province',
         'source_geometry_geojson',
-
         'record_date',
         'decision_status',
         'previous_dar_reference_number',
         'landholding_reference_number',
-
         'remarks',
         'boundary_description',
-
         'source_book',
         'page_number',
         'transcribed_by',
@@ -89,6 +86,13 @@ class LegacyRecord extends Model
         'area_hectares' => 'decimal:4',
         'source_geometry_geojson' => 'array',
     ];
+
+    protected static function booted(): void
+    {
+        static::saving(function (LegacyRecord $record) {
+            app(SourceRecordReferenceIntegrityService::class)->assertUniqueRecord($record);
+        });
+    }
 
     public function importBatch()
     {
@@ -125,8 +129,9 @@ class LegacyRecord extends Model
         return self::SOURCE_SCOPES[$this->source_record_scope]
             ?? ucfirst(str_replace('_', ' ', $this->source_record_scope));
     }
+
     public function package()
-{
-    return $this->belongsTo(SourceRecordPackage::class, 'source_record_package_id');
-}
+    {
+        return $this->belongsTo(SourceRecordPackage::class, 'source_record_package_id');
+    }
 }
