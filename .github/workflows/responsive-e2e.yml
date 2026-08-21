@@ -50,6 +50,7 @@ on:
       - 'tests/Feature/ApplicationModalViewportTest.php'
       - 'tests/Feature/DashboardAttentionTest.php'
       - 'tests/Feature/ClearancePrintReferenceTest.php'
+      - 'tests/Feature/FinalLtcForm5Test.php'
       - 'tests/Feature/MonitoringReportTest.php'
       - 'tests/Feature/SecurityHeadersTest.php'
       - 'tests/Feature/ProductionSecurityHardeningTest.php'
@@ -150,7 +151,7 @@ jobs:
       - name: Build frontend assets
         run: npm run build
 
-      - name: Run final UAT, security, workflow, reports, performance, and integrity tests
+      - name: Run final UAT, Form 5, security, workflow, reports, performance, and integrity tests
         run: |
           php artisan test \
             tests/Feature/ResponsiveUiFoundationTest.php \
@@ -163,6 +164,7 @@ jobs:
             tests/Feature/LandownerMapUiCleanupTest.php \
             tests/Feature/UiUxSystemTest.php \
             tests/Feature/ClearancePrintReferenceTest.php \
+            tests/Feature/FinalLtcForm5Test.php \
             tests/Feature/DashboardAttentionTest.php \
             tests/Feature/MonitoringReportTest.php \
             tests/Feature/SecurityHeadersTest.php \
