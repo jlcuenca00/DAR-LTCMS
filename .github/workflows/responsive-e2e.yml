@@ -33,6 +33,7 @@ on:
       - 'tests/Feature/HectareValidationWorkflowTest.php'
       - 'tests/Feature/NotificationSystemTest.php'
       - 'tests/Feature/AuditLoggingTest.php'
+      - 'tests/Feature/BetaSystemRegressionTest.php'
       - 'tests/e2e/**'
       - 'playwright.config.mjs'
       - '.github/workflows/responsive-e2e.yml'
@@ -133,7 +134,8 @@ jobs:
             tests/Feature/ApplicationWorkflowReadinessTest.php \
             tests/Feature/HectareValidationWorkflowTest.php \
             tests/Feature/NotificationSystemTest.php \
-            tests/Feature/AuditLoggingTest.php
+            tests/Feature/AuditLoggingTest.php \
+            tests/Feature/BetaSystemRegressionTest.php
 
       - name: Create browser test Staff account
         run: |
