@@ -7,765 +7,274 @@
 
     @php
         $generatedAtPh = $generatedAt?->timezone('Asia/Manila');
-        $statusLabel = function ($value) {
-            return match ((string) $value) {
-                'draft', 'pending_review', 'pending_legal_review' => 'Pending Review by Legal Officer',
-                'endorsed_lti' => 'Endorsed to LTI Division',
-                'endorsed_chief_legal' => 'Endorsed to Chief Legal',
-                'endorsed_parpo' => 'Endorsed to PARPO II',
-                'for_releasing' => 'For Releasing',
-                'released' => 'Released',
-                'denied' => 'Denied',
-                default => ucwords(str_replace('_', ' ', (string) $value)),
-            };
-        };
+        $normalizedStatusCounts = collect($statusCounts ?? []);
+        $normalizedClearanceCounts = collect($clearanceCounts ?? []);
 
-        $statusClass = function ($value) {
-            return match ((string) $value) {
-                'draft', 'pending_review', 'pending_legal_review' => 'pending-legal-review',
-                'endorsed_lti', 'endorsed_chief_legal', 'endorsed_parpo' => 'endorsed',
-                'for_releasing' => 'for-releasing',
-                'approved', 'released' => 'released',
-                'not_approved', 'denied' => 'denied',
-                default => strtolower(str_replace('_', '-', (string) $value)),
-            };
-        };
+        $statusRows = [
+            'Pending Review by Legal Officer' => (int) (($normalizedStatusCounts['pending_legal_review'] ?? 0) + ($normalizedStatusCounts['pending_review'] ?? 0) + ($normalizedStatusCounts['draft'] ?? 0)),
+            'Endorsed to LTI Division' => (int) ($normalizedStatusCounts['endorsed_lti'] ?? 0),
+            'Endorsed to Chief Legal' => (int) ($normalizedStatusCounts['endorsed_chief_legal'] ?? 0),
+            'Endorsed to PARPO II' => (int) ($normalizedStatusCounts['endorsed_parpo'] ?? 0),
+            'For Releasing' => (int) ($normalizedStatusCounts['for_releasing'] ?? 0),
+            'Released' => (int) (($normalizedStatusCounts['released'] ?? 0) + ($normalizedStatusCounts['approved'] ?? 0)),
+            'Denied' => (int) (($normalizedStatusCounts['denied'] ?? 0) + ($normalizedStatusCounts['not_approved'] ?? 0)),
+        ];
 
-        $decisionLabel = function ($value) {
-            return match ((string) $value) {
-                'released' => 'Released',
-                'denied' => 'Denied',
-                default => ucwords(str_replace('_', ' ', (string) $value)),
-            };
-        };
+        $activeApplicationCount = collect($statusRows)->only([
+            'Pending Review by Legal Officer',
+            'Endorsed to LTI Division',
+            'Endorsed to Chief Legal',
+            'Endorsed to PARPO II',
+            'For Releasing',
+        ])->sum();
 
-        $decisionClass = function ($value) {
-            return match ((string) $value) {
-                'approved', 'released' => 'released',
-                'not_approved', 'denied' => 'denied',
-                default => strtolower(str_replace('_', '-', (string) $value)),
+        $releasedResults = (int) (($normalizedClearanceCounts['released'] ?? 0) + ($normalizedClearanceCounts['approved'] ?? 0));
+        $deniedResults = (int) (($normalizedClearanceCounts['denied'] ?? 0) + ($normalizedClearanceCounts['not_approved'] ?? 0));
+        $backParams = array_filter($filters ?? [], fn ($value) => filled($value));
+
+        $decisionLabel = function (?string $status): string {
+            return match ($status) {
+                'released', 'approved' => 'Released',
+                'denied', 'not_approved' => 'Denied',
+                default => ucwords(str_replace('_', ' ', (string) $status)),
             };
         };
 
         $darLogoDataUri = null;
         foreach (['images/dar-logo.png', 'images/dar-logo.svg', 'images/dar-logo.jpg', 'images/dar-logo.jpeg'] as $logoCandidate) {
             $logoPath = public_path($logoCandidate);
-
-            if (file_exists($logoPath)) {
-                $extension = strtolower(pathinfo($logoPath, PATHINFO_EXTENSION));
-                $mime = match ($extension) {
-                    'svg' => 'image/svg+xml',
-                    'jpg', 'jpeg' => 'image/jpeg',
-                    default => 'image/png',
-                };
-                $darLogoDataUri = 'data:' . $mime . ';base64,' . base64_encode(file_get_contents($logoPath));
-                break;
+            if (! file_exists($logoPath)) {
+                continue;
             }
+
+            $extension = strtolower(pathinfo($logoPath, PATHINFO_EXTENSION));
+            $mime = match ($extension) {
+                'svg' => 'image/svg+xml',
+                'jpg', 'jpeg' => 'image/jpeg',
+                default => 'image/png',
+            };
+            $darLogoDataUri = 'data:' . $mime . ';base64,' . base64_encode(file_get_contents($logoPath));
+            break;
         }
     @endphp
 
     <style>
-        @page {
-            size: A4;
-            margin: 15mm 14mm 16mm;
-        }
-
-        :root {
-            --font-ui: 'Google Sans', 'Product Sans', Arial, Helvetica, sans-serif;
-        }
-
-        * {
-            box-sizing: border-box;
-            font-family: var(--font-ui) !important;
-        }
-
-        html {
-            background: #e5e7eb;
-        }
-
-        body {
-            margin: 0;
-            color: #111827;
-            font-family: var(--font-ui);
-            font-size: 12px;
-            line-height: 1.45;
-            background: #e5e7eb;
-        }
-
-        .print-toolbar {
-            max-width: 980px;
-            margin: 18px auto;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 12px;
-        }
-
-        .toolbar-left,
-        .toolbar-right {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            flex-wrap: wrap;
-        }
-
-        .toolbar-title {
-            font-size: 13px;
-            font-weight: 800;
-            color: #374151;
-        }
-
-        .print-button,
-        .back-link {
-            min-height: 38px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            padding: 0 14px;
-            border-radius: 9px;
-            border: 1px solid #d1d5db;
-            background: #ffffff;
-            color: #111827;
-            text-decoration: none;
-            font-family: var(--font-ui);
-            font-size: 12px;
-            font-weight: 800;
-            cursor: pointer;
-        }
-
-        .print-button.primary {
-            border-color: #166534;
-            background: #166534;
-            color: #ffffff;
-        }
-
-        .document-page {
-            width: 210mm;
-            min-height: 297mm;
-            max-width: 980px;
-            margin: 0 auto 24px;
-            background: #ffffff;
-            border: 1px solid #d1d5db;
-            box-shadow: 0 18px 40px rgba(15, 23, 42, 0.14);
-            padding: 18mm 16mm;
-        }
-
-        .document-header {
-            display: table;
-            width: 100%;
-            border-bottom: 3px double #14532d;
-            padding-bottom: 12px;
-            margin-bottom: 14px;
-        }
-
-        .seal-cell {
-            display: table-cell;
-            width: 62px;
-            vertical-align: middle;
-        }
-
-        .seal {
-            width: 52px;
-            height: 52px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .seal-logo {
-            width: 52px;
-            height: 52px;
-            object-fit: contain;
-            display: block;
-        }
-
-        .seal-fallback {
-            width: 44px;
-            height: 44px;
-            border-radius: 12px;
-            border: 1px solid #bbf7d0;
-            background: #f0fdf4;
-            color: #14532d;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 900;
-            font-size: 13px;
-            letter-spacing: 0.04em;
-        }
-
-        .agency-cell {
-            display: table-cell;
-            vertical-align: middle;
-            text-align: center;
-            padding-right: 62px;
-        }
-
-        .republic {
-            margin: 0;
-            font-size: 11px;
-            color: #374151;
-        }
-
-        .agency {
-            margin: 2px 0 0;
-            font-size: 15px;
-            font-weight: 900;
-            text-transform: uppercase;
-            letter-spacing: 0.04em;
-            color: #111827;
-        }
-
-        .office {
-            margin: 2px 0 0;
-            font-size: 12px;
-            font-weight: 800;
-            color: #14532d;
-        }
-
-        .system-name {
-            margin: 2px 0 0;
-            font-size: 10.5px;
-            color: #4b5563;
-        }
-
-        .report-title-block {
-            margin: 16px 0 14px;
-            display: table;
-            width: 100%;
-        }
-
-        .report-title-main {
-            display: table-cell;
-            vertical-align: top;
-        }
-
-        .report-title-main h1 {
-            margin: 0;
-            color: #111827;
-            font-size: 20px;
-            font-weight: 900;
-            text-transform: uppercase;
-            letter-spacing: 0.06em;
-        }
-
-        .report-title-main p {
-            margin: 5px 0 0;
-            color: #4b5563;
-            font-size: 11.5px;
-        }
-
-        .report-chip {
-            display: table-cell;
-            width: 190px;
-            vertical-align: top;
-            text-align: right;
-        }
-
-        .chip {
-            display: inline-block;
-            border: 1px solid #bbf7d0;
-            background: #f0fdf4;
-            color: #14532d;
-            padding: 6px 10px;
-            border-radius: 999px;
-            font-size: 10.5px;
-            font-weight: 900;
-            text-transform: uppercase;
-            letter-spacing: 0.04em;
-        }
-
-        .meta-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 12px 0 14px;
-        }
-
-        .meta-table td {
-            border: 1px solid #d1d5db;
-            padding: 8px 10px;
-            vertical-align: top;
-        }
-
-        .meta-label {
-            display: block;
-            margin-bottom: 2px;
-            color: #64748b;
-            font-size: 9.5px;
-            font-weight: 900;
-            letter-spacing: 0.10em;
-            text-transform: uppercase;
-        }
-
-        .meta-value {
-            color: #111827;
-            font-weight: 800;
-        }
-
-        .scope-notice {
-            border: 1px solid #bbf7d0;
-            background: #f0fdf4;
-            color: #064e3b;
-            padding: 10px 12px;
-            margin: 12px 0 16px;
-            border-radius: 8px;
-            font-size: 11px;
-            line-height: 1.55;
-        }
-
-        .scope-notice strong {
-            color: #14532d;
-        }
-
-        .section {
-            margin-top: 14px;
-            page-break-inside: avoid;
-        }
-
-        .section-title {
-            margin: 0 0 8px;
-            padding-bottom: 5px;
-            border-bottom: 1px solid #cbd5e1;
-            color: #111827;
-            font-size: 12px;
-            font-weight: 900;
-            letter-spacing: 0.08em;
-            text-transform: uppercase;
-        }
-
-        .summary-grid {
-            display: table;
-            width: 100%;
-            border-spacing: 8px 0;
-            margin-left: -8px;
-            margin-right: -8px;
-        }
-
-        .summary-card {
-            display: table-cell;
-            width: 25%;
-            border: 1px solid #d1d5db;
-            border-radius: 8px;
-            padding: 10px;
-            background: #ffffff;
-        }
-
-        .summary-label {
-            color: #64748b;
-            font-size: 9.5px;
-            font-weight: 900;
-            letter-spacing: 0.10em;
-            text-transform: uppercase;
-        }
-
-        .summary-value {
-            margin-top: 5px;
-            color: #111827;
-            font-size: 22px;
-            line-height: 1;
-            font-weight: 900;
-        }
-
-        .summary-unit {
-            margin-top: 4px;
-            color: #64748b;
-            font-size: 10px;
-        }
-
-        .two-column {
-            display: table;
-            width: 100%;
-            border-spacing: 10px 0;
-            margin-left: -10px;
-            margin-right: -10px;
-        }
-
-        .two-column .column {
-            display: table-cell;
-            width: 50%;
-            vertical-align: top;
-        }
-
-        table.data-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 6px;
-            font-size: 10.8px;
-        }
-
-        .data-table th,
-        .data-table td {
-            border: 1px solid #d1d5db;
-            padding: 7px 8px;
-            vertical-align: top;
-        }
-
-        .data-table th {
-            background: #f8fafc;
-            color: #475569;
-            text-align: left;
-            font-size: 9.5px;
-            font-weight: 900;
-            letter-spacing: 0.08em;
-            text-transform: uppercase;
-        }
-
-        .count-cell,
-        .area-cell {
-            text-align: right;
-            white-space: nowrap;
-            font-weight: 800;
-        }
-
-        .status-pill {
-            display: inline-block;
-            border-radius: 999px;
-            padding: 3px 7px;
-            border: 1px solid #d1d5db;
-            background: #f8fafc;
-            font-size: 10px;
-            font-weight: 800;
-            white-space: nowrap;
-        }
-
-        .status-released,
-        .status-approved,
-        .status-approved-clearance {
-            color: #14532d;
-            background: #dcfce7;
-            border-color: #bbf7d0;
-        }
-
-        .status-pending-legal-review,
-        .status-pending-review {
-            color: #c2410c;
-            background: #ffedd5;
-            border-color: #fed7aa;
-        }
-
-        .status-endorsed,
-        .status-for-releasing {
-            color: #1d4ed8;
-            background: #dbeafe;
-            border-color: #bfdbfe;
-        }
-
-        .status-denied,
-        .status-not-approved {
-            color: #b91c1c;
-            background: #fee2e2;
-            border-color: #fecaca;
-        }
-
-        .signature-grid {
-            display: table;
-            width: 100%;
-            border-spacing: 26px 0;
-            margin: 34px -26px 0;
-        }
-
-        .signature-box {
-            display: table-cell;
-            width: 50%;
-            vertical-align: bottom;
-        }
-
-        .signature-label {
-            color: #64748b;
-            font-size: 10px;
-            font-weight: 800;
-        }
-
-        .signature-line {
-            margin-top: 36px;
-            border-top: 1px solid #111827;
-            padding-top: 5px;
-            text-align: center;
-            font-weight: 800;
-        }
-
-        .signature-role {
-            margin-top: 2px;
-            text-align: center;
-            color: #64748b;
-            font-size: 10px;
-        }
-
-        .document-footer {
-            margin-top: 20px;
-            padding-top: 8px;
-            border-top: 1px solid #e5e7eb;
-            color: #64748b;
-            font-size: 9.8px;
-            text-align: justify;
-        }
-
+        @page { size: A4; margin: 14mm; }
+        * { box-sizing: border-box; }
+        body { margin: 0; background: #e5e7eb; color: #111827; font-family: Arial, Helvetica, sans-serif; font-size: 11px; line-height: 1.45; }
+        .toolbar { max-width: 980px; margin: 16px auto; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+        .toolbar a, .toolbar button { min-height: 38px; display: inline-flex; align-items: center; justify-content: center; padding: 0 14px; border: 1px solid #cbd5e1; border-radius: 8px; background: #fff; color: #111827; font-weight: 700; text-decoration: none; cursor: pointer; }
+        .toolbar button { border-color: #166534; background: #166534; color: #fff; }
+        .page { width: 210mm; min-height: 297mm; max-width: 980px; margin: 0 auto 24px; padding: 16mm; background: #fff; box-shadow: 0 12px 32px rgba(15,23,42,.14); }
+        .header { display: grid; grid-template-columns: 58px 1fr 58px; align-items: center; border-bottom: 3px double #14532d; padding-bottom: 10px; text-align: center; }
+        .logo { width: 50px; height: 50px; object-fit: contain; }
+        .logo-fallback { width: 46px; height: 46px; display: grid; place-items: center; border: 1px solid #bbf7d0; border-radius: 10px; color: #14532d; font-weight: 900; }
+        .republic { margin: 0; color: #475569; font-size: 10px; }
+        .agency { margin: 2px 0 0; font-size: 14px; font-weight: 900; text-transform: uppercase; }
+        .office { margin: 2px 0 0; color: #14532d; font-size: 11px; font-weight: 800; }
+        .system { margin: 2px 0 0; color: #64748b; font-size: 9.5px; }
+        .title-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin: 16px 0 10px; }
+        h1 { margin: 0; font-size: 18px; font-weight: 900; text-transform: uppercase; letter-spacing: .05em; }
+        .subtitle { margin: 4px 0 0; color: #64748b; }
+        .chip { display: inline-block; border: 1px solid #bbf7d0; border-radius: 999px; background: #f0fdf4; color: #14532d; padding: 5px 9px; font-size: 9px; font-weight: 900; text-transform: uppercase; }
+        .meta, .summary, .two-col { width: 100%; border-collapse: collapse; }
+        .meta td { width: 33.333%; border: 1px solid #d1d5db; padding: 7px 9px; vertical-align: top; }
+        .label { display: block; margin-bottom: 2px; color: #64748b; font-size: 8.5px; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; }
+        .value { font-weight: 800; }
+        .filters { margin: 10px 0; padding: 8px 10px; border: 1px solid #dbe7de; background: #f8fcf9; }
+        .filters strong { color: #14532d; }
+        .scope { margin: 10px 0 14px; padding: 9px 10px; border: 1px solid #bbf7d0; border-radius: 7px; background: #f0fdf4; color: #064e3b; }
+        .scope p { margin: 0; }
+        .scope p + p { margin-top: 5px; font-size: 9.5px; }
+        .section { margin-top: 14px; }
+        .section-title { margin: 0 0 7px; padding-bottom: 4px; border-bottom: 1px solid #cbd5e1; font-size: 11px; font-weight: 900; letter-spacing: .07em; text-transform: uppercase; }
+        .summary { table-layout: fixed; }
+        .summary td { width: 25%; border: 1px solid #d1d5db; padding: 9px; vertical-align: top; }
+        .summary-number { margin-top: 4px; font-size: 19px; font-weight: 900; }
+        .summary-note { margin-top: 3px; color: #64748b; font-size: 8.8px; }
+        .two-col { table-layout: fixed; }
+        .two-col > tbody > tr > td { width: 50%; padding-right: 8px; vertical-align: top; }
+        .two-col > tbody > tr > td:last-child { padding-right: 0; padding-left: 8px; }
+        .data { width: 100%; border-collapse: collapse; font-size: 9.5px; }
+        .data th, .data td { border: 1px solid #d1d5db; padding: 5px 6px; vertical-align: top; }
+        .data th { background: #f8fafc; color: #475569; font-size: 8.3px; font-weight: 900; text-align: left; text-transform: uppercase; letter-spacing: .05em; }
+        .number { text-align: right; white-space: nowrap; font-weight: 800; }
+        .result-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .result { border: 1px solid #d1d5db; border-radius: 6px; padding: 8px; }
+        .result.released { border-left: 4px solid #16a34a; }
+        .result.denied { border-left: 4px solid #dc2626; }
+        .result strong { display: block; font-size: 18px; }
+        .result span { color: #64748b; font-size: 9px; }
+        .footer { margin-top: 16px; padding-top: 7px; border-top: 1px solid #e5e7eb; color: #64748b; font-size: 8.8px; }
         @media print {
-            html,
-            body {
-                background: #ffffff;
-            }
-
-            .print-toolbar {
-                display: none !important;
-            }
-
-            .document-page {
-                width: auto;
-                min-height: auto;
-                max-width: none;
-                margin: 0;
-                padding: 0;
-                border: 0;
-                box-shadow: none;
-            }
+            body { background: #fff; }
+            .toolbar { display: none !important; }
+            .page { width: auto; min-height: auto; max-width: none; margin: 0; padding: 0; box-shadow: none; }
+            .section { break-inside: avoid; }
         }
     </style>
 </head>
 <body>
-    <div class="print-toolbar">
-        <div class="toolbar-left">
-            <a href="{{ route('staff.reports.monitoring.index') }}" class="back-link">Back to Monitoring Reports</a>
-            <span class="toolbar-title">Monitoring Report Print Output</span>
-        </div>
-
-        <div class="toolbar-right">
-            <button type="button" class="print-button primary" onclick="window.print()">Print / Save as PDF</button>
-        </div>
+    <div class="toolbar">
+        <a href="{{ route('staff.reports.monitoring.index', $backParams) }}">Back to Monitoring Reports</a>
+        <button type="button" onclick="window.print()">Print / Save as PDF</button>
     </div>
 
-    <main class="document-page">
-        <header class="document-header">
-            <div class="seal-cell">
-                <div class="seal">
-                    @if ($darLogoDataUri)
-                        <img src="{{ $darLogoDataUri }}" alt="Department of Agrarian Reform Logo" class="seal-logo">
-                    @else
-                        <div class="seal-fallback">DAR</div>
-                    @endif
-                </div>
+    <main class="page">
+        <header class="header">
+            <div>
+                @if ($darLogoDataUri)
+                    <img src="{{ $darLogoDataUri }}" alt="Department of Agrarian Reform logo" class="logo">
+                @else
+                    <div class="logo-fallback">DAR</div>
+                @endif
             </div>
-            <div class="agency-cell">
+            <div>
                 <p class="republic">Republic of the Philippines</p>
                 <p class="agency">Department of Agrarian Reform</p>
                 <p class="office">Negros Oriental Provincial Office</p>
-                <p class="system-name">Land Transfer Clearance and Monitoring System</p>
+                <p class="system">Land Transfer Clearance and Monitoring System</p>
             </div>
+            <div></div>
         </header>
 
-        <section class="report-title-block">
-            <div class="report-title-main">
+        <div class="title-row">
+            <div>
                 <h1>Monitoring Report</h1>
-                <p>Clearance application processing, release/denial recording, and administrative monitoring summary.</p>
+                <p class="subtitle">Administrative clearance processing, final-result recording, and monitoring summary.</p>
             </div>
-            <div class="report-chip">
-                <span class="chip">Office Report</span>
-            </div>
-        </section>
+            <span class="chip">Administrative Report</span>
+        </div>
 
-        <table class="meta-table">
+        <table class="meta">
             <tr>
-                <td>
-                    <span class="meta-label">Date Generated</span>
-                    <span class="meta-value">{{ $generatedAtPh?->format('F d, Y h:i A') ?? 'N/A' }}</span>
-                </td>
-                <td>
-                    <span class="meta-label">Generated By</span>
-                    <span class="meta-value">{{ $generatedBy?->name ?? 'System User' }}</span>
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <span class="meta-label">Report Type</span>
-                    <span class="meta-value">Clearance Application Monitoring Summary</span>
-                </td>
-                <td>
-                    <span class="meta-label">System Scope</span>
-                    <span class="meta-value">Administrative processing and monitoring only</span>
-                </td>
+                <td><span class="label">Date Generated</span><span class="value">{{ $generatedAtPh?->format('M d, Y h:i A') }} PHT</span></td>
+                <td><span class="label">Generated By</span><span class="value">{{ $generatedBy?->name ?? 'Authorized Staff' }}</span></td>
+                <td><span class="label">Dataset</span><span class="value">{{ $hasActiveFilters ? 'Filtered application dataset' : 'All application records' }}</span></td>
             </tr>
         </table>
 
-        <div class="scope-notice">
-            <strong>Scope Notice:</strong>
-            {{ $scopeNotice }}
+        <div class="filters">
+            <strong>Report Filters:</strong>
+            @if ($hasActiveFilters)
+                {{ $filterLabels->implode(' · ') }}
+            @else
+                None — all application records are included.
+            @endif
+            <br>
+            <span>Date filtering uses Date of Application, with encoded date used only when Date of Application is missing.</span>
+        </div>
+
+        <div class="scope">
+            <p><strong>Scope Notice:</strong> {{ $scopeNotice }}</p>
+            <p>{{ $areaNotice }}</p>
         </div>
 
         <section class="section">
-            <h2 class="section-title">Executive Summary</h2>
-            <div class="summary-grid">
-                <div class="summary-card">
-                    <div class="summary-label">Total Applications</div>
-                    <div class="summary-value">{{ number_format($totalApplications) }}</div>
-                </div>
-                <div class="summary-card">
-                    <div class="summary-label">Recorded Results</div>
-                    <div class="summary-value">{{ number_format($totalClearances) }}</div>
-                </div>
-                <div class="summary-card">
-                    <div class="summary-label">Recorded Area</div>
-                    <div class="summary-value">{{ number_format((float) $totalClearanceArea, 2) }}</div>
-                    <div class="summary-unit">hectares in recorded outputs</div>
-                </div>
-                <div class="summary-card">
-                    <div class="summary-label">Municipalities</div>
-                    <div class="summary-value">{{ number_format($municipalityBreakdown->count()) }}</div>
-                </div>
-            </div>
-        </section>
-
-        <section class="section two-column">
-            <div class="column">
-                <h2 class="section-title">Application Status Breakdown</h2>
-                <table class="data-table">
-                    <thead>
-                        <tr>
-                            <th>Status</th>
-                            <th>Total</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse ($statusCounts as $status => $total)
-                            @php $statusClassValue = $statusClass($status); @endphp
-                            <tr>
-                                <td><span class="status-pill status-{{ $statusClassValue }}">{{ $statusLabel($status) }}</span></td>
-                                <td class="count-cell">{{ number_format($total) }}</td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="2">No application status records found.</td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
-
-            <div class="column">
-                <h2 class="section-title">Release / Denial Breakdown</h2>
-                <table class="data-table">
-                    <thead>
-                        <tr>
-                            <th>Decision</th>
-                            <th>Total</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse ($clearanceCounts as $decisionStatus => $total)
-                            @php $decisionClassValue = $decisionClass($decisionStatus); @endphp
-                            <tr>
-                                <td><span class="status-pill status-{{ $decisionClassValue }}">{{ $decisionLabel($decisionStatus) }}</span></td>
-                                <td class="count-cell">{{ number_format($total) }}</td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="2">No release or denial records found.</td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
+            <h2 class="section-title">Summary</h2>
+            <table class="summary">
+                <tr>
+                    <td><span class="label">Total Applications</span><div class="summary-number">{{ number_format($totalApplications) }}</div><div class="summary-note">Matching report filters</div></td>
+                    <td><span class="label">Active Applications</span><div class="summary-number">{{ number_format($activeApplicationCount) }}</div><div class="summary-note">Still in clearance processing</div></td>
+                    <td><span class="label">Recorded Results</span><div class="summary-number">{{ number_format($totalClearances) }}</div><div class="summary-note">Released or denied snapshots</div></td>
+                    <td><span class="label">Recorded Output Area</span><div class="summary-number">{{ number_format((float) $totalClearanceArea, 4) }}</div><div class="summary-note">ha in final snapshots; not ownership transferred</div></td>
+                </tr>
+            </table>
         </section>
 
         <section class="section">
-            <h2 class="section-title">Municipality Breakdown</h2>
-            <table class="data-table">
-                <thead>
-                    <tr>
-                        <th>Municipality</th>
-                        <th>Total Applications</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @forelse ($municipalityBreakdown as $row)
-                        <tr>
-                            <td>{{ $row->municipality }}</td>
-                            <td class="count-cell">{{ number_format($row->total) }}</td>
-                        </tr>
-                    @empty
-                        <tr>
-                            <td colspan="2">No municipality records found.</td>
-                        </tr>
-                    @endforelse
-                </tbody>
+            <table class="two-col">
+                <tr>
+                    <td>
+                        <h2 class="section-title">Workflow Status Breakdown</h2>
+                        <table class="data">
+                            <thead><tr><th>Status</th><th class="number">Count</th></tr></thead>
+                            <tbody>
+                                @foreach ($statusRows as $label => $count)
+                                    <tr><td>{{ $label }}</td><td class="number">{{ number_format($count) }}</td></tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </td>
+                    <td>
+                        <h2 class="section-title">Final Output Results</h2>
+                        <div class="result-grid">
+                            <div class="result released">
+                                <span class="label">Released</span>
+                                <strong>{{ number_format($releasedResults) }}</strong>
+                                <span>{{ number_format((float) $releasedOutputArea, 4) }} ha in snapshots</span>
+                            </div>
+                            <div class="result denied">
+                                <span class="label">Denied</span>
+                                <strong>{{ number_format($deniedResults) }}</strong>
+                                <span>{{ number_format((float) $deniedOutputArea, 4) }} ha in snapshots</span>
+                            </div>
+                        </div>
+
+                        <h2 class="section-title" style="margin-top: 13px;">Municipality Breakdown</h2>
+                        <table class="data">
+                            <thead><tr><th>Municipality / City</th><th class="number">Applications</th></tr></thead>
+                            <tbody>
+                                @forelse ($municipalityBreakdown as $row)
+                                    <tr><td>{{ $row->municipality }}</td><td class="number">{{ number_format((int) $row->total) }}</td></tr>
+                                @empty
+                                    <tr><td colspan="2">No municipality data matches the current filters.</td></tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </td>
+                </tr>
             </table>
         </section>
 
         <section class="section">
             <h2 class="section-title">Recent Applications</h2>
-            <table class="data-table">
+            <table class="data">
                 <thead>
-                    <tr>
-                        <th>Application Code</th>
-                        <th>Transferor</th>
-                        <th>Transferee</th>
-                        <th>Status</th>
-                        <th>Location</th>
-                    </tr>
+                    <tr><th>Application</th><th>Transferor</th><th>Transferee</th><th>Location</th><th>Date</th><th>Status</th></tr>
                 </thead>
                 <tbody>
                     @forelse ($recentApplications as $application)
-                        @php $statusClassValue = $statusClass($application->status); @endphp
                         <tr>
-                            <td><strong>{{ $application->application_code }}</strong></td>
-                            <td>{{ $application->transferor_name ?? 'N/A' }}</td>
-                            <td>{{ $application->transferee_name ?? 'N/A' }}</td>
-                            <td><span class="status-pill status-{{ $statusClassValue }}">{{ $statusLabel($application->status) }}</span></td>
-                            <td>{{ $application->barangay ?? 'N/A' }}, {{ $application->municipality ?? 'N/A' }}</td>
+                            <td>{{ $application->application_code }}</td>
+                            <td>{{ $application->transferorDisplayName() ?: 'Not specified' }}</td>
+                            <td>{{ $application->transfereeDisplayName() ?: 'Not specified' }}</td>
+                            <td>{{ collect([$application->barangay, $application->municipality])->filter()->implode(', ') ?: 'Not specified' }}</td>
+                            <td>{{ ($application->date_of_application ?? $application->created_at)?->format('M d, Y') }}</td>
+                            <td>{{ $application->statusLabel() }}</td>
                         </tr>
                     @empty
-                        <tr>
-                            <td colspan="5">No recent applications found.</td>
-                        </tr>
+                        <tr><td colspan="6">No applications match the current filters.</td></tr>
                     @endforelse
                 </tbody>
             </table>
         </section>
 
         <section class="section">
-            <h2 class="section-title">Recent Recorded Results</h2>
-            <table class="data-table">
+            <h2 class="section-title">Recent Release / Denial Outputs</h2>
+            <table class="data">
                 <thead>
-                    <tr>
-                        <th>Result No.</th>
-                        <th>Decision</th>
-                        <th>Total Area</th>
-                        <th>Recorded At</th>
-                    </tr>
+                    <tr><th>Clearance No.</th><th>Application</th><th>Decision</th><th class="number">Snapshot Area</th><th>Generated</th></tr>
                 </thead>
                 <tbody>
                     @forelse ($recentClearances as $clearance)
-                        @php $decisionClassValue = $decisionClass($clearance->decision_status); @endphp
                         <tr>
-                            <td><strong>{{ $clearance->clearance_number ?? 'N/A' }}</strong></td>
-                            <td><span class="status-pill status-{{ $decisionClassValue }}">{{ $decisionLabel($clearance->decision_status) }}</span></td>
-                            <td class="area-cell">{{ number_format((float) $clearance->total_area_hectares, 2) }} ha</td>
-                            <td>{{ $clearance->generated_at?->timezone('Asia/Manila')->format('M d, Y h:i A') ?? 'N/A' }}</td>
+                            <td>{{ $clearance->clearance_number }}</td>
+                            <td>{{ $clearance->application_code }}</td>
+                            <td>{{ $decisionLabel($clearance->decision_status) }}</td>
+                            <td class="number">{{ number_format((float) $clearance->total_area_hectares, 4) }} ha</td>
+                            <td>{{ $clearance->generated_at?->timezone('Asia/Manila')->format('M d, Y h:i A') }}</td>
                         </tr>
                     @empty
-                        <tr>
-                            <td colspan="4">No recent release or denial outputs found.</td>
-                        </tr>
+                        <tr><td colspan="5">No final clearance outputs match the current filters.</td></tr>
                     @endforelse
                 </tbody>
             </table>
         </section>
 
-        <section class="signature-grid">
-            <div class="signature-box">
-                <div class="signature-label">Prepared by:</div>
-                <div class="signature-line">{{ $generatedBy?->name ?? 'System User' }}</div>
-                <div class="signature-role">Authorized System User</div>
-            </div>
-            <div class="signature-box">
-                <div class="signature-label">Reviewed by:</div>
-                <div class="signature-line">&nbsp;</div>
-                <div class="signature-role">Authorized DAR Personnel</div>
-            </div>
-        </section>
-
-        <footer class="document-footer">
-            Generated by DAR-LTCMS for administrative monitoring and reporting. This report summarizes encoded system records only and does not constitute automatic land ownership transfer, registry mutation, or final legal confirmation outside authorized DAR procedures.
-        </footer>
+        <div class="footer">
+            DAR-LTCMS is an administrative clearance generation, processing, records-management, and monitoring platform for the DAR Negros Oriental Provincial Office. This report does not constitute a registry mutation or evidence that legal land ownership transfer has been completed.
+        </div>
     </main>
 </body>
 </html>
