@@ -13,6 +13,7 @@ class LandholdingAreaValidationService
     public function forApplication(LandTransferApplication $application): array
     {
         $application->loadMissing('applicationParcels.parcel');
+        $shareIntegrity = app(ApplicationPartyShareIntegrityService::class)->inspect($application);
 
         $linkedTransfereeIds = $application->linkedLandownerIds('transferee');
         $landowners = Landowner::query()
@@ -24,7 +25,7 @@ class LandholdingAreaValidationService
             $result = $this->calculate(null, $application);
             $result['per_landowner'] = [];
 
-            return $result;
+            return $this->attachShareIntegrity($result, $shareIntegrity);
         }
 
         $perLandowner = $linkedTransfereeIds
@@ -43,13 +44,27 @@ class LandholdingAreaValidationService
         $representative['per_landowner'] = $perLandowner->all();
         $representative['scope_note'] = 'Computed separately for every linked transferee using encoded active landholding records and the transferee hectare share recorded for each linked parcel. The result is assistive only and does not make a final legal determination or execute ownership transfer.';
 
-        return $representative;
+        return $this->attachShareIntegrity($representative, $shareIntegrity);
     }
 
     public function forLandowner(Landowner $landowner): array
     {
         $result = $this->calculate($landowner, null);
         $result['per_landowner'] = [$result];
+
+        return $result;
+    }
+
+    private function attachShareIntegrity(array $result, array $shareIntegrity): array
+    {
+        $result['party_share_integrity'] = $shareIntegrity;
+        $result['party_share_integrity_invalid'] = ! $shareIntegrity['valid'];
+        $result['blocks_release'] = (bool) ($result['blocks_release'] ?? false) || ! $shareIntegrity['valid'];
+
+        if (! $shareIntegrity['valid']) {
+            $result['status'] = 'invalid_transferee_shares';
+            $result['status_label'] = 'Transferee parcel shares require correction';
+        }
 
         return $result;
     }
