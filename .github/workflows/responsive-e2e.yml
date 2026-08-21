@@ -34,6 +34,7 @@ on:
       - 'tests/Feature/NotificationSystemTest.php'
       - 'tests/Feature/AuditLoggingTest.php'
       - 'tests/Feature/BetaSystemRegressionTest.php'
+      - 'tests/Feature/DataIntegrityHardeningTest.php'
       - 'tests/e2e/**'
       - 'playwright.config.mjs'
       - '.github/workflows/responsive-e2e.yml'
@@ -114,7 +115,7 @@ jobs:
       - name: Build frontend assets
         run: npm run build
 
-      - name: Run responsive, workflow, UI UX, RBAC, audit, and final-decision regressions
+      - name: Run responsive, workflow, UI UX, RBAC, audit, final-decision, and data-integrity regressions
         run: |
           php artisan test \
             tests/Feature/ResponsiveUiFoundationTest.php \
@@ -135,7 +136,8 @@ jobs:
             tests/Feature/HectareValidationWorkflowTest.php \
             tests/Feature/NotificationSystemTest.php \
             tests/Feature/AuditLoggingTest.php \
-            tests/Feature/BetaSystemRegressionTest.php
+            tests/Feature/BetaSystemRegressionTest.php \
+            tests/Feature/DataIntegrityHardeningTest.php
 
       - name: Create browser test Staff account
         run: |
