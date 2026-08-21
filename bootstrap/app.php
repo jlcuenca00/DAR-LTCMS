@@ -36,26 +36,22 @@ return Application::configure(basePath: dirname(__DIR__))
             );
         }
 
+        $trustedHosts = (array) config('app.trusted_hosts', []);
+
+        if ($trustedHosts === []) {
+            $host = parse_url((string) config('app.url'), PHP_URL_HOST);
+            $trustedHosts = $host
+                ? ['^'.preg_quote($host, '/').'$']
+                : [];
+
+            if (! app()->environment('production')) {
+                $trustedHosts[] = '^localhost$';
+                $trustedHosts[] = '^127\\.0\\.0\\.1$';
+            }
+        }
+
         $middleware->trustHosts(
-            at: function (): array {
-                $configuredHosts = (array) config('app.trusted_hosts', []);
-
-                if ($configuredHosts !== []) {
-                    return $configuredHosts;
-                }
-
-                $host = parse_url((string) config('app.url'), PHP_URL_HOST);
-                $hosts = $host
-                    ? ['^'.preg_quote($host, '/').'$']
-                    : [];
-
-                if (! app()->environment('production')) {
-                    $hosts[] = '^localhost$';
-                    $hosts[] = '^127\\.0\\.0\\.1$';
-                }
-
-                return array_values(array_unique($hosts));
-            },
+            at: array_values(array_unique($trustedHosts)),
             subdomains: false
         );
 
