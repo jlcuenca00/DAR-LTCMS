@@ -10,12 +10,15 @@ on:
       - 'resources/js/**'
       - 'resources/views/**'
       - 'app/Http/Controllers/Staff/StaffDashboardController.php'
+      - 'app/Http/Controllers/Staff/ApplicationClearanceController.php'
+      - 'app/Http/Controllers/Landowner/ApplicationClearanceController.php'
       - 'tests/Feature/*Responsive*'
       - 'tests/Feature/*MobilePortal*'
       - 'tests/Feature/*Map*'
       - 'tests/Feature/UiUxSystemTest.php'
       - 'tests/Feature/ApplicationModalViewportTest.php'
       - 'tests/Feature/DashboardAttentionTest.php'
+      - 'tests/Feature/ClearancePrintReferenceTest.php'
       - 'tests/e2e/**'
       - 'playwright.config.mjs'
       - '.github/workflows/responsive-e2e.yml'
@@ -96,6 +99,7 @@ jobs:
             tests/Feature/StaffParcelMapResilienceTest.php \
             tests/Feature/LandownerMapUiCleanupTest.php \
             tests/Feature/UiUxSystemTest.php \
+            tests/Feature/ClearancePrintReferenceTest.php \
             tests/Feature/DashboardAttentionTest.php
 
       - name: Create browser test Staff account
