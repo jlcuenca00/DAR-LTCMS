@@ -7,7 +7,6 @@ use App\Models\LandTransferApplication;
 use App\Models\LegacyRecord;
 use App\Models\Parcel;
 use App\Models\SourceRecordPackage;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 
 class DataIntegrityScanner
@@ -114,7 +113,7 @@ class DataIntegrityScanner
                     'id',
                     'municipality',
                     'barangay',
-                    in_array($label, ['application'], true) ? null : 'province',
+                    $label === 'application' ? null : 'province',
                 ])))
                 ->orderBy('id')
                 ->chunkById(500, function ($records) use (&$invalid, $service, $label) {
@@ -236,7 +235,10 @@ class DataIntegrityScanner
 
     private function addQueryIssue(array &$issues, string $code, string $message, $query, array $columns): void
     {
-        $count = (clone $query)->count();
+        $count = (int) DB::query()
+            ->fromSub(clone $query, 'integrity_rows')
+            ->count();
+
         if ($count === 0) {
             return;
         }
