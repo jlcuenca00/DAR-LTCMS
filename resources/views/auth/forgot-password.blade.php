@@ -120,18 +120,6 @@
             text-transform: uppercase;
         }
 
-        .masked-email {
-            margin-top: 1rem;
-            padding: .9rem 1rem;
-            border: 1px solid #bbf7d0;
-            border-radius: .8rem;
-            background: #f0fdf4;
-            color: #166534;
-            font-size: .92rem;
-            font-weight: 900;
-            word-break: break-word;
-        }
-
         form { margin-top: 1.25rem; }
 
         .field + .field { margin-top: 1rem; }
@@ -194,8 +182,7 @@
         }
 
         .status,
-        .errors,
-        .note {
+        .errors {
             margin-top: 1rem;
             padding: .85rem 1rem;
             border-radius: .75rem;
@@ -219,12 +206,6 @@
         .errors ul {
             margin: 0;
             padding-left: 1.1rem;
-        }
-
-        .note {
-            border: 1px solid #e2e8f0;
-            background: #f8fafc;
-            color: #64748b;
         }
 
         .link-row {
@@ -275,7 +256,7 @@
                 </div>
 
                 <h1>Recover Your Account</h1>
-                <p class="intro">Enter your username and recovery email. For privacy, DAR-LTCMS does not confirm whether a username exists, whether an account is active, or whether an email is registered. A verification code is sent only when the recovery details match an eligible account.</p>
+                <p class="intro">Use your username and registered recovery email to regain access.</p>
 
                 @if (session('status'))
                     <div class="status">{{ session('status') }}</div>
@@ -293,7 +274,6 @@
 
                 @if ($step === 'confirm_email')
                     <span class="step-chip">Step 2 of 3 · Confirm Recovery Email</span>
-                    <p class="note">Enter the complete recovery email associated with the username. The system intentionally does not display or mask the stored email address.</p>
 
                     <form method="POST" action="{{ route('password.recovery.confirm-email') }}">
                         @csrf
@@ -313,8 +293,6 @@
                     </div>
                 @elseif ($step === 'otp')
                     <span class="step-chip">Step 3 of 3 · Verify Code</span>
-                    <div class="masked-email">Verification code sent to the registered recovery email.</div>
-                    <p class="note">Enter the 6-digit code sent to your email. It expires after 10 minutes. Requesting a new code invalidates the previous one.</p>
 
                     <form method="POST" action="{{ route('password.recovery.verify-code') }}">
                         @csrf
@@ -348,8 +326,6 @@
                         </div>
                         <button type="submit" class="primary">Continue</button>
                     </form>
-
-                    <p class="note">If email recovery cannot be completed, contact authorized DAR Staff at the DAR Negros Oriental Provincial Office for password assistance.</p>
 
                     <div class="link-row">
                         <a href="{{ route('login') }}" class="recovery-footer-action">Back to login</a>
