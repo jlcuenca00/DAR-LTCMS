@@ -2,17 +2,27 @@
 
 namespace Tests\Feature;
 
+use App\Http\Middleware\TrustHosts;
 use App\Models\SourceRecordPackage;
 use App\Models\User;
 use App\Services\ProductionReadinessScanner;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
+use Symfony\Component\HttpFoundation\Exception\SuspiciousOperationException;
 use Tests\TestCase;
 
 class ProductionSecurityHardeningTest extends TestCase
 {
     use RefreshDatabase;
+
+    protected function tearDown(): void
+    {
+        Request::setTrustedHosts([]);
+
+        parent::tearDown();
+    }
 
     public function test_source_scan_is_delivered_only_through_staff_authorized_route(): void
     {
@@ -93,6 +103,28 @@ class ProductionSecurityHardeningTest extends TestCase
             '/staff/protected-storage',
             (string) config('filesystems.disks.public.url')
         );
+    }
+
+    public function test_trusted_hosts_are_resolved_as_exact_patterns_after_configuration_loads(): void
+    {
+        config([
+            'app.url' => 'https://darltcms.me',
+            'app.trusted_hosts' => ['darltcms.me', 'www.darltcms.me'],
+        ]);
+
+        $middleware = app(TrustHosts::class);
+
+        $this->assertSame([
+            '^darltcms\\.me$',
+            '^www\\.darltcms\\.me$',
+        ], $middleware->hosts());
+
+        Request::setTrustedHosts($middleware->hosts());
+        $this->assertSame('darltcms.me', Request::create('https://darltcms.me/login')->getHost());
+        $this->assertSame('www.darltcms.me', Request::create('https://www.darltcms.me/login')->getHost());
+
+        $this->expectException(SuspiciousOperationException::class);
+        Request::create('https://evil.example/login')->getHost();
     }
 
     public function test_production_readiness_scanner_passes_hardened_core_configuration(): void
