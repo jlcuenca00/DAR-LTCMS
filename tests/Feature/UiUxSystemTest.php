@@ -55,6 +55,7 @@ class UiUxSystemTest extends TestCase
 
         $this->assertStringContainsString('attachClientValidation', $lastMile);
         $this->assertStringContainsString('enhanceRecordSelects', $lastMile);
+        $this->assertStringContainsString('enhanceRequirementGroupHeaders', $lastMile);
         $this->assertStringContainsString('addDecisionScopeBoundary', $lastMile);
         $this->assertStringContainsString('does not itself execute or finalize legal land ownership transfer or registry mutation', $lastMile);
     }
@@ -113,6 +114,21 @@ class UiUxSystemTest extends TestCase
         $this->assertStringContainsString("requirementGroup.classList.remove('is-collapsed')", $intakeFlow);
         $this->assertStringContainsString("toggle?.setAttribute('aria-expanded', 'true')", $intakeFlow);
         $this->assertStringContainsString("target.focus({ preventScroll: true })", $intakeFlow);
+    }
+
+    public function test_requirement_group_headers_replace_expand_buttons_with_accessible_card_toggles(): void
+    {
+        $lastMileJs = file_get_contents(resource_path('js/ui-ux-last-mile.js'));
+        $lastMileCss = file_get_contents(resource_path('css/ui-ux-last-mile.css'));
+
+        $this->assertStringContainsString('enhanceRequirementGroupHeaders', $lastMileJs);
+        $this->assertStringContainsString("legacyToggle?.remove()", $lastMileJs);
+        $this->assertStringContainsString("header.setAttribute('role', 'button')", $lastMileJs);
+        $this->assertStringContainsString("header.setAttribute('tabindex', '0')", $lastMileJs);
+        $this->assertStringContainsString("header.setAttribute('aria-controls', body.id)", $lastMileJs);
+        $this->assertStringContainsString("event.key !== 'Enter' && event.key !== ' '", $lastMileJs);
+        $this->assertStringContainsString('.ui-requirement-group-chevron', $lastMileCss);
+        $this->assertStringContainsString('.requirement-group-panel:not(.is-collapsed) .ui-requirement-group-chevron i', $lastMileCss);
     }
 
     public function test_dashboard_and_application_source_rows_use_shared_clickable_row_navigation(): void
