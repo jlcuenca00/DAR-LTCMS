@@ -20,6 +20,10 @@ trait NormalizesDarLocation
             );
 
             foreach ($normalized as $field => $value) {
+                if ($field === 'province' && $value === null && ! array_key_exists('province', $model->getAttributes())) {
+                    continue;
+                }
+
                 $model->setAttribute($field, $value);
             }
         });
