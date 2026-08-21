@@ -12,6 +12,13 @@ on:
       - 'app/Http/Controllers/Staff/StaffDashboardController.php'
       - 'app/Http/Controllers/Staff/ApplicationClearanceController.php'
       - 'app/Http/Controllers/Landowner/ApplicationClearanceController.php'
+      - 'app/Http/Controllers/Staff/ApplicationWorkflowController.php'
+      - 'app/Http/Controllers/Staff/LandTransferApplicationController.php'
+      - 'app/Http/Controllers/Staff/ApplicationDocumentController.php'
+      - 'app/Http/Controllers/Staff/ApplicationLandownerLinkController.php'
+      - 'app/Http/Middleware/LockApplicationMutation.php'
+      - 'app/Services/ApplicationClearanceService.php'
+      - 'bootstrap/app.php'
       - 'tests/Feature/*Responsive*'
       - 'tests/Feature/*MobilePortal*'
       - 'tests/Feature/*Map*'
@@ -19,6 +26,9 @@ on:
       - 'tests/Feature/ApplicationModalViewportTest.php'
       - 'tests/Feature/DashboardAttentionTest.php'
       - 'tests/Feature/ClearancePrintReferenceTest.php'
+      - 'tests/Feature/FinalDecisionLockTest.php'
+      - 'tests/Feature/FinalDecisionIntegrityHardeningTest.php'
+      - 'tests/Feature/RbacSecurityHardeningTest.php'
       - 'tests/e2e/**'
       - 'playwright.config.mjs'
       - '.github/workflows/responsive-e2e.yml'
@@ -87,7 +97,7 @@ jobs:
           php artisan key:generate
           php artisan migrate --force
 
-      - name: Run responsive and UI UX feature regressions
+      - name: Run responsive, UI UX, RBAC, and final-decision regressions
         run: |
           php artisan test \
             tests/Feature/ResponsiveUiFoundationTest.php \
@@ -100,7 +110,10 @@ jobs:
             tests/Feature/LandownerMapUiCleanupTest.php \
             tests/Feature/UiUxSystemTest.php \
             tests/Feature/ClearancePrintReferenceTest.php \
-            tests/Feature/DashboardAttentionTest.php
+            tests/Feature/DashboardAttentionTest.php \
+            tests/Feature/RbacSecurityHardeningTest.php \
+            tests/Feature/FinalDecisionLockTest.php \
+            tests/Feature/FinalDecisionIntegrityHardeningTest.php
 
       - name: Create browser test Staff account
         run: |
