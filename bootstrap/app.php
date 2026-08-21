@@ -21,6 +21,7 @@ return Application::configure(basePath: dirname(__DIR__))
             \App\Http\Middleware\SecurityHeaders::class,
             \App\Http\Middleware\LockApplicationMutation::class,
             \App\Http\Middleware\EnsureReleaseDataIntegrity::class,
+            \App\Http\Middleware\EnsureMutationAudited::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
