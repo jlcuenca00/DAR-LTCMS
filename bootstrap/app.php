@@ -3,6 +3,7 @@
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Request;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -11,6 +12,45 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
+        $trustedProxies = (array) config('app.trusted_proxies', []);
+
+        if ($trustedProxies !== []) {
+            $proxyTargets = count($trustedProxies) === 1 && $trustedProxies[0] === '*'
+                ? '*'
+                : $trustedProxies;
+
+            $middleware->trustProxies(
+                at: $proxyTargets,
+                headers: Request::HEADER_X_FORWARDED_FOR
+                    | Request::HEADER_X_FORWARDED_HOST
+                    | Request::HEADER_X_FORWARDED_PORT
+                    | Request::HEADER_X_FORWARDED_PROTO
+            );
+        }
+
+        $middleware->trustHosts(
+            at: function (): array {
+                $configuredHosts = (array) config('app.trusted_hosts', []);
+
+                if ($configuredHosts !== []) {
+                    return $configuredHosts;
+                }
+
+                $host = parse_url((string) config('app.url'), PHP_URL_HOST);
+                $hosts = $host
+                    ? ['^'.preg_quote($host, '/').'$']
+                    : [];
+
+                if (! app()->environment('production')) {
+                    $hosts[] = '^localhost$';
+                    $hosts[] = '^127\\.0\\.0\\.1$';
+                }
+
+                return array_values(array_unique($hosts));
+            },
+            subdomains: false
+        );
+
         $middleware->alias([
             'role' => App\Http\Middleware\RoleMiddleware::class,
         ]);
