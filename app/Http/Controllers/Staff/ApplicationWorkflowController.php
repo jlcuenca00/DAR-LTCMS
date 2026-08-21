@@ -39,18 +39,37 @@ class ApplicationWorkflowController extends Controller
             return back()->withErrors(['status' => 'This application cannot be advanced further through this action. Use the release action when the clearance is ready for release.']);
         }
 
+        $releaseReadinessSnapshot = null;
+
+        if ($nextStatus === LandTransferApplication::STATUS_FOR_RELEASING) {
+            [$releaseReadinessSnapshot, $readinessErrors] = $this->releaseReadiness($application);
+
+            if (! empty($readinessErrors)) {
+                return back()->withErrors(array_merge([
+                    'validation' => 'Resolve the following before marking this application For Releasing:',
+                ], $readinessErrors));
+            }
+        }
+
         $application->status = $nextStatus;
         $application->save();
+
+        $auditMetadata = [
+            'old_status' => $oldStatus,
+            'new_status' => $application->status,
+            'scope_note' => 'Status advancement only. No ownership transfer or registry mutation performed.',
+        ];
+
+        if ($releaseReadinessSnapshot !== null) {
+            $auditMetadata['release_readiness_checked'] = true;
+            $auditMetadata['release_readiness'] = $releaseReadinessSnapshot['workflow_readiness'] ?? [];
+        }
 
         AuditLogger::record(
             'application_status_advanced',
             $application,
             $application,
-            [
-                'old_status' => $oldStatus,
-                'new_status' => $application->status,
-                'scope_note' => 'Status advancement only. No ownership transfer or registry mutation performed.',
-            ]
+            $auditMetadata
         );
 
         $statusLabel = $application->statusLabel();
@@ -98,31 +117,12 @@ class ApplicationWorkflowController extends Controller
             'final_decision_confirmation.accepted' => 'Confirm the final release decision before continuing.',
         ]);
 
-        $approvalErrors = [];
+        [$snapshot, $readinessErrors] = $this->releaseReadiness($application);
 
-        $transferorRows = collect($application->partyRows('transferor'));
-        $transfereeRows = collect($application->partyRows('transferee'));
-
-        if ($transferorRows->isEmpty() || $transferorRows->contains(fn ($row) => blank($row['landowner_id'] ?? null))) {
-            $approvalErrors['transferors'] = 'Every transferor must be linked to a separate Landowner record before release.';
-        }
-
-        if ($transfereeRows->isEmpty() || $transfereeRows->contains(fn ($row) => blank($row['landowner_id'] ?? null))) {
-            $approvalErrors['transferees'] = 'Every transferee must be linked to a separate Landowner record before release.';
-        }
-
-        if (! empty($approvalErrors)) {
-            return back()->withErrors($approvalErrors);
-        }
-
-        [$snapshot, $hasCriticalFailures, $validationMessages] = $this->buildValidationSnapshot($application);
-
-        if ($hasCriticalFailures) {
-            $validationMessages = array_merge([
+        if (! empty($readinessErrors)) {
+            return back()->withErrors(array_merge([
                 'validation' => 'Resolve the following before releasing this clearance:',
-            ], $validationMessages);
-
-            return back()->withErrors($validationMessages);
+            ], $readinessErrors));
         }
 
         try {
@@ -165,6 +165,8 @@ class ApplicationWorkflowController extends Controller
                         'decision_notes' => $application->decision_notes,
                         'validated_at' => optional($application->validated_at)->toDateTimeString(),
                         'has_validation_snapshot' => ! empty($application->validation_snapshot),
+                        'form4_recommendation_decision' => $application->ltc_form4_recommendation_decision,
+                        'form4_recommendation_matches_final_decision' => $application->ltc_form4_recommendation_decision === 'approval',
                         'ownership_transfer_performed' => false,
                         'registry_mutation_performed' => false,
                         'scope_note' => 'Final clearance decision only; no ownership transfer or registry alteration was performed.',
@@ -238,6 +240,8 @@ class ApplicationWorkflowController extends Controller
                 $application->decision_notes = $request->input('decision_notes');
                 $application->save();
 
+                $form4Recommendation = $application->ltc_form4_recommendation_decision;
+
                 AuditLogger::record(
                     'application_denied',
                     $application,
@@ -247,6 +251,10 @@ class ApplicationWorkflowController extends Controller
                         'decision_notes' => $application->decision_notes,
                         'validated_at' => optional($application->validated_at)->toDateTimeString(),
                         'has_validation_snapshot' => ! empty($application->validation_snapshot),
+                        'form4_recommendation_decision' => $form4Recommendation,
+                        'form4_recommendation_matches_final_decision' => filled($form4Recommendation)
+                            ? $form4Recommendation === 'denial'
+                            : null,
                         'ownership_transfer_performed' => false,
                         'registry_mutation_performed' => false,
                         'scope_note' => 'Final clearance decision only; no ownership transfer or registry alteration was performed.',
@@ -263,6 +271,39 @@ class ApplicationWorkflowController extends Controller
         }
 
         return back()->with('success', 'Application marked as Denied and decision record generated.');
+    }
+
+    /**
+     * Return the full release-readiness snapshot and blocking messages.
+     *
+     * The same checks are used when entering For Releasing and when recording
+     * the final Released decision so the backend remains the source of truth.
+     */
+    private function releaseReadiness(LandTransferApplication $application): array
+    {
+        [$snapshot, $hasCriticalFailures, $validationMessages] = $this->buildValidationSnapshot($application);
+        $workflowReadiness = $snapshot['workflow_readiness'];
+        $errors = [];
+
+        if (! $workflowReadiness['linked_parties_complete']) {
+            $errors['parties'] = 'Every transferor and transferee must be linked to a Landowner record before the application can be prepared for release.';
+        }
+
+        if (! $workflowReadiness['has_linked_parcel']) {
+            $errors['parcel'] = 'At least one valid Parcel record must be linked to the application before it can be prepared for release.';
+        }
+
+        if (! $workflowReadiness['form4_complete']) {
+            $missing = implode(', ', $workflowReadiness['form4_missing_items']);
+            $errors['form4'] = 'Complete LTC Form No. 4 before the application can be prepared for release.'
+                . ($missing !== '' ? ' Missing: ' . $missing . '.' : '');
+        }
+
+        if ($hasCriticalFailures) {
+            $errors = array_merge($errors, $validationMessages);
+        }
+
+        return [$snapshot, $errors];
     }
 
     /**
@@ -326,9 +367,11 @@ class ApplicationWorkflowController extends Controller
             ->all();
 
         $hasCriticalFailures = (bool) ($hectareValidation['blocks_release'] ?? $hectareValidation['exceeds_limit']) || $missingMandatoryCount > 0;
+        $workflowReadiness = $this->workflowReadinessSnapshot($application);
 
         $snapshot = [
             'computed_at' => now()->toDateTimeString(),
+            'workflow_readiness' => $workflowReadiness,
             'five_hectare' => [
                 'current_approved_total' => (float) $hectareValidation['current_active_total'],
                 'pending_incoming_total' => (float) $hectareValidation['pending_incoming_total'],
@@ -355,5 +398,54 @@ class ApplicationWorkflowController extends Controller
         ];
 
         return [$snapshot, $hasCriticalFailures, $validationMessages];
+    }
+
+    /**
+     * Objective record-completeness checks for the release stage.
+     * Form No. 4 remains recommendatory; its recommendation never automatically
+     * determines the final clearance decision.
+     */
+    private function workflowReadinessSnapshot(LandTransferApplication $application): array
+    {
+        $linkedParcelCount = $application->applicationParcels()
+            ->whereNotNull('parcel_id')
+            ->whereHas('parcel')
+            ->count();
+
+        $subjectFindings = collect((array) $application->ltc_form4_subject_land_findings)
+            ->filter(fn ($value) => filled($value));
+        $recommendationFindings = collect((array) $application->ltc_form4_recommendation_findings)
+            ->filter(fn ($value) => filled($value));
+        $hasMeaningfulFindings = $subjectFindings->isNotEmpty()
+            || $recommendationFindings->isNotEmpty()
+            || filled($application->ltc_form4_other_findings);
+
+        $form4MissingItems = [];
+
+        if (! filled($application->ltc_form4_recommendation_decision)) {
+            $form4MissingItems[] = 'recommendation decision';
+        }
+
+        if (! $application->ltc_form4_certified_at) {
+            $form4MissingItems[] = 'certification date';
+        }
+
+        if (! filled($application->ltc_form4_certifying_officer_name)) {
+            $form4MissingItems[] = 'authorized officer';
+        }
+
+        if (! $hasMeaningfulFindings) {
+            $form4MissingItems[] = 'review finding';
+        }
+
+        return [
+            'linked_parties_complete' => $application->allPartiesLinked(),
+            'linked_parcel_count' => $linkedParcelCount,
+            'has_linked_parcel' => $linkedParcelCount > 0,
+            'form4_complete' => empty($form4MissingItems),
+            'form4_missing_items' => $form4MissingItems,
+            'form4_recommendation_decision' => $application->ltc_form4_recommendation_decision,
+            'scope_note' => 'Release readiness verifies record completeness only. Form No. 4 remains recommendatory, and no ownership transfer or registry mutation is performed.',
+        ];
     }
 }
