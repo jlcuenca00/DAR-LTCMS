@@ -12,10 +12,17 @@ return Application::configure(basePath: dirname(__DIR__))
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
         then: function (): void {
-            Route::middleware(['web', 'auth', 'role:staff'])
-                ->get('/staff/protected-storage/{path}', ProtectedStorageController::class)
-                ->where('path', '.*')
-                ->name('staff.protected-storage.show');
+            Route::middleware(['web', 'auth', 'role:staff'])->group(function (): void {
+                Route::get('/staff/protected-storage/{path}', ProtectedStorageController::class)
+                    ->where('path', '.*')
+                    ->name('staff.protected-storage.show');
+
+                // Compatibility for existing Staff reference-photo links. There is
+                // no public/storage symlink; this route still performs record-level
+                // registration checks in ProtectedStorageController.
+                Route::get('/storage/{path}', ProtectedStorageController::class)
+                    ->where('path', '.*');
+            });
         },
     )
     ->withMiddleware(function (Middleware $middleware) {

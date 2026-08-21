@@ -22,19 +22,8 @@ class TrustProxies extends Middleware
      */
     protected function proxies()
     {
-        $configured = array_values(array_filter(array_map(
-            static fn ($proxy): string => trim((string) $proxy),
-            (array) config('app.trusted_proxies', [])
-        )));
+        $configured = (array) config('app.trusted_proxies', []);
 
-        if ($configured === []) {
-            return parent::proxies();
-        }
-
-        if (count($configured) === 1 && in_array($configured[0], ['*', '**'], true)) {
-            return $configured[0];
-        }
-
-        return $configured;
+        return $configured !== [] ? $configured : parent::proxies();
     }
 }

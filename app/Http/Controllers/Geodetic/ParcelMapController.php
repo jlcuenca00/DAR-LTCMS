@@ -13,7 +13,23 @@ class ParcelMapController extends Controller
     public function index()
     {
         $parcelFeatures = Parcel::query()
-            ->with('landholdings.landowner')
+            ->select([
+                'id',
+                'parcel_code',
+                'title_no',
+                'tax_decl_no',
+                'municipality',
+                'barangay',
+                'area_hectares',
+                'status',
+                'geometry_geojson',
+                'is_flagged',
+                'flag_reason',
+            ])
+            ->with([
+                'landholdings:id,parcel_id,landowner_id,status',
+                'landholdings.landowner:id,first_name,middle_name,last_name,suffix',
+            ])
             ->where('status', 'active')
             ->whereNotNull('geometry_geojson')
             ->orderBy('municipality')
@@ -81,6 +97,16 @@ class ParcelMapController extends Controller
         $count = (clone $query)->count();
 
         $parcels = $query
+            ->select([
+                'id',
+                'parcel_code',
+                'title_no',
+                'tax_decl_no',
+                'municipality',
+                'barangay',
+                'area_hectares',
+                'created_at',
+            ])
             ->oldest('created_at')
             ->limit(8)
             ->get()
@@ -92,7 +118,7 @@ class ParcelMapController extends Controller
                 'municipality' => $parcel->municipality ?: 'N/A',
                 'barangay' => $parcel->barangay ?: 'N/A',
                 'area_hectares' => $parcel->area_hectares !== null
-                    ? number_format((float) $parcel->area_hectares, 4) . ' ha'
+                    ? number_format((float) $parcel->area_hectares, 4).' ha'
                     : 'N/A',
                 'edit_url' => route('geodetic.parcels.geometry.edit', $parcel),
                 'details_url' => route('geodetic.parcels.show', $parcel),

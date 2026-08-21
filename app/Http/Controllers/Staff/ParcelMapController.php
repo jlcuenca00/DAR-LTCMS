@@ -10,7 +10,27 @@ class ParcelMapController extends Controller
     public function index()
     {
         $parcelFeatures = Parcel::query()
-            ->with(['landholdings.landowner', 'legacyRecords.landowner', 'sourceRecordPackages.landowner'])
+            ->select([
+                'id',
+                'parcel_code',
+                'title_no',
+                'tax_decl_no',
+                'municipality',
+                'barangay',
+                'area_hectares',
+                'status',
+                'geometry_geojson',
+                'is_flagged',
+                'flag_reason',
+            ])
+            ->with([
+                'landholdings:id,parcel_id,landowner_id,status',
+                'landholdings.landowner:id,first_name,middle_name,last_name,suffix',
+                'legacyRecords:id,parcel_id,landowner_id',
+                'legacyRecords.landowner:id,first_name,middle_name,last_name,suffix',
+                'sourceRecordPackages:id,parcel_id,landowner_id',
+                'sourceRecordPackages.landowner:id,first_name,middle_name,last_name,suffix',
+            ])
             ->where('status', 'active')
             ->whereNotNull('geometry_geojson')
             ->orderBy('municipality')
@@ -51,9 +71,9 @@ class ParcelMapController extends Controller
                 $landownerNames = $activeLandholdingOwners->isNotEmpty()
                     ? $activeLandholdingOwners->implode(', ')
                     : ($anyLandholdingOwners->isNotEmpty()
-                        ? $anyLandholdingOwners->implode(', ') . ' (non-active landholding)'
+                        ? $anyLandholdingOwners->implode(', ').' (non-active landholding)'
                         : ($sourceLinkedOwners->isNotEmpty()
-                            ? $sourceLinkedOwners->implode(', ') . ' (source-linked)'
+                            ? $sourceLinkedOwners->implode(', ').' (source-linked)'
                             : 'No linked landowner record'));
 
                 return [
