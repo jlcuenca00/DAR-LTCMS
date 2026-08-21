@@ -200,6 +200,38 @@ function enhanceRequirementGroupHeaders() {
     });
 }
 
+/* The legacy Application Review script still builds an Expand button during its
+   DOMContentLoaded callback. Reconcile after all DOMContentLoaded listeners have
+   finished so the legacy control cannot reappear beside the whole-header toggle. */
+function cleanupLegacyRequirementGroupControls() {
+    document.querySelectorAll('.requirement-group-panel').forEach((panel) => {
+        const header = panel.querySelector(':scope > .review-panel-header');
+        if (!header) return;
+
+        panel.querySelectorAll('[data-requirement-group-toggle]').forEach((toggle) => toggle.remove());
+
+        const badge = header.querySelector('.party-group-badge');
+        const indicator = header.querySelector('.ui-requirement-group-chevron');
+        let actions = header.querySelector('.requirement-group-actions');
+
+        if (!actions && badge) {
+            actions = document.createElement('div');
+            actions.className = 'requirement-group-actions';
+            badge.replaceWith(actions);
+            actions.appendChild(badge);
+        }
+
+        if (actions && badge && badge.parentElement !== actions) {
+            actions.appendChild(badge);
+        }
+
+        /* Desired right edge: chevron, then the Transferor/Transferee badge. */
+        if (actions && indicator) {
+            actions.insertAdjacentElement('beforebegin', indicator);
+        }
+    });
+}
+
 /* Keep application-review overlays out of shell/topbar stacking contexts.
    Moving the original nodes preserves IDs, forms, and event listeners while
    allowing position:fixed to cover the real browser viewport edge-to-edge. */
@@ -238,6 +270,8 @@ function initUiUxLastMile() {
     enhanceRecordSelects();
     watchRecordSelects();
     enhanceRequirementGroupHeaders();
+    cleanupLegacyRequirementGroupControls();
+    window.setTimeout(cleanupLegacyRequirementGroupControls, 0);
     portalApplicationReviewModals();
     addDecisionScopeBoundary();
     addAuditTimezoneNote();

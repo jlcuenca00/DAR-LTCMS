@@ -114,7 +114,7 @@
     }
 
     /* Requirement group cards use the full header as the disclosure control.
-       The old text button is removed by JS; the chevron is only a state cue. */
+       The old text button is removed by JS; this rule is also a visual failsafe. */
     .requirement-group-panel > .ui-requirement-group-header-toggle {
         cursor: pointer;
         user-select: none;
@@ -134,11 +134,25 @@
         outline-color: rgba(37, 99, 235, .22);
     }
 
-    .requirement-group-actions {
-        align-items: center !important;
+    .requirement-group-panel .requirement-group-toggle {
+        display: none !important;
     }
 
-    .ui-requirement-group-chevron {
+    .requirement-group-panel .party-heading-copy {
+        flex: 1 1 auto;
+        min-width: 0;
+    }
+
+    .requirement-group-panel .requirement-group-actions {
+        order: 3;
+        flex: 0 0 auto;
+        align-items: center !important;
+        margin-left: 0;
+    }
+
+    .requirement-group-panel .ui-requirement-group-chevron {
+        order: 2;
+        margin-left: auto;
         width: 28px;
         height: 28px;
         display: inline-flex;
