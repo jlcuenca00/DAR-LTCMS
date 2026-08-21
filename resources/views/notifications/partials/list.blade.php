@@ -3,6 +3,8 @@
         'application_created' => 'Application encoded',
         'application_submitted' => 'Submitted for review',
         'application_status_updated' => 'Application status updated',
+        // Legacy display compatibility only; current Staff triggers do not emit this event.
+        'application_approved' => 'Application approved',
         'application_released' => 'Clearance released',
         'application_denied' => 'Application denied',
         'landowner_application_status' => 'Application status',
