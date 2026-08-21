@@ -6,7 +6,6 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Route;
 
-
 class SystemNotification extends Model
 {
     protected $fillable = [
@@ -39,7 +38,6 @@ class SystemNotification extends Model
     {
         return $query->whereNull('read_at');
     }
-
 
     public function targetUrlFor(?User $viewer = null): string
     {
@@ -85,7 +83,14 @@ class SystemNotification extends Model
             }
 
             if ($viewer->role === User::ROLE_LANDOWNER && Route::has('landowner.parcels.show')) {
-                return route('landowner.parcels.show', $this->related_id);
+                $landowner = $viewer->landowner;
+                $mayViewParcel = $landowner
+                    ? $landowner->landholdings()->where('parcel_id', $this->related_id)->exists()
+                    : false;
+
+                if ($mayViewParcel) {
+                    return route('landowner.parcels.show', $this->related_id);
+                }
             }
         }
 

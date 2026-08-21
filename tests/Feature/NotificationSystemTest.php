@@ -3,9 +3,13 @@
 namespace Tests\Feature;
 
 use App\Models\LandTransferApplication;
+use App\Models\Landholding;
 use App\Models\Landowner;
+use App\Models\Parcel;
+use App\Models\SourceRecordPackageImportBatch;
 use App\Models\SystemNotification;
 use App\Models\User;
+use App\Services\NotificationService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -130,9 +134,9 @@ class NotificationSystemTest extends TestCase
 
         SystemNotification::create([
             'user_id' => $user->id,
-            'type' => 'application_status_updated',
-            'title' => 'Application status updated',
-            'message' => 'Application status updated.',
+            'type' => 'application_submitted',
+            'title' => 'Application submitted for review',
+            'message' => 'Application submitted for review.',
         ]);
 
         $this->actingAs($user)
@@ -166,7 +170,7 @@ class NotificationSystemTest extends TestCase
         ]);
     }
 
-    public function test_application_stage_advancement_creates_staff_and_landowner_notifications(): void
+    public function test_internal_stage_advancement_notifies_linked_landowner_without_staff_noise(): void
     {
         $staffUser = User::factory()->create([
             'role' => User::ROLE_STAFF,
@@ -201,14 +205,47 @@ class NotificationSystemTest extends TestCase
             ->post(route('staff.applications.submit', $application))
             ->assertRedirect();
 
-        $this->assertDatabaseHas('system_notifications', [
+        $this->assertDatabaseMissing('system_notifications', [
             'user_id' => $staffUser->id,
             'type' => 'application_status_updated',
+        ]);
+
+        $this->assertDatabaseMissing('system_notifications', [
+            'user_id' => $staffUser->id,
+            'type' => 'application_submitted',
         ]);
 
         $this->assertDatabaseHas('system_notifications', [
             'user_id' => $landownerUser->id,
             'type' => 'landowner_application_status',
+        ]);
+    }
+
+    public function test_legacy_submission_into_review_creates_staff_submitted_notification(): void
+    {
+        $staffUser = User::factory()->create([
+            'role' => User::ROLE_STAFF,
+            'is_active' => true,
+        ]);
+
+        $application = LandTransferApplication::create([
+            'application_code' => 'APP-NOTIF-SUBMIT-001',
+            'transferor_name' => 'Legacy Transferor',
+            'transferee_name' => 'Legacy Transferee',
+            'municipality' => 'Dumaguete City',
+            'barangay' => 'Bantayan',
+            'status' => LandTransferApplication::STATUS_DRAFT,
+            'encoded_by' => $staffUser->id,
+        ]);
+
+        $this->actingAs($staffUser)
+            ->post(route('staff.applications.submit', $application))
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('system_notifications', [
+            'user_id' => $staffUser->id,
+            'type' => 'application_submitted',
+            'title' => 'Application submitted for review',
         ]);
     }
 
@@ -260,5 +297,206 @@ class NotificationSystemTest extends TestCase
             'user_id' => $landownerUser->id,
             'type' => 'landowner_final_decision',
         ]);
+    }
+
+    public function test_landowner_notification_is_deduplicated_and_payload_is_minimal(): void
+    {
+        $staffUser = User::factory()->create([
+            'role' => User::ROLE_STAFF,
+            'is_active' => true,
+        ]);
+
+        $landownerUser = User::factory()->create([
+            'role' => User::ROLE_LANDOWNER,
+            'is_active' => true,
+        ]);
+
+        $landowner = Landowner::create([
+            'user_id' => $landownerUser->id,
+            'first_name' => 'Minimal',
+            'last_name' => 'Payload',
+            'province' => 'Negros Oriental',
+        ]);
+
+        $application = LandTransferApplication::create([
+            'application_code' => 'APP-NOTIF-MINIMAL-001',
+            'transferor_name' => 'Minimal Payload',
+            'transferee_name' => 'Minimal Payload',
+            'transferor_landowner_id' => $landowner->id,
+            'transferee_landowner_id' => $landowner->id,
+            'municipality' => 'Dumaguete City',
+            'barangay' => 'Bantayan',
+            'status' => LandTransferApplication::STATUS_ENDORSED_LTI,
+            'encoded_by' => $staffUser->id,
+        ]);
+
+        app(NotificationService::class)
+            ->notifyLinkedLandownersStatusChanged($application, $application->statusLabel());
+
+        $this->assertSame(1, SystemNotification::query()
+            ->where('user_id', $landownerUser->id)
+            ->where('type', 'landowner_application_status')
+            ->count());
+
+        $notification = SystemNotification::query()
+            ->where('user_id', $landownerUser->id)
+            ->where('type', 'landowner_application_status')
+            ->firstOrFail();
+
+        $this->assertSame($application->id, $notification->data['application_id']);
+        $this->assertSame($application->application_code, $notification->data['application_code']);
+        $this->assertSame($application->status, $notification->data['status']);
+        $this->assertArrayNotHasKey('transferor_name', $notification->data);
+        $this->assertArrayNotHasKey('transferee_name', $notification->data);
+        $this->assertArrayNotHasKey('municipality', $notification->data);
+        $this->assertArrayNotHasKey('barangay', $notification->data);
+    }
+
+    public function test_inactive_or_unlinked_landowners_do_not_receive_application_notifications(): void
+    {
+        $staffUser = User::factory()->create([
+            'role' => User::ROLE_STAFF,
+            'is_active' => true,
+        ]);
+
+        $inactiveUser = User::factory()->create([
+            'role' => User::ROLE_LANDOWNER,
+            'is_active' => false,
+        ]);
+
+        $inactiveLandowner = Landowner::create([
+            'user_id' => $inactiveUser->id,
+            'first_name' => 'Inactive',
+            'last_name' => 'Linked',
+            'province' => 'Negros Oriental',
+        ]);
+
+        $unlinkedUser = User::factory()->create([
+            'role' => User::ROLE_LANDOWNER,
+            'is_active' => true,
+        ]);
+
+        Landowner::create([
+            'user_id' => $unlinkedUser->id,
+            'first_name' => 'Active',
+            'last_name' => 'Unlinked',
+            'province' => 'Negros Oriental',
+        ]);
+
+        $application = LandTransferApplication::create([
+            'application_code' => 'APP-NOTIF-RECIPIENT-001',
+            'transferor_name' => 'Inactive Linked',
+            'transferee_name' => 'Inactive Linked',
+            'transferor_landowner_id' => $inactiveLandowner->id,
+            'transferee_landowner_id' => $inactiveLandowner->id,
+            'municipality' => 'Dumaguete City',
+            'barangay' => 'Bantayan',
+            'status' => LandTransferApplication::STATUS_ENDORSED_LTI,
+            'encoded_by' => $staffUser->id,
+        ]);
+
+        app(NotificationService::class)
+            ->notifyLinkedLandownersStatusChanged($application, $application->statusLabel());
+
+        $this->assertDatabaseMissing('system_notifications', [
+            'user_id' => $inactiveUser->id,
+            'type' => 'landowner_application_status',
+        ]);
+
+        $this->assertDatabaseMissing('system_notifications', [
+            'user_id' => $unlinkedUser->id,
+            'type' => 'landowner_application_status',
+        ]);
+    }
+
+    public function test_committed_source_import_notifies_only_active_geodetic_users_once(): void
+    {
+        $staffUser = User::factory()->create([
+            'role' => User::ROLE_STAFF,
+            'is_active' => true,
+        ]);
+
+        $activeGeodetic = User::factory()->create([
+            'role' => User::ROLE_GEODETIC,
+            'is_active' => true,
+        ]);
+
+        $inactiveGeodetic = User::factory()->create([
+            'role' => User::ROLE_GEODETIC,
+            'is_active' => false,
+        ]);
+
+        $batch = SourceRecordPackageImportBatch::create([
+            'original_filename' => 'notification-import.csv',
+            'status' => 'previewed',
+            'uploaded_by_user_id' => $staffUser->id,
+            'preview_rows' => [],
+            'summary' => [],
+        ]);
+
+        $batch->update([
+            'status' => 'committed',
+            'committed_rows' => 3,
+            'committed_by_user_id' => $staffUser->id,
+            'committed_at' => now(),
+        ]);
+
+        $this->assertSame(1, SystemNotification::query()
+            ->where('user_id', $activeGeodetic->id)
+            ->where('type', 'geodetic_reference_imported')
+            ->count());
+
+        $this->assertDatabaseMissing('system_notifications', [
+            'user_id' => $inactiveGeodetic->id,
+            'type' => 'geodetic_reference_imported',
+        ]);
+
+        $this->assertDatabaseMissing('system_notifications', [
+            'user_id' => $staffUser->id,
+            'type' => 'geodetic_reference_imported',
+        ]);
+    }
+
+    public function test_landowner_parcel_notification_target_requires_landholding_link(): void
+    {
+        $landownerUser = User::factory()->create([
+            'role' => User::ROLE_LANDOWNER,
+            'is_active' => true,
+        ]);
+
+        $landowner = Landowner::create([
+            'user_id' => $landownerUser->id,
+            'first_name' => 'Parcel',
+            'last_name' => 'Viewer',
+            'province' => 'Negros Oriental',
+        ]);
+
+        $parcel = Parcel::create([
+            'parcel_code' => 'PCL-NOTIF-TARGET-001',
+            'municipality' => 'Dumaguete City',
+            'barangay' => 'Bantayan',
+            'area_hectares' => 1.0000,
+            'status' => 'active',
+        ]);
+
+        $notification = SystemNotification::create([
+            'user_id' => $landownerUser->id,
+            'type' => 'landowner_parcel_reference',
+            'title' => 'Parcel reference',
+            'message' => 'A parcel reference is available.',
+            'related_type' => Parcel::class,
+            'related_id' => $parcel->id,
+        ]);
+
+        $this->assertSame(route('notifications.index'), $notification->targetUrlFor($landownerUser));
+
+        Landholding::create([
+            'landowner_id' => $landowner->id,
+            'parcel_id' => $parcel->id,
+            'area_hectares' => 1.0000,
+            'status' => Landholding::STATUS_ACTIVE,
+        ]);
+
+        $this->assertSame(route('landowner.parcels.show', $parcel), $notification->targetUrlFor($landownerUser));
     }
 }

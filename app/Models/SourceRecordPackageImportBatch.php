@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Services\NotificationService;
 use App\Services\SourceRecordReferenceIntegrityService;
 use Illuminate\Database\Eloquent\Model;
 
@@ -52,6 +53,14 @@ class SourceRecordPackageImportBatch extends Model
                 'error_rows' => $errorRows,
                 'duplicate_rows' => $duplicateRows,
             ];
+        });
+
+        static::updated(function (SourceRecordPackageImportBatch $batch) {
+            if (! $batch->wasChanged('status') || $batch->status !== 'committed') {
+                return;
+            }
+
+            app(NotificationService::class)->notifyGeodeticSourceImportCommitted($batch);
         });
     }
 
