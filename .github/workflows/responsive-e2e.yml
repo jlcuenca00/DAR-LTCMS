@@ -21,6 +21,8 @@ on:
       - 'app/Http/Middleware/LockApplicationMutation.php'
       - 'app/Http/Middleware/EnsureMutationAudited.php'
       - 'app/Http/Middleware/SecurityHeaders.php'
+      - 'app/Http/Middleware/TrustHosts.php'
+      - 'app/Http/Middleware/TrustProxies.php'
       - 'app/Models/AuditLog.php'
       - 'app/Providers/AppServiceProvider.php'
       - 'app/Services/AuditLogger.php'
