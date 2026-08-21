@@ -30,5 +30,5 @@ Artisan::command('dar:scan-data-integrity {--json : Output the complete result a
         }
     }
 
-    return $result['clean'] ? self::SUCCESS : self::FAILURE;
+    return $result['clean'] ? 0 : 1;
 })->purpose('Report DAR-LTCMS data-integrity problems without modifying records');
