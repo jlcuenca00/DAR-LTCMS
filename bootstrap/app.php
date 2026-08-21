@@ -40,18 +40,26 @@ return Application::configure(basePath: dirname(__DIR__))
 
         if ($trustedHosts === []) {
             $host = parse_url((string) config('app.url'), PHP_URL_HOST);
-            $trustedHosts = $host
-                ? ['^'.preg_quote($host, '/').'$']
-                : [];
+            $trustedHosts = $host ? [$host] : [];
 
             if (! app()->environment('production')) {
-                $trustedHosts[] = '^localhost$';
-                $trustedHosts[] = '^127\\.0\\.0\\.1$';
+                $trustedHosts[] = 'localhost';
+                $trustedHosts[] = '127.0.0.1';
             }
         }
 
+        $trustedHosts = array_values(array_unique(array_filter(array_map(
+            static fn ($host): string => strtolower(trim((string) $host)),
+            $trustedHosts
+        ))));
+
+        $trustedHostPatterns = array_map(
+            static fn (string $host): string => '~^'.preg_quote($host, '~').'$~i',
+            $trustedHosts
+        );
+
         $middleware->trustHosts(
-            at: array_values(array_unique($trustedHosts)),
+            at: $trustedHostPatterns,
             subdomains: false
         );
 
