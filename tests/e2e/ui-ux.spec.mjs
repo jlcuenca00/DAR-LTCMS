@@ -98,6 +98,39 @@ test.describe('authenticated UI UX behavior', () => {
         }
     });
 
+    test('requirement group cards toggle from the full header without an Expand button', async ({ page }) => {
+        await page.setViewportSize({ width: 390, height: 844 });
+        await page.goto('/staff/applications');
+        await waitForUiUx(page);
+
+        const firstApplication = page.locator('.application-desktop-table tbody a.staff-link').first();
+        if (!(await firstApplication.count())) test.skip(true, 'No application record is available for review.');
+
+        await firstApplication.click();
+        await waitForUiUx(page);
+
+        const panel = page.locator('.requirement-group-panel').first();
+        if (!(await panel.count())) test.skip(true, 'No requirement group is available for review.');
+
+        const header = panel.locator(':scope > .review-panel-header');
+        const body = panel.locator(':scope > .review-panel-body');
+
+        await expect(panel.locator('[data-requirement-group-toggle]')).toHaveCount(0);
+        await expect(panel.locator('.ui-requirement-group-chevron')).toHaveCount(1);
+        await expect(header).toHaveAttribute('role', 'button');
+        await expect(header).toHaveAttribute('tabindex', '0');
+        await expect(header).toHaveAttribute('aria-expanded', 'false');
+        await expect(body).toBeHidden();
+
+        await header.click();
+        await expect(header).toHaveAttribute('aria-expanded', 'true');
+        await expect(body).toBeVisible();
+
+        await header.press('Space');
+        await expect(header).toHaveAttribute('aria-expanded', 'false');
+        await expect(body).toBeHidden();
+    });
+
     test('Application Actions backdrop covers the complete browser viewport', async ({ page }) => {
         await page.setViewportSize({ width: 1440, height: 900 });
         await page.goto('/staff/applications');
