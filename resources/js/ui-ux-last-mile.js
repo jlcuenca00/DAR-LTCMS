@@ -125,6 +125,81 @@ function watchRecordSelects() {
     observer.observe(root, { childList: true, subtree: true });
 }
 
+function enhanceRequirementGroupHeaders() {
+    const panels = Array.from(document.querySelectorAll('.requirement-group-panel'));
+    if (!panels.length) return;
+
+    panels.forEach((panel, index) => {
+        if (panel.dataset.uiHeaderToggleEnhanced === 'true') return;
+
+        const header = panel.querySelector(':scope > .review-panel-header');
+        const body = panel.querySelector(':scope > .review-panel-body');
+        const legacyToggle = panel.querySelector('[data-requirement-group-toggle]');
+        const actions = panel.querySelector('.requirement-group-actions');
+        if (!header || !body) return;
+
+        panel.dataset.uiHeaderToggleEnhanced = 'true';
+
+        if (!body.id) body.id = `requirement-group-body-${index + 1}`;
+
+        header.classList.add('ui-requirement-group-header-toggle');
+        header.setAttribute('role', 'button');
+        header.setAttribute('tabindex', '0');
+        header.setAttribute('aria-controls', body.id);
+
+        let indicator = actions?.querySelector('.ui-requirement-group-chevron');
+        if (!indicator) {
+            indicator = document.createElement('span');
+            indicator.className = 'ui-requirement-group-chevron';
+            indicator.setAttribute('aria-hidden', 'true');
+            indicator.innerHTML = '<i class="fa-solid fa-chevron-down"></i>';
+
+            if (actions) {
+                actions.appendChild(indicator);
+            } else {
+                const badge = header.querySelector('.party-group-badge');
+                if (badge) badge.insertAdjacentElement('afterend', indicator);
+                else header.appendChild(indicator);
+            }
+        }
+
+        legacyToggle?.remove();
+
+        const syncState = () => {
+            const expanded = !panel.classList.contains('is-collapsed');
+            const title = header.querySelector('.review-panel-title')?.textContent?.trim() || 'Requirement group';
+            header.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+            header.setAttribute(
+                'aria-label',
+                `${title}. ${expanded ? 'Expanded' : 'Collapsed'}. Press Enter or Space to ${expanded ? 'collapse' : 'expand'}.`
+            );
+        };
+
+        const togglePanel = () => {
+            panel.classList.toggle('is-collapsed');
+            syncState();
+        };
+
+        header.addEventListener('click', (event) => {
+            if (event.target.closest('a, button, input, select, textarea, label')) return;
+            togglePanel();
+        });
+
+        header.addEventListener('keydown', (event) => {
+            if (event.key !== 'Enter' && event.key !== ' ') return;
+            event.preventDefault();
+            togglePanel();
+        });
+
+        if (typeof MutationObserver !== 'undefined') {
+            const observer = new MutationObserver(syncState);
+            observer.observe(panel, { attributes: true, attributeFilter: ['class'] });
+        }
+
+        syncState();
+    });
+}
+
 /* Keep application-review overlays out of shell/topbar stacking contexts.
    Moving the original nodes preserves IDs, forms, and event listeners while
    allowing position:fixed to cover the real browser viewport edge-to-edge. */
@@ -162,6 +237,7 @@ function initUiUxLastMile() {
     attachClientValidation();
     enhanceRecordSelects();
     watchRecordSelects();
+    enhanceRequirementGroupHeaders();
     portalApplicationReviewModals();
     addDecisionScopeBoundary();
     addAuditTimezoneNote();
