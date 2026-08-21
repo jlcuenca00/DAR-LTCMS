@@ -19,11 +19,19 @@ class ApplicationReviewResponsiveHardeningTest extends TestCase
 
     public function test_application_review_workflow_action_stops_floating_on_compact_viewports(): void
     {
-        $css = file_get_contents(resource_path('css/responsive-hardening.css'));
+        $responsiveCss = file_get_contents(resource_path('css/responsive-hardening.css'));
+        $lastMileCss = file_get_contents(resource_path('css/ui-ux-last-mile.css'));
 
-        $this->assertStringContainsString('.application-review-page .workflow-fab {', $css);
-        $this->assertStringContainsString('position: static !important;', $css);
-        $this->assertStringContainsString('width: 100% !important;', $css);
+        $this->assertStringContainsString('.application-review-page .workflow-fab {', $responsiveCss);
+        $this->assertStringContainsString('position: static !important;', $responsiveCss);
+        $this->assertStringContainsString('width: 100% !important;', $responsiveCss);
+
+        // The trigger is rendered immediately after the application-review wrapper, so it also
+        // needs an unscoped compact rule to prevent the fixed desktop FAB from covering fields.
+        $this->assertStringContainsString('@media (max-width: 1100px)', $lastMileCss);
+        $this->assertStringContainsString('.workflow-fab {', $lastMileCss);
+        $this->assertStringContainsString('inset: auto !important;', $lastMileCss);
+        $this->assertStringContainsString('margin: 4px 0 24px !important;', $lastMileCss);
     }
 
     public function test_application_review_modals_are_dynamic_viewport_bounded(): void
