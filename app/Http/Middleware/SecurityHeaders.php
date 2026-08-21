@@ -17,6 +17,8 @@ class SecurityHeaders
         $response->headers->set('Referrer-Policy', 'strict-origin-when-cross-origin');
         $response->headers->set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
         $response->headers->set('X-Permitted-Cross-Domain-Policies', 'none');
+        $response->headers->set('Cross-Origin-Opener-Policy', 'same-origin');
+        $response->headers->set('Cross-Origin-Resource-Policy', 'same-origin');
 
         if ($request->isSecure()) {
             $response->headers->set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
@@ -38,6 +40,7 @@ class SecurityHeaders
                 "img-src 'self' data: blob: https://unpkg.com https://cdn.jsdelivr.net https://*.basemaps.cartocdn.com",
                 "connect-src 'self'",
                 "worker-src 'self' blob:",
+                'upgrade-insecure-requests',
             ]));
         }
 
@@ -51,14 +54,17 @@ class SecurityHeaders
             'password.required.update',
             'password.confirm'
         );
+        $isAuthenticated = (bool) $request->user();
 
-        // Never cache authenticated pages or guest authentication/recovery forms.
-        // Recovery forms contain session-bound CSRF tokens, so caching an older
-        // response can surface a stale token and cause a 419 Page Expired error.
-        if ($isHtml && ($request->user() || $isSensitiveAuthPage)) {
+        // Never allow authenticated responses to be cached by browsers or shared
+        // intermediaries. This includes PDFs, images, and uploaded records, not
+        // only HTML pages. Guest authentication/recovery forms are also no-store
+        // because they contain session-bound CSRF/recovery state.
+        if ($isAuthenticated || ($isHtml && $isSensitiveAuthPage)) {
             $response->headers->set('Cache-Control', 'no-store, no-cache, must-revalidate, private, max-age=0');
             $response->headers->set('Pragma', 'no-cache');
             $response->headers->set('Expires', '0');
+            $response->headers->set('X-Robots-Tag', 'noindex, nofollow, noarchive');
         }
 
         return $response;
