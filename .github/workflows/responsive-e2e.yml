@@ -82,28 +82,6 @@ jobs:
           cp .env.example .env
           php artisan key:generate
           php artisan migrate --force
-          php <<'PHP'
-          <?php
-          require 'vendor/autoload.php';
-          $app = require 'bootstrap/app.php';
-          $app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
-
-          App\Models\User::query()->updateOrCreate(
-              ['username' => 'responsive.staff'],
-              [
-                  'name' => 'Responsive Test Staff',
-                  'email' => 'responsive.staff@example.test',
-                  'password' => Illuminate\Support\Facades\Hash::make('ResponsiveTest321!'),
-                  'role' => 'staff',
-                  'is_active' => true,
-                  'must_change_password' => false,
-              ]
-          );
-
-          if (! App\Models\User::query()->where('username', 'responsive.staff')->exists()) {
-              throw new RuntimeException('Responsive E2E Staff account was not created.');
-          }
-          PHP
 
       - name: Run responsive and UI UX feature regressions
         run: |
@@ -117,6 +95,31 @@ jobs:
             tests/Feature/LandownerMapUiCleanupTest.php \
             tests/Feature/UiUxSystemTest.php \
             tests/Feature/DashboardAttentionTest.php
+
+      - name: Create browser test Staff account
+        run: |
+          php <<'PHP'
+          <?php
+          require 'vendor/autoload.php';
+          $app = require 'bootstrap/app.php';
+          $app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
+
+          $user = App\Models\User::query()->updateOrCreate(
+              ['username' => 'responsive.staff'],
+              [
+                  'name' => 'Responsive Test Staff',
+                  'email' => 'responsive.staff@example.test',
+                  'password' => 'ResponsiveTest321!',
+                  'role' => 'staff',
+                  'is_active' => true,
+                  'must_change_password' => false,
+              ]
+          );
+
+          if (! Illuminate\Support\Facades\Hash::check('ResponsiveTest321!', $user->password)) {
+              throw new RuntimeException('Responsive E2E Staff password was not stored correctly.');
+          }
+          PHP
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
