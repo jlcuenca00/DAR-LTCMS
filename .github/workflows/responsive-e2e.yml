@@ -12,6 +12,7 @@ on:
       - 'app/Http/Controllers/Staff/StaffDashboardController.php'
       - 'app/Http/Controllers/Staff/MonitoringReportController.php'
       - 'app/Http/Controllers/Staff/ApplicationClearanceController.php'
+      - 'app/Http/Controllers/Staff/ProtectedStorageController.php'
       - 'app/Http/Controllers/Landowner/ApplicationClearanceController.php'
       - 'app/Http/Controllers/Staff/ApplicationWorkflowController.php'
       - 'app/Http/Controllers/Staff/LandTransferApplicationController.php'
@@ -19,11 +20,20 @@ on:
       - 'app/Http/Controllers/Staff/ApplicationLandownerLinkController.php'
       - 'app/Http/Middleware/LockApplicationMutation.php'
       - 'app/Http/Middleware/EnsureMutationAudited.php'
+      - 'app/Http/Middleware/SecurityHeaders.php'
       - 'app/Models/AuditLog.php'
+      - 'app/Providers/AppServiceProvider.php'
       - 'app/Services/AuditLogger.php'
       - 'app/Services/ApplicationClearanceService.php'
+      - 'app/Services/ProductionReadinessScanner.php'
+      - 'config/app.php'
+      - 'config/filesystems.php'
+      - 'config/session.php'
       - 'database/migrations/**audit_log**'
       - 'bootstrap/app.php'
+      - 'routes/console.php'
+      - '.env.example'
+      - '.github/workflows/deploy.yml'
       - 'tests/Feature/*Responsive*'
       - 'tests/Feature/*MobilePortal*'
       - 'tests/Feature/*Map*'
@@ -32,6 +42,8 @@ on:
       - 'tests/Feature/DashboardAttentionTest.php'
       - 'tests/Feature/ClearancePrintReferenceTest.php'
       - 'tests/Feature/MonitoringReportTest.php'
+      - 'tests/Feature/SecurityHeadersTest.php'
+      - 'tests/Feature/ProductionSecurityHardeningTest.php'
       - 'tests/Feature/FinalDecisionLockTest.php'
       - 'tests/Feature/FinalDecisionIntegrityHardeningTest.php'
       - 'tests/Feature/RbacSecurityHardeningTest.php'
@@ -122,7 +134,7 @@ jobs:
       - name: Build frontend assets
         run: npm run build
 
-      - name: Run responsive, workflow, UI UX, reports, RBAC, audit, final-decision, and data-integrity regressions
+      - name: Run responsive, workflow, UI UX, reports, production-security, RBAC, audit, final-decision, and data-integrity regressions
         run: |
           php artisan test \
             tests/Feature/ResponsiveUiFoundationTest.php \
@@ -137,6 +149,8 @@ jobs:
             tests/Feature/ClearancePrintReferenceTest.php \
             tests/Feature/DashboardAttentionTest.php \
             tests/Feature/MonitoringReportTest.php \
+            tests/Feature/SecurityHeadersTest.php \
+            tests/Feature/ProductionSecurityHardeningTest.php \
             tests/Feature/RbacSecurityHardeningTest.php \
             tests/Feature/FinalDecisionLockTest.php \
             tests/Feature/FinalDecisionIntegrityHardeningTest.php \
