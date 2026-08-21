@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Staff;
 use App\Http\Controllers\Controller;
 use App\Models\ApplicationClearance;
 use App\Models\LandTransferApplication;
+use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -87,23 +88,29 @@ class MonitoringReportController extends Controller
             ->orderBy('decision_status')
             ->pluck('total', 'decision_status');
 
-        $totalApplications = (clone $applications)->count();
-        $totalClearances = (clone $clearances)->count();
-        $totalClearanceArea = (float) (clone $clearances)->sum('total_area_hectares');
+        // These totals are already represented by the grouped queries above, so
+        // derive them in memory instead of asking PostgreSQL to recount the same set.
+        $totalApplications = $statusCounts->sum(fn ($count) => (int) $count);
+        $totalClearances = $clearanceCounts->sum(fn ($count) => (int) $count);
 
-        $releasedOutputArea = (float) (clone $clearances)
-            ->whereIn('decision_status', [
-                LandTransferApplication::STATUS_RELEASED,
-                LandTransferApplication::STATUS_APPROVED,
-            ])
-            ->sum('total_area_hectares');
+        // Compute all hectare metrics with one scan of the filtered clearance set.
+        $clearanceMetrics = (clone $clearances)
+            ->selectRaw(
+                'COALESCE(SUM(total_area_hectares), 0) as total_area_hectares,
+                 COALESCE(SUM(CASE WHEN decision_status IN (?, ?) THEN total_area_hectares ELSE 0 END), 0) as released_area_hectares,
+                 COALESCE(SUM(CASE WHEN decision_status IN (?, ?) THEN total_area_hectares ELSE 0 END), 0) as denied_area_hectares',
+                [
+                    LandTransferApplication::STATUS_RELEASED,
+                    LandTransferApplication::STATUS_APPROVED,
+                    LandTransferApplication::STATUS_DENIED,
+                    LandTransferApplication::STATUS_NOT_APPROVED,
+                ]
+            )
+            ->first();
 
-        $deniedOutputArea = (float) (clone $clearances)
-            ->whereIn('decision_status', [
-                LandTransferApplication::STATUS_DENIED,
-                LandTransferApplication::STATUS_NOT_APPROVED,
-            ])
-            ->sum('total_area_hectares');
+        $totalClearanceArea = (float) ($clearanceMetrics?->total_area_hectares ?? 0);
+        $releasedOutputArea = (float) ($clearanceMetrics?->released_area_hectares ?? 0);
+        $deniedOutputArea = (float) ($clearanceMetrics?->denied_area_hectares ?? 0);
 
         $municipalityBreakdown = (clone $applications)
             ->selectRaw('municipality, COUNT(*) as total')
@@ -123,8 +130,8 @@ class MonitoringReportController extends Controller
             ->get();
 
         $filterLabels = collect([
-            $filters['date_from'] ? 'From ' . $filters['date_from'] : null,
-            $filters['date_to'] ? 'To ' . $filters['date_to'] : null,
+            $filters['date_from'] ? 'From '.$filters['date_from'] : null,
+            $filters['date_to'] ? 'To '.$filters['date_to'] : null,
             $filters['status'] ? ($statusOptions[$filters['status']] ?? null) : null,
             $filters['municipality'],
         ])->filter()->values();
@@ -155,25 +162,33 @@ class MonitoringReportController extends Controller
     private function applyApplicationFilters(Builder $query, array $filters): void
     {
         if ($filters['date_from']) {
-            $query->where(function (Builder $dateQuery) use ($filters) {
+            $createdFrom = CarbonImmutable::parse($filters['date_from'], config('app.timezone'))->startOfDay();
+
+            $query->where(function (Builder $dateQuery) use ($filters, $createdFrom) {
                 $dateQuery
-                    ->whereDate('date_of_application', '>=', $filters['date_from'])
-                    ->orWhere(function (Builder $fallback) use ($filters) {
+                    // date_of_application is already a DATE column; wrapping it in
+                    // whereDate() would prevent normal B-tree index usage.
+                    ->where('date_of_application', '>=', $filters['date_from'])
+                    ->orWhere(function (Builder $fallback) use ($createdFrom) {
                         $fallback
                             ->whereNull('date_of_application')
-                            ->whereDate('created_at', '>=', $filters['date_from']);
+                            ->where('created_at', '>=', $createdFrom);
                     });
             });
         }
 
         if ($filters['date_to']) {
-            $query->where(function (Builder $dateQuery) use ($filters) {
+            $createdBefore = CarbonImmutable::parse($filters['date_to'], config('app.timezone'))
+                ->startOfDay()
+                ->addDay();
+
+            $query->where(function (Builder $dateQuery) use ($filters, $createdBefore) {
                 $dateQuery
-                    ->whereDate('date_of_application', '<=', $filters['date_to'])
-                    ->orWhere(function (Builder $fallback) use ($filters) {
+                    ->where('date_of_application', '<=', $filters['date_to'])
+                    ->orWhere(function (Builder $fallback) use ($createdBefore) {
                         $fallback
                             ->whereNull('date_of_application')
-                            ->whereDate('created_at', '<=', $filters['date_to']);
+                            ->where('created_at', '<', $createdBefore);
                     });
             });
         }
