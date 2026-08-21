@@ -17,7 +17,26 @@ class ParcelMapController extends Controller
 
         if ($landowner) {
             $landholdings = Landholding::query()
-                ->with('parcel')
+                ->select([
+                    'id',
+                    'landowner_id',
+                    'parcel_id',
+                    'area_hectares',
+                    'created_at',
+                ])
+                ->with(['parcel' => function ($query) {
+                    $query->select([
+                        'id',
+                        'parcel_code',
+                        'title_no',
+                        'tax_decl_no',
+                        'municipality',
+                        'barangay',
+                        'area_hectares',
+                        'status',
+                        'geometry_geojson',
+                    ]);
+                }])
                 ->where('landowner_id', $landowner->id)
                 ->whereHas('parcel', function ($query) {
                     $query->where('status', 'active')
