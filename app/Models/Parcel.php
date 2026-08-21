@@ -2,10 +2,14 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\NormalizesDarLocation;
+use App\Services\ParcelAreaIntegrityService;
 use Illuminate\Database\Eloquent\Model;
 
 class Parcel extends Model
 {
+    use NormalizesDarLocation;
+
     public const DEFAULT_AGRICULTURAL_STATUS = 'private_agricultural';
 
     public const STATUSES = [
@@ -81,6 +85,13 @@ class Parcel extends Model
         'flagged_at' => 'datetime',
         'flag_resolved_at' => 'datetime',
     ];
+
+    protected static function booted(): void
+    {
+        static::saving(function (Parcel $parcel) {
+            app(ParcelAreaIntegrityService::class)->canonicalizeParcel($parcel);
+        });
+    }
 
     public static function statusOptions(): array
     {
