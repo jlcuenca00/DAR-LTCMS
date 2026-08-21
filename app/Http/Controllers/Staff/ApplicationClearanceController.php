@@ -7,13 +7,12 @@ use App\Models\ApplicationDocument;
 use App\Models\LandTransferApplication;
 use App\Models\RequiredDocument;
 use Barryvdh\DomPDF\Facade\Pdf;
-use Illuminate\Support\Facades\File;
 
 class ApplicationClearanceController extends Controller
 {
     public function show(LandTransferApplication $application)
     {
-        $application->load(['clearance']);
+        $application->load(['clearance', 'documents']);
 
         if (! $application->isFinalized()) {
             return back()->with('error', 'Decision output is only available for released or denied applications.');
@@ -23,12 +22,17 @@ class ApplicationClearanceController extends Controller
             return back()->with('error', 'Decision output record not found for this application.');
         }
 
-        return redirect()->route('staff.applications.clearance.pdf', $application);
+        return view('staff.clearances.show', [
+            'application' => $application,
+            'clearance' => $application->clearance,
+            'returnRoute' => route('staff.applications.show', $application),
+            'returnLabel' => 'Back to Application',
+        ]);
     }
 
     public function pdf(LandTransferApplication $application)
     {
-        $application->load(['clearance', 'documents.requiredDocument', 'applicationParcels.parcel']);
+        $application->load(['clearance', 'documents']);
 
         if (! $application->isFinalized()) {
             return back()->with('error', 'Decision output is only available for released or denied applications.');
@@ -37,17 +41,13 @@ class ApplicationClearanceController extends Controller
         if (! $application->clearance) {
             return back()->with('error', 'Decision output record not found for this application.');
         }
-
-        File::ensureDirectoryExists(storage_path('fonts'), 0755, true);
 
         $safeApplicationCode = str_replace(['/', '\\', ' '], '-', (string) $application->application_code);
 
         $pdf = Pdf::setOption([
             'defaultMediaType' => 'print',
-            'isRemoteEnabled' => true,
-            'allowedRemoteHosts' => [
-                'raw.githubusercontent.com',
-            ],
+            'defaultFont' => 'Helvetica',
+            'isRemoteEnabled' => false,
         ])->loadView('staff.clearances.pdf', [
             'application' => $application,
             'clearance' => $application->clearance,
