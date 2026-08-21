@@ -4,7 +4,6 @@ use App\Http\Controllers\Staff\ProtectedStorageController;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 return Application::configure(basePath: dirname(__DIR__))
@@ -20,47 +19,14 @@ return Application::configure(basePath: dirname(__DIR__))
         },
     )
     ->withMiddleware(function (Middleware $middleware) {
-        $trustedProxies = (array) config('app.trusted_proxies', []);
-
-        if ($trustedProxies !== []) {
-            $proxyTargets = count($trustedProxies) === 1 && $trustedProxies[0] === '*'
-                ? '*'
-                : $trustedProxies;
-
-            $middleware->trustProxies(
-                at: $proxyTargets,
-                headers: Request::HEADER_X_FORWARDED_FOR
-                    | Request::HEADER_X_FORWARDED_HOST
-                    | Request::HEADER_X_FORWARDED_PORT
-                    | Request::HEADER_X_FORWARDED_PROTO
-            );
-        }
-
-        $trustedHosts = (array) config('app.trusted_hosts', []);
-
-        if ($trustedHosts === []) {
-            $host = parse_url((string) config('app.url'), PHP_URL_HOST);
-            $trustedHosts = $host ? [$host] : [];
-
-            if (! app()->environment('production')) {
-                $trustedHosts[] = 'localhost';
-                $trustedHosts[] = '127.0.0.1';
-            }
-        }
-
-        $trustedHosts = array_values(array_unique(array_filter(array_map(
-            static fn ($host): string => strtolower(trim((string) $host)),
-            $trustedHosts
-        ))));
-
-        $trustedHostPatterns = array_map(
-            static fn (string $host): string => '~^'.preg_quote($host, '~').'$~i',
-            $trustedHosts
+        $middleware->trustHosts();
+        $middleware->replace(
+            \Illuminate\Http\Middleware\TrustHosts::class,
+            \App\Http\Middleware\TrustHosts::class
         );
-
-        $middleware->trustHosts(
-            at: $trustedHostPatterns,
-            subdomains: false
+        $middleware->replace(
+            \Illuminate\Http\Middleware\TrustProxies::class,
+            \App\Http\Middleware\TrustProxies::class
         );
 
         $middleware->alias([
