@@ -113,6 +113,58 @@
         display: none !important;
     }
 
+    /* Requirement group cards use the full header as the disclosure control.
+       The old text button is removed by JS; the chevron is only a state cue. */
+    .requirement-group-panel > .ui-requirement-group-header-toggle {
+        cursor: pointer;
+        user-select: none;
+        transition: box-shadow 140ms ease, border-color 140ms ease;
+    }
+
+    .requirement-group-panel > .ui-requirement-group-header-toggle:hover {
+        box-shadow: inset 0 0 0 1px rgba(100, 116, 139, .14);
+    }
+
+    .requirement-group-panel > .ui-requirement-group-header-toggle:focus-visible {
+        outline: 3px solid rgba(21, 128, 61, .22);
+        outline-offset: -3px;
+    }
+
+    .requirement-group-panel.transferee-group > .ui-requirement-group-header-toggle:focus-visible {
+        outline-color: rgba(37, 99, 235, .22);
+    }
+
+    .requirement-group-actions {
+        align-items: center !important;
+    }
+
+    .ui-requirement-group-chevron {
+        width: 28px;
+        height: 28px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex: 0 0 auto;
+        color: #64748b;
+        pointer-events: none;
+    }
+
+    .requirement-group-panel.transferor-group .ui-requirement-group-chevron {
+        color: #166534;
+    }
+
+    .requirement-group-panel.transferee-group .ui-requirement-group-chevron {
+        color: #1d4ed8;
+    }
+
+    .ui-requirement-group-chevron i {
+        transition: transform 140ms ease;
+    }
+
+    .requirement-group-panel:not(.is-collapsed) .ui-requirement-group-chevron i {
+        transform: rotate(180deg);
+    }
+
     .audit-metric-card {
         min-height: 88px !important;
         padding: 14px 15px !important;
@@ -257,7 +309,8 @@
     }
 
     @media (prefers-reduced-motion: reduce) {
-        .ui-review-disclosure-toggle span:last-child {
+        .ui-review-disclosure-toggle span:last-child,
+        .ui-requirement-group-chevron i {
             transition: none !important;
         }
     }
