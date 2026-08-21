@@ -1,0 +1,40 @@
+/* Application Review modal viewport contract.
+   The original modal nodes are portaled to document.body by ui-ux-last-mile.js
+   so these fixed backdrops cover the complete browser viewport, including topbars. */
+
+@media screen {
+    html body > .workflow-modal-backdrop,
+    html body > .decision-modal-backdrop {
+        position: fixed !important;
+        inset: 0 !important;
+        z-index: 4000 !important;
+        box-sizing: border-box !important;
+        width: 100vw !important;
+        height: 100dvh !important;
+        min-height: 100vh !important;
+        margin: 0 !important;
+        padding:
+            max(16px, env(safe-area-inset-top))
+            max(16px, env(safe-area-inset-right))
+            max(16px, env(safe-area-inset-bottom))
+            max(16px, env(safe-area-inset-left)) !important;
+        align-items: center !important;
+        justify-content: center !important;
+        overflow-y: auto !important;
+        overscroll-behavior: contain;
+        background: rgba(15, 23, 42, .72) !important;
+        backdrop-filter: blur(3px);
+    }
+
+    html body > .workflow-modal-backdrop > .workflow-modal-card,
+    html body > .decision-modal-backdrop > .decision-modal-card {
+        max-height: calc(100dvh - max(32px, env(safe-area-inset-top) + env(safe-area-inset-bottom))) !important;
+    }
+
+    @media (max-width: 760px) {
+        html body > .workflow-modal-backdrop,
+        html body > .decision-modal-backdrop {
+            align-items: flex-start !important;
+        }
+    }
+}

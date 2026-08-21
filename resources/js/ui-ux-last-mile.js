@@ -125,6 +125,17 @@ function watchRecordSelects() {
     observer.observe(root, { childList: true, subtree: true });
 }
 
+/* Keep application-review overlays out of shell/topbar stacking contexts.
+   Moving the original nodes preserves IDs, forms, and event listeners while
+   allowing position:fixed to cover the real browser viewport edge-to-edge. */
+function portalApplicationReviewModals() {
+    document.querySelectorAll('.workflow-modal-backdrop, .decision-modal-backdrop').forEach((modal) => {
+        if (modal.parentElement === document.body) return;
+        document.body.appendChild(modal);
+        modal.dataset.uiViewportPortal = 'true';
+    });
+}
+
 function addDecisionScopeBoundary() {
     const modal = document.getElementById('decision-confirm-modal');
     const body = modal?.querySelector('.decision-modal-body');
@@ -151,6 +162,7 @@ function initUiUxLastMile() {
     attachClientValidation();
     enhanceRecordSelects();
     watchRecordSelects();
+    portalApplicationReviewModals();
     addDecisionScopeBoundary();
     addAuditTimezoneNote();
 }
