@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\Concerns\NormalizesDarLocation;
+use App\Services\SourceRecordReferenceIntegrityService;
 use Illuminate\Database\Eloquent\Model;
 
 class LegacyRecord extends Model
@@ -85,6 +86,13 @@ class LegacyRecord extends Model
         'area_hectares' => 'decimal:4',
         'source_geometry_geojson' => 'array',
     ];
+
+    protected static function booted(): void
+    {
+        static::saving(function (LegacyRecord $record) {
+            app(SourceRecordReferenceIntegrityService::class)->assertUniqueRecord($record);
+        });
+    }
 
     public function importBatch()
     {
