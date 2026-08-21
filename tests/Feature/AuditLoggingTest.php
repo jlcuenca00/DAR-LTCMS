@@ -3,9 +3,11 @@
 namespace Tests\Feature;
 
 use App\Models\ApplicationDocument;
+use App\Models\ApplicationParcel;
 use App\Models\AuditLog;
 use App\Models\Landowner;
 use App\Models\LandTransferApplication;
+use App\Models\Parcel;
 use App\Models\RequiredDocument;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -191,6 +193,17 @@ class AuditLoggingTest extends TestCase
             'province' => 'Negros Oriental',
         ]);
 
+        $parcel = Parcel::create([
+            'parcel_code' => 'AUDIT-RELEASE-PARCEL-001',
+            'title_no' => 'T-AUDIT-RELEASE-001',
+            'lot_number' => 'LOT-AUDIT-RELEASE-001',
+            'municipality' => 'Dumaguete City',
+            'barangay' => 'Bantayan',
+            'province' => 'Negros Oriental',
+            'area_hectares' => 1.0000,
+            'status' => 'active',
+        ]);
+
         $application = LandTransferApplication::create([
             'application_code' => 'AUDIT-RELEASE-001',
             'transferor_name' => 'Audit Transferor',
@@ -201,6 +214,23 @@ class AuditLoggingTest extends TestCase
             'barangay' => 'Bantayan',
             'status' => LandTransferApplication::STATUS_FOR_RELEASING,
             'encoded_by' => $staffUser->id,
+        ]);
+
+        $application->forceFill([
+            'ltc_form4_subject_land_findings' => ['ra6657_not_covered_not_tenanted_retained_area'],
+            'ltc_form4_recommendation_findings' => ['application_complete'],
+            'ltc_form4_recommendation_decision' => 'approval',
+            'ltc_form4_certified_at' => now()->toDateString(),
+            'ltc_form4_certifying_officer_name' => 'Authorized Review Officer',
+        ])->save();
+
+        ApplicationParcel::create([
+            'land_transfer_application_id' => $application->id,
+            'parcel_id' => $parcel->id,
+            'parcel_code' => $parcel->parcel_code,
+            'title_no' => $parcel->title_no,
+            'lot_number' => $parcel->lot_number,
+            'area_hectares' => 1.0000,
         ]);
 
         $this->actingAs($staffUser)->post(
@@ -234,11 +264,12 @@ class AuditLoggingTest extends TestCase
 
         $this->assertSame('Audit release reason', $releaseLog->metadata['decision_reason']);
         $this->assertSame('Audit release notes', $releaseLog->metadata['decision_notes']);
+        $this->assertTrue($releaseLog->metadata['form4_recommendation_matches_final_decision']);
         $this->assertFalse($releaseLog->metadata['registry_mutation_performed']);
 
         $clearanceLog = AuditLog::where('action', 'clearance_generated')->first();
 
         $this->assertSame(LandTransferApplication::STATUS_RELEASED, $clearanceLog->metadata['decision_status']);
-        $this->assertSame(0, $clearanceLog->metadata['parcel_count']);
+        $this->assertSame(1, $clearanceLog->metadata['parcel_count']);
     }
 }
