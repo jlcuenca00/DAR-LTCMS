@@ -32,6 +32,7 @@ on:
       - 'tests/Feature/ApplicationWorkflowReadinessTest.php'
       - 'tests/Feature/HectareValidationWorkflowTest.php'
       - 'tests/Feature/NotificationSystemTest.php'
+      - 'tests/Feature/AuditLoggingTest.php'
       - 'tests/e2e/**'
       - 'playwright.config.mjs'
       - '.github/workflows/responsive-e2e.yml'
@@ -100,7 +101,19 @@ jobs:
           php artisan key:generate
           php artisan migrate --force
 
-      - name: Run responsive, workflow, UI UX, RBAC, and final-decision regressions
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: Build frontend assets
+        run: npm run build
+
+      - name: Run responsive, workflow, UI UX, RBAC, audit, and final-decision regressions
         run: |
           php artisan test \
             tests/Feature/ResponsiveUiFoundationTest.php \
@@ -119,7 +132,8 @@ jobs:
             tests/Feature/FinalDecisionIntegrityHardeningTest.php \
             tests/Feature/ApplicationWorkflowReadinessTest.php \
             tests/Feature/HectareValidationWorkflowTest.php \
-            tests/Feature/NotificationSystemTest.php
+            tests/Feature/NotificationSystemTest.php \
+            tests/Feature/AuditLoggingTest.php
 
       - name: Create browser test Staff account
         run: |
@@ -145,18 +159,6 @@ jobs:
               throw new RuntimeException('Responsive E2E Staff password was not stored correctly.');
           }
           PHP
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-          cache: npm
-
-      - name: Install frontend dependencies
-        run: npm ci
-
-      - name: Build frontend assets
-        run: npm run build
 
       - name: Install Playwright after build
         run: |
