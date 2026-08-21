@@ -22,8 +22,7 @@ class ProfileController extends Controller
 
         return view('profile.edit', [
             'user' => $user,
-            'profilePhotoExists' => filled($user->profile_photo_path)
-                && Storage::disk(self::PROFILE_PHOTO_DISK)->exists($user->profile_photo_path),
+            'profilePhotoExists' => $this->ensurePrivateProfilePhoto($user),
         ]);
     }
 
@@ -37,14 +36,13 @@ class ProfileController extends Controller
         );
 
         $path = $user->profile_photo_path;
-        $disk = Storage::disk(self::PROFILE_PHOTO_DISK);
 
         abort_if(
-            blank($path) || ! $disk->exists($path),
+            blank($path) || ! $this->ensurePrivateProfilePhoto($user),
             404
         );
 
-        return $disk->response(
+        return Storage::disk(self::PROFILE_PHOTO_DISK)->response(
             $path,
             basename($path),
             [
@@ -124,14 +122,51 @@ class ProfileController extends Controller
         return Redirect::route('profile.edit')->with('status', 'profile-updated');
     }
 
+    /**
+     * Ensure a profile photo is stored on the private disk. Legacy photos that
+     * were previously stored on the public disk are migrated only after an
+     * authorization-checked request reaches this controller.
+     */
+    private function ensurePrivateProfilePhoto(User $user): bool
+    {
+        $path = $user->profile_photo_path;
+
+        if (blank($path)) {
+            return false;
+        }
+
+        $private = Storage::disk(self::PROFILE_PHOTO_DISK);
+        $public = Storage::disk('public');
+
+        if ($private->exists($path)) {
+            if ($public->exists($path)) {
+                $public->delete($path);
+            }
+
+            return true;
+        }
+
+        if (! $public->exists($path)) {
+            return false;
+        }
+
+        $private->put($path, $public->get($path));
+
+        if (! $private->exists($path)) {
+            return false;
+        }
+
+        $public->delete($path);
+
+        return true;
+    }
+
     private function deleteProfilePhoto(?string $path): void
     {
         if (blank($path)) {
             return;
         }
 
-        // Delete from both locations so legacy publicly stored photos cannot remain
-        // addressable after a replacement/removal during the private-storage rollout.
         foreach ([self::PROFILE_PHOTO_DISK, 'public'] as $diskName) {
             $disk = Storage::disk($diskName);
 
