@@ -67,6 +67,8 @@ class AuditLogIntegrityHardeningTest extends TestCase
             'must_change_password' => false,
         ]);
 
+        $this->actingAs($staff);
+
         $request = Request::create('/_audit-integrity-probe', 'PATCH', [
             'safe_field' => 'safe-value',
             'password' => 'DO-NOT-STORE-THIS',
