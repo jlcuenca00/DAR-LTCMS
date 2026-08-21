@@ -301,6 +301,11 @@ class NotificationSystemTest extends TestCase
 
     public function test_landowner_notification_is_deduplicated_and_payload_is_minimal(): void
     {
+        $staffUser = User::factory()->create([
+            'role' => User::ROLE_STAFF,
+            'is_active' => true,
+        ]);
+
         $landownerUser = User::factory()->create([
             'role' => User::ROLE_LANDOWNER,
             'is_active' => true,
@@ -322,6 +327,7 @@ class NotificationSystemTest extends TestCase
             'municipality' => 'Dumaguete City',
             'barangay' => 'Bantayan',
             'status' => LandTransferApplication::STATUS_ENDORSED_LTI,
+            'encoded_by' => $staffUser->id,
         ]);
 
         app(NotificationService::class)
@@ -348,6 +354,11 @@ class NotificationSystemTest extends TestCase
 
     public function test_inactive_or_unlinked_landowners_do_not_receive_application_notifications(): void
     {
+        $staffUser = User::factory()->create([
+            'role' => User::ROLE_STAFF,
+            'is_active' => true,
+        ]);
+
         $inactiveUser = User::factory()->create([
             'role' => User::ROLE_LANDOWNER,
             'is_active' => false,
@@ -381,6 +392,7 @@ class NotificationSystemTest extends TestCase
             'municipality' => 'Dumaguete City',
             'barangay' => 'Bantayan',
             'status' => LandTransferApplication::STATUS_ENDORSED_LTI,
+            'encoded_by' => $staffUser->id,
         ]);
 
         app(NotificationService::class)
