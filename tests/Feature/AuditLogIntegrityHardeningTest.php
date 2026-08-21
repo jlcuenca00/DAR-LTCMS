@@ -2,13 +2,15 @@
 
 namespace Tests\Feature;
 
+use App\Http\Middleware\EnsureMutationAudited;
 use App\Models\AuditLog;
 use App\Models\LandTransferApplication;
 use App\Models\User;
 use App\Services\AuditLogger;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Request;
+use Illuminate\Routing\Route as IlluminateRoute;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Route;
 use LogicException;
 use Tests\TestCase;
 
@@ -59,22 +61,33 @@ class AuditLogIntegrityHardeningTest extends TestCase
 
     public function test_mutating_request_without_domain_event_receives_fallback_audit_record(): void
     {
-        Route::middleware('web')
-            ->patch('/_audit-integrity-probe', fn () => response()->noContent())
-            ->name('audit.integrity.probe');
-
         $staff = User::factory()->create([
             'role' => User::ROLE_STAFF,
             'is_active' => true,
             'must_change_password' => false,
         ]);
 
-        $this->actingAs($staff)
-            ->patch(route('audit.integrity.probe'), [
-                'safe_field' => 'safe-value',
-                'password' => 'DO-NOT-STORE-THIS',
-            ])
-            ->assertNoContent();
+        $request = Request::create('/_audit-integrity-probe', 'PATCH', [
+            'safe_field' => 'safe-value',
+            'password' => 'DO-NOT-STORE-THIS',
+        ]);
+        $request->setUserResolver(fn () => $staff);
+
+        $route = new IlluminateRoute(
+            ['PATCH'],
+            '/_audit-integrity-probe',
+            fn () => response()->noContent()
+        );
+        $route->name('audit.integrity.probe');
+        $request->setRouteResolver(fn () => $route);
+        $this->app->instance('request', $request);
+
+        $response = app(EnsureMutationAudited::class)->handle(
+            $request,
+            fn () => response()->noContent()
+        );
+
+        $this->assertSame(204, $response->getStatusCode());
 
         $log = AuditLog::query()
             ->where('action', 'mutation_request_fallback')
