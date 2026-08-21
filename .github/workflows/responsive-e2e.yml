@@ -17,7 +17,11 @@ on:
       - 'app/Http/Controllers/Staff/ApplicationDocumentController.php'
       - 'app/Http/Controllers/Staff/ApplicationLandownerLinkController.php'
       - 'app/Http/Middleware/LockApplicationMutation.php'
+      - 'app/Http/Middleware/EnsureMutationAudited.php'
+      - 'app/Models/AuditLog.php'
+      - 'app/Services/AuditLogger.php'
       - 'app/Services/ApplicationClearanceService.php'
+      - 'database/migrations/**audit_log**'
       - 'bootstrap/app.php'
       - 'tests/Feature/*Responsive*'
       - 'tests/Feature/*MobilePortal*'
@@ -33,6 +37,7 @@ on:
       - 'tests/Feature/HectareValidationWorkflowTest.php'
       - 'tests/Feature/NotificationSystemTest.php'
       - 'tests/Feature/AuditLoggingTest.php'
+      - 'tests/Feature/AuditLogIntegrityHardeningTest.php'
       - 'tests/Feature/BetaSystemRegressionTest.php'
       - 'tests/Feature/DataIntegrityHardeningTest.php'
       - 'tests/e2e/**'
@@ -136,6 +141,7 @@ jobs:
             tests/Feature/HectareValidationWorkflowTest.php \
             tests/Feature/NotificationSystemTest.php \
             tests/Feature/AuditLoggingTest.php \
+            tests/Feature/AuditLogIntegrityHardeningTest.php \
             tests/Feature/BetaSystemRegressionTest.php \
             tests/Feature/DataIntegrityHardeningTest.php
 
