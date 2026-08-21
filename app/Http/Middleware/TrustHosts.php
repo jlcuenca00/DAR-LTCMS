@@ -31,7 +31,7 @@ class TrustHosts extends Middleware
         ))));
 
         return array_map(
-            static fn (string $host): string => '^'.preg_quote($host).'$',$
+            static fn (string $host): string => '^'.preg_quote($host).'$',
             $hosts
         );
     }
