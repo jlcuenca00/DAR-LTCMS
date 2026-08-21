@@ -7,9 +7,9 @@ return [
     | Default Filesystem Disk
     |--------------------------------------------------------------------------
     |
-    | Here you may specify the default filesystem disk that should be used
-    | by the framework. The "local" disk, as well as a variety of cloud
-    | based disks are available to your application for file storage.
+    | Supporting application documents use the private local disk by default.
+    | Keep FILESYSTEM_DISK=local in production so administrative uploads are
+    | never written beneath the web root.
     |
     */
 
@@ -19,13 +19,6 @@ return [
     |--------------------------------------------------------------------------
     | Filesystem Disks
     |--------------------------------------------------------------------------
-    |
-    | Below you may configure as many filesystem disks as necessary, and you
-    | may even configure multiple disks for the same driver. Examples for
-    | most supported storage drivers are configured here for reference.
-    |
-    | Supported drivers: "local", "ftp", "sftp", "s3"
-    |
     */
 
     'disks' => [
@@ -38,11 +31,18 @@ return [
             'report' => false,
         ],
 
+        /*
+         * Historical source-package scans were written to this disk. The files
+         * remain under storage/app/public for deployment compatibility, but the
+         * application deliberately does NOT create public/storage anymore.
+         * URLs point to an authenticated Staff route which verifies that the
+         * requested path belongs to a recorded SourceRecordPackage.
+         */
         'public' => [
             'driver' => 'local',
             'root' => storage_path('app/public'),
-            'url' => rtrim(env('APP_URL', 'http://localhost'), '/').'/storage',
-            'visibility' => 'public',
+            'url' => rtrim(env('APP_URL', 'http://localhost'), '/').'/staff/protected-storage',
+            'visibility' => 'private',
             'throw' => false,
             'report' => false,
         ],
@@ -67,14 +67,12 @@ return [
     | Symbolic Links
     |--------------------------------------------------------------------------
     |
-    | Here you may configure the symbolic links that will be created when the
-    | `storage:link` Artisan command is executed. The array keys should be
-    | the locations of the links and the values should be their targets.
+    | DAR-LTCMS intentionally exposes no storage directory through a public web
+    | symlink. Files that users may view are streamed by authorization-checked
+    | controllers instead.
     |
     */
 
-    'links' => [
-        public_path('storage') => storage_path('app/public'),
-    ],
+    'links' => [],
 
 ];

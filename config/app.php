@@ -56,12 +56,37 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Trusted Hosts and Proxies
+    |--------------------------------------------------------------------------
+    |
+    | DAR-LTCMS derives its default trusted production host from APP_URL. These
+    | optional comma-separated values allow deployments to add another exact
+    | hostname (for example, www) or the reverse proxy / load balancer IPs.
+    | Hostnames are escaped into full regular-expression patterns internally;
+    | TRUSTED_HOSTS therefore accepts hostnames only, not raw regex patterns.
+    | Do not use TRUSTED_PROXIES=* unless the deployment architecture requires
+    | it and the upstream proxy strips client-supplied forwarded headers.
+    |
+    */
+
+    'trusted_hosts' => array_values(array_filter(array_map(
+        'trim',
+        explode(',', (string) env('TRUSTED_HOSTS', ''))
+    ))),
+
+    'trusted_proxies' => array_values(array_filter(array_map(
+        'trim',
+        explode(',', (string) env('TRUSTED_PROXIES', ''))
+    ))),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Timezone
     |--------------------------------------------------------------------------
     |
     | Here you may specify the default timezone for your application, which
-    | will be used by the PHP date and date-time functions. The timezone
-    | is set to "UTC" by default as it is suitable for most use cases.
+    | will be used by the PHP date and date-time functions. The timezone is
+    | set to "UTC" by default as it is suitable for most use cases.
     |
     */
 
@@ -73,8 +98,8 @@ return [
     |--------------------------------------------------------------------------
     |
     | The application locale determines the default locale that will be used
-    | by Laravel's translation / localization methods. This option can be
-    | set to any locale for which you plan to have translation strings.
+    | by Laravel's translation / localization methods. You are free to set
+    | this value to any locale for which you plan to have translation strings.
     |
     */
 
@@ -90,8 +115,8 @@ return [
     |--------------------------------------------------------------------------
     |
     | This key is utilized by Laravel's encryption services and should be set
-    | to a random, 32 character string to ensure that all encrypted values
-    | are secure. You should do this prior to deploying the application.
+    | to a random, 32 character string to ensure that all encrypted values are
+    | secure. You should do this prior to deploying the application.
     |
     */
 
