@@ -14,6 +14,8 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ProfileController extends Controller
 {
+    private const PROFILE_PHOTO_DISK = 'local';
+
     public function edit(Request $request): View
     {
         $user = $request->user();
@@ -21,7 +23,7 @@ class ProfileController extends Controller
         return view('profile.edit', [
             'user' => $user,
             'profilePhotoExists' => filled($user->profile_photo_path)
-                && Storage::disk('public')->exists($user->profile_photo_path),
+                && Storage::disk(self::PROFILE_PHOTO_DISK)->exists($user->profile_photo_path),
         ]);
     }
 
@@ -35,13 +37,14 @@ class ProfileController extends Controller
         );
 
         $path = $user->profile_photo_path;
+        $disk = Storage::disk(self::PROFILE_PHOTO_DISK);
 
         abort_if(
-            blank($path) || ! Storage::disk('public')->exists($path),
+            blank($path) || ! $disk->exists($path),
             404
         );
 
-        return Storage::disk('public')->response(
+        return $disk->response(
             $path,
             basename($path),
             [
@@ -80,18 +83,18 @@ class ProfileController extends Controller
         $photoChanged = false;
 
         if ($request->boolean('remove_profile_photo') && $user->profile_photo_path) {
-            Storage::disk('public')->delete($user->profile_photo_path);
+            $this->deleteProfilePhoto($user->profile_photo_path);
             $user->profile_photo_path = null;
             $photoChanged = true;
         }
 
         if ($request->hasFile('profile_photo')) {
-            $newPhotoPath = $request->file('profile_photo')->store('profile-photos', 'public');
+            $newPhotoPath = $request->file('profile_photo')->store('profile-photos', self::PROFILE_PHOTO_DISK);
 
             if ($user->profile_photo_path && $user->profile_photo_path !== $newPhotoPath) {
-                Storage::disk('public')->delete($user->profile_photo_path);
+                $this->deleteProfilePhoto($user->profile_photo_path);
             } elseif ($oldPhotoPath && $oldPhotoPath !== $newPhotoPath) {
-                Storage::disk('public')->delete($oldPhotoPath);
+                $this->deleteProfilePhoto($oldPhotoPath);
             }
 
             $user->profile_photo_path = $newPhotoPath;
@@ -114,9 +117,27 @@ class ProfileController extends Controller
                 ],
                 'profile_photo_changed' => $photoChanged,
                 'email_verification_reset' => $emailChanged,
+                'profile_photo_storage' => self::PROFILE_PHOTO_DISK,
             ]
         );
 
         return Redirect::route('profile.edit')->with('status', 'profile-updated');
+    }
+
+    private function deleteProfilePhoto(?string $path): void
+    {
+        if (blank($path)) {
+            return;
+        }
+
+        // Delete from both locations so legacy publicly stored photos cannot remain
+        // addressable after a replacement/removal during the private-storage rollout.
+        foreach ([self::PROFILE_PHOTO_DISK, 'public'] as $diskName) {
+            $disk = Storage::disk($diskName);
+
+            if ($disk->exists($path)) {
+                $disk->delete($path);
+            }
+        }
     }
 }
