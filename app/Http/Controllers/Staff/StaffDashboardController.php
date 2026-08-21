@@ -115,11 +115,17 @@ class StaffDashboardController extends Controller
             ->unique('id')
             ->values();
 
+        // Timestamp ranges keep PostgreSQL indexes usable; whereDate() would wrap the
+        // indexed timestamp column in a database function.
+        $todayStart = now()->startOfDay();
+        $tomorrowStart = $todayStart->copy()->addDay();
+
         $todaySummary = [
             [
                 'label' => 'Encoded Today',
                 'value' => LandTransferApplication::query()
-                    ->whereDate('created_at', today())
+                    ->where('created_at', '>=', $todayStart)
+                    ->where('created_at', '<', $tomorrowStart)
                     ->count(),
                 'icon' => 'fa-file-circle-plus',
             ],
@@ -130,36 +136,35 @@ class StaffDashboardController extends Controller
                         LandTransferApplication::FINAL_STATUSES,
                         LandTransferApplication::LEGACY_FINAL_STATUSES
                     ))
-                    ->whereDate('updated_at', today())
+                    ->where('updated_at', '>=', $todayStart)
+                    ->where('updated_at', '<', $tomorrowStart)
                     ->count(),
                 'icon' => 'fa-gavel',
             ],
             [
                 'label' => 'Clearances Generated Today',
                 'value' => ApplicationClearance::query()
-                    ->whereDate('generated_at', today())
+                    ->where('generated_at', '>=', $todayStart)
+                    ->where('generated_at', '<', $tomorrowStart)
                     ->count(),
                 'icon' => 'fa-file-circle-check',
             ],
         ];
 
-        // Use the exact same deduplicated review requirement set shown on the
-        // Application Review page so dashboard counts cannot drift from the checklist.
+        // Fetch the review-requirement catalog once, then partition the same ordered
+        // collection so transferor/transferee checklist semantics remain unchanged.
+        $reviewRequirements = RequiredDocument::query()
+            ->whereIn('applies_to', ['transferor', 'transferee'])
+            ->orderBy('blocks_acceptance', 'desc')
+            ->orderBy('requirement_classification')
+            ->orderBy('name')
+            ->get();
+
         $transferorRequirements = RequiredDocument::deduplicateForApplicationReview(
-            RequiredDocument::query()
-                ->where('applies_to', 'transferor')
-                ->orderBy('blocks_acceptance', 'desc')
-                ->orderBy('requirement_classification')
-                ->orderBy('name')
-                ->get()
+            $reviewRequirements->where('applies_to', 'transferor')->values()
         );
         $transfereeRequirements = RequiredDocument::deduplicateForApplicationReview(
-            RequiredDocument::query()
-                ->where('applies_to', 'transferee')
-                ->orderBy('blocks_acceptance', 'desc')
-                ->orderBy('requirement_classification')
-                ->orderBy('name')
-                ->get()
+            $reviewRequirements->where('applies_to', 'transferee')->values()
         );
 
         $blockingRequirementIds = $transferorRequirements
@@ -189,10 +194,9 @@ class StaffDashboardController extends Controller
                 ->whereNotIn('id', $completeRequirementApplicationIds())
                 ->count();
 
-            $requirementsCompleteCount = LandTransferApplication::query()
-                ->whereIn('status', $activeStatuses)
-                ->whereIn('id', $completeRequirementApplicationIds())
-                ->count();
+            // Every active application is either complete or incomplete for this same
+            // blocking requirement set, so avoid issuing a second inverse count query.
+            $requirementsCompleteCount = max(0, $activeApplicationCount - $incompleteRequirementsCount);
         } else {
             $incompleteRequirementsCount = 0;
             $requirementsCompleteCount = $activeApplicationCount;
