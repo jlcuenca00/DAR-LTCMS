@@ -425,7 +425,7 @@ class BetaSystemRegressionTest extends TestCase
             ->get(route('staff.applications.show', $application));
 
         $response->assertOk();
-        $response->assertSee('Acknowledgement Receipt', false);
+        $response->assertSee('Open LTC Form No. 3 PDF', false);
         $response->assertSee('Certification, Attestation and Recommendation', false);
         $response->assertDontSee('Incomplete / with lacking documents', false);
     }
@@ -529,6 +529,14 @@ class BetaSystemRegressionTest extends TestCase
             'status' => LandTransferApplication::STATUS_PENDING_LEGAL_REVIEW,
             'encoded_by' => $staff->id,
         ]);
+
+        $application->forceFill([
+            'ltc_form4_subject_land_findings' => ['ra6657_not_covered_not_tenanted_retained_area'],
+            'ltc_form4_recommendation_findings' => ['application_complete'],
+            'ltc_form4_recommendation_decision' => 'approval',
+            'ltc_form4_certified_at' => now()->toDateString(),
+            'ltc_form4_certifying_officer_name' => 'Authorized Review Officer',
+        ])->save();
 
         ApplicationParcel::create([
             'land_transfer_application_id' => $application->id,

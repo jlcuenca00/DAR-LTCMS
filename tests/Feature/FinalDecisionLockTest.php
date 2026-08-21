@@ -246,6 +246,7 @@ class FinalDecisionLockTest extends TestCase
         $this->assertTrue($notApprovedApplication->isFinalized());
         $this->assertFalse($notApprovedApplication->isEditable());
     }
+
     public function test_releasing_clearance_does_not_mutate_landholding_ownership(): void
     {
         $staffUser = User::factory()->create([
@@ -293,6 +294,14 @@ class FinalDecisionLockTest extends TestCase
             'status' => LandTransferApplication::STATUS_FOR_RELEASING,
             'encoded_by' => $staffUser->id,
         ]);
+
+        $application->forceFill([
+            'ltc_form4_subject_land_findings' => ['ra6657_not_covered_not_tenanted_retained_area'],
+            'ltc_form4_recommendation_findings' => ['application_complete'],
+            'ltc_form4_recommendation_decision' => 'approval',
+            'ltc_form4_certified_at' => now()->toDateString(),
+            'ltc_form4_certifying_officer_name' => 'Authorized Review Officer',
+        ])->save();
 
         ApplicationParcel::create([
             'land_transfer_application_id' => $application->id,
@@ -423,5 +432,4 @@ class FinalDecisionLockTest extends TestCase
             'status' => Landholding::STATUS_TRANSFERRED,
         ]);
     }
-
 }
