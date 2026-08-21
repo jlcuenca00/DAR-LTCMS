@@ -26,17 +26,17 @@ return [
         'local' => [
             'driver' => 'local',
             'root' => storage_path('app/private'),
-            'serve' => true,
+            'serve' => false,
             'throw' => false,
             'report' => false,
         ],
 
         /*
-         * Historical source-package scans were written to this disk. The files
-         * remain under storage/app/public for deployment compatibility, but the
-         * application deliberately does NOT create public/storage anymore.
-         * URLs point to an authenticated Staff route which verifies that the
-         * requested path belongs to a recorded SourceRecordPackage.
+         * Historical source-package scans and selected Staff reference images
+         * were written to this disk. Files remain under storage/app/public for
+         * deployment compatibility, but DAR-LTCMS deliberately does NOT create
+         * public/storage. URLs point to an authenticated Staff controller which
+         * serves only paths registered to approved administrative record types.
          */
         'public' => [
             'driver' => 'local',

@@ -11,6 +11,10 @@ on:
       - 'resources/views/**'
       - 'app/Http/Controllers/Staff/StaffDashboardController.php'
       - 'app/Http/Controllers/Staff/MonitoringReportController.php'
+      - 'app/Http/Controllers/Staff/ParcelMapController.php'
+      - 'app/Http/Controllers/Geodetic/ParcelMapController.php'
+      - 'app/Http/Controllers/Landowner/ParcelMapController.php'
+      - 'app/Http/Controllers/Landowner/LandownerDashboardController.php'
       - 'app/Http/Controllers/Staff/ApplicationClearanceController.php'
       - 'app/Http/Controllers/Staff/ProtectedStorageController.php'
       - 'app/Http/Controllers/Landowner/ApplicationClearanceController.php'
@@ -31,7 +35,7 @@ on:
       - 'config/app.php'
       - 'config/filesystems.php'
       - 'config/session.php'
-      - 'database/migrations/**audit_log**'
+      - 'database/migrations/**'
       - 'bootstrap/app.php'
       - 'routes/console.php'
       - '.env.example'
@@ -46,6 +50,7 @@ on:
       - 'tests/Feature/MonitoringReportTest.php'
       - 'tests/Feature/SecurityHeadersTest.php'
       - 'tests/Feature/ProductionSecurityHardeningTest.php'
+      - 'tests/Feature/PerformanceHardeningTest.php'
       - 'tests/Feature/FinalDecisionLockTest.php'
       - 'tests/Feature/FinalDecisionIntegrityHardeningTest.php'
       - 'tests/Feature/RbacSecurityHardeningTest.php'
@@ -136,7 +141,7 @@ jobs:
       - name: Build frontend assets
         run: npm run build
 
-      - name: Run responsive, workflow, UI UX, reports, production-security, RBAC, audit, final-decision, and data-integrity regressions
+      - name: Run responsive, workflow, UI UX, reports, production-security, performance, RBAC, audit, final-decision, and data-integrity regressions
         run: |
           php artisan test \
             tests/Feature/ResponsiveUiFoundationTest.php \
@@ -153,6 +158,7 @@ jobs:
             tests/Feature/MonitoringReportTest.php \
             tests/Feature/SecurityHeadersTest.php \
             tests/Feature/ProductionSecurityHardeningTest.php \
+            tests/Feature/PerformanceHardeningTest.php \
             tests/Feature/RbacSecurityHardeningTest.php \
             tests/Feature/FinalDecisionLockTest.php \
             tests/Feature/FinalDecisionIntegrityHardeningTest.php \
