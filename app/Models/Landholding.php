@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Services\ParcelAreaIntegrityService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 
@@ -37,6 +38,13 @@ class Landholding extends Model
         'date_acquired' => 'date',
         'date_transferred' => 'date',
     ];
+
+    protected static function booted(): void
+    {
+        static::saving(function (Landholding $landholding) {
+            app(ParcelAreaIntegrityService::class)->assertLandholdingCapacity($landholding);
+        });
+    }
 
     public function scopeActive(Builder $query): Builder
     {
