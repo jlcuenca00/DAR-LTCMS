@@ -38,66 +38,36 @@ class PasswordResetLinkController extends Controller
             ->where('username', $validated['username'])
             ->first();
 
-        if (! $user) {
-            return back()
-                ->withInput()
-                ->withErrors([
-                    'username' => 'No account was found for that username. Verify the username or approach authorized DAR Staff for assistance.',
-                ]);
-        }
+        $recoverableUser = $user && $user->is_active && $this->hasRecoverableEmail($user)
+            ? $user
+            : null;
 
-        if (! $user->is_active) {
-            $request->session()->forget('password_recovery');
+        $request->session()->put('password_recovery', [
+            'step' => 'confirm_email',
+            'user_id' => $recoverableUser?->id,
+            'username' => $validated['username'],
+            'email_attempts' => 0,
+            'code_attempts' => 0,
+        ]);
 
-            return back()->with(
-                'status',
-                'This account is currently inactive. Please approach authorized DAR Staff at the DAR Negros Oriental Provincial Office for account assistance.'
-            );
-        }
-
-        if (! $this->hasRecoverableEmail($user)) {
-            $request->session()->forget('password_recovery');
-
+        // Keep the public response deliberately generic. Whether the username
+        // exists, is inactive, or has a recovery email is not disclosed.
+        if ($user) {
             AuditLogger::record(
-                'password_recovery_requested_without_email',
+                'password_recovery_requested',
                 null,
                 $user,
                 [
                     'user_id' => $user->id,
                     'username' => $user->username,
-                    'recovery_available' => false,
+                    'recovery_available' => (bool) $recoverableUser,
                 ]
-            );
-
-            return back()->with(
-                'status',
-                'No email address is registered with this account. Please approach authorized DAR Staff at the DAR Negros Oriental Provincial Office for password assistance.'
             );
         }
 
-        $recovery = [
-            'step' => 'confirm_email',
-            'user_id' => $user->id,
-            'username' => $user->username,
-            'masked_email' => $this->maskEmail($user->email),
-            'email_attempts' => 0,
-            'code_attempts' => 0,
-        ];
-
-        $request->session()->put('password_recovery', $recovery);
-
-        AuditLogger::record(
-            'password_recovery_requested',
-            null,
-            $user,
-            [
-                'user_id' => $user->id,
-                'username' => $user->username,
-                'recovery_available' => true,
-            ]
-        );
-
-        return redirect()->route('password.request');
+        return redirect()
+            ->route('password.request')
+            ->with('status', 'Continue by entering the registered recovery email for this username. If email recovery is unavailable, no verification code will be sent; contact authorized DAR Staff for assistance.');
     }
 
     public function confirmEmail(Request $request): RedirectResponse
@@ -106,16 +76,8 @@ class PasswordResetLinkController extends Controller
             'email' => ['required', 'email', 'max:255'],
         ]);
 
-        $recovery = $this->requireRecoveryState($request, 'confirm_email');
-        $user = User::find($recovery['user_id']);
-
-        if (! $user || ! $user->is_active || ! $this->hasRecoverableEmail($user)) {
-            $request->session()->forget('password_recovery');
-
-            return redirect()
-                ->route('password.request')
-                ->with('status', 'Account recovery is unavailable. Please approach authorized DAR Staff for assistance.');
-        }
+        $recovery = $this->requireRecoveryState($request, 'confirm_email', allowMissingUser: true);
+        $user = ! empty($recovery['user_id']) ? User::find($recovery['user_id']) : null;
 
         $attempts = (int) ($recovery['email_attempts'] ?? 0) + 1;
         $recovery['email_attempts'] = $attempts;
@@ -127,15 +89,23 @@ class PasswordResetLinkController extends Controller
             return redirect()
                 ->route('password.request')
                 ->withErrors([
-                    'username' => 'Too many incorrect email confirmation attempts. Start again or approach authorized DAR Staff for assistance.',
+                    'username' => 'Too many recovery verification attempts. Start again or contact authorized DAR Staff for assistance.',
                 ]);
         }
 
-        if (mb_strtolower(trim($validated['email'])) !== mb_strtolower(trim((string) $user->email))) {
+        $emailMatches = $user
+            && $user->is_active
+            && $this->hasRecoverableEmail($user)
+            && hash_equals(
+                mb_strtolower(trim((string) $user->email)),
+                mb_strtolower(trim($validated['email']))
+            );
+
+        if (! $emailMatches) {
             return back()
                 ->withInput()
                 ->withErrors([
-                    'email' => 'The email address does not match the registered email for this account.',
+                    'email' => 'The recovery details could not be verified. Check the username and email, or contact authorized DAR Staff for assistance.',
                 ]);
         }
 
@@ -155,13 +125,13 @@ class PasswordResetLinkController extends Controller
 
         if (! $this->sendRecoveryCode($request, $user)) {
             return back()->withErrors([
-                'email' => 'The verification email could not be sent. Please try again later or approach authorized DAR Staff for assistance.',
+                'email' => 'The verification email could not be sent. Please try again later or contact authorized DAR Staff for assistance.',
             ]);
         }
 
         return redirect()
             ->route('password.request')
-            ->with('status', 'Email confirmed. A 6-digit verification code has been sent to your registered email address.');
+            ->with('status', 'Recovery details confirmed. A 6-digit verification code has been sent to the registered recovery email.');
     }
 
     public function resendCode(Request $request): RedirectResponse
@@ -174,7 +144,7 @@ class PasswordResetLinkController extends Controller
 
             return redirect()
                 ->route('password.request')
-                ->with('status', 'Account recovery is unavailable. Please approach authorized DAR Staff for assistance.');
+                ->with('status', 'Account recovery could not be completed. Please start again or contact authorized DAR Staff for assistance.');
         }
 
         $sentAt = (int) ($recovery['otp_sent_at'] ?? 0);
@@ -188,7 +158,7 @@ class PasswordResetLinkController extends Controller
 
         if (! $this->sendRecoveryCode($request, $user)) {
             return back()->withErrors([
-                'code' => 'The verification email could not be sent. Please try again later or approach authorized DAR Staff for assistance.',
+                'code' => 'The verification email could not be sent. Please try again later or contact authorized DAR Staff for assistance.',
             ]);
         }
 
@@ -211,7 +181,7 @@ class PasswordResetLinkController extends Controller
 
             return redirect()
                 ->route('password.request')
-                ->with('status', 'Account recovery is unavailable. Please approach authorized DAR Staff for assistance.');
+                ->with('status', 'Account recovery could not be completed. Please start again or contact authorized DAR Staff for assistance.');
         }
 
         if (empty($recovery['otp_hash']) || time() > (int) ($recovery['otp_expires_at'] ?? 0)) {
@@ -343,11 +313,15 @@ class PasswordResetLinkController extends Controller
         return true;
     }
 
-    private function requireRecoveryState(Request $request, string $expectedStep): array
+    private function requireRecoveryState(Request $request, string $expectedStep, bool $allowMissingUser = false): array
     {
         $recovery = $request->session()->get('password_recovery', []);
 
-        if (($recovery['step'] ?? null) !== $expectedStep || empty($recovery['user_id'])) {
+        $invalidState = ($recovery['step'] ?? null) !== $expectedStep
+            || empty($recovery['username'])
+            || (! $allowMissingUser && empty($recovery['user_id']));
+
+        if ($invalidState) {
             throw ValidationException::withMessages([
                 'username' => 'The password recovery session has expired or is incomplete. Start again.',
             ]);
@@ -363,31 +337,5 @@ class PasswordResetLinkController extends Controller
         }
 
         return ! str_ends_with(mb_strtolower($user->email), '@dar-ltcms.local');
-    }
-
-    private function maskEmail(string $email): string
-    {
-        [$local, $domain] = array_pad(explode('@', $email, 2), 2, '');
-        $length = mb_strlen($local);
-
-        if ($length <= 1) {
-            $maskedLocal = '*';
-        } else {
-            $maskedLocal = '';
-
-            for ($index = 0; $index < $length; $index++) {
-                $character = mb_substr($local, $index, 1);
-
-                if ($character === '.') {
-                    $maskedLocal .= '.';
-                } elseif ($index === 0 || $index === $length - 1) {
-                    $maskedLocal .= $character;
-                } else {
-                    $maskedLocal .= '*';
-                }
-            }
-        }
-
-        return $maskedLocal . '@' . $domain;
     }
 }
