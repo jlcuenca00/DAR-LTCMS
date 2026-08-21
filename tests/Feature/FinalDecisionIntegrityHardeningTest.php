@@ -24,7 +24,7 @@ class FinalDecisionIntegrityHardeningTest extends TestCase
     {
         $staff = User::factory()->create(['role' => 'staff']);
 
-        $application = $this->createApplication($staff, LandTransferApplication::STATUS_PENDING_LEGAL_REVIEW);
+        $application = $this->makeApplication($staff, LandTransferApplication::STATUS_PENDING_LEGAL_REVIEW);
         $staleApplication = $application->fresh();
 
         LandTransferApplication::query()
@@ -75,10 +75,10 @@ class FinalDecisionIntegrityHardeningTest extends TestCase
     public function test_all_final_statuses_reject_linked_parcel_additions(): void
     {
         $staff = User::factory()->create(['role' => 'staff']);
-        $parcel = $this->createParcel('FINAL-LOCK-PARCEL-ADD');
+        $parcel = $this->makeParcel('FINAL-LOCK-PARCEL-ADD');
 
         foreach ($this->finalStatuses() as $index => $status) {
-            $application = $this->createApplication($staff, $status, 'FINAL-PARCEL-' . $index);
+            $application = $this->makeApplication($staff, $status, 'FINAL-PARCEL-' . $index);
 
             $this->actingAs($staff)
                 ->post(route('staff.applications.parcels.store', $application), [
@@ -97,10 +97,10 @@ class FinalDecisionIntegrityHardeningTest extends TestCase
     public function test_finalized_application_rejects_parcel_removal_landowner_link_form4_and_metadata_mutations(): void
     {
         $staff = User::factory()->create(['role' => 'staff']);
-        $transferor = $this->createLandowner('Locked', 'Transferor');
-        $otherTransferor = $this->createLandowner('Other', 'Transferor');
-        $transferee = $this->createLandowner('Locked', 'Transferee');
-        $parcel = $this->createParcel('FINAL-LOCK-PARCEL-EXISTING');
+        $transferor = $this->makeLandowner('Locked', 'Transferor');
+        $otherTransferor = $this->makeLandowner('Other', 'Transferor');
+        $transferee = $this->makeLandowner('Locked', 'Transferee');
+        $parcel = $this->makeParcel('FINAL-LOCK-PARCEL-EXISTING');
 
         $application = LandTransferApplication::create([
             'application_code' => 'FINAL-INTEGRITY-001',
@@ -230,7 +230,7 @@ class FinalDecisionIntegrityHardeningTest extends TestCase
     public function test_clearance_generation_is_create_once_and_does_not_rewrite_the_final_snapshot(): void
     {
         $staff = User::factory()->create(['role' => 'staff']);
-        $parcel = $this->createParcel('IMMUTABLE-CLEARANCE-PARCEL');
+        $parcel = $this->makeParcel('IMMUTABLE-CLEARANCE-PARCEL');
 
         $application = LandTransferApplication::create([
             'application_code' => 'IMMUTABLE-CLEARANCE-001',
@@ -311,7 +311,7 @@ class FinalDecisionIntegrityHardeningTest extends TestCase
         ];
     }
 
-    private function createApplication(User $staff, string $status, ?string $suffix = null): LandTransferApplication
+    private function makeApplication(User $staff, string $status, ?string $suffix = null): LandTransferApplication
     {
         $suffix ??= strtoupper(str_replace('_', '-', $status));
 
@@ -326,7 +326,7 @@ class FinalDecisionIntegrityHardeningTest extends TestCase
         ]);
     }
 
-    private function createParcel(string $code): Parcel
+    private function makeParcel(string $code): Parcel
     {
         return Parcel::create([
             'parcel_code' => $code,
@@ -339,7 +339,7 @@ class FinalDecisionIntegrityHardeningTest extends TestCase
         ]);
     }
 
-    private function createLandowner(string $firstName, string $lastName): Landowner
+    private function makeLandowner(string $firstName, string $lastName): Landowner
     {
         return Landowner::create([
             'first_name' => $firstName,
