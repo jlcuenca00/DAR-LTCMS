@@ -93,6 +93,37 @@ function enhanceApplications() {
     });
 }
 
+function enhanceDashboardApplications() {
+    const table = document.querySelector('.dashboard-table');
+    if (!table) return;
+
+    table.querySelectorAll('tbody tr').forEach((row) => {
+        if (row.hidden || row.matches('[data-dashboard-filter-empty]') || row.querySelector('td[colspan]')) return;
+        const link = row.querySelector('.application-link[href]');
+        if (!link?.href) return;
+        makeRowNavigable(row, link.href, `Open clearance application ${link.textContent.trim()}`);
+    });
+}
+
+function enhanceMatchedApplicationSources() {
+    document.querySelectorAll('.application-review-page .source-table-wrap .staff-table').forEach((table) => {
+        table.querySelectorAll('tbody tr').forEach((row) => {
+            if (row.querySelector('td[colspan]')) return;
+
+            const openLink = row.querySelector(
+                'a[href*="/staff/source-record-packages/"], a[href*="/staff/legacy-records/"]'
+            );
+            if (!openLink?.href) return;
+
+            const href = openLink.href;
+            const recordLabel = row.querySelector('td strong')?.textContent?.trim() || 'matched source record';
+            makeRowNavigable(row, href, `Open ${recordLabel}`);
+        });
+
+        removeActionColumn(table);
+    });
+}
+
 function enhanceParcelEditReviewFlag() {
     const match = window.location.pathname.match(/^\/staff\/records\/parcels\/([^/]+)\/edit\/?$/);
     if (!match) return;
@@ -138,6 +169,8 @@ function initStaffRecordRowNavigation() {
     if (path === '/staff/records/parcels') enhanceParcels();
     if (path === '/staff/legacy-records') enhanceSourceRecords();
     if (path === '/staff/applications') enhanceApplications();
+    if (path === '/staff/dashboard') enhanceDashboardApplications();
+    if (/^\/staff\/applications\/[^/]+$/.test(path)) enhanceMatchedApplicationSources();
 
     enhanceParcelEditReviewFlag();
 }

@@ -114,4 +114,27 @@ class UiUxSystemTest extends TestCase
         $this->assertStringContainsString("toggle?.setAttribute('aria-expanded', 'true')", $intakeFlow);
         $this->assertStringContainsString("target.focus({ preventScroll: true })", $intakeFlow);
     }
+
+    public function test_dashboard_and_application_source_rows_use_shared_clickable_row_navigation(): void
+    {
+        $rowNavigation = file_get_contents(resource_path('js/staff-record-row-navigation.js'));
+
+        $this->assertStringContainsString('enhanceDashboardApplications', $rowNavigation);
+        $this->assertStringContainsString("if (path === '/staff/dashboard') enhanceDashboardApplications();", $rowNavigation);
+        $this->assertStringContainsString('enhanceMatchedApplicationSources', $rowNavigation);
+        $this->assertStringContainsString("/^\\/staff\\/applications\\/[^/]+$/", $rowNavigation);
+        $this->assertStringContainsString('removeActionColumn(table)', $rowNavigation);
+        $this->assertStringContainsString('makeRowNavigable(row, href', $rowNavigation);
+    }
+
+    public function test_mobile_parcel_search_and_leaflet_attribution_are_kept_compact(): void
+    {
+        $lastMile = file_get_contents(resource_path('css/ui-ux-last-mile.css'));
+
+        $this->assertStringContainsString('#parcel-map-search.parcel-search-input', $lastMile);
+        $this->assertStringContainsString('max-height: 44px !important', $lastMile);
+        $this->assertStringContainsString('#parcel-map .leaflet-control-attribution', $lastMile);
+        $this->assertStringContainsString('white-space: nowrap !important', $lastMile);
+        $this->assertStringContainsString('max-width: none !important', $lastMile);
+    }
 }
