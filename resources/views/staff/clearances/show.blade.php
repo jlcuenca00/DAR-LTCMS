@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" style="--ltc-font: Arial, Helvetica, sans-serif;">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -17,11 +17,5 @@
     ])
 
     @include('staff.clearances.partials.form5-reference-styles')
-
-    <script>
-        // The legacy Form 5 partial still carries an inline Montserrat declaration.
-        // Remove it in the browser print view so no remote font is needed to render.
-        document.querySelector('.ltc-page')?.style.removeProperty('font-family');
-    </script>
 </body>
 </html>

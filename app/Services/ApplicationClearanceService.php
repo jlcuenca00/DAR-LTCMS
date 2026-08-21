@@ -79,15 +79,36 @@ class ApplicationClearanceService
                 ?? ('User #' . ($application->reviewed_by ?? $userId));
 
             $decisionYear = ($application->date_of_clearance_release ?? $application->reviewed_at ?? now())->format('Y');
-            $pageNumber = 1;
-            $sequence = (int) $application->id;
+            $pageNumber = max(1, (int) ($application->ltc_page_number ?: 1));
+
+            /*
+             * LTC numbers are issued as 1803-YEAR-XXXX (page). Serialize
+             * number allocation on PostgreSQL so two releases cannot receive
+             * the same annual sequence. Existing final clearances are never
+             * renumbered because of the create-once rule above.
+             */
+            if (DB::connection()->getDriverName() === 'pgsql') {
+                DB::statement('LOCK TABLE application_clearances IN SHARE ROW EXCLUSIVE MODE');
+            }
+
+            $existingSequences = ApplicationClearance::query()
+                ->where('clearance_number', 'LIKE', '1803-' . $decisionYear . '-%')
+                ->pluck('clearance_number')
+                ->map(function ($number) use ($decisionYear): ?int {
+                    $pattern = '/^1803-' . preg_quote($decisionYear, '/') . '-(\d+)\s*\(/';
+
+                    return preg_match($pattern, (string) $number, $matches)
+                        ? (int) $matches[1]
+                        : null;
+                })
+                ->filter(fn ($sequence) => $sequence !== null);
+
+            $sequence = max(1, ((int) $existingSequences->max()) + 1);
 
             do {
                 $clearanceNumber = sprintf('1803-%s-%04d (%d)', $decisionYear, $sequence, $pageNumber);
                 $sequence++;
-            } while (ApplicationClearance::where('clearance_number', $clearanceNumber)
-                ->where('land_transfer_application_id', '<>', $application->id)
-                ->exists());
+            } while (ApplicationClearance::where('clearance_number', $clearanceNumber)->exists());
 
             $clearance = ApplicationClearance::create([
                 'land_transfer_application_id' => $application->id,

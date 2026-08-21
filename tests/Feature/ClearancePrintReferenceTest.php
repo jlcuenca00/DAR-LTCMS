@@ -16,6 +16,7 @@ class ClearancePrintReferenceTest extends TestCase
             $this->assertStringContainsString("'clearance', 'documents'", $controller);
             $this->assertStringContainsString("'isRemoteEnabled' => false", $controller);
             $this->assertStringContainsString("'defaultFont' => 'Helvetica'", $controller);
+            $this->assertStringContainsString('612, 936', $controller);
         }
 
         $this->assertStringNotContainsString(
@@ -34,11 +35,12 @@ class ClearancePrintReferenceTest extends TestCase
         $show = file_get_contents(resource_path('views/staff/clearances/show.blade.php'));
         $styles = file_get_contents(resource_path('views/staff/clearances/partials/form5-reference-styles.blade.php'));
         $form = file_get_contents(resource_path('views/staff/clearances/partials/form5-content.blade.php'));
+        $pdf = file_get_contents(resource_path('views/staff/clearances/pdf.blade.php'));
 
         $this->assertStringContainsString("asset('images/dar-logo.svg')", $show);
         $this->assertStringContainsString("asset('images/bagong-pilipinas.png')", $show);
         $this->assertStringContainsString('form5-reference-styles', $show);
-        $this->assertStringContainsString("style.removeProperty('font-family')", $show);
+        $this->assertStringNotContainsString("style.removeProperty('font-family')", $show);
 
         $this->assertStringContainsString('size: 8.5in 13in', $styles);
         $this->assertStringContainsString('width: 816px', $styles);
@@ -48,9 +50,18 @@ class ClearancePrintReferenceTest extends TestCase
         $this->assertStringContainsString('.green-bars', $styles);
         $this->assertStringContainsString('.footer', $styles);
 
+        $this->assertStringContainsString('size: 8.5in 13in', $form);
+        $this->assertStringContainsString("public_path('images/' . \$filename)", $form);
+        $this->assertStringContainsString("\$logoAsset('dar-logo.svg')", $form);
+        $this->assertStringContainsString("\$logoAsset('bagong-pilipinas.png')", $form);
+        $this->assertStringNotContainsString('raw.githubusercontent.com', $form);
         $this->assertStringContainsString('CERTIFICATION', $form);
         $this->assertStringContainsString('(Land Transfer Clearance)', $form);
         $this->assertStringContainsString('ENGR. MANUEL M. GALON, JR.', $form);
         $this->assertStringContainsString('Not official if not sealed', $form);
+
+        $this->assertStringContainsString('size: 8.5in 13in', $pdf);
+        $this->assertStringContainsString("'pdfMode' => true", $pdf);
+        $this->assertStringNotContainsString('Storage::disk', $pdf);
     }
 }

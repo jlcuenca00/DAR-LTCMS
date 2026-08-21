@@ -8,21 +8,61 @@
     $issueDate = $application->date_of_clearance_release ?? $generatedAt ?? $reviewedAt ?? now();
 
     $parcels = collect($clearance->parcel_snapshot ?? []);
-    $firstParcel = $parcels->first() ?? [];
 
-    $titleType = $firstParcel['title_type'] ?? 'TCT';
-    $titleNo = $firstParcel['title_number'] ?? $firstParcel['title_no'] ?? '__________';
-    $taxDeclNo = $firstParcel['tax_decl_no'] ?? '__________';
-    $lotNo = $firstParcel['lot_number'] ?? '__________';
-    $surveyNo = $firstParcel['survey_plan_number'] ?? '__________';
-    $areaSqm = $firstParcel['area_square_meters'] ?? null;
-    if (! $areaSqm && filled($firstParcel['area_hectares'] ?? null)) {
-        $areaSqm = round(((float) $firstParcel['area_hectares']) * 10000, 2);
-    }
-    if (! $areaSqm) {
-        $areaSqm = round(((float) $clearance->total_area_hectares) * 10000, 2);
-    }
-    $areaText = $areaSqm > 0 ? rtrim(rtrim(number_format((float) $areaSqm, 2, '.', ''), '0'), '.') . ' sq. m.' : '__________ sq. m.';
+    $titleEntries = $parcels
+        ->map(function (array $parcel): ?string {
+            $titleNumber = $parcel['title_number'] ?? $parcel['title_no'] ?? null;
+            if (! filled($titleNumber)) {
+                return null;
+            }
+
+            $titleType = trim((string) ($parcel['title_type'] ?? 'TCT')) ?: 'TCT';
+
+            return $titleType . ' No. ' . trim((string) $titleNumber);
+        })
+        ->filter()
+        ->unique()
+        ->values();
+
+    $taxDeclarationNumbers = $parcels
+        ->pluck('tax_decl_no')
+        ->filter(fn ($value) => filled($value))
+        ->map(fn ($value) => trim((string) $value))
+        ->unique()
+        ->values();
+
+    $titleTdParts = [];
+    $titleTdParts[] = $titleEntries->isNotEmpty()
+        ? $titleEntries->implode('; ')
+        : 'TCT No. __________';
+    $titleTdParts[] = $taxDeclarationNumbers->isNotEmpty()
+        ? 'TD Number ' . $taxDeclarationNumbers->implode('; ')
+        : 'TD Number __________';
+    $titleTdText = implode(' / ', $titleTdParts);
+
+    $lotSurveyEntries = $parcels
+        ->map(function (array $parcel): ?string {
+            $lotNumber = trim((string) ($parcel['lot_number'] ?? ''));
+            $surveyNumber = trim((string) ($parcel['survey_plan_number'] ?? ''));
+            $parts = array_values(array_filter([$lotNumber, $surveyNumber], fn ($value) => $value !== ''));
+
+            return $parts !== [] ? implode(', ', $parts) : null;
+        })
+        ->filter()
+        ->unique()
+        ->values();
+
+    $totalAreaSqm = filled($clearance->total_area_hectares)
+        ? (float) bcmul((string) $clearance->total_area_hectares, '10000', 2)
+        : 0.0;
+    $areaText = $totalAreaSqm > 0
+        ? rtrim(rtrim(number_format($totalAreaSqm, 2, '.', ''), '0'), '.') . ' sq. m.'
+        : '__________ sq. m.';
+    $lotReferenceText = $lotSurveyEntries->isNotEmpty()
+        ? $lotSurveyEntries->implode('; ')
+        : '__________';
+    $lotAreaLead = $parcels->count() > 1 ? 'with a total area of' : 'with an area of';
+    $lotAreaText = $lotReferenceText . ', ' . $lotAreaLead . ' ' . $areaText;
 
     $location = trim(($clearance->barangay ? $clearance->barangay . ', ' : '') . ($clearance->municipality ?? ''));
     $location = $location !== '' ? $location . ', Negros Oriental' : '__________';
@@ -40,10 +80,12 @@
                 }
             }
         }
+
         return null;
     };
 
-    $ownerName = $metaFirst(['title_owner_names', 'document_owner_names']) ?: ($clearance->transferor_name ?: $application->transferorDisplayName());
+    $ownerName = $metaFirst(['title_owner_names', 'document_owner_names'])
+        ?: ($clearance->transferor_name ?: $application->transferorDisplayName());
     $subjectOf = $metaFirst(['transfer_document_title']) ?: $application->transferInstrumentDisplay();
     $subjectDate = $metaFirst(['notarization_date', 'date_issued']);
     $subjectLine = $subjectOf ?: '__________';
@@ -66,7 +108,9 @@
     if ($pageNo) $notarialLineParts[] = 'Page No. ' . $pageNo;
     if ($bookNo) $notarialLineParts[] = 'Book No. ' . $bookNo;
     if ($series) $notarialLineParts[] = 'Series of ' . $series;
-    $notarialLine = count($notarialLineParts) ? implode(', ', $notarialLineParts) : 'Doc No. __, Page No. __, Book No. __, Series of ____';
+    $notarialLine = count($notarialLineParts)
+        ? implode(', ', $notarialLineParts)
+        : 'Doc No. __, Page No. __, Book No. __, Series of ____';
 
     $transferorNames = $clearance->transferor_name ?: $application->transferorDisplayName();
     $transfereeNames = $clearance->transferee_name ?: $application->transfereeDisplayName();
@@ -76,52 +120,26 @@
     $returnRoute = $returnRoute ?? route('staff.applications.show', $application);
     $returnLabel = $returnLabel ?? 'Back to Application';
 
-    $logoAsset = function (array $filenames) use ($pdfMode) {
-        foreach ($filenames as $filename) {
-            foreach ([$filename, 'images/' . $filename, 'logos/' . $filename, 'clearance/' . $filename, 'clearances/' . $filename] as $storagePath) {
-                if (\Illuminate\Support\Facades\Storage::disk('public')->exists($storagePath)) {
-                    return $pdfMode
-                        ? \Illuminate\Support\Facades\Storage::disk('public')->path($storagePath)
-                        : asset('storage/' . $storagePath);
-                }
-            }
+    // Official Form 5 assets are shipped with DAR-LTCMS under public/images.
+    // This avoids role-dependent storage URLs and keeps PDF rendering offline.
+    $logoAsset = function (string $filename) use ($pdfMode): ?string {
+        $path = public_path('images/' . $filename);
+
+        if (! is_file($path)) {
+            return null;
         }
 
-        foreach ($filenames as $filename) {
-            $path = public_path('images/' . $filename);
-            if (is_file($path)) {
-                return $pdfMode ? $path : asset('images/' . $filename);
-            }
-        }
-
-        return null;
+        return $pdfMode ? $path : asset('images/' . $filename);
     };
 
-    $darLogo = $logoAsset($pdfMode
-        ? ['dar-logo.svg']
-        : ['dar-logo.png', 'dar-logo.jpg', 'dar-logo.svg', 'dar_logo.png', 'DAR-logo.png']);
-    $bagongLogo = $logoAsset($pdfMode
-        ? ['bagong-pilipinas.svg', 'bagong-pilipinas-logo.svg']
-        : ['bagong-pilipinas.png', 'bagong-pilipinas.jpg', 'bagong-pilipinas.svg', 'bagong-pilipinas-logo.svg', 'bagong_pilipinas.png']);
+    $darLogo = $logoAsset('dar-logo.svg');
+    $bagongLogo = $logoAsset('bagong-pilipinas.png');
 @endphp
 
 <style>
-    @page { size: A4; margin: 8mm 11mm; }
+    @page { size: 8.5in 13in; margin: 0; }
 
-    @font-face {
-        font-family: 'LTC Montserrat';
-        src: url('https://raw.githubusercontent.com/JulietaUla/Montserrat/master/fonts/ttf/Montserrat-Regular.ttf') format('truetype');
-        font-weight: 400;
-        font-style: normal;
-    }
-    @font-face {
-        font-family: 'LTC Montserrat';
-        src: url('https://raw.githubusercontent.com/JulietaUla/Montserrat/master/fonts/ttf/Montserrat-Bold.ttf') format('truetype');
-        font-weight: 700;
-        font-style: normal;
-    }
-
-    :root { --ltc-font: 'LTC Montserrat', 'Montserrat', Arial, sans-serif; }
+    :root { --ltc-font: Arial, Helvetica, sans-serif; }
     html,
     body,
     main,
@@ -156,7 +174,7 @@
     .print-toolbar-actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
     .print-btn { display: inline-flex; align-items: center; justify-content: center; min-height: 34px; border: 1px solid #cbd5e1; border-radius: 9px; background: #fff; color: #0f172a; padding: 0 12px; font-size: 11px; font-weight: 700; text-decoration: none; cursor: pointer; }
     .print-btn.primary { border-color: #111827; background: #111827; color: #fff; }
-    .ltc-page { font-weight: 400; width: 794px; min-height: 1123px; margin: 14px auto 24px; padding: 26px 44px 20px; background: #fff; box-shadow: 0 18px 45px rgba(15,23,42,.18); box-sizing: border-box; position: relative; font-size: 11px; line-height: 1.18; }
+    .ltc-page { font-weight: 400; width: 816px; min-height: 1248px; margin: 14px auto 24px; padding: 26px 44px 20px; background: #fff; box-shadow: 0 18px 45px rgba(15,23,42,.18); box-sizing: border-box; position: relative; font-size: 11px; line-height: 1.18; }
     .top-form-no { text-align: right; font-size: 7.5px; font-weight: 700; margin-bottom: 4px; }
     .official-header { display: grid; grid-template-columns: 168px 1fr; gap: 12px; align-items: center; border-bottom: 3px solid #333; padding-bottom: 5px; }
     .logos { display: flex; gap: 8px; align-items: center; }
@@ -174,7 +192,7 @@
     .detail-table { width: 610px; margin: 0 auto; border-collapse: collapse; }
     .detail-table td { padding: 4px 3px; vertical-align: top; }
     .detail-label { width: 116px; text-align: right; color: #4b5563; font-style: italic; padding-right: 12px !important; white-space: nowrap; }
-    .detail-value { font-weight: 700; text-decoration: underline; text-underline-offset: 2px; }
+    .detail-value { font-weight: 700; text-decoration: underline; text-underline-offset: 2px; overflow-wrap: anywhere; }
     .decision-line { width: 610px; margin: 154px auto 14px; display: flex; align-items: center; gap: 12px; }
     .decision-line .prefix { color: #4b5563; }
     .decision-box { min-width: 128px; padding: 9px 18px; border: 3px solid #4b5563; text-align: center; font-weight: 700; letter-spacing: .05em; }
@@ -216,7 +234,11 @@
         .footer > div:last-child { width: 190px; }
     @endif
 
-    @media print { body { background: #fff; } .print-toolbar { display: none !important; } .ltc-page { margin: 0; padding: 0; box-shadow: none; width: auto; min-height: auto; } }
+    @media print {
+        body { background: #fff; }
+        .print-toolbar { display: none !important; }
+        .ltc-page { box-shadow: none; }
+    }
 </style>
 
 @if ($showToolbar)
@@ -231,7 +253,7 @@
     </div>
 @endif
 
-<main class="ltc-page" style="font-family: 'LTC Montserrat', 'Montserrat', Arial, sans-serif !important; font-weight: 400;">
+<main class="ltc-page">
     <div class="top-form-no">LTC Form No. 5</div>
 
     <header class="official-header">
@@ -270,8 +292,8 @@
 
     <table class="detail-table">
         <tr><td class="detail-label">(Owner)</td><td class="detail-value">{{ $ownerName ?: '__________' }}</td></tr>
-        <tr><td class="detail-label">(Title/TD Number)</td><td class="detail-value">{{ $titleType }} No. {{ $titleNo }} / TD Number {{ $taxDeclNo }}</td></tr>
-        <tr><td class="detail-label">(Lot Number)</td><td class="detail-value">{{ $lotNo }}, {{ $surveyNo }}, with an area of {{ $areaText }}</td></tr>
+        <tr><td class="detail-label">(Title/TD Number)</td><td class="detail-value">{{ $titleTdText }}</td></tr>
+        <tr><td class="detail-label">(Lot Number)</td><td class="detail-value">{{ $lotAreaText }}</td></tr>
         <tr><td class="detail-label">(Location)</td><td class="detail-value">{{ $location }}</td></tr>
         <tr><td class="detail-label">(subject of)</td><td class="detail-value">{{ $subjectLine }}</td></tr>
         <tr><td class="detail-label">(notarized as)</td><td class="detail-value">{{ $notarialLine }}</td></tr>
@@ -287,7 +309,7 @@
 
     <section class="basis">
         <p>based on the attestation of the CARPO/LTS/FOD and from the report and recommendation of the Chief Legal Division/Authorized Legal Officer pursuant to Administrative Order (A.O.) No. 4, Series of 2021.</p>
-        <p>Any actual change in the use of the land and/or development over the subject land, require a prior Order of Conversion or Exemption/Exclusion from the office of the DAR Regional Director.</p>
+        <p>Any actual change in the use of the land and/or development over the subject land, requires a prior Order of Conversion or Exemption/Exclusion from the office of the DAR Regional Director.</p>
         <p>This Office reserves the right to revoke this Certification of LTC in case of findings of misrepresentation or submission of falsified documents by either or both parties to the Deed of transfer and any third person who may be affected by the transfer.</p>
         <p>This Certification, which is valid for six (6) months from the date of issuance, is hereby issued only for the purpose stated in the application/request for issuance of LTC.</p>
     </section>
