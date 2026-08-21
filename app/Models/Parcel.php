@@ -89,7 +89,9 @@ class Parcel extends Model
     protected static function booted(): void
     {
         static::saving(function (Parcel $parcel) {
-            app(ParcelAreaIntegrityService::class)->canonicalizeParcel($parcel);
+            if (! $parcel->exists || $parcel->isDirty(['area_hectares', 'area_square_meters'])) {
+                app(ParcelAreaIntegrityService::class)->canonicalizeParcel($parcel);
+            }
         });
     }
 
