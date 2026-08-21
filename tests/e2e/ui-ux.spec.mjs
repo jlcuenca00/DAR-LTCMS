@@ -98,6 +98,37 @@ test.describe('authenticated UI UX behavior', () => {
         }
     });
 
+    test('Application Actions backdrop covers the complete browser viewport', async ({ page }) => {
+        await page.setViewportSize({ width: 1440, height: 900 });
+        await page.goto('/staff/applications');
+        await waitForUiUx(page);
+
+        const firstApplication = page.locator('.application-desktop-table tbody a.staff-link').first();
+        if (!(await firstApplication.count())) test.skip(true, 'No application record is available for review.');
+
+        await firstApplication.click();
+        await waitForUiUx(page);
+
+        const trigger = page.locator('#workflow-modal-open');
+        if (!(await trigger.count())) test.skip(true, 'Application Actions is not available for this record.');
+
+        const backdrop = page.locator('body > .workflow-modal-backdrop');
+        await expect(backdrop).toHaveAttribute('data-ui-viewport-portal', 'true');
+        await trigger.click();
+        await expect(backdrop).toBeVisible();
+
+        const bounds = await backdrop.evaluate((node) => {
+            const rect = node.getBoundingClientRect();
+            return { top: rect.top, left: rect.left, width: rect.width, height: rect.height };
+        });
+        const viewport = page.viewportSize();
+
+        expect(Math.abs(bounds.top)).toBeLessThanOrEqual(1);
+        expect(Math.abs(bounds.left)).toBeLessThanOrEqual(1);
+        expect(bounds.width).toBeGreaterThanOrEqual(viewport.width - 1);
+        expect(bounds.height).toBeGreaterThanOrEqual(viewport.height - 1);
+    });
+
     test('Audit Logs identifies Philippine Time explicitly', async ({ page }) => {
         await page.goto('/staff/audit-logs');
         await waitForUiUx(page);
