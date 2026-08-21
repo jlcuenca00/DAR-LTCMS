@@ -34,6 +34,7 @@ import '../css/staff-record-row-navigation.css';
 import '../css/responsive-hardening-last-mile.css';
 import '../css/ui-ux-system.css';
 import '../css/ui-ux-last-mile.css';
+import '../css/application-modal-viewport.css';
 import '../css/ui-ux-public.css';
 
 window.axios = axios;
