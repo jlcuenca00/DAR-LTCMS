@@ -193,6 +193,26 @@
         white-space: nowrap !important;
     }
 
+    /* The Application Actions trigger is rendered immediately after the review-page wrapper,
+       so the older descendant-only compact rule did not match it. Keep the trigger in normal
+       document flow on compact portal layouts so it never overlays review fields. */
+    @media (max-width: 1100px) {
+        .workflow-fab {
+            position: static !important;
+            inset: auto !important;
+            width: 100% !important;
+            min-width: 0 !important;
+            min-height: 48px !important;
+            margin: 4px 0 24px !important;
+            transform: none !important;
+        }
+
+        .workflow-fab:hover,
+        .workflow-fab:focus-visible {
+            transform: none !important;
+        }
+    }
+
     @media (max-width: 760px) {
         .ui-review-disclosure > .review-panel-header {
             align-items: stretch !important;
