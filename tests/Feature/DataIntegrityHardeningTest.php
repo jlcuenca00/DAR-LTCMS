@@ -13,6 +13,7 @@ use App\Models\User;
 use App\Services\DataIntegrityScanner;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Tests\TestCase;
@@ -138,6 +139,16 @@ class DataIntegrityHardeningTest extends TestCase
             'barangay' => 'Bio-os',
             'province' => 'Negros Oriental',
         ]);
+    }
+
+    public function test_official_negros_oriental_location_coverage_is_not_truncated(): void
+    {
+        $municipalities = config('dar_locations.municipalities');
+
+        $this->assertCount(25, $municipalities);
+        $this->assertSame(557, collect($municipalities)->sum(fn (array $barangays) => count($barangays)));
+        $this->assertArrayHasKey('Vallehermoso', $municipalities);
+        $this->assertContains('Bantayan', $municipalities['Dumaguete City']);
     }
 
     public function test_application_parcel_pair_is_unique_at_database_level(): void
@@ -273,6 +284,15 @@ class DataIntegrityHardeningTest extends TestCase
         $this->assertFalse($result['clean']);
         $this->assertTrue($codes->contains('parcel_area_mismatch'));
         $this->assertSame(50000.0, (float) DB::table('parcels')->where('id', $parcel->id)->value('area_square_meters'));
+    }
+
+    public function test_integrity_scanner_artisan_command_boots_and_reports_read_only_mode(): void
+    {
+        $exitCode = Artisan::call('dar:scan-data-integrity', ['--json' => true]);
+        $output = Artisan::output();
+
+        $this->assertSame(0, $exitCode);
+        $this->assertStringContainsString('"read_only": true', $output);
     }
 
     private function staff(): User
