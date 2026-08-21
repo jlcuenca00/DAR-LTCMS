@@ -45,13 +45,13 @@
                 align-items: center;
                 justify-content: center;
                 gap: 9px;
-                min-height: 40px;
+                min-height: 44px;
                 padding: 8px 14px;
                 border: 1px solid #ffffff;
                 border-radius: 10px;
                 background: #ffffff;
                 color: #14532d;
-                font-size: 11.5px;
+                font-size: 12px;
                 font-weight: 900;
                 text-decoration: none;
                 transition: transform 150ms ease, background 150ms ease;
@@ -82,6 +82,7 @@
                 align-items: center;
                 gap: 10px;
                 width: 100%;
+                min-height: 44px;
                 padding: 8px 4px;
                 border: 0;
                 border-bottom: 1px solid rgba(255, 255, 255, 0.13);
@@ -118,7 +119,7 @@
             .queue-label {
                 display: block;
                 color: #ffffff;
-                font-size: 10.5px;
+                font-size: 11px;
                 font-weight: 900;
                 line-height: 1.3;
             }
@@ -127,7 +128,7 @@
                 display: block;
                 margin-top: 2px;
                 color: #ccebd7;
-                font-size: 9px;
+                font-size: 10px;
                 line-height: 1.3;
             }
 
@@ -171,7 +172,7 @@
 
             .today-label {
                 color: #475569;
-                font-size: 11.5px;
+                font-size: 12px;
                 font-weight: 800;
                 line-height: 1.35;
             }
@@ -186,7 +187,7 @@
 
             .dashboard-workspace {
                 display: grid;
-                grid-template-columns: minmax(0, 1.9fr) minmax(310px, 0.65fr);
+                grid-template-columns: minmax(0, 1.9fr) minmax(320px, 0.7fr);
                 gap: 18px;
                 align-items: start;
             }
@@ -220,13 +221,13 @@
             .panel-subtitle {
                 margin: 5px 0 0;
                 color: #6b7280;
-                font-size: 11px;
+                font-size: 12px;
                 line-height: 1.45;
             }
 
             .panel-link {
                 color: #166534;
-                font-size: 11px;
+                font-size: 12px;
                 font-weight: 900;
                 text-decoration: none;
                 white-space: nowrap;
@@ -245,16 +246,16 @@
             .dashboard-table {
                 width: 100%;
                 border-collapse: collapse;
-                font-size: 12px;
+                font-size: 13px;
             }
 
             .dashboard-table th {
                 padding: 11px 8px;
                 border-bottom: 1px solid #d9e1dc;
                 color: #64748b;
-                font-size: 9px;
+                font-size: 11px;
                 font-weight: 900;
-                letter-spacing: 0.09em;
+                letter-spacing: 0.04em;
                 text-align: left;
                 text-transform: uppercase;
                 white-space: nowrap;
@@ -297,7 +298,7 @@
 
             .party-direction {
                 color: #94a3b8;
-                font-size: 8px;
+                font-size: 9px;
             }
 
             .dashboard-status {
@@ -308,7 +309,7 @@
                 border-radius: 999px;
                 background: #f1f5f9;
                 color: #475569;
-                font-size: 9.5px;
+                font-size: 11px;
                 font-weight: 900;
                 white-space: nowrap;
             }
@@ -351,13 +352,27 @@
 
             .attention-item {
                 display: grid;
-                grid-template-columns: 36px minmax(0, 1fr);
+                grid-template-columns: 36px minmax(0, 1fr) auto;
                 gap: 11px;
-                padding: 15px 17px;
+                align-items: center;
+                min-height: 82px;
+                padding: 14px 16px;
                 border-bottom: 1px solid #edf1ee;
+                color: inherit;
+                text-decoration: none;
+                transition: background-color 120ms ease;
             }
 
             .attention-item:last-child { border-bottom: 0; }
+            .attention-item:hover { background: #f8faf9; }
+            .attention-item.is-selected { background: #f0fdf4; }
+
+            .attention-item:focus-visible {
+                position: relative;
+                z-index: 1;
+                outline: 3px solid rgba(21, 128, 61, 0.24);
+                outline-offset: -3px;
+            }
 
             .attention-icon {
                 display: grid;
@@ -367,67 +382,61 @@
                 border-radius: 9px;
                 background: #f1f5f9;
                 color: #475569;
-                font-size: 12px;
+                font-size: 13px;
+            }
+
+            .attention-item.tone-warning .attention-icon {
+                background: #fff7ed;
+                color: #c2410c;
+            }
+
+            .attention-item.tone-success .attention-icon {
+                background: #f0fdf4;
+                color: #166534;
             }
 
             .attention-label {
                 margin: 0;
-                color: #64748b;
-                font-size: 9.5px;
+                color: #0f172a;
+                font-size: 13px;
                 font-weight: 900;
-                letter-spacing: 0.06em;
-                text-transform: uppercase;
+                line-height: 1.3;
             }
 
-            .attention-link {
-                display: inline-block;
-                margin-top: 4px;
-                color: #166534;
-                font-size: 12.5px;
-                font-weight: 900;
-                text-decoration: none;
-            }
-
-            .attention-link:hover { text-decoration: underline; }
-
-            .attention-meta,
-            .attention-empty {
-                margin-top: 3px;
+            .attention-description {
+                margin: 4px 0 0;
                 color: #64748b;
-                font-size: 10.5px;
+                font-size: 11.5px;
                 line-height: 1.4;
             }
 
-            .stale-callout {
-                display: flex;
+            .attention-action {
+                display: inline-flex;
                 align-items: center;
-                justify-content: space-between;
-                gap: 12px;
-                margin: 14px 16px 16px;
-                padding: 12px 13px;
-                border: 1px solid #fed7aa;
-                border-radius: 10px;
-                background: #fff7ed;
-            }
-
-            .stale-label {
-                color: #9a3412;
+                gap: 6px;
+                margin-top: 7px;
+                color: #166534;
                 font-size: 11px;
-                font-weight: 850;
-                line-height: 1.4;
-            }
-
-            .stale-value {
-                color: #c2410c;
-                font-family: var(--heading-font);
-                font-size: 22px;
                 font-weight: 900;
             }
+
+            .attention-value {
+                min-width: 36px;
+                color: #111827;
+                font-family: var(--heading-font);
+                font-size: 24px;
+                font-weight: 900;
+                line-height: 1;
+                text-align: right;
+            }
+
+            .attention-item.tone-warning .attention-value { color: #c2410c; }
+            .attention-item.tone-success .attention-value { color: #166534; }
 
             .dashboard-empty {
                 padding: 34px 18px;
                 color: #6b7280;
-                font-size: 11.5px;
+                font-size: 12px;
                 text-align: center;
             }
 
@@ -475,6 +484,11 @@
 
                 .hero-title { font-size: 26px; }
                 .dashboard-table-wrap { padding-inline: 13px; }
+
+                .attention-item {
+                    grid-template-columns: 34px minmax(0, 1fr) auto;
+                    padding-inline: 13px;
+                }
             }
         </style>
     </x-slot>
@@ -498,9 +512,9 @@
                 @foreach ($workQueue as $item)
                     <button
                         type="button"
-                        class="queue-row{{ $item['filter'] === 'all' ? ' is-active' : '' }}"
+                        class="queue-row"
                         data-dashboard-filter="{{ $item['filter'] }}"
-                        aria-pressed="{{ $item['filter'] === 'all' ? 'true' : 'false' }}"
+                        aria-pressed="false"
                     >
                         <span class="queue-icon">
                             <i class="fa-solid {{ $item['icon'] }}" aria-hidden="true"></i>
@@ -532,9 +546,19 @@
                 <div class="panel-header">
                     <div>
                         <h2 class="panel-title">Applications Requiring Action</h2>
-                        <p class="panel-subtitle">Highest-priority active applications for continued staff processing.</p>
+                        <p class="panel-subtitle">
+                            @if ($attentionFocusLabel)
+                                Filtered by {{ $attentionFocusLabel }}. Oldest updates are shown first for follow-up.
+                            @else
+                                Highest-priority active applications for continued staff processing.
+                            @endif
+                        </p>
                     </div>
-                    <a href="{{ route('staff.applications.index') }}" class="panel-link">View all applications →</a>
+                    @if ($attentionFocusLabel)
+                        <a href="{{ route('staff.dashboard') }}" class="panel-link">Clear attention filter →</a>
+                    @else
+                        <a href="{{ route('staff.applications.index') }}" class="panel-link">View all applications →</a>
+                    @endif
                 </div>
 
                 <div class="dashboard-table-wrap">
@@ -577,7 +601,9 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="4" class="dashboard-empty">No active applications currently require staff action.</td>
+                                    <td colspan="4" class="dashboard-empty">
+                                        {{ $attentionFocusLabel ? 'No active applications match this attention category.' : 'No active applications currently require staff action.' }}
+                                    </td>
                                 </tr>
                             @endforelse
 
@@ -595,36 +621,29 @@
                 <div class="panel-header">
                     <div>
                         <h2 class="panel-title">Processing Attention</h2>
-                        <p class="panel-subtitle">Items that may require follow-up.</p>
+                        <p class="panel-subtitle">Actionable groups for requirement work and follow-up.</p>
                     </div>
                 </div>
 
                 <div class="attention-list">
-                    @foreach ($attentionItems as $index => $item)
-                        <div class="attention-item">
+                    @foreach ($attentionItems as $item)
+                        <a href="{{ $item['href'] }}"
+                           class="attention-item tone-{{ $item['tone'] }}{{ $attentionFilter === $item['key'] ? ' is-selected' : '' }}"
+                           @if ($attentionFilter === $item['key']) aria-current="true" @endif>
                             <span class="attention-icon">
-                                <i class="fa-solid {{ $index === 0 ? 'fa-scale-balanced' : 'fa-file-export' }}" aria-hidden="true"></i>
+                                <i class="fa-solid {{ $item['icon'] }}" aria-hidden="true"></i>
                             </span>
-                            <div>
-                                <p class="attention-label">{{ $item['label'] }}</p>
-                                @if ($item['application'])
-                                    <a href="{{ route('staff.applications.show', $item['application']) }}" class="attention-link">
-                                        {{ $item['application']->application_code }}
-                                    </a>
-                                    <div class="attention-meta">
-                                        Waiting {{ (int) ($item['application']->updated_at?->copy()->startOfDay()->diffInDays(today()) ?? 0) }} day(s)
-                                    </div>
-                                @else
-                                    <div class="attention-empty">{{ $item['empty'] }}</div>
-                                @endif
-                            </div>
-                        </div>
+                            <span>
+                                <span class="attention-label">{{ $item['label'] }}</span>
+                                <span class="attention-description">{{ $item['description'] }}</span>
+                                <span class="attention-action">
+                                    {{ $item['action'] }}
+                                    <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
+                                </span>
+                            </span>
+                            <strong class="attention-value">{{ number_format($item['value']) }}</strong>
+                        </a>
                     @endforeach
-                </div>
-
-                <div class="stale-callout">
-                    <span class="stale-label">Active applications with no update for more than 7 days</span>
-                    <strong class="stale-value">{{ number_format($staleActiveCount) }}</strong>
                 </div>
             </aside>
         </section>
@@ -641,20 +660,33 @@
                     return;
                 }
 
+                const activeWorkflowStatuses = ['endorsed_lti', 'endorsed_chief_legal', 'endorsed_parpo'];
+                const pendingLegalStatuses = ['pending_legal_review', 'pending_review', 'draft'];
+
                 filterButtons.forEach(function (button) {
                     button.addEventListener('click', function () {
                         const selectedFilter = button.dataset.dashboardFilter;
+                        const wasActive = button.getAttribute('aria-pressed') === 'true';
                         let visibleCount = 0;
 
                         filterButtons.forEach(function (candidate) {
-                            const isActive = candidate === button;
-                            candidate.classList.toggle('is-active', isActive);
-                            candidate.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+                            candidate.classList.remove('is-active');
+                            candidate.setAttribute('aria-pressed', 'false');
                         });
 
+                        if (!wasActive) {
+                            button.classList.add('is-active');
+                            button.setAttribute('aria-pressed', 'true');
+                        }
+
                         applicationRows.forEach(function (row) {
-                            const isVisible = selectedFilter === 'all'
-                                || row.dataset.dashboardStatus === selectedFilter;
+                            const status = row.dataset.dashboardStatus;
+                            const isVisible = wasActive
+                                || (selectedFilter === 'active_workflow'
+                                    ? activeWorkflowStatuses.includes(status)
+                                    : (selectedFilter === 'pending_legal_review'
+                                        ? pendingLegalStatuses.includes(status)
+                                        : status === selectedFilter));
 
                             row.hidden = !isVisible;
                             if (isVisible) {

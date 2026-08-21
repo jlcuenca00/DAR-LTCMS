@@ -84,4 +84,34 @@ class UiUxSystemTest extends TestCase
         $this->assertStringContainsString('data-decision-confirm="deny"', $review);
         $this->assertStringContainsString('final_decision_confirmation', $review);
     }
+
+    public function test_staff_dashboard_uses_actionable_attention_groups_instead_of_oldest_record_metrics(): void
+    {
+        $controller = file_get_contents(app_path('Http/Controllers/Staff/StaffDashboardController.php'));
+        $dashboard = file_get_contents(resource_path('views/dashboards/staff.blade.php'));
+
+        $this->assertStringContainsString('Incomplete Requirements', $controller);
+        $this->assertStringContainsString('Requirements Complete', $controller);
+        $this->assertStringContainsString('No Update for More Than 7 Days', $controller);
+        $this->assertStringContainsString("['attention' => 'missing_requirements']", $controller);
+        $this->assertStringContainsString("['attention' => 'requirements_complete']", $controller);
+        $this->assertStringContainsString("['attention' => 'stale']", $controller);
+        $this->assertStringNotContainsString('Oldest Legal Review', $controller);
+        $this->assertStringNotContainsString('Oldest For Releasing', $controller);
+
+        $this->assertStringContainsString('Actionable groups for requirement work and follow-up.', $dashboard);
+        $this->assertStringContainsString('attention-item', $dashboard);
+        $this->assertStringContainsString('Clear attention filter', $dashboard);
+    }
+
+    public function test_open_requirements_targets_and_reveals_the_first_incomplete_required_entry(): void
+    {
+        $intakeFlow = file_get_contents(resource_path('js/application-intake-flow.js'));
+
+        $this->assertStringContainsString('firstRequirementNeedingAttention = missingBlockingCards[0] || firstRequirement', $intakeFlow);
+        $this->assertStringContainsString('revealApplicationReviewTarget', $intakeFlow);
+        $this->assertStringContainsString("requirementGroup.classList.remove('is-collapsed')", $intakeFlow);
+        $this->assertStringContainsString("toggle?.setAttribute('aria-expanded', 'true')", $intakeFlow);
+        $this->assertStringContainsString("target.focus({ preventScroll: true })", $intakeFlow);
+    }
 }
