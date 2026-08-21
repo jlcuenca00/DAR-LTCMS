@@ -13,8 +13,11 @@ on:
       - 'app/Http/Controllers/Staff/MonitoringReportController.php'
       - 'app/Http/Controllers/Staff/ParcelMapController.php'
       - 'app/Http/Controllers/Geodetic/ParcelMapController.php'
+      - 'app/Http/Controllers/Geodetic/GeodeticPortalController.php'
       - 'app/Http/Controllers/Landowner/ParcelMapController.php'
       - 'app/Http/Controllers/Landowner/LandownerDashboardController.php'
+      - 'app/Http/Controllers/Landowner/LandownerPortalController.php'
+      - 'app/Http/Controllers/ProfileController.php'
       - 'app/Http/Controllers/Staff/ApplicationClearanceController.php'
       - 'app/Http/Controllers/Staff/ProtectedStorageController.php'
       - 'app/Http/Controllers/Landowner/ApplicationClearanceController.php'
@@ -51,6 +54,12 @@ on:
       - 'tests/Feature/SecurityHeadersTest.php'
       - 'tests/Feature/ProductionSecurityHardeningTest.php'
       - 'tests/Feature/PerformanceHardeningTest.php'
+      - 'tests/Feature/FinalUatTest.php'
+      - 'tests/Feature/GeodeticReadOnlyTest.php'
+      - 'tests/Feature/LandownerParcelMapViewerTest.php'
+      - 'tests/Feature/ProfilePhotoDeliveryTest.php'
+      - 'tests/Feature/RecordSearchPagesTest.php'
+      - 'tests/Feature/ApplicationSearchFilterTest.php'
       - 'tests/Feature/FinalDecisionLockTest.php'
       - 'tests/Feature/FinalDecisionIntegrityHardeningTest.php'
       - 'tests/Feature/RbacSecurityHardeningTest.php'
@@ -141,7 +150,7 @@ jobs:
       - name: Build frontend assets
         run: npm run build
 
-      - name: Run responsive, workflow, UI UX, reports, production-security, performance, RBAC, audit, final-decision, and data-integrity regressions
+      - name: Run final UAT, security, workflow, reports, performance, and integrity tests
         run: |
           php artisan test \
             tests/Feature/ResponsiveUiFoundationTest.php \
@@ -159,6 +168,12 @@ jobs:
             tests/Feature/SecurityHeadersTest.php \
             tests/Feature/ProductionSecurityHardeningTest.php \
             tests/Feature/PerformanceHardeningTest.php \
+            tests/Feature/FinalUatTest.php \
+            tests/Feature/GeodeticReadOnlyTest.php \
+            tests/Feature/LandownerParcelMapViewerTest.php \
+            tests/Feature/ProfilePhotoDeliveryTest.php \
+            tests/Feature/RecordSearchPagesTest.php \
+            tests/Feature/ApplicationSearchFilterTest.php \
             tests/Feature/RbacSecurityHardeningTest.php \
             tests/Feature/FinalDecisionLockTest.php \
             tests/Feature/FinalDecisionIntegrityHardeningTest.php \
