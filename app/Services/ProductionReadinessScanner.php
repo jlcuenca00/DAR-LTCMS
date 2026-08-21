@@ -39,20 +39,26 @@ class ProductionReadinessScanner
         $this->require($issues, is_dir(storage_path('app/public')) && is_writable(storage_path('app/public')), 'legacy_source_storage_not_writable', 'storage/app/public must remain writable for protected legacy source-package scans.');
 
         $mailDriver = (string) config('mail.default');
-        $this->require($issues, ! in_array($mailDriver, ['log', 'array'], true), 'mail_not_deliverable', 'MAIL_MAILER must use a real delivery transport in production so password-recovery messages can be delivered.');
+        $this->recommend($issues, ! in_array($mailDriver, ['log', 'array'], true), 'mail_not_deliverable', 'MAIL_MAILER should use a real delivery transport in production so password-recovery messages can be delivered.');
 
         foreach ($this->activeLogLevels() as $channel => $level) {
-            $this->require(
+            $this->recommend(
                 $issues,
-                ! in_array(strtolower((string) $level), ['debug'], true),
+                strtolower((string) $level) !== 'debug',
                 'debug_log_level_'.$channel,
-                "Production log channel {$channel} must not run at debug level."
+                "Production log channel {$channel} should not run at debug level."
             );
         }
 
+        $blockingCount = collect($issues)->where('severity', 'blocking')->count();
+        $warningCount = collect($issues)->where('severity', 'warning')->count();
+
         return [
             'clean' => $issues === [],
+            'ready' => $blockingCount === 0,
             'issue_count' => count($issues),
+            'blocking_count' => $blockingCount,
+            'warning_count' => $warningCount,
             'generated_at' => now()->toIso8601String(),
             'read_only' => true,
             'issues' => $issues,
@@ -61,11 +67,22 @@ class ProductionReadinessScanner
 
     private function require(array &$issues, bool $condition, string $code, string $message): void
     {
+        $this->addIssue($issues, $condition, 'blocking', $code, $message);
+    }
+
+    private function recommend(array &$issues, bool $condition, string $code, string $message): void
+    {
+        $this->addIssue($issues, $condition, 'warning', $code, $message);
+    }
+
+    private function addIssue(array &$issues, bool $condition, string $severity, string $code, string $message): void
+    {
         if ($condition) {
             return;
         }
 
         $issues[] = [
+            'severity' => $severity,
             'code' => $code,
             'message' => $message,
         ];
