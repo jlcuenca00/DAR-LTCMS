@@ -42,6 +42,7 @@ on:
       - 'bootstrap/app.php'
       - 'routes/console.php'
       - '.env.example'
+      - 'docs/RELEASE_PREPARATION.md'
       - '.github/workflows/deploy.yml'
       - 'tests/Feature/*Responsive*'
       - 'tests/Feature/*MobilePortal*'
@@ -51,6 +52,7 @@ on:
       - 'tests/Feature/DashboardAttentionTest.php'
       - 'tests/Feature/ClearancePrintReferenceTest.php'
       - 'tests/Feature/FinalLtcForm5Test.php'
+      - 'tests/Feature/ReleasePreparationTest.php'
       - 'tests/Feature/MonitoringReportTest.php'
       - 'tests/Feature/SecurityHeadersTest.php'
       - 'tests/Feature/ProductionSecurityHardeningTest.php'
@@ -133,6 +135,9 @@ jobs:
       - name: Install Composer dependencies
         run: composer install --no-interaction --prefer-dist
 
+      - name: Audit production PHP dependencies
+        run: composer audit --no-dev
+
       - name: Prepare Laravel environment
         run: |
           cp .env.example .env
@@ -148,10 +153,13 @@ jobs:
       - name: Install frontend dependencies
         run: npm ci
 
+      - name: Audit production JavaScript dependencies
+        run: npm audit --omit=dev --audit-level=high
+
       - name: Build frontend assets
         run: npm run build
 
-      - name: Run final UAT, Form 5, security, workflow, reports, performance, and integrity tests
+      - name: Run final UAT, Form 5, release, security, workflow, reports, performance, and integrity tests
         run: |
           php artisan test \
             tests/Feature/ResponsiveUiFoundationTest.php \
@@ -165,6 +173,7 @@ jobs:
             tests/Feature/UiUxSystemTest.php \
             tests/Feature/ClearancePrintReferenceTest.php \
             tests/Feature/FinalLtcForm5Test.php \
+            tests/Feature/ReleasePreparationTest.php \
             tests/Feature/DashboardAttentionTest.php \
             tests/Feature/MonitoringReportTest.php \
             tests/Feature/SecurityHeadersTest.php \
