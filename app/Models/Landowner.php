@@ -2,10 +2,14 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\NormalizesDarLocation;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Validation\ValidationException;
 
 class Landowner extends Model
 {
+    use NormalizesDarLocation;
+
     public const STATUS_SINGLE = 'single';
     public const STATUS_MARRIED = 'married';
     public const STATUS_WIDOWED = 'widowed';
@@ -28,6 +32,21 @@ class Landowner extends Model
         'user_id',
     ];
 
+    protected static function booted(): void
+    {
+        static::saving(function (Landowner $landowner) {
+            if (! $landowner->isDirty('user_id') || ! $landowner->user_id) {
+                return;
+            }
+
+            $user = User::query()->find($landowner->user_id);
+            if (! $user || $user->role !== User::ROLE_LANDOWNER) {
+                throw ValidationException::withMessages([
+                    'user_id' => 'Only a user account with the Landowner role may be linked to a Landowner record.',
+                ]);
+            }
+        });
+    }
 
     public static function registeredOwnerStatusOptions(): array
     {
