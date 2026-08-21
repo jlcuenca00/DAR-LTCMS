@@ -13,31 +13,40 @@ class EmailOtpPasswordRecoveryTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_account_without_email_is_directed_to_staff_assistance(): void
+    public function test_identify_step_does_not_reveal_account_existence_or_recovery_eligibility(): void
     {
-        $user = User::factory()->create([
+        $noEmail = User::factory()->create([
             'username' => 'no_email_user',
             'email' => null,
             'email_verified_at' => null,
+            'is_active' => true,
         ]);
 
-        $this->from(route('password.request'))
-            ->post(route('password.recovery.identify'), [
-                'username' => $user->username,
+        $inactive = User::factory()->create([
+            'username' => 'inactive_recovery_user',
+            'email' => 'inactive@example.com',
+            'is_active' => false,
+        ]);
+
+        foreach ([$noEmail->username, $inactive->username, 'unknown_recovery_user'] as $username) {
+            $this->post(route('password.recovery.identify'), [
+                'username' => $username,
             ])
-            ->assertRedirect(route('password.request'))
-            ->assertSessionHas('status', function (string $status) {
-                return str_contains($status, 'No email address is registered');
-            });
+                ->assertRedirect(route('password.request'))
+                ->assertSessionHas('status', function (string $status) {
+                    return str_contains($status, 'Continue by entering the registered recovery email');
+                });
 
-        $this->assertDatabaseHas('audit_logs', [
-            'auditable_type' => User::class,
-            'auditable_id' => $user->id,
-            'action' => 'password_recovery_requested_without_email',
-        ]);
+            $this->get(route('password.request'))
+                ->assertOk()
+                ->assertSee('Confirm Recovery Email')
+                ->assertDontSee('No account was found')
+                ->assertDontSee('No email address is registered')
+                ->assertDontSee('currently inactive');
+        }
     }
 
-    public function test_registered_email_is_masked_and_must_match_before_code_is_sent(): void
+    public function test_registered_email_is_not_exposed_and_must_match_before_code_is_sent(): void
     {
         Notification::fake();
 
@@ -52,8 +61,9 @@ class EmailOtpPasswordRecoveryTest extends TestCase
 
         $this->get(route('password.request'))
             ->assertOk()
-            ->assertSee('c***.*****n@gmail.com')
-            ->assertDontSee('carl.martin@gmail.com');
+            ->assertSee('system intentionally does not display or mask the stored email address')
+            ->assertDontSee('carl.martin@gmail.com')
+            ->assertDontSee('c***.*****n@gmail.com');
 
         $this->from(route('password.request'))
             ->post(route('password.recovery.confirm-email'), [

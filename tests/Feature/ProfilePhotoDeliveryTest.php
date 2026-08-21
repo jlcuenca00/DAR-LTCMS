@@ -13,8 +13,9 @@ class ProfilePhotoDeliveryTest extends TestCase
 
     private const TINY_PNG = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=';
 
-    public function test_authenticated_user_can_view_own_profile_photo_without_public_storage_url(): void
+    public function test_authenticated_user_can_view_own_private_profile_photo(): void
     {
+        Storage::fake('local');
         Storage::fake('public');
 
         $user = User::factory()->create([
@@ -22,7 +23,7 @@ class ProfilePhotoDeliveryTest extends TestCase
             'profile_photo_path' => 'profile-photos/own-photo.png',
         ]);
 
-        Storage::disk('public')->put(
+        Storage::disk('local')->put(
             $user->profile_photo_path,
             base64_decode(self::TINY_PNG)
         );
@@ -30,10 +31,13 @@ class ProfilePhotoDeliveryTest extends TestCase
         $this->actingAs($user)
             ->get(route('profile.photo', $user))
             ->assertOk();
+
+        Storage::disk('public')->assertMissing($user->profile_photo_path);
     }
 
-    public function test_staff_can_view_another_users_profile_photo_for_user_management(): void
+    public function test_staff_can_view_another_users_private_profile_photo_for_user_management(): void
     {
+        Storage::fake('local');
         Storage::fake('public');
 
         $staff = User::factory()->create([
@@ -45,7 +49,7 @@ class ProfilePhotoDeliveryTest extends TestCase
             'profile_photo_path' => 'profile-photos/managed-user.png',
         ]);
 
-        Storage::disk('public')->put(
+        Storage::disk('local')->put(
             $landowner->profile_photo_path,
             base64_decode(self::TINY_PNG)
         );
@@ -57,6 +61,7 @@ class ProfilePhotoDeliveryTest extends TestCase
 
     public function test_non_staff_user_cannot_view_another_users_profile_photo(): void
     {
+        Storage::fake('local');
         Storage::fake('public');
 
         $viewer = User::factory()->create([
@@ -68,7 +73,7 @@ class ProfilePhotoDeliveryTest extends TestCase
             'profile_photo_path' => 'profile-photos/other-user.png',
         ]);
 
-        Storage::disk('public')->put(
+        Storage::disk('local')->put(
             $other->profile_photo_path,
             base64_decode(self::TINY_PNG)
         );
@@ -78,8 +83,35 @@ class ProfilePhotoDeliveryTest extends TestCase
             ->assertForbidden();
     }
 
+    public function test_legacy_public_profile_photo_is_migrated_to_private_storage_on_authorized_access(): void
+    {
+        Storage::fake('local');
+        Storage::fake('public');
+
+        $user = User::factory()->create([
+            'role' => User::ROLE_STAFF,
+            'profile_photo_path' => 'profile-photos/legacy-photo.png',
+        ]);
+
+        Storage::disk('public')->put(
+            $user->profile_photo_path,
+            base64_decode(self::TINY_PNG)
+        );
+
+        Storage::disk('local')->assertMissing($user->profile_photo_path);
+        Storage::disk('public')->assertExists($user->profile_photo_path);
+
+        $this->actingAs($user)
+            ->get(route('profile.photo', $user))
+            ->assertOk();
+
+        Storage::disk('local')->assertExists($user->profile_photo_path);
+        Storage::disk('public')->assertMissing($user->profile_photo_path);
+    }
+
     public function test_missing_profile_photo_file_returns_404_and_profile_page_uses_fallback(): void
     {
+        Storage::fake('local');
         Storage::fake('public');
 
         $user = User::factory()->create([

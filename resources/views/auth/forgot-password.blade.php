@@ -127,7 +127,7 @@
             border-radius: .8rem;
             background: #f0fdf4;
             color: #166534;
-            font-size: 1rem;
+            font-size: .92rem;
             font-weight: 900;
             word-break: break-word;
         }
@@ -275,7 +275,7 @@
                 </div>
 
                 <h1>Recover Your Account</h1>
-                <p class="intro">Use your username first. If the account has a registered email address, confirm it and receive a one-time verification code. Accounts without email remain eligible for DAR Staff-assisted password reset.</p>
+                <p class="intro">Enter your username and recovery email. For privacy, DAR-LTCMS does not confirm whether a username exists, whether an account is active, or whether an email is registered. A verification code is sent only when the recovery details match an eligible account.</p>
 
                 @if (session('status'))
                     <div class="status">{{ session('status') }}</div>
@@ -292,17 +292,16 @@
                 @endif
 
                 @if ($step === 'confirm_email')
-                    <span class="step-chip">Step 2 of 3 · Confirm Email</span>
-                    <div class="masked-email">Registered email: {{ $recovery['masked_email'] ?? 'Unavailable' }}</div>
-                    <p class="note">Enter the complete email address that matches the masked address above. The system will never display the full stored email.</p>
+                    <span class="step-chip">Step 2 of 3 · Confirm Recovery Email</span>
+                    <p class="note">Enter the complete recovery email associated with the username. The system intentionally does not display or mask the stored email address.</p>
 
                     <form method="POST" action="{{ route('password.recovery.confirm-email') }}">
                         @csrf
                         <div class="field">
-                            <label for="email">Registered Email Address</label>
+                            <label for="email">Recovery Email Address</label>
                             <input id="email" name="email" type="email" value="{{ old('email') }}" required autofocus autocomplete="email" placeholder="name@example.com">
                         </div>
-                        <button type="submit" class="primary">Confirm Email and Send Code</button>
+                        <button type="submit" class="primary">Verify Recovery Details</button>
                     </form>
 
                     <div class="link-row">
@@ -314,7 +313,7 @@
                     </div>
                 @elseif ($step === 'otp')
                     <span class="step-chip">Step 3 of 3 · Verify Code</span>
-                    <div class="masked-email">Code sent to: {{ $recovery['masked_email'] ?? 'registered email' }}</div>
+                    <div class="masked-email">Verification code sent to the registered recovery email.</div>
                     <p class="note">Enter the 6-digit code sent to your email. It expires after 10 minutes. Requesting a new code invalidates the previous one.</p>
 
                     <form method="POST" action="{{ route('password.recovery.verify-code') }}">
@@ -350,7 +349,7 @@
                         <button type="submit" class="primary">Continue</button>
                     </form>
 
-                    <p class="note">If your account has no registered email address, the system will direct you to authorized DAR Staff for password assistance.</p>
+                    <p class="note">If email recovery cannot be completed, contact authorized DAR Staff at the DAR Negros Oriental Provincial Office for password assistance.</p>
 
                     <div class="link-row">
                         <a href="{{ route('login') }}" class="recovery-footer-action">Back to login</a>
