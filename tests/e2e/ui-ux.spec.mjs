@@ -115,12 +115,22 @@ test.describe('authenticated UI UX behavior', () => {
         const header = panel.locator(':scope > .review-panel-header');
         const body = panel.locator(':scope > .review-panel-body');
 
+        // Wait past every DOMContentLoaded callback so a late legacy button cannot slip past the assertion.
+        await page.waitForTimeout(100);
         await expect(panel.locator('[data-requirement-group-toggle]')).toHaveCount(0);
         await expect(panel.locator('.ui-requirement-group-chevron')).toHaveCount(1);
         await expect(header).toHaveAttribute('role', 'button');
         await expect(header).toHaveAttribute('tabindex', '0');
         await expect(header).toHaveAttribute('aria-expanded', 'false');
         await expect(body).toBeHidden();
+
+        const chevronBeforeBadge = await header.evaluate((node) => {
+            const chevron = node.querySelector('.ui-requirement-group-chevron');
+            const actions = node.querySelector('.requirement-group-actions');
+            const badge = node.querySelector('.party-group-badge');
+            return Boolean(chevron && actions && badge && chevron.nextElementSibling === actions && badge.parentElement === actions);
+        });
+        expect(chevronBeforeBadge).toBe(true);
 
         await header.click();
         await expect(header).toHaveAttribute('aria-expanded', 'true');
