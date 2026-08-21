@@ -13,25 +13,38 @@ class LandownerDashboardController extends Controller
 {
     public function __invoke()
     {
-        $landownerIds = Landowner::query()
+        // Resolve the user's Landowner records once. Keeping the ID collection
+        // preserves support for historical accounts linked to more than one record.
+        $landowners = Landowner::query()
             ->where('user_id', Auth::id())
-            ->pluck('id');
+            ->get(['id', 'first_name', 'middle_name', 'last_name', 'suffix']);
 
-        $landowner = Landowner::query()
-            ->where('user_id', Auth::id())
-            ->first();
+        $landownerIds = $landowners->pluck('id');
+        $landowner = $landowners->first();
 
         $landholdingsQuery = Landholding::query()
-            ->with(['parcel', 'landowner'])
+            ->select([
+                'id',
+                'landowner_id',
+                'parcel_id',
+                'area_hectares',
+                'status',
+                'created_at',
+            ])
+            ->with(['parcel' => function ($query) {
+                $query->select([
+                    'id',
+                    'parcel_code',
+                    'municipality',
+                    'barangay',
+                    'geometry_geojson',
+                ]);
+            }])
             ->whereIn('landowner_id', $landownerIds);
 
+        // The dashboard reads application scalar/JSON fields only. Avoid loading
+        // parcels, clearance and party relationships that are unused by the view.
         $applicationQuery = LandTransferApplication::query()
-            ->with([
-                'transferorLandowner',
-                'transfereeLandowner',
-                'applicationParcels.parcel',
-                'clearance',
-            ])
             ->linkedToLandownerIds($landownerIds);
 
         $statusCounts = (clone $applicationQuery)
@@ -52,7 +65,7 @@ class LandownerDashboardController extends Controller
             ->count('parcel_id');
 
         $landholdingCount = (clone $landholdingsQuery)->count();
-        $applicationCount = (clone $applicationQuery)->count();
+        $applicationCount = $statusCounts->sum(fn ($count) => (int) $count);
 
         $statusSummary = collect([
             [
