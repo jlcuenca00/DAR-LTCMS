@@ -55,7 +55,7 @@ class FinalLtcForm5Test extends TestCase
         $clearance = app(ApplicationClearanceService::class)
             ->generateForDecision($application, $staff->id);
 
-        $this->assertSame('1803-2026-0043 ( 7 )', $clearance->clearance_number);
+        $this->assertSame('1803-2026-0043 (7)', $clearance->clearance_number);
         $this->assertSame(LandTransferApplication::STATUS_RELEASED, $clearance->decision_status);
         $this->assertSame('1.5000', (string) $clearance->total_area_hectares);
         $this->assertCount(1, $clearance->parcel_snapshot);
@@ -75,7 +75,7 @@ class FinalLtcForm5Test extends TestCase
 
         $clearance = new ApplicationClearance([
             'land_transfer_application_id' => $application->id,
-            'clearance_number' => '1803-2026-0050 ( 3 )',
+            'clearance_number' => '1803-2026-0050 (3)',
             'decision_status' => LandTransferApplication::STATUS_RELEASED,
             'application_code' => $application->application_code,
             'transferor_name' => 'Juan Transferor',
@@ -116,7 +116,7 @@ class FinalLtcForm5Test extends TestCase
             'pdfMode' => false,
         ])->render();
 
-        $this->assertStringContainsString('1803-2026-0050 ( 3 )', $html);
+        $this->assertStringContainsString('1803-2026-0050 (3)', $html);
         $this->assertStringContainsString('TCT No. T-1001; TCT No. T-1002', $html);
         $this->assertStringContainsString('TD Number TD-1001; TD-1002', $html);
         $this->assertStringContainsString('LOT-1001, PSD-1001; LOT-1002, PSD-1002, with a total area of 30000 sq. m.', $html);
@@ -136,7 +136,7 @@ class FinalLtcForm5Test extends TestCase
         $application->load('documents');
 
         $clearance = new ApplicationClearance([
-            'clearance_number' => '1803-2026-0051 ( 1 )',
+            'clearance_number' => '1803-2026-0051 (1)',
             'decision_status' => LandTransferApplication::STATUS_DENIED,
             'application_code' => $application->application_code,
             'transferor_name' => $application->transferorDisplayName(),
