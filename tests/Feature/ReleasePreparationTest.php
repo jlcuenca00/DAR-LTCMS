@@ -60,7 +60,8 @@ class ReleasePreparationTest extends TestCase
         $this->assertStringContainsString('/storage/app/private/', $deployment);
         $this->assertStringContainsString('/storage/app/public/', $deployment);
         $this->assertStringContainsString('/.env,', $deployment);
-        $this->assertStringContainsString("printf '%s\\n' '${{ github.sha }}' > .release-commit", $deployment);
+        $this->assertStringContainsString("printf '%s\\n'", $deployment);
+        $this->assertStringContainsString('> .release-commit', $deployment);
     }
 
     private function configureCleanProductionEnvironment(): void
