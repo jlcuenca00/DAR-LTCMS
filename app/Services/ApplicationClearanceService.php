@@ -6,7 +6,6 @@ use App\Models\ApplicationClearance;
 use App\Models\LandTransferApplication;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
-use App\Services\AuditLogger;
 
 class ApplicationClearanceService
 {
@@ -30,6 +29,20 @@ class ApplicationClearanceService
 
             if (! in_array($application->status, $allowedDecisionStatuses, true)) {
                 throw new \RuntimeException('Clearance can only be generated for released/denied decisions.');
+            }
+
+            /*
+             * Final decision outputs are immutable snapshots. If one already
+             * exists for this application, return it exactly as recorded rather
+             * than refreshing names, parcel data, timestamps, or decision data.
+             */
+            $existingClearance = ApplicationClearance::query()
+                ->where('land_transfer_application_id', $application->id)
+                ->lockForUpdate()
+                ->first();
+
+            if ($existingClearance) {
+                return $existingClearance;
             }
 
             $totalArea = '0.0000';
@@ -76,26 +89,22 @@ class ApplicationClearanceService
                 ->where('land_transfer_application_id', '<>', $application->id)
                 ->exists());
 
-                        $clearance = ApplicationClearance::updateOrCreate(
-                [
-                    'land_transfer_application_id' => $application->id,
-                ],
-                [
-                    'clearance_number' => $clearanceNumber,
-                    'decision_status' => $application->status,
-                    'application_code' => $application->application_code,
-                    'transferor_name' => $application->transferorDisplayName(),
-                    'transferee_name' => $application->transfereeDisplayName(),
-                    'municipality' => $application->municipality,
-                    'barangay' => $application->barangay,
-                    'total_area_hectares' => $totalArea,
-                    'parcel_snapshot' => $parcelSnapshot,
-                    'review_officer_name' => $reviewOfficerName,
-                    'reviewed_at' => $application->reviewed_at,
-                    'generated_by' => $userId,
-                    'generated_at' => now(),
-                ]
-            );
+            $clearance = ApplicationClearance::create([
+                'land_transfer_application_id' => $application->id,
+                'clearance_number' => $clearanceNumber,
+                'decision_status' => $application->status,
+                'application_code' => $application->application_code,
+                'transferor_name' => $application->transferorDisplayName(),
+                'transferee_name' => $application->transfereeDisplayName(),
+                'municipality' => $application->municipality,
+                'barangay' => $application->barangay,
+                'total_area_hectares' => $totalArea,
+                'parcel_snapshot' => $parcelSnapshot,
+                'review_officer_name' => $reviewOfficerName,
+                'reviewed_at' => $application->reviewed_at,
+                'generated_by' => $userId,
+                'generated_at' => now(),
+            ]);
 
             AuditLogger::record(
                 'clearance_generated',
@@ -106,6 +115,7 @@ class ApplicationClearanceService
                     'decision_status' => $clearance->decision_status,
                     'total_area_hectares' => $clearance->total_area_hectares,
                     'parcel_count' => count($parcelSnapshot),
+                    'scope_note' => 'Immutable final clearance snapshot only. No ownership transfer or registry mutation was performed.',
                 ],
                 $userId
             );
