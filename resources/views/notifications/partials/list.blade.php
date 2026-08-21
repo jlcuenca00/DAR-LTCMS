@@ -1,16 +1,15 @@
 @php
     $notificationTypeLabels = [
         'application_created' => 'Application encoded',
-        'application_submitted' => 'Application updated',
+        'application_submitted' => 'Submitted for review',
         'application_status_updated' => 'Application status updated',
-        'application_approved' => 'Application approved',
         'application_released' => 'Clearance released',
-        'application_not_approved' => 'Application denied',
         'application_denied' => 'Application denied',
-        'document_uploaded' => 'Document uploaded',
-        'document_reviewed' => 'Document reviewed',
-        'source_record_created' => 'Source record created',
-        'source_package_created' => 'Source package created',
+        'landowner_application_status' => 'Application status',
+        'landowner_final_decision' => 'Final clearance decision',
+        'geodetic_reference_available' => 'Source reference available',
+        'geodetic_reference_imported' => 'Source references imported',
+        'geodetic_reference_updated' => 'Parcel reference updated',
     ];
 
     $cleanNotificationText = function (?string $value): string {
