@@ -105,7 +105,8 @@ class AuditLogger
                 continue;
             }
 
-            $sanitized[$key] = '[NON_SCALAR_VALUE:' . $value::class . ']';
+            $type = is_object($value) ? $value::class : gettype($value);
+            $sanitized[$key] = '[NON_SCALAR_VALUE:' . $type . ']';
         }
 
         return $sanitized;
