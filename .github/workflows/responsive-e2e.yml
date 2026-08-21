@@ -10,6 +10,7 @@ on:
       - 'resources/js/**'
       - 'resources/views/**'
       - 'app/Http/Controllers/Staff/StaffDashboardController.php'
+      - 'app/Http/Controllers/Staff/MonitoringReportController.php'
       - 'app/Http/Controllers/Staff/ApplicationClearanceController.php'
       - 'app/Http/Controllers/Landowner/ApplicationClearanceController.php'
       - 'app/Http/Controllers/Staff/ApplicationWorkflowController.php'
@@ -30,6 +31,7 @@ on:
       - 'tests/Feature/ApplicationModalViewportTest.php'
       - 'tests/Feature/DashboardAttentionTest.php'
       - 'tests/Feature/ClearancePrintReferenceTest.php'
+      - 'tests/Feature/MonitoringReportTest.php'
       - 'tests/Feature/FinalDecisionLockTest.php'
       - 'tests/Feature/FinalDecisionIntegrityHardeningTest.php'
       - 'tests/Feature/RbacSecurityHardeningTest.php'
@@ -120,7 +122,7 @@ jobs:
       - name: Build frontend assets
         run: npm run build
 
-      - name: Run responsive, workflow, UI UX, RBAC, audit, final-decision, and data-integrity regressions
+      - name: Run responsive, workflow, UI UX, reports, RBAC, audit, final-decision, and data-integrity regressions
         run: |
           php artisan test \
             tests/Feature/ResponsiveUiFoundationTest.php \
@@ -134,6 +136,7 @@ jobs:
             tests/Feature/UiUxSystemTest.php \
             tests/Feature/ClearancePrintReferenceTest.php \
             tests/Feature/DashboardAttentionTest.php \
+            tests/Feature/MonitoringReportTest.php \
             tests/Feature/RbacSecurityHardeningTest.php \
             tests/Feature/FinalDecisionLockTest.php \
             tests/Feature/FinalDecisionIntegrityHardeningTest.php \
