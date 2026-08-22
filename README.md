@@ -109,7 +109,7 @@ DAR-LTCMS supports LTC-related forms used in the application workflow, including
 - **LTC Form No. 4** – review checklist
 - **LTC Form No. 5** – final Land Transfer Clearance certification/output
 
-For LTC Form No. 5, the current implementation preserves annual LTC numbering/page references, linked Parcel details, GRANTED/DENIED output, official signatory information, notarial details, and 8.5 x 13 inch print/PDF behavior.
+For LTC Form No. 5, the current implementation preserves annual LTC numbering/page references, linked Parcel details, GRANTED/DENIED output, signatory **ENGR. MANUEL M. GALON, JR., OIC PARPO II**, notarial details, and 8.5 x 13 inch print/PDF behavior.
 
 Final outputs remain administrative clearance records only and do not automatically alter ownership or registry records.
 
