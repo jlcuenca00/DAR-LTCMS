@@ -95,7 +95,7 @@ const roleTours = {
         helpMount: '.geo-topbar-right',
         helpLabel: 'Geodetic Portal Tour',
         welcomeTitle: 'Welcome to the Geodetic Portal',
-        welcomeCopy: 'Take a quick tour of the parcel and map information available for geodetic review.',
+        welcomeCopy: 'Take a quick tour of the parcel and mapping tools available for geodetic review.',
         steps: [
             {
                 path: '/geodetic/dashboard',
@@ -122,10 +122,31 @@ const roleTours = {
             },
             {
                 path: '/geodetic/parcel-map',
-                selectors: ['#parcel-map', '#map', '.geo-content'],
-                title: 'Parcel Map',
-                copy: 'Use the map to review parcel locations and mapped boundaries. This information supports technical review and does not change land ownership.',
+                selectors: ['#parcel-search', '.geo-search-wrap', '.geo-map-sidebar'],
+                title: 'Find Mapped Parcels',
+                copy: 'Search by parcel code, title number, tax declaration, landowner, barangay, or municipality. Choosing a result focuses the corresponding mapped parcel.',
+                side: 'right',
+            },
+            {
+                path: '/geodetic/parcel-map',
+                selectors: ['#parcel-map', '.geo-map-panel', '.geo-content'],
+                title: 'Inspect Parcel Boundaries',
+                copy: 'Pan and zoom the map to review parcel locations and mapped boundaries. Hover over a parcel for reference details, or open the parcel record from the mapped feature when further review is needed.',
                 side: 'left',
+            },
+            {
+                path: '/geodetic/parcel-map',
+                selectors: ['.geo-map-tools', '#reset-map-view', '.geo-map-sidebar'],
+                title: 'Map Navigation Tools',
+                copy: 'Use Reset View to return to the provincial parcel extent, or return to Parcel References when you need the full record list.',
+                side: 'right',
+            },
+            {
+                path: '/geodetic/parcel-map',
+                selectors: ['.geo-legend-list', '.geo-map-sidebar', '.geo-content'],
+                title: 'Map Legend and Review Flags',
+                copy: 'The legend distinguishes mapped parcel records from parcels flagged for review. Flags are review cues only and do not authorize ownership or registry changes.',
+                side: 'right',
             },
             {
                 path: '/geodetic/parcel-map',
