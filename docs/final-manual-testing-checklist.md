@@ -1,190 +1,233 @@
 # Final Manual Testing Checklist
 
-Use this checklist before defense and before the final database/demo export.
+Use this checklist for final UAT/defense verification in a controlled local or staging environment before the production `v1.0.0` gate.
 
-## 1. Setup and baseline
+> **Do not run `migrate:fresh`, demo seeders, or destructive test setup commands on production.** Production release validation uses `docs/RELEASE_PREPARATION.md` and `php artisan dar:release-check`.
+
+## 1. Test setup and baseline
 
 - [ ] Run `composer install`
-- [ ] Run `npm install`
-- [ ] Confirm `.env` uses PostgreSQL database `dar_iland`
-- [ ] Run `php artisan migrate:fresh --seed`
-- [ ] Run `php artisan db:seed --class=LandownerPrivacyDemoSeeder`
-- [ ] Run `php artisan db:seed --class=ParcelMapDemoSeeder`
+- [ ] Run `npm ci`
+- [ ] Confirm the test `.env` uses PostgreSQL database `dar_iland`
+- [ ] Prepare the intended local/staging test dataset
 - [ ] Run `npm run build`
 - [ ] Run `php artisan test`
 
-Expected result: all tests pass.
+Expected: build and automated tests pass before manual UAT.
 
-## 2. Login and role redirects
+## 2. Login and role routing
 
 - [ ] Staff can log in
 - [ ] Landowner A can log in
 - [ ] Landowner B can log in
-- [ ] Geodetic user can log in if created through User Management
+- [ ] Geodetic user can log in
 - [ ] Inactive account cannot continue using the system
-- [ ] Each role lands on its own dashboard
+- [ ] Each role lands on the correct dashboard
 
-Expected result: role-based dashboards and navigation are correct.
+Expected: role-based dashboards/navigation are correct.
 
 ## 3. Staff dashboard and navigation
 
 - [ ] Staff Dashboard loads
-- [ ] Quick action cards point to correct modules
+- [ ] Quick actions open the correct modules
 - [ ] Sidebar active states are correct
-- [ ] User Management appears in the administration/footer area, not as a main workflow item
+- [ ] User Management remains an administrative function
 - [ ] Logout works
 
-Expected result: staff navigation is polished, consistent, and not cluttered.
-
-## 4. Staff application processing
+## 4. Staff application encoding and document review
 
 - [ ] Staff can open Clearance Applications
-- [ ] Staff can create/encode an application
-- [ ] Staff can link or create landowner records from application parties
-- [ ] Staff can upload supporting documents
-- [ ] Staff can encode document metadata/indexing fields
-- [ ] Staff can submit an application for review
-- [ ] Staff can approve an application
-- [ ] Staff can mark an application as not approved
-- [ ] Browser decision output opens
-- [ ] PDF decision output downloads/opens
+- [ ] Staff can manually encode an application
+- [ ] Staff can encode/select multiple transferor/s and transferee/s where applicable
+- [ ] Staff can link the relevant Parcel record/s
+- [ ] Staff can upload/review supporting documents
+- [ ] Requirement-specific data fields display correctly
+- [ ] Date issued is available where applicable
+- [ ] Transfer-instrument fields display for deeds/instruments
+- [ ] Notarial fields display for notarized requirements
+- [ ] Staff can submit/process the application through the workflow
 
-Expected result: approval generates/records clearance result only. It must not imply automatic land ownership transfer or registry mutation.
+Expected: document data capture supports administrative review only; it is not automatic legal verification.
 
-## 5. Final decision lock
+## 5. Office workflow
 
-Test one approved and one not-approved application.
+Verify a positive-path application moves through:
 
-- [ ] Edit controls are hidden/disabled after final decision
-- [ ] Document upload is locked after final decision
-- [ ] Backend rejects post-final update attempts
+- [ ] Pending Review by Legal Officer
+- [ ] Endorsed to LTI Division
+- [ ] Endorsed to Chief Legal
+- [ ] Endorsed to PARPO II
+- [ ] For Releasing
+- [ ] Released
+
+Also verify a separate application can end in:
+
+- [ ] Denied
+
+Expected: **Released** and **Denied** are the current final user-facing states.
+
+## 6. Final-decision lock
+
+Test one Released and one Denied application.
+
+- [ ] Edit controls are hidden/disabled after finalization
+- [ ] Supporting-document upload/removal is locked
+- [ ] Backend rejects post-final application mutations
 - [ ] Backend rejects post-final upload/removal attempts
-- [ ] UI clearly shows final/locked state
-- [ ] Decision output remains viewable by authorized users
+- [ ] UI clearly shows the final/locked state
+- [ ] Authorized viewing, reporting, audit, and archival access remains available
 
-Expected result: final decision records are preserved and protected.
+Expected: final records are preserved and protected.
 
-## 6. Landowner privacy
+## 7. LTC Form No. 5
 
-Using `LandownerPrivacyDemoSeeder`:
+For Released and Denied records:
 
-- [ ] Login as `landowner.a@test.com`
-- [ ] Confirm Alpha parcel/application appears
-- [ ] Confirm Bravo parcel/application does not appear
-- [ ] Attempt to open Bravo parcel/application URL directly
-- [ ] Confirm direct access is denied
-- [ ] Login as `landowner.b@test.com`
-- [ ] Confirm Bravo parcel/application appears
-- [ ] Confirm Alpha parcel/application does not appear
-- [ ] Attempt to open Alpha parcel/application URL directly
-- [ ] Confirm direct access is denied
+- [ ] Browser output opens
+- [ ] Direct PDF output opens/downloads
+- [ ] 8.5 x 13 inch page format is correct
+- [ ] LTC number uses the annual sequence and stored page value
+- [ ] Released record prints GRANTED
+- [ ] Denied record prints DENIED
+- [ ] All linked Parcel title/TD/lot/survey references are correct
+- [ ] Combined recorded area is correct
+- [ ] Signatory is `ENGR. MANUEL M. GALON, JR., OIC PARPO II`
+- [ ] Notarial Doc/Page/Book/Series details appear when encoded
+- [ ] No printed signature/stamp placeholder is presented as an executed signature
+- [ ] Output wording does not claim that legal ownership or registry records were automatically changed
 
-Expected result: landowners only see their own linked records.
+## 8. Landowner privacy
 
-## 7. Geodetic read-only access
+Using two different Landowner accounts:
+
+- [ ] Landowner A sees only A-linked Parcel/Application records
+- [ ] Landowner A cannot open B's records by direct URL
+- [ ] Landowner B sees only B-linked Parcel/Application records
+- [ ] Landowner B cannot open A's records by direct URL
+- [ ] Landowner cannot create a Clearance Application
+- [ ] Own final output is visible only when tied to the authenticated Landowner
+- [ ] Parcel Map remains privacy-filtered
+
+Expected: Landowners never access records belonging to another Landowner.
+
+## 9. Geodetic read-only access
 
 - [ ] Geodetic dashboard loads
-- [ ] Geodetic can open parcel records
-- [ ] Geodetic can open parcel detail pages
-- [ ] Geodetic can open parcel map viewer
-- [ ] Geodetic cannot open staff clearance applications
-- [ ] Geodetic cannot approve/not approve applications
-- [ ] Geodetic cannot upload supporting documents
-- [ ] Geodetic cannot access User Management
-- [ ] Geodetic cannot generate clearance decisions
+- [ ] Geodetic can review allowed Parcel/reference information
+- [ ] Geodetic can use the read-only Parcel Map
+- [ ] Geodetic cannot process/release/deny applications
+- [ ] Geodetic cannot upload application supporting documents
+- [ ] Geodetic cannot broadly edit ownership/application records
+- [ ] Geodetic cannot access Staff User Management
 
-Expected result: geodetic access remains limited/read-only.
+Expected: Geodetic access remains limited/read-only.
 
-## 8. Landowner portal
+## 10. Landowner Records
 
-- [ ] Landowner dashboard loads
-- [ ] Own parcel records list loads
-- [ ] Own application status list loads
-- [ ] Finalized decision output is viewable only for own linked applications
-- [ ] Decision PDF is viewable/downloadable only for own linked applications
-- [ ] Parcel map is privacy-filtered
-- [ ] Profile page matches role styling
+- [ ] Staff can create/edit Landowner records using the current fields
+- [ ] First/Middle/Last/Suffix fields behave correctly
+- [ ] Contact number, address, municipality, barangay, and province save correctly
+- [ ] Linked Landowner user account behaves correctly
+- [ ] One user is not incorrectly linked to multiple Landowner records
 
-Expected result: landowner portal is useful but privacy-restricted.
-
-## 9. Parcel records and agricultural classification
+## 11. Parcel and Landholding Records
 
 - [ ] Staff Parcel Records page loads
-- [ ] Staff can search/filter parcel records
-- [ ] Agricultural classification filter is a dropdown
-- [ ] Parcel edit form uses agricultural classification dropdown
-- [ ] Labels do not say “crop land use” where agricultural classification is intended
-- [ ] Staff/geodetic/landowner visibility rules are still correct
-- [ ] `non_agricultural` is treated as reference/legacy/exception data only
+- [ ] Search/filter works
+- [ ] Agricultural classification/status uses the current labels/controls
+- [ ] Parcel area values are consistent
+- [ ] Landholding links point to the intended Landowner and Parcel
+- [ ] Staff can manage authorized record fields
+- [ ] Landowner/Geodetic visibility restrictions remain correct
 
-Expected result: agricultural classification supports records management only and does not become an approval gate.
+Expected: these modules manage administrative records; clearance finalization does not automatically mutate legal ownership.
 
-## 10. Source records / legacy records
+## 12. Source / Reference Records
 
 - [ ] Source Records page loads
 - [ ] Encode Source Record Package works
-- [ ] Import template downloads
-- [ ] Import preview page works
-- [ ] Valid rows and errors are visually understandable
-- [ ] Source record details page loads
-- [ ] Link parcel/create parcel actions work for staff
-- [ ] Link landowner/create landowner actions work for staff
-- [ ] Crop/land-use wording has been replaced with agricultural classification wording/dropdowns
+- [ ] Source scope/provenance is visible
+- [ ] Reference file upload/view works through protected delivery
+- [ ] Import template/preview works when used
+- [ ] Link/create Parcel and Landowner actions work only for authorized Staff
+- [ ] Geodetic access remains limited/read-only where exposed
 
-Expected result: source records support review, provenance, and encoding/import workflows.
+## 13. Parcel Map
 
-## 11. Parcel map viewer
+- [ ] Staff map loads authorized broad Parcel data
+- [ ] Municipality/barangay filtering works
+- [ ] Parcel hover/click/details behavior works
+- [ ] Geodetic map remains read-only
+- [ ] Landowner map includes only own linked Parcels
+- [ ] Geometry display is usable and non-overlapping for the test data
 
-- [ ] Staff map loads broad parcel data
-- [ ] Staff map hover/click behavior works
-- [ ] Staff map opens parcel details
-- [ ] Geodetic map loads read-only parcel/reference data
-- [ ] Landowner map loads only own linked parcel data
-- [ ] Basemap is clean and does not show heavy distracting boundary/water lines
-- [ ] Demo irregular parcels display properly
+Expected: map features support review/reference only and do not mutate ownership.
 
-Expected result: map viewer supports review and monitoring only. It does not mutate parcel ownership.
-
-## 12. Monitoring reports
+## 14. Monitoring Reports
 
 - [ ] Monitoring dashboard loads
-- [ ] Summary counts display
-- [ ] Status/decision breakdowns display
-- [ ] Municipality breakdown displays
-- [ ] Recent applications/clearances display
+- [ ] Date, status, and municipality filters work consistently
+- [ ] Workflow status breakdown uses current labels
+- [ ] Released and Denied output totals are correct
+- [ ] Recorded Output Area is labeled as an administrative output metric
 - [ ] Printable report opens
-- [ ] Print / Save as PDF is visible
-- [ ] Scope notice appears
-- [ ] Signature areas appear
+- [ ] Scope/limitation wording is visible
+- [ ] Report does not claim legal transfer completion
 
-Expected result: report is defense-ready and print-ready.
-
-## 13. Audit logs
+## 15. Audit Logs
 
 - [ ] Audit Log Viewer loads
-- [ ] Filter by action works
-- [ ] Filter by application code works
-- [ ] Filter by actor works
-- [ ] Expandable metadata/details are readable
-- [ ] Application links return to review page
-- [ ] Important actions are logged: document upload/removal, submit, approve, not-approved, clearance generation, user create/update
+- [ ] Filters work
+- [ ] Actor and timestamp are visible
+- [ ] Application/record context is traceable
+- [ ] Important actions are logged, including application creation/processing/finalization, document changes, clearance generation, and user administration
+- [ ] Final decision records remain traceable after locking
 
-Expected result: important system actions remain traceable.
+## 16. Notifications
 
-## 14. User / Role Management
+- [ ] Notification bell/panel works
+- [ ] Full notification archive opens
+- [ ] Users only see notifications intended for them
+- [ ] Staff application events use current Released/Denied terminology
+- [ ] Landowner notifications expose only their own application information
 
-- [ ] Staff can list users
-- [ ] Staff can create users
-- [ ] Staff can assign role: staff, landowner, geodetic
-- [ ] Staff can activate/deactivate users
-- [ ] Landowner account linking works
-- [ ] One-user-to-one-landowner rule is protected
-- [ ] Staff cannot accidentally self-demote/self-deactivate if blocked by implementation
-- [ ] User create/update actions are audit logged
+## 17. User / Role Management
 
-Expected result: user administration is staff-only and traceable.
+- [ ] Staff can list/create/update authorized users
+- [ ] Available roles are Staff, Landowner, and Geodetic
+- [ ] Activate/deactivate controls work
+- [ ] Landowner account linkage works
+- [ ] User management remains Staff-only
+- [ ] Significant account actions are audit logged
 
-## 15. Final route/page sweep
+## 18. Security and protected files
+
+- [ ] Guest cannot open protected administrative files
+- [ ] Landowner cannot open Staff-only source scans
+- [ ] Geodetic cannot open Staff-only source scans unless explicitly authorized by scope
+- [ ] `public/storage` is not required for sensitive file delivery
+- [ ] Authenticated pages/files use no-store/no-cache behavior as designed
+- [ ] Unauthorized direct URLs return redirect/403/404 as appropriate
+
+## 19. Responsive sweep
+
+Check the major portals on phone, tablet, and desktop widths:
+
+- [ ] Login/recovery
+- [ ] Staff Dashboard
+- [ ] Clearance Applications list/review
+- [ ] Landowner/Parcel/Landholding records
+- [ ] Source Records
+- [ ] Parcel Map
+- [ ] Monitoring Reports
+- [ ] Audit Logs
+- [ ] User Management
+- [ ] Landowner portal
+- [ ] Geodetic portal
+
+Expected: no horizontal overflow, hidden essential controls, unusable modal, or broken navigation.
+
+## 20. Major route/page sweep
 
 Run:
 
@@ -192,7 +235,7 @@ Run:
 php artisan route:list
 ```
 
-Manually inspect major pages:
+Manually inspect major pages including:
 
 - [ ] `/login`
 - [ ] `/staff/dashboard`
@@ -213,4 +256,4 @@ Manually inspect major pages:
 - [ ] `/geodetic/parcel-map`
 - [ ] `/profile`
 
-Expected result: no broken routes, no old/unpolished leftover page, no scope-breaking wording.
+Expected: no broken routes, obsolete DAR-iLAND branding, outdated Approved/Not Approved user-facing workflow language, or wording that exceeds the approved clearance-processing scope.
