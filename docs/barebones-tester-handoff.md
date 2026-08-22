@@ -1,90 +1,90 @@
 # Barebones Tester Handoff Guide
 
-This guide prepares the DAR-LTCMS / DAR-iLAND system for user testing with an empty working database and only one starting staff account.
+This guide prepares **DAR-LTCMS** for controlled user testing with an empty working dataset and only tester accounts/reference configuration.
 
-The purpose is to let testers create data through the system UI instead of testing pre-filled demo records.
+> **Testing only:** `migrate:fresh` permanently deletes the target database contents. Never run this reset against the production DAR-LTCMS database.
+
+The purpose is to let testers create records through the web interface instead of relying on pre-filled demo transactions.
 
 ## Barebones database state
 
 After running the barebones reset, the system should contain:
 
-- one active staff account
-- required document reference records
-- no landowner demo records
-- no geodetic demo records
-- no parcel demo records
-- no landholding demo records
-- no source record demo records
-- no clearance application demo records
+- five active Staff tester accounts
+- the required document reference list
+- no Landowner demo records
+- no Geodetic demo accounts
+- no Parcel demo records
+- no Landholding demo records
+- no Source Record demo records
+- no Clearance Application demo records
 - no application document demo records
-- no audit log demo records
 - no notification demo records
+- no audit-log demo records
 
-The required document list is kept because it is reference/configuration data used by the clearance application workflow, not tester-filled demo data.
+The required document list is kept because it is workflow reference/configuration data, not tester-entered transaction data.
 
-## Starting staff account
+## Staff tester accounts
 
-Use this account only to begin the test session:
+The seeder creates these Staff accounts. All use the test password `password` and are for local/staging testing only.
 
-```text
-Email: staff.tester@dar-ltcms.local
-Password: password
-Role: Staff
-```
+| Name | Email |
+|---|---|
+| DAR Staff Tester | `staff.tester@dar-ltcms.local` |
+| Jay | `jay.staff@dar-ltcms.local` |
+| Miles | `miles.staff@dar-ltcms.local` |
+| Vea | `vea.staff@dar-ltcms.local` |
+| Lloyd | `lloyd.staff@dar-ltcms.local` |
 
-After logging in, the tester may create additional staff, landowner, or geodetic accounts through Staff User / Role Management if those roles need to be tested.
+Use `staff.tester@dar-ltcms.local` as the primary starting account unless a test specifically needs multiple Staff users.
 
 ## Reset command
 
-From the project root, run:
+From the project root:
 
 ```bash
 php artisan migrate:fresh --seeder=BarebonesTesterSeeder
 ```
 
-Then build assets:
+Then install/build frontend assets as needed and start Laravel:
 
 ```bash
+npm ci
 npm run build
-```
-
-Then start the system:
-
-```bash
 php artisan serve
 ```
 
-## What the tester should do through the system
+## Recommended testing flow
 
-The tester should not directly edit the database. The tester should create and review data using the web interface.
-
-Recommended testing flow:
-
-1. Log in as the staff tester account.
+1. Log in as the primary Staff tester.
 2. Open User / Role Management.
-3. Create a landowner user account if landowner portal testing is needed.
-4. Create a geodetic user account if geodetic portal testing is needed.
-5. Create a landowner record.
-6. Link the landowner user account to the landowner record.
-7. Create a parcel record.
-8. Create or link a landholding record for the landowner and parcel.
-9. Optionally create a source record package/reference record.
-10. Encode a land transfer clearance application manually as staff.
-11. Upload supporting documents and encode document metadata/indexing fields.
-12. Submit the application for review.
-13. Test approval or not-approved decision behavior.
-14. Confirm final decision locking.
-15. Confirm audit log entries.
-16. Confirm notification bell/dropdown behavior.
-17. Confirm landowner privacy filtering.
-18. Confirm geodetic read-only access.
-19. Confirm monitoring report output.
-20. Confirm parcel map visibility per role.
+3. Create a Landowner account if Landowner portal testing is needed.
+4. Create a Geodetic account if read-only parcel/map testing is needed.
+5. Create a Landowner record and link its Landowner user account.
+6. Create a Parcel record.
+7. Create/link a Landholding record.
+8. Optionally encode a Source Record Package/reference record.
+9. Encode a Land Transfer Clearance application manually as Staff.
+10. Upload/review supporting documents and fill requirement-specific metadata.
+11. Process the application through the office workflow:
+    - Pending Review by Legal Officer
+    - Endorsed to LTI Division
+    - Endorsed to Chief Legal
+    - Endorsed to PARPO II
+    - For Releasing
+12. Test one **Released** final outcome and one **Denied** final outcome.
+13. Confirm final-decision locking after Released/Denied.
+14. Confirm significant actions appear in Audit Logs.
+15. Confirm role-appropriate notifications.
+16. Confirm Landowner privacy/isolation.
+17. Confirm Geodetic access remains limited/read-only.
+18. Confirm Monitoring Reports and Parcel Map behavior.
+19. Confirm LTC Form No. 5 output for final applications.
 
 ## Scope reminder for testers
 
-The system is a clearance generation, application processing, monitoring, parcel/reference review, and records-management system only.
+DAR-LTCMS is a clearance generation, administrative processing, monitoring, parcel/reference review, and records-management system.
 
-Approval of a clearance application does not automatically transfer ownership, does not mutate Registry of Deeds records, and does not legally finalize land transfer by itself.
+A **Released** clearance records and generates the administrative clearance result only. It does not automatically transfer land ownership, mutate Registry of Deeds records, or conclusively execute a legal land transfer.
 
-Any actual ownership transfer, registry alteration, or legal mutation remains outside the automatic system scope and belongs to separate legal and administrative procedures.
+Any actual ownership transfer, registry alteration, or legal mutation remains outside the automatic system scope and is subject to separate legal and administrative procedures.
