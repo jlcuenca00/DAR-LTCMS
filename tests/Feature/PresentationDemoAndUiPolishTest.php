@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\AuditLog;
 use App\Models\Landholding;
 use App\Models\Landowner;
 use App\Models\LandTransferApplication;
@@ -88,6 +89,7 @@ class PresentationDemoAndUiPolishTest extends TestCase
         $this->assertSame($before['parcels'], Parcel::query()->count());
         $this->assertSame($before['landholdings'], Landholding::query()->count());
         $this->assertSame($before['applications'], LandTransferApplication::query()->count());
+        $this->assertSame(2, AuditLog::query()->where('action', 'presentation_demo_account_provisioned')->count());
     }
 
     public function test_demo_provisioner_is_idempotent_and_can_disable_accounts_without_deleting_them(): void
@@ -108,6 +110,7 @@ class PresentationDemoAndUiPolishTest extends TestCase
         $this->assertSame(1, User::query()->where('email', 'geodetic.demo@dar-ltcms.local')->count());
         $this->assertTrue(Hash::check('StaffDemo654!Safe', User::query()->where('email', 'staff.demo@dar-ltcms.local')->value('password')));
         $this->assertTrue(Hash::check('GeoDemo654!Safe', User::query()->where('email', 'geodetic.demo@dar-ltcms.local')->value('password')));
+        $this->assertSame(4, AuditLog::query()->where('action', 'presentation_demo_account_provisioned')->count());
 
         $this->artisan('dar:disable-demo-access')->assertSuccessful();
 
@@ -117,6 +120,7 @@ class PresentationDemoAndUiPolishTest extends TestCase
             'staff.demo@dar-ltcms.local',
             'geodetic.demo@dar-ltcms.local',
         ])->count());
+        $this->assertSame(2, AuditLog::query()->where('action', 'presentation_demo_account_disabled')->count());
     }
 
     public function test_demo_provisioner_rejects_weak_passwords(): void
@@ -128,5 +132,9 @@ class PresentationDemoAndUiPolishTest extends TestCase
 
         $this->assertDatabaseMissing('users', ['email' => 'staff.demo@dar-ltcms.local']);
         $this->assertDatabaseMissing('users', ['email' => 'geodetic.demo@dar-ltcms.local']);
+        $this->assertSame(0, AuditLog::query()->whereIn('action', [
+            'presentation_demo_account_provisioned',
+            'presentation_demo_account_disabled',
+        ])->count());
     }
 }
