@@ -109,7 +109,7 @@ Capture at least one clear final output showing:
 
 ## Screenshot quality rules
 
-- Use DAR-LTCMS branding only; do not show obsolete DAR-iLAND labels.
+- Use DAR-LTCMS branding only; do not show obsolete project branding.
 - Use the current **Released/Denied** user-facing workflow terminology.
 - Do not expose real production credentials, personal data, `.env` values, or private file paths.
 - Avoid browser clutter that distracts from the system.
