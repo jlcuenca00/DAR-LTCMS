@@ -2,71 +2,64 @@
 
 **Department of Agrarian Reform – Land Transfer Clearance and Monitoring System**
 
-DAR-LTCMS is a web-based administrative processing, records-management, and monitoring platform developed for the **Department of Agrarian Reform (DAR) Negros Oriental Provincial Office**. It supports the processing of land transfer clearance applications, management of related land records, supporting-document review, clearance generation, monitoring, reporting, and auditability.
+DAR-LTCMS is a web-based administrative processing, records-management, clearance-generation, and monitoring platform developed for the **Department of Agrarian Reform (DAR) Negros Oriental Provincial Office**. It supports land transfer clearance application processing, related land records, supporting-document review, clearance generation, monitoring, reporting, and auditability.
 
 ## Live System
 
 **Production site:** https://darltcms.me
 
-The deployed system is intended for authorized DAR personnel and approved stakeholders. Access to system functions and records is controlled according to user role and record ownership.
+The deployed system is intended for authorized DAR personnel and approved stakeholders. Access to functions and records is controlled by role and record ownership.
 
-## Project Overview
+## Project Scope
 
-DAR-LTCMS centralizes the records and activities involved in office-based land transfer clearance processing, including:
+DAR-LTCMS supports:
 
-- landowner record management
-- parcel record management
-- landholding record management
-- land transfer clearance application processing
-- supporting-document upload and review
-- application status monitoring
+- Landowner record management
+- Parcel record management
+- Landholding record management
+- Staff-encoded Land Transfer Clearance applications
+- supporting-document upload/review and requirement-specific data capture
+- application workflow/status monitoring
 - role-based access control
 - notifications
 - audit logging
-- map-based parcel review
+- map-based Parcel review
 - monitoring and report generation
 - LTC form and clearance output generation
 
-The platform supports administrative processing and decision support. Clearance approval or release records the DAR clearance result and makes the corresponding output available for authorized viewing, printing, monitoring, and archival purposes. Any subsequent legal ownership transfer or registry alteration remains subject to the appropriate legal and administrative procedures outside the system's automatic operations.
+The platform is an administrative processing and decision-support system. A **Released** clearance records and generates the administrative clearance result; it does **not** automatically transfer land ownership, mutate Registry of Deeds records, or conclusively execute a legal land transfer. Any actual ownership transfer or registry alteration remains subject to separate legal and administrative procedures outside DAR-LTCMS automatic operations.
 
 ## User Roles
 
 ### DAR Staff
 
-DAR Staff are the primary system operators. They can:
+Staff are the primary operators. They can:
 
-- encode and manage landowner, parcel, and landholding records
-- manually encode land transfer clearance applications
-- upload and review supporting documents
-- process applications through the authorized workflow
-- generate LTC forms and clearance outputs
-- monitor application status and processing history
+- encode/manage Landowner, Parcel, and Landholding records
+- manually encode Clearance Applications
+- upload/review supporting documents
+- process applications through the authorized DAR office workflow
+- generate/view LTC forms and final clearance outputs
+- monitor application status/history
 - generate reports
-- review audit trails and significant system activities
+- review audit trails
+- manage authorized system accounts
 
 ### Landowner
 
-Landowner accounts provide restricted access to records linked to the authenticated landowner. They can:
+Landowner accounts are restricted to records tied to the authenticated Landowner. They can:
 
-- view their own linked parcel and landholding information
-- view their own clearance application status
-- view final decision information and available clearance outputs associated with their records
+- view their own linked Parcel/Landholding information
+- view their own Clearance Application status
+- view their own authorized final output when available
 
-Landowner access is isolated from records belonging to other landowners.
+Landowners do **not** create applications and must never access another Landowner's records.
 
 ### Geodetic Personnel
 
-Geodetic personnel have limited review-oriented access. They can:
+Geodetic users have limited/read-only review access. They can review authorized Parcel/reference/map information but do not broadly edit ownership/application records and are not primary application decision users.
 
-- review parcel and reference information
-- inspect map-based parcel geometry and location data
-- view information relevant to parcel verification
-
-Their access remains limited and does not provide general application approval or ownership-editing authority.
-
-## Application Workflow
-
-The current office-oriented workflow follows these processing stages:
+## Current Application Workflow
 
 ```text
 Pending Review by Legal Officer
@@ -82,57 +75,60 @@ For Releasing
 Released
 ```
 
-An application may also reach a final **Denied / Not Approved** outcome when required by the authorized review decision.
+A separate application may end in **Denied** when required by the authorized decision.
 
-Once an application reaches a final decision state, editing and document-upload actions are locked. Authorized users may continue to view the record, clearance output, audit history, and monitoring information.
+**Released** and **Denied** are the current final user-facing states. Once final, editing and supporting-document changes are locked by the UI and backend; authorized viewing, monitoring, reporting, audit, and archival access remain available.
+
+Legacy database values such as `approved` and `not_approved` may still be recognized for historical compatibility, but current screens map them to **Released** and **Denied**.
 
 ## Core Modules
 
 | Module | Purpose |
 |---|---|
 | Dashboard | Role-based overview of applications, records, and monitoring information |
-| Landowner Records | Maintain landowner profiles and linked accounts |
-| Parcel Records | Store parcel details, title/tax declaration references, area, classification, and map geometry |
-| Landholding Records | Maintain parcel-based landholding relationships |
-| Source / Reference Records | Preserve supporting reference information used during review |
+| Landowner Records | Maintain Landowner profiles and linked accounts |
+| Parcel Records | Store Parcel details, title/tax declaration references, area, classification, and map geometry |
+| Landholding Records | Maintain administrative Landowner–Parcel relationships |
+| Source / Reference Records | Preserve supporting reference/provenance information used during review |
 | Clearance Applications | Encode, review, endorse, release, deny, and monitor applications |
-| Supporting Documents | Upload, view, index, and review application-related documents |
+| Supporting Documents | Upload, view, and review requirement-specific document information |
 | LTC Forms and Outputs | Generate office forms, printable records, and final clearance outputs |
-| Parcel Map | Review mapped agricultural parcel information |
-| Notifications | Surface important application events to authorized users |
-| Monitoring and Reports | Produce office-level monitoring summaries and reports |
+| Parcel Map | Review mapped agricultural Parcel information |
+| Notifications | Surface important authorized application events |
+| Monitoring and Reports | Produce office-level monitoring summaries and printable reports |
 | Audit Logs | Record significant actions with actor, timestamp, and record context |
-| Administration | Manage authorized system accounts and role assignments |
+| Administration | Manage authorized accounts and role assignments |
 
 ## LTC Forms and Outputs
 
-DAR-LTCMS supports the LTC-related forms used in the application workflow, including:
+DAR-LTCMS supports LTC-related forms used in the application workflow, including:
 
 - **LTC Form No. 1** – application/data form
-- **LTC Form No. 2** – acknowledgment-related form
+- **LTC Form No. 2** – acknowledgment/certification-related requirement
 - **LTC Form No. 3** – acknowledgment receipt / printable application output
 - **LTC Form No. 4** – review checklist
-- **LTC Form No. 5** – official Land Transfer Clearance certification/output
+- **LTC Form No. 5** – final Land Transfer Clearance certification/output
 
-Final clearance outputs are generated from the application's recorded decision and supporting data and remain available to authorized users after finalization.
+For LTC Form No. 5, the current implementation preserves annual LTC numbering/page references, linked Parcel details, GRANTED/DENIED output, signatory **ENGR. MANUEL M. GALON, JR., OIC PARPO II**, notarial details, and 8.5 x 13 inch print/PDF behavior.
+
+Final outputs remain administrative clearance records only and do not automatically alter ownership or registry records.
 
 ## Security, Integrity, and Auditability
 
 DAR-LTCMS prioritizes government-grade traceability and controlled access through:
 
 - strict role-based access control
-- landowner record isolation
-- limited geodetic access
-- staff-controlled application encoding and processing
-- protected supporting documents and clearance outputs
+- Landowner record isolation
+- limited Geodetic access
+- Staff-controlled application encoding/processing
+- protected supporting documents/source scans
 - final-decision locking
-- timestamped audit logs
-- actor-based activity tracking
-- preserved application and decision history
-- server-side authorization checks for sensitive actions
+- timestamped actor-based audit logs
+- preserved application/decision history
+- server-side authorization for sensitive actions
 - controlled account administration
-
-These controls are designed to preserve accountability, data integrity, and traceability throughout clearance processing.
+- production security/configuration readiness checks
+- production dependency security audits
 
 ## Technology Stack
 
@@ -140,31 +136,48 @@ These controls are designed to preserve accountability, data integrity, and trac
 |---|---|
 | Backend | Laravel 12 |
 | Server Language | PHP 8.4 |
-| Database | PostgreSQL |
+| Database | PostgreSQL 18 |
 | Authentication | Laravel Breeze |
 | Frontend | Blade, Tailwind CSS, Vite |
 | Mapping | Leaflet |
 | Package Management | Composer and npm |
 | Deployment | Linux server with CloudPanel |
 
-## Production and Operations
+The local/development PostgreSQL database name remains `dar_iland`.
 
-The application is deployed through the project's protected `main` branch and production deployment workflow. Production configuration, database credentials, environment files, backup credentials, and other operational secrets are intentionally excluded from this repository.
+## Production and Release Operations
 
-The deployed environment includes controlled production backups and recovery procedures for application data and uploaded files.
+The protected `main` branch is the production source baseline. Merging to `main` triggers the CloudPanel deployment workflow.
 
-## System Scope
+Production secrets, `.env`, database backups, and private administrative uploads are intentionally excluded from source deployment/commits.
 
-DAR-LTCMS is designed specifically for the **DAR Negros Oriental Provincial Office** and for agricultural land transfer clearance processing within the approved project scope.
+Before `v1.0.0`, the production server must pass:
 
-System validation and monitoring features assist authorized personnel in reviewing encoded records and application information. Final administrative and legal determinations remain with the appropriate DAR personnel and established procedures.
+```bash
+php artisan dar:release-check
+```
+
+and the database/private-file backup, exact deployment verification, and smoke-test requirements in `docs/RELEASE_PREPARATION.md`.
+
+## Canonical Documentation
+
+Use these files as the current project reference:
+
+- `docs/FINAL_SYSTEM_BASELINE.md` – canonical scope, roles, workflow, final states, Form 5, and system boundaries
+- `docs/thesis-documentation-alignment.md` – wording/diagram rules for thesis alignment
+- `docs/final-manual-testing-checklist.md` – final controlled UAT checklist
+- `docs/RELEASE_PREPARATION.md` – production backup, release check, smoke test, and rollback procedure
+- `docs/barebones-tester-handoff.md` – local/staging tester reset behavior
+- `docs/tester-data-entry-guide.md` – current tester data-entry workflow/fields
 
 ## Project Status
 
-**Status:** Live deployment with controlled ongoing development and refinement.
+**Status:** Release candidate / production validation pending.
 
-Current work focuses on production stability, responsive user interfaces, clearance-output accuracy, performance, security, auditability, and documentation consistency.
+The repository baseline has completed responsive hardening, UI/UX refinement, data-integrity hardening, audit/notification/reporting hardening, production/security hardening, performance pass, final automated UAT coverage, LTC Form No. 5 finalization, and release-preparation hardening.
+
+The final `v1.0.0` tag must not be created until the live production `dar:release-check`, backups, exact deployed commit verification, and post-deployment smoke test are actually completed.
 
 ## Academic Context
 
-DAR-LTCMS was developed as a thesis/capstone project and is being evaluated as a web-based administrative processing and monitoring solution for the DAR Negros Oriental Provincial Office.
+DAR-LTCMS was developed as a thesis/capstone project and is evaluated as a web-based administrative processing, decision-support, records-management, clearance-generation, and monitoring solution for the DAR Negros Oriental Provincial Office.

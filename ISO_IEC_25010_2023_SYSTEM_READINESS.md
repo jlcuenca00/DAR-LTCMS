@@ -1,54 +1,93 @@
 # DAR-LTCMS ISO/IEC 25010:2023 System Readiness
 
-This document maps the implemented controls of DAR-LTCMS to the nine product-quality characteristics used by the project questionnaire. It is an engineering readiness assessment, not a guarantee of evaluator ratings.
+This document maps implemented DAR-LTCMS controls to the nine product-quality characteristics used by the project evaluation. It is an engineering readiness assessment, not a guarantee of evaluator ratings or legal/administrative outcomes.
 
 ## 1. Functional Suitability
 
-**Strong controls:** staff-encoded applications, role-specific portals, parcel/landholding records, supporting-document review, multi-party linking, final decisions, LTC Form No. 5 output, monitoring reports, notifications, and audit logs.
+**Implemented controls:** Staff-encoded applications, role-specific portals, Landowner/Parcel/Landholding records, supporting-document review, multi-party linking, DAR office workflow tracking, Released/Denied final outcomes, LTC Form No. 5 output, Monitoring Reports, notifications, and Audit Logs.
 
-**Hardening applied:** public registration was removed so accounts follow the approved staff-managed workflow. Username-based account confirmation and optional email handling are now consistent.
+**Scope boundary:** these functions support clearance processing and records management only. A Released clearance does not automatically transfer land ownership or alter registry records.
 
 ## 2. Performance Efficiency
 
-**Strong controls:** pagination, eager loading in major listings, database-backed cache, and indexed operational tables.
+**Implemented controls:** pagination, targeted eager loading, indexed operational tables, database-backed application stores, and performance regression coverage.
 
-**Hardening applied:** additional indexes were added for application queues, location filtering, audit history, and notifications. Development now detects lazy-loading problems.
+**Hardening applied:** major dashboard/report/listing queries, Parcel Map data, search/filter paths, and common operational indexes were reviewed during the performance pass. Development/testing also detects avoidable lazy-loading behavior.
 
 ## 3. Compatibility
 
-The system uses standard HTTP/HTTPS, Laravel/Blade, PostgreSQL, modern browsers, GeoJSON, Leaflet, OpenStreetMap, and CARTO. External map resources remain network-dependent and should be included in deployment testing.
+DAR-LTCMS uses standard HTTP/HTTPS, Laravel/Blade, PostgreSQL, modern browsers, GeoJSON, Leaflet, and external basemap resources. Network-dependent map resources remain part of deployment/browser validation.
+
+Responsive regression coverage checks phone, tablet, and desktop viewport behavior. Final real-device/browser verification remains appropriate for formal evaluation.
 
 ## 4. Interaction Capability
 
-The role-specific dashboards, breadcrumbs, validation messages, confirmation dialogs, locked-state notices, print views, and responsive pages support learnability and operability. Continued usability testing with DAR Staff, landowners, and geodetic personnel remains required.
+Role-specific dashboards, breadcrumbs, validation messages, confirmation dialogs, final-state notices, requirement-specific fields, print views, responsive layouts, and protected navigation support learnability and operability.
+
+Final usability evaluation should use Staff, Landowner, and Geodetic scenarios that match each role's actual permissions.
 
 ## 5. Reliability
 
-Database transactions protect important multi-record actions. Final decisions lock editing and uploads. Clearance generation uses row locking and update-or-create behavior. The `/up` health endpoint is available. Production backup and restore procedures remain deployment responsibilities and must be tested before turnover.
+Database transactions protect important multi-record actions. Released/Denied applications are locked against further editing and supporting-document mutation. Clearance generation preserves final output data. The `/up` health endpoint is available.
+
+Production release preparation now includes database/private-file backups, exact deployed-commit recording, a read-only release check, smoke testing, and controlled rollback guidance.
 
 ## 6. Security
 
-**Implemented controls:** username authentication, login throttling, CSRF protection, session regeneration, active-account enforcement, forced password change, staff-assisted resets, role middleware, landowner ownership checks, private document storage, and audit logging.
+**Implemented controls include:**
 
-**Hardening applied:** public registration and self-deletion were removed, password defaults were strengthened, reset actions were throttled, executable uploads were rejected, authenticated HTML was marked no-store, and common security headers were added.
+- authenticated role-based access control
+- login throttling and secure session behavior
+- CSRF protection and session regeneration
+- active-account enforcement
+- Staff-managed account administration
+- Landowner record isolation
+- limited Geodetic access
+- protected administrative file delivery
+- rejection of unsupported/executable uploads where applicable
+- final-decision locking
+- actor/timestamp/context Audit Logs
+- security headers and authenticated no-store/no-cache behavior
+- trusted-host/proxy handling
+- production configuration readiness checks
+- production PHP/JavaScript dependency security audits
+
+Sensitive administrative uploads are not intentionally exposed through a public `storage` symlink.
 
 ## 7. Maintainability
 
-Laravel MVC separation, service classes, migrations, reusable Blade components, and feature tests support modification and diagnosis. The patch adds targeted regression tests and a safe environment template.
+Laravel MVC separation, service classes, migrations, reusable Blade components, configuration files, regression tests, and documented release procedures support modification, diagnosis, and controlled deployment.
+
+The final repository also includes a canonical system baseline and documentation-alignment rules to reduce scope/terminology drift.
 
 ## 8. Flexibility
 
-Environment-based configuration supports local testing and future deployment. `.env.example` now documents PostgreSQL, sessions, queues, storage, and production HTTPS settings. Final hosting remains to be configured and tested.
+Environment-based configuration supports local development, controlled testing, and the CloudPanel production deployment. `.env.example` documents PostgreSQL, sessions, storage, HTTPS, mail, trusted hosts, and trusted proxies without exposing production secrets.
+
+The production site is deployed at `https://darltcms.me`; final `v1.0.0` release status still depends on completion of the live release gate described in `docs/RELEASE_PREPARATION.md`.
 
 ## 9. Safety
 
-DAR-LTCMS is not safety-critical in the ISO sense. Its important operational safeguards are final-decision locking, validation warnings, role restrictions, and audit trails. Obsolete automatic ownership/registry mutation schema was removed. Approval or release only records and generates a clearance result; it does not execute legal ownership transfer or registry alteration.
+DAR-LTCMS is not safety-critical in the industrial/medical ISO sense, but it contains important operational safeguards for sensitive administrative records:
 
-## Residual items before formal evaluation
+- strict role restrictions
+- Landowner privacy isolation
+- limited Geodetic access
+- validation warnings/checks
+- final-decision locking
+- protected files
+- data-integrity checks
+- audit trails
+- preserved final outputs
 
-1. Run the complete automated test suite against a clean PostgreSQL testing database.
-2. Conduct browser checks in current Chrome, Edge, Firefox, and Safari.
-3. Perform concurrent-user response-time testing using the intended deployment server.
-4. Test backup restoration, file recovery, and interruption recovery.
-5. Confirm HTTPS, secure cookies, production logging, and database access restrictions.
-6. Complete role-based user acceptance testing using the exact evaluation scenarios.
+Obsolete automatic ownership/registry mutation artifacts were removed. **Released/GRANTED clearance only records and generates the administrative clearance result; it does not execute legal ownership transfer or registry alteration.**
+
+## Residual items before final formal evaluation / v1.0.0
+
+1. Complete the live production `php artisan dar:release-check` with no blockers/warnings.
+2. Create and verify the final production database and private-file backups.
+3. Confirm `.release-commit` matches the intended `main` commit after deployment.
+4. Complete the production smoke test, including role isolation and LTC Form No. 5 output.
+5. Conduct any required evaluator-led UAT/usability sessions using the final scenarios.
+6. Capture final thesis screenshots from the validated baseline.
+7. Create the `v1.0.0` tag only after the production release gate is actually complete.

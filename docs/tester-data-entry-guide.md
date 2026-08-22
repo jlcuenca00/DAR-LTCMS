@@ -1,17 +1,19 @@
 # Tester Data Entry Guide
 
-This guide explains how a tester should fill the barebones system using the system interface.
+This guide explains how a tester should populate the DAR-LTCMS barebones test environment through the web interface.
+
+> Use realistic but non-sensitive test data. The barebones reset and seeded credentials are for local/staging testing only.
 
 ## 1. Staff login
 
-Log in using:
+Use the primary tester account:
 
 ```text
 Email: staff.tester@dar-ltcms.local
 Password: password
 ```
 
-The staff account is the starting operator account.
+The barebones seeder also creates four additional Staff tester accounts for multi-actor testing.
 
 ## 2. Create test user accounts
 
@@ -21,15 +23,15 @@ Go to:
 Staff Dashboard → User / Role Management
 ```
 
-Create only the accounts needed for testing:
+Create only the accounts required by the test scenario:
 
-- staff account for another encoder/reviewer if needed
-- landowner account for landowner portal testing
-- geodetic account for read-only parcel/reference review testing
+- Landowner account for Landowner portal/privacy testing
+- Geodetic account for limited read-only parcel/reference/map testing
+- additional Staff accounts only when a multi-actor workflow is required
 
-For a landowner user, the account must be linked to a landowner record before the landowner portal can show that landowner's own data.
+A Landowner user must be linked to the correct Landowner record before that user can see their own records.
 
-## 3. Create landowner records
+## 3. Create Landowner records
 
 Go to:
 
@@ -37,28 +39,32 @@ Go to:
 Staff Dashboard → Landowner Records
 ```
 
-Create the test landowner profile using realistic but non-sensitive test data.
+The current Landowner record fields are:
 
-Recommended fields to prepare:
+- First name
+- Middle name
+- Last name
+- Suffix
+- Contact number
+- Linked Landowner user account / no linked account
+- Address
+- Municipality
+- Barangay
+- Province
 
-- full name
-- contact number
-- address line
-- barangay
-- municipality
-- province
+Do not invent unavailable profile fields such as sex, civil status, or birthdate.
 
-## 4. Link landowner user account
+## 4. Link the Landowner account
 
-After creating a landowner record, link the landowner user account through the staff-side user/landowner linkage controls.
+Link the Landowner user account to the correct Landowner record through the Staff controls.
 
 Expected result:
 
-- the landowner can log in
-- the landowner can only see records linked to their own landowner account
-- the landowner cannot see other landowners' data
+- the Landowner can log in;
+- the Landowner sees only records tied to that linked Landowner record; and
+- direct access to another Landowner's records is rejected.
 
-## 5. Create parcel records
+## 5. Create Parcel records
 
 Go to:
 
@@ -66,40 +72,26 @@ Go to:
 Staff Dashboard → Parcel Records
 ```
 
-Create parcel test data.
-
-Recommended fields to prepare:
+Prepare the parcel information required by the current form, such as:
 
 - parcel code
-- title number, if applicable
-- tax declaration number, if applicable
+- title/tax declaration references when applicable
 - municipality
 - barangay
 - province
-- area in hectares
-- parcel status
+- parcel area
 - agricultural classification/status
-- remarks
-- GeoJSON geometry, if map testing is needed
+- map geometry/reference information when map testing is needed
 
-Agricultural classification supports record organization and filtering. It is not an automatic approval gate and does not mutate ownership.
+Agricultural classification supports administrative organization, review, filtering, and monitoring. It is not an automatic legal approval gate and does not transfer ownership.
 
-## 6. Create landholding records
+## 6. Create Landholding records
 
-Open the landowner details page or parcel details page and add/link landholding data.
+Open the relevant Landowner or Parcel record and create/link the Landholding relationship.
 
-A landholding represents the administrative relationship between a landowner and a parcel or land area in the system.
+A Landholding represents the administrative relationship between a Landowner and Parcel/area in DAR-LTCMS. It is a records-management relationship; changing or approving a clearance does not automatically mutate legal ownership.
 
-Recommended fields:
-
-- landowner
-- parcel
-- area in hectares
-- status
-- source/reference number, if available
-- remarks
-
-## 7. Create source records or source packages
+## 7. Create Source Records / Source Record Packages
 
 Go to:
 
@@ -107,11 +99,11 @@ Go to:
 Staff Dashboard → Source Records
 ```
 
-Encode source/reference information if the test scenario needs documentary or legacy reference data.
+Encode source/reference information when the scenario needs documentary, historical, or reference data. Preserve provenance and use the source scope that matches the record.
 
-Source records should be treated as documentary/reference origins. They support review and traceability, but they do not automatically prove or execute ownership transfer.
+Source records support review and traceability. They are not automatic proof of legal ownership transfer.
 
-## 8. Encode a clearance application
+## 8. Encode a Clearance Application
 
 Go to:
 
@@ -119,84 +111,101 @@ Go to:
 Staff Dashboard → Clearance Applications
 ```
 
-Create a land transfer clearance application manually as staff.
+Staff manually encode applications. Landowners do not create applications themselves.
 
 Recommended flow:
 
-1. Encode application details.
-2. Select or link transferor/transferee landowner records if available.
-3. Link parcel records if applicable.
-4. Save the application.
-5. Upload required supporting documents.
-6. Encode document metadata/indexing fields.
-7. Submit the application for review.
+1. Encode the application details.
+2. Encode/select the transferor/s and transferee/s.
+3. Link the relevant Parcel record/s.
+4. Select the transfer nature/instrument information.
+5. Save the application.
+6. Upload or review supporting requirements.
+7. Fill the requirement-specific data fields.
+8. Submit/process the application through the authorized office workflow.
 
-Landowners do not create applications themselves.
+## 9. Requirement/document data fields
 
-## 9. Upload documents and metadata
+The visible fields depend on the requirement type. Use the labels actually shown by the system.
 
-Upload supporting documents through the staff application review page.
+Common fields include:
 
-For document metadata/indexing, encode only selected reference fields such as:
+- Title number, Tax Declaration number, Official Receipt number, Certificate number, or other Document number as applicable
+- Date issued
+- Lot / parcel shown in the document when applicable
+- Names appearing in the document when applicable
+- Transfer document title/type, transfer area, transferor/s, and transferee/s for transfer instruments
+- Notarizer / lawyer name and Date notarized for notarized documents
+- Notarial Document No., Page No., Book No., and Series when applicable
+- MARPO Certification / LTC Form No. 2 review checks when applicable
+- Verification notes
 
-- title number
-- tax declaration number
-- document reference number
-- date issued, if available
-- issuing office, if available
-- remarks
+The old generic **Reference Number** and **Issuing Office** instructions are no longer part of this guide because the current form uses requirement-specific fields instead.
 
-Do not treat metadata capture as automatic legal verification.
+File upload is supporting evidence; metadata capture and validation checks remain assistive and do not replace DAR legal/administrative determination.
 
-## 10. Submit, decide, and verify locking
+## 10. Process the application workflow
 
-After the application is complete, submit it for review, then test one final decision path:
+For a complete positive-path test, process an application through:
 
-- approved
-- not approved
+1. Pending Review by Legal Officer
+2. Endorsed to LTI Division
+3. Endorsed to Chief Legal
+4. Endorsed to PARPO II
+5. For Releasing
+6. Released
 
-After a final decision, verify:
+Also test a separate application that ends in **Denied**.
 
-- application editing is locked
-- uploads are locked
-- backend rejects further changes
-- final decision output is viewable by authorized users
-- audit logs record the action
-- notification appears for the proper user role
+Released and Denied are final user-facing states. After either final state, verify that:
 
-## 11. Test role-based access
+- application editing is locked;
+- supporting-document upload/removal is locked;
+- backend mutation attempts are rejected;
+- final output remains viewable by authorized users;
+- audit logs preserve the decision/action history; and
+- role-appropriate notifications are generated.
+
+## 11. Verify LTC Form No. 5
+
+For final applications, verify the official output:
+
+- LTC number uses the annual sequence and page value;
+- result is GRANTED for Released or DENIED for Denied;
+- all linked parcel references/areas are represented correctly;
+- signatory is `ENGR. MANUEL M. GALON, JR., OIC PARPO II`;
+- notarial details display when encoded;
+- print/PDF uses the intended 8.5 x 13 inch format; and
+- the output does not claim that ownership or registry records were automatically changed.
+
+## 12. Test role-based access
 
 ### Staff
 
-Staff should be able to encode records, process applications, view reports, view audit logs, manage users, and use the parcel map.
+Staff may encode/manage records, process applications, review/upload documents, generate outputs/reports, view audit logs, manage authorized accounts, and use the Staff Parcel Map.
 
 ### Landowner
 
-Landowner should only see their own parcels, applications, status, decision output, and map records.
+Landowners may view only their own linked parcel/application/status/final-output information. They must never see another Landowner's records and do not create applications.
 
-### Geodetic
+### Geodetic Personnel
 
-Geodetic should have limited/read-only parcel, source/reference, and map review access. Geodetic users should not approve applications, edit ownership/application records, upload documents, or generate clearances.
+Geodetic users have limited/read-only parcel, source/reference, and map access. They are not clearance approving/processing users and must not broadly edit ownership/application records.
 
-## 12. Test notification dropdown
+## 13. Test notifications
 
-Use the topbar bell.
+Use the notification bell/archive and verify that:
 
-Expected behavior:
+- users see only notifications intended for them;
+- important application events link to the correct authorized page; and
+- final Released/Denied events display using current terminology.
 
-- bell opens recent notification panel
-- clicking outside closes the panel
-- clicking a notification opens the related page
-- See all notifications opens the full notification archive page
-- users only see their own notifications
+## 14. Test monitoring and reports
 
-## 13. Test monitoring and reports
+After creating enough test data, open Monitoring Reports and confirm:
 
-After creating enough test data, open Monitoring Reports.
-
-Confirm:
-
-- counts update correctly
-- status breakdowns reflect test records
-- final decision records appear correctly
-- report output remains administrative/monitoring focused
+- counts and filters reflect the test records;
+- current workflow statuses are used;
+- Released and Denied output totals are correct;
+- Recorded Output Area is presented as an administrative/reporting metric; and
+- report wording does not imply automatic legal land transfer.

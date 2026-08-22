@@ -1,132 +1,118 @@
-# Final Barebones Release Checklist
+# Barebones Tester Reset Checklist (Testing Only)
 
-Use this checklist before giving the system to a tester.
+This checklist is for preparing a **local or staging tester database**. It is not the DAR-LTCMS production `v1.0.0` release procedure.
 
-## 1. Confirm latest code is pushed
+> **Never run `migrate:fresh` on production.** It deletes the target database contents.
+
+For the actual production release process, use `docs/RELEASE_PREPARATION.md`.
+
+## 1. Confirm the test code baseline
 
 ```bash
 git status
 git log --oneline -5
 ```
 
-Expected:
+Expected: the working tree is clean and the intended branch/commit is checked out.
 
-```text
-nothing to commit, working tree clean
-```
-
-## 2. Reset database to barebones tester state
+## 2. Reset the test database
 
 ```bash
 php artisan migrate:fresh --seeder=BarebonesTesterSeeder
 ```
 
-Expected database state:
+Expected test state:
 
 ```text
-1 staff user
+5 Staff tester accounts
 required document reference list
-0 demo landowners
-0 demo parcels
-0 demo landholdings
-0 demo applications
-0 demo source records
-0 demo notifications
-0 demo audit logs
+0 demo Landowners
+0 demo Geodetic accounts
+0 demo Parcels
+0 demo Landholdings
+0 demo Applications
+0 demo Source Records
+0 demo Notifications
+0 demo Audit Logs
 ```
 
-## 3. Build and test
-
-```bash
-php artisan test
-npm run build
-```
-
-Expected:
-
-```text
-all tests passed
-build successful
-```
-
-## 4. Manual login check
-
-Use:
+The primary starting account is:
 
 ```text
 Email: staff.tester@dar-ltcms.local
 Password: password
 ```
 
+All seeded credentials are testing-only and must not be used as production accounts.
+
+## 3. Build and test
+
+```bash
+composer install
+npm ci
+npm run build
+php artisan test
+```
+
+Expected: dependencies install, frontend build completes, and tests pass.
+
+## 4. Manual test login
+
 Confirm:
 
 ```text
-[ ] staff login works
-[ ] dashboard loads
-[ ] no demo applications are shown
-[ ] no demo landowners are shown
-[ ] no demo parcels are shown
-[ ] no demo notifications are shown
-[ ] required document checklist still appears when application workflow needs it
+[ ] Staff login works
+[ ] Dashboard loads
+[ ] No demo applications are shown
+[ ] No demo Landowners are shown
+[ ] No demo Parcels are shown
+[ ] No demo Notifications are shown
+[ ] Required-document configuration remains available
 ```
 
-## 5. Export barebones database
+## 5. Optional tester database export
+
+If a portable **testing-only** database export is needed:
 
 ```bash
-mkdir final_exports
-pg_dump -U postgres -h 127.0.0.1 -p 5432 -d dar_iland -f final_exports/dar_iland_barebones_tester_database.sql
+mkdir -p final_exports
+pg_dump -U postgres -h 127.0.0.1 -p 5432 -d dar_iland \
+  -f final_exports/dar_iland_barebones_tester_database.sql
 ```
 
-## 6. Package files for tester handoff
+Do not confuse this tester export with a production backup. Production release backups use the procedure in `docs/RELEASE_PREPARATION.md`.
 
-Include:
+## 6. Tester handoff files
 
-```text
-app/
-bootstrap/
-config/
-database/
-docs/
-public/
-resources/
-routes/
-tests/
-README.md
-artisan
-composer.json
-composer.lock
-package.json
-package-lock.json
-vite.config.js
-tailwind.config.js
-postcss.config.js
-final_exports/dar_iland_barebones_tester_database.sql
-```
-
-Do not include:
-
-```text
-vendor/
-node_modules/
-.env
-storage/logs/
-```
-
-## 7. Tester instructions to include
-
-Give the tester these docs:
+Useful files include:
 
 ```text
 docs/barebones-tester-handoff.md
 docs/tester-data-entry-guide.md
-docs/final-barebones-release-checklist.md
+docs/final-manual-testing-checklist.md
 ```
 
-## 8. Final Git tag suggestion
+Do not distribute or commit:
 
-After the barebones state is verified:
-
-```bash
-git tag -a v0.27-barebones-tester-handoff -m "v0.27 barebones tester handoff"
-git push origin v0.27-barebones-tester-handoff
+```text
+.env
+production database credentials
+production backups
+storage/app/private contents
+storage/app/public administrative records
 ```
+
+## 7. Current workflow expectations
+
+New applications use the DAR office workflow ending in either:
+
+- **Released**; or
+- **Denied**.
+
+Both are final states. After either final state, editing/uploads are locked and the record remains available for authorized viewing, monitoring, reporting, audit, and clearance output purposes.
+
+A Released clearance does not automatically transfer land ownership or alter registry ownership records.
+
+## 8. Production release reminder
+
+Do **not** create the final `v1.0.0` tag from this barebones tester checklist. The production tag is created only after the production release check, backups, exact deployment verification, and smoke test in `docs/RELEASE_PREPARATION.md` have all passed.
