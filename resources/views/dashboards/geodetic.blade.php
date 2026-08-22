@@ -212,7 +212,7 @@
                 <header class="geo-dashboard-panel-header">
                     <div>
                         <h2 class="geo-dashboard-panel-title">Recently Updated Parcel Records</h2>
-                        <p class="geo-dashboard-panel-copy">Latest parcel references available for technical and map review.</p>
+                        <p class="geo-dashboard-panel-copy">Latest parcel references available for technical and map review. Select any row to review its details.</p>
                     </div>
                     <a href="{{ route('geodetic.parcels.index') }}" class="geo-dashboard-link">View all →</a>
                 </header>
@@ -222,7 +222,11 @@
                 @else
                     <div class="geo-recent-list">
                         @foreach ($recentParcels as $parcel)
-                            <div class="geo-recent-row">
+                            <div
+                                class="geo-recent-row"
+                                data-record-row-href="{{ route('geodetic.parcels.show', $parcel) }}"
+                                aria-label="Review parcel record {{ $parcel->parcel_code }}"
+                            >
                                 <a href="{{ route('geodetic.parcels.show', $parcel) }}" class="geo-recent-code">{{ $parcel->parcel_code }}</a>
                                 <div class="geo-recent-meta">
                                     {{ $parcel->barangay ?? 'N/A' }}, {{ $parcel->municipality ?? 'N/A' }}
@@ -264,4 +268,6 @@
             </aside>
         </section>
     </section>
+
+    <x-record-row-navigation />
 </x-geodetic-shell>
