@@ -2,7 +2,15 @@ import '../css/mobile-portal-polish.css';
 
 const compactPortalQuery = window.matchMedia('(max-width: 1100px)');
 
-const portalAccessConfigs = [
+const portalConfigs = [
+    {
+        key: 'staff',
+        shell: '.staff-shell',
+        actions: '.staff-topbar-actions',
+        chip: null,
+        help: '[data-onboarding-help="staff_portal"]',
+        compactLabel: null,
+    },
     {
         key: 'landowner',
         shell: '.lo-shell',
@@ -16,7 +24,7 @@ const portalAccessConfigs = [
         shell: '.geo-shell',
         actions: '.geo-topbar-right',
         chip: '.geo-access-chip',
-        help: null,
+        help: '[data-onboarding-help="geodetic_portal"]',
         compactLabel: 'Read Only',
     },
 ];
@@ -38,21 +46,23 @@ function ensurePlaceholder(container, element, key, type) {
     return placeholder;
 }
 
-function ensureAccessChipPlacement(config) {
+function ensurePortalControlsPlacement(config) {
     const shell = document.querySelector(config.shell);
     const legacyActions = shell?.querySelector(config.actions);
-    const chip = shell?.querySelector(config.chip);
+    const chip = config.chip ? shell?.querySelector(config.chip) : null;
     const help = config.help ? shell?.querySelector(config.help) : null;
     const mobileActions = shell?.querySelector(
         `[data-dar-mobile-portal="${config.key}"] .dar-mobile-portal-actions`
     );
 
-    if (!shell || !legacyActions || !chip || !mobileActions) return;
+    if (!shell || !legacyActions || !mobileActions) return;
 
-    const chipPlaceholder = ensurePlaceholder(legacyActions, chip, config.key, 'access');
+    const chipPlaceholder = chip ? ensurePlaceholder(legacyActions, chip, config.key, 'access') : null;
     const helpPlaceholder = help ? ensurePlaceholder(legacyActions, help, config.key, 'help') : null;
 
-    chip.dataset.mobileAccessLabel = config.compactLabel;
+    if (chip && config.compactLabel) {
+        chip.dataset.mobileAccessLabel = config.compactLabel;
+    }
 
     if (compactPortalQuery.matches) {
         const notification = mobileActions.querySelector(':scope > .notification-dropdown');
@@ -63,7 +73,7 @@ function ensureAccessChipPlacement(config) {
             else mobileActions.prepend(help);
         }
 
-        if (chip.parentElement !== mobileActions) {
+        if (chip && chip.parentElement !== mobileActions) {
             if (account) mobileActions.insertBefore(chip, account);
             else mobileActions.appendChild(chip);
         }
@@ -74,22 +84,22 @@ function ensureAccessChipPlacement(config) {
         helpPlaceholder.after(help);
     }
 
-    if (chipPlaceholder?.parentNode && chip.parentElement !== legacyActions) {
+    if (chip && chipPlaceholder?.parentNode && chip.parentElement !== legacyActions) {
         chipPlaceholder.after(chip);
     }
 }
 
-function syncPortalAccessChips() {
-    portalAccessConfigs.forEach(ensureAccessChipPlacement);
+function syncPortalControls() {
+    portalConfigs.forEach(ensurePortalControlsPlacement);
 }
 
 function initMobilePortalPolish() {
-    syncPortalAccessChips();
+    syncPortalControls();
 
     if (typeof compactPortalQuery.addEventListener === 'function') {
-        compactPortalQuery.addEventListener('change', syncPortalAccessChips);
+        compactPortalQuery.addEventListener('change', syncPortalControls);
     } else {
-        compactPortalQuery.addListener(syncPortalAccessChips);
+        compactPortalQuery.addListener(syncPortalControls);
     }
 }
 
