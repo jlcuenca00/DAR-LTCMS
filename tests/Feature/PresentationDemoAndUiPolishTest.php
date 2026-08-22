@@ -29,9 +29,25 @@ class PresentationDemoAndUiPolishTest extends TestCase
         $response->assertSee('For Releasing');
         $response->assertSee('Released or Denied');
         $response->assertSee('LTC Form No. 5');
-        $response->assertSee('does not automatically transfer land ownership');
-        $response->assertSee('Landowners do not create clearance applications');
+        $response->assertSee('A GRANTED clearance does not mean the land has already changed owners.');
+        $response->assertSee('Landowners do not create applications in the system.');
         $response->assertDontSee('This site is still undergoing development');
+    }
+
+    public function test_public_landing_page_uses_plain_language_for_general_visitors(): void
+    {
+        $response = $this->get('/');
+
+        $response->assertOk();
+        $response->assertSee('What DAR-LTCMS helps with.');
+        $response->assertSee('Documents you may need.');
+        $response->assertSee('How an application moves through DAR.');
+        $response->assertSee('Who can use DAR-LTCMS?');
+        $response->assertSee('Users only see the information allowed for their account.');
+        $response->assertDontSee('role-based access', false);
+        $response->assertDontSee('auditability', false);
+        $response->assertDontSee('registry mutation', false);
+        $response->assertDontSee('final system outcomes', false);
     }
 
     public function test_requested_parcel_lists_use_accessible_clickable_rows_without_action_columns(): void
