@@ -81,13 +81,27 @@ class RoleMobilePortalNavigationTest extends TestCase
         $this->assertStringContainsString('mobileActions.insertBefore(chip, account)', $polish);
         $this->assertStringContainsString('chipPlaceholder.after(chip)', $polish);
         $this->assertStringContainsString('.dar-mobile-portal-actions > :is(.lo-access-chip, .geo-access-chip)', $css);
-        $this->assertStringContainsString('height: 26px !important;', $css);
-        $this->assertStringContainsString('min-height: 26px !important;', $css);
+        $this->assertStringContainsString('--dar-mobile-control-size: 38px;', $css);
+        $this->assertStringContainsString('height: var(--dar-mobile-control-size) !important;', $css);
+        $this->assertStringContainsString('min-height: var(--dar-mobile-control-size) !important;', $css);
         $this->assertStringContainsString("compactLabel: 'Own Only'", $polish);
         $this->assertStringContainsString("compactLabel: 'Read Only'", $polish);
     }
 
-    public function test_phone_access_scope_uses_the_short_label_and_tighter_spacing(): void
+    public function test_compact_header_controls_share_one_visual_size_and_surface(): void
+    {
+        $css = file_get_contents(resource_path('css/mobile-portal-polish.css'));
+
+        $this->assertStringContainsString('.notification-bell-link, .account-menu-trigger', $css);
+        $this->assertStringContainsString('.onboarding-help-button', $css);
+        $this->assertStringContainsString('.account-menu-avatar', $css);
+        $this->assertStringContainsString('width: 28px !important;', $css);
+        $this->assertStringContainsString('border: 1px solid #bbf7d0 !important;', $css);
+        $this->assertStringContainsString('background: #f0fdf4 !important;', $css);
+        $this->assertStringContainsString('gap: 6px !important;', $css);
+    }
+
+    public function test_phone_access_scope_uses_the_short_label_and_even_spacing(): void
     {
         $css = file_get_contents(resource_path('css/mobile-portal-polish.css'));
 
@@ -99,7 +113,7 @@ class RoleMobilePortalNavigationTest extends TestCase
 
         $phoneCss = substr($css, $phoneStart, $narrowStart - $phoneStart);
 
-        $this->assertStringContainsString('gap: 4px !important;', $phoneCss);
+        $this->assertStringContainsString('gap: 6px !important;', $phoneCss);
         $this->assertStringContainsString('max-width: 64px !important;', $phoneCss);
         $this->assertStringContainsString('font-size: 0 !important;', $phoneCss);
         $this->assertStringContainsString('content: attr(data-mobile-access-label);', $phoneCss);
