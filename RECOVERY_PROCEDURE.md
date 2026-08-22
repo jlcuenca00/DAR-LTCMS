@@ -1,13 +1,13 @@
 # DAR-LTCMS Backup and Recovery Procedure
 
-DAR-LTCMS uses two backup modes:
+This document describes supported backup/recovery procedures for DAR-LTCMS. It does **not** by itself prove that an off-site backup job is currently configured on the live server; production configuration and successful restore testing must be verified operationally.
 
-1. **Manual/local snapshot** for development or one-off maintenance work.
-2. **Encrypted off-site production backup** for the deployed DAR-LTCMS server.
+DAR-LTCMS supports two backup approaches:
 
-Production backups must never be stored under the public web root.
+1. **Manual/local snapshot** for development, maintenance, or pre-release protection.
+2. **Encrypted off-site production backup** using the provided production backup script and a private restic repository.
 
----
+Production backups must never be exposed through the public web root or committed to GitHub.
 
 ## 1. Manual/local snapshot
 
@@ -17,216 +17,133 @@ From the project root:
 bash scripts/backup_dar_ltcms.sh
 ```
 
-This creates a timestamped folder under `storage/backups/` containing:
+The local backup script creates a timestamped backup under `storage/backups/` containing the data handled by the script, such as the PostgreSQL dump/private files/manifest/checksums where available.
 
-- PostgreSQL custom-format dump
-- private uploaded files, when present
-- manifest
-- SHA-256 checksums
+`storage/backups/` and database dump files are excluded from deployment/source-control use and must never be committed.
 
-`storage/backups/` and database dump files are ignored by Git and must never be committed.
+For the final `v1.0.0` pre-release backup, follow `docs/RELEASE_PREPARATION.md` even if another backup routine is also configured.
 
----
+## 2. Supported off-site production design
 
-## 2. Production backup design
-
-Production uses:
+The repository provides:
 
 ```bash
 bash scripts/backup_dar_ltcms_production.sh
 ```
 
-The production script:
+When correctly configured, the production script is designed to:
 
-1. reads the active Laravel PostgreSQL configuration;
-2. creates one temporary PostgreSQL custom-format dump outside the web root;
-3. validates the dump with `pg_restore --list`;
-4. backs up the dump, production `.env`, `storage/app/private`, and `storage/app/public`;
-5. encrypts and uploads the snapshot to an off-site restic repository;
-6. keeps 7 daily, 4 weekly, and 3 monthly snapshots by default;
-7. prunes expired snapshots;
-8. checks repository metadata plus a 5% data sample by default; and
-9. removes the temporary local database dump after completion.
+1. read the active Laravel PostgreSQL configuration;
+2. create a temporary PostgreSQL custom-format dump outside the web root;
+3. validate the dump with `pg_restore --list`;
+4. include the dump, production `.env`, `storage/app/private`, and `storage/app/public` in the protected snapshot;
+5. encrypt/upload the snapshot through restic;
+6. apply configured retention;
+7. verify repository data; and
+8. remove the temporary local database dump after completion.
 
-Application source code, `vendor/`, `node_modules/`, `public/build/`, and the `public/storage` symlink are not duplicated in the production backup.
+Application source, `vendor/`, `node_modules/`, generated frontend assets, and a public storage symlink do not need to be duplicated as production data backups.
 
----
+## 3. Off-site destination example
 
-## 3. Recommended off-site destination
+A private S3-compatible object-storage bucket, such as Backblaze B2, may be used with restic.
 
-Use a **private Backblaze B2 bucket** through its S3-compatible HTTPS endpoint.
-
-Recommended repository form:
+Example repository form:
 
 ```text
 s3:https://s3.<region>.backblazeb2.com/<private-bucket-name>/dar-ltcms
 ```
 
-Use a dedicated application key restricted to the backup bucket. The key must support the object read/write/delete/list operations required by restic retention and verification.
-
-For Backblaze B2 lifecycle settings, use the provider option that keeps only the latest file version so hidden/old object versions removed by restic do not continue consuming storage indefinitely.
-
----
+Use a dedicated restricted application key. Backup credentials, repository passwords, and bucket details are production secrets and must not be committed.
 
 ## 4. Production secret files
 
-Create a private backup configuration directory on the production server:
+On the production server, a private configuration directory may be created as:
 
 ```bash
 mkdir -p ~/.config/dar-ltcms
 chmod 700 ~/.config/dar-ltcms
-```
-
-Copy the repository template:
-
-```bash
 cp scripts/backup.env.example ~/.config/dar-ltcms/backup.env
 chmod 600 ~/.config/dar-ltcms/backup.env
 ```
 
-Edit it with the real private bucket endpoint and application key:
-
-```bash
-nano ~/.config/dar-ltcms/backup.env
-```
-
-Create a strong restic encryption password file:
+Store the restic encryption password in a separate protected file, for example:
 
 ```bash
 nano ~/.config/dar-ltcms/restic-password
 chmod 600 ~/.config/dar-ltcms/restic-password
 ```
 
-The restic password must also be stored securely **outside the production server**. Losing the password means the encrypted backup repository cannot be recovered.
+The encryption password must also be stored securely outside the production server. Losing it can make encrypted backups unrecoverable.
 
-Do not commit `backup.env`, the restic password, or any application keys to GitHub.
+## 5. Initialize and verify the off-site repository
 
----
-
-## 5. Initialize the off-site repository once
-
-Load the private backup configuration:
+Only after the real production backup configuration has been securely prepared:
 
 ```bash
 set -a
 source ~/.config/dar-ltcms/backup.env
 set +a
-```
-
-Then initialize the repository:
-
-```bash
 restic init
-```
-
-Verify access:
-
-```bash
 restic snapshots
 restic check
 ```
 
-Initialization must only be performed once for a new empty repository.
+`restic init` is performed only for a new empty repository.
 
----
-
-## 6. First production backup
+## 6. First production backup verification
 
 From the Laravel project root:
 
 ```bash
-cd ~/htdocs/darltcms.me
+cd /home/darltcms/htdocs/darltcms.me
 bash scripts/backup_dar_ltcms_production.sh
 ```
 
-A successful run must end with a latest snapshot listing and:
+Do not consider off-site backups operational until a real backup completes successfully and its snapshot can be listed/checked.
 
-```text
-Backup completed successfully. Temporary local dump will now be removed.
-```
+Also confirm temporary plaintext dumps are not left behind after a successful production run.
 
-Then verify that no dump was left behind:
+## 7. Scheduling
 
-```bash
-ls -lah ~/.cache/dar-ltcms-backup
-```
+If automated daily production backups are approved and configured, use the `darltcms` deployment account rather than requiring root.
 
-Only the lock file should remain when the backup is idle.
-
----
-
-## 7. Schedule daily production backups
-
-Use the `darltcms` account's crontab so the job does not require root.
-
-Open the user crontab:
-
-```bash
-crontab -e
-```
-
-Recommended daily schedule:
+Example cron schedule:
 
 ```cron
 30 2 * * * cd /home/darltcms/htdocs/darltcms.me && /usr/bin/bash scripts/backup_dar_ltcms_production.sh >> /home/darltcms/.cache/dar-ltcms-backup/backup.log 2>&1
 ```
 
-This runs at **2:30 AM server local time**. Confirm the server timezone before relying on this schedule.
-
-Check the installed schedule:
-
-```bash
-crontab -l
-```
-
-The backup script uses a file lock so a second run will fail safely instead of overlapping an existing run.
-
----
+Confirm the server timezone, log location, credentials, retention, and successful scheduled execution. A configured cron entry is not sufficient evidence of recoverability by itself.
 
 ## 8. Restore into a test environment first
 
 Never test restoration against the active production database.
 
-Create a temporary restore directory:
+Create a separate restore location and load the backup credentials:
 
 ```bash
 mkdir -p ~/dar-ltcms-restore-test
 chmod 700 ~/dar-ltcms-restore-test
-```
-
-Load backup credentials:
-
-```bash
 set -a
 source ~/.config/dar-ltcms/backup.env
 set +a
 ```
 
-List snapshots:
+List snapshots and restore the selected snapshot to the temporary target:
 
 ```bash
 restic snapshots --host darltcms-production --tag dar-ltcms-production
-```
-
-Restore the selected snapshot into the temporary directory:
-
-```bash
 restic restore <snapshot-id> --target ~/dar-ltcms-restore-test
 ```
 
-Locate the restored `database.dump`:
-
-```bash
-find ~/dar-ltcms-restore-test -name database.dump -type f -print
-```
-
-Validate it:
+Validate the restored database dump:
 
 ```bash
 pg_restore --list /path/to/restored/database.dump > /dev/null
 ```
 
-Create a separate PostgreSQL test database and restore into it:
+Restore into a separate PostgreSQL test database, never the live database:
 
 ```bash
 createdb -U postgres dar_iland_restore_test
@@ -239,36 +156,36 @@ pg_restore -U postgres \
   /path/to/restored/database.dump
 ```
 
-Use a separate test copy of the Laravel project and point its database configuration to `dar_iland_restore_test`.
+Point a separate test copy of DAR-LTCMS to `dar_iland_restore_test`.
 
 Verify at minimum:
 
 - users and role assignments
-- landowner records
-- parcel records
-- landholdings
-- applications and application parties
-- uploaded document references/files
-- workflow history
-- final decisions
+- Landowner records
+- Parcel records
+- Landholdings
+- Clearance Applications and parties
+- protected uploads/document references
+- workflow/final-state data
 - generated clearance records
 - notifications
-- audit logs
-- profile photos or other public-storage user uploads
+- Audit Logs
+- private/reference/profile files included by the selected backup
 
-Do not send email, mutate production records, or run the restored test copy against the live production database.
-
----
+Do not send production email, mutate live records, or point the restore test copy at the live database.
 
 ## 9. Production restoration rule
 
-A production restore requires all of the following before proceeding:
+A production restore requires:
 
 1. authorized approval;
 2. a verified current backup;
 3. a tested restore of the selected snapshot;
 4. a defined maintenance window;
-5. a rollback plan; and
-6. confirmation that the restore will not overwrite a newer valid production state by mistake.
+5. a rollback plan;
+6. confirmation of the exact target database/snapshot; and
+7. confirmation that a newer valid production state will not be overwritten accidentally.
 
-Restoring DAR-LTCMS data restores administrative processing and monitoring records only. It does not execute or finalize land ownership transfer or registry mutation.
+For a code/UI-only regression, prefer reverting the code/deployment rather than restoring the database.
+
+Restoring DAR-LTCMS restores administrative processing/monitoring records only. It does not execute or finalize legal land ownership transfer or registry mutation.
