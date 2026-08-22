@@ -13,8 +13,12 @@
         \App\Models\User::ROLE_GEODETIC => 'Geodetic Personnel',
         default => 'Authorized User',
     };
-    $accountPhotoExists = $user?->profile_photo_path
-        && \Illuminate\Support\Facades\Storage::disk('public')->exists($user->profile_photo_path);
+    $accountPhotoPath = $user?->profile_photo_path;
+    $accountPhotoExists = $accountPhotoPath
+        && (
+            \Illuminate\Support\Facades\Storage::disk('local')->exists($accountPhotoPath)
+            || \Illuminate\Support\Facades\Storage::disk('public')->exists($accountPhotoPath)
+        );
     $accountPhotoUrl = $accountPhotoExists
         ? route('profile.photo', $user)
         : null;
@@ -42,6 +46,29 @@
             flex: 0 0 44px;
             box-sizing: border-box;
             line-height: 1;
+        }
+
+        :where(.staff-topbar, .geo-topbar, .lo-topbar) .onboarding-help-button {
+            width: 44px !important;
+            min-width: 44px !important;
+            height: 44px !important;
+            min-height: 44px !important;
+            flex: 0 0 44px !important;
+            box-sizing: border-box;
+            border: 1px solid #bbd7c4 !important;
+            background: #f0fdf4 !important;
+            color: #166534 !important;
+            font-size: 15px !important;
+            line-height: 1 !important;
+            transform: none !important;
+            box-shadow: none !important;
+        }
+
+        :where(.staff-topbar, .geo-topbar, .lo-topbar) .onboarding-help-button:hover {
+            background: #dcfce7 !important;
+            color: #14532d !important;
+            transform: none !important;
+            box-shadow: none !important;
         }
 
         :where(.geo-topbar, .lo-topbar) :where(.geo-access-chip, .lo-access-chip) {
