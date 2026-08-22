@@ -256,4 +256,4 @@ Manually inspect major pages including:
 - [ ] `/geodetic/parcel-map`
 - [ ] `/profile`
 
-Expected: no broken routes, obsolete DAR-iLAND branding, outdated Approved/Not Approved user-facing workflow language, or wording that exceeds the approved clearance-processing scope.
+Expected: no broken routes, obsolete project branding, outdated Approved/Not Approved user-facing workflow language, or wording that exceeds the approved clearance-processing scope.
