@@ -69,6 +69,35 @@ class RoleMobilePortalNavigationTest extends TestCase
         $this->assertStringContainsString('accountPlaceholder.after(account)', $script);
     }
 
+    public function test_landowner_and_geodetic_access_scope_moves_into_the_mobile_topbar(): void
+    {
+        $bootstrap = file_get_contents(resource_path('js/bootstrap.js'));
+        $polish = file_get_contents(resource_path('js/mobile-portal-polish.js'));
+        $css = file_get_contents(resource_path('css/mobile-portal-polish.css'));
+
+        $this->assertStringContainsString("import './mobile-portal-polish';", $bootstrap);
+        $this->assertStringContainsString("chip: '.lo-access-chip'", $polish);
+        $this->assertStringContainsString("chip: '.geo-access-chip'", $polish);
+        $this->assertStringContainsString('mobileActions.insertBefore(chip, account)', $polish);
+        $this->assertStringContainsString('placeholder.after(chip)', $polish);
+        $this->assertStringContainsString('.dar-mobile-portal-actions > :is(.lo-access-chip, .geo-access-chip)', $css);
+        $this->assertStringContainsString("compactLabel: 'Own Only'", $polish);
+        $this->assertStringContainsString("compactLabel: 'Read Only'", $polish);
+    }
+
+    public function test_landowner_and_geodetic_mobile_record_cards_do_not_require_horizontal_scrolling(): void
+    {
+        $css = file_get_contents(resource_path('css/mobile-portal-polish.css'));
+
+        $this->assertStringContainsString('.lo-shell .lo-parcel-table-wrap', $css);
+        $this->assertStringContainsString('.geo-shell .geo-record-table-wrap', $css);
+        $this->assertStringContainsString('overflow-x: hidden !important;', $css);
+        $this->assertStringContainsString('.lo-reference-list', $css);
+        $this->assertStringContainsString('.geo-reference-list', $css);
+        $this->assertStringContainsString('white-space: normal !important;', $css);
+        $this->assertStringContainsString('grid-template-columns: minmax(48px, auto) minmax(0, 1fr) !important;', $css);
+    }
+
     public function test_role_mobile_account_menu_is_bounded_near_the_top_controls(): void
     {
         $css = file_get_contents(resource_path('css/responsive-hardening.css'));
