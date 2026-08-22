@@ -48,7 +48,7 @@
             .lo-parcel-panel-copy { margin: 4px 0 0; color: var(--lo-muted); font-size: 12px; line-height: 1.45; }
 
             .lo-parcel-table-wrap { overflow-x: auto; }
-            .lo-parcel-table { width: 100%; min-width: 940px; border-collapse: collapse; font-size: 13px; }
+            .lo-parcel-table { width: 100%; min-width: 800px; border-collapse: collapse; font-size: 13px; }
             .lo-parcel-table th {
                 padding: 12px 15px;
                 background: #f8faf9;
@@ -62,14 +62,6 @@
                 white-space: nowrap;
             }
             .lo-parcel-table td { padding: 15px; border-bottom: 1px solid #edf1ee; color: #344054; vertical-align: top; }
-            .lo-parcel-table th.lo-parcel-action-column,
-            .lo-parcel-table td.lo-parcel-action-column {
-                width: 1%;
-                min-width: 150px;
-                text-align: center;
-                white-space: nowrap;
-            }
-            .lo-parcel-table td.lo-parcel-action-column { vertical-align: middle; }
             .lo-parcel-table tbody tr:last-child td { border-bottom: 0; }
 
             .lo-parcel-code-link { color: var(--lo-green-900); text-decoration: none; font-weight: 900; white-space: nowrap; }
@@ -101,23 +93,6 @@
             }
             .lo-state-badge.is-active { background: #dcfce7; border-color: #bbf7d0; color: #166534; }
             .lo-state-badge.is-mapped { background: #dbeafe; border-color: #bfdbfe; color: #1d4ed8; }
-
-            .lo-open-link {
-                min-height: 32px;
-                display: inline-flex;
-                align-items: center;
-                gap: 7px;
-                padding: 0 11px;
-                border: 1px solid #d7ded9;
-                border-radius: 9px;
-                background: #ffffff;
-                color: var(--lo-green-900);
-                text-decoration: none;
-                font-size: 11px;
-                font-weight: 900;
-                white-space: nowrap;
-            }
-            .lo-open-link:hover { background: var(--lo-green-50); border-color: #bbf7d0; }
             .lo-parcel-empty { padding: 28px 20px; color: var(--lo-muted); font-size: 13px; line-height: 1.5; }
 
             @media (max-width: 760px) {
@@ -147,7 +122,7 @@
         <article class="lo-parcel-panel">
             <header class="lo-parcel-panel-header">
                 <h2 class="lo-parcel-panel-title">Parcel and Landholding References</h2>
-                <p class="lo-parcel-panel-copy">Essential reference numbers, location, linked area, and map availability.</p>
+                <p class="lo-parcel-panel-copy">Essential reference numbers, location, linked area, and map availability. Select any row to open its details.</p>
             </header>
 
             @if ($landholdings->isEmpty())
@@ -163,13 +138,17 @@
                                 <th>Linked Area</th>
                                 <th>Clearance Scope</th>
                                 <th>Record State</th>
-                                <th class="lo-parcel-action-column">Action</th>
                             </tr>
                         </thead>
                         <tbody>
                             @foreach ($landholdings as $holding)
                                 @php($parcel = $holding->parcel)
-                                <tr>
+                                <tr
+                                    @if ($parcel)
+                                        data-record-row-href="{{ route('landowner.parcels.show', $parcel) }}"
+                                        aria-label="Open parcel record {{ $parcel->parcel_code }}"
+                                    @endif
+                                >
                                     <td>
                                         @if ($parcel)
                                             <a href="{{ route('landowner.parcels.show', $parcel) }}" class="lo-parcel-code-link">{{ $parcel->parcel_code }}</a>
@@ -206,13 +185,6 @@
                                             <span class="lo-state-badge {{ $parcel?->geometry_geojson ? 'is-mapped' : '' }}">{{ $parcel?->geometry_geojson ? 'Mapped' : 'No Geometry' }}</span>
                                         </div>
                                     </td>
-                                    <td class="lo-parcel-action-column">
-                                        @if ($parcel)
-                                            <a href="{{ route('landowner.parcels.show', $parcel) }}" class="lo-open-link">Open Details <i class="fa-solid fa-arrow-right"></i></a>
-                                        @else
-                                            <span class="lo-state-badge">Unavailable</span>
-                                        @endif
-                                    </td>
                                 </tr>
                             @endforeach
                         </tbody>
@@ -221,4 +193,6 @@
             @endif
         </article>
     </section>
+
+    <x-record-row-navigation />
 </x-landowner-shell>
