@@ -49,7 +49,7 @@
         .geo-record-panel-copy { margin: 4px 0 0; color: var(--geo-muted); font-size: 12px; line-height: 1.45; }
 
         .geo-record-table-wrap { overflow-x: auto; }
-        .geo-record-table { width: 100%; min-width: 1080px; border-collapse: collapse; font-size: 13px; }
+        .geo-record-table { width: 100%; min-width: 930px; border-collapse: collapse; font-size: 13px; }
         .geo-record-table th {
             padding: 12px 15px;
             background: #f8faf9;
@@ -63,14 +63,6 @@
             white-space: nowrap;
         }
         .geo-record-table td { padding: 15px; border-bottom: 1px solid #edf1ee; color: #344054; vertical-align: top; }
-        .geo-record-table th.geo-record-action-column,
-        .geo-record-table td.geo-record-action-column {
-            width: 1%;
-            min-width: 150px;
-            text-align: center;
-            white-space: nowrap;
-        }
-        .geo-record-table td.geo-record-action-column { vertical-align: middle; }
         .geo-record-table tbody tr:last-child td { border-bottom: 0; }
 
         .geo-record-code { color: var(--geo-green-900); text-decoration: none; font-weight: 900; white-space: nowrap; }
@@ -103,23 +95,6 @@
         }
         .geo-state-badge.is-active { background: #dcfce7; border-color: #bbf7d0; color: #166534; }
         .geo-state-badge.is-mapped { background: #dbeafe; border-color: #bfdbfe; color: #1d4ed8; }
-
-        .geo-open-link {
-            min-height: 32px;
-            display: inline-flex;
-            align-items: center;
-            gap: 7px;
-            padding: 0 11px;
-            border: 1px solid #d7ded9;
-            border-radius: 9px;
-            background: #ffffff;
-            color: var(--geo-green-900);
-            text-decoration: none;
-            font-size: 11px;
-            font-weight: 900;
-            white-space: nowrap;
-        }
-        .geo-open-link:hover { background: var(--geo-green-50); border-color: #bbf7d0; }
         .geo-record-empty { padding: 28px 20px; color: var(--geo-muted); font-size: 13px; line-height: 1.5; }
 
         @media (max-width: 760px) {
@@ -149,7 +124,7 @@
         <article class="geo-record-panel">
             <header class="geo-record-panel-header">
                 <h2 class="geo-record-panel-title">Reference Records</h2>
-                <p class="geo-record-panel-copy">Essential parcel, landowner, area, and geometry information for technical review.</p>
+                <p class="geo-record-panel-copy">Essential parcel, landowner, area, and geometry information for technical review. Select any row to review its details.</p>
             </header>
 
             @if ($landholdings->isEmpty())
@@ -166,13 +141,17 @@
                                 <th>Recorded Area</th>
                                 <th>Clearance Scope</th>
                                 <th>Record State</th>
-                                <th class="geo-record-action-column">Action</th>
                             </tr>
                         </thead>
                         <tbody>
                             @foreach ($landholdings as $holding)
                                 @php($parcel = $holding->parcel)
-                                <tr>
+                                <tr
+                                    @if ($parcel)
+                                        data-record-row-href="{{ route('geodetic.parcels.show', $parcel) }}"
+                                        aria-label="Review parcel record {{ $parcel->parcel_code }}"
+                                    @endif
+                                >
                                     <td>
                                         @if ($parcel)
                                             <a href="{{ route('geodetic.parcels.show', $parcel) }}" class="geo-record-code">{{ $parcel->parcel_code }}</a>
@@ -210,13 +189,6 @@
                                             <span class="geo-state-badge {{ $parcel?->geometry_geojson ? 'is-mapped' : '' }}">{{ $parcel?->geometry_geojson ? 'Mapped' : 'No Geometry' }}</span>
                                         </div>
                                     </td>
-                                    <td class="geo-record-action-column">
-                                        @if ($parcel)
-                                            <a href="{{ route('geodetic.parcels.show', $parcel) }}" class="geo-open-link">Review Details <i class="fa-solid fa-arrow-right"></i></a>
-                                        @else
-                                            <span class="geo-state-badge">Unavailable</span>
-                                        @endif
-                                    </td>
                                 </tr>
                             @endforeach
                         </tbody>
@@ -225,4 +197,6 @@
             @endif
         </article>
     </section>
+
+    <x-record-row-navigation />
 </x-geodetic-shell>
