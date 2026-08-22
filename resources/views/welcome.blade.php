@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="DAR-LTCMS supports land transfer clearance processing, monitoring, records management, and clearance generation for the DAR Negros Oriental Provincial Office.">
+    <meta name="description" content="DAR-LTCMS helps DAR Negros Oriental review land transfer clearance applications, track their progress, and prepare clearance results.">
     <title>DAR-LTCMS | DAR Negros Oriental</title>
     <link rel="icon" type="image/png" href="{{ asset('images/favicon.png') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -185,7 +185,7 @@
                 <div>
                     <p class="eyebrow">Department of Agrarian Reform · Negros Oriental</p>
                     <h1 id="hero-title">Land Transfer Clearance and Monitoring System</h1>
-                    <p class="hero-copy">Process, monitor, and document land transfer clearance applications through one authorized DAR workspace.</p>
+                    <p class="hero-copy">A website used by DAR Negros Oriental to review land transfer clearance applications, check their progress, and prepare clearance results.</p>
                     <div class="hero-actions">
                         <a href="{{ route('login') }}" class="button button-light">Sign In</a>
                         <a href="#requirements" class="button button-outline">View Requirements</a>
@@ -197,22 +197,22 @@
                         <img src="{{ asset('images/dar-logo.svg') }}" alt="">
                         <div>
                             <div class="panel-title">DAR-LTCMS</div>
-                            <div class="panel-sub">Clearance processing and monitoring</div>
+                            <div class="panel-sub">Land transfer clearance service</div>
                         </div>
                     </div>
                     <div class="panel-body">
-                        <div class="panel-row"><div class="panel-label">Application intake</div><div class="panel-value">Encoded by authorized DAR Staff</div></div>
-                        <div class="panel-row"><div class="panel-label">Final status</div><div class="panel-value">Released or Denied</div></div>
-                        <div class="panel-row"><div class="panel-label">Output</div><div class="panel-value">LTC Form No. 5 · GRANTED / DENIED</div></div>
+                        <div class="panel-row"><div class="panel-label">Applications</div><div class="panel-value">Entered by authorized DAR Staff</div></div>
+                        <div class="panel-row"><div class="panel-label">Final result</div><div class="panel-value">Released or Denied</div></div>
+                        <div class="panel-row"><div class="panel-label">Clearance form</div><div class="panel-value">LTC Form No. 5 · GRANTED / DENIED</div></div>
                     </div>
                 </aside>
             </div>
         </section>
 
-        <section class="scope-banner" aria-label="Important system scope">
+        <section class="scope-banner" aria-label="Important information">
             <div class="container scope-banner-inner">
                 <span aria-hidden="true">ⓘ</span>
-                <div>A Released or GRANTED clearance does not automatically transfer land ownership or alter registry records; legal transfer remains a separate administrative process.</div>
+                <div>A GRANTED clearance does not mean the land has already changed owners. The actual land transfer and any changes to official land records are handled separately through the proper legal and government process.</div>
             </div>
         </section>
 
@@ -220,13 +220,13 @@
             <div class="container section-grid">
                 <div class="side-note">
                     <p class="section-kicker">About</p>
-                    <h2 class="section-title" id="about-title">What the system does.</h2>
+                    <h2 class="section-title" id="about-title">What DAR-LTCMS helps with.</h2>
                 </div>
                 <div class="feature-line">
-                    <article class="feature"><span class="feature-number">01</span><h3>Process</h3><p>Encode and review clearance applications.</p></article>
-                    <article class="feature"><span class="feature-number">02</span><h3>Records</h3><p>Manage landowner, parcel, and landholding references.</p></article>
-                    <article class="feature"><span class="feature-number">03</span><h3>Monitor</h3><p>Track status, reports, and final results.</p></article>
-                    <article class="feature"><span class="feature-number">04</span><h3>Protect</h3><p>Use role-based access and audit trails.</p></article>
+                    <article class="feature"><span class="feature-number">01</span><h3>Applications</h3><p>DAR Staff record and review land transfer clearance applications.</p></article>
+                    <article class="feature"><span class="feature-number">02</span><h3>Land Information</h3><p>Keep landowner, parcel, and landholding information together.</p></article>
+                    <article class="feature"><span class="feature-number">03</span><h3>Updates</h3><p>See where an application is in the DAR process and view its final result.</p></article>
+                    <article class="feature"><span class="feature-number">04</span><h3>Privacy</h3><p>Users only see the information allowed for their account.</p></article>
                 </div>
             </div>
         </section>
@@ -235,11 +235,12 @@
             <div class="container section-grid">
                 <div class="side-note">
                     <p class="section-kicker">Requirements</p>
-                    <h2 class="section-title" id="requirements-title">Prepare the applicable documents.</h2>
+                    <h2 class="section-title" id="requirements-title">Documents you may need.</h2>
+                    <p class="section-intro">Prepare the documents that apply to the land transfer.</p>
                 </div>
                 <div class="requirement-groups">
                     <article class="requirement-card">
-                        <div class="requirement-head"><h3>Transferor</h3></div>
+                        <div class="requirement-head"><h3>Transferor — person transferring the land</h3></div>
                         <ul class="requirement-list">
                             <li>Official Receipt (LTC Fee Payment)</li>
                             <li>Electronic Copy of Title</li>
@@ -250,7 +251,7 @@
                         </ul>
                     </article>
                     <article class="requirement-card">
-                        <div class="requirement-head"><h3>Transferee</h3></div>
+                        <div class="requirement-head"><h3>Transferee — person receiving the land</h3></div>
                         <ul class="requirement-list">
                             <li>Affidavit of Transferee</li>
                             <li>Municipal Assessor's Certificate of Aggregate Landholding</li>
@@ -258,7 +259,7 @@
                             <li>MARPO Certification (LTC Form No. 2)</li>
                         </ul>
                     </article>
-                    <div class="additional"><strong>When applicable:</strong> Recent Tax Declaration, Death Certificate, City Assessor's Certificate, and other documents requested during DAR review.</div>
+                    <div class="additional"><strong>When needed:</strong> Recent Tax Declaration, Death Certificate, City Assessor's Certificate, and other documents requested by DAR during review.</div>
                 </div>
             </div>
         </section>
@@ -267,8 +268,8 @@
             <div class="container section-grid">
                 <div class="side-note">
                     <p class="section-kicker">Process</p>
-                    <h2 class="section-title" id="process-title">Current application workflow.</h2>
-                    <p class="section-intro">Staff encode and move applications through the authorized stages below.</p>
+                    <h2 class="section-title" id="process-title">How an application moves through DAR.</h2>
+                    <p class="section-intro">DAR Staff update the application as it passes through each office step.</p>
                 </div>
                 <div>
                     <div class="workflow-grid">
@@ -279,19 +280,19 @@
                         <div class="workflow-step"><span class="workflow-number">5</span><strong>For Releasing</strong></div>
                         <div class="workflow-step"><span class="workflow-number">6</span><strong>Released or Denied</strong></div>
                     </div>
-                    <div class="decision-note">Released and Denied are final system outcomes. Editing and uploads are locked after finalization.</div>
+                    <div class="decision-note">Once an application is Released or Denied, it is final in DAR-LTCMS. Its information and uploaded documents can no longer be changed.</div>
                 </div>
             </div>
         </section>
 
         <section class="section section-dark" aria-labelledby="access-title">
             <div class="container">
-                <p class="section-kicker">Access</p>
-                <h2 class="section-title" id="access-title">Role-based and limited by purpose.</h2>
+                <p class="section-kicker">Users</p>
+                <h2 class="section-title" id="access-title">Who can use DAR-LTCMS?</h2>
                 <div class="role-grid">
-                    <article class="role"><h3>DAR Staff</h3><p>Encode, process, manage records, and generate monitoring outputs.</p></article>
-                    <article class="role"><h3>Landowners</h3><p>View only their own linked records and application status. Landowners do not create clearance applications.</p></article>
-                    <article class="role"><h3>Geodetic Personnel</h3><p>Review parcel, reference, and map information through limited technical access.</p></article>
+                    <article class="role"><h3>DAR Staff</h3><p>Enter and review applications, manage DAR information, and prepare reports.</p></article>
+                    <article class="role"><h3>Landowners</h3><p>View only their own linked land information and application progress. Landowners do not create applications in the system.</p></article>
+                    <article class="role"><h3>Geodetic Personnel</h3><p>View parcel and map information needed for checking land details. They do not approve clearance applications.</p></article>
                 </div>
             </div>
         </section>
