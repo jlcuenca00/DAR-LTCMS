@@ -1,9 +1,11 @@
 <?php
 
+use App\Models\User;
 use App\Services\DataIntegrityScanner;
 use App\Services\ProductionReadinessScanner;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\DB;
 
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
@@ -121,3 +123,117 @@ Artisan::command('dar:release-check {--json : Output the complete final-release 
 
     return 1;
 })->purpose('Run the strict read-only data and production checks required before a DAR-LTCMS final release');
+
+Artisan::command(
+    'dar:provision-demo-access
+        {--staff-password= : Staff demo password; omit to enter it securely}
+        {--geodetic-password= : Geodetic demo password; omit to enter it securely}
+        {--allow-production : Explicitly allow creation/update of the two presentation accounts in production}',
+    function () {
+        if (app()->environment('production') && ! $this->option('allow-production')) {
+            $this->error('Production protection: rerun with --allow-production only when you intentionally want the two presentation accounts on the live system.');
+
+            return 1;
+        }
+
+        $staffPassword = (string) ($this->option('staff-password') ?: $this->secret('Staff demo password'));
+        $geodeticPassword = (string) ($this->option('geodetic-password') ?: $this->secret('Geodetic demo password'));
+
+        $passwordIsStrong = static fn (string $password): bool =>
+            strlen($password) >= 12
+            && preg_match('/[a-z]/', $password) === 1
+            && preg_match('/[A-Z]/', $password) === 1
+            && preg_match('/\d/', $password) === 1
+            && preg_match('/[^A-Za-z0-9]/', $password) === 1;
+
+        if (! $passwordIsStrong($staffPassword) || ! $passwordIsStrong($geodeticPassword)) {
+            $this->error('Each demo password must be at least 12 characters and include lowercase, uppercase, a number, and a symbol.');
+
+            return 1;
+        }
+
+        $accounts = [
+            [
+                'name' => 'DAR-LTCMS Staff Demo',
+                'username' => 'staff.demo',
+                'email' => 'staff.demo@dar-ltcms.local',
+                'role' => User::ROLE_STAFF,
+                'password' => $staffPassword,
+            ],
+            [
+                'name' => 'DAR-LTCMS Geodetic Demo',
+                'username' => 'geodetic.demo',
+                'email' => 'geodetic.demo@dar-ltcms.local',
+                'role' => User::ROLE_GEODETIC,
+                'password' => $geodeticPassword,
+            ],
+        ];
+
+        foreach ($accounts as $account) {
+            $emailCollision = User::query()->where('email', $account['email'])->first();
+            if ($emailCollision && $emailCollision->role !== $account['role']) {
+                $this->error('Refusing to change '.$account['email'].' because it already belongs to a different role.');
+
+                return 1;
+            }
+
+            $usernameCollision = User::query()
+                ->where('username', $account['username'])
+                ->where('email', '!=', $account['email'])
+                ->first();
+
+            if ($usernameCollision) {
+                $this->error('Refusing to use username '.$account['username'].' because it already belongs to another account.');
+
+                return 1;
+            }
+        }
+
+        DB::transaction(function () use ($accounts): void {
+            foreach ($accounts as $account) {
+                User::query()->updateOrCreate(
+                    ['email' => $account['email']],
+                    [
+                        'name' => $account['name'],
+                        'username' => $account['username'],
+                        'password' => $account['password'],
+                        'role' => $account['role'],
+                        'is_active' => true,
+                        'must_change_password' => false,
+                        'password_changed_at' => now(),
+                    ]
+                );
+            }
+        });
+
+        $this->info('Presentation access is ready. No landowner, parcel, landholding, application, decision, ownership, or registry record was created or changed.');
+        $this->line('Staff demo username: staff.demo');
+        $this->line('Staff demo email: staff.demo@dar-ltcms.local');
+        $this->line('Geodetic demo username: geodetic.demo');
+        $this->line('Geodetic demo email: geodetic.demo@dar-ltcms.local');
+        $this->warn('Passwords are intentionally not printed. Staff retains Staff permissions; Geodetic retains its limited technical access and cannot approve clearance applications or mutate ownership records.');
+
+        return 0;
+    }
+)->purpose('Safely create or refresh the two presentation login accounts without seeding land transaction data');
+
+Artisan::command('dar:disable-demo-access {--allow-production : Explicitly allow disabling the two presentation accounts in production}', function () {
+    if (app()->environment('production') && ! $this->option('allow-production')) {
+        $this->error('Production protection: rerun with --allow-production only when you intentionally want to disable the presentation accounts.');
+
+        return 1;
+    }
+
+    $emails = [
+        'staff.demo@dar-ltcms.local',
+        'geodetic.demo@dar-ltcms.local',
+    ];
+
+    $count = User::query()
+        ->whereIn('email', $emails)
+        ->update(['is_active' => false]);
+
+    $this->info("Disabled {$count} DAR-LTCMS presentation account(s). No records were deleted.");
+
+    return 0;
+})->purpose('Disable the presentation accounts without deleting system records');
