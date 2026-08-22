@@ -9,14 +9,14 @@
         justify-content: center !important;
         width: auto !important;
         min-width: 0 !important;
-        max-width: 112px !important;
-        height: 32px !important;
-        min-height: 32px !important;
+        max-width: 104px !important;
+        height: 26px !important;
+        min-height: 26px !important;
         flex: 0 1 auto !important;
-        padding: 0 9px !important;
+        padding: 0 7px !important;
         border-radius: 999px !important;
         box-sizing: border-box !important;
-        font-size: 10.5px !important;
+        font-size: 10px !important;
         line-height: 1 !important;
         font-weight: 800 !important;
         white-space: nowrap !important;
@@ -115,13 +115,13 @@
 
 @media screen and (max-width: 480px) {
     html body .dar-mobile-portal-top {
-        gap: 8px !important;
-        padding-left: max(12px, var(--dar-safe-left)) !important;
-        padding-right: max(12px, var(--dar-safe-right)) !important;
+        gap: 6px !important;
+        padding-left: max(10px, var(--dar-safe-left)) !important;
+        padding-right: max(10px, var(--dar-safe-right)) !important;
     }
 
     html body .dar-mobile-portal-brand {
-        gap: 8px !important;
+        gap: 7px !important;
     }
 
     html body .dar-mobile-portal-brand-copy small {
@@ -129,28 +129,33 @@
     }
 
     html body .dar-mobile-portal-actions {
-        gap: 6px !important;
+        gap: 4px !important;
     }
 
     html body .dar-mobile-portal-actions > :is(.lo-access-chip, .geo-access-chip) {
-        max-width: 88px !important;
-        padding-left: 8px !important;
-        padding-right: 8px !important;
-        font-size: 9.5px !important;
-    }
-}
-
-@media screen and (max-width: 390px) {
-    html body .dar-mobile-portal-actions > :is(.lo-access-chip, .geo-access-chip) {
-        max-width: 68px !important;
+        max-width: 64px !important;
+        padding-left: 6px !important;
+        padding-right: 6px !important;
         font-size: 0 !important;
     }
 
     html body .dar-mobile-portal-actions > :is(.lo-access-chip, .geo-access-chip)::after {
         content: attr(data-mobile-access-label);
-        font-size: 9.5px;
+        font-size: 9px;
         line-height: 1;
         font-weight: 800;
+    }
+}
+
+@media screen and (max-width: 390px) {
+    html body .dar-mobile-portal-actions > :is(.lo-access-chip, .geo-access-chip) {
+        max-width: 58px !important;
+        padding-left: 5px !important;
+        padding-right: 5px !important;
+    }
+
+    html body .dar-mobile-portal-actions > :is(.lo-access-chip, .geo-access-chip)::after {
+        font-size: 8.5px;
     }
 }
 
