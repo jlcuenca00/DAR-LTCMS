@@ -15,6 +15,7 @@ import './user-management-linked-records';
 import './staff-record-row-navigation';
 import './development-notice';
 import './responsive-hardening';
+import './mobile-portal-polish';
 import './ui-ux-system';
 import './ui-ux-last-mile';
 import './ui-ux-public';
