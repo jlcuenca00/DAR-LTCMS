@@ -81,10 +81,28 @@ class RoleMobilePortalNavigationTest extends TestCase
         $this->assertStringContainsString('mobileActions.insertBefore(chip, account)', $polish);
         $this->assertStringContainsString('chipPlaceholder.after(chip)', $polish);
         $this->assertStringContainsString('.dar-mobile-portal-actions > :is(.lo-access-chip, .geo-access-chip)', $css);
-        $this->assertStringContainsString('height: 32px !important;', $css);
-        $this->assertStringContainsString('min-height: 32px !important;', $css);
+        $this->assertStringContainsString('height: 26px !important;', $css);
+        $this->assertStringContainsString('min-height: 26px !important;', $css);
         $this->assertStringContainsString("compactLabel: 'Own Only'", $polish);
         $this->assertStringContainsString("compactLabel: 'Read Only'", $polish);
+    }
+
+    public function test_phone_access_scope_uses_the_short_label_and_tighter_spacing(): void
+    {
+        $css = file_get_contents(resource_path('css/mobile-portal-polish.css'));
+
+        $phoneStart = strpos($css, '@media screen and (max-width: 480px)');
+        $narrowStart = strpos($css, '@media screen and (max-width: 390px)');
+
+        $this->assertNotFalse($phoneStart);
+        $this->assertNotFalse($narrowStart);
+
+        $phoneCss = substr($css, $phoneStart, $narrowStart - $phoneStart);
+
+        $this->assertStringContainsString('gap: 4px !important;', $phoneCss);
+        $this->assertStringContainsString('max-width: 64px !important;', $phoneCss);
+        $this->assertStringContainsString('font-size: 0 !important;', $phoneCss);
+        $this->assertStringContainsString('content: attr(data-mobile-access-label);', $phoneCss);
     }
 
     public function test_landowner_tour_help_icon_moves_into_the_same_mobile_topbar(): void
