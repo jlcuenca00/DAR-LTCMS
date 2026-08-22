@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\User;
+use App\Services\AuditLogger;
 use App\Services\DataIntegrityScanner;
 use App\Services\ProductionReadinessScanner;
 use Illuminate\Foundation\Inspiring;
@@ -191,7 +192,7 @@ Artisan::command(
 
         DB::transaction(function () use ($accounts): void {
             foreach ($accounts as $account) {
-                User::query()->updateOrCreate(
+                $user = User::query()->updateOrCreate(
                     ['email' => $account['email']],
                     [
                         'name' => $account['name'],
@@ -201,6 +202,18 @@ Artisan::command(
                         'is_active' => true,
                         'must_change_password' => false,
                         'password_changed_at' => now(),
+                    ]
+                );
+
+                AuditLogger::record(
+                    action: 'presentation_demo_account_provisioned',
+                    auditable: $user,
+                    metadata: [
+                        'source' => 'artisan',
+                        'purpose' => 'presentation_demo_access',
+                        'role' => $user->role,
+                        'is_active' => true,
+                        'scope_note' => 'Login account provisioning only. No landowner, parcel, landholding, application, ownership, registry, or final-decision record was changed.',
                     ]
                 );
             }
@@ -229,9 +242,27 @@ Artisan::command('dar:disable-demo-access {--allow-production : Explicitly allow
         'geodetic.demo@dar-ltcms.local',
     ];
 
-    $count = User::query()
-        ->whereIn('email', $emails)
-        ->update(['is_active' => false]);
+    $count = DB::transaction(function () use ($emails): int {
+        $users = User::query()->whereIn('email', $emails)->get();
+
+        foreach ($users as $user) {
+            $user->forceFill(['is_active' => false])->save();
+
+            AuditLogger::record(
+                action: 'presentation_demo_account_disabled',
+                auditable: $user,
+                metadata: [
+                    'source' => 'artisan',
+                    'purpose' => 'presentation_demo_access',
+                    'role' => $user->role,
+                    'is_active' => false,
+                    'scope_note' => 'Presentation account disabled only. No land or clearance records were deleted or changed.',
+                ]
+            );
+        }
+
+        return $users->count();
+    });
 
     $this->info("Disabled {$count} DAR-LTCMS presentation account(s). No records were deleted.");
 
