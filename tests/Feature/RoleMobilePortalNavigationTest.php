@@ -79,10 +79,31 @@ class RoleMobilePortalNavigationTest extends TestCase
         $this->assertStringContainsString("chip: '.lo-access-chip'", $polish);
         $this->assertStringContainsString("chip: '.geo-access-chip'", $polish);
         $this->assertStringContainsString('mobileActions.insertBefore(chip, account)', $polish);
-        $this->assertStringContainsString('placeholder.after(chip)', $polish);
+        $this->assertStringContainsString('chipPlaceholder.after(chip)', $polish);
         $this->assertStringContainsString('.dar-mobile-portal-actions > :is(.lo-access-chip, .geo-access-chip)', $css);
+        $this->assertStringContainsString('height: 32px !important;', $css);
+        $this->assertStringContainsString('min-height: 32px !important;', $css);
         $this->assertStringContainsString("compactLabel: 'Own Only'", $polish);
         $this->assertStringContainsString("compactLabel: 'Read Only'", $polish);
+    }
+
+    public function test_landowner_tour_help_icon_moves_into_the_same_mobile_topbar(): void
+    {
+        $polish = file_get_contents(resource_path('js/mobile-portal-polish.js'));
+        $css = file_get_contents(resource_path('css/mobile-portal-polish.css'));
+
+        $this->assertStringContainsString("help: '[data-onboarding-help=\"landowner_portal\"]'", $polish);
+        $this->assertStringContainsString('mobileActions.insertBefore(help, notification)', $polish);
+        $this->assertStringContainsString('helpPlaceholder.after(help)', $polish);
+        $this->assertStringContainsString('.dar-mobile-portal-actions > .onboarding-help-button', $css);
+    }
+
+    public function test_obsolete_development_notice_is_not_loaded_into_authenticated_portals(): void
+    {
+        $bootstrap = file_get_contents(resource_path('js/bootstrap.js'));
+
+        $this->assertStringNotContainsString("import './development-notice';", $bootstrap);
+        $this->assertStringNotContainsString("import '../css/development-notice.css';", $bootstrap);
     }
 
     public function test_landowner_and_geodetic_mobile_record_cards_do_not_require_horizontal_scrolling(): void
