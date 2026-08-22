@@ -2,6 +2,7 @@ import axios from 'axios';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import './onboarding-tour';
+import './role-onboarding-tours';
 import './onboarding-replay-confirmation';
 import './application-intake-flow';
 import './application-page-cleanup';
