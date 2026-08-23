@@ -90,7 +90,7 @@
             flex-wrap: wrap;
             align-items: center;
             gap: 10px;
-            margin: 0 0 22px;
+            margin: 0;
             padding: 2px 0 12px;
             border-bottom: 2px solid #d8e5db;
             color: #475569;
@@ -130,7 +130,7 @@
         @media (max-width: 640px) {
             .app-breadcrumbs {
                 gap: 8px;
-                margin-bottom: 18px;
+                margin-bottom: 0;
                 font-size: 14px;
             }
         }
