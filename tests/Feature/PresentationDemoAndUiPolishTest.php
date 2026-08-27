@@ -29,7 +29,7 @@ class PresentationDemoAndUiPolishTest extends TestCase
         $response->assertSee('For Releasing');
         $response->assertSee('Released or Denied');
         $response->assertSee('LTC Form No. 5');
-        $response->assertSee('A GRANTED clearance does not mean the land has already changed owners.');
+        $response->assertDontSee('A GRANTED clearance does not mean the land has already changed owners.');
         $response->assertSee('Landowners do not create applications in the system.');
         $response->assertDontSee('This site is still undergoing development');
     }
