@@ -71,9 +71,6 @@
         .panel-label { color: #9fc5ab; font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; }
         .panel-value { margin-top: .14rem; color: #fff; font-size: .88rem; }
 
-        .scope-banner { background: #fff9e8; border-bottom: 1px solid #eadb8e; }
-        .scope-banner-inner { padding: 13px 0; display: flex; gap: 10px; align-items: flex-start; color: #574800; font-size: .85rem; }
-
         .section { padding: 4.5rem 0; }
         .section-white { background: #fff; }
         .section-dark { background: #0d3421; color: #fff; }
@@ -206,13 +203,6 @@
                         <div class="panel-row"><div class="panel-label">Clearance form</div><div class="panel-value">LTC Form No. 5 · GRANTED / DENIED</div></div>
                     </div>
                 </aside>
-            </div>
-        </section>
-
-        <section class="scope-banner" aria-label="Important information">
-            <div class="container scope-banner-inner">
-                <span aria-hidden="true">ⓘ</span>
-                <div>A GRANTED clearance does not mean the land has already changed owners. The actual land transfer and any changes to official land records are handled separately through the proper legal and government process.</div>
             </div>
         </section>
 
