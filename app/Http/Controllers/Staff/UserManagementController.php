@@ -178,13 +178,21 @@ class UserManagementController extends Controller
 
         $statusMessage = match ($emailDelivery) {
             'sent' => "User account {$user->username} created successfully. The username and temporary password were emailed to {$user->email}. The user must change the password after the first login.",
-            'failed' => "User account {$user->username} created successfully, but the confirmation email could not be sent. Provide the initial credentials securely. The user must change the password after the first login.",
-            default => "User account {$user->username} created successfully. No confirmation email was sent because the account has no deliverable email address. The user must change the initial password after signing in.",
+            'failed' => "User account {$user->username} created successfully, but the confirmation email could not be sent. The temporary password is shown once below so it can be provided securely. The user must change it after the first login.",
+            default => "User account {$user->username} created successfully. No confirmation email was sent because the account has no deliverable email address. The temporary password is shown once below so it can be provided securely.",
         };
 
+        if ($emailDelivery === 'sent') {
+            return redirect()
+                ->route('staff.users.index')
+                ->with('success', $statusMessage);
+        }
+
         return redirect()
-            ->route('staff.users.index')
-            ->with('success', $statusMessage);
+            ->route('staff.users.edit', $user)
+            ->with('success', $statusMessage)
+            ->with('temporary_password', $initialPassword)
+            ->with('temporary_password_username', $user->username);
     }
 
     public function edit(User $user)
