@@ -60,7 +60,7 @@ class AccountCreationEmailTest extends TestCase
         ]);
     }
 
-    public function test_account_creation_without_email_still_succeeds_without_sending_credentials(): void
+    public function test_account_creation_without_email_shows_temporary_password_once_to_staff(): void
     {
         Notification::fake();
 
@@ -69,7 +69,7 @@ class AccountCreationEmailTest extends TestCase
             'is_active' => true,
         ]);
 
-        $this->actingAs($staff)
+        $response = $this->actingAs($staff)
             ->post(route('staff.users.store'), [
                 'name' => 'No Email User',
                 'username' => 'no_email_user',
@@ -79,15 +79,19 @@ class AccountCreationEmailTest extends TestCase
                 'role' => User::ROLE_GEODETIC,
                 'is_active' => '1',
                 'landowner_id' => null,
-            ])
-            ->assertRedirect(route('staff.users.index'))
-            ->assertSessionHas('success', function (string $message): bool {
-                return str_contains($message, 'No confirmation email was sent');
-            });
-
-        Notification::assertNothingSent();
+            ]);
 
         $created = User::query()->where('username', 'no_email_user')->firstOrFail();
+
+        $response
+            ->assertRedirect(route('staff.users.edit', $created))
+            ->assertSessionHas('success', function (string $message): bool {
+                return str_contains($message, 'No confirmation email was sent');
+            })
+            ->assertSessionHas('temporary_password', 'Temporary-123!')
+            ->assertSessionHas('temporary_password_username', 'no_email_user');
+
+        Notification::assertNothingSent();
         $this->assertTrue($created->must_change_password);
     }
 
