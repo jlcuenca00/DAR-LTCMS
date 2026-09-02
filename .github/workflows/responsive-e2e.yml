@@ -15,6 +15,7 @@ on:
       - 'app/Http/Controllers/Staff/StaffDashboardController.php'
       - 'app/Http/Controllers/Staff/MonitoringReportController.php'
       - 'app/Http/Controllers/Staff/ParcelMapController.php'
+      - 'app/Http/Controllers/Staff/UserManagementController.php'
       - 'app/Http/Controllers/Geodetic/ParcelMapController.php'
       - 'app/Http/Controllers/Geodetic/GeodeticPortalController.php'
       - 'app/Http/Controllers/Landowner/ParcelMapController.php'
@@ -34,6 +35,7 @@ on:
       - 'app/Http/Middleware/TrustHosts.php'
       - 'app/Http/Middleware/TrustProxies.php'
       - 'app/Models/AuditLog.php'
+      - 'app/Notifications/AccountCreatedNotification.php'
       - 'app/Providers/AppServiceProvider.php'
       - 'app/Services/AuditLogger.php'
       - 'app/Services/ApplicationClearanceService.php'
@@ -74,6 +76,7 @@ on:
       - 'tests/Feature/RbacSecurityHardeningTest.php'
       - 'tests/Feature/ApplicationWorkflowReadinessTest.php'
       - 'tests/Feature/HectareValidationWorkflowTest.php'
+      - 'tests/Feature/AccountCreationEmailTest.php'
       - 'tests/Feature/NotificationSystemTest.php'
       - 'tests/Feature/AuditLoggingTest.php'
       - 'tests/Feature/AuditLogIntegrityHardeningTest.php'
@@ -199,6 +202,7 @@ jobs:
             tests/Feature/FinalDecisionIntegrityHardeningTest.php \
             tests/Feature/ApplicationWorkflowReadinessTest.php \
             tests/Feature/HectareValidationWorkflowTest.php \
+            tests/Feature/AccountCreationEmailTest.php \
             tests/Feature/NotificationSystemTest.php \
             tests/Feature/AuditLoggingTest.php \
             tests/Feature/AuditLogIntegrityHardeningTest.php \
