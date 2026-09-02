@@ -13,7 +13,6 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
-use Illuminate\Validation\Rules\Password;
 use Throwable;
 
 class UserManagementController extends Controller
@@ -75,7 +74,6 @@ class UserManagementController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'username' => ['required', 'string', 'alpha_dash:ascii', 'max:100', 'unique:users,username'],
             'email' => ['nullable', 'email', 'max:255', 'unique:users,email'],
-            'password' => ['required', Password::defaults(), 'confirmed'],
             'role' => ['required', 'string', Rule::in(User::ROLES)],
             'is_active' => ['nullable', 'boolean'],
             'landowner_id' => ['nullable', 'integer', 'exists:landowners,id'],
@@ -102,14 +100,14 @@ class UserManagementController extends Controller
         }
 
         $email = $this->normalizeEmail($validated['email'] ?? null);
-        $initialPassword = $validated['password'];
+        $initialPassword = Str::password(12, true, true, true, false);
 
-        $user = DB::transaction(function () use ($validated, $email) {
+        $user = DB::transaction(function () use ($validated, $email, $initialPassword) {
             $user = User::create([
                 'name' => $validated['name'],
                 'username' => $validated['username'],
                 'email' => $email,
-                'password' => $validated['password'],
+                'password' => $initialPassword,
                 'role' => $validated['role'],
                 'is_active' => (bool) ($validated['is_active'] ?? false),
                 'must_change_password' => true,
@@ -135,6 +133,7 @@ class UserManagementController extends Controller
                     'has_recovery_email' => filled($user->email),
                     'linked_landowner_id' => $validated['landowner_id'] ?? null,
                     'must_change_password' => true,
+                    'temporary_password_generated_by_system' => true,
                 ]
             );
 
@@ -177,9 +176,9 @@ class UserManagementController extends Controller
         }
 
         $statusMessage = match ($emailDelivery) {
-            'sent' => "User account {$user->username} created successfully. The username and temporary password were emailed to {$user->email}. The user must change the password after the first login.",
-            'failed' => "User account {$user->username} created successfully, but the confirmation email could not be sent. The temporary password is shown once below so it can be provided securely. The user must change it after the first login.",
-            default => "User account {$user->username} created successfully. No confirmation email was sent because the account has no deliverable email address. The temporary password is shown once below so it can be provided securely.",
+            'sent' => "User account {$user->username} created successfully. The username and system-generated temporary password were emailed to {$user->email}. The user must change the password after the first login.",
+            'failed' => "User account {$user->username} created successfully, but the confirmation email could not be sent. The system-generated temporary password is shown once below so it can be provided securely. The user must change it after the first login.",
+            default => "User account {$user->username} created successfully. No confirmation email was sent because the account has no deliverable email address. The system-generated temporary password is shown once below so it can be provided securely.",
         };
 
         if ($emailDelivery === 'sent') {
