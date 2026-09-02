@@ -153,6 +153,10 @@
             min-width: 0;
         }
 
+        .user-field-full {
+            grid-column: 1 / -1;
+        }
+
         .user-label {
             display: block;
             margin-bottom: .45rem;
@@ -609,7 +613,7 @@
                             <span class="user-card-icon"><i class="fa-solid fa-id-card"></i></span>
                             <div>
                                 <h3 class="user-card-title">Login Information</h3>
-                                <p class="user-card-copy">Maintain the name and username used for system login.</p>
+                                <p class="user-card-copy">Maintain the name, username, and recovery email used for account access and credential delivery.</p>
                             </div>
                         </div>
                         <div class="user-card-body user-form-grid">
@@ -625,6 +629,15 @@
                                 <label class="user-label">Username</label>
                                 <input type="text" name="username" value="{{ old('username', $user->username) }}" required class="user-input">
                                 @error('username')
+                                    <p class="user-error">{{ $message }}</p>
+                                @enderror
+                            </div>
+
+                            <div class="user-field user-field-full">
+                                <label class="user-label">Email Address <span class="normal-case tracking-normal font-medium text-slate-500">(Optional)</span></label>
+                                <input type="email" name="email" value="{{ old('email', $user->email) }}" class="user-input" autocomplete="email" placeholder="Example: user@example.com">
+                                <p class="mt-2 text-xs leading-5 text-slate-500">Used for account recovery and credential delivery. Leaving this blank keeps Staff-assisted temporary password recovery available.</p>
+                                @error('email')
                                     <p class="user-error">{{ $message }}</p>
                                 @enderror
                             </div>

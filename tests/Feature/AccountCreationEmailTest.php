@@ -13,7 +13,7 @@ class AccountCreationEmailTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_create_user_page_does_not_ask_staff_to_set_an_initial_password(): void
+    public function test_create_user_page_collects_optional_email_without_manual_password_fields(): void
     {
         $staff = User::factory()->create([
             'role' => User::ROLE_STAFF,
@@ -23,10 +23,33 @@ class AccountCreationEmailTest extends TestCase
         $this->actingAs($staff)
             ->get(route('staff.users.create'))
             ->assertOk()
+            ->assertSee('Email Address')
+            ->assertSee('name="email"', false)
             ->assertDontSee('Initial Password')
             ->assertDontSee('name="password"', false)
             ->assertDontSee('name="password_confirmation"', false)
-            ->assertSee('generate a temporary password automatically');
+            ->assertSee('temporary password automatically');
+    }
+
+    public function test_edit_user_page_allows_staff_to_maintain_email_address(): void
+    {
+        $staff = User::factory()->create([
+            'role' => User::ROLE_STAFF,
+            'is_active' => true,
+        ]);
+
+        $user = User::factory()->create([
+            'role' => User::ROLE_GEODETIC,
+            'is_active' => true,
+            'email' => 'existing@example.com',
+        ]);
+
+        $this->actingAs($staff)
+            ->get(route('staff.users.edit', $user))
+            ->assertOk()
+            ->assertSee('Email Address')
+            ->assertSee('name="email"', false)
+            ->assertSee('existing@example.com');
     }
 
     public function test_account_creation_generates_and_emails_temporary_password_and_keeps_forced_change_enabled(): void
