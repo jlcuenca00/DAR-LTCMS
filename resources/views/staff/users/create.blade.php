@@ -584,7 +584,7 @@
                             <span class="user-card-icon"><i class="fa-solid fa-id-card"></i></span>
                             <div>
                                 <h3 class="user-card-title">Login Information</h3>
-                                <p class="user-card-copy">Enter the name and username used for system login.</p>
+                                <p class="user-card-copy">Enter the name and username used for system login. DAR-LTCMS will generate a temporary password automatically.</p>
                             </div>
                         </div>
                         <div class="user-card-body user-form-grid">
@@ -603,35 +603,6 @@
                                     <p class="user-error">{{ $message }}</p>
                                 @enderror
                             </div>
-                        </div>
-                    </section>
-
-                    <section class="user-card">
-                        <div class="user-card-head">
-                            <span class="user-card-icon"><i class="fa-solid fa-key"></i></span>
-                            <div>
-                                <h3 class="user-card-title">Initial Password</h3>
-                                <p class="user-card-copy">Set a temporary initial password. The user must replace it after the first sign-in.</p>
-                            </div>
-                        </div>
-                        <div class="user-card-body user-form-grid">
-                            <div class="user-field">
-                                <label class="user-label">Password</label>
-                                <input id="staff_user_password" type="password" name="password" required class="user-input" autocomplete="new-password">
-                                @error('password')
-                                    <p class="user-error">{{ $message }}</p>
-                                @enderror
-                            </div>
-
-                            <div class="user-field">
-                                <label class="user-label">Confirm Password</label>
-                                <input id="staff_user_password_confirmation" type="password" name="password_confirmation" required class="user-input" autocomplete="new-password">
-                            </div>
-
-                            <x-password-requirements
-                                password-id="staff_user_password"
-                                confirmation-id="staff_user_password_confirmation"
-                            />
                         </div>
                     </section>
                 </main>
@@ -700,7 +671,7 @@
                     <section class="user-card">
                         <div class="user-card-body">
                             <h3 class="user-card-title">Create Account</h3>
-                            <p class="user-card-copy">Account creation is audit logged for traceability.</p>
+                            <p class="user-card-copy">A secure temporary password is generated automatically. Account creation is audit logged for traceability.</p>
                             <div class="user-actions mt-4">
                                 <button type="submit" class="staff-button staff-button-primary">
                                     <i class="fa-solid fa-user-plus"></i>
