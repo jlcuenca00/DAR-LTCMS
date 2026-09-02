@@ -154,6 +154,10 @@
             min-width: 0;
         }
 
+        .user-field-full {
+            grid-column: 1 / -1;
+        }
+
         .user-label {
             display: block;
             margin-bottom: .45rem;
@@ -584,7 +588,7 @@
                             <span class="user-card-icon"><i class="fa-solid fa-id-card"></i></span>
                             <div>
                                 <h3 class="user-card-title">Login Information</h3>
-                                <p class="user-card-copy">Enter the name and username used for system login. DAR-LTCMS will generate a temporary password automatically.</p>
+                                <p class="user-card-copy">Enter the name, username, and optional email address. DAR-LTCMS generates a temporary password automatically and emails the credentials when an email is provided.</p>
                             </div>
                         </div>
                         <div class="user-card-body user-form-grid">
@@ -600,6 +604,15 @@
                                 <label class="user-label">Username</label>
                                 <input type="text" name="username" value="{{ old('username') }}" required class="user-input" placeholder="Example: dar_staff01">
                                 @error('username')
+                                    <p class="user-error">{{ $message }}</p>
+                                @enderror
+                            </div>
+
+                            <div class="user-field user-field-full">
+                                <label class="user-label">Email Address <span class="normal-case tracking-normal font-medium text-slate-500">(Optional)</span></label>
+                                <input type="email" name="email" value="{{ old('email') }}" class="user-input" autocomplete="email" placeholder="Example: user@example.com">
+                                <p class="mt-2 text-xs leading-5 text-slate-500">If provided, the username and system-generated temporary password will be sent to this address.</p>
+                                @error('email')
                                     <p class="user-error">{{ $message }}</p>
                                 @enderror
                             </div>
