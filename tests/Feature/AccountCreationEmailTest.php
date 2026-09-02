@@ -13,7 +13,23 @@ class AccountCreationEmailTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_account_creation_emails_username_and_temporary_password_and_keeps_forced_change_enabled(): void
+    public function test_create_user_page_does_not_ask_staff_to_set_an_initial_password(): void
+    {
+        $staff = User::factory()->create([
+            'role' => User::ROLE_STAFF,
+            'is_active' => true,
+        ]);
+
+        $this->actingAs($staff)
+            ->get(route('staff.users.create'))
+            ->assertOk()
+            ->assertDontSee('Initial Password')
+            ->assertDontSee('name="password"', false)
+            ->assertDontSee('name="password_confirmation"', false)
+            ->assertSee('generate a temporary password automatically');
+    }
+
+    public function test_account_creation_generates_and_emails_temporary_password_and_keeps_forced_change_enabled(): void
     {
         Notification::fake();
 
@@ -27,8 +43,6 @@ class AccountCreationEmailTest extends TestCase
                 'name' => 'New Geodetic User',
                 'username' => 'new_geo_user',
                 'email' => 'new.geo@example.com',
-                'password' => 'Temporary-123!',
-                'password_confirmation' => 'Temporary-123!',
                 'role' => User::ROLE_GEODETIC,
                 'is_active' => '1',
                 'landowner_id' => null,
@@ -37,20 +51,30 @@ class AccountCreationEmailTest extends TestCase
         $response
             ->assertRedirect(route('staff.users.index'))
             ->assertSessionHas('success', function (string $message): bool {
-                return str_contains($message, 'temporary password were emailed');
+                return str_contains($message, 'system-generated temporary password were emailed');
             });
 
         $created = User::query()->where('username', 'new_geo_user')->firstOrFail();
-
-        $this->assertTrue(Hash::check('Temporary-123!', $created->password));
-        $this->assertTrue($created->must_change_password);
-        $this->assertNotNull($created->password_changed_at);
+        $generatedPassword = null;
 
         Notification::assertSentTo(
             $created,
             AccountCreatedNotification::class,
-            fn (AccountCreatedNotification $notification): bool => $notification->temporaryPassword === 'Temporary-123!'
+            function (AccountCreatedNotification $notification) use (&$generatedPassword): bool {
+                $generatedPassword = $notification->temporaryPassword;
+
+                return strlen($generatedPassword) >= 12
+                    && preg_match('/[a-z]/', $generatedPassword) === 1
+                    && preg_match('/[A-Z]/', $generatedPassword) === 1
+                    && preg_match('/[0-9]/', $generatedPassword) === 1
+                    && preg_match('/[^A-Za-z0-9]/', $generatedPassword) === 1;
+            }
         );
+
+        $this->assertNotNull($generatedPassword);
+        $this->assertTrue(Hash::check($generatedPassword, $created->password));
+        $this->assertTrue($created->must_change_password);
+        $this->assertNotNull($created->password_changed_at);
 
         $this->assertDatabaseHas('audit_logs', [
             'actor_user_id' => $staff->id,
@@ -60,7 +84,7 @@ class AccountCreationEmailTest extends TestCase
         ]);
     }
 
-    public function test_account_creation_without_email_shows_temporary_password_once_to_staff(): void
+    public function test_account_creation_without_email_shows_generated_temporary_password_once_to_staff(): void
     {
         Notification::fake();
 
@@ -74,8 +98,6 @@ class AccountCreationEmailTest extends TestCase
                 'name' => 'No Email User',
                 'username' => 'no_email_user',
                 'email' => null,
-                'password' => 'Temporary-123!',
-                'password_confirmation' => 'Temporary-123!',
                 'role' => User::ROLE_GEODETIC,
                 'is_active' => '1',
                 'landowner_id' => null,
@@ -86,10 +108,19 @@ class AccountCreationEmailTest extends TestCase
         $response
             ->assertRedirect(route('staff.users.edit', $created))
             ->assertSessionHas('success', function (string $message): bool {
-                return str_contains($message, 'No confirmation email was sent');
+                return str_contains($message, 'system-generated temporary password is shown once');
             })
-            ->assertSessionHas('temporary_password', 'Temporary-123!')
             ->assertSessionHas('temporary_password_username', 'no_email_user');
+
+        $temporaryPassword = $response->getSession()->get('temporary_password');
+
+        $this->assertIsString($temporaryPassword);
+        $this->assertGreaterThanOrEqual(12, strlen($temporaryPassword));
+        $this->assertMatchesRegularExpression('/[a-z]/', $temporaryPassword);
+        $this->assertMatchesRegularExpression('/[A-Z]/', $temporaryPassword);
+        $this->assertMatchesRegularExpression('/[0-9]/', $temporaryPassword);
+        $this->assertMatchesRegularExpression('/[^A-Za-z0-9]/', $temporaryPassword);
+        $this->assertTrue(Hash::check($temporaryPassword, $created->password));
 
         Notification::assertNothingSent();
         $this->assertTrue($created->must_change_password);
