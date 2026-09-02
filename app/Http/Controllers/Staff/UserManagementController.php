@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Staff;
 use App\Http\Controllers\Controller;
 use App\Models\Landowner;
 use App\Models\User;
+use App\Notifications\AccountCreatedNotification;
 use App\Services\AuditLogger;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -13,6 +14,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
+use Throwable;
 
 class UserManagementController extends Controller
 {
@@ -100,6 +102,7 @@ class UserManagementController extends Controller
         }
 
         $email = $this->normalizeEmail($validated['email'] ?? null);
+        $initialPassword = $validated['password'];
 
         $user = DB::transaction(function () use ($validated, $email) {
             $user = User::create([
@@ -138,9 +141,50 @@ class UserManagementController extends Controller
             return $user;
         });
 
+        $emailDelivery = 'not_available';
+
+        if ($this->hasRecoveryEmail($user)) {
+            try {
+                $user->notify(new AccountCreatedNotification($initialPassword));
+                $emailDelivery = 'sent';
+
+                AuditLogger::record(
+                    'user_account_creation_email_sent',
+                    null,
+                    $user,
+                    [
+                        'created_user_id' => $user->id,
+                        'created_user_username' => $user->username,
+                        'recipient_email' => $user->email,
+                        'force_change_on_first_login' => true,
+                    ]
+                );
+            } catch (Throwable $exception) {
+                $emailDelivery = 'failed';
+
+                AuditLogger::record(
+                    'user_account_creation_email_failed',
+                    null,
+                    $user,
+                    [
+                        'created_user_id' => $user->id,
+                        'created_user_username' => $user->username,
+                        'recipient_email' => $user->email,
+                        'delivery_error_type' => $exception::class,
+                    ]
+                );
+            }
+        }
+
+        $statusMessage = match ($emailDelivery) {
+            'sent' => "User account {$user->username} created successfully. The username and temporary password were emailed to {$user->email}. The user must change the password after the first login.",
+            'failed' => "User account {$user->username} created successfully, but the confirmation email could not be sent. Provide the initial credentials securely. The user must change the password after the first login.",
+            default => "User account {$user->username} created successfully. No confirmation email was sent because the account has no deliverable email address. The user must change the initial password after signing in.",
+        };
+
         return redirect()
             ->route('staff.users.index')
-            ->with('success', "User account {$user->username} created successfully. The user must change the initial password after signing in.");
+            ->with('success', $statusMessage);
     }
 
     public function edit(User $user)
