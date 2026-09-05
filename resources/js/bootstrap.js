@@ -10,6 +10,7 @@ import './staff-list-filters';
 import './dashboard-work-queue';
 import './staff-dashboard-hero';
 import './parcel-map-single-tooltip';
+import './carto-basemap-key';
 import './geodetic-geometry-workflow';
 import './account-panel';
 import './user-management-linked-records';
