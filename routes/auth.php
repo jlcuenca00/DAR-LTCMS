@@ -5,6 +5,7 @@ use App\Http\Controllers\Auth\ConfirmablePasswordController;
 use App\Http\Controllers\Auth\ForcedPasswordController;
 use App\Http\Controllers\Auth\PasswordController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
+use App\Http\Controllers\Auth\VerifyAddedEmailController;
 use App\Http\Controllers\OnboardingTourController;
 use Illuminate\Support\Facades\Route;
 
@@ -19,6 +20,10 @@ use Illuminate\Support\Facades\Route;
 | the existing DAR Staff-assisted reset process.
 |
 */
+Route::get('email/verify-added/{user}/{hash}', VerifyAddedEmailController::class)
+    ->middleware(['signed', 'throttle:6,1'])
+    ->name('email.added.verify');
+
 Route::middleware('guest')->group(function () {
     Route::get('login', [AuthenticatedSessionController::class, 'create'])
         ->name('login');
