@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Landowner;
 use App\Models\User;
 use App\Notifications\AccountCreatedNotification;
+use App\Notifications\EmailAddedVerificationNotification;
 use App\Services\AuditLogger;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -277,8 +278,12 @@ class UserManagementController extends Controller
         }
 
         $email = $this->normalizeEmail($validated['email'] ?? null);
+        $previousEmail = $this->normalizeEmail($user->email);
+        $emailChanged = mb_strtolower((string) $previousEmail) !== mb_strtolower((string) $email);
+        $verificationRequired = $emailChanged && filled($email);
+        $emailChangeReason = blank($previousEmail) ? 'email_added' : 'email_changed';
 
-        DB::transaction(function () use ($validated, $user, $requestedIsActive, $email) {
+        DB::transaction(function () use ($validated, $user, $requestedIsActive, $email, $emailChanged) {
             $oldValues = [
                 'name' => $user->name,
                 'email' => $user->email,
@@ -286,8 +291,6 @@ class UserManagementController extends Controller
                 'is_active' => $user->is_active,
                 'linked_landowner_id' => optional($user->landowner)->id,
             ];
-
-            $emailChanged = mb_strtolower((string) $user->email) !== mb_strtolower((string) $email);
 
             $user->fill([
                 'name' => $validated['name'],
@@ -337,9 +340,53 @@ class UserManagementController extends Controller
             );
         });
 
+        $verificationDelivery = 'not_required';
+
+        if ($verificationRequired) {
+            try {
+                $user->refresh();
+                $user->notify(new EmailAddedVerificationNotification());
+                $verificationDelivery = 'sent';
+
+                AuditLogger::record(
+                    'user_email_verification_email_sent',
+                    null,
+                    $user,
+                    [
+                        'updated_user_id' => $user->id,
+                        'updated_user_username' => $user->username,
+                        'recipient_email' => $user->email,
+                        'reason' => $emailChangeReason,
+                        'verification_link_expires_in_hours' => 24,
+                    ]
+                );
+            } catch (Throwable $exception) {
+                $verificationDelivery = 'failed';
+
+                AuditLogger::record(
+                    'user_email_verification_email_failed',
+                    null,
+                    $user,
+                    [
+                        'updated_user_id' => $user->id,
+                        'updated_user_username' => $user->username,
+                        'recipient_email' => $user->email,
+                        'reason' => $emailChangeReason,
+                        'delivery_error_type' => $exception::class,
+                    ]
+                );
+            }
+        }
+
+        $statusMessage = match ($verificationDelivery) {
+            'sent' => "User account {$user->username} updated successfully. A verification email was sent to {$user->email} so the user can confirm the newly registered email address.",
+            'failed' => "User account {$user->username} updated successfully, but the email verification message could not be sent. The address remains unverified.",
+            default => "User account {$user->username} updated successfully.",
+        };
+
         return redirect()
             ->route('staff.users.index')
-            ->with('success', "User account {$user->username} updated successfully.");
+            ->with('success', $statusMessage);
     }
 
     public function resetPassword(Request $request, User $user): RedirectResponse
