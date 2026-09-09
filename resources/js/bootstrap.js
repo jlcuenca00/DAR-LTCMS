@@ -1,5 +1,6 @@
 import axios from 'axios';
 import L from 'leaflet';
+import proj4 from 'proj4';
 import 'leaflet/dist/leaflet.css';
 import './onboarding-tour';
 import './role-onboarding-tours';
@@ -40,5 +41,27 @@ import '../css/ui-ux-public.css';
 
 window.axios = axios;
 window.L = L;
+
+// PRS92 / Philippines zone 4 (EPSG:3124), the projected CRS used for Negros parcel survey coordinates.
+proj4.defs(
+    'EPSG:3124',
+    '+proj=tmerc +lat_0=0 +lon_0=123 +k=0.99995 +x_0=500000 +y_0=0 +ellps=clrk66 +towgs84=-127.62,-67.24,-47.04,3.068,-4.903,-1.578,-1.06 +units=m +no_defs +type=crs'
+);
+proj4.defs('EPSG:4326', '+proj=longlat +datum=WGS84 +no_defs +type=crs');
+
+window.DarLtcmsProjection = Object.freeze({
+    sourceCrs: 'EPSG:3124',
+    displayCrs: 'EPSG:4326',
+    toWgs84(easting, northing) {
+        const x = Number(easting);
+        const y = Number(northing);
+
+        if (!Number.isFinite(x) || !Number.isFinite(y)) {
+            throw new TypeError('PRS92 Zone IV coordinates must be finite numbers.');
+        }
+
+        return proj4('EPSG:3124', 'EPSG:4326', [x, y]);
+    },
+});
 
 window.axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
