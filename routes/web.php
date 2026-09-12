@@ -246,6 +246,10 @@ Route::middleware(['auth', 'role:geodetic'])
             ->name('parcels.geometry.edit');
         Route::patch('/parcels/{parcel}/geometry', [GeodeticParcelMapController::class, 'updateGeometry'])
             ->name('parcels.geometry.update');
+        Route::post('/parcels/{parcel}/geometry/session/heartbeat', [GeodeticParcelMapController::class, 'heartbeatGeometrySession'])
+            ->name('parcels.geometry.session.heartbeat');
+        Route::post('/parcels/{parcel}/geometry/session/release', [GeodeticParcelMapController::class, 'releaseGeometrySession'])
+            ->name('parcels.geometry.session.release');
         Route::get('/parcels/{parcel}', [GeodeticParcelMapController::class, 'show'])
             ->name('parcels.show');
     });

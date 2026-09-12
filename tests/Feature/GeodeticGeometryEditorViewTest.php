@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Parcel;
+use App\Models\ParcelGeometryEditSession;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -34,8 +35,15 @@ class GeodeticGeometryEditorViewTest extends TestCase
         $response->assertSee('Easting (m)');
         $response->assertSee('Northing (m)');
         $response->assertSee('Convert &amp; Apply', false);
-        $response->assertSee('Generated Web Map Geometry (WGS84)');
+        $response->assertSee('Undo');
+        $response->assertSee('Redo');
         $response->assertSee('Save Geometry');
+        $response->assertSee('No other active Geodetic editors');
+        $response->assertSee('data-geojson-undo', false);
+        $response->assertSee('data-geojson-redo', false);
+        $response->assertDontSee('data-geojson-sample', false);
+        $response->assertDontSee('data-geojson-format', false);
+        $response->assertDontSee('data-geojson-clear', false);
     }
 
     public function test_geodetic_geometry_update_preserves_prs92_source_coordinates_in_geometry_metadata(): void
@@ -49,6 +57,15 @@ class GeodeticGeometryEditorViewTest extends TestCase
             'province' => 'Negros Oriental',
             'status' => 'active',
         ]);
+
+        $this->actingAs($geodetic)
+            ->get(route('geodetic.parcels.geometry.edit', $parcel))
+            ->assertOk();
+
+        $session = ParcelGeometryEditSession::query()
+            ->where('parcel_id', $parcel->id)
+            ->where('user_id', $geodetic->id)
+            ->firstOrFail();
 
         $geometry = [
             'type' => 'Polygon',
@@ -75,6 +92,8 @@ class GeodeticGeometryEditorViewTest extends TestCase
         $response = $this->actingAs($geodetic)
             ->patch(route('geodetic.parcels.geometry.update', $parcel), [
                 'geometry_geojson' => json_encode($geometry),
+                'geometry_version' => 0,
+                'edit_session_token' => $session->session_token,
             ]);
 
         $response->assertRedirect(route('geodetic.parcels.show', $parcel));

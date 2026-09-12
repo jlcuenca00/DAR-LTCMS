@@ -220,6 +220,35 @@ class NotificationService
         );
     }
 
+    public function notifyGeodeticParcelGeometryUpdated(Parcel $parcel, ?User $actor): void
+    {
+        $actorName = $actor?->name ?: 'A Geodetic user';
+
+        User::query()
+            ->where('role', User::ROLE_GEODETIC)
+            ->where('is_active', true)
+            ->when($actor, fn ($query) => $query->whereKeyNot($actor->id))
+            ->orderBy('id')
+            ->chunkById(100, function ($users) use ($parcel, $actorName, $actor) {
+                $this->notifyUsers(
+                    $users,
+                    'geodetic_geometry_updated',
+                    'Parcel geometry updated',
+                    $actorName . ' successfully updated the parcel geometry for ' . $parcel->parcel_code . '.',
+                    $parcel,
+                    [
+                        'parcel_id' => $parcel->id,
+                        'parcel_code' => $parcel->parcel_code,
+                        'geometry_version' => (int) $parcel->geometry_version,
+                        'actor_user_id' => $actor?->id,
+                        'actor_name' => $actorName,
+                        'municipality' => $parcel->municipality,
+                        'barangay' => $parcel->barangay,
+                    ]
+                );
+            });
+    }
+
     private function linkedLandownerUsers(LandTransferApplication $application): Collection
     {
         $landownerIds = $application->linkedLandownerIds();

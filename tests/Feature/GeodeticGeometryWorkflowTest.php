@@ -4,6 +4,9 @@ namespace Tests\Feature;
 
 use App\Models\AuditLog;
 use App\Models\Parcel;
+use App\Models\ParcelGeometryEditSession;
+use App\Models\ParcelGeometryRevision;
+use App\Models\SystemNotification;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -56,7 +59,7 @@ class GeodeticGeometryWorkflowTest extends TestCase
         $response->assertJsonMissing(['parcel_code' => 'GEO-INACTIVE-001']);
     }
 
-    public function test_geodetic_can_update_only_geojson_geometry(): void
+    public function test_geodetic_can_update_only_geojson_geometry_and_revision_is_recorded(): void
     {
         $geodetic = User::factory()->create(['role' => 'geodetic']);
 
@@ -69,14 +72,14 @@ class GeodeticGeometryWorkflowTest extends TestCase
             'status' => 'active',
         ]);
 
-        $geometry = [
-            'type' => 'Polygon',
-            'coordinates' => [[[123.30, 9.30], [123.31, 9.30], [123.31, 9.31], [123.30, 9.30]]],
-        ];
+        $session = $this->openEditor($geodetic, $parcel);
+        $geometry = $this->polygon(123.30, 9.30);
 
         $this->actingAs($geodetic)
             ->patch(route('geodetic.parcels.geometry.update', $parcel), [
                 'geometry_geojson' => json_encode($geometry),
+                'geometry_version' => 0,
+                'edit_session_token' => $session->session_token,
                 // These extra fields must never be applied by the Geodetic endpoint.
                 'status' => 'inactive',
                 'title_no' => 'T-TAMPERED-999',
@@ -87,8 +90,16 @@ class GeodeticGeometryWorkflowTest extends TestCase
         $fresh = $parcel->fresh();
 
         $this->assertSame('Polygon', $fresh->geometry_geojson['type']);
+        $this->assertSame(1, $fresh->geometry_version);
         $this->assertSame('active', $fresh->status);
         $this->assertSame('T-ORIGINAL-001', $fresh->title_no);
+
+        $this->assertDatabaseHas('parcel_geometry_revisions', [
+            'parcel_id' => $parcel->id,
+            'geometry_version' => 1,
+            'actor_user_id' => $geodetic->id,
+            'source' => 'geodetic_edit',
+        ]);
 
         $this->assertDatabaseHas('audit_logs', [
             'actor_user_id' => $geodetic->id,
@@ -100,6 +111,116 @@ class GeodeticGeometryWorkflowTest extends TestCase
         $log = AuditLog::where('action', 'geodetic_parcel_geometry_updated')->first();
         $this->assertSame('geometry_geojson only', $log->metadata['editable_scope']);
         $this->assertSame('geodetic', $log->metadata['actor_role']);
+        $this->assertSame(0, $log->metadata['previous_geometry_version']);
+        $this->assertSame(1, $log->metadata['new_geometry_version']);
+    }
+
+    public function test_stale_geodetic_save_is_blocked_instead_of_overwriting_newer_geometry(): void
+    {
+        $first = User::factory()->create(['role' => 'geodetic', 'name' => 'First Engineer']);
+        $second = User::factory()->create(['role' => 'geodetic', 'name' => 'Second Engineer']);
+
+        $parcel = Parcel::create([
+            'parcel_code' => 'GEO-CONFLICT-001',
+            'municipality' => 'Dumaguete City',
+            'barangay' => 'Bantayan',
+            'province' => 'Negros Oriental',
+            'status' => 'active',
+        ]);
+
+        $firstSession = $this->openEditor($first, $parcel);
+        $secondSession = $this->openEditor($second, $parcel);
+
+        $firstGeometry = $this->polygon(123.30, 9.30);
+        $secondGeometry = $this->polygon(123.40, 9.40);
+
+        $this->actingAs($first)
+            ->patch(route('geodetic.parcels.geometry.update', $parcel), [
+                'geometry_geojson' => json_encode($firstGeometry),
+                'geometry_version' => 0,
+                'edit_session_token' => $firstSession->session_token,
+            ])
+            ->assertRedirect(route('geodetic.parcels.show', $parcel));
+
+        $this->actingAs($second)
+            ->patch(route('geodetic.parcels.geometry.update', $parcel), [
+                'geometry_geojson' => json_encode($secondGeometry),
+                'geometry_version' => 0,
+                'edit_session_token' => $secondSession->session_token,
+            ])
+            ->assertRedirect(route('geodetic.parcels.geometry.edit', $parcel))
+            ->assertSessionHas('error');
+
+        $fresh = $parcel->fresh();
+        $this->assertSame(1, $fresh->geometry_version);
+        $this->assertSame($firstGeometry['coordinates'], $fresh->geometry_geojson['coordinates']);
+        $this->assertSame(1, ParcelGeometryRevision::where('parcel_id', $parcel->id)->where('source', 'geodetic_edit')->count());
+    }
+
+    public function test_editor_warns_when_another_geodetic_user_is_active(): void
+    {
+        $first = User::factory()->create(['role' => 'geodetic', 'name' => 'Jovie Anne']);
+        $second = User::factory()->create(['role' => 'geodetic', 'name' => 'Second Engineer']);
+
+        $parcel = Parcel::create([
+            'parcel_code' => 'GEO-PRESENCE-001',
+            'municipality' => 'Dumaguete City',
+            'barangay' => 'Bantayan',
+            'province' => 'Negros Oriental',
+            'status' => 'active',
+        ]);
+
+        $this->openEditor($first, $parcel);
+
+        $this->actingAs($second)
+            ->get(route('geodetic.parcels.geometry.edit', $parcel))
+            ->assertOk()
+            ->assertSee('Another Geodetic user is editing this parcel')
+            ->assertSee('Jovie Anne');
+    }
+
+    public function test_successful_geometry_edit_notifies_other_geodetic_users_and_links_to_parcel(): void
+    {
+        $actor = User::factory()->create(['role' => 'geodetic', 'name' => 'Mapping Engineer']);
+        $other = User::factory()->create(['role' => 'geodetic', 'name' => 'Review Engineer']);
+
+        $parcel = Parcel::create([
+            'parcel_code' => 'GEO-NOTIFY-001',
+            'municipality' => 'Dumaguete City',
+            'barangay' => 'Bantayan',
+            'province' => 'Negros Oriental',
+            'status' => 'active',
+        ]);
+
+        $session = $this->openEditor($actor, $parcel);
+
+        $this->actingAs($actor)
+            ->patch(route('geodetic.parcels.geometry.update', $parcel), [
+                'geometry_geojson' => json_encode($this->polygon(123.30, 9.30)),
+                'geometry_version' => 0,
+                'edit_session_token' => $session->session_token,
+            ])
+            ->assertRedirect(route('geodetic.parcels.show', $parcel));
+
+        $this->assertDatabaseHas('system_notifications', [
+            'user_id' => $other->id,
+            'type' => 'geodetic_geometry_updated',
+            'related_type' => Parcel::class,
+            'related_id' => $parcel->id,
+        ]);
+
+        $this->assertDatabaseMissing('system_notifications', [
+            'user_id' => $actor->id,
+            'type' => 'geodetic_geometry_updated',
+            'related_id' => $parcel->id,
+        ]);
+
+        $notification = SystemNotification::query()
+            ->where('user_id', $other->id)
+            ->where('type', 'geodetic_geometry_updated')
+            ->firstOrFail();
+
+        $this->assertSame(route('geodetic.parcels.show', $parcel), $notification->targetUrlFor($other));
     }
 
     public function test_geodetic_geometry_update_rejects_non_polygon_geojson(): void
@@ -114,6 +235,8 @@ class GeodeticGeometryWorkflowTest extends TestCase
             'status' => 'active',
         ]);
 
+        $session = $this->openEditor($geodetic, $parcel);
+
         $this->actingAs($geodetic)
             ->from(route('geodetic.parcels.geometry.edit', $parcel))
             ->patch(route('geodetic.parcels.geometry.update', $parcel), [
@@ -121,6 +244,8 @@ class GeodeticGeometryWorkflowTest extends TestCase
                     'type' => 'Point',
                     'coordinates' => [123.30, 9.30],
                 ]),
+                'geometry_version' => 0,
+                'edit_session_token' => $session->session_token,
             ])
             ->assertRedirect(route('geodetic.parcels.geometry.edit', $parcel))
             ->assertSessionHasErrors('geometry_geojson');
@@ -142,10 +267,9 @@ class GeodeticGeometryWorkflowTest extends TestCase
         ]);
 
         $payload = [
-            'geometry_geojson' => json_encode([
-                'type' => 'Polygon',
-                'coordinates' => [[[123.30, 9.30], [123.31, 9.30], [123.31, 9.31], [123.30, 9.30]]],
-            ]),
+            'geometry_geojson' => json_encode($this->polygon(123.30, 9.30)),
+            'geometry_version' => 0,
+            'edit_session_token' => '00000000-0000-4000-8000-000000000000',
         ];
 
         $this->actingAs($landowner)
@@ -157,5 +281,30 @@ class GeodeticGeometryWorkflowTest extends TestCase
             ->assertForbidden();
 
         $this->assertNull($parcel->fresh()->geometry_geojson);
+    }
+
+    private function openEditor(User $user, Parcel $parcel): ParcelGeometryEditSession
+    {
+        $this->actingAs($user)
+            ->get(route('geodetic.parcels.geometry.edit', $parcel))
+            ->assertOk();
+
+        return ParcelGeometryEditSession::query()
+            ->where('parcel_id', $parcel->id)
+            ->where('user_id', $user->id)
+            ->firstOrFail();
+    }
+
+    private function polygon(float $longitude, float $latitude): array
+    {
+        return [
+            'type' => 'Polygon',
+            'coordinates' => [[
+                [$longitude, $latitude],
+                [$longitude + 0.01, $latitude],
+                [$longitude + 0.01, $latitude + 0.01],
+                [$longitude, $latitude],
+            ]],
+        ];
     }
 }
