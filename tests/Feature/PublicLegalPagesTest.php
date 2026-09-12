@@ -56,4 +56,24 @@ class PublicLegalPagesTest extends TestCase
                 ->assertRedirect(route('landowner.registration.pending'));
         }
     }
+
+    public function test_registration_has_one_shared_consent_with_and_without_google(): void
+    {
+        foreach (['test-client', null] as $clientId) {
+            config(['services.google.client_id' => $clientId]);
+            $response = $this->get('/register')->assertOk();
+            $html = $response->getContent();
+
+            $this->assertSame(1, substr_count($html, 'I have read the'));
+            $this->assertSame(1, substr_count($html, 'type="checkbox"'));
+            $response->assertSee('id="registration-privacy-consent" form="manual-registration-form"', false);
+            $response->assertSee('id="manual-registration-form"', false);
+        }
+    }
+
+    public function test_login_uses_forgot_password_label(): void
+    {
+        $this->get('/login')->assertOk()->assertSee('Forgot password?')
+            ->assertDontSee('Need Help Signing In?');
+    }
 }

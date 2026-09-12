@@ -164,7 +164,7 @@
 
                         @if (Route::has('password.request'))
                             <a class="forgot-link" href="{{ route('password.request') }}">
-                                Need Help Signing In?
+                                Forgot password?
                             </a>
                         @endif
                     </div>
