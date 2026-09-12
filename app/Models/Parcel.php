@@ -79,6 +79,7 @@ class Parcel extends Model
 
     protected $casts = [
         'geometry_geojson' => 'array',
+        'geometry_version' => 'integer',
         'area_hectares' => 'decimal:4',
         'area_square_meters' => 'decimal:2',
         'is_flagged' => 'boolean',
@@ -91,6 +92,13 @@ class Parcel extends Model
         static::saving(function (Parcel $parcel) {
             if (! $parcel->exists || $parcel->isDirty(['area_hectares', 'area_square_meters'])) {
                 app(ParcelAreaIntegrityService::class)->canonicalizeParcel($parcel);
+            }
+
+            // Geometry gets its own monotonic version so concurrent editors cannot
+            // silently overwrite one another. Any geometry change, including a
+            // Staff-side correction, advances the version.
+            if ($parcel->isDirty('geometry_geojson')) {
+                $parcel->geometry_version = ((int) ($parcel->getOriginal('geometry_version') ?? 0)) + 1;
             }
         });
     }
@@ -177,5 +185,15 @@ class Parcel extends Model
     public function sourceRecordPackages()
     {
         return $this->hasMany(SourceRecordPackage::class);
+    }
+
+    public function geometryRevisions()
+    {
+        return $this->hasMany(ParcelGeometryRevision::class)->orderByDesc('geometry_version');
+    }
+
+    public function geometryEditSessions()
+    {
+        return $this->hasMany(ParcelGeometryEditSession::class);
     }
 }
