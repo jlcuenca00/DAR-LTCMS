@@ -427,7 +427,8 @@
                         <script src="https://accounts.google.com/gsi/client" async defer></script>
                         <div id="g_id_onload"
                             data-client_id="{{ $googleClientId }}"
-                            data-login_uri="{{ route('register.google') }}"
+                            data-callback="handleGoogleLogin"
+                            data-ux_mode="popup"
                             data-auto_prompt="false">
                         </div>
                         <div class="g_id_signin"
@@ -438,6 +439,11 @@
                             data-shape="rectangular"
                             data-logo_alignment="left">
                         </div>
+                        <form id="google-login-form" method="POST" action="{{ route('register.google') }}" style="display: none;">
+                            @csrf
+                            <input id="google-login-credential" type="hidden" name="credential">
+                            <input type="hidden" name="intent" value="login">
+                        </form>
                     </div>
 
                     <div style="display: flex; align-items: center; gap: .75rem; margin-top: 1.25rem; color: #9ca3af; font-size: .72rem; font-weight: 800; text-transform: uppercase; letter-spacing: .12em;">
@@ -544,6 +550,11 @@
         </div>
     </main>
     <script>
+    window.handleGoogleLogin = function (response) {
+        document.getElementById('google-login-credential').value = response.credential;
+        document.getElementById('google-login-form').submit();
+    };
+
     document.addEventListener('DOMContentLoaded', function () {
         const passwordInput = document.getElementById('password');
         const toggleButton = document.getElementById('toggle-password');
