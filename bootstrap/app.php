@@ -38,10 +38,12 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->alias([
             'role' => App\Http\Middleware\RoleMiddleware::class,
+            'landowner.approved' => App\Http\Middleware\EnsureLandownerRegistrationApproved::class,
         ]);
 
         $middleware->web(append: [
             \App\Http\Middleware\EnsureUserIsActive::class,
+            \App\Http\Middleware\EnsureLandownerRegistrationApproved::class,
             \App\Http\Middleware\EnsurePasswordIsCurrent::class,
             \App\Http\Middleware\SecurityHeaders::class,
             \App\Http\Middleware\LockApplicationMutation::class,
