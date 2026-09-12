@@ -22,7 +22,7 @@ class UserManagementController extends Controller
     {
         $filters = $request->validate([
             'role' => ['nullable', 'string', Rule::in(User::ROLES)],
-            'status' => ['nullable', 'string', Rule::in(['active', 'inactive'])],
+            'status' => ['nullable', 'string', Rule::in(['active', 'inactive', 'pending'])],
             'search' => ['nullable', 'string', 'max:255'],
         ]);
 
@@ -33,10 +33,15 @@ class UserManagementController extends Controller
         $accountCounts = [
             'active' => User::query()->where('is_active', true)->count(),
             'inactive' => User::query()->where('is_active', false)->count(),
+            'pending' => User::query()->where('registration_status', User::REGISTRATION_PENDING)->count(),
         ];
 
         $usersQuery = User::with('landowner')
-            ->where('is_active', $filters['status'] === 'active')
+            ->when($filters['status'] === 'pending', function ($query) {
+                $query->where('registration_status', User::REGISTRATION_PENDING);
+            }, function ($query) use ($filters) {
+                $query->where('is_active', $filters['status'] === 'active');
+            })
             ->latest();
 
         if (! empty($filters['role'])) {
@@ -78,9 +83,10 @@ class UserManagementController extends Controller
             'role' => ['required', 'string', Rule::in(User::ROLES)],
             'is_active' => ['nullable', 'boolean'],
             'landowner_id' => ['nullable', 'integer', 'exists:landowners,id'],
+            'registration_status' => ['nullable', 'string', Rule::in(User::REGISTRATION_STATUSES)],
         ]);
 
-        if ($validated['role'] === User::ROLE_LANDOWNER && empty($validated['landowner_id'])) {
+        if ($validated['role'] === User::ROLE_LANDOWNER && ($validated['registration_status'] ?? User::REGISTRATION_APPROVED) === User::REGISTRATION_APPROVED && empty($validated['landowner_id'])) {
             return back()
                 ->withInput()
                 ->withErrors([
@@ -101,7 +107,7 @@ class UserManagementController extends Controller
         }
 
         $email = $this->normalizeEmail($validated['email'] ?? null);
-        $initialPassword = Str::password(12, true, true, true, false);
+        $initialPassword = $this->generateTemporaryPassword();
 
         $user = DB::transaction(function () use ($validated, $email, $initialPassword) {
             $user = User::create([
@@ -110,6 +116,7 @@ class UserManagementController extends Controller
                 'email' => $email,
                 'password' => $initialPassword,
                 'role' => $validated['role'],
+                'registration_status' => $validated['registration_status'] ?? User::REGISTRATION_APPROVED,
                 'is_active' => (bool) ($validated['is_active'] ?? false),
                 'must_change_password' => true,
                 'password_changed_at' => now(),
@@ -237,6 +244,7 @@ class UserManagementController extends Controller
             'role' => ['required', 'string', Rule::in(User::ROLES)],
             'is_active' => ['nullable', 'boolean'],
             'landowner_id' => ['nullable', 'integer', 'exists:landowners,id'],
+            'registration_status' => ['nullable', 'string', Rule::in(User::REGISTRATION_STATUSES)],
         ]);
 
         if ($user->id === $currentUser?->id && $validated['role'] !== $user->role) {
@@ -257,7 +265,7 @@ class UserManagementController extends Controller
                 ]);
         }
 
-        if ($validated['role'] === User::ROLE_LANDOWNER && empty($validated['landowner_id'])) {
+        if ($validated['role'] === User::ROLE_LANDOWNER && ($validated['registration_status'] ?? $user->registration_status) === User::REGISTRATION_APPROVED && empty($validated['landowner_id'])) {
             return back()
                 ->withInput()
                 ->withErrors([
@@ -283,13 +291,14 @@ class UserManagementController extends Controller
         $verificationRequired = $emailChanged && filled($email);
         $emailChangeReason = blank($previousEmail) ? 'email_added' : 'email_changed';
 
-        DB::transaction(function () use ($validated, $user, $requestedIsActive, $email, $emailChanged) {
+        DB::transaction(function () use ($validated, $user, $requestedIsActive, $email, $emailChanged, $currentUser) {
             $oldValues = [
                 'name' => $user->name,
                 'email' => $user->email,
                 'role' => $user->role,
                 'is_active' => $user->is_active,
                 'linked_landowner_id' => optional($user->landowner)->id,
+                'registration_status' => $user->registration_status,
             ];
 
             $user->fill([
@@ -298,7 +307,13 @@ class UserManagementController extends Controller
                 'email' => $email,
                 'role' => $validated['role'],
                 'is_active' => $requestedIsActive,
+                'registration_status' => $validated['registration_status'] ?? $user->registration_status,
             ]);
+
+            if ($user->isDirty('registration_status')) {
+                $user->registration_reviewed_at = now();
+                $user->registration_reviewed_by_user_id = $currentUser?->id;
+            }
 
             if ($emailChanged) {
                 $user->email_verified_at = null;
@@ -334,6 +349,7 @@ class UserManagementController extends Controller
                         'role' => $user->role,
                         'is_active' => $user->is_active,
                         'linked_landowner_id' => optional($user->landowner)->id,
+                        'registration_status' => $user->registration_status,
                     ],
                     'email_verification_reset' => $emailChanged,
                 ]
@@ -402,7 +418,7 @@ class UserManagementController extends Controller
             );
         }
 
-        $temporaryPassword = Str::password(12, true, true, true, false);
+        $temporaryPassword = $this->generateTemporaryPassword();
 
         DB::transaction(function () use ($user, $temporaryPassword, $request) {
             $user->forceFill([
@@ -435,6 +451,20 @@ class UserManagementController extends Controller
             ->with('success', $statusMessage)
             ->with('temporary_password', $temporaryPassword)
             ->with('temporary_password_username', $user->username);
+    }
+
+    private function generateTemporaryPassword(): string
+    {
+        do {
+            $password = Str::password(14, true, true, true, false);
+        } while (
+            preg_match('/[a-z]/', $password) !== 1 ||
+            preg_match('/[A-Z]/', $password) !== 1 ||
+            preg_match('/[0-9]/', $password) !== 1 ||
+            preg_match('/[^A-Za-z0-9]/', $password) !== 1
+        );
+
+        return $password;
     }
 
     private function normalizeEmail(?string $email): ?string

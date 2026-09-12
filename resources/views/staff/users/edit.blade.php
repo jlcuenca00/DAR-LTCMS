@@ -600,6 +600,11 @@
                     <span class="staff-badge {{ $user->is_active ? 'staff-badge-green' : 'staff-badge-red' }}">
                         {{ $user->is_active ? 'Active' : 'Inactive' }}
                     </span>
+                    @if ($user->registration_status === \App\Models\User::REGISTRATION_PENDING)
+                        <span class="staff-badge staff-badge-amber">Pending DAR Review</span>
+                    @elseif ($user->registration_status === \App\Models\User::REGISTRATION_DECLINED)
+                        <span class="staff-badge staff-badge-red">Registration Declined</span>
+                    @endif
                     @if ($user->must_change_password)
                         <span class="staff-badge staff-badge-amber">Password Change Required</span>
                     @endif
@@ -723,6 +728,21 @@
                                     </div>
                                 </div>
                             </details>
+
+                            <div class="user-field">
+                                <label class="user-label">Landowner Registration Review</label>
+                                <select name="registration_status" class="user-select">
+                                    @foreach (\App\Models\User::REGISTRATION_STATUSES as $status)
+                                        <option value="{{ $status }}" @selected(old('registration_status', $user->registration_status) === $status)>
+                                            {{ str_replace('_', ' ', ucwords($status, '_')) }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                <p class="mt-2 text-xs leading-5 text-slate-500">Approve only after DAR staff verifies the landowner identity and links the correct landowner record.</p>
+                                @error('registration_status')
+                                    <p class="user-error">{{ $message }}</p>
+                                @enderror
+                            </div>
                         </div>
                     </section>
 

@@ -30,6 +30,8 @@ class UserFactory extends Factory
             'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
             'role' => 'staff',
+            'registration_status' => 'approved',
+            'auth_provider' => 'local',
             'is_active' => true,
             'must_change_password' => false,
             'password_changed_at' => null,

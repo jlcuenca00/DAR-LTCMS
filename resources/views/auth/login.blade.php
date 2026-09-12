@@ -292,13 +292,15 @@
     border-color: #166534;
 }
 
-        .forgot-link {
+        .forgot-link,
+        .registration-link {
             color: #166534;
             font-weight: 800;
             text-decoration: none;
         }
 
-        .forgot-link:hover {
+        .forgot-link:hover,
+        .registration-link:hover {
             text-decoration: underline;
         }
 
@@ -422,6 +424,37 @@
                     </div>
                 @endif
 
+                @if ($googleClientId)
+                    <div style="margin-top: 1.4rem; display: flex; justify-content: center;">
+                        <script src="https://accounts.google.com/gsi/client" async defer></script>
+                        <div id="g_id_onload"
+                            data-client_id="{{ $googleClientId }}"
+                            data-callback="handleGoogleLogin"
+                            data-ux_mode="popup"
+                            data-auto_prompt="false">
+                        </div>
+                        <div class="g_id_signin"
+                            data-type="standard"
+                            data-size="large"
+                            data-theme="outline"
+                            data-text="continue_with"
+                            data-shape="rectangular"
+                            data-logo_alignment="left">
+                        </div>
+                        <form id="google-login-form" method="POST" action="{{ route('register.google') }}" style="display: none;">
+                            @csrf
+                            <input id="google-login-credential" type="hidden" name="credential">
+                            <input type="hidden" name="intent" value="login">
+                        </form>
+                    </div>
+
+                    <div style="display: flex; align-items: center; gap: .75rem; margin-top: 1.25rem; color: #9ca3af; font-size: .72rem; font-weight: 800; text-transform: uppercase; letter-spacing: .12em;">
+                        <span style="height: 1px; flex: 1; background: #e5e7eb;"></span>
+                        or sign in manually
+                        <span style="height: 1px; flex: 1; background: #e5e7eb;"></span>
+                    </div>
+                @endif
+
                 <form method="POST" action="{{ route('login') }}" class="login-form">
                     @csrf
 
@@ -505,6 +538,12 @@
                     </button>
                 </form>
 
+                <div style="margin-top: 1rem; text-align: center;">
+                    <a href="{{ route('register') }}" class="registration-link">
+                        Register as Landowner
+                    </a>
+                </div>
+
                 <div class="login-footer">
                     © {{ now()->year }} Department of Agrarian Reform<br>
                     Negros Oriental Provincial Office
@@ -513,6 +552,11 @@
         </div>
     </main>
     <script>
+    window.handleGoogleLogin = function (response) {
+        document.getElementById('google-login-credential').value = response.credential;
+        document.getElementById('google-login-form').submit();
+    };
+
     document.addEventListener('DOMContentLoaded', function () {
         const passwordInput = document.getElementById('password');
         const toggleButton = document.getElementById('toggle-password');

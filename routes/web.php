@@ -37,7 +37,9 @@ Route::get('/dashboard', function () {
     return match ($user?->role) {
         'staff' => redirect()->route('staff.dashboard'),
         'geodetic' => redirect()->route('geodetic.dashboard'),
-        default => redirect()->route('landowner.dashboard'),
+        default => $user?->registration_status === \App\Models\User::REGISTRATION_APPROVED
+            ? redirect()->route('landowner.dashboard')
+            : redirect()->route('landowner.registration.pending'),
     };
 })->middleware('auth')->name('dashboard');
 

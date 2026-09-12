@@ -5,6 +5,7 @@ use App\Http\Controllers\Auth\ConfirmablePasswordController;
 use App\Http\Controllers\Auth\ForcedPasswordController;
 use App\Http\Controllers\Auth\PasswordController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
+use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\Auth\VerifyAddedEmailController;
 use App\Http\Controllers\OnboardingTourController;
 use Illuminate\Support\Facades\Route;
@@ -25,6 +26,16 @@ Route::get('email/verify-added/{user}/{hash}', VerifyAddedEmailController::class
     ->name('email.added.verify');
 
 Route::middleware('guest')->group(function () {
+    Route::get('register', [RegisteredUserController::class, 'create'])
+        ->name('register');
+
+    Route::post('register', [RegisteredUserController::class, 'store'])
+        ->middleware('throttle:5,1');
+
+    Route::post('auth/google/callback', [RegisteredUserController::class, 'storeGoogle'])
+        ->middleware('throttle:10,1')
+        ->name('register.google');
+
     Route::get('login', [AuthenticatedSessionController::class, 'create'])
         ->name('login');
 
@@ -70,6 +81,9 @@ Route::middleware('auth')->group(function () {
         ->name('onboarding-tours.show');
     Route::patch('onboarding-tours/{tourKey}', [OnboardingTourController::class, 'store'])
         ->name('onboarding-tours.store');
+
+    Route::get('landowner/registration-pending', [RegisteredUserController::class, 'pending'])
+        ->name('landowner.registration.pending');
 
     Route::post('logout', [AuthenticatedSessionController::class, 'destroy'])
         ->name('logout');
