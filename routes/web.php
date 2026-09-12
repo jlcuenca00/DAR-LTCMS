@@ -30,6 +30,8 @@ use App\Http\Controllers\Staff\UserManagementController;
 use Illuminate\Support\Facades\Route;
 
 Route::view('/', 'welcome')->name('home');
+Route::view('/privacy-policy', 'legal.privacy')->name('privacy');
+Route::view('/terms-of-service', 'legal.terms')->name('terms');
 
 Route::get('/dashboard', function () {
     $user = request()->user();

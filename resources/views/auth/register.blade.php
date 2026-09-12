@@ -1,7 +1,7 @@
-<x-guest-layout>
+<x-public-auth-layout title="Landowner Registration">
     <div class="mb-6 text-center">
-        <h1 class="text-2xl font-black text-gray-900">Landowner Registration</h1>
-        <p class="mt-2 text-sm leading-6 text-gray-600">
+        <h1 class="auth-heading">Landowner Registration</h1>
+        <p class="auth-intro">
             Create an account for DAR review. Your records stay locked until staff verifies your identity and links the correct landowner record.
         </p>
     </div>
@@ -14,11 +14,11 @@
 
     @if ($googleClientId)
         <div class="space-y-3">
-            <label class="flex items-start gap-2 text-sm text-gray-600">
+            <label class="consent">
                 <input id="google-privacy-consent" type="checkbox" class="mt-1 rounded border-gray-300 text-green-700 focus:ring-green-600">
-                <span>I agree that DAR-LTCMS may use my account details to process this registration and verify my identity.</span>
+                <span>I have read the <a href="{{ route('privacy') }}" target="_blank" rel="noopener">Privacy Policy</a>, consent to the use of my account details for registration and identity review, and agree to the <a href="{{ route('terms') }}" target="_blank" rel="noopener">Terms of Service</a>.</span>
             </label>
-            <p id="google-consent-error" class="hidden text-sm font-semibold text-red-600">
+            <p id="google-consent-error" role="alert" class="hidden text-sm font-semibold text-red-600">
                 Please accept the privacy notice before continuing with Google.
             </p>
 
@@ -59,46 +59,46 @@
         @csrf
 
         <div>
-            <x-input-label for="name" :value="__('Full name')" />
-            <x-text-input id="name" class="mt-1 block w-full" type="text" name="name" :value="old('name')" required autofocus autocomplete="name" />
+            <x-input-label class="form-label" for="name" :value="__('Full name')" />
+            <x-text-input id="name" class="form-input" type="text" name="name" :value="old('name')" required autofocus autocomplete="name" />
             <x-input-error :messages="$errors->get('name')" class="mt-2" />
         </div>
 
         <div>
-            <x-input-label for="username" :value="__('Username')" />
-            <x-text-input id="username" class="mt-1 block w-full" type="text" name="username" :value="old('username')" required autocomplete="username" />
+            <x-input-label class="form-label" for="username" :value="__('Username')" />
+            <x-text-input id="username" class="form-input" type="text" name="username" :value="old('username')" required autocomplete="username" />
             <p class="mt-1 text-xs text-gray-500">Use letters, numbers, dashes, or underscores. You will use this to sign in.</p>
             <x-input-error :messages="$errors->get('username')" class="mt-2" />
         </div>
 
         <div>
-            <x-input-label for="email" :value="__('Email (optional)')" />
-            <x-text-input id="email" class="mt-1 block w-full" type="email" name="email" :value="old('email')" autocomplete="email" />
+            <x-input-label class="form-label" for="email" :value="__('Email (optional)')" />
+            <x-text-input id="email" class="form-input" type="email" name="email" :value="old('email')" autocomplete="email" />
             <p class="mt-1 text-xs leading-5 text-gray-500">Leave this blank if you do not use email. Password recovery will require help from DAR staff.</p>
             <x-input-error :messages="$errors->get('email')" class="mt-2" />
         </div>
 
         <div>
-            <x-input-label for="password" :value="__('Password')" />
-            <x-text-input id="password" class="mt-1 block w-full" type="password" name="password" required autocomplete="new-password" />
+            <x-input-label class="form-label" for="password" :value="__('Password')" />
+            <x-text-input id="password" class="form-input" type="password" name="password" required autocomplete="new-password" />
             <x-input-error :messages="$errors->get('password')" class="mt-2" />
         </div>
 
         <div>
-            <x-input-label for="password_confirmation" :value="__('Confirm password')" />
-            <x-text-input id="password_confirmation" class="mt-1 block w-full" type="password" name="password_confirmation" required autocomplete="new-password" />
+            <x-input-label class="form-label" for="password_confirmation" :value="__('Confirm password')" />
+            <x-text-input id="password_confirmation" class="form-input" type="password" name="password_confirmation" required autocomplete="new-password" />
             <x-input-error :messages="$errors->get('password_confirmation')" class="mt-2" />
         </div>
 
-        <label class="flex items-start gap-2 text-sm text-gray-600">
+        <label class="consent">
             <input type="checkbox" name="privacy_consent" value="1" class="mt-1 rounded border-gray-300 text-green-700 focus:ring-green-600" @checked(old('privacy_consent')) required>
-            <span>I agree that DAR-LTCMS may use my account details to process this registration and verify my identity.</span>
+            <span>I have read the <a href="{{ route('privacy') }}" target="_blank" rel="noopener">Privacy Policy</a>, consent to the use of my account details for registration and identity review, and agree to the <a href="{{ route('terms') }}" target="_blank" rel="noopener">Terms of Service</a>.</span>
         </label>
         <x-input-error :messages="$errors->get('privacy_consent')" class="mt-2" />
 
-        <x-primary-button class="w-full justify-center">
+        <button type="submit" class="login-button">
             {{ __('Create Landowner Account') }}
-        </x-primary-button>
+        </button>
 
         <div class="text-center">
             <a class="text-sm font-semibold text-green-700 underline hover:text-green-900" href="{{ route('login') }}">
@@ -125,4 +125,4 @@
             };
         </script>
     @endif
-</x-guest-layout>
+</x-public-auth-layout>
