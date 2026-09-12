@@ -505,6 +505,12 @@
                     </button>
                 </form>
 
+                <div style="margin-top: 1rem; text-align: center;">
+                    <a href="{{ route('register') }}" class="forgot-link">
+                        Register as Landowner
+                    </a>
+                </div>
+
                 <div class="login-footer">
                     © {{ now()->year }} Department of Agrarian Reform<br>
                     Negros Oriental Provincial Office
