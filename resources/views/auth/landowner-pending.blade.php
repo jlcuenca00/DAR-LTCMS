@@ -1,4 +1,4 @@
-<x-guest-layout>
+<x-public-auth-layout title="Registration Status">
     @php
         $declined = $user?->registration_status === \App\Models\User::REGISTRATION_DECLINED;
     @endphp
@@ -9,9 +9,9 @@
         </div>
 
         <div>
-            <h2 class="text-xl font-black text-gray-900">
+            <h1 class="auth-heading">
                 {{ $declined ? 'Registration needs attention' : 'Registration received' }}
-            </h2>
+            </h1>
             <p class="mt-2 text-sm leading-6 text-gray-600">
                 @if ($declined)
                     DAR staff could not approve this registration. Your land records, parcel maps, and clearance outputs remain locked. Please contact the DAR Negros Oriental Provincial Office so staff can check your identity and account details.
@@ -35,4 +35,4 @@
             </button>
         </form>
     </div>
-</x-guest-layout>
+</x-public-auth-layout>

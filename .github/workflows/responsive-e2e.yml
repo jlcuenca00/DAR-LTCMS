@@ -171,6 +171,8 @@ jobs:
       - name: Run final UAT, Form 5, release, documentation, presentation, security, workflow, reports, performance, and integrity tests
         run: |
           php artisan test \
+            tests/Feature/PublicLegalPagesTest.php \
+            tests/Feature/Auth/RegistrationTest.php \
             tests/Feature/ResponsiveUiFoundationTest.php \
             tests/Feature/StaffMobilePortalNavigationTest.php \
             tests/Feature/RoleMobilePortalNavigationTest.php \

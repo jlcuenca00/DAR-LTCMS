@@ -18,6 +18,8 @@ class EnsureLandownerRegistrationApproved
         }
 
         if ($request->routeIs(
+            'privacy',
+            'terms',
             'landowner.registration.pending',
             'logout',
             'profile.*',

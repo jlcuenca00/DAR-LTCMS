@@ -13,7 +13,7 @@ class EnsurePasswordIsCurrent
     {
         $user = $request->user();
 
-        if (! $user) {
+        if (! $user || $request->routeIs('privacy', 'terms')) {
             return $next($request);
         }
 

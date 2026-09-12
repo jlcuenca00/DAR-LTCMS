@@ -325,6 +325,8 @@
                 </div>
             </div>
             <nav class="footer-links" aria-label="Footer navigation">
+                <a href="{{ route('privacy') }}">Privacy Policy</a>
+                <a href="{{ route('terms') }}">Terms of Service</a>
                 <a href="#requirements">Requirements</a>
                 <a href="#process">Process</a>
                 <a href="#office">Office</a>
