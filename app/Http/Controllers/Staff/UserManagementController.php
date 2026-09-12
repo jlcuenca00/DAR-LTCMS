@@ -243,6 +243,7 @@ class UserManagementController extends Controller
             'role' => ['required', 'string', Rule::in(User::ROLES)],
             'is_active' => ['nullable', 'boolean'],
             'landowner_id' => ['nullable', 'integer', 'exists:landowners,id'],
+            'registration_status' => ['nullable', 'string', Rule::in(User::REGISTRATION_STATUSES)],
         ]);
 
         if ($user->id === $currentUser?->id && $validated['role'] !== $user->role) {
@@ -263,7 +264,7 @@ class UserManagementController extends Controller
                 ]);
         }
 
-        if ($validated['role'] === User::ROLE_LANDOWNER && empty($validated['landowner_id'])) {
+        if ($validated['role'] === User::ROLE_LANDOWNER && ($validated['registration_status'] ?? $user->registration_status) === User::REGISTRATION_APPROVED && empty($validated['landowner_id'])) {
             return back()
                 ->withInput()
                 ->withErrors([
