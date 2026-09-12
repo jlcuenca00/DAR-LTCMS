@@ -3,6 +3,7 @@
     $geoFieldId = $fieldId ?? str_replace(['[', ']'], ['_', ''], $geoFieldName);
     $geoValue = old($geoFieldName, $value ?? '');
     $isPrs92Zone4 = $geoFieldName === 'geometry_geojson';
+    $requireGeometry = (bool) ($requireGeometry ?? false);
 
     if (is_array($geoValue)) {
         $geoValue = json_encode($geoValue, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
@@ -18,27 +19,32 @@
     data-geojson-helper
     data-target="{{ $geoFieldId }}"
     data-coordinate-mode="{{ $isPrs92Zone4 ? 'prs92-zone4' : 'geographic' }}"
+    data-require-geometry="{{ $requireGeometry ? 'true' : 'false' }}"
 >
     <div class="geojson-toolbar">
         <div>
             <p class="geojson-title">{{ $isPrs92Zone4 ? 'PRS92 / PTM Zone IV parcel boundary' : 'Parcel boundary helper' }}</p>
             <p class="geojson-copy">
                 @if ($isPrs92Zone4)
-                    Enter the parcel's Easting and Northing survey points. DAR-LTCMS retains those PRS92 Zone IV values and converts them to WGS84 coordinates for the online map.
+                    Enter the parcel's Easting and Northing survey points. DAR-LTCMS retains those PRS92 Zone IV values and converts them to WGS84 for the online map.
                 @else
-                    Enter longitude and latitude points. The helper creates the valid Polygon format used by the map field.
+                    Enter longitude and latitude points. The helper creates the Polygon geometry used by the map field.
                 @endif
             </p>
             @if ($isPrs92Zone4)
                 <span class="geojson-crs-badge">PRS92 / Philippines Zone 4 · EPSG:3124 · metres</span>
             @endif
         </div>
-        <div class="geojson-actions">
+
+        <div class="geojson-actions" aria-label="Coordinate editor actions">
+            <button type="button" class="geojson-button" data-geojson-undo disabled title="Undo (Ctrl/Cmd+Z)">
+                <i class="fa-solid fa-rotate-left" aria-hidden="true"></i> Undo
+            </button>
+            <button type="button" class="geojson-button" data-geojson-redo disabled title="Redo (Ctrl+Y or Ctrl/Cmd+Shift+Z)">
+                <i class="fa-solid fa-rotate-right" aria-hidden="true"></i> Redo
+            </button>
             <button type="button" class="geojson-button" data-geojson-add-point>
                 <i class="fa-solid fa-plus" aria-hidden="true"></i> Add point
-            </button>
-            <button type="button" class="geojson-button" data-geojson-sample>
-                <i class="fa-solid fa-map-location-dot" aria-hidden="true"></i> Sample
             </button>
             <button type="button" class="geojson-button primary" data-geojson-build>
                 <i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i>
@@ -71,23 +77,17 @@
         @endforeach
     </div>
 
-    <div class="geojson-textarea-wrap">
-        <div class="geojson-textarea-header">
-            <span>{{ $isPrs92Zone4 ? 'Generated Web Map Geometry (WGS84)' : 'Map Geometry Output' }}</span>
-            <div class="geojson-actions compact">
-                <button type="button" class="geojson-button" data-geojson-format>
-                    <i class="fa-solid fa-code" aria-hidden="true"></i> Format
-                </button>
-                <button type="button" class="geojson-button" data-geojson-clear>
-                    <i class="fa-solid fa-eraser" aria-hidden="true"></i> Clear
-                </button>
+    @if ($isPrs92Zone4)
+        <textarea id="{{ $geoFieldId }}" name="{{ $geoFieldName }}" hidden>{{ $geoValue }}</textarea>
+        <p class="geojson-output-note">The online-map geometry is generated automatically from these survey points. The original Easting/Northing values remain stored with the parcel geometry.</p>
+    @else
+        <div class="geojson-textarea-wrap">
+            <div class="geojson-textarea-header">
+                <span>Map Geometry Output</span>
             </div>
+            <textarea id="{{ $geoFieldId }}" name="{{ $geoFieldName }}" rows="{{ $geoRows }}" class="{{ $geoInputClass }}" placeholder="Use Apply Coordinates to generate the map geometry, or paste valid Polygon GeoJSON.">{{ $geoValue }}</textarea>
         </div>
-        <textarea id="{{ $geoFieldId }}" name="{{ $geoFieldName }}" rows="{{ $geoRows }}" class="{{ $geoInputClass }}" placeholder='{{ $isPrs92Zone4 ? 'Use Convert & Apply to generate the web-map geometry from PRS92 Zone IV points.' : 'Use Sample or Apply Coordinates to fill this map geometry field.' }}'>{{ $geoValue }}</textarea>
-        @if ($isPrs92Zone4)
-            <p class="geojson-output-note">The original Easting/Northing points are stored inside this geometry record as DAR source metadata. The converted longitude/latitude polygon is used only for web-map display.</p>
-        @endif
-    </div>
+    @endif
 
     <p class="geojson-message" data-geojson-message aria-live="polite"></p>
     @error($geoFieldName)<p class="{{ $geoErrorClass }}">{{ $message }}</p>@enderror
@@ -97,7 +97,7 @@
     <style>
         .geojson-helper {
             display: grid;
-            gap: 12px;
+            gap: 14px;
             border: 1px solid #bbf7d0;
             background: linear-gradient(180deg, #f0fdf4 0%, #ffffff 100%);
             border-radius: 14px;
@@ -108,7 +108,7 @@
         .geojson-textarea-header {
             display: flex;
             justify-content: space-between;
-            gap: 12px;
+            gap: 14px;
             align-items: flex-start;
         }
 
@@ -121,13 +121,14 @@
 
         .geojson-copy,
         .geojson-output-note {
-            margin: 3px 0 0;
+            margin: 4px 0 0;
             color: #475569;
             font-size: 12px;
-            line-height: 1.45;
+            line-height: 1.5;
         }
 
         .geojson-output-note {
+            margin: 0;
             color: #64748b;
             font-size: 11px;
         }
@@ -154,12 +155,8 @@
             gap: 7px;
         }
 
-        .geojson-actions.compact {
-            flex-wrap: nowrap;
-        }
-
         .geojson-button {
-            min-height: 44px;
+            min-height: 42px;
             display: inline-flex;
             align-items: center;
             justify-content: center;
@@ -175,9 +172,17 @@
             touch-action: manipulation;
         }
 
-        .geojson-button:hover {
+        .geojson-button:hover:not(:disabled) {
             background: #ecfdf5;
             border-color: #86efac;
+        }
+
+        .geojson-button:disabled {
+            cursor: not-allowed;
+            opacity: .45;
+            background: #f8fafc;
+            color: #64748b;
+            border-color: #e2e8f0;
         }
 
         .geojson-button.primary {
@@ -188,7 +193,7 @@
 
         .geojson-point-grid {
             display: grid;
-            gap: 7px;
+            gap: 8px;
         }
 
         .geojson-point-row {
@@ -261,11 +266,8 @@
 
             .geojson-actions {
                 justify-content: stretch;
-            }
-
-            .geojson-actions.compact {
-                grid-template-columns: repeat(2, minmax(0, 1fr));
                 display: grid;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
             }
 
             .geojson-button {
@@ -285,13 +287,23 @@
                 const target = document.getElementById(editor.dataset.target);
                 const pointsWrap = editor.querySelector('[data-geojson-points]');
                 const message = editor.querySelector('[data-geojson-message]');
+                const undoButton = editor.querySelector('[data-geojson-undo]');
+                const redoButton = editor.querySelector('[data-geojson-redo]');
                 const isPrs92Zone4 = editor.dataset.coordinateMode === 'prs92-zone4';
+                const requireGeometry = editor.dataset.requireGeometry === 'true';
 
                 if (! target || ! pointsWrap) return;
 
                 const axisLabels = isPrs92Zone4
                     ? { x: 'easting', y: 'northing', xPlaceholder: 'Easting (m)', yPlaceholder: 'Northing (m)', step: '0.001' }
                     : { x: 'longitude', y: 'latitude', xPlaceholder: 'Longitude / X', yPlaceholder: 'Latitude / Y', step: '0.000001' };
+
+                const undoStack = [];
+                const redoStack = [];
+                const historyLimit = 60;
+                let lastSnapshot = null;
+                let pendingCapture = null;
+                let restoring = false;
 
                 const setMessage = function (text, isError = false) {
                     if (! message) return;
@@ -323,6 +335,114 @@
                     });
                 };
 
+                const snapshot = function () {
+                    return {
+                        rows: Array.from(pointsWrap.querySelectorAll('.geojson-point-row')).map(function (row) {
+                            return [
+                                row.querySelector('[data-geojson-x]')?.value ?? '',
+                                row.querySelector('[data-geojson-y]')?.value ?? ''
+                            ];
+                        }),
+                        target: target.value
+                    };
+                };
+
+                const sameSnapshot = function (left, right) {
+                    return JSON.stringify(left) === JSON.stringify(right);
+                };
+
+                const updateHistoryButtons = function () {
+                    if (undoButton) undoButton.disabled = undoStack.length === 0;
+                    if (redoButton) redoButton.disabled = redoStack.length === 0;
+                };
+
+                const captureChange = function () {
+                    if (restoring) return;
+                    const current = snapshot();
+
+                    if (lastSnapshot === null) {
+                        lastSnapshot = current;
+                        updateHistoryButtons();
+                        return;
+                    }
+
+                    if (sameSnapshot(current, lastSnapshot)) return;
+
+                    undoStack.push(lastSnapshot);
+                    if (undoStack.length > historyLimit) undoStack.shift();
+                    redoStack.length = 0;
+                    lastSnapshot = current;
+                    updateHistoryButtons();
+                };
+
+                const scheduleCapture = function () {
+                    if (restoring) return;
+                    window.clearTimeout(pendingCapture);
+                    pendingCapture = window.setTimeout(function () {
+                        pendingCapture = null;
+                        captureChange();
+                    }, 300);
+                };
+
+                const flushCapture = function () {
+                    if (pendingCapture) {
+                        window.clearTimeout(pendingCapture);
+                        pendingCapture = null;
+                        captureChange();
+                    }
+                };
+
+                const restoreSnapshot = function (state) {
+                    restoring = true;
+                    pointsWrap.innerHTML = '';
+                    (state.rows || []).forEach(function (row) {
+                        addPointRow(row[0], row[1]);
+                    });
+                    if ((state.rows || []).length === 0) {
+                        [1, 2, 3, 4].forEach(function () { addPointRow(); });
+                    }
+                    renumberRows();
+                    target.value = state.target || '';
+                    lastSnapshot = snapshot();
+                    restoring = false;
+                    updateHistoryButtons();
+                };
+
+                const undo = function () {
+                    flushCapture();
+                    if (undoStack.length === 0) return;
+                    const current = snapshot();
+                    const previous = undoStack.pop();
+                    redoStack.push(current);
+                    restoreSnapshot(previous);
+                    setMessage('Last coordinate edit undone.');
+                };
+
+                const redo = function () {
+                    flushCapture();
+                    if (redoStack.length === 0) return;
+                    const current = snapshot();
+                    const next = redoStack.pop();
+                    undoStack.push(current);
+                    restoreSnapshot(next);
+                    setMessage('Coordinate edit restored.');
+                };
+
+                const recordImmediateMutation = function (callback) {
+                    flushCapture();
+                    const before = snapshot();
+                    callback();
+                    const after = snapshot();
+
+                    if (!sameSnapshot(before, after)) {
+                        undoStack.push(before);
+                        if (undoStack.length > historyLimit) undoStack.shift();
+                        redoStack.length = 0;
+                        lastSnapshot = after;
+                        updateHistoryButtons();
+                    }
+                };
+
                 const readRows = function () {
                     const coordinates = [];
 
@@ -351,10 +471,11 @@
                 };
 
                 const buildFromRows = function () {
+                    flushCapture();
                     const sourceCoordinates = readRows();
 
                     if (sourceCoordinates.length < 3) {
-                        setMessage('Add at least 3 coordinate points before building a polygon.', true);
+                        setMessage('Add at least 3 complete coordinate points before building a polygon.', true);
                         return false;
                     }
 
@@ -409,36 +530,12 @@
 
                     geometry.coordinates = [closeRing(mapCoordinates)];
                     target.value = JSON.stringify(geometry, null, 2);
+                    lastSnapshot = snapshot();
+                    updateHistoryButtons();
                     setMessage(isPrs92Zone4
-                        ? 'PRS92 points converted to WGS84 for the web map. Original Easting/Northing values were retained.'
+                        ? 'Coordinates converted and ready to save. Original Easting/Northing values are retained.'
                         : 'Map geometry generated. You can save the form now.');
                     return true;
-                };
-
-                const loadSample = function () {
-                    const sample = isPrs92Zone4
-                        ? [
-                            [477318.941, 1034526.171],
-                            [478911.914, 1034912.331],
-                            [478659.955, 1036095.895],
-                            [477451.427, 1035632.091]
-                        ]
-                        : [
-                            [122.795000, 9.355000],
-                            [122.809500, 9.358500],
-                            [122.807200, 9.369200],
-                            [122.796200, 9.365000]
-                        ];
-
-                    pointsWrap.innerHTML = '';
-                    sample.forEach(function (point) {
-                        addPointRow(point[0], point[1]);
-                    });
-
-                    buildFromRows();
-                    setMessage(isPrs92Zone4
-                        ? 'Sample PRS92 Zone IV parcel loaded and converted. Replace it with the actual survey coordinates before saving.'
-                        : 'Sample parcel polygon loaded. Adjust the coordinates if needed.');
                 };
 
                 const normalizeStoredRing = function (coordinates) {
@@ -489,65 +586,72 @@
                                 setMessage('Stored PRS92 Zone IV source coordinates loaded.');
                             }
                         } else if (isPrs92Zone4 && parsed?.type === 'Polygon' && Array.isArray(parsed?.coordinates?.[0])) {
-                            setMessage('This is a legacy geographic-only parcel geometry. It remains unchanged unless you enter PRS92 Zone IV Easting/Northing points and convert it.');
+                            setMessage('This parcel has legacy geographic-only geometry. It stays unchanged until PRS92 Zone IV points are entered and converted.');
                         }
                     } catch (error) {
-                        // Keep the existing raw value visible so the normal validation path can report it.
+                        setMessage('The stored geometry could not be loaded into the coordinate helper.', true);
                     }
                 };
 
-                if (isPrs92Zone4) {
-                    const fieldLabel = editor.closest('.parcel-create-field, .parcel-edit-field')?.querySelector('label[for="' + target.id + '"]');
-                    if (fieldLabel && /geojson geometry/i.test(fieldLabel.textContent || '')) {
-                        fieldLabel.textContent = 'PRS92 / PTM Zone IV Parcel Boundary';
+                pointsWrap.addEventListener('input', function (event) {
+                    if (event.target.matches('[data-geojson-x], [data-geojson-y]')) {
+                        scheduleCapture();
                     }
-
-                    const panelCopy = editor.closest('.geo-map-editor-panel')?.querySelector('.geo-map-editor-panel-copy');
-                    if (panelCopy && /longitude and latitude/i.test(panelCopy.textContent || '')) {
-                        panelCopy.textContent = 'Enter PRS92 / PTM Zone IV Easting and Northing points. The system converts them to WGS84 for the online map while retaining the original survey coordinates.';
-                    }
-                }
+                });
 
                 editor.querySelector('[data-geojson-add-point]')?.addEventListener('click', function () {
-                    addPointRow();
-                    renumberRows();
+                    recordImmediateMutation(function () {
+                        addPointRow();
+                        renumberRows();
+                    });
                 });
 
                 editor.querySelector('[data-geojson-build]')?.addEventListener('click', buildFromRows);
-                editor.querySelector('[data-geojson-sample]')?.addEventListener('click', loadSample);
+                undoButton?.addEventListener('click', undo);
+                redoButton?.addEventListener('click', redo);
 
-                editor.querySelector('[data-geojson-format]')?.addEventListener('click', function () {
-                    try {
-                        const parsed = JSON.parse(target.value || '{}');
-                        if (!parsed.type || !parsed.coordinates) {
-                            setMessage('GeoJSON must include type and coordinates.', true);
-                            return;
+                editor.addEventListener('keydown', function (event) {
+                    if (!(event.ctrlKey || event.metaKey)) return;
+
+                    const key = String(event.key || '').toLowerCase();
+                    if (key === 'z') {
+                        event.preventDefault();
+                        if (event.shiftKey) {
+                            redo();
+                        } else {
+                            undo();
                         }
-                        target.value = JSON.stringify(parsed, null, 2);
-                        setMessage('GeoJSON formatted successfully.');
-                    } catch (error) {
-                        setMessage('This is not valid JSON yet. Use the coordinate builder if you do not want to type it manually.', true);
+                        return;
                     }
-                });
 
-                editor.querySelector('[data-geojson-clear]')?.addEventListener('click', function () {
-                    target.value = '';
-                    pointsWrap.querySelectorAll('input').forEach(function (input) { input.value = ''; });
-                    setMessage('Map geometry field cleared.');
+                    if (key === 'y') {
+                        event.preventDefault();
+                        redo();
+                    }
                 });
 
                 const form = editor.closest('form');
                 form?.addEventListener('submit', function (event) {
+                    flushCapture();
+
                     const completedRows = Array.from(pointsWrap.querySelectorAll('.geojson-point-row')).filter(function (row) {
                         return row.querySelector('[data-geojson-x]')?.value !== '' && row.querySelector('[data-geojson-y]')?.value !== '';
                     });
 
-                    if (completedRows.length >= 3 && !buildFromRows()) {
+                    if (completedRows.length >= 3) {
+                        if (!buildFromRows()) event.preventDefault();
+                        return;
+                    }
+
+                    if (requireGeometry && !target.value.trim()) {
                         event.preventDefault();
+                        setMessage('Enter at least 3 complete coordinate points before saving this parcel geometry.', true);
                     }
                 });
 
                 loadExistingCoordinates();
+                lastSnapshot = snapshot();
+                updateHistoryButtons();
             });
         });
     </script>
