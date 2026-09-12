@@ -292,13 +292,15 @@
     border-color: #166534;
 }
 
-        .forgot-link {
+        .forgot-link,
+        .registration-link {
             color: #166534;
             font-weight: 800;
             text-decoration: none;
         }
 
-        .forgot-link:hover {
+        .forgot-link:hover,
+        .registration-link:hover {
             text-decoration: underline;
         }
 
@@ -537,7 +539,7 @@
                 </form>
 
                 <div style="margin-top: 1rem; text-align: center;">
-                    <a href="{{ route('register') }}" class="forgot-link">
+                    <a href="{{ route('register') }}" class="registration-link">
                         Register as Landowner
                     </a>
                 </div>
