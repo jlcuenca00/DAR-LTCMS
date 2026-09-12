@@ -27,7 +27,7 @@ test.describe('public UI UX baseline', () => {
         await waitForUiUx(page);
 
         await expect(page.locator('.login-button')).toHaveText('Sign in');
-        await expect(page.locator('.forgot-link')).toHaveText('Need help signing in?');
+        await expect(page.locator('.forgot-link')).toHaveText('Forgot password?');
 
         const radius = await page.locator('.remember-control').evaluate((node) => getComputedStyle(node).borderRadius);
         expect(parseFloat(radius)).toBeLessThanOrEqual(5);

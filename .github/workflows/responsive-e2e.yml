@@ -172,6 +172,7 @@ jobs:
         run: |
           php artisan test \
             tests/Feature/PublicLegalPagesTest.php \
+            tests/Feature/GoogleSignInHeadersTest.php \
             tests/Feature/Auth/RegistrationTest.php \
             tests/Feature/ResponsiveUiFoundationTest.php \
             tests/Feature/StaffMobilePortalNavigationTest.php \

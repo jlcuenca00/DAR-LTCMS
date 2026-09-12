@@ -283,7 +283,7 @@ function enhanceLogin() {
     }
 
     const help = page.querySelector('.forgot-link');
-    if (help) help.textContent = 'Need help signing in?';
+    if (help) help.textContent = 'Forgot password?';
 }
 
 function addSubmitState() {

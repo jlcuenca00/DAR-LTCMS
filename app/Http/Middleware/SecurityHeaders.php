@@ -11,13 +11,15 @@ class SecurityHeaders
     public function handle(Request $request, Closure $next): Response
     {
         $response = $next($request);
+        $usesGoogleSignIn = $request->routeIs('login', 'register')
+            && (bool) config('services.google.client_id');
 
         $response->headers->set('X-Content-Type-Options', 'nosniff');
         $response->headers->set('X-Frame-Options', 'SAMEORIGIN');
         $response->headers->set('Referrer-Policy', 'strict-origin-when-cross-origin');
         $response->headers->set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
         $response->headers->set('X-Permitted-Cross-Domain-Policies', 'none');
-        $response->headers->set('Cross-Origin-Opener-Policy', 'same-origin');
+        $response->headers->set('Cross-Origin-Opener-Policy', $usesGoogleSignIn ? 'same-origin-allow-popups' : 'same-origin');
         $response->headers->set('Cross-Origin-Resource-Policy', 'same-origin');
 
         if ($request->isSecure()) {
@@ -34,11 +36,12 @@ class SecurityHeaders
                 "form-action 'self'",
                 "frame-ancestors 'self'",
                 "object-src 'none'",
-                "script-src 'self' 'unsafe-inline' https://unpkg.com https://cdn.jsdelivr.net",
-                "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com https://unpkg.com https://cdn.jsdelivr.net",
+                "script-src 'self' 'unsafe-inline' https://unpkg.com https://cdn.jsdelivr.net".($usesGoogleSignIn ? ' https://accounts.google.com/gsi/client' : ''),
+                "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com https://unpkg.com https://cdn.jsdelivr.net".($usesGoogleSignIn ? ' https://accounts.google.com/gsi/style' : ''),
                 "font-src 'self' data: https://fonts.gstatic.com https://cdnjs.cloudflare.com",
                 "img-src 'self' data: blob: https://unpkg.com https://cdn.jsdelivr.net https://*.basemaps.cartocdn.com",
-                "connect-src 'self'",
+                "connect-src 'self'".($usesGoogleSignIn ? ' https://accounts.google.com/gsi/' : ''),
+                "frame-src 'self'".($usesGoogleSignIn ? ' https://accounts.google.com/gsi/' : ''),
                 "worker-src 'self' blob:",
                 'upgrade-insecure-requests',
             ]));
@@ -48,6 +51,7 @@ class SecurityHeaders
         $isHtml = str_starts_with(strtolower($contentType), 'text/html');
         $isSensitiveAuthPage = $request->routeIs(
             'login',
+            'register',
             'password.request',
             'password.recovery.*',
             'password.required',

@@ -12,17 +12,18 @@
         </div>
     @endif
 
+    <label class="consent mb-4">
+        <input id="registration-privacy-consent" form="manual-registration-form" type="checkbox" name="privacy_consent" value="1" class="mt-1 rounded border-gray-300 text-green-700 focus:ring-green-600" @checked(old('privacy_consent')) required>
+        <span>I have read the <a href="{{ route('privacy') }}" target="_blank" rel="noopener">Privacy Policy</a>, consent to the use of my account details for registration and identity review, and agree to the <a href="{{ route('terms') }}" target="_blank" rel="noopener">Terms of Service</a>.</span>
+    </label>
+    <x-input-error :messages="$errors->get('privacy_consent')" class="mb-4" />
+
     @if ($googleClientId)
         <div class="space-y-3">
-            <label class="consent">
-                <input id="google-privacy-consent" type="checkbox" class="mt-1 rounded border-gray-300 text-green-700 focus:ring-green-600">
-                <span>I have read the <a href="{{ route('privacy') }}" target="_blank" rel="noopener">Privacy Policy</a>, consent to the use of my account details for registration and identity review, and agree to the <a href="{{ route('terms') }}" target="_blank" rel="noopener">Terms of Service</a>.</span>
-            </label>
             <p id="google-consent-error" role="alert" class="hidden text-sm font-semibold text-red-600">
                 Please accept the privacy notice before continuing with Google.
             </p>
 
-            <script src="https://accounts.google.com/gsi/client" async defer></script>
             <div class="flex justify-center">
                 <div id="g_id_onload"
                     data-client_id="{{ $googleClientId }}"
@@ -55,7 +56,7 @@
         </div>
     @endif
 
-    <form method="POST" action="{{ route('register') }}" class="space-y-4">
+    <form id="manual-registration-form" method="POST" action="{{ route('register') }}" class="space-y-4">
         @csrf
 
         <div>
@@ -90,12 +91,6 @@
             <x-input-error :messages="$errors->get('password_confirmation')" class="mt-2" />
         </div>
 
-        <label class="consent">
-            <input type="checkbox" name="privacy_consent" value="1" class="mt-1 rounded border-gray-300 text-green-700 focus:ring-green-600" @checked(old('privacy_consent')) required>
-            <span>I have read the <a href="{{ route('privacy') }}" target="_blank" rel="noopener">Privacy Policy</a>, consent to the use of my account details for registration and identity review, and agree to the <a href="{{ route('terms') }}" target="_blank" rel="noopener">Terms of Service</a>.</span>
-        </label>
-        <x-input-error :messages="$errors->get('privacy_consent')" class="mt-2" />
-
         <button type="submit" class="login-button">
             {{ __('Create Landowner Account') }}
         </button>
@@ -110,11 +105,12 @@
     @if ($googleClientId)
         <script>
             window.handleGoogleRegistration = function (response) {
-                const consent = document.getElementById('google-privacy-consent');
+                const consent = document.getElementById('registration-privacy-consent');
                 const consentError = document.getElementById('google-consent-error');
 
                 if (! consent.checked) {
                     consentError.classList.remove('hidden');
+                    consent.focus();
                     return;
                 }
 
@@ -124,5 +120,6 @@
                 document.getElementById('google-registration-form').submit();
             };
         </script>
+        <script src="https://accounts.google.com/gsi/client" async defer></script>
     @endif
 </x-public-auth-layout>
