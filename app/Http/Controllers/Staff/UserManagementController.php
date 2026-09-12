@@ -116,6 +116,7 @@ class UserManagementController extends Controller
                 'email' => $email,
                 'password' => $initialPassword,
                 'role' => $validated['role'],
+                'registration_status' => $validated['registration_status'] ?? User::REGISTRATION_APPROVED,
                 'is_active' => (bool) ($validated['is_active'] ?? false),
                 'must_change_password' => true,
                 'password_changed_at' => now(),
