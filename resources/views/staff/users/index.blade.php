@@ -14,6 +14,11 @@
             'role' => $filters['role'] ?? null,
             'search' => $filters['search'] ?? null,
         ]));
+        $pendingTabUrl = route('staff.users.index', array_filter([
+            'status' => 'pending',
+            'role' => $filters['role'] ?? null,
+            'search' => $filters['search'] ?? null,
+        ]));
         $clearUrl = route('staff.users.index', ['status' => $currentStatus]);
     @endphp
 
@@ -359,6 +364,11 @@
                     Inactive Accounts
                     <span class="user-management-tab-count">{{ $accountCounts['inactive'] }}</span>
                 </a>
+                <a href="{{ $pendingTabUrl }}" class="user-management-tab {{ $currentStatus === 'pending' ? 'is-active' : '' }}">
+                    <i class="fa-solid fa-hourglass-half" aria-hidden="true"></i>
+                    Pending Review
+                    <span class="user-management-tab-count">{{ $accountCounts['pending'] }}</span>
+                </a>
             </nav>
 
             <div class="user-management-context">
@@ -482,6 +492,10 @@
                                     <div class="user-management-readiness">
                                         @if ($currentStatus === 'inactive')
                                             <span class="staff-badge staff-badge-red">Access Disabled</span>
+                                        @elseif ($user->registration_status === \App\Models\User::REGISTRATION_PENDING)
+                                            <span class="staff-badge staff-badge-amber">Pending DAR Review</span>
+                                        @elseif ($user->registration_status === \App\Models\User::REGISTRATION_DECLINED)
+                                            <span class="staff-badge staff-badge-red">Registration Declined</span>
                                         @elseif ($user->must_change_password)
                                             <span class="staff-badge staff-badge-amber">Password Change Required</span>
                                         @else
