@@ -16,6 +16,16 @@ class User extends Authenticatable
     public const ROLE_LANDOWNER = 'landowner';
     public const ROLE_GEODETIC = 'geodetic';
 
+    public const REGISTRATION_PENDING = 'pending_review';
+    public const REGISTRATION_APPROVED = 'approved';
+    public const REGISTRATION_DECLINED = 'declined';
+
+    public const REGISTRATION_STATUSES = [
+        self::REGISTRATION_PENDING,
+        self::REGISTRATION_APPROVED,
+        self::REGISTRATION_DECLINED,
+    ];
+
     public const ROLES = [
         self::ROLE_STAFF,
         self::ROLE_LANDOWNER,
@@ -31,8 +41,14 @@ class User extends Authenticatable
         'name',
         'username',
         'email',
+        'google_id',
+        'auth_provider',
         'password',
         'role',
+        'registration_status',
+        'registration_notes',
+        'registration_reviewed_at',
+        'registration_reviewed_by_user_id',
         'is_active',
         'must_change_password',
         'password_changed_at',
@@ -61,12 +77,23 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'registration_reviewed_at' => 'datetime',
             'is_active' => 'boolean',
             'must_change_password' => 'boolean',
             'password_changed_at' => 'datetime',
             'last_login_at' => 'datetime',
             'onboarding_state' => 'array',
         ];
+    }
+
+    public function registrationReviewer()
+    {
+        return $this->belongsTo(User::class, 'registration_reviewed_by_user_id');
+    }
+
+    public function isRegistrationApproved(): bool
+    {
+        return $this->registration_status === self::REGISTRATION_APPROVED;
     }
 
     public function landowner()
