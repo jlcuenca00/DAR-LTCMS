@@ -422,6 +422,31 @@
                     </div>
                 @endif
 
+                @if ($googleClientId)
+                    <div style="margin-top: 1.4rem; display: flex; justify-content: center;">
+                        <script src="https://accounts.google.com/gsi/client" async defer></script>
+                        <div id="g_id_onload"
+                            data-client_id="{{ $googleClientId }}"
+                            data-login_uri="{{ route('register.google') }}"
+                            data-auto_prompt="false">
+                        </div>
+                        <div class="g_id_signin"
+                            data-type="standard"
+                            data-size="large"
+                            data-theme="outline"
+                            data-text="continue_with"
+                            data-shape="rectangular"
+                            data-logo_alignment="left">
+                        </div>
+                    </div>
+
+                    <div style="display: flex; align-items: center; gap: .75rem; margin-top: 1.25rem; color: #9ca3af; font-size: .72rem; font-weight: 800; text-transform: uppercase; letter-spacing: .12em;">
+                        <span style="height: 1px; flex: 1; background: #e5e7eb;"></span>
+                        or sign in manually
+                        <span style="height: 1px; flex: 1; background: #e5e7eb;"></span>
+                    </div>
+                @endif
+
                 <form method="POST" action="{{ route('login') }}" class="login-form">
                     @csrf
 
