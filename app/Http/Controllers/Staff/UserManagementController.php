@@ -107,7 +107,7 @@ class UserManagementController extends Controller
         }
 
         $email = $this->normalizeEmail($validated['email'] ?? null);
-        $initialPassword = Str::password(12, true, true, true, false);
+        $initialPassword = $this->generateTemporaryPassword();
 
         $user = DB::transaction(function () use ($validated, $email, $initialPassword) {
             $user = User::create([
@@ -418,7 +418,7 @@ class UserManagementController extends Controller
             );
         }
 
-        $temporaryPassword = Str::password(12, true, true, true, false);
+        $temporaryPassword = $this->generateTemporaryPassword();
 
         DB::transaction(function () use ($user, $temporaryPassword, $request) {
             $user->forceFill([
@@ -451,6 +451,20 @@ class UserManagementController extends Controller
             ->with('success', $statusMessage)
             ->with('temporary_password', $temporaryPassword)
             ->with('temporary_password_username', $user->username);
+    }
+
+    private function generateTemporaryPassword(): string
+    {
+        do {
+            $password = Str::password(14, true, true, true, false);
+        } while (
+            preg_match('/[a-z]/', $password) !== 1 ||
+            preg_match('/[A-Z]/', $password) !== 1 ||
+            preg_match('/[0-9]/', $password) !== 1 ||
+            preg_match('/[^A-Za-z0-9]/', $password) !== 1
+        );
+
+        return $password;
     }
 
     private function normalizeEmail(?string $email): ?string
