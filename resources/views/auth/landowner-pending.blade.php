@@ -4,8 +4,14 @@
     @endphp
 
     <div class="space-y-5 text-center">
-        <div class="mx-auto grid h-14 w-14 place-items-center rounded-full {{ $declined ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700' }}">
-            <i class="fa-solid {{ $declined ? 'fa-circle-exclamation' : 'fa-hourglass-half' }} text-xl"></i>
+        <div class="registration-status-icon {{ $declined ? 'declined' : '' }}" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                @if ($declined)
+                    <path d="M12 5v9m0 4h.01" />
+                @else
+                    <path d="m5 12 4 4L19 6" />
+                @endif
+            </svg>
         </div>
 
         <div>
@@ -27,6 +33,10 @@
                 ? 'contact authorized DAR staff for assistance.'
                 : 'wait for DAR staff confirmation, or visit/contact the DAR Negros Oriental Provincial Office if they need to verify your details.' }}
         </div>
+
+        @if (session('registration_email_warning'))
+            <p role="status" class="text-sm text-gray-600">{{ session('registration_email_warning') }}</p>
+        @endif
 
         <form method="POST" action="{{ route('logout') }}">
             @csrf

@@ -4,17 +4,20 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Notifications\LandownerRegistrationReceived;
 use App\Services\AuditLogger;
 use App\Services\GoogleIdentity;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rules;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
+use Throwable;
 
 class RegisteredUserController extends Controller
 {
@@ -72,7 +75,7 @@ class RegisteredUserController extends Controller
         return redirect()->route('landowner.registration.pending');
     }
 
-    public function storeGoogle(Request $request, GoogleIdentity $googleIdentity): RedirectResponse
+    public function storeGoogle(Request $request, GoogleIdentity $googleIdentity): RedirectResponse|Response
     {
         $validated = $request->validate([
             'credential' => ['required', 'string', 'max:10000'],
@@ -92,6 +95,10 @@ class RegisteredUserController extends Controller
         $existingGoogleUser = User::query()->where('google_id', $googleId)->first();
 
         if ($existingGoogleUser) {
+            if ($validated['intent'] === 'register') {
+                return $this->accountExists();
+            }
+
             if (! $existingGoogleUser->is_active) {
                 throw ValidationException::withMessages([
                     'google' => 'This account is inactive. Please contact authorized DAR staff.',
@@ -136,10 +143,14 @@ class RegisteredUserController extends Controller
             ]);
         }
 
-        if (User::query()->whereRaw('LOWER(email) = ?', [$email])->exists()) {
+        if (! filter_var($payload['email_verified'] ?? false, FILTER_VALIDATE_BOOLEAN)) {
             throw ValidationException::withMessages([
-                'google' => 'That email already belongs to a DAR-LTCMS account. Sign in with its username, or ask DAR staff for help linking Google safely.',
+                'google' => 'Google could not verify your email address. Please use manual registration.',
             ]);
+        }
+
+        if (User::query()->whereRaw('LOWER(email) = ?', [$email])->exists()) {
+            return $this->accountExists();
         }
 
         $name = trim((string) ($payload['name'] ?? 'Landowner'));
@@ -175,7 +186,22 @@ class RegisteredUserController extends Controller
             $user->id
         );
 
+        try {
+            $user->notify(new LandownerRegistrationReceived());
+        } catch (Throwable $exception) {
+            report($exception);
+            $request->session()->flash('registration_email_warning',
+                'Your registration was received, but the confirmation email could not be sent. Your account is still waiting for DAR review.');
+        }
+
         return redirect()->route('landowner.registration.pending');
+    }
+
+    private function accountExists(): Response
+    {
+        return response()->view('auth.account-exists', [], 409)
+            ->header('Cache-Control', 'no-store, private')
+            ->header('X-Robots-Tag', 'noindex, nofollow');
     }
 
     public function pending(Request $request): View
