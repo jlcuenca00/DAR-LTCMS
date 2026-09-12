@@ -269,6 +269,17 @@ class ParcelMapController extends Controller
             }
 
             $previousGeometry = $current->geometry_geojson;
+
+            if ($previousGeometry === $geometry) {
+                $session->delete();
+
+                return [
+                    'status' => 'unchanged',
+                    'parcel' => $current,
+                    'current_version' => $currentVersion,
+                ];
+            }
+
             $previousVersion = $currentVersion;
             $hadGeometryBefore = ! empty($previousGeometry);
 
@@ -324,6 +335,12 @@ class ParcelMapController extends Controller
             return redirect()
                 ->route('geodetic.parcels.geometry.edit', $parcel)
                 ->with('error', 'This parcel was updated by another user while you were editing. Your save was blocked, and the latest geometry has been reloaded to prevent an overwrite.');
+        }
+
+        if ($result['status'] === 'unchanged') {
+            return redirect()
+                ->route('geodetic.parcels.show', $result['parcel'])
+                ->with('success', 'No geometry changes were detected. Version '.$result['current_version'].' was retained.');
         }
 
         /** @var Parcel $savedParcel */
