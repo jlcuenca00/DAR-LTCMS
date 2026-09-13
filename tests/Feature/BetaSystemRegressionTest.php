@@ -144,50 +144,112 @@ class BetaSystemRegressionTest extends TestCase
         $this->assertDatabaseCount('landholdings', 0);
     }
 
-    public function test_office_workflow_reaches_release_and_generates_clearance_record(): void
+    public function test_office_workflow_reaches_final_approval_then_separate_client_release(): void
     {
         $staff = $this->staffUser();
         [$transferor, $transferee, $parcel, $landholding, $application] = $this->applicationPackage($staff);
 
-        foreach ([
-            LandTransferApplication::STATUS_ENDORSED_LTI,
-            LandTransferApplication::STATUS_ENDORSED_CHIEF_LEGAL,
-            LandTransferApplication::STATUS_ENDORSED_PARPO,
-            LandTransferApplication::STATUS_FOR_RELEASING,
-        ] as $expectedStatus) {
-            $this->actingAs($staff)
-                ->post(route('staff.applications.submit', $application))
-                ->assertSessionHas('success');
+        $this->actingAs($staff)
+            ->post(route('staff.applications.submit', $application), [
+                'payment_order_reference' => 'OP-BETA-WORKFLOW-001',
+            ])
+            ->assertSessionHas('success');
+        $application->refresh();
+        $this->assertSame(LandTransferApplication::STATUS_AWAITING_PAYMENT, $application->status);
 
-            $application->refresh();
-            $this->assertSame($expectedStatus, $application->status);
-        }
+        $this->actingAs($staff)
+            ->post(route('staff.applications.submit', $application), [
+                'or_number' => 'OR-BETA-WORKFLOW-001',
+                'or_date' => now()->toDateString(),
+                'amount_paid' => config('dar_ltc.filing_fee', 2000),
+            ])
+            ->assertSessionHas('success');
+        $application->refresh();
+        $this->assertSame(LandTransferApplication::STATUS_ENDORSED_LTI, $application->status);
+
+        $this->actingAs($staff)
+            ->post(route('staff.applications.submit', $application))
+            ->assertSessionHas('success');
+        $application->refresh();
+        $this->assertSame(LandTransferApplication::STATUS_RETURNED_TO_LEGAL, $application->status);
+
+        $this->actingAs($staff)
+            ->post(route('staff.applications.submit', $application))
+            ->assertSessionHas('success');
+        $application->refresh();
+        $this->assertSame(LandTransferApplication::STATUS_LEGAL_EVALUATION, $application->status);
+
+        $this->actingAs($staff)
+            ->post(route('staff.applications.submit', $application), [
+                'csw_reference' => 'CSW-BETA-WORKFLOW-001',
+                'csw_notes' => 'Beta regression completed staff work.',
+            ])
+            ->assertSessionHas('success');
+        $application->refresh();
+        $this->assertSame(LandTransferApplication::STATUS_ENDORSED_CHIEF_LEGAL, $application->status);
+
+        $this->actingAs($staff)
+            ->post(route('staff.applications.submit', $application))
+            ->assertSessionHas('success');
+        $application->refresh();
+        $this->assertSame(LandTransferApplication::STATUS_ENDORSED_PARPO, $application->status);
+
+        $this->actingAs($staff)
+            ->post(route('staff.applications.submit', $application))
+            ->assertSessionHas('success');
+        $application->refresh();
+        $this->assertSame(LandTransferApplication::STATUS_FOR_RELEASING, $application->status);
 
         $this->actingAs($staff)
             ->post(route('staff.applications.approve', $application), [
                 'final_decision_confirmation' => '1',
-                'decision_reason' => 'Clearance release validated for beta regression testing.',
-                'decision_notes' => 'Final release path verified.',
+                'decision_reason' => 'PARPO II approval validated for beta regression testing.',
+                'decision_notes' => 'Final decision path verified.',
             ])
             ->assertSessionHas('success');
 
         $application->refresh();
         $landholding->refresh();
 
-        $this->assertSame(LandTransferApplication::STATUS_RELEASED, $application->status);
+        $this->assertSame(LandTransferApplication::STATUS_APPROVED, $application->status);
         $this->assertSame($staff->id, $application->reviewed_by);
         $this->assertNotNull($application->validated_at);
         $this->assertNotNull($application->clearance()->first());
 
         $this->assertDatabaseHas('audit_logs', [
             'actor_user_id' => $staff->id,
-            'action' => 'application_released',
+            'action' => 'application_approved',
             'land_transfer_application_id' => $application->id,
         ]);
 
         $this->assertDatabaseHas('audit_logs', [
             'actor_user_id' => $staff->id,
             'action' => 'clearance_generated',
+            'land_transfer_application_id' => $application->id,
+        ]);
+
+        $this->actingAs($staff)
+            ->post(route('staff.applications.ready_for_release', $application))
+            ->assertSessionHas('success');
+
+        $this->actingAs($staff)
+            ->post(route('staff.applications.release', $application), [
+                'release_confirmation' => '1',
+                'release_recipient_name' => $transferee->full_name,
+                'release_logbook_reference' => 'LOG-BETA-WORKFLOW-001',
+                'csm_status' => 'issued',
+            ])
+            ->assertSessionHas('success');
+
+        $application->refresh();
+        $landholding->refresh();
+
+        $this->assertSame(LandTransferApplication::STATUS_APPROVED, $application->status);
+        $this->assertSame(LandTransferApplication::RELEASED_TO_CLIENT, $application->release_status);
+
+        $this->assertDatabaseHas('audit_logs', [
+            'actor_user_id' => $staff->id,
+            'action' => 'application_released_to_client',
             'land_transfer_application_id' => $application->id,
         ]);
 
@@ -217,10 +279,16 @@ class BetaSystemRegressionTest extends TestCase
         $staff = $this->staffUser();
         [$transferor, $transferee, $parcel, $landholding, $application] = $this->applicationPackage($staff, 'BETA-DENIED-001');
 
+        // This regression isolates the PARPO II final-denial action; earlier
+        // workflow gates are exercised by the full-flow test above.
+        $application->forceFill([
+            'status' => LandTransferApplication::STATUS_FOR_RELEASING,
+        ])->save();
+
         $this->actingAs($staff)
             ->post(route('staff.applications.not_approved', $application), [
                 'final_decision_confirmation' => '1',
-                'decision_reason' => 'Documentary review did not support release.',
+                'decision_reason' => 'Substantive review did not support clearance approval.',
                 'decision_notes' => 'Beta denial path verified.',
             ])
             ->assertSessionHas('success');
@@ -275,7 +343,7 @@ class BetaSystemRegressionTest extends TestCase
         ]);
 
         foreach ([
-            LandTransferApplication::STATUS_RELEASED,
+            LandTransferApplication::STATUS_APPROVED,
             LandTransferApplication::STATUS_DENIED,
         ] as $status) {
             $application = LandTransferApplication::create([
@@ -520,7 +588,17 @@ class BetaSystemRegressionTest extends TestCase
             'applicant_name' => $transferor->full_name,
             'applicant_type' => 'transferor',
             'transferor_name' => $transferor->full_name,
+            'transferors' => [[
+                'name' => $transferor->full_name,
+                'landowner_id' => $transferor->id,
+                'parcel_shares' => [],
+            ]],
             'transferee_name' => $transferee->full_name,
+            'transferees' => [[
+                'name' => $transferee->full_name,
+                'landowner_id' => $transferee->id,
+                'parcel_shares' => [],
+            ]],
             'transferor_landowner_id' => $transferor->id,
             'transferee_landowner_id' => $transferee->id,
             'municipality' => 'Dumaguete City',
