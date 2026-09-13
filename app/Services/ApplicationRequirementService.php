@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\LandTransferApplication;
 use App\Models\RequiredDocument;
+use Carbon\Carbon;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Collection;
 
@@ -97,7 +98,7 @@ class ApplicationRequirementService
         }
 
         try {
-            $issuedAt = now()->parse((string) $issued)->startOfDay();
+            $issuedAt = Carbon::parse((string) $issued)->startOfDay();
             $applicationDate = $referenceDate->copy()->startOfDay();
             $earliestValidDate = $applicationDate->copy()->subMonthsNoOverflow($months);
         } catch (\Throwable) {
