@@ -14,18 +14,17 @@ use Illuminate\Support\Collection;
 class NotificationService
 {
     /**
-     * Approved Staff notification policy.
-     *
-     * Staff should only receive notices for application encoding, submission
-     * into review, and final released/denied decisions. Internal endorsement
-     * stage changes, document activity, metadata/indexing changes, and automatic
-     * clearance generation are intentionally excluded to avoid notification noise.
+     * Staff notifications stay intentionally narrow: intake, final decision,
+     * release readiness, and actual client release. Routine internal stage
+     * endorsements remain visible in the audit trail without creating noise.
      */
     private const STAFF_ALLOWED_TYPES = [
         'application_created',
         'application_submitted',
-        'application_released',
+        'application_approved',
         'application_denied',
+        'application_ready_for_release',
+        'application_released',
     ];
 
     public function notifyUser(
@@ -115,25 +114,59 @@ class NotificationService
         );
     }
 
-    public function notifyStaffApplicationReleased(LandTransferApplication $application): void
+    public function notifyStaffApplicationApproved(LandTransferApplication $application): void
     {
         $this->notifyActiveStaff(
-            'application_released',
-            'Clearance released',
-            'A final released clearance decision was recorded for application ' . $application->application_code . '.',
+            'application_approved',
+            'PARPO II approval recorded',
+            'A final Approved clearance decision was recorded for application ' . $application->application_code . '. Client release is tracked separately.',
             $application,
             $this->staffApplicationData($application)
         );
+    }
+
+    /**
+     * Historical compatibility wrapper. New code should use
+     * notifyStaffApplicationReleasedToClient() for an actual release event.
+     */
+    public function notifyStaffApplicationReleased(LandTransferApplication $application): void
+    {
+        $this->notifyStaffApplicationReleasedToClient($application);
     }
 
     public function notifyStaffApplicationDenied(LandTransferApplication $application): void
     {
         $this->notifyActiveStaff(
             'application_denied',
-            'Application denied',
-            'A final denied clearance decision was recorded for application ' . $application->application_code . '.',
+            'PARPO II denial recorded',
+            'A final Denied clearance decision was recorded for application ' . $application->application_code . '.',
             $application,
             $this->staffApplicationData($application)
+        );
+    }
+
+    public function notifyStaffApplicationReadyForRelease(LandTransferApplication $application): void
+    {
+        $this->notifyActiveStaff(
+            'application_ready_for_release',
+            'Decision output ready for release',
+            'The signed LTC Form No. 5 for application ' . $application->application_code . ' is ready for client release.',
+            $application,
+            $this->staffApplicationData($application)
+        );
+    }
+
+    public function notifyStaffApplicationReleasedToClient(LandTransferApplication $application): void
+    {
+        $this->notifyActiveStaff(
+            'application_released',
+            'Decision output released to client',
+            'The signed clearance decision for application ' . $application->application_code . ' was released to the client or authorized representative.',
+            $application,
+            array_merge($this->staffApplicationData($application), [
+                'release_status' => $application->release_status,
+                'released_at' => optional($application->released_at)->toDateTimeString(),
+            ])
         );
     }
 
@@ -160,9 +193,26 @@ class NotificationService
             $users,
             'landowner_final_decision',
             'Final clearance decision recorded',
-            'A final clearance decision has been recorded for application ' . $application->application_code . '. Decision status: ' . $statusLabel . '.',
+            'A final clearance decision has been recorded for application ' . $application->application_code . '. Decision status: ' . $statusLabel . '. Release of the signed output is tracked separately.',
             $application,
             $this->landownerApplicationData($application)
+        );
+    }
+
+    public function notifyLinkedLandownersReleasedToClient(LandTransferApplication $application): void
+    {
+        $users = $this->linkedLandownerUsers($application);
+
+        $this->notifyUsers(
+            $users,
+            'landowner_clearance_released',
+            'Decision output released',
+            'The signed clearance decision for application ' . $application->application_code . ' has been recorded as Released to Client.',
+            $application,
+            array_merge($this->landownerApplicationData($application), [
+                'release_status' => $application->release_status,
+                'released_at' => optional($application->released_at)->toDateTimeString(),
+            ])
         );
     }
 
@@ -292,7 +342,7 @@ class NotificationService
 
             $type = 'application_submitted';
             $title = 'Application submitted for review';
-            $message = 'Application ' . $applicationCode . ' was submitted for review and is now Pending Review by Legal Officer.';
+            $message = 'Application ' . $applicationCode . ' was submitted for Legal completeness review.';
         }
 
         if (! in_array($type, self::STAFF_ALLOWED_TYPES, true)) {
@@ -309,6 +359,8 @@ class NotificationService
             'application_code' => $application->application_code,
             'status' => $application->status,
             'status_label' => $application->statusLabel(),
+            'release_status' => $application->release_status,
+            'release_status_label' => method_exists($application, 'releaseStatusLabel') ? $application->releaseStatusLabel() : null,
             'transferor_name' => $application->transferor_name,
             'transferee_name' => $application->transferee_name,
             'municipality' => $application->municipality,
@@ -323,18 +375,18 @@ class NotificationService
             'application_code' => $application->application_code,
             'status' => $application->status,
             'status_label' => $application->statusLabel(),
+            'release_status' => $application->release_status,
+            'release_status_label' => method_exists($application, 'releaseStatusLabel') ? $application->releaseStatusLabel() : null,
         ];
     }
 
     private function finalDecisionLabel(LandTransferApplication $application): string
     {
         return match ($application->status) {
-            LandTransferApplication::STATUS_RELEASED,
-            LandTransferApplication::STATUS_APPROVED => 'Released',
-
+            LandTransferApplication::STATUS_APPROVED => 'Approved',
             LandTransferApplication::STATUS_DENIED,
             LandTransferApplication::STATUS_NOT_APPROVED => 'Denied',
-
+            LandTransferApplication::STATUS_RELEASED => 'Released (legacy record)',
             default => $application->statusLabel(),
         };
     }
