@@ -13,6 +13,7 @@ import './staff-dashboard-hero';
 import './parcel-map-single-tooltip';
 import './carto-basemap-key';
 import './geodetic-geometry-workflow';
+import './geodetic-existing-coordinate-reference';
 import './account-panel';
 import './user-management-linked-records';
 import './staff-record-row-navigation';
