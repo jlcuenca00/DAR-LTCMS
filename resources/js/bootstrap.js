@@ -13,6 +13,7 @@ import './staff-dashboard-hero';
 import './parcel-map-single-tooltip';
 import './carto-basemap-key';
 import './geodetic-geometry-workflow';
+import './geodetic-existing-coordinate-reference';
 import './account-panel';
 import './user-management-linked-records';
 import './staff-record-row-navigation';
@@ -61,6 +62,16 @@ window.DarLtcmsProjection = Object.freeze({
         }
 
         return proj4('EPSG:3124', 'EPSG:4326', [x, y]);
+    },
+    toPrs92(longitude, latitude) {
+        const x = Number(longitude);
+        const y = Number(latitude);
+
+        if (!Number.isFinite(x) || !Number.isFinite(y)) {
+            throw new TypeError('WGS84 coordinates must be finite numbers.');
+        }
+
+        return proj4('EPSG:4326', 'EPSG:3124', [x, y]);
     },
 });
 
