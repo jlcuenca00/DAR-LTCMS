@@ -140,6 +140,7 @@ class RequiredDocument extends Model
                 $group = $grouped->get(self::normalizedReviewName((string) $document->name), collect());
 
                 $preferred = $group->firstWhere('name', 'Certified True Copy of Current Tax Declaration (Untitled Land)')
+                    ?? $group->firstWhere('name', 'Recent Tax Declaration (if available)')
                     ?? $group->first();
 
                 return (int) $document->id === (int) $preferred->id;
