@@ -8,6 +8,7 @@ import './onboarding-replay-confirmation';
 import './application-intake-flow';
 import './application-page-cleanup';
 import './application-citizens-charter-flow';
+import './application-final-decision-presentation';
 import './staff-list-filters';
 import './dashboard-work-queue';
 import './staff-dashboard-hero';
