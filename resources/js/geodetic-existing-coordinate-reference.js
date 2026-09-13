@@ -1,3 +1,11 @@
+import proj4 from 'proj4';
+
+proj4.defs(
+    'EPSG:3124',
+    '+proj=tmerc +lat_0=0 +lon_0=123 +k=0.99995 +x_0=500000 +y_0=0 +ellps=clrk66 +towgs84=-127.62,-67.24,-47.04,3.068,-4.903,-1.578,-1.06 +units=m +no_defs +type=crs'
+);
+proj4.defs('EPSG:4326', '+proj=longlat +datum=WGS84 +no_defs +type=crs');
+
 function normalizePolygonRing(coordinates) {
     if (!Array.isArray(coordinates)) return [];
 
@@ -72,12 +80,9 @@ function prefillLegacyGeodeticCoordinates() {
     const geographicPoints = normalizePolygonRing(geometry?.coordinates?.[0]);
     if (geographicPoints.length < 3) return;
 
-    const projection = window.DarLtcmsProjection;
-    if (!projection || typeof projection.toPrs92 !== 'function') return;
-
     try {
         const projectedPoints = geographicPoints.map(([longitude, latitude]) => {
-            const [easting, northing] = projection.toPrs92(longitude, latitude);
+            const [easting, northing] = proj4('EPSG:4326', 'EPSG:3124', [longitude, latitude]);
 
             if (!Number.isFinite(Number(easting)) || !Number.isFinite(Number(northing))) {
                 throw new Error('Invalid projected coordinate');
