@@ -18,13 +18,19 @@ class ApplicationClearanceController extends Controller
         if (! $application->isFinalized()) {
             return redirect()
                 ->route('landowner.applications.index')
-                ->with('error', 'Decision output is only available after the application is finalized.');
+                ->with('error', 'Decision output is only available after the application receives a final PARPO II decision.');
+        }
+
+        if (! $application->isReleasedToClient()) {
+            return redirect()
+                ->route('landowner.applications.index')
+                ->with('error', 'The final decision has been recorded, but the signed output has not yet been released to the client.');
         }
 
         if (! $application->clearance) {
             return redirect()
                 ->route('landowner.applications.index')
-                ->with('error', 'Decision output record is not yet available for this application.');
+                ->with('error', 'Decision output record is not available for this application.');
         }
 
         return view('staff.clearances.show', [
@@ -43,13 +49,19 @@ class ApplicationClearanceController extends Controller
         if (! $application->isFinalized()) {
             return redirect()
                 ->route('landowner.applications.index')
-                ->with('error', 'Decision output is only available after the application is finalized.');
+                ->with('error', 'Decision output is only available after the application receives a final PARPO II decision.');
+        }
+
+        if (! $application->isReleasedToClient()) {
+            return redirect()
+                ->route('landowner.applications.index')
+                ->with('error', 'The final decision has been recorded, but the signed output has not yet been released to the client.');
         }
 
         if (! $application->clearance) {
             return redirect()
                 ->route('landowner.applications.index')
-                ->with('error', 'Decision output record is not yet available for this application.');
+                ->with('error', 'Decision output record is not available for this application.');
         }
 
         $safeApplicationCode = str_replace(['/', '\\', ' '], '-', (string) $application->application_code);
