@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\ApplicationDocument;
 use App\Models\LandTransferApplication;
 use App\Models\RequiredDocument;
+use App\Services\ApplicationRequirementService;
 use Barryvdh\DomPDF\Facade\Pdf;
 
 class ApplicationClearanceController extends Controller
@@ -15,7 +16,7 @@ class ApplicationClearanceController extends Controller
         $application->load(['clearance', 'documents']);
 
         if (! $application->isFinalized()) {
-            return back()->with('error', 'Decision output is only available for released or denied applications.');
+            return back()->with('error', 'Decision output is only available after a final Approved or Denied PARPO II decision.');
         }
 
         if (! $application->clearance) {
@@ -35,7 +36,7 @@ class ApplicationClearanceController extends Controller
         $application->load(['clearance', 'documents']);
 
         if (! $application->isFinalized()) {
-            return back()->with('error', 'Decision output is only available for released or denied applications.');
+            return back()->with('error', 'Decision output is only available after a final Approved or Denied PARPO II decision.');
         }
 
         if (! $application->clearance) {
@@ -60,12 +61,27 @@ class ApplicationClearanceController extends Controller
     {
         $application->load([
             'documents.requiredDocument',
+            'applicationParcels.parcel',
             'transferorLandowner',
             'transfereeLandowner',
         ]);
 
+        $requirementService = app(ApplicationRequirementService::class);
+        $evaluation = $requirementService->evaluate($application);
+        $applicableIds = collect($evaluation['requirements'])
+            ->where('applicable', true)
+            ->pluck('id')
+            ->map(fn ($id) => (int) $id)
+            ->all();
+        $blockingIds = collect($evaluation['requirements'])
+            ->where('blocking', true)
+            ->pluck('id')
+            ->map(fn ($id) => (int) $id)
+            ->all();
+
         $transferorRequirements = RequiredDocument::deduplicateForApplicationReview(
             RequiredDocument::where('applies_to', 'transferor')
+                ->whereIn('id', $applicableIds)
                 ->orderBy('blocks_acceptance', 'desc')
                 ->orderBy('requirement_classification')
                 ->orderBy('name')
@@ -74,6 +90,7 @@ class ApplicationClearanceController extends Controller
 
         $transfereeRequirements = RequiredDocument::deduplicateForApplicationReview(
             RequiredDocument::where('applies_to', 'transferee')
+                ->whereIn('id', $applicableIds)
                 ->orderBy('blocks_acceptance', 'desc')
                 ->orderBy('requirement_classification')
                 ->orderBy('name')
@@ -85,11 +102,9 @@ class ApplicationClearanceController extends Controller
             ->keyBy('required_document_id');
 
         $allRequirements = $transferorRequirements->concat($transfereeRequirements);
-        $blockingRequirements = $allRequirements->filter(
-            fn ($requirement) => method_exists($requirement, 'blocksAcceptance')
-                ? $requirement->blocksAcceptance()
-                : (bool) $requirement->is_mandatory
-        );
+        $blockingRequirements = $allRequirements
+            ->filter(fn ($requirement) => in_array((int) $requirement->id, $blockingIds, true))
+            ->values();
 
         $pdf = Pdf::loadView('staff.applications.pdfs.acknowledgement-receipt', [
             'application' => $application,
@@ -97,6 +112,7 @@ class ApplicationClearanceController extends Controller
             'transfereeRequirements' => $transfereeRequirements,
             'uploaded' => $uploaded,
             'blockingRequirements' => $blockingRequirements,
+            'requirementEvaluation' => $evaluation,
         ])->setPaper('a4');
 
         $safeApplicationCode = str_replace(['/', '\\', ' '], '-', (string) $application->application_code);
