@@ -17,18 +17,19 @@ class ApplicationClearanceService
                 ->findOrFail($application->id);
 
             if (! $application->isFinalized()) {
-                throw new \RuntimeException('Clearance can only be generated for finalized clearance decisions.');
+                throw new \RuntimeException('LTC Form No. 5 can only be generated after a final PARPO II clearance decision.');
             }
 
             $allowedDecisionStatuses = [
-                LandTransferApplication::STATUS_RELEASED,
-                LandTransferApplication::STATUS_DENIED,
                 LandTransferApplication::STATUS_APPROVED,
+                LandTransferApplication::STATUS_DENIED,
+                // Historical compatibility only.
+                LandTransferApplication::STATUS_RELEASED,
                 LandTransferApplication::STATUS_NOT_APPROVED,
             ];
 
             if (! in_array($application->status, $allowedDecisionStatuses, true)) {
-                throw new \RuntimeException('Clearance can only be generated for released/denied decisions.');
+                throw new \RuntimeException('LTC Form No. 5 can only be generated for final Approved or Denied decisions.');
             }
 
             /*
@@ -78,14 +79,15 @@ class ApplicationClearanceService
             $reviewOfficerName = $reviewOfficer?->name
                 ?? ('User #' . ($application->reviewed_by ?? $userId));
 
-            $decisionYear = ($application->date_of_clearance_release ?? $application->reviewed_at ?? now())->format('Y');
+            // The LTC number belongs to the immutable PARPO II decision output,
+            // not to the later administrative delivery date.
+            $decisionYear = ($application->reviewed_at ?? now())->format('Y');
             $pageNumber = max(1, (int) ($application->ltc_page_number ?: 1));
 
             /*
              * LTC numbers are issued as 1803-YEAR-XXXX (page). Serialize
-             * number allocation on PostgreSQL so two releases cannot receive
-             * the same annual sequence. Existing final clearances are never
-             * renumbered because of the create-once rule above.
+             * number allocation on PostgreSQL so two final decisions cannot
+             * receive the same annual sequence.
              */
             if (DB::connection()->getDriverName() === 'pgsql') {
                 DB::statement('LOCK TABLE application_clearances IN SHARE ROW EXCLUSIVE MODE');
@@ -136,7 +138,7 @@ class ApplicationClearanceService
                     'decision_status' => $clearance->decision_status,
                     'total_area_hectares' => $clearance->total_area_hectares,
                     'parcel_count' => count($parcelSnapshot),
-                    'scope_note' => 'Immutable final clearance snapshot only. No ownership transfer or registry mutation was performed.',
+                    'scope_note' => 'Immutable final clearance decision snapshot only. No ownership transfer or registry mutation was performed.',
                 ],
                 $userId
             );
