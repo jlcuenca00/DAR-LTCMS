@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Staff;
 use App\Http\Controllers\Controller;
 use App\Models\ApplicationClearance;
 use App\Models\LandTransferApplication;
-use App\Models\RequiredDocument;
+use App\Services\ApplicationRequirementService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -113,16 +113,12 @@ class StaffDashboardController extends Controller
             ->limit(6)
             ->get();
 
-        // Each queue contributes its own preview candidates. The browser then
-        // shows only the selected queue, capped at six visible rows.
         $actionApplications = $activeWorkflowPreview
             ->concat($intakePreview)
             ->concat($decisionPendingPreview)
             ->unique('id')
             ->values();
 
-        // Timestamp ranges keep PostgreSQL indexes usable; whereDate() would wrap
-        // the indexed timestamp column in a database function.
         $todayStart = now()->startOfDay();
         $tomorrowStart = $todayStart->copy()->addDay();
 
@@ -157,55 +153,37 @@ class StaffDashboardController extends Controller
             ],
         ];
 
-        // Fetch the review-requirement catalog once, then partition the same
-        // ordered collection so transferor/transferee checklist semantics remain
-        // unchanged. These counts are operational aids, not legal determinations.
-        $reviewRequirements = RequiredDocument::query()
-            ->whereIn('applies_to', ['transferor', 'transferee'])
-            ->orderBy('blocks_acceptance', 'desc')
-            ->orderBy('requirement_classification')
-            ->orderBy('name')
-            ->get();
+        /*
+         * Requirement attention must use the same conditional/freshness rules as
+         * the actual intake gate. A simple global document-ID count would falsely
+         * flag municipal-vs-city, titled-vs-untitled, SPA, and juridical-entity
+         * conditions. Evaluate in chunks with eager-loaded relations instead.
+         */
+        $requirementService = app(ApplicationRequirementService::class);
+        $requirementsCompleteIds = [];
+        $incompleteRequirementIds = [];
 
-        $transferorRequirements = RequiredDocument::deduplicateForApplicationReview(
-            $reviewRequirements->where('applies_to', 'transferor')->values()
-        );
-        $transfereeRequirements = RequiredDocument::deduplicateForApplicationReview(
-            $reviewRequirements->where('applies_to', 'transferee')->values()
-        );
-
-        $blockingRequirementIds = $transferorRequirements
-            ->concat($transfereeRequirements)
-            ->filter(fn (RequiredDocument $requirement) => $requirement->blocksAcceptance())
-            ->pluck('id')
-            ->map(fn ($id) => (int) $id)
-            ->unique()
-            ->values();
-        $blockingRequirementTotal = $blockingRequirementIds->count();
-
-        $completeRequirementApplicationIds = function () use ($blockingRequirementIds, $blockingRequirementTotal) {
-            return DB::table('application_documents')
-                ->select('land_transfer_application_id')
-                ->whereIn('required_document_id', $blockingRequirementIds)
-                ->groupBy('land_transfer_application_id')
-                ->havingRaw('COUNT(DISTINCT required_document_id) >= ?', [$blockingRequirementTotal]);
-        };
-
-        $activeApplicationCount = LandTransferApplication::query()
+        LandTransferApplication::query()
             ->whereIn('status', $activeStatuses)
-            ->count();
+            ->with(['documents.requiredDocument', 'applicationParcels.parcel'])
+            ->chunkById(100, function ($applications) use (
+                $requirementService,
+                &$requirementsCompleteIds,
+                &$incompleteRequirementIds
+            ) {
+                foreach ($applications as $application) {
+                    $evaluation = $requirementService->evaluate($application);
 
-        if ($blockingRequirementTotal > 0) {
-            $incompleteRequirementsCount = LandTransferApplication::query()
-                ->whereIn('status', $activeStatuses)
-                ->whereNotIn('id', $completeRequirementApplicationIds())
-                ->count();
+                    if ($evaluation['complete']) {
+                        $requirementsCompleteIds[] = (int) $application->id;
+                    } else {
+                        $incompleteRequirementIds[] = (int) $application->id;
+                    }
+                }
+            });
 
-            $requirementsCompleteCount = max(0, $activeApplicationCount - $incompleteRequirementsCount);
-        } else {
-            $incompleteRequirementsCount = 0;
-            $requirementsCompleteCount = $activeApplicationCount;
-        }
+        $requirementsCompleteCount = count($requirementsCompleteIds);
+        $incompleteRequirementsCount = count($incompleteRequirementIds);
 
         $staleActiveCount = LandTransferApplication::query()
             ->whereIn('status', $activeStatuses)
@@ -222,7 +200,7 @@ class StaffDashboardController extends Controller
             [
                 'key' => 'missing_requirements',
                 'label' => 'Incomplete Requirements',
-                'description' => 'Active applications with required entries still missing.',
+                'description' => 'Active applications missing an applicable or still-valid required document.',
                 'value' => $incompleteRequirementsCount,
                 'icon' => 'fa-file-circle-exclamation',
                 'action' => 'Review requirements',
@@ -232,7 +210,7 @@ class StaffDashboardController extends Controller
             [
                 'key' => 'requirements_complete',
                 'label' => 'Requirements Complete',
-                'description' => 'Required entries are encoded; continue the current stage review.',
+                'description' => 'Applicable required documents are complete under the assistive intake checks.',
                 'value' => $requirementsCompleteCount,
                 'icon' => 'fa-list-check',
                 'action' => 'View applications',
@@ -258,14 +236,16 @@ class StaffDashboardController extends Controller
                 ->whereIn('status', $activeStatuses);
 
             if ($attentionFilter === 'missing_requirements') {
-                if ($blockingRequirementTotal > 0) {
-                    $attentionQuery->whereNotIn('id', $completeRequirementApplicationIds());
-                } else {
+                if ($incompleteRequirementIds === []) {
                     $attentionQuery->whereRaw('1 = 0');
+                } else {
+                    $attentionQuery->whereIn('id', $incompleteRequirementIds);
                 }
             } elseif ($attentionFilter === 'requirements_complete') {
-                if ($blockingRequirementTotal > 0) {
-                    $attentionQuery->whereIn('id', $completeRequirementApplicationIds());
+                if ($requirementsCompleteIds === []) {
+                    $attentionQuery->whereRaw('1 = 0');
+                } else {
+                    $attentionQuery->whereIn('id', $requirementsCompleteIds);
                 }
             } elseif ($attentionFilter === 'stale') {
                 $attentionQuery->where('updated_at', '<', now()->subDays(7));
