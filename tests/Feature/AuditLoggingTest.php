@@ -36,7 +36,9 @@ class AuditLoggingTest extends TestCase
         ]);
 
         $this->actingAs($staffUser)
-            ->post(route('staff.applications.submit', $application))
+            ->post(route('staff.applications.submit', $application), [
+                'payment_order_reference' => 'OP-AUDIT-ADVANCE-001',
+            ])
             ->assertSessionHas('success');
 
         $this->assertDatabaseHas('audit_logs', [
@@ -50,8 +52,9 @@ class AuditLoggingTest extends TestCase
         $log = AuditLog::where('action', 'application_status_advanced')->first();
 
         $this->assertSame(LandTransferApplication::STATUS_PENDING_LEGAL_REVIEW, $log->metadata['old_status']);
-        $this->assertSame(LandTransferApplication::STATUS_ENDORSED_LTI, $log->metadata['new_status']);
-        $this->assertSame('Status advancement only. No ownership transfer or registry mutation performed.', $log->metadata['scope_note']);
+        $this->assertSame(LandTransferApplication::STATUS_AWAITING_PAYMENT, $log->metadata['new_status']);
+        $this->assertSame('Administrative status advancement only. No ownership transfer or registry mutation was performed.', $log->metadata['scope_note']);
+        $this->assertTrue($log->metadata['requirements_checked']);
     }
 
     public function test_document_upload_creates_audit_log(): void
@@ -175,7 +178,7 @@ class AuditLoggingTest extends TestCase
         $this->assertSame('audit-existing.pdf', $log->metadata['original_filename']);
     }
 
-    public function test_release_creates_application_and_clearance_audit_logs(): void
+    public function test_final_approval_creates_application_and_clearance_audit_logs_without_mutating_ownership(): void
     {
         $staffUser = User::factory()->create([
             'role' => 'staff',
@@ -194,9 +197,9 @@ class AuditLoggingTest extends TestCase
         ]);
 
         $parcel = Parcel::create([
-            'parcel_code' => 'AUDIT-RELEASE-PARCEL-001',
-            'title_no' => 'T-AUDIT-RELEASE-001',
-            'lot_number' => 'LOT-AUDIT-RELEASE-001',
+            'parcel_code' => 'AUDIT-APPROVAL-PARCEL-001',
+            'title_no' => 'T-AUDIT-APPROVAL-001',
+            'lot_number' => 'LOT-AUDIT-APPROVAL-001',
             'municipality' => 'Dumaguete City',
             'barangay' => 'Bantayan',
             'province' => 'Negros Oriental',
@@ -205,7 +208,7 @@ class AuditLoggingTest extends TestCase
         ]);
 
         $application = LandTransferApplication::create([
-            'application_code' => 'AUDIT-RELEASE-001',
+            'application_code' => 'AUDIT-APPROVAL-001',
             'transferor_name' => 'Audit Transferor',
             'transferee_name' => 'Audit Transferee',
             'transferor_landowner_id' => $transferor->id,
@@ -222,6 +225,14 @@ class AuditLoggingTest extends TestCase
             'ltc_form4_recommendation_decision' => 'approval',
             'ltc_form4_certified_at' => now()->toDateString(),
             'ltc_form4_certifying_officer_name' => 'Authorized Review Officer',
+            'payment_order_reference' => 'OP-AUDIT-APPROVAL-001',
+            'payment_order_issued_at' => now(),
+            'or_number' => 'OR-AUDIT-APPROVAL-001',
+            'or_date' => now()->toDateString(),
+            'amount_paid' => config('dar_ltc.filing_fee', 2000),
+            'csw_reference' => 'CSW-AUDIT-APPROVAL-001',
+            'csw_completed_at' => now(),
+            'csw_prepared_by' => $staffUser->id,
         ])->save();
 
         ApplicationParcel::create([
@@ -237,21 +248,21 @@ class AuditLoggingTest extends TestCase
             route('staff.applications.approve', $application),
             [
                 'final_decision_confirmation' => '1',
-                'decision_reason' => 'Audit release reason',
-                'decision_notes' => 'Audit release notes',
+                'decision_reason' => 'Audit approval reason',
+                'decision_notes' => 'Audit approval notes',
             ]
         )->assertSessionHas('success');
 
         $application->refresh();
 
-        $this->assertSame(LandTransferApplication::STATUS_RELEASED, $application->status);
+        $this->assertSame(LandTransferApplication::STATUS_APPROVED, $application->status);
 
         $this->assertDatabaseHas('audit_logs', [
             'actor_user_id' => $staffUser->id,
             'land_transfer_application_id' => $application->id,
             'auditable_type' => LandTransferApplication::class,
             'auditable_id' => $application->id,
-            'action' => 'application_released',
+            'action' => 'application_approved',
         ]);
 
         $this->assertDatabaseHas('audit_logs', [
@@ -260,16 +271,17 @@ class AuditLoggingTest extends TestCase
             'action' => 'clearance_generated',
         ]);
 
-        $releaseLog = AuditLog::where('action', 'application_released')->first();
+        $approvalLog = AuditLog::where('action', 'application_approved')->first();
 
-        $this->assertSame('Audit release reason', $releaseLog->metadata['decision_reason']);
-        $this->assertSame('Audit release notes', $releaseLog->metadata['decision_notes']);
-        $this->assertTrue($releaseLog->metadata['form4_recommendation_matches_final_decision']);
-        $this->assertFalse($releaseLog->metadata['registry_mutation_performed']);
+        $this->assertSame('Audit approval reason', $approvalLog->metadata['decision_reason']);
+        $this->assertSame('Audit approval notes', $approvalLog->metadata['decision_notes']);
+        $this->assertTrue($approvalLog->metadata['form4_recommendation_matches_final_decision']);
+        $this->assertFalse($approvalLog->metadata['ownership_transfer_performed']);
+        $this->assertFalse($approvalLog->metadata['registry_mutation_performed']);
 
         $clearanceLog = AuditLog::where('action', 'clearance_generated')->first();
 
-        $this->assertSame(LandTransferApplication::STATUS_RELEASED, $clearanceLog->metadata['decision_status']);
+        $this->assertSame(LandTransferApplication::STATUS_APPROVED, $clearanceLog->metadata['decision_status']);
         $this->assertSame(1, $clearanceLog->metadata['parcel_count']);
     }
 }
