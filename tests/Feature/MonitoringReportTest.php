@@ -16,11 +16,11 @@ class MonitoringReportTest extends TestCase
     {
         $staff = $this->makeStaff();
 
-        $released = $this->makeApplication($staff, 'REPORT-RELEASED-001', 'Dumaguete City', 'Bantayan', LandTransferApplication::STATUS_RELEASED, '2026-08-10');
+        $legacyReleased = $this->makeApplication($staff, 'REPORT-RELEASED-001', 'Dumaguete City', 'Bantayan', LandTransferApplication::STATUS_RELEASED, '2026-08-10');
         $pending = $this->makeApplication($staff, 'REPORT-PENDING-001', 'Valencia', 'North Poblacion', LandTransferApplication::STATUS_PENDING_LEGAL_REVIEW, '2026-08-11');
         $denied = $this->makeApplication($staff, 'REPORT-DENIED-001', 'Dumaguete City', 'Cadawinonan', LandTransferApplication::STATUS_DENIED, '2026-08-12');
 
-        $this->makeClearance($staff, $released, LandTransferApplication::STATUS_RELEASED, 3.5000, '1803-2026-0001 (1)');
+        $this->makeClearance($staff, $legacyReleased, LandTransferApplication::STATUS_RELEASED, 3.5000, '1803-2026-0001 (1)');
         $this->makeClearance($staff, $denied, LandTransferApplication::STATUS_DENIED, 2.0000, '1803-2026-0002 (1)');
 
         $response = $this->actingAs($staff)->get(route('staff.reports.monitoring.index'));
@@ -56,22 +56,22 @@ class MonitoringReportTest extends TestCase
     {
         $staff = $this->makeStaff();
 
-        $releasedDumaguete = $this->makeApplication($staff, 'FILTER-KEEP-RELEASED', 'Dumaguete City', 'Bantayan', LandTransferApplication::STATUS_RELEASED, '2026-08-10');
-        $legacyApprovedDumaguete = $this->makeApplication($staff, 'FILTER-KEEP-LEGACY', 'Dumaguete City', 'Bantayan', LandTransferApplication::STATUS_APPROVED, '2026-08-15');
-        $releasedValencia = $this->makeApplication($staff, 'FILTER-DROP-MUNICIPALITY', 'Valencia', 'North Poblacion', LandTransferApplication::STATUS_RELEASED, '2026-08-10');
+        $approvedDumaguete = $this->makeApplication($staff, 'FILTER-KEEP-APPROVED', 'Dumaguete City', 'Bantayan', LandTransferApplication::STATUS_APPROVED, '2026-08-10');
+        $legacyReleasedDumaguete = $this->makeApplication($staff, 'FILTER-KEEP-LEGACY', 'Dumaguete City', 'Bantayan', LandTransferApplication::STATUS_RELEASED, '2026-08-15');
+        $approvedValencia = $this->makeApplication($staff, 'FILTER-DROP-MUNICIPALITY', 'Valencia', 'North Poblacion', LandTransferApplication::STATUS_APPROVED, '2026-08-10');
         $deniedDumaguete = $this->makeApplication($staff, 'FILTER-DROP-STATUS', 'Dumaguete City', 'Bantayan', LandTransferApplication::STATUS_DENIED, '2026-08-10');
-        $releasedOld = $this->makeApplication($staff, 'FILTER-DROP-DATE', 'Dumaguete City', 'Bantayan', LandTransferApplication::STATUS_RELEASED, '2026-07-15');
+        $approvedOld = $this->makeApplication($staff, 'FILTER-DROP-DATE', 'Dumaguete City', 'Bantayan', LandTransferApplication::STATUS_APPROVED, '2026-07-15');
 
-        $this->makeClearance($staff, $releasedDumaguete, LandTransferApplication::STATUS_RELEASED, 3.0000, '1803-2026-0010 (1)');
-        $this->makeClearance($staff, $legacyApprovedDumaguete, LandTransferApplication::STATUS_APPROVED, 1.5000, '1803-2026-0011 (1)');
-        $this->makeClearance($staff, $releasedValencia, LandTransferApplication::STATUS_RELEASED, 4.0000, '1803-2026-0012 (1)');
+        $this->makeClearance($staff, $approvedDumaguete, LandTransferApplication::STATUS_APPROVED, 3.0000, '1803-2026-0010 (1)');
+        $this->makeClearance($staff, $legacyReleasedDumaguete, LandTransferApplication::STATUS_RELEASED, 1.5000, '1803-2026-0011 (1)');
+        $this->makeClearance($staff, $approvedValencia, LandTransferApplication::STATUS_APPROVED, 4.0000, '1803-2026-0012 (1)');
         $this->makeClearance($staff, $deniedDumaguete, LandTransferApplication::STATUS_DENIED, 5.0000, '1803-2026-0013 (1)');
-        $this->makeClearance($staff, $releasedOld, LandTransferApplication::STATUS_RELEASED, 6.0000, '1803-2026-0014 (1)');
+        $this->makeClearance($staff, $approvedOld, LandTransferApplication::STATUS_APPROVED, 6.0000, '1803-2026-0014 (1)');
 
         $params = [
             'date_from' => '2026-08-01',
             'date_to' => '2026-08-31',
-            'status' => LandTransferApplication::STATUS_RELEASED,
+            'status' => LandTransferApplication::STATUS_APPROVED,
             'municipality' => 'Dumaguete City',
         ];
 
@@ -84,10 +84,10 @@ class MonitoringReportTest extends TestCase
         $response->assertViewHas('releasedOutputArea', fn ($value) => abs((float) $value - 4.5) < 0.0001);
         $response->assertViewHas('deniedOutputArea', fn ($value) => abs((float) $value) < 0.0001);
         $response->assertViewHas('recentApplications', function ($rows) {
-            return $rows->pluck('application_code')->sort()->values()->all() === ['FILTER-KEEP-LEGACY', 'FILTER-KEEP-RELEASED'];
+            return $rows->pluck('application_code')->sort()->values()->all() === ['FILTER-KEEP-APPROVED', 'FILTER-KEEP-LEGACY'];
         });
         $response->assertViewHas('recentClearances', function ($rows) {
-            return $rows->pluck('application_code')->sort()->values()->all() === ['FILTER-KEEP-LEGACY', 'FILTER-KEEP-RELEASED'];
+            return $rows->pluck('application_code')->sort()->values()->all() === ['FILTER-KEEP-APPROVED', 'FILTER-KEEP-LEGACY'];
         });
         $response->assertViewHas('municipalityBreakdown', function ($rows) {
             return $rows->count() === 1
@@ -95,7 +95,7 @@ class MonitoringReportTest extends TestCase
                 && (int) $rows->first()->total === 2;
         });
 
-        $response->assertSee('FILTER-KEEP-RELEASED');
+        $response->assertSee('FILTER-KEEP-APPROVED');
         $response->assertSee('FILTER-KEEP-LEGACY');
         $response->assertDontSee('FILTER-DROP-MUNICIPALITY');
         $response->assertDontSee('FILTER-DROP-STATUS');
@@ -151,11 +151,11 @@ class MonitoringReportTest extends TestCase
     {
         $staff = $this->makeStaff();
 
-        $kept = $this->makeApplication($staff, 'PRINT-KEEP-001', 'Dumaguete City', 'Bantayan', LandTransferApplication::STATUS_RELEASED, '2026-08-10');
-        $dropped = $this->makeApplication($staff, 'PRINT-DROP-001', 'Valencia', 'North Poblacion', LandTransferApplication::STATUS_RELEASED, '2026-08-10');
+        $kept = $this->makeApplication($staff, 'PRINT-KEEP-001', 'Dumaguete City', 'Bantayan', LandTransferApplication::STATUS_APPROVED, '2026-08-10');
+        $dropped = $this->makeApplication($staff, 'PRINT-DROP-001', 'Valencia', 'North Poblacion', LandTransferApplication::STATUS_APPROVED, '2026-08-10');
 
-        $this->makeClearance($staff, $kept, LandTransferApplication::STATUS_RELEASED, 2.2500, '1803-2026-0020 (1)');
-        $this->makeClearance($staff, $dropped, LandTransferApplication::STATUS_RELEASED, 8.0000, '1803-2026-0021 (1)');
+        $this->makeClearance($staff, $kept, LandTransferApplication::STATUS_APPROVED, 2.2500, '1803-2026-0020 (1)');
+        $this->makeClearance($staff, $dropped, LandTransferApplication::STATUS_APPROVED, 8.0000, '1803-2026-0021 (1)');
 
         $response = $this->actingAs($staff)->get(route('staff.reports.monitoring.print', [
             'municipality' => 'Dumaguete City',
