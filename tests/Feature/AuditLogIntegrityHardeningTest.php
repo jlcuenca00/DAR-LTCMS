@@ -3,8 +3,10 @@
 namespace Tests\Feature;
 
 use App\Http\Middleware\EnsureMutationAudited;
+use App\Models\ApplicationParcel;
 use App\Models\AuditLog;
 use App\Models\LandTransferApplication;
+use App\Models\Parcel;
 use App\Models\User;
 use App\Services\AuditLogger;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -34,6 +36,22 @@ class AuditLogIntegrityHardeningTest extends TestCase
             'barangay' => 'Bantayan',
             'status' => LandTransferApplication::STATUS_PENDING_LEGAL_REVIEW,
             'encoded_by' => $staff->id,
+        ]);
+
+        $parcel = Parcel::create([
+            'parcel_code' => 'AUDIT-CONTEXT-PARCEL-001',
+            'municipality' => 'Dumaguete City',
+            'barangay' => 'Bantayan',
+            'province' => 'Negros Oriental',
+            'area_hectares' => 1.0000,
+            'status' => 'active',
+        ]);
+
+        ApplicationParcel::create([
+            'land_transfer_application_id' => $application->id,
+            'parcel_id' => $parcel->id,
+            'parcel_code' => $parcel->parcel_code,
+            'area_hectares' => 1.0000,
         ]);
 
         $this->actingAs($staff)
