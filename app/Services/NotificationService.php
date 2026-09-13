@@ -327,10 +327,17 @@ class NotificationService
             $oldStatus = $data['old_status'] ?? null;
             $newStatus = $data['new_status'] ?? null;
 
+            // Legacy draft/pending records are normalized into the current Legal
+            // intake workflow. The first action may immediately land at Awaiting
+            // Payment after a successful completeness check, but it is still the
+            // one-time submission into the current review process.
             $isSubmissionIntoReview = in_array($oldStatus, [
                 LandTransferApplication::STATUS_DRAFT,
                 LandTransferApplication::STATUS_PENDING_REVIEW,
-            ], true) && $newStatus === LandTransferApplication::STATUS_PENDING_LEGAL_REVIEW;
+            ], true) && in_array($newStatus, [
+                LandTransferApplication::STATUS_PENDING_LEGAL_REVIEW,
+                LandTransferApplication::STATUS_AWAITING_PAYMENT,
+            ], true);
 
             if (! $isSubmissionIntoReview) {
                 return null;
@@ -339,10 +346,12 @@ class NotificationService
             $applicationCode = $related instanceof LandTransferApplication
                 ? $related->application_code
                 : ($data['application_code'] ?? 'the application');
+            $newStatusLabel = LandTransferApplication::statusLabels()[$newStatus]
+                ?? ucwords(str_replace('_', ' ', (string) $newStatus));
 
             $type = 'application_submitted';
             $title = 'Application submitted for review';
-            $message = 'Application ' . $applicationCode . ' was submitted for Legal completeness review.';
+            $message = 'Application ' . $applicationCode . ' entered the current review workflow and is now ' . $newStatusLabel . '.';
         }
 
         if (! in_array($type, self::STAFF_ALLOWED_TYPES, true)) {
