@@ -247,7 +247,7 @@ class FinalDecisionLockTest extends TestCase
         $this->assertFalse($notApprovedApplication->isEditable());
     }
 
-    public function test_releasing_clearance_does_not_mutate_landholding_ownership(): void
+    public function test_approving_and_releasing_clearance_does_not_mutate_landholding_ownership(): void
     {
         $staffUser = User::factory()->create([
             'role' => 'staff',
@@ -280,7 +280,7 @@ class FinalDecisionLockTest extends TestCase
             'parcel_id' => $parcel->id,
             'area_hectares' => 1.2500,
             'status' => Landholding::STATUS_ACTIVE,
-            'remarks' => 'Original active landholding before clearance release.',
+            'remarks' => 'Original active landholding before clearance decision.',
         ]);
 
         $application = LandTransferApplication::create([
@@ -301,6 +301,14 @@ class FinalDecisionLockTest extends TestCase
             'ltc_form4_recommendation_decision' => 'approval',
             'ltc_form4_certified_at' => now()->toDateString(),
             'ltc_form4_certifying_officer_name' => 'Authorized Review Officer',
+            'payment_order_reference' => 'OP-NO-MUTATION-RELEASE-001',
+            'payment_order_issued_at' => now(),
+            'or_number' => 'OR-NO-MUTATION-001',
+            'or_date' => now()->toDateString(),
+            'amount_paid' => config('dar_ltc.filing_fee', 2000),
+            'csw_reference' => 'CSW-NO-MUTATION-001',
+            'csw_completed_at' => now(),
+            'csw_prepared_by' => $staffUser->id,
         ])->save();
 
         ApplicationParcel::create([
@@ -315,15 +323,34 @@ class FinalDecisionLockTest extends TestCase
         $this->actingAs($staffUser)
             ->post(route('staff.applications.approve', $application), [
                 'final_decision_confirmation' => '1',
-                'decision_reason' => 'Release clearance only.',
-                'decision_notes' => 'Regression test: release must not mutate ownership records.',
+                'decision_reason' => 'Approve clearance only.',
+                'decision_notes' => 'Regression test: approval must not mutate ownership records.',
             ])
             ->assertSessionHas('success');
 
         $application->refresh();
         $existingLandholding->refresh();
 
-        $this->assertSame(LandTransferApplication::STATUS_RELEASED, $application->status);
+        $this->assertSame(LandTransferApplication::STATUS_APPROVED, $application->status);
+
+        $this->actingAs($staffUser)
+            ->post(route('staff.applications.ready_for_release', $application))
+            ->assertSessionHas('success');
+
+        $this->actingAs($staffUser)
+            ->post(route('staff.applications.release', $application), [
+                'release_confirmation' => '1',
+                'release_recipient_name' => 'Proposed Buyer',
+                'release_logbook_reference' => 'LOG-NO-MUTATION-001',
+                'csm_status' => 'issued',
+            ])
+            ->assertSessionHas('success');
+
+        $application->refresh();
+        $existingLandholding->refresh();
+
+        $this->assertSame(LandTransferApplication::STATUS_APPROVED, $application->status);
+        $this->assertSame(LandTransferApplication::RELEASED_TO_CLIENT, $application->release_status);
 
         $this->assertDatabaseHas('landholdings', [
             'id' => $existingLandholding->id,
