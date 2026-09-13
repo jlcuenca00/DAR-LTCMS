@@ -62,6 +62,16 @@ window.DarLtcmsProjection = Object.freeze({
 
         return proj4('EPSG:3124', 'EPSG:4326', [x, y]);
     },
+    toPrs92(longitude, latitude) {
+        const x = Number(longitude);
+        const y = Number(latitude);
+
+        if (!Number.isFinite(x) || !Number.isFinite(y)) {
+            throw new TypeError('WGS84 coordinates must be finite numbers.');
+        }
+
+        return proj4('EPSG:4326', 'EPSG:3124', [x, y]);
+    },
 });
 
 window.axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
