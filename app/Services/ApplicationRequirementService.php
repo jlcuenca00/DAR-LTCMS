@@ -10,6 +10,8 @@ use Illuminate\Support\Collection;
 
 class ApplicationRequirementService
 {
+    private ?Collection $requirementCatalog = null;
+
     /**
      * Evaluate the Citizen's Charter documentary requirements that apply to one
      * application. This is an administrative completeness aid only; authorized
@@ -23,11 +25,7 @@ class ApplicationRequirementService
         ]);
 
         $uploaded = $application->documents->keyBy('required_document_id');
-        $requirements = RequiredDocument::query()
-            ->orderBy('applies_to')
-            ->orderBy('id')
-            ->get();
-
+        $requirements = $this->requirements();
         $referenceDate = $application->date_of_application ?: now();
 
         $rows = $requirements->map(function (RequiredDocument $requirement) use ($application, $uploaded, $referenceDate) {
@@ -72,12 +70,24 @@ class ApplicationRequirementService
 
     public function applicableRequirements(LandTransferApplication $application): Collection
     {
-        return RequiredDocument::query()
-            ->orderBy('applies_to')
-            ->orderBy('id')
-            ->get()
+        $application->loadMissing('applicationParcels.parcel');
+
+        return $this->requirements()
             ->filter(fn (RequiredDocument $requirement) => $requirement->appliesToApplication($application))
             ->values();
+    }
+
+    /**
+     * Keep one requirement catalog in memory for the current request. Dashboard
+     * attention counts may evaluate many active applications, so re-querying the
+     * same catalog for every row would create avoidable N+1 work.
+     */
+    private function requirements(): Collection
+    {
+        return $this->requirementCatalog ??= RequiredDocument::query()
+            ->orderBy('applies_to')
+            ->orderBy('id')
+            ->get();
     }
 
     private function freshnessState(RequiredDocument $requirement, array $metadata, CarbonInterface $referenceDate): array
