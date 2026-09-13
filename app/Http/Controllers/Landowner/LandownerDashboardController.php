@@ -13,8 +13,6 @@ class LandownerDashboardController extends Controller
 {
     public function __invoke()
     {
-        // Resolve the user's Landowner records once. Keeping the ID collection
-        // preserves support for historical accounts linked to more than one record.
         $landowners = Landowner::query()
             ->where('user_id', Auth::id())
             ->get(['id', 'first_name', 'middle_name', 'last_name', 'suffix']);
@@ -23,29 +21,13 @@ class LandownerDashboardController extends Controller
         $landowner = $landowners->first();
 
         $landholdingsQuery = Landholding::query()
-            ->select([
-                'id',
-                'landowner_id',
-                'parcel_id',
-                'area_hectares',
-                'status',
-                'created_at',
-            ])
+            ->select(['id', 'landowner_id', 'parcel_id', 'area_hectares', 'status', 'created_at'])
             ->with(['parcel' => function ($query) {
-                $query->select([
-                    'id',
-                    'parcel_code',
-                    'municipality',
-                    'barangay',
-                    'geometry_geojson',
-                ]);
+                $query->select(['id', 'parcel_code', 'municipality', 'barangay', 'geometry_geojson']);
             }])
             ->whereIn('landowner_id', $landownerIds);
 
-        // The dashboard reads application scalar/JSON fields only. Avoid loading
-        // parcels, clearance and party relationships that are unused by the view.
-        $applicationQuery = LandTransferApplication::query()
-            ->linkedToLandownerIds($landownerIds);
+        $applicationQuery = LandTransferApplication::query()->linkedToLandownerIds($landownerIds);
 
         $statusCounts = (clone $applicationQuery)
             ->select('status', DB::raw('COUNT(*) as total'))
@@ -53,16 +35,11 @@ class LandownerDashboardController extends Controller
             ->pluck('total', 'status');
 
         $linkedParcelCount = (clone $landholdingsQuery)
-            ->whereNotNull('parcel_id')
-            ->distinct('parcel_id')
-            ->count('parcel_id');
+            ->whereNotNull('parcel_id')->distinct('parcel_id')->count('parcel_id');
 
         $mappedParcelCount = (clone $landholdingsQuery)
-            ->whereHas('parcel', function ($query) {
-                $query->whereNotNull('geometry_geojson');
-            })
-            ->distinct('parcel_id')
-            ->count('parcel_id');
+            ->whereHas('parcel', fn ($query) => $query->whereNotNull('geometry_geojson'))
+            ->distinct('parcel_id')->count('parcel_id');
 
         $landholdingCount = (clone $landholdingsQuery)->count();
         $applicationCount = $statusCounts->sum(fn ($count) => (int) $count);
@@ -70,7 +47,7 @@ class LandownerDashboardController extends Controller
         $statusSummary = collect([
             [
                 'status' => LandTransferApplication::STATUS_PENDING_LEGAL_REVIEW,
-                'label' => 'Pending Review by Legal Officer',
+                'label' => 'Legal Completeness Review',
                 'statuses' => [
                     LandTransferApplication::STATUS_PENDING_LEGAL_REVIEW,
                     LandTransferApplication::STATUS_DRAFT,
@@ -78,59 +55,64 @@ class LandownerDashboardController extends Controller
                 ],
             ],
             [
+                'status' => LandTransferApplication::STATUS_RETURNED_FOR_COMPLIANCE,
+                'label' => 'Returned for Compliance',
+                'statuses' => [LandTransferApplication::STATUS_RETURNED_FOR_COMPLIANCE],
+            ],
+            [
+                'status' => LandTransferApplication::STATUS_AWAITING_PAYMENT,
+                'label' => 'Awaiting Payment / O.R.',
+                'statuses' => [LandTransferApplication::STATUS_AWAITING_PAYMENT],
+            ],
+            [
                 'status' => LandTransferApplication::STATUS_ENDORSED_LTI,
-                'label' => 'Endorsed to LTI Division',
+                'label' => 'LTID Verification',
                 'statuses' => [LandTransferApplication::STATUS_ENDORSED_LTI],
             ],
             [
+                'status' => LandTransferApplication::STATUS_RETURNED_TO_LEGAL,
+                'label' => 'Returned to Legal',
+                'statuses' => [LandTransferApplication::STATUS_RETURNED_TO_LEGAL],
+            ],
+            [
+                'status' => LandTransferApplication::STATUS_LEGAL_EVALUATION,
+                'label' => 'Legal Evaluation / CSW',
+                'statuses' => [LandTransferApplication::STATUS_LEGAL_EVALUATION],
+            ],
+            [
                 'status' => LandTransferApplication::STATUS_ENDORSED_CHIEF_LEGAL,
-                'label' => 'Endorsed to Chief Legal',
+                'label' => 'Chief Legal Review',
                 'statuses' => [LandTransferApplication::STATUS_ENDORSED_CHIEF_LEGAL],
             ],
             [
                 'status' => LandTransferApplication::STATUS_ENDORSED_PARPO,
-                'label' => 'Endorsed to PARPO II',
+                'label' => 'Forwarded to PARPO II',
                 'statuses' => [LandTransferApplication::STATUS_ENDORSED_PARPO],
             ],
             [
                 'status' => LandTransferApplication::STATUS_FOR_RELEASING,
-                'label' => 'For Releasing',
+                'label' => 'PARPO II Decision Pending',
                 'statuses' => [LandTransferApplication::STATUS_FOR_RELEASING],
             ],
             [
-                'status' => LandTransferApplication::STATUS_RELEASED,
-                'label' => 'Released',
-                'statuses' => [
-                    LandTransferApplication::STATUS_RELEASED,
-                    LandTransferApplication::STATUS_APPROVED,
-                ],
+                'status' => LandTransferApplication::STATUS_APPROVED,
+                'label' => 'Approved',
+                'statuses' => [LandTransferApplication::STATUS_APPROVED, LandTransferApplication::STATUS_RELEASED],
             ],
             [
                 'status' => LandTransferApplication::STATUS_DENIED,
                 'label' => 'Denied',
-                'statuses' => [
-                    LandTransferApplication::STATUS_DENIED,
-                    LandTransferApplication::STATUS_NOT_APPROVED,
-                ],
+                'statuses' => [LandTransferApplication::STATUS_DENIED, LandTransferApplication::STATUS_NOT_APPROVED],
             ],
         ])->map(function (array $summary) use ($statusCounts) {
             $summary['count'] = collect($summary['statuses'])
                 ->sum(fn (string $status) => (int) ($statusCounts[$status] ?? 0));
-
             unset($summary['statuses']);
-
             return $summary;
-        })->values();
+        })->filter(fn ($summary) => $summary['count'] > 0)->values();
 
-        $recentApplications = (clone $applicationQuery)
-            ->latest()
-            ->limit(5)
-            ->get();
-
-        $recentLandholdings = (clone $landholdingsQuery)
-            ->latest()
-            ->limit(5)
-            ->get();
+        $recentApplications = (clone $applicationQuery)->latest()->limit(5)->get();
+        $recentLandholdings = (clone $landholdingsQuery)->latest()->limit(5)->get();
 
         $dashboardCards = [
             [
