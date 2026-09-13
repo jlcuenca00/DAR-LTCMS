@@ -5,33 +5,53 @@
 
         $statusRows = [
             'pending_legal_review' => [
-                'label' => 'Pending Review by Legal Officer',
+                'label' => 'Legal Completeness Review',
                 'count' => (int) (($normalizedStatusCounts['pending_legal_review'] ?? 0) + ($normalizedStatusCounts['pending_review'] ?? 0) + ($normalizedStatusCounts['draft'] ?? 0)),
                 'class' => 'bg-amber-50 text-amber-800 border-amber-200',
             ],
+            'returned_for_compliance' => [
+                'label' => 'Returned for Compliance',
+                'count' => (int) ($normalizedStatusCounts['returned_for_compliance'] ?? 0),
+                'class' => 'bg-orange-50 text-orange-800 border-orange-200',
+            ],
+            'awaiting_payment' => [
+                'label' => 'Awaiting Payment / Official Receipt',
+                'count' => (int) ($normalizedStatusCounts['awaiting_payment'] ?? 0),
+                'class' => 'bg-amber-50 text-amber-800 border-amber-200',
+            ],
             'endorsed_lti' => [
-                'label' => 'Endorsed to LTI Division',
+                'label' => 'Endorsed to LTID for Verification',
                 'count' => (int) ($normalizedStatusCounts['endorsed_lti'] ?? 0),
                 'class' => 'bg-blue-50 text-blue-800 border-blue-200',
             ],
-            'endorsed_chief_legal' => [
-                'label' => 'Endorsed to Chief Legal',
-                'count' => (int) ($normalizedStatusCounts['endorsed_chief_legal'] ?? 0),
+            'returned_to_legal' => [
+                'label' => 'Returned to Legal Division',
+                'count' => (int) ($normalizedStatusCounts['returned_to_legal'] ?? 0),
                 'class' => 'bg-blue-50 text-blue-800 border-blue-200',
+            ],
+            'legal_evaluation' => [
+                'label' => 'Legal Evaluation / CSW Preparation',
+                'count' => (int) ($normalizedStatusCounts['legal_evaluation'] ?? 0),
+                'class' => 'bg-blue-50 text-blue-800 border-blue-200',
+            ],
+            'endorsed_chief_legal' => [
+                'label' => 'Chief Legal Final Review',
+                'count' => (int) ($normalizedStatusCounts['endorsed_chief_legal'] ?? 0),
+                'class' => 'bg-indigo-50 text-indigo-800 border-indigo-200',
             ],
             'endorsed_parpo' => [
-                'label' => 'Endorsed to PARPO II',
+                'label' => 'Forwarded to PARPO II',
                 'count' => (int) ($normalizedStatusCounts['endorsed_parpo'] ?? 0),
-                'class' => 'bg-blue-50 text-blue-800 border-blue-200',
+                'class' => 'bg-indigo-50 text-indigo-800 border-indigo-200',
             ],
             'for_releasing' => [
-                'label' => 'For Releasing',
+                'label' => 'PARPO II Decision Pending',
                 'count' => (int) ($normalizedStatusCounts['for_releasing'] ?? 0),
-                'class' => 'bg-amber-50 text-amber-800 border-amber-200',
+                'class' => 'bg-violet-50 text-violet-800 border-violet-200',
             ],
-            'released' => [
-                'label' => 'Released',
-                'count' => (int) (($normalizedStatusCounts['released'] ?? 0) + ($normalizedStatusCounts['approved'] ?? 0)),
+            'approved' => [
+                'label' => 'Approved',
+                'count' => (int) (($normalizedStatusCounts['approved'] ?? 0) + ($normalizedStatusCounts['released'] ?? 0)),
                 'class' => 'bg-green-50 text-green-800 border-green-200',
             ],
             'denied' => [
@@ -42,25 +62,26 @@
         ];
 
         $activeApplicationCount = collect($statusRows)
-            ->only(['pending_legal_review', 'endorsed_lti', 'endorsed_chief_legal', 'endorsed_parpo', 'for_releasing'])
+            ->except(['approved', 'denied'])
             ->sum('count');
 
-        $releasedResults = (int) (($normalizedClearanceCounts['released'] ?? 0) + ($normalizedClearanceCounts['approved'] ?? 0));
+        $approvedResults = (int) (($normalizedClearanceCounts['approved'] ?? 0) + ($normalizedClearanceCounts['released'] ?? 0));
         $deniedResults = (int) (($normalizedClearanceCounts['denied'] ?? 0) + ($normalizedClearanceCounts['not_approved'] ?? 0));
         $printParams = array_filter($filters ?? [], fn ($value) => filled($value));
 
         $statusClassFor = function (?string $status): string {
             return match ($status) {
-                'released', 'approved' => 'bg-green-50 text-green-800 border-green-200',
+                'approved', 'released' => 'bg-green-50 text-green-800 border-green-200',
                 'denied', 'not_approved' => 'bg-red-50 text-red-800 border-red-200',
-                'pending_legal_review', 'pending_review', 'draft', 'for_releasing' => 'bg-amber-50 text-amber-800 border-amber-200',
+                'pending_legal_review', 'pending_review', 'draft', 'returned_for_compliance', 'awaiting_payment' => 'bg-amber-50 text-amber-800 border-amber-200',
+                'for_releasing' => 'bg-violet-50 text-violet-800 border-violet-200',
                 default => 'bg-blue-50 text-blue-800 border-blue-200',
             };
         };
 
         $decisionLabel = function (?string $status): string {
             return match ($status) {
-                'released', 'approved' => 'Released',
+                'approved', 'released' => 'Approved',
                 'denied', 'not_approved' => 'Denied',
                 default => ucwords(str_replace('_', ' ', (string) $status)),
             };
@@ -73,7 +94,7 @@
                 <p class="text-xs font-black uppercase tracking-[0.18em] text-green-700">Administrative monitoring</p>
                 <h1 class="mt-1 text-2xl font-black text-slate-950">Monitoring and Reports</h1>
                 <p class="mt-2 max-w-3xl text-sm font-semibold leading-6 text-slate-500">
-                    Review clearance-processing activity using one consistent filtered dataset. Filters apply to summary totals, workflow counts, municipality counts, recent applications, and related final clearance outputs.
+                    Review clearance-processing activity using one consistent filtered dataset. Approved/Denied is the final PARPO II decision; client release is a separate administrative delivery record.
                 </p>
             </div>
             <div class="flex flex-col gap-2 sm:flex-row lg:flex-col lg:items-end">
@@ -156,25 +177,30 @@
             <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
                 <p class="text-xs font-black uppercase tracking-wide text-slate-500">Active Applications</p>
                 <p class="mt-2 text-3xl font-black text-slate-950">{{ number_format($activeApplicationCount) }}</p>
-                <p class="mt-2 text-xs font-semibold text-slate-500">Still within the administrative clearance workflow.</p>
+                <p class="mt-2 text-xs font-semibold text-slate-500">Still within administrative clearance processing.</p>
             </article>
             <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
                 <p class="text-xs font-black uppercase tracking-wide text-slate-500">Recorded Results</p>
                 <p class="mt-2 text-3xl font-black text-slate-950">{{ number_format($totalClearances) }}</p>
-                <p class="mt-2 text-xs font-semibold text-slate-500">Immutable released or denied clearance-output snapshots.</p>
+                <p class="mt-2 text-xs font-semibold text-slate-500">Immutable Approved or Denied decision-output snapshots.</p>
             </article>
             <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
                 <p class="text-xs font-black uppercase tracking-wide text-slate-500">Recorded Output Area</p>
                 <p class="mt-2 text-3xl font-black text-slate-950">{{ number_format((float) $totalClearanceArea, 4) }}</p>
-                <p class="mt-2 text-xs font-semibold text-slate-500">hectares represented in final output snapshots; not ownership transferred.</p>
+                <p class="mt-2 text-xs font-semibold text-slate-500">hectares in final output snapshots; not ownership transferred.</p>
             </article>
+        </section>
+
+        <section class="rounded-2xl border border-green-200 bg-green-50 p-4 text-sm font-semibold leading-6 text-green-950">
+            <strong class="font-black">Scope notice.</strong> {{ $scopeNotice }}
+            <span class="block mt-1 text-xs text-green-900">{{ $areaNotice }}</span>
         </section>
 
         <div class="grid gap-5 xl:grid-cols-[1.45fr_0.75fr]">
             <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
                 <div class="border-b border-slate-200 px-5 py-4">
                     <h2 class="text-base font-black text-slate-950">Workflow Status Breakdown</h2>
-                    <p class="mt-1 text-sm font-semibold text-slate-500">Canonical workflow groups include compatible legacy statuses where applicable.</p>
+                    <p class="mt-1 text-sm font-semibold text-slate-500">Current Citizen's Charter processing stages, with compatible legacy records grouped where appropriate.</p>
                 </div>
                 <div class="divide-y divide-slate-100">
                     @foreach ($statusRows as $row)
@@ -189,11 +215,11 @@
             <div class="space-y-5">
                 <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
                     <h2 class="text-base font-black text-slate-950">Final Output Results</h2>
-                    <p class="mt-1 text-sm font-semibold text-slate-500">Administrative clearance results only.</p>
+                    <p class="mt-1 text-sm font-semibold text-slate-500">PARPO II clearance decisions only; client release is tracked separately.</p>
                     <div class="mt-4 grid grid-cols-2 gap-3">
                         <div class="rounded-xl border border-green-200 bg-green-50 p-4">
-                            <p class="text-xs font-black uppercase tracking-wide text-green-700">Released</p>
-                            <p class="mt-2 text-2xl font-black text-green-950">{{ number_format($releasedResults) }}</p>
+                            <p class="text-xs font-black uppercase tracking-wide text-green-700">Approved</p>
+                            <p class="mt-2 text-2xl font-black text-green-950">{{ number_format($approvedResults) }}</p>
                             <p class="mt-1 text-xs font-semibold text-green-800">{{ number_format((float) $releasedOutputArea, 4) }} ha in snapshots</p>
                         </div>
                         <div class="rounded-xl border border-red-200 bg-red-50 p-4">
@@ -238,19 +264,19 @@
                             <th class="px-4 py-3">Status</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-slate-100 bg-white">
+                    <tbody class="divide-y divide-slate-100">
                         @forelse ($recentApplications as $application)
                             <tr>
-                                <td class="whitespace-nowrap px-4 py-3 font-black text-green-700">
+                                <td class="px-4 py-3 font-black text-green-800">
                                     <a href="{{ route('staff.applications.show', $application) }}" class="hover:underline">{{ $application->application_code }}</a>
                                 </td>
-                                <td class="min-w-64 px-4 py-3 text-slate-700">
-                                    <strong>{{ $application->transferorDisplayName() ?: 'Not specified' }}</strong>
-                                    <div class="mt-1 text-xs font-semibold text-slate-500">to {{ $application->transfereeDisplayName() ?: 'Not specified' }}</div>
+                                <td class="px-4 py-3 font-semibold text-slate-700">
+                                    <div>{{ $application->transferorDisplayName() ?: 'Not specified' }}</div>
+                                    <div class="mt-1 text-xs text-slate-500">to {{ $application->transfereeDisplayName() ?: 'Not specified' }}</div>
                                 </td>
-                                <td class="whitespace-nowrap px-4 py-3 font-semibold text-slate-600">{{ collect([$application->barangay, $application->municipality])->filter()->implode(', ') ?: 'Not specified' }}</td>
-                                <td class="whitespace-nowrap px-4 py-3 font-semibold text-slate-600">{{ ($application->date_of_application ?? $application->created_at)?->format('M d, Y') }}</td>
-                                <td class="whitespace-nowrap px-4 py-3">
+                                <td class="px-4 py-3 text-slate-600">{{ collect([$application->barangay, $application->municipality])->filter()->implode(', ') ?: '—' }}</td>
+                                <td class="px-4 py-3 text-slate-600">{{ $application->date_of_application?->format('M d, Y') ?? $application->created_at?->format('M d, Y') ?? '—' }}</td>
+                                <td class="px-4 py-3">
                                     <span class="inline-flex rounded-full border px-2.5 py-1 text-xs font-black {{ $statusClassFor($application->status) }}">{{ $application->statusLabel() }}</span>
                                 </td>
                             </tr>
@@ -264,48 +290,37 @@
 
         <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
             <div class="border-b border-slate-200 px-5 py-4">
-                <h2 class="text-base font-black text-slate-950">Recent Release / Denial Outputs</h2>
-                <p class="mt-1 text-sm font-semibold text-slate-500">Latest 10 immutable clearance-result snapshots tied to applications in the filtered dataset.</p>
+                <h2 class="text-base font-black text-slate-950">Recent Decision Outputs</h2>
+                <p class="mt-1 text-sm font-semibold text-slate-500">Latest immutable Form No. 5 decision snapshots linked to the filtered applications.</p>
             </div>
             <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-slate-200 text-sm">
                     <thead class="bg-slate-50 text-left text-xs font-black uppercase tracking-wide text-slate-500">
                         <tr>
-                            <th class="px-4 py-3">Clearance No.</th>
+                            <th class="px-4 py-3">Clearance</th>
                             <th class="px-4 py-3">Application</th>
                             <th class="px-4 py-3">Decision</th>
-                            <th class="px-4 py-3">Snapshot Area</th>
+                            <th class="px-4 py-3">Area (ha)</th>
                             <th class="px-4 py-3">Generated</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-slate-100 bg-white">
+                    <tbody class="divide-y divide-slate-100">
                         @forelse ($recentClearances as $clearance)
                             <tr>
-                                <td class="whitespace-nowrap px-4 py-3 font-black text-slate-800">{{ $clearance->clearance_number }}</td>
-                                <td class="whitespace-nowrap px-4 py-3 font-bold text-green-700">{{ $clearance->application_code }}</td>
-                                <td class="whitespace-nowrap px-4 py-3">
+                                <td class="px-4 py-3 font-black text-slate-800">{{ $clearance->clearance_number }}</td>
+                                <td class="px-4 py-3 font-semibold text-slate-700">{{ $clearance->application_code }}</td>
+                                <td class="px-4 py-3">
                                     <span class="inline-flex rounded-full border px-2.5 py-1 text-xs font-black {{ $statusClassFor($clearance->decision_status) }}">{{ $decisionLabel($clearance->decision_status) }}</span>
                                 </td>
-                                <td class="whitespace-nowrap px-4 py-3 font-semibold text-slate-600">{{ number_format((float) $clearance->total_area_hectares, 4) }} ha</td>
-                                <td class="whitespace-nowrap px-4 py-3 font-semibold text-slate-600">{{ $clearance->generated_at?->timezone('Asia/Manila')->format('M d, Y h:i A') }}</td>
+                                <td class="px-4 py-3 font-semibold text-slate-700">{{ number_format((float) $clearance->total_area_hectares, 4) }}</td>
+                                <td class="px-4 py-3 text-slate-600">{{ $clearance->generated_at?->timezone('Asia/Manila')->format('M d, Y h:i A') ?? '—' }}</td>
                             </tr>
                         @empty
-                            <tr><td colspan="5" class="px-4 py-8 text-center font-semibold text-slate-500">No final clearance outputs match the current filters.</td></tr>
+                            <tr><td colspan="5" class="px-4 py-8 text-center font-semibold text-slate-500">No final decision outputs match the current filters.</td></tr>
                         @endforelse
                     </tbody>
                 </table>
             </div>
         </section>
-
-        <div class="rounded-xl border border-green-200 bg-green-50 p-4 text-sm font-semibold leading-6 text-green-950">
-            <div class="flex items-start gap-3">
-                <i class="fa-solid fa-circle-info mt-1 text-green-700"></i>
-                <div>
-                    <strong class="block font-black">Scope Notice</strong>
-                    <p class="mt-1">{{ $scopeNotice }}</p>
-                    <p class="mt-2 text-xs text-green-800">{{ $areaNotice }}</p>
-                </div>
-            </div>
-        </div>
     </div>
 </x-staff-shell>
