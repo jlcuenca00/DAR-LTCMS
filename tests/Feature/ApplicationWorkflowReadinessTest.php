@@ -15,11 +15,12 @@ class ApplicationWorkflowReadinessTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_application_cannot_enter_for_releasing_without_a_linked_parcel(): void
+    public function test_application_cannot_enter_parpo_decision_pending_without_a_linked_parcel(): void
     {
         $staff = $this->staffUser();
         $application = $this->application($staff, LandTransferApplication::STATUS_ENDORSED_PARPO);
         $this->completeForm4($application);
+        $this->completePaymentAndCsw($application, $staff);
 
         $this->actingAs($staff)
             ->post(route('staff.applications.submit', $application))
@@ -31,11 +32,12 @@ class ApplicationWorkflowReadinessTest extends TestCase
         );
     }
 
-    public function test_application_cannot_enter_for_releasing_until_form4_is_complete(): void
+    public function test_application_cannot_enter_parpo_decision_pending_until_form4_is_complete(): void
     {
         $staff = $this->staffUser();
         $application = $this->application($staff, LandTransferApplication::STATUS_ENDORSED_PARPO);
         $this->linkParcel($application);
+        $this->completePaymentAndCsw($application, $staff);
 
         $this->actingAs($staff)
             ->post(route('staff.applications.submit', $application))
@@ -47,17 +49,18 @@ class ApplicationWorkflowReadinessTest extends TestCase
         );
     }
 
-    public function test_release_rechecks_parcel_and_form4_readiness(): void
+    public function test_final_approval_rechecks_parcel_and_form4_readiness(): void
     {
         $staff = $this->staffUser();
 
         $missingParcel = $this->application($staff, LandTransferApplication::STATUS_FOR_RELEASING, 'READINESS-NO-PARCEL');
         $this->completeForm4($missingParcel);
+        $this->completePaymentAndCsw($missingParcel, $staff);
 
         $this->actingAs($staff)
             ->post(route('staff.applications.approve', $missingParcel), [
                 'final_decision_confirmation' => '1',
-                'decision_reason' => 'Release readiness regression.',
+                'decision_reason' => 'Decision readiness regression.',
             ])
             ->assertSessionHasErrors(['validation', 'parcel']);
 
@@ -68,11 +71,12 @@ class ApplicationWorkflowReadinessTest extends TestCase
 
         $missingForm4 = $this->application($staff, LandTransferApplication::STATUS_FOR_RELEASING, 'READINESS-NO-FORM4');
         $this->linkParcel($missingForm4, 'READINESS-NO-FORM4-PARCEL');
+        $this->completePaymentAndCsw($missingForm4, $staff);
 
         $this->actingAs($staff)
             ->post(route('staff.applications.approve', $missingForm4), [
                 'final_decision_confirmation' => '1',
-                'decision_reason' => 'Release readiness regression.',
+                'decision_reason' => 'Decision readiness regression.',
             ])
             ->assertSessionHasErrors(['validation', 'form4']);
 
@@ -82,26 +86,68 @@ class ApplicationWorkflowReadinessTest extends TestCase
         );
     }
 
-    public function test_complete_application_can_follow_the_full_office_flow_and_release(): void
+    public function test_complete_application_can_follow_the_full_citizens_charter_flow_then_release_the_output(): void
     {
         $staff = $this->staffUser();
         $application = $this->application($staff, LandTransferApplication::STATUS_PENDING_LEGAL_REVIEW, 'READINESS-FULL-FLOW');
         $this->linkParcel($application, 'READINESS-FULL-FLOW-PARCEL');
         $this->completeForm4($application);
 
-        foreach ([
-            LandTransferApplication::STATUS_ENDORSED_LTI,
-            LandTransferApplication::STATUS_ENDORSED_CHIEF_LEGAL,
-            LandTransferApplication::STATUS_ENDORSED_PARPO,
-            LandTransferApplication::STATUS_FOR_RELEASING,
-        ] as $expectedStatus) {
-            $this->actingAs($staff)
-                ->post(route('staff.applications.submit', $application))
-                ->assertSessionHas('success');
+        // Legal completeness review issues the Payment Order.
+        $this->actingAs($staff)
+            ->post(route('staff.applications.submit', $application), [
+                'payment_order_reference' => 'OP-READINESS-FULL-FLOW',
+            ])
+            ->assertSessionHas('success');
+        $application->refresh();
+        $this->assertSame(LandTransferApplication::STATUS_AWAITING_PAYMENT, $application->status);
 
-            $application->refresh();
-            $this->assertSame($expectedStatus, $application->status);
-        }
+        // Cashier payment is external; DAR-LTCMS records the resulting OR.
+        $this->actingAs($staff)
+            ->post(route('staff.applications.submit', $application), [
+                'or_number' => 'OR-READINESS-001',
+                'or_date' => now()->toDateString(),
+                'amount_paid' => config('dar_ltc.filing_fee', 2000),
+            ])
+            ->assertSessionHas('success');
+        $application->refresh();
+        $this->assertSame(LandTransferApplication::STATUS_ENDORSED_LTI, $application->status);
+
+        // LTID verification returns the record to Legal.
+        $this->actingAs($staff)
+            ->post(route('staff.applications.submit', $application))
+            ->assertSessionHas('success');
+        $application->refresh();
+        $this->assertSame(LandTransferApplication::STATUS_RETURNED_TO_LEGAL, $application->status);
+
+        // Completed Form 4 permits formal Legal evaluation.
+        $this->actingAs($staff)
+            ->post(route('staff.applications.submit', $application))
+            ->assertSessionHas('success');
+        $application->refresh();
+        $this->assertSame(LandTransferApplication::STATUS_LEGAL_EVALUATION, $application->status);
+
+        // Legal records Completed Staff Work before Chief Legal review.
+        $this->actingAs($staff)
+            ->post(route('staff.applications.submit', $application), [
+                'csw_reference' => 'CSW-READINESS-001',
+                'csw_notes' => 'Completed Staff Work regression coverage.',
+            ])
+            ->assertSessionHas('success');
+        $application->refresh();
+        $this->assertSame(LandTransferApplication::STATUS_ENDORSED_CHIEF_LEGAL, $application->status);
+
+        $this->actingAs($staff)
+            ->post(route('staff.applications.submit', $application))
+            ->assertSessionHas('success');
+        $application->refresh();
+        $this->assertSame(LandTransferApplication::STATUS_ENDORSED_PARPO, $application->status);
+
+        $this->actingAs($staff)
+            ->post(route('staff.applications.submit', $application))
+            ->assertSessionHas('success');
+        $application->refresh();
+        $this->assertSame(LandTransferApplication::STATUS_FOR_RELEASING, $application->status);
 
         $readinessLog = AuditLog::query()
             ->where('land_transfer_application_id', $application->id)
@@ -109,26 +155,52 @@ class ApplicationWorkflowReadinessTest extends TestCase
             ->latest('id')
             ->firstOrFail();
 
-        $this->assertTrue($readinessLog->metadata['release_readiness_checked']);
-        $this->assertTrue($readinessLog->metadata['release_readiness']['linked_parties_complete']);
-        $this->assertTrue($readinessLog->metadata['release_readiness']['has_linked_parcel']);
-        $this->assertTrue($readinessLog->metadata['release_readiness']['form4_complete']);
+        $this->assertTrue($readinessLog->metadata['decision_readiness_checked']);
+        $this->assertTrue($readinessLog->metadata['decision_readiness']['linked_parties_complete']);
+        $this->assertTrue($readinessLog->metadata['decision_readiness']['has_linked_parcel']);
+        $this->assertTrue($readinessLog->metadata['decision_readiness']['payment_complete']);
+        $this->assertTrue($readinessLog->metadata['decision_readiness']['form4_complete']);
+        $this->assertTrue($readinessLog->metadata['decision_readiness']['csw_complete']);
 
+        // PARPO II approval is the final application decision and freezes edits.
         $this->actingAs($staff)
             ->post(route('staff.applications.approve', $application), [
                 'final_decision_confirmation' => '1',
-                'decision_reason' => 'Record is ready for clearance release.',
-                'decision_notes' => 'Workflow readiness regression.',
+                'decision_reason' => 'Record is ready for final PARPO II approval.',
+                'decision_notes' => 'Citizen Charter workflow regression.',
             ])
             ->assertSessionHas('success');
 
         $application->refresh();
-
-        $this->assertSame(LandTransferApplication::STATUS_RELEASED, $application->status);
+        $this->assertSame(LandTransferApplication::STATUS_APPROVED, $application->status);
+        $this->assertTrue($application->isFinalized());
         $this->assertNotNull($application->clearance()->first());
-        $this->assertTrue($application->validation_snapshot['workflow_readiness']['linked_parties_complete']);
-        $this->assertTrue($application->validation_snapshot['workflow_readiness']['has_linked_parcel']);
-        $this->assertTrue($application->validation_snapshot['workflow_readiness']['form4_complete']);
+        $this->assertTrue($application->validation_snapshot['workflow_readiness']['payment_complete']);
+        $this->assertTrue($application->validation_snapshot['workflow_readiness']['csw_complete']);
+
+        // Delivery is a separate administrative event; it must not change the
+        // Approved final decision or mutate ownership records.
+        $this->actingAs($staff)
+            ->post(route('staff.applications.ready_for_release', $application))
+            ->assertSessionHas('success');
+
+        $application->refresh();
+        $this->assertSame(LandTransferApplication::RELEASE_READY, $application->release_status);
+        $this->assertSame(LandTransferApplication::STATUS_APPROVED, $application->status);
+
+        $this->actingAs($staff)
+            ->post(route('staff.applications.release', $application), [
+                'release_confirmation' => '1',
+                'release_recipient_name' => 'Authorized Recipient',
+                'release_logbook_reference' => 'LOG-READINESS-001',
+                'csm_status' => 'issued',
+            ])
+            ->assertSessionHas('success');
+
+        $application->refresh();
+        $this->assertSame(LandTransferApplication::STATUS_APPROVED, $application->status);
+        $this->assertSame(LandTransferApplication::RELEASED_TO_CLIENT, $application->release_status);
+        $this->assertNotNull($application->released_at);
     }
 
     public function test_form4_recommendation_does_not_automatically_make_the_final_decision(): void
@@ -137,24 +209,27 @@ class ApplicationWorkflowReadinessTest extends TestCase
         $application = $this->application($staff, LandTransferApplication::STATUS_FOR_RELEASING, 'READINESS-RECOMMENDATION');
         $this->linkParcel($application, 'READINESS-RECOMMENDATION-PARCEL');
         $this->completeForm4($application, 'denial');
+        $this->completePaymentAndCsw($application, $staff);
 
         $this->actingAs($staff)
             ->post(route('staff.applications.approve', $application), [
                 'final_decision_confirmation' => '1',
-                'decision_reason' => 'Authorized final release after review of the recommendation.',
+                'decision_reason' => 'Authorized PARPO II approval after review of the recommendation.',
             ])
             ->assertSessionHas('success');
 
         $application->refresh();
-        $this->assertSame(LandTransferApplication::STATUS_RELEASED, $application->status);
+        $this->assertSame(LandTransferApplication::STATUS_APPROVED, $application->status);
 
-        $releaseLog = AuditLog::query()
+        $approvalLog = AuditLog::query()
             ->where('land_transfer_application_id', $application->id)
-            ->where('action', 'application_released')
+            ->where('action', 'application_approved')
             ->firstOrFail();
 
-        $this->assertSame('denial', $releaseLog->metadata['form4_recommendation_decision']);
-        $this->assertFalse($releaseLog->metadata['form4_recommendation_matches_final_decision']);
+        $this->assertSame('denial', $approvalLog->metadata['form4_recommendation_decision']);
+        $this->assertFalse($approvalLog->metadata['form4_recommendation_matches_final_decision']);
+        $this->assertFalse($approvalLog->metadata['ownership_transfer_performed']);
+        $this->assertFalse($approvalLog->metadata['registry_mutation_performed']);
     }
 
     private function staffUser(): User
@@ -237,6 +312,20 @@ class ApplicationWorkflowReadinessTest extends TestCase
             'ltc_form4_recommendation_decision' => $recommendation,
             'ltc_form4_certified_at' => now()->toDateString(),
             'ltc_form4_certifying_officer_name' => 'Authorized Review Officer',
+        ])->save();
+    }
+
+    private function completePaymentAndCsw(LandTransferApplication $application, User $staff): void
+    {
+        $application->forceFill([
+            'payment_order_reference' => 'OP-' . $application->application_code,
+            'payment_order_issued_at' => now(),
+            'or_number' => 'OR-' . $application->id,
+            'or_date' => now()->toDateString(),
+            'amount_paid' => config('dar_ltc.filing_fee', 2000),
+            'csw_reference' => 'CSW-' . $application->application_code,
+            'csw_completed_at' => now(),
+            'csw_prepared_by' => $staff->id,
         ])->save();
     }
 }

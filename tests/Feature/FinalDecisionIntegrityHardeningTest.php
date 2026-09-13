@@ -159,10 +159,10 @@ class FinalDecisionIntegrityHardeningTest extends TestCase
 
         $this->actingAs($staff)
             ->patch(route('staff.applications.form4.update', $application), [
-                'ltc_form4_other_findings' => 'This must never be written after release.',
+                'ltc_form4_other_findings' => 'This must never be written after final decision.',
                 'ltc_form4_recommendation_decision' => 'approval',
             ])
-            ->assertSessionHas('error', 'LTC Form No. 4 review details are locked after release or denial.');
+            ->assertSessionHas('error', 'LTC Form No. 4 review details are locked after the final Approved/Denied decision.');
 
         $application->refresh();
         $this->assertNull($application->ltc_form4_other_findings);

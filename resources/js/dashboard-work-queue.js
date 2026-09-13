@@ -9,13 +9,17 @@ function initializeDashboardWorkQueue() {
     if (!filterButtons.length || !applicationRows.length) return;
 
     const statusGroups = {
-        pending_legal_review: new Set([
+        intake_compliance: new Set([
             'pending_legal_review',
+            'returned_for_compliance',
+            'awaiting_payment',
             'draft',
             'pending_review',
         ]),
         active_workflow: new Set([
             'endorsed_lti',
+            'returned_to_legal',
+            'legal_evaluation',
             'endorsed_chief_legal',
             'endorsed_parpo',
         ]),
@@ -49,6 +53,9 @@ function initializeDashboardWorkQueue() {
 
     filterButtons.forEach((button) => {
         button.addEventListener('click', (event) => {
+            // The dashboard Blade contains a compatibility click handler from the
+            // pre-AO4 workflow. Capture first so this canonical grouping remains
+            // the single behavior seen by staff.
             event.stopImmediatePropagation();
             applyFilter(button.dataset.dashboardFilter || 'active_workflow');
         }, { capture: true });

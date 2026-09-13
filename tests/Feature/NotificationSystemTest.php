@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\ApplicationParcel;
 use App\Models\LandTransferApplication;
 use App\Models\Landholding;
 use App\Models\Landowner;
@@ -201,6 +202,8 @@ class NotificationSystemTest extends TestCase
             'encoded_by' => $staffUser->id,
         ]);
 
+        $this->linkSubjectParcel($application, 'APP-NOTIF-ADVANCE-PARCEL');
+
         $this->actingAs($staffUser)
             ->post(route('staff.applications.submit', $application))
             ->assertRedirect();
@@ -237,6 +240,8 @@ class NotificationSystemTest extends TestCase
             'status' => LandTransferApplication::STATUS_DRAFT,
             'encoded_by' => $staffUser->id,
         ]);
+
+        $this->linkSubjectParcel($application, 'APP-NOTIF-SUBMIT-PARCEL');
 
         $this->actingAs($staffUser)
             ->post(route('staff.applications.submit', $application))
@@ -276,7 +281,7 @@ class NotificationSystemTest extends TestCase
             'transferee_landowner_id' => $landowner->id,
             'municipality' => 'Dumaguete City',
             'barangay' => 'Bantayan',
-            'status' => LandTransferApplication::STATUS_PENDING_LEGAL_REVIEW,
+            'status' => LandTransferApplication::STATUS_FOR_RELEASING,
             'encoded_by' => $staffUser->id,
         ]);
 
@@ -498,5 +503,24 @@ class NotificationSystemTest extends TestCase
         ]);
 
         $this->assertSame(route('landowner.parcels.show', $parcel), $notification->targetUrlFor($landownerUser));
+    }
+
+    private function linkSubjectParcel(LandTransferApplication $application, string $parcelCode): void
+    {
+        $parcel = Parcel::create([
+            'parcel_code' => $parcelCode,
+            'municipality' => 'Dumaguete City',
+            'barangay' => 'Bantayan',
+            'province' => 'Negros Oriental',
+            'area_hectares' => 1.0000,
+            'status' => 'active',
+        ]);
+
+        ApplicationParcel::create([
+            'land_transfer_application_id' => $application->id,
+            'parcel_id' => $parcel->id,
+            'parcel_code' => $parcel->parcel_code,
+            'area_hectares' => 1.0000,
+        ]);
     }
 }

@@ -4,7 +4,9 @@ namespace Tests\Feature;
 
 use App\Http\Controllers\Staff\StaffDashboardController;
 use App\Models\ApplicationDocument;
+use App\Models\ApplicationParcel;
 use App\Models\LandTransferApplication;
+use App\Models\Parcel;
 use App\Models\RequiredDocument;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -45,6 +47,22 @@ class DashboardAttentionTest extends TestCase
             'transferee_name' => 'Complete Transferee',
             'status' => LandTransferApplication::STATUS_ENDORSED_LTI,
             'encoded_by' => $staff->id,
+        ]);
+
+        $completeParcel = Parcel::create([
+            'parcel_code' => 'APP-ATTN-COMPLETE-PARCEL',
+            'municipality' => 'Dumaguete City',
+            'barangay' => 'Bantayan',
+            'province' => 'Negros Oriental',
+            'area_hectares' => 1.0000,
+            'status' => 'active',
+        ]);
+
+        ApplicationParcel::create([
+            'land_transfer_application_id' => $complete->id,
+            'parcel_id' => $completeParcel->id,
+            'parcel_code' => $completeParcel->parcel_code,
+            'area_hectares' => 1.0000,
         ]);
 
         ApplicationDocument::create([

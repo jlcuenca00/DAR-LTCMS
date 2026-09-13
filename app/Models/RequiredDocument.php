@@ -11,11 +11,19 @@ class RequiredDocument extends Model
     public const CLASSIFICATION_CASE_DEPENDENT = 'case_dependent';
     public const CLASSIFICATION_REFERENCE = 'reference';
 
+    public const CONDITION_TITLED_LAND = 'titled_land';
+    public const CONDITION_UNTITLED_LAND = 'untitled_land';
+    public const CONDITION_MUNICIPAL_JURISDICTION = 'municipal_jurisdiction';
+    public const CONDITION_CITY_JURISDICTION = 'city_jurisdiction';
+    public const CONDITION_AUTHORIZED_REPRESENTATIVE = 'authorized_representative';
+    public const CONDITION_JURIDICAL_ENTITY = 'juridical_entity';
+
     protected $guarded = [];
 
     protected $casts = [
         'is_mandatory' => 'boolean',
         'blocks_acceptance' => 'boolean',
+        'max_age_months' => 'integer',
     ];
 
     protected static function booted(): void
@@ -36,9 +44,11 @@ class RequiredDocument extends Model
                 $document->blocks_acceptance = false;
             }
 
+            // Case-dependent items may still block intake when their condition is
+            // true. Keep is_mandatory false so the UI can distinguish them from
+            // always-required documents, but do not force blocks_acceptance off.
             if ($document->requirement_classification === self::CLASSIFICATION_CASE_DEPENDENT) {
                 $document->is_mandatory = false;
-                $document->blocks_acceptance = false;
             }
         });
     }
@@ -63,11 +73,56 @@ class RequiredDocument extends Model
         return $this->requirement_classification === self::CLASSIFICATION_REFERENCE;
     }
 
+    public function appliesToApplication(LandTransferApplication $application): bool
+    {
+        $condition = $this->condition_key;
 
+        if (blank($condition)) {
+            return true;
+        }
+
+        $application->loadMissing('applicationParcels.parcel');
+        $parcels = $application->applicationParcels;
+
+        $hasUntitledLand = $parcels->contains(function ($applicationParcel) {
+            $titleType = strtolower((string) ($applicationParcel->title_type ?? $applicationParcel->parcel?->title_type));
+            $titleNumber = trim((string) ($applicationParcel->title_no ?? $applicationParcel->parcel?->title_no));
+
+            return $titleType === 'untitled' || $titleNumber === '';
+        });
+
+        $hasTitledLand = $parcels->contains(function ($applicationParcel) {
+            $titleType = strtolower((string) ($applicationParcel->title_type ?? $applicationParcel->parcel?->title_type));
+            $titleNumber = trim((string) ($applicationParcel->title_no ?? $applicationParcel->parcel?->title_no));
+
+            return $titleType !== 'untitled' && $titleNumber !== '';
+        });
+
+        $municipality = trim((string) $application->municipality);
+        $isCity = $municipality !== '' && str_contains(mb_strtolower($municipality), 'city');
+
+        return match ($condition) {
+            self::CONDITION_TITLED_LAND => $hasTitledLand,
+            self::CONDITION_UNTITLED_LAND => $hasUntitledLand,
+            self::CONDITION_CITY_JURISDICTION => $isCity,
+            self::CONDITION_MUNICIPAL_JURISDICTION => $municipality !== '' && ! $isCity,
+            self::CONDITION_AUTHORIZED_REPRESENTATIVE =>
+                $application->applicant_type === 'authorized_representative'
+                || filled($application->authorized_representative_name)
+                || (bool) $application->has_special_power_of_attorney,
+            self::CONDITION_JURIDICAL_ENTITY => (bool) $application->applicant_is_juridical_entity,
+            default => true,
+        };
+    }
+
+    public function blocksApplication(LandTransferApplication $application): bool
+    {
+        return $this->blocksAcceptance() && $this->appliesToApplication($application);
+    }
 
     public static function normalizedReviewName(string $name): string
     {
-        $normalized = preg_replace('/\s*\(if available\)\s*/i', '', $name) ?? $name;
+        $normalized = preg_replace('/\s*\((?:if available|if applicable|when applicable|where applicable)[^)]*\)\s*/i', '', $name) ?? $name;
         $normalized = preg_replace('/\s+/', ' ', trim($normalized)) ?? trim($normalized);
 
         return mb_strtolower($normalized);
@@ -84,7 +139,8 @@ class RequiredDocument extends Model
             ->filter(function (RequiredDocument $document) use ($grouped): bool {
                 $group = $grouped->get(self::normalizedReviewName((string) $document->name), collect());
 
-                $preferred = $group->firstWhere('name', 'Recent Tax Declaration (if available)')
+                $preferred = $group->firstWhere('name', 'Certified True Copy of Current Tax Declaration (Untitled Land)')
+                    ?? $group->firstWhere('name', 'Recent Tax Declaration (if available)')
                     ?? $group->first();
 
                 return (int) $document->id === (int) $preferred->id;
@@ -95,10 +151,10 @@ class RequiredDocument extends Model
     public function classificationLabel(): string
     {
         return match ($this->requirement_classification) {
-            self::CLASSIFICATION_MANDATORY => 'Required before acceptance/release',
-            self::CLASSIFICATION_CASE_DEPENDENT => 'Case-dependent',
+            self::CLASSIFICATION_MANDATORY => 'Required before acceptance',
+            self::CLASSIFICATION_CASE_DEPENDENT => $this->blocks_acceptance ? 'Required when applicable' : 'Case-dependent',
             self::CLASSIFICATION_REFERENCE => 'Reference only',
-            default => $this->is_mandatory ? 'Required before acceptance/release' : 'Case-dependent',
+            default => $this->is_mandatory ? 'Required before acceptance' : 'Case-dependent',
         };
     }
 

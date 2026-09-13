@@ -11,30 +11,27 @@
         $normalizedClearanceCounts = collect($clearanceCounts ?? []);
 
         $statusRows = [
-            'Pending Review by Legal Officer' => (int) (($normalizedStatusCounts['pending_legal_review'] ?? 0) + ($normalizedStatusCounts['pending_review'] ?? 0) + ($normalizedStatusCounts['draft'] ?? 0)),
-            'Endorsed to LTI Division' => (int) ($normalizedStatusCounts['endorsed_lti'] ?? 0),
-            'Endorsed to Chief Legal' => (int) ($normalizedStatusCounts['endorsed_chief_legal'] ?? 0),
-            'Endorsed to PARPO II' => (int) ($normalizedStatusCounts['endorsed_parpo'] ?? 0),
-            'For Releasing' => (int) ($normalizedStatusCounts['for_releasing'] ?? 0),
-            'Released' => (int) (($normalizedStatusCounts['released'] ?? 0) + ($normalizedStatusCounts['approved'] ?? 0)),
+            'Legal Completeness Review' => (int) (($normalizedStatusCounts['pending_legal_review'] ?? 0) + ($normalizedStatusCounts['pending_review'] ?? 0) + ($normalizedStatusCounts['draft'] ?? 0)),
+            'Returned for Compliance' => (int) ($normalizedStatusCounts['returned_for_compliance'] ?? 0),
+            'Awaiting Payment / Official Receipt' => (int) ($normalizedStatusCounts['awaiting_payment'] ?? 0),
+            'Endorsed to LTID for Verification' => (int) ($normalizedStatusCounts['endorsed_lti'] ?? 0),
+            'Returned to Legal Division' => (int) ($normalizedStatusCounts['returned_to_legal'] ?? 0),
+            'Legal Evaluation / CSW Preparation' => (int) ($normalizedStatusCounts['legal_evaluation'] ?? 0),
+            'Chief Legal Final Review' => (int) ($normalizedStatusCounts['endorsed_chief_legal'] ?? 0),
+            'Forwarded to PARPO II' => (int) ($normalizedStatusCounts['endorsed_parpo'] ?? 0),
+            'PARPO II Decision Pending' => (int) ($normalizedStatusCounts['for_releasing'] ?? 0),
+            'Approved' => (int) (($normalizedStatusCounts['approved'] ?? 0) + ($normalizedStatusCounts['released'] ?? 0)),
             'Denied' => (int) (($normalizedStatusCounts['denied'] ?? 0) + ($normalizedStatusCounts['not_approved'] ?? 0)),
         ];
 
-        $activeApplicationCount = collect($statusRows)->only([
-            'Pending Review by Legal Officer',
-            'Endorsed to LTI Division',
-            'Endorsed to Chief Legal',
-            'Endorsed to PARPO II',
-            'For Releasing',
-        ])->sum();
-
-        $releasedResults = (int) (($normalizedClearanceCounts['released'] ?? 0) + ($normalizedClearanceCounts['approved'] ?? 0));
+        $activeApplicationCount = collect($statusRows)->except(['Approved', 'Denied'])->sum();
+        $approvedResults = (int) (($normalizedClearanceCounts['approved'] ?? 0) + ($normalizedClearanceCounts['released'] ?? 0));
         $deniedResults = (int) (($normalizedClearanceCounts['denied'] ?? 0) + ($normalizedClearanceCounts['not_approved'] ?? 0));
         $backParams = array_filter($filters ?? [], fn ($value) => filled($value));
 
         $decisionLabel = function (?string $status): string {
             return match ($status) {
-                'released', 'approved' => 'Released',
+                'approved', 'released' => 'Approved',
                 'denied', 'not_approved' => 'Denied',
                 default => ucwords(str_replace('_', ' ', (string) $status)),
             };
@@ -43,9 +40,7 @@
         $darLogoDataUri = null;
         foreach (['images/dar-logo.png', 'images/dar-logo.svg', 'images/dar-logo.jpg', 'images/dar-logo.jpeg'] as $logoCandidate) {
             $logoPath = public_path($logoCandidate);
-            if (! file_exists($logoPath)) {
-                continue;
-            }
+            if (! file_exists($logoPath)) continue;
 
             $extension = strtolower(pathinfo($logoPath, PATHINFO_EXTENSION));
             $mime = match ($extension) {
@@ -62,7 +57,7 @@
         @page { size: A4; margin: 14mm; }
         * { box-sizing: border-box; }
         body { margin: 0; background: #e5e7eb; color: #111827; font-family: Arial, Helvetica, sans-serif; font-size: 11px; line-height: 1.45; }
-        .toolbar { max-width: 980px; margin: 16px auto; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+        .toolbar { max-width: 980px; margin: 16px auto; display: flex; justify-content: space-between; gap: 12px; }
         .toolbar a, .toolbar button { min-height: 38px; display: inline-flex; align-items: center; justify-content: center; padding: 0 14px; border: 1px solid #cbd5e1; border-radius: 8px; background: #fff; color: #111827; font-weight: 700; text-decoration: none; cursor: pointer; }
         .toolbar button { border-color: #166534; background: #166534; color: #fff; }
         .page { width: 210mm; min-height: 297mm; max-width: 980px; margin: 0 auto 24px; padding: 16mm; background: #fff; box-shadow: 0 12px 32px rgba(15,23,42,.14); }
@@ -77,7 +72,7 @@
         h1 { margin: 0; font-size: 18px; font-weight: 900; text-transform: uppercase; letter-spacing: .05em; }
         .subtitle { margin: 4px 0 0; color: #64748b; }
         .chip { display: inline-block; border: 1px solid #bbf7d0; border-radius: 999px; background: #f0fdf4; color: #14532d; padding: 5px 9px; font-size: 9px; font-weight: 900; text-transform: uppercase; }
-        .meta, .summary, .two-col { width: 100%; border-collapse: collapse; }
+        .meta, .summary, .two-col, .data { width: 100%; border-collapse: collapse; }
         .meta td { width: 33.333%; border: 1px solid #d1d5db; padding: 7px 9px; vertical-align: top; }
         .label { display: block; margin-bottom: 2px; color: #64748b; font-size: 8.5px; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; }
         .value { font-weight: 800; }
@@ -95,13 +90,13 @@
         .two-col { table-layout: fixed; }
         .two-col > tbody > tr > td { width: 50%; padding-right: 8px; vertical-align: top; }
         .two-col > tbody > tr > td:last-child { padding-right: 0; padding-left: 8px; }
-        .data { width: 100%; border-collapse: collapse; font-size: 9.5px; }
+        .data { font-size: 9.5px; }
         .data th, .data td { border: 1px solid #d1d5db; padding: 5px 6px; vertical-align: top; }
         .data th { background: #f8fafc; color: #475569; font-size: 8.3px; font-weight: 900; text-align: left; text-transform: uppercase; letter-spacing: .05em; }
         .number { text-align: right; white-space: nowrap; font-weight: 800; }
         .result-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
         .result { border: 1px solid #d1d5db; border-radius: 6px; padding: 8px; }
-        .result.released { border-left: 4px solid #16a34a; }
+        .result.approved { border-left: 4px solid #16a34a; }
         .result.denied { border-left: 4px solid #dc2626; }
         .result strong { display: block; font-size: 18px; }
         .result span { color: #64748b; font-size: 9px; }
@@ -141,7 +136,7 @@
         <div class="title-row">
             <div>
                 <h1>Monitoring Report</h1>
-                <p class="subtitle">Administrative clearance processing, final-result recording, and monitoring summary.</p>
+                <p class="subtitle">Administrative clearance processing, final-decision recording, client-release monitoring, and records-management summary.</p>
             </div>
             <span class="chip">Administrative Report</span>
         </div>
@@ -168,6 +163,7 @@
         <div class="scope">
             <p><strong>Scope Notice:</strong> {{ $scopeNotice }}</p>
             <p>{{ $areaNotice }}</p>
+            <p>A recorded approval, denial, or client-release event does not constitute a registry mutation or automatic transfer of land ownership.</p>
         </div>
 
         <section class="section">
@@ -176,7 +172,7 @@
                 <tr>
                     <td><span class="label">Total Applications</span><div class="summary-number">{{ number_format($totalApplications) }}</div><div class="summary-note">Matching report filters</div></td>
                     <td><span class="label">Active Applications</span><div class="summary-number">{{ number_format($activeApplicationCount) }}</div><div class="summary-note">Still in clearance processing</div></td>
-                    <td><span class="label">Recorded Results</span><div class="summary-number">{{ number_format($totalClearances) }}</div><div class="summary-note">Released or denied snapshots</div></td>
+                    <td><span class="label">Recorded Results</span><div class="summary-number">{{ number_format($totalClearances) }}</div><div class="summary-note">Approved or Denied snapshots</div></td>
                     <td><span class="label">Recorded Output Area</span><div class="summary-number">{{ number_format((float) $totalClearanceArea, 4) }}</div><div class="summary-note">ha in final snapshots; not ownership transferred</div></td>
                 </tr>
             </table>
@@ -199,9 +195,9 @@
                     <td>
                         <h2 class="section-title">Final Output Results</h2>
                         <div class="result-grid">
-                            <div class="result released">
-                                <span class="label">Released</span>
-                                <strong>{{ number_format($releasedResults) }}</strong>
+                            <div class="result approved">
+                                <span class="label">Approved</span>
+                                <strong>{{ number_format($approvedResults) }}</strong>
                                 <span>{{ number_format((float) $releasedOutputArea, 4) }} ha in snapshots</span>
                             </div>
                             <div class="result denied">
@@ -230,17 +226,15 @@
         <section class="section">
             <h2 class="section-title">Recent Applications</h2>
             <table class="data">
-                <thead>
-                    <tr><th>Application</th><th>Transferor</th><th>Transferee</th><th>Location</th><th>Date</th><th>Status</th></tr>
-                </thead>
+                <thead><tr><th>Application</th><th>Transferor</th><th>Transferee</th><th>Location</th><th>Date</th><th>Status</th></tr></thead>
                 <tbody>
                     @forelse ($recentApplications as $application)
                         <tr>
                             <td>{{ $application->application_code }}</td>
                             <td>{{ $application->transferorDisplayName() ?: 'Not specified' }}</td>
                             <td>{{ $application->transfereeDisplayName() ?: 'Not specified' }}</td>
-                            <td>{{ collect([$application->barangay, $application->municipality])->filter()->implode(', ') ?: 'Not specified' }}</td>
-                            <td>{{ ($application->date_of_application ?? $application->created_at)?->format('M d, Y') }}</td>
+                            <td>{{ collect([$application->barangay, $application->municipality])->filter()->implode(', ') ?: '—' }}</td>
+                            <td>{{ $application->date_of_application?->format('M d, Y') ?? $application->created_at?->format('M d, Y') ?? '—' }}</td>
                             <td>{{ $application->statusLabel() }}</td>
                         </tr>
                     @empty
@@ -251,29 +245,27 @@
         </section>
 
         <section class="section">
-            <h2 class="section-title">Recent Release / Denial Outputs</h2>
+            <h2 class="section-title">Recent Decision Outputs</h2>
             <table class="data">
-                <thead>
-                    <tr><th>Clearance No.</th><th>Application</th><th>Decision</th><th class="number">Snapshot Area</th><th>Generated</th></tr>
-                </thead>
+                <thead><tr><th>Clearance No.</th><th>Application</th><th>Decision</th><th class="number">Area (ha)</th><th>Generated</th></tr></thead>
                 <tbody>
                     @forelse ($recentClearances as $clearance)
                         <tr>
                             <td>{{ $clearance->clearance_number }}</td>
                             <td>{{ $clearance->application_code }}</td>
                             <td>{{ $decisionLabel($clearance->decision_status) }}</td>
-                            <td class="number">{{ number_format((float) $clearance->total_area_hectares, 4) }} ha</td>
-                            <td>{{ $clearance->generated_at?->timezone('Asia/Manila')->format('M d, Y h:i A') }}</td>
+                            <td class="number">{{ number_format((float) $clearance->total_area_hectares, 4) }}</td>
+                            <td>{{ $clearance->generated_at?->timezone('Asia/Manila')->format('M d, Y h:i A') ?? '—' }}</td>
                         </tr>
                     @empty
-                        <tr><td colspan="5">No final clearance outputs match the current filters.</td></tr>
+                        <tr><td colspan="5">No final decision outputs match the current filters.</td></tr>
                     @endforelse
                 </tbody>
             </table>
         </section>
 
         <div class="footer">
-            DAR-LTCMS is an administrative clearance generation, processing, records-management, and monitoring platform for the DAR Negros Oriental Provincial Office. This report does not constitute a registry mutation or evidence that legal land ownership transfer has been completed.
+            Generated by DAR-LTCMS for the Department of Agrarian Reform – Negros Oriental Provincial Office. This document is an administrative monitoring output and does not replace official legal or registry procedures.
         </div>
     </main>
 </body>

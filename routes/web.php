@@ -197,6 +197,7 @@ Route::middleware(['auth', 'role:staff'])
         Route::get('/applications/{application}/acknowledgement/pdf', [ApplicationClearanceController::class, 'acknowledgementPdf'])
             ->name('applications.acknowledgement.pdf');
         Route::patch('/applications/{application}/form-4-review', [LandTransferApplicationController::class, 'updateForm4Review'])
+            ->middleware(\App\Http\Middleware\EnsureForm4ReviewStage::class)
             ->name('applications.form4.update');
         Route::get('/applications/{application}/form-4/pdf', [ApplicationClearanceController::class, 'form4Pdf'])
             ->name('applications.form4.pdf');
@@ -206,12 +207,20 @@ Route::middleware(['auth', 'role:staff'])
             ->name('applications.documents.store');
         Route::delete('/applications/{application}/documents/{requiredDocument}', [ApplicationDocumentController::class, 'destroy'])
             ->name('applications.documents.destroy');
+        Route::get('/applications/{application}/workflow-state', [ApplicationWorkflowController::class, 'state'])
+            ->name('applications.workflow_state');
+        Route::post('/applications/{application}/return-for-compliance', [ApplicationWorkflowController::class, 'returnForCompliance'])
+            ->name('applications.return_for_compliance');
         Route::post('/applications/{application}/submit', [ApplicationWorkflowController::class, 'submit'])
             ->name('applications.submit');
         Route::post('/applications/{application}/approve', [ApplicationWorkflowController::class, 'approve'])
             ->name('applications.approve');
         Route::post('/applications/{application}/not-approved', [ApplicationWorkflowController::class, 'notApproved'])
             ->name('applications.not_approved');
+        Route::post('/applications/{application}/ready-for-release', [ApplicationWorkflowController::class, 'markReadyForRelease'])
+            ->name('applications.ready_for_release');
+        Route::post('/applications/{application}/release', [ApplicationWorkflowController::class, 'release'])
+            ->name('applications.release');
         Route::get('/applications/{application}/clearance', [ApplicationClearanceController::class, 'show'])
             ->name('applications.clearance.show');
         Route::get('/applications/{application}/clearance/pdf', [ApplicationClearanceController::class, 'pdf'])
