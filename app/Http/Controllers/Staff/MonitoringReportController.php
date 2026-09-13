@@ -26,15 +26,7 @@ class MonitoringReportController extends Controller
 
     private function buildReportData(Request $request): array
     {
-        $statusOptions = [
-            LandTransferApplication::STATUS_PENDING_LEGAL_REVIEW => 'Pending Review by Legal Officer',
-            LandTransferApplication::STATUS_ENDORSED_LTI => 'Endorsed to LTI Division',
-            LandTransferApplication::STATUS_ENDORSED_CHIEF_LEGAL => 'Endorsed to Chief Legal',
-            LandTransferApplication::STATUS_ENDORSED_PARPO => 'Endorsed to PARPO II',
-            LandTransferApplication::STATUS_FOR_RELEASING => 'For Releasing',
-            LandTransferApplication::STATUS_RELEASED => 'Released',
-            LandTransferApplication::STATUS_DENIED => 'Denied',
-        ];
+        $statusOptions = LandTransferApplication::workflowStatusOptions();
 
         $municipalities = array_keys((array) config('dar_locations.municipalities', []));
 
@@ -64,9 +56,9 @@ class MonitoringReportController extends Controller
         $this->applyApplicationFilters($applications, $filters);
 
         $validDecisionStatuses = [
-            LandTransferApplication::STATUS_RELEASED,
-            LandTransferApplication::STATUS_DENIED,
             LandTransferApplication::STATUS_APPROVED,
+            LandTransferApplication::STATUS_DENIED,
+            LandTransferApplication::STATUS_RELEASED,
             LandTransferApplication::STATUS_NOT_APPROVED,
         ];
 
@@ -88,20 +80,17 @@ class MonitoringReportController extends Controller
             ->orderBy('decision_status')
             ->pluck('total', 'decision_status');
 
-        // These totals are already represented by the grouped queries above, so
-        // derive them in memory instead of asking PostgreSQL to recount the same set.
         $totalApplications = $statusCounts->sum(fn ($count) => (int) $count);
         $totalClearances = $clearanceCounts->sum(fn ($count) => (int) $count);
 
-        // Compute all hectare metrics with one scan of the filtered clearance set.
         $clearanceMetrics = (clone $clearances)
             ->selectRaw(
                 'COALESCE(SUM(total_area_hectares), 0) as total_area_hectares,
-                 COALESCE(SUM(CASE WHEN decision_status IN (?, ?) THEN total_area_hectares ELSE 0 END), 0) as released_area_hectares,
+                 COALESCE(SUM(CASE WHEN decision_status IN (?, ?) THEN total_area_hectares ELSE 0 END), 0) as approved_area_hectares,
                  COALESCE(SUM(CASE WHEN decision_status IN (?, ?) THEN total_area_hectares ELSE 0 END), 0) as denied_area_hectares',
                 [
-                    LandTransferApplication::STATUS_RELEASED,
                     LandTransferApplication::STATUS_APPROVED,
+                    LandTransferApplication::STATUS_RELEASED,
                     LandTransferApplication::STATUS_DENIED,
                     LandTransferApplication::STATUS_NOT_APPROVED,
                 ]
@@ -109,7 +98,9 @@ class MonitoringReportController extends Controller
             ->first();
 
         $totalClearanceArea = (float) ($clearanceMetrics?->total_area_hectares ?? 0);
-        $releasedOutputArea = (float) ($clearanceMetrics?->released_area_hectares ?? 0);
+        // Existing view variable retained for compatibility; this is Approved /
+        // GRANTED decision-output area, not proof of physical client release.
+        $releasedOutputArea = (float) ($clearanceMetrics?->approved_area_hectares ?? 0);
         $deniedOutputArea = (float) ($clearanceMetrics?->denied_area_hectares ?? 0);
 
         $municipalityBreakdown = (clone $applications)
@@ -119,15 +110,8 @@ class MonitoringReportController extends Controller
             ->orderBy('municipality')
             ->get();
 
-        $recentApplications = (clone $applications)
-            ->latest('created_at')
-            ->limit(10)
-            ->get();
-
-        $recentClearances = (clone $clearances)
-            ->latest('generated_at')
-            ->limit(10)
-            ->get();
+        $recentApplications = (clone $applications)->latest('created_at')->limit(10)->get();
+        $recentClearances = (clone $clearances)->latest('generated_at')->limit(10)->get();
 
         $filterLabels = collect([
             $filters['date_from'] ? 'From '.$filters['date_from'] : null,
@@ -154,7 +138,7 @@ class MonitoringReportController extends Controller
             'hasActiveFilters' => $filterLabels->isNotEmpty(),
             'statusOptions' => $statusOptions,
             'municipalities' => $municipalities,
-            'scopeNotice' => 'This report is generated for administrative monitoring, records management, and decision-support purposes only. Released and denied clearance outputs are recorded administrative results. They do not automatically transfer land ownership, mutate parcel ownership or registry records, or replace separate legal and administrative procedures.',
+            'scopeNotice' => 'This report is for administrative monitoring, records management, and decision support. Approved/Denied are final clearance decisions; release to the client is tracked separately. No clearance decision or release record automatically transfers land ownership, mutates parcel ownership or registry records, or replaces separate legal and administrative procedures.',
             'areaNotice' => 'Recorded output area is the summed parcel area preserved in final clearance snapshots. It is not a measurement of land whose legal ownership has been transferred.',
         ];
     }
@@ -166,29 +150,21 @@ class MonitoringReportController extends Controller
 
             $query->where(function (Builder $dateQuery) use ($filters, $createdFrom) {
                 $dateQuery
-                    // date_of_application is already a DATE column; wrapping it in
-                    // whereDate() would prevent normal B-tree index usage.
                     ->where('date_of_application', '>=', $filters['date_from'])
                     ->orWhere(function (Builder $fallback) use ($createdFrom) {
-                        $fallback
-                            ->whereNull('date_of_application')
-                            ->where('created_at', '>=', $createdFrom);
+                        $fallback->whereNull('date_of_application')->where('created_at', '>=', $createdFrom);
                     });
             });
         }
 
         if ($filters['date_to']) {
-            $createdBefore = CarbonImmutable::parse($filters['date_to'], config('app.timezone'))
-                ->startOfDay()
-                ->addDay();
+            $createdBefore = CarbonImmutable::parse($filters['date_to'], config('app.timezone'))->startOfDay()->addDay();
 
             $query->where(function (Builder $dateQuery) use ($filters, $createdBefore) {
                 $dateQuery
                     ->where('date_of_application', '<=', $filters['date_to'])
                     ->orWhere(function (Builder $fallback) use ($createdBefore) {
-                        $fallback
-                            ->whereNull('date_of_application')
-                            ->where('created_at', '<', $createdBefore);
+                        $fallback->whereNull('date_of_application')->where('created_at', '<', $createdBefore);
                     });
             });
         }
@@ -204,9 +180,9 @@ class MonitoringReportController extends Controller
                     LandTransferApplication::STATUS_PENDING_REVIEW,
                     LandTransferApplication::STATUS_DRAFT,
                 ],
-                LandTransferApplication::STATUS_RELEASED => [
-                    LandTransferApplication::STATUS_RELEASED,
+                LandTransferApplication::STATUS_APPROVED => [
                     LandTransferApplication::STATUS_APPROVED,
+                    LandTransferApplication::STATUS_RELEASED,
                 ],
                 LandTransferApplication::STATUS_DENIED => [
                     LandTransferApplication::STATUS_DENIED,
