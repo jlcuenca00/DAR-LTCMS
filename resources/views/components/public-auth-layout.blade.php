@@ -12,6 +12,12 @@
     @include('auth.partials.styles')
     <style>
         body { overflow: auto; }
+        .public-auth .login-bg { position: fixed; inset: 0; background-size: cover; background-position: center; }
+        .public-auth .logo-slot { flex-shrink: 0; }
+        .public-auth a.login-button { display: block; color: #fff; text-align: center; text-decoration: none; }
+        .public-auth .registration-status-icon { display: grid; place-items: center; width: 56px; height: 56px; margin: 1rem auto; border-radius: 50%; background: #15803d; color: #fff; }
+        .public-auth .registration-status-icon.declined { background: #b91c1c; }
+        .public-auth .registration-status-icon svg { width: 28px; height: 28px; }
         .public-auth .login-content { margin-top: 0; }
         .public-auth .login-content.wide { max-width: 800px; }
         .public-auth .login-title { letter-spacing: 0 !important; line-height: 1.2; }

@@ -62,7 +62,7 @@
 
                 @if ($googleClientId)
                     <div style="margin-top: 1.4rem; display: flex; justify-content: center;">
-                        <script src="https://accounts.google.com/gsi/client" async defer></script>
+                        <script src="https://accounts.google.com/gsi/client?hl=en" async defer></script>
                         <div id="g_id_onload"
                             data-client_id="{{ $googleClientId }}"
                             data-callback="handleGoogleLogin"
@@ -74,7 +74,8 @@
                             data-size="large"
                             data-theme="outline"
                             data-text="continue_with"
-                            data-shape="rectangular"
+                            data-shape="pill"
+                            data-locale="en"
                             data-logo_alignment="left">
                         </div>
                         <form id="google-login-form" method="POST" action="{{ route('register.google') }}" style="display: none;">

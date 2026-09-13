@@ -36,7 +36,8 @@
                     data-size="large"
                     data-theme="outline"
                     data-text="continue_with"
-                    data-shape="rectangular"
+                    data-shape="pill"
+                    data-locale="en"
                     data-logo_alignment="left">
                 </div>
             </div>
@@ -120,6 +121,6 @@
                 document.getElementById('google-registration-form').submit();
             };
         </script>
-        <script src="https://accounts.google.com/gsi/client" async defer></script>
+        <script src="https://accounts.google.com/gsi/client?hl=en" async defer></script>
     @endif
 </x-public-auth-layout>
