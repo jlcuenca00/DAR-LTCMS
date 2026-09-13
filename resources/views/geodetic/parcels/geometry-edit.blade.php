@@ -52,16 +52,6 @@
         .geo-map-editor-presence.is-expired { border-color: #fecaca; background: #fef2f2; color: #991b1b; }
         .geo-map-editor-presence strong { font-weight: 900; }
 
-        .geo-map-editor-note {
-            margin-top: 12px;
-            padding: 12px 13px;
-            border: 1px solid #dbe7df;
-            border-radius: 9px;
-            background: #f7fbf8;
-            color: #3f5d4a;
-            font-size: 11px;
-            line-height: 1.5;
-        }
         .geo-map-editor-actions { margin-top: 16px; display: flex; flex-wrap: wrap; gap: 9px; }
         .geo-map-editor-button {
             display: inline-flex;
@@ -182,10 +172,6 @@
                             'rows' => 5,
                             'requireGeometry' => true,
                         ])
-
-                        <div class="geo-map-editor-note">
-                            Use at least <strong>3 coordinate points</strong>. The first point is automatically repeated to close the polygon. Undo/Redo works with the buttons or <strong>Ctrl/Cmd+Z</strong>, <strong>Ctrl+Y</strong>, and <strong>Ctrl/Cmd+Shift+Z</strong>. Only the parcel's map geometry is editable here; ownership, landholding, application, title, registry, and clearance records are not changed.
-                        </div>
 
                         <div class="geo-map-editor-actions">
                             <button type="submit" class="geo-map-editor-button" data-save-geometry>
