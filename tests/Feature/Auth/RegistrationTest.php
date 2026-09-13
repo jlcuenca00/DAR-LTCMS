@@ -42,8 +42,12 @@ class RegistrationTest extends TestCase
         $this->assertAuthenticatedAs($user);
         Notification::assertSentTo($user, LandownerRegistrationReceived::class);
         $mail = (new LandownerRegistrationReceived)->toMail($user);
-        $this->assertSame(route('login'), $mail->actionUrl);
-        $this->assertStringContainsString('not an approval', implode(' ', $mail->introLines));
+        $this->assertSame('emails.landowner-registration-received', $mail->view);
+        $html = view($mail->view, $mail->viewData)->render();
+        $this->assertStringContainsString(route('login'), $html);
+        $this->assertStringContainsString('not an approval', $html);
+        $this->assertStringContainsString('Pending DAR review', $html);
+        $this->assertStringContainsString(asset('images/favicon.png'), $html);
     }
 
     public function test_existing_google_registration_shows_conflict_without_signing_in(): void
