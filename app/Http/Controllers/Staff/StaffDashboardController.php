@@ -23,55 +23,57 @@ class StaffDashboardController extends Controller
                 ->sum(fn ($status) => (int) ($statusCounts[$status] ?? 0));
         };
 
-        // Legacy draft/pending_review records are displayed as Pending Review by
-        // Legal Officer, so dashboard counts and previews must treat them the same way.
-        $pendingLegalStatuses = array_values(array_unique([
+        // Intake/compliance work includes compatibility rows from the previous
+        // draft/pending_review workflow plus the current AO4 completeness,
+        // compliance-return, and cashier/O.R. stages.
+        $intakeStatuses = array_values(array_unique([
             LandTransferApplication::STATUS_PENDING_LEGAL_REVIEW,
+            LandTransferApplication::STATUS_RETURNED_FOR_COMPLIANCE,
+            LandTransferApplication::STATUS_AWAITING_PAYMENT,
             LandTransferApplication::STATUS_DRAFT,
             LandTransferApplication::STATUS_PENDING_REVIEW,
         ]));
 
-        // Keep the three dashboard work queues mutually exclusive. Active Workflow
-        // represents only the endorsement stages between initial legal review and release.
+        // Active workflow represents internal verification/evaluation handoffs
+        // after intake and before the PARPO II final-decision gate.
         $workflowStatuses = [
             LandTransferApplication::STATUS_ENDORSED_LTI,
+            LandTransferApplication::STATUS_RETURNED_TO_LEGAL,
+            LandTransferApplication::STATUS_LEGAL_EVALUATION,
             LandTransferApplication::STATUS_ENDORSED_CHIEF_LEGAL,
             LandTransferApplication::STATUS_ENDORSED_PARPO,
         ];
 
-        // This broader set is used for operational attention and stale-record monitoring.
         $activeStatuses = array_values(array_unique(array_merge(
-            $pendingLegalStatuses,
+            $intakeStatuses,
             $workflowStatuses,
             [LandTransferApplication::STATUS_FOR_RELEASING]
         )));
 
-        $pendingLegalReview = $countStatuses($pendingLegalStatuses);
+        $intakeAndCompliance = $countStatuses($intakeStatuses);
         $activeWorkflow = $countStatuses($workflowStatuses);
-        $forReleasing = (int) (
-            $statusCounts[LandTransferApplication::STATUS_FOR_RELEASING] ?? 0
-        );
+        $decisionPending = (int) ($statusCounts[LandTransferApplication::STATUS_FOR_RELEASING] ?? 0);
 
         $workQueue = [
             [
-                'label' => 'Pending Legal Review',
-                'description' => 'Awaiting initial legal action',
-                'value' => $pendingLegalReview,
+                'label' => 'Intake & Compliance',
+                'description' => 'Legal completeness, compliance, and O.R. recording',
+                'value' => $intakeAndCompliance,
                 'icon' => 'fa-scale-balanced',
-                'filter' => LandTransferApplication::STATUS_PENDING_LEGAL_REVIEW,
+                'filter' => 'intake_compliance',
             ],
             [
                 'label' => 'Active Workflow',
-                'description' => 'Applications in endorsement stages',
+                'description' => 'LTID, Legal, Chief Legal, and PARPO handoffs',
                 'value' => $activeWorkflow,
                 'icon' => 'fa-arrows-rotate',
                 'filter' => 'active_workflow',
             ],
             [
-                'label' => 'For Releasing',
-                'description' => 'Ready for clearance release',
-                'value' => $forReleasing,
-                'icon' => 'fa-file-export',
+                'label' => 'PARPO II Decision Pending',
+                'description' => 'Complete records awaiting final Approved/Denied action',
+                'value' => $decisionPending,
+                'icon' => 'fa-gavel',
                 'filter' => LandTransferApplication::STATUS_FOR_RELEASING,
             ],
         ];
@@ -83,11 +85,15 @@ class StaffDashboardController extends Controller
                     WHEN status = ? THEN 0
                     WHEN status = ? THEN 1
                     WHEN status = ? THEN 2
-                    ELSE 3
+                    WHEN status = ? THEN 3
+                    WHEN status = ? THEN 4
+                    ELSE 5
                 END',
                 [
                     LandTransferApplication::STATUS_ENDORSED_PARPO,
                     LandTransferApplication::STATUS_ENDORSED_CHIEF_LEGAL,
+                    LandTransferApplication::STATUS_LEGAL_EVALUATION,
+                    LandTransferApplication::STATUS_RETURNED_TO_LEGAL,
                     LandTransferApplication::STATUS_ENDORSED_LTI,
                 ]
             )
@@ -95,28 +101,28 @@ class StaffDashboardController extends Controller
             ->limit(6)
             ->get();
 
-        $pendingLegalPreview = LandTransferApplication::query()
-            ->whereIn('status', $pendingLegalStatuses)
+        $intakePreview = LandTransferApplication::query()
+            ->whereIn('status', $intakeStatuses)
             ->latest('updated_at')
             ->limit(6)
             ->get();
 
-        $forReleasingPreview = LandTransferApplication::query()
+        $decisionPendingPreview = LandTransferApplication::query()
             ->where('status', LandTransferApplication::STATUS_FOR_RELEASING)
             ->latest('updated_at')
             ->limit(6)
             ->get();
 
-        // Each queue contributes its own preview candidates. The browser then shows
-        // only the selected queue, capped at six visible rows.
+        // Each queue contributes its own preview candidates. The browser then
+        // shows only the selected queue, capped at six visible rows.
         $actionApplications = $activeWorkflowPreview
-            ->concat($pendingLegalPreview)
-            ->concat($forReleasingPreview)
+            ->concat($intakePreview)
+            ->concat($decisionPendingPreview)
             ->unique('id')
             ->values();
 
-        // Timestamp ranges keep PostgreSQL indexes usable; whereDate() would wrap the
-        // indexed timestamp column in a database function.
+        // Timestamp ranges keep PostgreSQL indexes usable; whereDate() would wrap
+        // the indexed timestamp column in a database function.
         $todayStart = now()->startOfDay();
         $tomorrowStart = $todayStart->copy()->addDay();
 
@@ -151,8 +157,9 @@ class StaffDashboardController extends Controller
             ],
         ];
 
-        // Fetch the review-requirement catalog once, then partition the same ordered
-        // collection so transferor/transferee checklist semantics remain unchanged.
+        // Fetch the review-requirement catalog once, then partition the same
+        // ordered collection so transferor/transferee checklist semantics remain
+        // unchanged. These counts are operational aids, not legal determinations.
         $reviewRequirements = RequiredDocument::query()
             ->whereIn('applies_to', ['transferor', 'transferee'])
             ->orderBy('blocks_acceptance', 'desc')
@@ -194,8 +201,6 @@ class StaffDashboardController extends Controller
                 ->whereNotIn('id', $completeRequirementApplicationIds())
                 ->count();
 
-            // Every active application is either complete or incomplete for this same
-            // blocking requirement set, so avoid issuing a second inverse count query.
             $requirementsCompleteCount = max(0, $activeApplicationCount - $incompleteRequirementsCount);
         } else {
             $incompleteRequirementsCount = 0;
