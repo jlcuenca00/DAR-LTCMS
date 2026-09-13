@@ -276,7 +276,7 @@ class NotificationSystemTest extends TestCase
             'transferee_landowner_id' => $landowner->id,
             'municipality' => 'Dumaguete City',
             'barangay' => 'Bantayan',
-            'status' => LandTransferApplication::STATUS_PENDING_LEGAL_REVIEW,
+            'status' => LandTransferApplication::STATUS_FOR_RELEASING,
             'encoded_by' => $staffUser->id,
         ]);
 
