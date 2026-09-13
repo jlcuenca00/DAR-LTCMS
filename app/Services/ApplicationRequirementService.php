@@ -28,6 +28,17 @@ class ApplicationRequirementService
         $requirements = $this->requirements();
         $referenceDate = $application->date_of_application ?: now();
 
+        /*
+         * The parcel link is an intake prerequisite for the documentary engine:
+         * without the subject parcel, the system cannot safely determine whether
+         * titled-land or untitled-land evidence applies. This is a data-integrity
+         * gate only; linking a parcel never changes ownership.
+         */
+        $structuralErrors = [];
+        if ($application->applicationParcels->isEmpty()) {
+            $structuralErrors['parcel'] = 'Link at least one subject Parcel record before completing the documentary intake review.';
+        }
+
         $rows = $requirements->map(function (RequiredDocument $requirement) use ($application, $uploaded, $referenceDate) {
             $applicable = $requirement->appliesToApplication($application);
             $blocking = $requirement->blocksApplication($application);
@@ -55,16 +66,19 @@ class ApplicationRequirementService
 
         $blockingRows = $rows->where('blocking', true)->values();
         $incomplete = $blockingRows->where('complete', false)->values();
+        $documentErrors = $this->messagesFor($incomplete);
+        $errors = array_merge($structuralErrors, $documentErrors);
 
         return [
             'reference_date' => $referenceDate->toDateString(),
             'requirements' => $rows->all(),
             'blocking_count' => $blockingRows->count(),
             'complete_blocking_count' => $blockingRows->where('complete', true)->count(),
-            'incomplete_count' => $incomplete->count(),
-            'complete' => $incomplete->isEmpty(),
-            'errors' => $this->messagesFor($incomplete),
-            'scope_note' => 'Document completeness and age checks are assistive administrative validations only and are not final legal determinations.',
+            'incomplete_count' => $incomplete->count() + count($structuralErrors),
+            'complete' => $errors === [],
+            'errors' => $errors,
+            'has_subject_parcel' => $application->applicationParcels->isNotEmpty(),
+            'scope_note' => 'Document completeness, age, and parcel-link checks are assistive administrative validations only and are not final legal determinations or ownership-transfer actions.',
         ];
     }
 
