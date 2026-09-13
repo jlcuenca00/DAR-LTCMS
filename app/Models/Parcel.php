@@ -41,6 +41,7 @@ class Parcel extends Model
         'tct' => 'TCT - Transfer Certificate of Title',
         'cloa' => 'CLOA - Certificate of Land Ownership Award',
         'ep' => 'EP - Emancipation Patent',
+        'untitled' => 'Untitled - Tax Declaration / Assessor Reference',
     ];
 
     public const ROD_OFFICES = [
