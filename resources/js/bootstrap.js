@@ -25,6 +25,7 @@ import './ui-ux-system';
 import './ui-ux-last-mile';
 import './ui-ux-public';
 import '../css/staff-dashboard-hero.css';
+import '../css/dashboard-citizens-charter.css';
 import '../css/application-page-cleanup.css';
 import '../css/staff-list-filters.css';
 import '../css/application-table-toolbar.css';
