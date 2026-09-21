@@ -86,6 +86,52 @@ class ApplicationWorkflowReadinessTest extends TestCase
         );
     }
 
+    public function test_final_denial_rechecks_workflow_prerequisites_but_can_record_an_adverse_decision(): void
+    {
+        $staff = $this->staffUser();
+
+        $missingParcel = $this->application(
+            $staff,
+            LandTransferApplication::STATUS_FOR_RELEASING,
+            'READINESS-DENIAL-NO-PARCEL'
+        );
+        $this->completeForm4($missingParcel, 'denial');
+        $this->completePaymentAndCsw($missingParcel, $staff);
+
+        $this->actingAs($staff)
+            ->post(route('staff.applications.not_approved', $missingParcel), [
+                'final_decision_confirmation' => '1',
+                'decision_reason' => 'Adverse PARPO II decision.',
+            ])
+            ->assertSessionHasErrors(['validation', 'parcel']);
+
+        $this->assertSame(
+            LandTransferApplication::STATUS_FOR_RELEASING,
+            $missingParcel->fresh()->status
+        );
+
+        $complete = $this->application(
+            $staff,
+            LandTransferApplication::STATUS_FOR_RELEASING,
+            'READINESS-DENIAL-COMPLETE'
+        );
+        $this->linkParcel($complete, 'READINESS-DENIAL-COMPLETE-PARCEL');
+        $this->completeForm4($complete, 'denial');
+        $this->completePaymentAndCsw($complete, $staff);
+
+        $this->actingAs($staff)
+            ->post(route('staff.applications.not_approved', $complete), [
+                'final_decision_confirmation' => '1',
+                'decision_reason' => 'Substantive review supports denial.',
+            ])
+            ->assertSessionHas('success');
+
+        $this->assertSame(
+            LandTransferApplication::STATUS_DENIED,
+            $complete->fresh()->status
+        );
+    }
+
     public function test_complete_application_can_follow_the_full_citizens_charter_flow_then_release_the_output(): void
     {
         $staff = $this->staffUser();
