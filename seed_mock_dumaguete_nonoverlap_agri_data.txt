@@ -6,14 +6,17 @@ BEGIN;
 --
 -- Map geometry notes:
 -- * Parcels are illustrative demo polygons only, not cadastral/legal boundaries.
--- * The three clusters were repositioned away from the visible road centerlines in
---   the current DAR-LTCMS basemap reference and are intentionally separated.
+-- * The demo parcels are distributed across four rural agricultural clusters in
+--   San Jose, Valencia, and Dauin rather than the dense Dumaguete street grid.
+-- * Parcel shapes are irregular, separated, and intentionally offset from barangay
+--   centers/visible road corridors to read as agricultural holdings on the basemap.
 -- * All seeded Parcel records are marked Private Agricultural Land.
 -- * Final Approved/Denied demo applications leave the active landholding with the
 --   transferor. No ownership/registry mutation is simulated.
 --
--- Safe rerun rule: only records using the DGT-AGRI / DGT-DEMO identifiers and the
--- reserved 09996 demo contact range are removed.
+-- Safe rerun rule: only records using the current NOR-AGRI / NOR-DEMO identifiers,
+-- previous DGT-AGRI / DGT-DEMO demo identifiers, and the reserved 09996 demo
+-- contact range are removed.
 
 -- Capture only known DAR-LTCMS demo rows before any linked rows are removed.
 -- This deliberately avoids blanket deletion of every 2026-DGT-* application code.
@@ -22,11 +25,13 @@ INSERT INTO dar_demo_application_ids (id)
 SELECT id
 FROM land_transfer_applications
 WHERE application_code LIKE '2026-DGT-DEMO-%'
+   OR application_code LIKE '2026-NOR-DEMO-%'
 UNION
 SELECT DISTINCT ap.land_transfer_application_id
 FROM application_parcels ap
 JOIN parcels p ON p.id = ap.parcel_id
-WHERE p.parcel_code LIKE 'DGT-AGRI-%';
+WHERE p.parcel_code LIKE 'DGT-AGRI-%'
+   OR p.parcel_code LIKE 'NOR-AGRI-%';
 
 CREATE TEMP TABLE dar_demo_landowner_ids (id bigint PRIMARY KEY) ON COMMIT DROP;
 INSERT INTO dar_demo_landowner_ids (id)
@@ -34,6 +39,7 @@ SELECT DISTINCT lh.landowner_id
 FROM landholdings lh
 JOIN parcels p ON p.id = lh.parcel_id
 WHERE p.parcel_code LIKE 'DGT-AGRI-%'
+   OR p.parcel_code LIKE 'NOR-AGRI-%'
 UNION
 SELECT id
 FROM landowners
@@ -58,27 +64,31 @@ DELETE FROM land_transfer_applications
 WHERE id IN (SELECT id FROM dar_demo_application_ids);
 
 DELETE FROM legacy_records
-WHERE parcel_code LIKE 'DGT-AGRI-%'
+WHERE (parcel_code LIKE 'DGT-AGRI-%' OR parcel_code LIKE 'NOR-AGRI-%')
    OR source_book IN (
         'Dumaguete Mock Agri Map 2026',
         'Dumaguete Agri Map Cluster 2026',
         'Dumaguete Realistic Agri Parcels 2026',
-        'DAR-LTCMS Realistic Agricultural Demo 2026'
+        'DAR-LTCMS Provincial Agricultural Demo 2026'
    );
 
 DELETE FROM source_record_packages
-WHERE parcel_code LIKE 'DGT-AGRI-%'
+WHERE (parcel_code LIKE 'DGT-AGRI-%' OR parcel_code LIKE 'NOR-AGRI-%')
    OR source_book IN (
         'Dumaguete Mock Agri Map 2026',
         'Dumaguete Agri Map Cluster 2026',
         'Dumaguete Realistic Agri Parcels 2026',
-        'DAR-LTCMS Realistic Agricultural Demo 2026'
+        'DAR-LTCMS Provincial Agricultural Demo 2026'
    );
 
 DELETE FROM landholdings
-WHERE parcel_id IN (SELECT id FROM parcels WHERE parcel_code LIKE 'DGT-AGRI-%');
+WHERE parcel_id IN (
+    SELECT id FROM parcels
+    WHERE parcel_code LIKE 'DGT-AGRI-%' OR parcel_code LIKE 'NOR-AGRI-%'
+);
 
-DELETE FROM parcels WHERE parcel_code LIKE 'DGT-AGRI-%';
+DELETE FROM parcels
+WHERE parcel_code LIKE 'DGT-AGRI-%' OR parcel_code LIKE 'NOR-AGRI-%';
 
 DELETE FROM landowners
 WHERE id IN (SELECT id FROM dar_demo_landowner_ids);
@@ -125,9 +135,10 @@ BEGIN
 
     FOR r IN
         SELECT *
-        FROM jsonb_to_recordset('[{"seq":1,"barangay":"Balugo","transferor":"Roberto Canlas","tf_first":"Roberto","tf_last":"Canlas","owner_status":"married","spouse":"Elena Canlas","transferee":"Ana Marie Rosales","tr_first":"Ana Marie","tr_last":"Rosales","crop":"Rice / corn","status":"pending_legal_review","release_status":"not_ready","title_type":"tct","area":0.998,"poly":[[123.27535,9.33435],[123.27642,9.33428],[123.27636,9.3351],[123.27528,9.33506],[123.27535,9.33435]]},{"seq":2,"barangay":"Balugo","transferor":"Marites Dela Cruz","tf_first":"Marites","tf_last":"Dela Cruz","owner_status":"single","spouse":null,"transferee":"Miguel Reyes","tr_first":"Miguel","tr_last":"Reyes","crop":"Corn / vegetables","status":"returned_for_compliance","release_status":"not_ready","title_type":"tct","area":1.132,"poly":[[123.27655,9.3343],[123.27772,9.33436],[123.27764,9.33516],[123.27649,9.3351],[123.27655,9.3343]]},{"seq":3,"barangay":"Balugo","transferor":"Alfredo Villanueva","tf_first":"Alfredo","tf_last":"Villanueva","owner_status":"married","spouse":"Rosa Villanueva","transferee":"Patricia Lim","tr_first":"Patricia","tr_last":"Lim","crop":"Sugarcane","status":"awaiting_payment","release_status":"not_ready","title_type":"tct","area":1.107,"poly":[[123.27786,9.33438],[123.27905,9.33431],[123.27896,9.33507],[123.27778,9.33517],[123.27786,9.33438]]},{"seq":4,"barangay":"Balugo","transferor":"Lourdes Mendoza","tf_first":"Lourdes","tf_last":"Mendoza","owner_status":"widowed","spouse":null,"transferee":"Jonathan Uy","tr_first":"Jonathan","tr_last":"Uy","crop":"Coconut / banana","status":"endorsed_lti","release_status":"not_ready","title_type":"untitled","area":1.214,"poly":[[123.27528,9.33325],[123.27638,9.3332],[123.27642,9.33412],[123.27534,9.33416],[123.27528,9.33325]]},{"seq":5,"barangay":"Balugo","transferor":"Cesar Abellanosa","tf_first":"Cesar","tf_last":"Abellanosa","owner_status":"married","spouse":"Lina Abellanosa","transferee":"Clarissa Tan","tr_first":"Clarissa","tr_last":"Tan","crop":"Corn / root crops","status":"returned_to_legal","release_status":"not_ready","title_type":"tct","area":1.345,"poly":[[123.27654,9.33318],[123.27768,9.33327],[123.27772,9.33415],[123.27643,9.33412],[123.27654,9.33318]]},{"seq":6,"barangay":"Balugo","transferor":"Imelda Cabahug","tf_first":"Imelda","tf_last":"Cabahug","owner_status":"single","spouse":null,"transferee":"Rafael Gatchalian","tr_first":"Rafael","tr_last":"Gatchalian","crop":"Vegetables","status":"legal_evaluation","release_status":"not_ready","title_type":"tct","area":1.327,"poly":[[123.27782,9.33329],[123.279,9.3332],[123.27905,9.3341],[123.27776,9.33416],[123.27782,9.33329]]},{"seq":7,"barangay":"Cantil-e","transferor":"Narciso Alegre","tf_first":"Narciso","tf_last":"Alegre","owner_status":"married","spouse":"Teresa Alegre","transferee":"Sophia Velasco","tr_first":"Sophia","tr_last":"Velasco","crop":"Rice / corn","status":"endorsed_chief_legal","release_status":"not_ready","title_type":"oct","area":0.881,"poly":[[123.28135,9.33815],[123.28228,9.3381],[123.28224,9.33888],[123.28128,9.33891],[123.28135,9.33815]]},{"seq":8,"barangay":"Cantil-e","transferor":"Rosario Toring","tf_first":"Rosario","tf_last":"Toring","owner_status":"single","spouse":null,"transferee":"Ethan Sarmiento","tr_first":"Ethan","tr_last":"Sarmiento","crop":"Sugarcane","status":"endorsed_parpo","release_status":"not_ready","title_type":"tct","area":1.058,"poly":[[123.2824,9.33808],[123.28345,9.33815],[123.28336,9.33894],[123.28236,9.33888],[123.2824,9.33808]]},{"seq":9,"barangay":"Cantil-e","transferor":"Felix Montealto","tf_first":"Felix","tf_last":"Montealto","owner_status":"separated","spouse":null,"transferee":"Bea Rosillo","tr_first":"Bea","tr_last":"Rosillo","crop":"Coconut / banana","status":"for_releasing","release_status":"not_ready","title_type":"tct","area":0.926,"poly":[[123.28357,9.33817],[123.28445,9.33813],[123.28451,9.33887],[123.28352,9.33892],[123.28357,9.33817]]},{"seq":10,"barangay":"Cantil-e","transferor":"Nena Escobal","tf_first":"Nena","tf_last":"Escobal","owner_status":"widowed","spouse":null,"transferee":"Daniel Corvera","tr_first":"Daniel","tr_last":"Corvera","crop":"Corn / vegetables","status":"approved","release_status":"not_ready","title_type":"tct","area":0.916,"poly":[[123.28128,9.33722],[123.28223,9.33718],[123.28228,9.33798],[123.28135,9.33802],[123.28128,9.33722]]},{"seq":11,"barangay":"Cantil-e","transferor":"Gerardo Bacalso","tf_first":"Gerardo","tf_last":"Bacalso","owner_status":"married","spouse":"Lorna Bacalso","transferee":"Angela Matic","tr_first":"Angela","tr_last":"Matic","crop":"Mixed crops","status":"approved","release_status":"ready_for_release","title_type":"tct","area":1.11,"poly":[[123.28236,9.33716],[123.28347,9.33722],[123.28345,9.338],[123.28228,9.33798],[123.28236,9.33716]]},{"seq":12,"barangay":"Cadawinonan","transferor":"Teresita Mabunay","tf_first":"Teresita","tf_last":"Mabunay","owner_status":"single","spouse":null,"transferee":"Marco Silorio","tr_first":"Marco","tr_last":"Silorio","crop":"Coconut / banana","status":"approved","release_status":"released","title_type":"tct","area":1.04,"poly":[[123.27545,9.33118],[123.27645,9.3311],[123.27652,9.33192],[123.27538,9.33196],[123.27545,9.33118]]},{"seq":13,"barangay":"Cadawinonan","transferor":"Mauro Labrador","tf_first":"Mauro","tf_last":"Labrador","owner_status":"married","spouse":"Celia Labrador","transferee":"Nadine Erames","tr_first":"Nadine","tr_last":"Erames","crop":"Rice / corn","status":"denied","release_status":"not_ready","title_type":"untitled","area":1.145,"poly":[[123.27658,9.33108],[123.27772,9.33116],[123.27764,9.33198],[123.27652,9.33192],[123.27658,9.33108]]},{"seq":14,"barangay":"Cadawinonan","transferor":"Elsa Remulta","tf_first":"Elsa","tf_last":"Remulta","owner_status":"single","spouse":null,"transferee":"Claire Mendoza","tr_first":"Claire","tr_last":"Mendoza","crop":"Sugarcane","status":"denied","release_status":"released","title_type":"tct","area":1.123,"poly":[[123.27784,9.33118],[123.27886,9.3311],[123.27893,9.33191],[123.27782,9.33198],[123.27784,9.33118]]},{"seq":15,"barangay":"Cadawinonan","transferor":"Danilo Catan","tf_first":"Danilo","tf_last":"Catan","owner_status":"married","spouse":"Myrna Catan","transferee":"Ian Villaflores","tr_first":"Ian","tr_last":"Villaflores","crop":"Corn / root crops","status":"endorsed_lti","release_status":"not_ready","title_type":"tct","area":1.045,"poly":[[123.27538,9.33018],[123.2765,9.33022],[123.27645,9.33098],[123.27542,9.33102],[123.27538,9.33018]]},{"seq":16,"barangay":"Cadawinonan","transferor":"Perlita Yap","tf_first":"Perlita","tf_last":"Yap","owner_status":"widowed","spouse":null,"transferee":"Daphne Solis","tr_first":"Daphne","tr_last":"Solis","crop":"Vegetables / banana","status":"pending_legal_review","release_status":"not_ready","title_type":"tct","area":1.169,"poly":[[123.27661,9.3302],[123.27776,9.33014],[123.27772,9.331],[123.27652,9.33098],[123.27661,9.3302]]}]'::jsonb) AS x(
+        FROM jsonb_to_recordset('[{"seq":1,"barangay":"Basak","transferor":"Roberto Canlas","tf_first":"Roberto","tf_last":"Canlas","owner_status":"married","spouse":"Elena Canlas","transferee":"Ana Marie Rosales","tr_first":"Ana Marie","tr_last":"Rosales","crop":"Sweet corn / vegetables","status":"pending_legal_review","release_status":"not_ready","title_type":"tct","area":1.141,"poly":[[123.208328,9.39916],[123.209282,9.399268],[123.209237,9.399993],[123.208801,9.400205],[123.208107,9.399967],[123.208328,9.39916]],"municipality":"San Jose"},{"seq":2,"barangay":"Basak","transferor":"Marites Dela Cruz","tf_first":"Marites","tf_last":"Dela Cruz","owner_status":"single","spouse":null,"transferee":"Miguel Reyes","tr_first":"Miguel","tr_last":"Reyes","crop":"Corn / forage","status":"returned_for_compliance","release_status":"not_ready","title_type":"tct","area":1.114,"poly":[[123.210822,9.399984],[123.211789,9.399721],[123.212099,9.400238],[123.211879,9.400656],[123.210996,9.40071],[123.210822,9.399984]],"municipality":"San Jose"},{"seq":3,"barangay":"Basak","transferor":"Alfredo Villanueva","tf_first":"Alfredo","tf_last":"Villanueva","owner_status":"married","spouse":"Rosa Villanueva","transferee":"Patricia Lim","tr_first":"Patricia","tr_last":"Lim","crop":"Sweet corn / legumes","status":"awaiting_payment","release_status":"not_ready","title_type":"tct","area":1.389,"poly":[[123.213129,9.397492],[123.21408,9.398168],[123.213696,9.398856],[123.213032,9.398751],[123.212666,9.398218],[123.213129,9.397492]],"municipality":"San Jose"},{"seq":4,"barangay":"Basak","transferor":"Lourdes Mendoza","tf_first":"Lourdes","tf_last":"Mendoza","owner_status":"widowed","spouse":null,"transferee":"Jonathan Uy","tr_first":"Jonathan","tr_last":"Uy","crop":"Vegetables / corn","status":"endorsed_lti","release_status":"not_ready","title_type":"untitled","area":1.132,"poly":[[123.209673,9.396189],[123.210552,9.39572],[123.210921,9.396316],[123.210692,9.396797],[123.209991,9.396894],[123.209673,9.396189]],"municipality":"San Jose"},{"seq":5,"barangay":"Apolong","transferor":"Cesar Abellanosa","tf_first":"Cesar","tf_last":"Abellanosa","owner_status":"married","spouse":"Lina Abellanosa","transferee":"Clarissa Tan","tr_first":"Clarissa","tr_last":"Tan","crop":"Highland vegetables","status":"returned_to_legal","release_status":"not_ready","title_type":"tct","area":0.924,"poly":[[123.202357,9.283709],[123.203137,9.283342],[123.203454,9.283917],[123.203223,9.284284],[123.202579,9.284429],[123.202357,9.283709]],"municipality":"Valencia"},{"seq":6,"barangay":"Apolong","transferor":"Imelda Cabahug","tf_first":"Imelda","tf_last":"Cabahug","owner_status":"single","spouse":null,"transferee":"Rafael Gatchalian","tr_first":"Rafael","tr_last":"Gatchalian","crop":"Corn / root crops","status":"legal_evaluation","release_status":"not_ready","title_type":"tct","area":1.493,"poly":[[123.205142,9.284104],[123.206293,9.284255],[123.206386,9.284944],[123.20596,9.285292],[123.204994,9.284955],[123.205142,9.284104]],"municipality":"Valencia"},{"seq":7,"barangay":"Apolong","transferor":"Narciso Alegre","tf_first":"Narciso","tf_last":"Alegre","owner_status":"married","spouse":"Teresa Alegre","transferee":"Sophia Velasco","tr_first":"Sophia","tr_last":"Velasco","crop":"Banana / vegetables","status":"endorsed_chief_legal","release_status":"not_ready","title_type":"oct","area":1.137,"poly":[[123.206808,9.281859],[123.207868,9.281891],[123.207933,9.282599],[123.207381,9.282851],[123.206833,9.282634],[123.206808,9.281859]],"municipality":"Valencia"},{"seq":8,"barangay":"Apolong","transferor":"Rosario Toring","tf_first":"Rosario","tf_last":"Toring","owner_status":"single","spouse":null,"transferee":"Ethan Sarmiento","tr_first":"Ethan","tr_last":"Sarmiento","crop":"Corn / mixed crops","status":"endorsed_parpo","release_status":"not_ready","title_type":"tct","area":1.398,"poly":[[123.204011,9.280342],[123.20507,9.280674],[123.204872,9.281425],[123.204305,9.281616],[123.203686,9.281138],[123.204011,9.280342]],"municipality":"Valencia"},{"seq":9,"barangay":"Baslay","transferor":"Felix Montealto","tf_first":"Felix","tf_last":"Montealto","owner_status":"separated","spouse":null,"transferee":"Bea Rosillo","tr_first":"Bea","tr_last":"Rosillo","crop":"Coffee / banana","status":"for_releasing","release_status":"not_ready","title_type":"tct","area":1.141,"poly":[[123.205535,9.213503],[123.20644,9.21382],[123.206231,9.214517],[123.205758,9.214626],[123.205136,9.214241],[123.205535,9.213503]],"municipality":"Dauin"},{"seq":10,"barangay":"Baslay","transferor":"Nena Escobal","tf_first":"Nena","tf_last":"Escobal","owner_status":"widowed","spouse":null,"transferee":"Daniel Corvera","tr_first":"Daniel","tr_last":"Corvera","crop":"Coffee / coconut","status":"approved","release_status":"not_ready","title_type":"tct","area":1,"poly":[[123.207918,9.21458],[123.208796,9.214222],[123.209147,9.214673],[123.20899,9.215092],[123.208166,9.215243],[123.207918,9.21458]],"municipality":"Dauin"},{"seq":11,"barangay":"Baslay","transferor":"Gerardo Bacalso","tf_first":"Gerardo","tf_last":"Bacalso","owner_status":"married","spouse":"Lorna Bacalso","transferee":"Angela Matic","tr_first":"Angela","tr_last":"Matic","crop":"Coffee / fruit trees","status":"approved","release_status":"ready_for_release","title_type":"tct","area":1.525,"poly":[[123.210019,9.211962],[123.211159,9.212412],[123.210945,9.213207],[123.210244,9.213266],[123.209735,9.212816],[123.210019,9.211962]],"municipality":"Dauin"},{"seq":12,"barangay":"Baslay","transferor":"Teresita Mabunay","tf_first":"Teresita","tf_last":"Mabunay","owner_status":"single","spouse":null,"transferee":"Marco Silorio","tr_first":"Marco","tr_last":"Silorio","crop":"Banana / root crops","status":"approved","release_status":"released","title_type":"tct","area":1.261,"poly":[[123.206794,9.210916],[123.207598,9.210241],[123.208111,9.210776],[123.207981,9.211323],[123.20728,9.211575],[123.206794,9.210916]],"municipality":"Dauin"},{"seq":13,"barangay":"Malongcay Dacu","transferor":"Mauro Labrador","tf_first":"Mauro","tf_last":"Labrador","owner_status":"married","spouse":"Celia Labrador","transferee":"Nadine Erames","tr_first":"Nadine","tr_last":"Erames","crop":"Corn / coconut","status":"denied","release_status":"not_ready","title_type":"untitled","area":1.029,"poly":[[123.205679,9.18759],[123.206549,9.18732],[123.206794,9.187966],[123.206498,9.188316],[123.205804,9.188375],[123.205679,9.18759]],"municipality":"Dauin"},{"seq":14,"barangay":"Malongcay Dacu","transferor":"Elsa Remulta","tf_first":"Elsa","tf_last":"Remulta","owner_status":"single","spouse":null,"transferee":"Claire Mendoza","tr_first":"Claire","tr_last":"Mendoza","crop":"Corn / vegetables","status":"denied","release_status":"released","title_type":"tct","area":1.36,"poly":[[123.208551,9.187764],[123.209624,9.188039],[123.20963,9.188703],[123.209186,9.188983],[123.208311,9.188553],[123.208551,9.187764]],"municipality":"Dauin"},{"seq":15,"barangay":"Malongcay Dacu","transferor":"Danilo Catan","tf_first":"Danilo","tf_last":"Catan","owner_status":"married","spouse":"Myrna Catan","transferee":"Ian Villaflores","tr_first":"Ian","tr_last":"Villaflores","crop":"Coconut / banana","status":"endorsed_lti","release_status":"not_ready","title_type":"tct","area":1.021,"poly":[[123.210159,9.185819],[123.211136,9.185593],[123.211372,9.186225],[123.210929,9.186589],[123.210374,9.186523],[123.210159,9.185819]],"municipality":"Dauin"},{"seq":16,"barangay":"Malongcay Dacu","transferor":"Perlita Yap","tf_first":"Perlita","tf_last":"Yap","owner_status":"widowed","spouse":null,"transferee":"Daphne Solis","tr_first":"Daphne","tr_last":"Solis","crop":"Corn / root crops","status":"pending_legal_review","release_status":"not_ready","title_type":"tct","area":1.691,"poly":[[123.207277,9.184149],[123.208487,9.184309],[123.208418,9.185159],[123.207841,9.185473],[123.207078,9.185073],[123.207277,9.184149]],"municipality":"Dauin"}]'::jsonb) AS x(
             seq integer,
             barangay text,
+            municipality text,
             transferor text,
             tf_first text,
             tf_last text,
@@ -145,10 +156,10 @@ BEGIN
         )
         ORDER BY seq
     LOOP
-        v_parcel_code := 'DGT-AGRI-' || lpad(r.seq::text, 3, '0');
-        v_application_code := '2026-DGT-DEMO-' || lpad(r.seq::text, 4, '0');
-        v_title_no := CASE WHEN r.title_type = 'untitled' THEN NULL ELSE 'T-2026-DGT-' || lpad(r.seq::text, 4, '0') END;
-        v_tax_decl_no := 'TD-2026-DGT-' || lpad(r.seq::text, 4, '0');
+        v_parcel_code := 'NOR-AGRI-' || lpad(r.seq::text, 3, '0');
+        v_application_code := '2026-NOR-DEMO-' || lpad(r.seq::text, 4, '0');
+        v_title_no := CASE WHEN r.title_type = 'untitled' THEN NULL ELSE 'T-2026-NOR-' || lpad(r.seq::text, 4, '0') END;
+        v_tax_decl_no := 'TD-2026-NOR-' || lpad(r.seq::text, 4, '0');
         v_lot_no := 'Lot ' || (500 + r.seq)::text || '-' || chr(64 + ((r.seq - 1) % 5) + 1);
         v_survey_no := 'PSD-07-2026-' || lpad(r.seq::text, 3, '0');
 
@@ -171,7 +182,7 @@ BEGIN
             r.tf_first, NULL, r.tf_last, NULL,
             '099961' || lpad(r.seq::text, 4, '0'),
             'Agricultural demo holding, Barangay ' || r.barangay,
-            r.barangay, 'Dumaguete City', 'Negros Oriental',
+            r.barangay, r.municipality, 'Negros Oriental',
             CASE WHEN r.seq = 1 THEN v_landowner_user_id ELSE NULL END,
             r.owner_status, r.spouse, now(), now()
         ) RETURNING id INTO v_transferor_id;
@@ -184,7 +195,7 @@ BEGIN
             r.tr_first, NULL, r.tr_last, NULL,
             '099962' || lpad(r.seq::text, 4, '0'),
             'Demo transferee record, Barangay ' || r.barangay,
-            r.barangay, 'Dumaguete City', 'Negros Oriental',
+            r.barangay, r.municipality, 'Negros Oriental',
             NULL, 'single', NULL, now(), now()
         ) RETURNING id INTO v_transferee_id;
 
@@ -195,7 +206,7 @@ BEGIN
             title_type, rod_office, remarks, created_at, updated_at
         ) VALUES (
             v_parcel_code, v_title_no, v_tax_decl_no,
-            'Dumaguete City', r.barangay, 'Negros Oriental',
+            r.municipality, r.barangay, 'Negros Oriental',
             r.area, round((r.area * 10000)::numeric, 2), r.poly::text,
             'active', 'private_agricultural', v_lot_no, v_survey_no,
             r.title_type, 'Negros Oriental Province',
@@ -209,7 +220,7 @@ BEGIN
         ) VALUES (
             v_transferor_id, v_parcel_id, r.area, 'active',
             DATE '2018-01-15' + (r.seq * INTERVAL '37 days'),
-            'LH-DGT-DEMO-2026-' || lpad(r.seq::text, 3, '0'),
+            'LH-NOR-DEMO-2026-' || lpad(r.seq::text, 3, '0'),
             'Active demo agricultural landholding. Final clearance decisions do not automatically change this ownership/holding record.',
             now(), now()
         );
@@ -222,14 +233,14 @@ BEGIN
             boundary_description, source_book, page_number, transcribed_by,
             transcription_date, source_notes, remarks, created_at, updated_at
         ) VALUES (
-            'SRC-DGT-DEMO-2026-' || lpad(r.seq::text, 3, '0'),
+            'SRC-NOR-DEMO-2026-' || lpad(r.seq::text, 3, '0'),
             'linked', 'current_active', v_parcel_id, v_transferor_id,
             v_staff_id, v_parcel_code, v_title_no,
-            'LH-DGT-DEMO-2026-' || lpad(r.seq::text, 3, '0'),
+            'LH-NOR-DEMO-2026-' || lpad(r.seq::text, 3, '0'),
             r.transferor, v_lot_no, v_survey_no, r.area, r.crop,
-            r.barangay, 'Dumaguete City', 'Negros Oriental', r.poly::text,
+            r.barangay, r.municipality, 'Negros Oriental', r.poly::text,
             'Illustrative field boundary for DAR-LTCMS demo use only; not a surveyed cadastral boundary.',
-            'DAR-LTCMS Realistic Agricultural Demo 2026',
+            'DAR-LTCMS Provincial Agricultural Demo 2026',
             'P-' || (500 + r.seq)::text,
             'DAR-LTCMS Demo Encoder', CURRENT_DATE,
             'Current-schema mock source package for agricultural parcel, workflow, map, and report testing.',
@@ -250,17 +261,17 @@ BEGIN
         ) VALUES (
             'title', 'encoded', v_staff_id, v_title_no,
             v_tax_decl_no, v_lot_no, v_survey_no, r.transferor,
-            r.area, r.crop, r.barangay, 'Dumaguete City', 'Negros Oriental',
+            r.area, r.crop, r.barangay, r.municipality, 'Negros Oriental',
             r.poly::text, CURRENT_DATE - (r.seq * INTERVAL '10 days'), 'active',
-            'DAR-DGT-DEMO-' || lpad(r.seq::text, 4, '0'),
+            'DAR-NOR-DEMO-' || lpad(r.seq::text, 4, '0'),
             'Mock source/reference record generated for the current demo dataset.',
             'Illustrative boundary only; not cadastral.',
-            'DAR-LTCMS Realistic Agricultural Demo 2026',
+            'DAR-LTCMS Provincial Agricultural Demo 2026',
             'P-' || (500 + r.seq)::text,
             'DAR-LTCMS Demo Encoder', CURRENT_DATE,
             'Demo source record for map, parcel, and source-record workflow testing.',
             v_parcel_id, 'current_active', v_parcel_code,
-            'LH-DGT-DEMO-2026-' || lpad(r.seq::text, 3, '0'),
+            'LH-NOR-DEMO-2026-' || lpad(r.seq::text, 3, '0'),
             v_package_id, v_transferor_id, now(), now()
         );
 
@@ -289,7 +300,7 @@ BEGIN
             jsonb_build_array(jsonb_build_object('name', r.transferor, 'landowner_id', v_transferor_id, 'parcel_shares', jsonb_build_object())),
             r.transferee,
             jsonb_build_array(jsonb_build_object('name', r.transferee, 'landowner_id', v_transferee_id, 'parcel_shares', jsonb_build_object())),
-            'Dumaguete City', r.barangay,
+            r.municipality, r.barangay,
             CURRENT_DATE - (r.seq * INTERVAL '2 days'),
             CURRENT_DATE - (r.seq * INTERVAL '1 day'),
             r.status, r.release_status,
@@ -301,9 +312,9 @@ BEGIN
             END,
             v_staff_id, v_transferor_id, v_transferee_id,
             r.transferor, 'transferor', false, NULL, false,
-            CASE WHEN v_has_payment_order THEN 'OP-DGT-DEMO-' || lpad(r.seq::text, 4, '0') ELSE NULL END,
+            CASE WHEN v_has_payment_order THEN 'OP-NOR-DEMO-' || lpad(r.seq::text, 4, '0') ELSE NULL END,
             CASE WHEN v_has_payment_order THEN CURRENT_TIMESTAMP - (r.seq * INTERVAL '2 days') ELSE NULL END,
-            CASE WHEN v_has_or THEN 'OR-DGT-DEMO-' || lpad(r.seq::text, 4, '0') ELSE NULL END,
+            CASE WHEN v_has_or THEN 'OR-NOR-DEMO-' || lpad(r.seq::text, 4, '0') ELSE NULL END,
             CASE WHEN v_has_or THEN CURRENT_DATE - (r.seq * INTERVAL '1 day') ELSE NULL END,
             CASE WHEN v_has_or THEN 2000.00 ELSE NULL END,
             CURRENT_DATE - (r.seq * INTERVAL '2 days'),
@@ -314,7 +325,7 @@ BEGIN
             )),
             false, false, NULL,
             'Demo landholding review: parcel and parties are linked for administrative clearance processing only.',
-            CASE WHEN v_has_csw THEN 'CSW-DGT-DEMO-' || lpad(r.seq::text, 4, '0') ELSE NULL END,
+            CASE WHEN v_has_csw THEN 'CSW-NOR-DEMO-' || lpad(r.seq::text, 4, '0') ELSE NULL END,
             CASE WHEN v_has_csw THEN CURRENT_TIMESTAMP - (r.seq * INTERVAL '1 day') ELSE NULL END,
             CASE WHEN v_has_csw THEN v_staff_id ELSE NULL END,
             CASE WHEN v_has_csw THEN 'Demo Completed Staff Work entry for workflow presentation.' ELSE NULL END,
@@ -368,7 +379,7 @@ BEGIN
                 '1803-2026-' || lpad((9000 + r.seq)::text, 4, '0') || ' (' || (900 + r.seq)::text || ')',
                 r.status,
                 v_application_code, r.transferor, r.transferee,
-                'Dumaguete City', r.barangay, r.area,
+                r.municipality, r.barangay, r.area,
                 jsonb_build_array(jsonb_build_object(
                     'parcel_id', v_parcel_id,
                     'parcel_code', v_parcel_code,
@@ -413,10 +424,10 @@ WHERE parcel_code LIKE 'DGT-AGRI-%';
 
 SELECT parcel_code, barangay, municipality, area_hectares, agricultural_status
 FROM parcels
-WHERE parcel_code LIKE 'DGT-AGRI-%'
+WHERE parcel_code LIKE 'NOR-AGRI-%'
 ORDER BY parcel_code;
 
 SELECT application_code, status, release_status, amount_paid
 FROM land_transfer_applications
-WHERE application_code LIKE '2026-DGT-DEMO-%'
+WHERE application_code LIKE '2026-NOR-DEMO-%'
 ORDER BY application_code;
