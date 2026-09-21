@@ -253,7 +253,7 @@
                 <div>
                     <h2>New Clearance Application Record</h2>
                     <p>
-                        Encode the parties, location, filing dates, and optional parcel reference. The record will start under Pending Review by Legal Officer after saving.
+                        Encode the parties, location, filing dates, and optional parcel reference. The record will start under Legal Completeness Review after saving.
                     </p>
                 </div>
                 <span class="draft-pill">
