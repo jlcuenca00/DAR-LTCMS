@@ -39,7 +39,7 @@ The implemented system covers:
 
 ## Critical legal/operational boundary
 
-A Released clearance means DAR-LTCMS has recorded and generated the administrative clearance result.
+An Approved or Denied application means DAR-LTCMS has recorded the final administrative clearance decision. Release of the signed output is tracked separately.
 
 It does **not** mean the platform has:
 
@@ -157,7 +157,7 @@ Final Form No. 5 behavior includes:
 - example appearance: `1803-2026-0043 (7)`
 - all linked Parcel title/Tax Declaration/lot/survey references as applicable
 - combined recorded area
-- `GRANTED` for Released
+- `GRANTED` for Approved
 - `DENIED` for Denied
 - signatory: `ENGR. MANUEL M. GALON, JR., OIC PARPO II`
 - notarial Doc No., Page No., Book No., Series when encoded
@@ -186,7 +186,7 @@ The system preserves:
 
 Monitoring Reports use administrative status/output data and may filter by date, status, and municipality.
 
-Released/Denied output totals and **Recorded Output Area** are monitoring/reporting metrics only; they do not represent registry mutation or conclusively completed legal ownership transfer.
+Approved/Denied output totals, release totals, and **Recorded Output Area** are monitoring/reporting metrics only; they do not represent registry mutation or conclusively completed legal ownership transfer.
 
 ## Map baseline
 
