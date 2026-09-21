@@ -337,9 +337,7 @@
         }
 
         .registration-prompt {
-            margin-top: 1.15rem;
-            padding-top: 1.1rem;
-            border-top: 1px solid #edf0ee;
+            margin-top: 0.9rem;
             display: flex;
             align-items: center;
             justify-content: center;
