@@ -36,14 +36,14 @@ if (
 
 $beforeParcels = DB::table('parcels')
     ->where(function ($query) {
-        $query->where('parcel_code', 'like', 'NOR-AGRI-%')
+        $query->where('parcel_code', 'like', 'DGT-AGRI-%')
             ->orWhere('parcel_code', 'like', 'NOR-AGRI-%');
     })
     ->count();
 
 $beforeApplications = DB::table('land_transfer_applications')
     ->where(function ($query) {
-        $query->where('application_code', 'like', '2026-NOR-DEMO-%')
+        $query->where('application_code', 'like', '2026-DGT-DEMO-%')
             ->orWhere('application_code', 'like', '2026-NOR-DEMO-%')
             ->orWhereExists(function ($subquery) {
                 $subquery->selectRaw('1')
