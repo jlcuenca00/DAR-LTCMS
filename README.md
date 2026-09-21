@@ -57,7 +57,7 @@ Landowners do **not** create applications and must never access another Landowne
 
 ### Geodetic Personnel
 
-Geodetic users have limited/read-only review access. They can review authorized Parcel/reference/map information but do not broadly edit ownership/application records and are not primary application decision users.
+Geodetic users have limited technical access. They can review authorized Parcel/reference/map information and, where explicitly enabled, edit only parcel map geometry through versioned/concurrency-protected tools. They do not edit ownership/application decision records and are not primary application decision users.
 
 ## Current Application Workflow
 
