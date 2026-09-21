@@ -187,7 +187,7 @@ function initApplicationCreate() {
 
     const footerNote = form.querySelector('.footer-note');
     if (footerNote) {
-        footerNote.textContent = 'Saving creates the clearance application under Pending Review by Legal Officer, then opens the case for parcel links, Landowner links, requirement review, and workflow processing. Saving does not transfer ownership or alter registry records.';
+        footerNote.textContent = 'Saving creates the clearance application under Legal Completeness Review, then opens the case for parcel links, Landowner links, requirement review, and workflow processing. Saving does not transfer ownership or alter registry records.';
     }
 }
 
