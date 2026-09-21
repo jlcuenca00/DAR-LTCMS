@@ -24,6 +24,8 @@ on:
       - 'playwright.config.mjs'
       - '.env.example'
       - '.github/workflows/responsive-e2e.yml'
+      - '.github/workflows/refresh-production-demo-data.yml'
+      - '.github/scripts/**'
       - 'seed_mock_*.txt'
 
 permissions:
@@ -162,9 +164,9 @@ jobs:
           PGPASSWORD: postgres
         run: |
           psql -h 127.0.0.1 -U postgres -d dar_iland -v ON_ERROR_STOP=1 -f seed_mock_dumaguete_nonoverlap_agri_data.txt
-          test "$(psql -h 127.0.0.1 -U postgres -d dar_iland -Atc "SELECT COUNT(*) FROM parcels WHERE parcel_code LIKE 'DGT-AGRI-%';")" = "16"
-          test "$(psql -h 127.0.0.1 -U postgres -d dar_iland -Atc "SELECT COUNT(*) FROM land_transfer_applications WHERE application_code LIKE '2026-DGT-DEMO-%' AND status IN ('approved','denied');")" = "5"
-          test "$(psql -h 127.0.0.1 -U postgres -d dar_iland -Atc "SELECT COUNT(*) FROM land_transfer_applications WHERE application_code LIKE '2026-DGT-DEMO-%' AND amount_paid IS NOT NULL AND amount_paid <> 2000.00;")" = "0"
+          test "$(psql -h 127.0.0.1 -U postgres -d dar_iland -Atc "SELECT COUNT(*) FROM parcels WHERE parcel_code LIKE 'NOR-AGRI-%';")" = "16"
+          test "$(psql -h 127.0.0.1 -U postgres -d dar_iland -Atc "SELECT COUNT(*) FROM land_transfer_applications WHERE application_code LIKE '2026-NOR-DEMO-%' AND status IN ('approved','denied');")" = "5"
+          test "$(psql -h 127.0.0.1 -U postgres -d dar_iland -Atc "SELECT COUNT(*) FROM land_transfer_applications WHERE application_code LIKE '2026-NOR-DEMO-%' AND amount_paid IS NOT NULL AND amount_paid <> 2000.00;")" = "0"
 
       - name: Upload browser report on failure
         if: failure()

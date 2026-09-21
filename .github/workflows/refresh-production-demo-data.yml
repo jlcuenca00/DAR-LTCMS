@@ -35,8 +35,9 @@ jobs:
       - name: Verify safe demo seed
         run: |
           grep -q "CREATE TEMP TABLE dar_demo_application_ids" seed_mock_dumaguete_nonoverlap_agri_data.txt
-          if grep -Fq "application_code LIKE '2026-DGT-%'" seed_mock_dumaguete_nonoverlap_agri_data.txt; then
-            echo "Unsafe broad DGT application cleanup detected."
+          if grep -Fq "application_code LIKE '2026-DGT-%'" seed_mock_dumaguete_nonoverlap_agri_data.txt \
+             || grep -Fq "application_code LIKE '2026-NOR-%'" seed_mock_dumaguete_nonoverlap_agri_data.txt; then
+            echo "Unsafe broad demo application cleanup detected."
             exit 1
           fi
 
