@@ -141,7 +141,7 @@ function initApplicationCreate() {
             </div>
         </div>
         <div class="intake-flow-steps">
-            <div class="intake-flow-step"><strong>1 · Intake</strong><span>Applicant, payment, and application date.</span></div>
+            <div class="intake-flow-step"><strong>1 · Intake</strong><span>Applicant and application date. Payment is recorded later after completeness review.</span></div>
             <div class="intake-flow-step"><strong>2 · Parties</strong><span>Transferor and transferee names; link existing records when found.</span></div>
             <div class="intake-flow-step"><strong>3 · Parcel & Location</strong><span>Use an existing Parcel Record when available; otherwise complete it after saving.</span></div>
             <div class="intake-flow-step"><strong>4 · Review Context</strong><span>Transfer instruments, succession, retention, and staff review notes.</span></div>
@@ -151,7 +151,7 @@ function initApplicationCreate() {
 
     root.insertBefore(guide, form);
 
-    const intake = sectionByTitle(form, 'Application Intake and Payment Details');
+    const intake = sectionByTitle(form, 'Application Intake Details');
     const parties = sectionByTitle(form, 'Party Records');
     const location = sectionByTitle(form, 'Location and Filing Details');
     const parcel = sectionByTitle(form, 'Parcel Reference');
