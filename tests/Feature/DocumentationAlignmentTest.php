@@ -64,7 +64,7 @@ class DocumentationAlignmentTest extends TestCase
         $this->assertStringContainsString('DAR Negros Oriental Provincial Office', $baseline);
         $this->assertStringContainsString('manually encode applications', $baseline);
         $this->assertStringContainsString('Landowners', $baseline);
-        $this->assertStringContainsString('limited/read-only', $baseline);
+        $this->assertStringContainsString('limited Parcel/reference/map review access', $baseline);
         $this->assertStringContainsString('does **not** mean the platform has', $baseline);
         $this->assertStringContainsString('transferred legal ownership', $baseline);
         $this->assertStringContainsString('registry alteration', $baseline);
