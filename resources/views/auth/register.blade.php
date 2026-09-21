@@ -1,5 +1,5 @@
 <x-public-auth-layout title="Landowner Registration">
-    <div class="mb-6 text-center">
+    <div class="registration-header">
         <h1 class="auth-heading">Landowner Registration</h1>
         <p class="auth-intro">
             Create an account for DAR review. Your records stay locked until staff verifies your identity and links the correct landowner record.
@@ -12,16 +12,10 @@
         </div>
     @endif
 
-    <label class="consent mb-4">
-        <input id="registration-privacy-consent" form="manual-registration-form" type="checkbox" name="privacy_consent" value="1" class="mt-1 rounded border-gray-300 text-green-700 focus:ring-green-600" @checked(old('privacy_consent')) required>
-        <span>I have read the <a href="{{ route('privacy') }}" target="_blank" rel="noopener">Privacy Policy</a>, consent to the use of my account details for registration and identity review, and agree to the <a href="{{ route('terms') }}" target="_blank" rel="noopener">Terms of Service</a>.</span>
-    </label>
-    <x-input-error :messages="$errors->get('privacy_consent')" class="mb-4" />
-
     @if ($googleClientId)
-        <div class="space-y-3">
-            <p id="google-consent-error" role="alert" class="hidden text-sm font-semibold text-red-600">
-                Please accept the privacy notice before continuing with Google.
+        <div class="registration-google-section">
+            <p id="google-consent-error" role="alert" class="hidden registration-google-error">
+                Please accept the privacy notice below before continuing with Google.
             </p>
 
             <div class="flex justify-center">
@@ -50,56 +44,63 @@
             </form>
         </div>
 
-        <div class="my-6 flex items-center gap-3 text-xs font-bold uppercase text-gray-400">
-            <span class="h-px flex-1 bg-gray-200"></span>
-            Or register manually
-            <span class="h-px flex-1 bg-gray-200"></span>
+        <div class="registration-divider" aria-hidden="true">
+            <span></span>
+            <span>or register manually</span>
+            <span></span>
         </div>
     @endif
 
-    <form id="manual-registration-form" method="POST" action="{{ route('register') }}" class="space-y-4">
+    <form id="manual-registration-form" method="POST" action="{{ route('register') }}" class="registration-form">
         @csrf
 
-        <div>
+        <div class="registration-field">
             <x-input-label class="form-label" for="name" :value="__('Full name')" />
             <x-text-input id="name" class="form-input" type="text" name="name" :value="old('name')" required autofocus autocomplete="name" />
             <x-input-error :messages="$errors->get('name')" class="mt-2" />
         </div>
 
-        <div>
+        <div class="registration-field">
             <x-input-label class="form-label" for="username" :value="__('Username')" />
             <x-text-input id="username" class="form-input" type="text" name="username" :value="old('username')" required autocomplete="username" />
-            <p class="mt-1 text-xs text-gray-500">Use letters, numbers, dashes, or underscores. You will use this to sign in.</p>
+            <p class="registration-help">Use letters, numbers, dashes, or underscores. You will use this to sign in.</p>
             <x-input-error :messages="$errors->get('username')" class="mt-2" />
         </div>
 
-        <div>
+        <div class="registration-field">
             <x-input-label class="form-label" for="email" :value="__('Email (optional)')" />
             <x-text-input id="email" class="form-input" type="email" name="email" :value="old('email')" autocomplete="email" />
-            <p class="mt-1 text-xs leading-5 text-gray-500">Leave this blank if you do not use email. Password recovery will require help from DAR staff.</p>
+            <p class="registration-help">Leave this blank if you do not use email. Password recovery will require help from DAR staff.</p>
             <x-input-error :messages="$errors->get('email')" class="mt-2" />
         </div>
 
-        <div>
+        <div class="registration-field">
             <x-input-label class="form-label" for="password" :value="__('Password')" />
             <x-text-input id="password" class="form-input" type="password" name="password" required autocomplete="new-password" />
             <x-input-error :messages="$errors->get('password')" class="mt-2" />
         </div>
 
-        <div>
+        <div class="registration-field">
             <x-input-label class="form-label" for="password_confirmation" :value="__('Confirm password')" />
             <x-text-input id="password_confirmation" class="form-input" type="password" name="password_confirmation" required autocomplete="new-password" />
             <x-input-error :messages="$errors->get('password_confirmation')" class="mt-2" />
         </div>
 
-        <button type="submit" class="login-button">
+        <div class="registration-consent-block">
+            <label class="consent">
+                <input id="registration-privacy-consent" type="checkbox" name="privacy_consent" value="1" class="rounded border-gray-300 text-green-700 focus:ring-green-600" @checked(old('privacy_consent')) required>
+                <span>I have read the <a href="{{ route('privacy') }}" target="_blank" rel="noopener">Privacy Policy</a>, consent to the use of my account details for registration and identity review, and agree to the <a href="{{ route('terms') }}" target="_blank" rel="noopener">Terms of Service</a>.</span>
+            </label>
+            <x-input-error :messages="$errors->get('privacy_consent')" class="mt-2" />
+        </div>
+
+        <button type="submit" class="login-button registration-submit">
             {{ __('Create Landowner Account') }}
         </button>
 
-        <div class="text-center">
-            <a class="text-sm font-semibold text-green-700 underline hover:text-green-900" href="{{ route('login') }}">
-                {{ __('Already registered? Sign in') }}
-            </a>
+        <div class="registration-signin">
+            <span>Already registered?</span>
+            <a href="{{ route('login') }}">{{ __('Sign in') }}</a>
         </div>
     </form>
 
@@ -111,6 +112,7 @@
 
                 if (! consent.checked) {
                     consentError.classList.remove('hidden');
+                    consent.scrollIntoView({ behavior: 'smooth', block: 'center' });
                     consent.focus();
                     return;
                 }
