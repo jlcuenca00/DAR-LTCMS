@@ -253,6 +253,42 @@ class GeodeticGeometryWorkflowTest extends TestCase
         $this->assertNull($parcel->fresh()->geometry_geojson);
     }
 
+    public function test_archived_parcel_geometry_cannot_be_opened_or_saved(): void
+    {
+        $geodetic = User::factory()->create(['role' => 'geodetic']);
+
+        $parcel = Parcel::create([
+            'parcel_code' => 'GEO-ARCHIVED-001',
+            'municipality' => 'Dumaguete City',
+            'barangay' => 'Bantayan',
+            'province' => 'Negros Oriental',
+            'status' => 'active',
+        ]);
+
+        $session = $this->openEditor($geodetic, $parcel);
+
+        $parcel->forceFill(['status' => 'inactive'])->save();
+
+        $this->actingAs($geodetic)
+            ->get(route('geodetic.parcels.geometry.edit', $parcel))
+            ->assertForbidden();
+
+        $this->actingAs($geodetic)
+            ->patch(route('geodetic.parcels.geometry.update', $parcel), [
+                'geometry_geojson' => json_encode($this->polygon(123.30, 9.30)),
+                'geometry_version' => 0,
+                'edit_session_token' => $session->session_token,
+            ])
+            ->assertRedirect(route('geodetic.parcels.show', $parcel))
+            ->assertSessionHas('error');
+
+        $fresh = $parcel->fresh();
+        $this->assertNull($fresh->geometry_geojson);
+        $this->assertSame(0, (int) $fresh->geometry_version);
+        $this->assertSame(0, ParcelGeometryRevision::where('parcel_id', $parcel->id)->count());
+        $this->assertSame(0, ParcelGeometryEditSession::where('parcel_id', $parcel->id)->count());
+    }
+
     public function test_non_geodetic_users_cannot_use_geodetic_geometry_routes(): void
     {
         $landowner = User::factory()->create(['role' => 'landowner']);
