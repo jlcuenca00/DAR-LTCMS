@@ -59,7 +59,7 @@ php artisan serve
 1. Log in as the primary Staff tester.
 2. Open User / Role Management.
 3. Create a Landowner account if Landowner portal testing is needed.
-4. Create a Geodetic account if read-only parcel/map testing is needed.
+4. Create a Geodetic account if parcel/reference review and controlled geometry-edit testing is needed.
 5. Create a Landowner record and link its Landowner user account.
 6. Create a Parcel record.
 7. Create/link a Landholding record.
