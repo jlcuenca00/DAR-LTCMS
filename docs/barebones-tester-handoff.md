@@ -67,24 +67,28 @@ php artisan serve
 9. Encode a Land Transfer Clearance application manually as Staff.
 10. Upload/review supporting documents and fill requirement-specific metadata.
 11. Process the application through the office workflow:
-    - Pending Review by Legal Officer
-    - Endorsed to LTI Division
-    - Endorsed to Chief Legal
-    - Endorsed to PARPO II
-    - For Releasing
-12. Test one **Released** final outcome and one **Denied** final outcome.
-13. Confirm final-decision locking after Released/Denied.
-14. Confirm significant actions appear in Audit Logs.
-15. Confirm role-appropriate notifications.
-16. Confirm Landowner privacy/isolation.
-17. Confirm Geodetic access remains limited/read-only.
-18. Confirm Monitoring Reports and Parcel Map behavior.
-19. Confirm LTC Form No. 5 output for final applications.
+    - Legal Completeness Review
+    - Payment / Official Receipt Recording
+    - Endorsed to LTID for Verification
+    - LTID Verification / Returned to Legal
+    - Legal Evaluation / CSW Preparation
+    - Chief Legal Final Review
+    - Forwarded to PARPO II
+    - PARPO II Decision Pending
+12. Record one **Approved** final decision and one **Denied** final decision.
+13. Confirm final-decision locking after Approved/Denied.
+14. Mark a signed final output **Ready for Release**, then record **Released to Client** without changing the final decision.
+15. Confirm significant actions appear in Audit Logs.
+16. Confirm role-appropriate notifications.
+17. Confirm Landowner privacy/isolation and post-release final-output visibility.
+18. Confirm Geodetic access remains limited to parcel/reference review and explicitly scoped geometry editing.
+19. Confirm Monitoring Reports and Parcel Map behavior.
+20. Confirm LTC Form No. 5 output for final applications.
 
 ## Scope reminder for testers
 
 DAR-LTCMS is a clearance generation, administrative processing, monitoring, parcel/reference review, and records-management system.
 
-A **Released** clearance records and generates the administrative clearance result only. It does not automatically transfer land ownership, mutate Registry of Deeds records, or conclusively execute a legal land transfer.
+An **Approved** or **Denied** application records the final administrative clearance decision. Release of the signed output is tracked separately. Neither approval nor release automatically transfers land ownership, mutates Registry of Deeds records, or conclusively executes a legal land transfer.
 
 Any actual ownership transfer, registry alteration, or legal mutation remains outside the automatic system scope and is subject to separate legal and administrative procedures.
