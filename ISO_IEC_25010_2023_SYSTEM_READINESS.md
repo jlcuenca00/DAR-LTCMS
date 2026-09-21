@@ -4,9 +4,9 @@ This document maps implemented DAR-LTCMS controls to the nine product-quality ch
 
 ## 1. Functional Suitability
 
-**Implemented controls:** Staff-encoded applications, role-specific portals, Landowner/Parcel/Landholding records, supporting-document review, multi-party linking, DAR office workflow tracking, Released/Denied final outcomes, LTC Form No. 5 output, Monitoring Reports, notifications, and Audit Logs.
+**Implemented controls:** Staff-encoded applications, role-specific portals, Landowner/Parcel/Landholding records, supporting-document review, multi-party linking, DAR office workflow tracking, Approved/Denied final decisions, separate release tracking, LTC Form No. 5 output, Monitoring Reports, notifications, and Audit Logs.
 
-**Scope boundary:** these functions support clearance processing and records management only. A Released clearance does not automatically transfer land ownership or alter registry records.
+**Scope boundary:** these functions support clearance processing and records management only. An Approved clearance or a recorded client release does not automatically transfer land ownership or alter registry records.
 
 ## 2. Performance Efficiency
 
@@ -28,7 +28,7 @@ Final usability evaluation should use Staff, Landowner, and Geodetic scenarios t
 
 ## 5. Reliability
 
-Database transactions protect important multi-record actions. Released/Denied applications are locked against further editing and supporting-document mutation. Clearance generation preserves final output data. The `/up` health endpoint is available.
+Database transactions protect important multi-record actions. Approved/Denied applications are locked against further editing and supporting-document mutation. Clearance generation preserves final output data. The `/up` health endpoint is available.
 
 Production release preparation now includes database/private-file backups, exact deployed-commit recording, a read-only release check, smoke testing, and controlled rollback guidance.
 
@@ -80,7 +80,7 @@ DAR-LTCMS is not safety-critical in the industrial/medical ISO sense, but it con
 - audit trails
 - preserved final outputs
 
-Obsolete automatic ownership/registry mutation artifacts were removed. **Released/GRANTED clearance only records and generates the administrative clearance result; it does not execute legal ownership transfer or registry alteration.**
+Obsolete automatic ownership/registry mutation artifacts were removed. **Approved/GRANTED clearance and subsequent release tracking only record the administrative clearance result and its delivery; they do not execute legal ownership transfer or registry alteration.**
 
 ## Residual items before final formal evaluation / v1.0.0
 
