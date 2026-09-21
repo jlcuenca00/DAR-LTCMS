@@ -53,41 +53,48 @@ Expected: document data capture supports administrative review only; it is not a
 
 Verify a positive-path application moves through:
 
-- [ ] Pending Review by Legal Officer
-- [ ] Endorsed to LTI Division
-- [ ] Endorsed to Chief Legal
-- [ ] Endorsed to PARPO II
-- [ ] For Releasing
-- [ ] Released
+- [ ] Legal Completeness Review
+- [ ] Payment / Official Receipt Recording
+- [ ] Endorsed to LTID for Verification
+- [ ] LTID Verification / Returned to Legal
+- [ ] Legal Evaluation / CSW Preparation
+- [ ] Chief Legal Final Review
+- [ ] Forwarded to PARPO II
+- [ ] PARPO II Decision Pending
+- [ ] Approved final decision
+- [ ] Ready for Release
+- [ ] Released to Client
 
-Also verify a separate application can end in:
+Also verify a separate application can receive:
 
-- [ ] Denied
+- [ ] Denied final decision
 
-Expected: **Released** and **Denied** are the current final user-facing states.
+Expected: **Approved** and **Denied** are the final application decisions. Ready for Release and Released to Client are separate administrative delivery statuses.
 
 ## 6. Final-decision lock
 
-Test one Released and one Denied application.
+Test one Approved and one Denied application.
 
 - [ ] Edit controls are hidden/disabled after finalization
 - [ ] Supporting-document upload/removal is locked
-- [ ] Backend rejects post-final application mutations
+- [ ] Backend rejects post-final substantive application mutations
 - [ ] Backend rejects post-final upload/removal attempts
-- [ ] UI clearly shows the final/locked state
-- [ ] Authorized viewing, reporting, audit, and archival access remains available
+- [ ] UI clearly shows the final/locked decision state
+- [ ] Authorized release tracking, viewing, reporting, audit, and archival access remains available
+- [ ] Marking Ready for Release does not change Approved/Denied
+- [ ] Recording Released to Client does not change Approved/Denied
 
-Expected: final records are preserved and protected.
+Expected: final decision records are preserved and protected while delivery is tracked separately.
 
 ## 7. LTC Form No. 5
 
-For Released and Denied records:
+For Approved and Denied records:
 
 - [ ] Browser output opens
 - [ ] Direct PDF output opens/downloads
 - [ ] 8.5 x 13 inch page format is correct
 - [ ] LTC number uses the annual sequence and stored page value
-- [ ] Released record prints GRANTED
+- [ ] Approved record prints GRANTED
 - [ ] Denied record prints DENIED
 - [ ] All linked Parcel title/TD/lot/survey references are correct
 - [ ] Combined recorded area is correct
@@ -95,6 +102,7 @@ For Released and Denied records:
 - [ ] Notarial Doc/Page/Book/Series details appear when encoded
 - [ ] No printed signature/stamp placeholder is presented as an executed signature
 - [ ] Output wording does not claim that legal ownership or registry records were automatically changed
+- [ ] Landowner access to the final output is unavailable until actual client release is recorded
 
 ## 8. Landowner privacy
 
@@ -110,17 +118,17 @@ Using two different Landowner accounts:
 
 Expected: Landowners never access records belonging to another Landowner.
 
-## 9. Geodetic read-only access
+## 9. Geodetic limited-access verification
 
 - [ ] Geodetic dashboard loads
 - [ ] Geodetic can review allowed Parcel/reference information
-- [ ] Geodetic can use the read-only Parcel Map
+- [ ] Geodetic can use the Parcel Map for authorized parcel/reference review
 - [ ] Geodetic cannot process/release/deny applications
 - [ ] Geodetic cannot upload application supporting documents
-- [ ] Geodetic cannot broadly edit ownership/application records
+- [ ] Geodetic can edit only explicitly scoped parcel geometry and cannot broadly edit ownership/application records
 - [ ] Geodetic cannot access Staff User Management
 
-Expected: Geodetic access remains limited/read-only.
+Expected: Geodetic access remains limited to parcel/reference review plus explicitly scoped, versioned geometry editing; ownership/application decision data remains protected.
 
 ## 10. Landowner Records
 
@@ -168,7 +176,7 @@ Expected: map features support review/reference only and do not mutate ownership
 - [ ] Monitoring dashboard loads
 - [ ] Date, status, and municipality filters work consistently
 - [ ] Workflow status breakdown uses current labels
-- [ ] Released and Denied output totals are correct
+- [ ] Approved and Denied output totals and release tracking are correct
 - [ ] Recorded Output Area is labeled as an administrative output metric
 - [ ] Printable report opens
 - [ ] Scope/limitation wording is visible
@@ -188,7 +196,7 @@ Expected: map features support review/reference only and do not mutate ownership
 - [ ] Notification bell/panel works
 - [ ] Full notification archive opens
 - [ ] Users only see notifications intended for them
-- [ ] Staff application events use current Released/Denied terminology
+- [ ] Staff notifications distinguish Approved/Denied final decisions from Ready for Release and Released to Client events
 - [ ] Landowner notifications expose only their own application information
 
 ## 17. User / Role Management
