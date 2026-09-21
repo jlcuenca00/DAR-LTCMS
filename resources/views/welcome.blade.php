@@ -284,7 +284,7 @@
                 <div class="role-grid">
                     <article class="role"><h3>DAR Staff</h3><p>Enter and review applications, manage DAR information, and prepare reports.</p></article>
                     <article class="role"><h3>Landowners</h3><p>View only their own linked land information and application progress. Landowners do not create applications in the system.</p></article>
-                    <article class="role"><h3>Geodetic Personnel</h3><p>View parcel and map information needed for checking land details. They do not approve clearance applications.</p></article>
+                    <article class="role"><h3>Geodetic Personnel</h3><p>Review parcel/reference/map information and, when authorized, update parcel map geometry only. They do not approve clearance applications or edit ownership records.</p></article>
                 </div>
             </div>
         </section>
