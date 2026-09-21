@@ -95,7 +95,7 @@ Form No. 5 is the final administrative clearance output generated from the recor
 
 Use these implementation facts when describing it:
 
-- Released → GRANTED output
+- Approved → GRANTED output
 - Denied → DENIED output
 - annual LTC number sequence and page reference
 - linked Parcel title/Tax Declaration/lot/survey references
@@ -143,7 +143,7 @@ Check these thesis sections for consistent wording:
 
 ## Diagram modeling rule
 
-Never model **Released/GRANTED clearance → change Parcel owner**.
+Never model **Approved/GRANTED clearance → change Parcel owner**.
 
 A final clearance may lead only to system-scope actions such as:
 
