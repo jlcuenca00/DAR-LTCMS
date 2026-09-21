@@ -60,38 +60,6 @@
                     </div>
                 @endif
 
-                @if ($googleClientId)
-                    <div style="margin-top: 1.4rem; display: flex; justify-content: center;">
-                        <script src="https://accounts.google.com/gsi/client?hl=en" async defer></script>
-                        <div id="g_id_onload"
-                            data-client_id="{{ $googleClientId }}"
-                            data-callback="handleGoogleLogin"
-                            data-ux_mode="popup"
-                            data-auto_prompt="false">
-                        </div>
-                        <div class="g_id_signin"
-                            data-type="standard"
-                            data-size="large"
-                            data-theme="outline"
-                            data-text="continue_with"
-                            data-shape="pill"
-                            data-locale="en"
-                            data-logo_alignment="left">
-                        </div>
-                        <form id="google-login-form" method="POST" action="{{ route('register.google') }}" style="display: none;">
-                            @csrf
-                            <input id="google-login-credential" type="hidden" name="credential">
-                            <input type="hidden" name="intent" value="login">
-                        </form>
-                    </div>
-
-                    <div style="display: flex; align-items: center; gap: .75rem; margin-top: 1.25rem; color: #9ca3af; font-size: .72rem; font-weight: 800; text-transform: uppercase; letter-spacing: .12em;">
-                        <span style="height: 1px; flex: 1; background: #e5e7eb;"></span>
-                        or sign in manually
-                        <span style="height: 1px; flex: 1; background: #e5e7eb;"></span>
-                    </div>
-                @endif
-
                 <form method="POST" action="{{ route('login') }}" class="login-form">
                     @csrf
 
@@ -114,54 +82,54 @@
                     </div>
 
                     <div class="form-group">
-    <label for="password" class="form-label">
-        Password
-    </label>
+                        <label for="password" class="form-label">
+                            Password
+                        </label>
 
-    <div class="password-field">
-        <input
-            id="password"
-            class="form-input"
-            type="password"
-            name="password"
-            placeholder="Enter your password"
-            required
-            autocomplete="current-password"
-        >
+                        <div class="password-field">
+                            <input
+                                id="password"
+                                class="form-input"
+                                type="password"
+                                name="password"
+                                placeholder="Enter your password"
+                                required
+                                autocomplete="current-password"
+                            >
 
-        <button
-            type="button"
-            class="password-toggle"
-            id="toggle-password"
-            aria-label="Show password"
-        >
-            <svg id="eye-open" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                      d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                      d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-            </svg>
+                            <button
+                                type="button"
+                                class="password-toggle"
+                                id="toggle-password"
+                                aria-label="Show password"
+                            >
+                                <svg id="eye-open" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                          d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                          d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                </svg>
 
-            <svg id="eye-closed" xmlns="http://www.w3.org/2000/svg" class="hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                      d="M13.875 18.825A10.05 10.05 0 0112 19c-4.477 0-8.268-2.943-9.542-7a9.956 9.956 0 012.223-3.592m3.31-2.13A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.542 7a9.973 9.973 0 01-4.132 5.236M15 12a3 3 0 00-3-3m0 0a3 3 0 00-3 3m3-3l9 9M3 3l18 18" />
-            </svg>
-        </button>
-    </div>
-</div>
+                                <svg id="eye-closed" xmlns="http://www.w3.org/2000/svg" class="hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                          d="M13.875 18.825A10.05 10.05 0 0112 19c-4.477 0-8.268-2.943-9.542-7a9.956 9.956 0 012.223-3.592m3.31-2.13A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.542 7a9.973 9.973 0 01-4.132 5.236M15 12a3 3 0 00-3-3m0 0a3 3 0 00-3 3m3-3l9 9M3 3l18 18" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
 
                     <div class="login-options">
                         <label class="remember-label">
-    <input
-        type="checkbox"
-        name="remember"
-        class="remember-checkbox"
-    >
+                            <input
+                                type="checkbox"
+                                name="remember"
+                                class="remember-checkbox"
+                            >
 
-    <span class="remember-control" aria-hidden="true"></span>
+                            <span class="remember-control" aria-hidden="true"></span>
 
-    <span>Remember me</span>
-</label>
+                            <span>Remember me</span>
+                        </label>
 
                         @if (Route::has('password.request'))
                             <a class="forgot-link" href="{{ route('password.request') }}">
@@ -174,6 +142,38 @@
                         Login
                     </button>
                 </form>
+
+                @if ($googleClientId)
+                    <div style="display: flex; align-items: center; gap: .75rem; margin-top: 1.25rem; color: #9ca3af; font-size: .72rem; font-weight: 800; text-transform: uppercase; letter-spacing: .12em;">
+                        <span style="height: 1px; flex: 1; background: #e5e7eb;"></span>
+                        or continue with
+                        <span style="height: 1px; flex: 1; background: #e5e7eb;"></span>
+                    </div>
+
+                    <div style="margin-top: 1rem; display: flex; justify-content: center;">
+                        <script src="https://accounts.google.com/gsi/client?hl=en" async defer></script>
+                        <div id="g_id_onload"
+                            data-client_id="{{ $googleClientId }}"
+                            data-callback="handleGoogleLogin"
+                            data-ux_mode="popup"
+                            data-auto_prompt="false">
+                        </div>
+                        <div class="g_id_signin"
+                            data-type="standard"
+                            data-size="large"
+                            data-theme="outline"
+                            data-text="continue_with"
+                            data-shape="pill"
+                            data-locale="en"
+                            data-logo_alignment="left">
+                        </div>
+                        <form id="google-login-form" method="POST" action="{{ route('register.google') }}" style="display: none;">
+                            @csrf
+                            <input id="google-login-credential" type="hidden" name="credential">
+                            <input type="hidden" name="intent" value="login">
+                        </form>
+                    </div>
+                @endif
 
                 <div style="margin-top: 1rem; text-align: center;">
                     <a href="{{ route('register') }}" class="registration-link">
