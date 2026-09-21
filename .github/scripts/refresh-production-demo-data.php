@@ -27,23 +27,33 @@ if (! str_contains($sql, 'CREATE TEMP TABLE dar_demo_application_ids')) {
     throw new RuntimeException('The demo refresh SQL is missing the safe demo-record targeting guard.');
 }
 
-if (str_contains($sql, "application_code LIKE '2026-DGT-%'")) {
-    throw new RuntimeException('Unsafe broad 2026-DGT application cleanup detected.');
+if (
+    str_contains($sql, "application_code LIKE '2026-DGT-%'")
+    || str_contains($sql, "application_code LIKE '2026-NOR-%'")
+) {
+    throw new RuntimeException('Unsafe broad demo application cleanup detected.');
 }
 
 $beforeParcels = DB::table('parcels')
-    ->where('parcel_code', 'like', 'DGT-AGRI-%')
+    ->where(function ($query) {
+        $query->where('parcel_code', 'like', 'NOR-AGRI-%')
+            ->orWhere('parcel_code', 'like', 'NOR-AGRI-%');
+    })
     ->count();
 
 $beforeApplications = DB::table('land_transfer_applications')
     ->where(function ($query) {
-        $query->where('application_code', 'like', '2026-DGT-DEMO-%')
+        $query->where('application_code', 'like', '2026-NOR-DEMO-%')
+            ->orWhere('application_code', 'like', '2026-NOR-DEMO-%')
             ->orWhereExists(function ($subquery) {
                 $subquery->selectRaw('1')
                     ->from('application_parcels as ap')
                     ->join('parcels as p', 'p.id', '=', 'ap.parcel_id')
                     ->whereColumn('ap.land_transfer_application_id', 'land_transfer_applications.id')
-                    ->where('p.parcel_code', 'like', 'DGT-AGRI-%');
+                    ->where(function ($parcelQuery) {
+                        $parcelQuery->where('p.parcel_code', 'like', 'DGT-AGRI-%')
+                            ->orWhere('p.parcel_code', 'like', 'NOR-AGRI-%');
+                    });
             });
     })
     ->count();
@@ -54,35 +64,35 @@ echo "Existing targeted demo applications: {$beforeApplications}\n";
 DB::unprepared($sql);
 
 $parcelCount = DB::table('parcels')
-    ->where('parcel_code', 'like', 'DGT-AGRI-%')
+    ->where('parcel_code', 'like', 'NOR-AGRI-%')
     ->count();
 
 $applicationCount = DB::table('land_transfer_applications')
-    ->where('application_code', 'like', '2026-DGT-DEMO-%')
+    ->where('application_code', 'like', '2026-NOR-DEMO-%')
     ->count();
 
 $finalCount = DB::table('land_transfer_applications')
-    ->where('application_code', 'like', '2026-DGT-DEMO-%')
+    ->where('application_code', 'like', '2026-NOR-DEMO-%')
     ->whereIn('status', ['approved', 'denied'])
     ->count();
 
 $badPaymentCount = DB::table('land_transfer_applications')
-    ->where('application_code', 'like', '2026-DGT-DEMO-%')
+    ->where('application_code', 'like', '2026-NOR-DEMO-%')
     ->whereNotNull('amount_paid')
     ->where('amount_paid', '<>', 2000)
     ->count();
 
 $nonAgriculturalCount = DB::table('parcels')
-    ->where('parcel_code', 'like', 'DGT-AGRI-%')
+    ->where('parcel_code', 'like', 'NOR-AGRI-%')
     ->where('agricultural_status', '<>', 'private_agricultural')
     ->count();
 
 if ($parcelCount !== 16) {
-    throw new RuntimeException("Expected 16 DGT-AGRI demo parcels after refresh; found {$parcelCount}.");
+    throw new RuntimeException("Expected 16 NOR-AGRI demo parcels after refresh; found {$parcelCount}.");
 }
 
 if ($applicationCount !== 16) {
-    throw new RuntimeException("Expected 16 DGT demo applications after refresh; found {$applicationCount}.");
+    throw new RuntimeException("Expected 16 NOR demo applications after refresh; found {$applicationCount}.");
 }
 
 if ($finalCount !== 5) {
