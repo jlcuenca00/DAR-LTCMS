@@ -316,6 +316,19 @@ class BetaSystemRegressionTest extends TestCase
         // workflow gates are exercised by the full-flow test above.
         $application->forceFill([
             'status' => LandTransferApplication::STATUS_FOR_RELEASING,
+            'payment_order_reference' => 'OP-BETA-DENIED-001',
+            'payment_order_issued_at' => now(),
+            'or_number' => 'OR-BETA-DENIED-001',
+            'or_date' => now()->toDateString(),
+            'amount_paid' => config('dar_ltc.filing_fee', 2000),
+            'ltc_form4_subject_land_findings' => ['subject_land_reviewed'],
+            'ltc_form4_recommendation_findings' => ['denial_recommended'],
+            'ltc_form4_recommendation_decision' => 'denial',
+            'ltc_form4_certified_at' => now()->toDateString(),
+            'ltc_form4_certifying_officer_name' => 'Authorized Review Officer',
+            'csw_reference' => 'CSW-BETA-DENIED-001',
+            'csw_completed_at' => now(),
+            'csw_prepared_by' => $staff->id,
         ])->save();
 
         $this->actingAs($staff)
