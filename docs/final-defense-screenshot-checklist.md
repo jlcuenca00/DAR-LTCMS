@@ -57,7 +57,7 @@ Capture at least one clear final output showing:
 
 - [ ] Staff Parcel Map with multiple test Parcels
 - [ ] Staff map filter/hover/click behavior
-- [ ] Geodetic read-only Parcel Map
+- [ ] Geodetic limited-access Parcel Map / controlled geometry workflow
 - [ ] Landowner privacy-filtered Parcel Map
 
 ## Monitoring and audit screenshots
