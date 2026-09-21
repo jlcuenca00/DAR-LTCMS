@@ -27,7 +27,7 @@ DAR-LTCMS supports:
 - monitoring and report generation
 - LTC form and clearance output generation
 
-The platform is an administrative processing and decision-support system. A **Released** clearance records and generates the administrative clearance result; it does **not** automatically transfer land ownership, mutate Registry of Deeds records, or conclusively execute a legal land transfer. Any actual ownership transfer or registry alteration remains subject to separate legal and administrative procedures outside DAR-LTCMS automatic operations.
+The platform is an administrative processing and decision-support system. An **Approved** or **Denied** application records the final administrative clearance decision. Release of the signed result is tracked separately. Neither approval nor release automatically transfers land ownership, mutates Registry of Deeds records, or conclusively executes a legal land transfer. Any actual ownership transfer or registry alteration remains subject to separate legal and administrative procedures outside DAR-LTCMS automatic operations.
 
 ## User Roles
 
@@ -100,7 +100,7 @@ Historical database values such as `released`, `not_approved`, `pending_review`,
 | Parcel Records | Store Parcel details, title/tax declaration references, area, classification, and map geometry |
 | Landholding Records | Maintain administrative Landowner–Parcel relationships |
 | Source / Reference Records | Preserve supporting reference/provenance information used during review |
-| Clearance Applications | Encode, review, endorse, release, deny, and monitor applications |
+| Clearance Applications | Encode, review, endorse, record final decisions, track release, and monitor applications |
 | Supporting Documents | Upload, view, and review requirement-specific document information |
 | LTC Forms and Outputs | Generate office forms, printable records, and final clearance outputs |
 | Parcel Map | Review mapped agricultural Parcel information |
