@@ -78,9 +78,10 @@ Landowners:
 
 Geodetic users:
 
-- have limited/read-only Parcel/reference/map access;
+- have limited Parcel/reference/map review access;
+- may edit only explicitly scoped parcel geometry through the controlled Geodetic geometry workflow;
 - are not primary clearance decision users;
-- do not broadly edit ownership/application records; and
+- do not edit ownership/application decision records; and
 - do not receive Staff-level administrative access.
 
 ## Current application workflow
