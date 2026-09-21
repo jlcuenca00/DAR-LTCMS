@@ -2639,7 +2639,7 @@
                                     <h2 class="review-panel-title">Final Decision Locked</h2>
                                     <p class="review-panel-subtitle">
                                         This application already has a final decision. Uploads, document removals, resubmission,
-                                        release, and denial actions are locked for audit integrity.
+                                        and further decision changes are locked for audit integrity. Authorized release tracking remains available and does not change the final decision.
                                     </p>
                                 </div>
                                 <span class="staff-badge {{ $statusBadgeClass }}">{{ $statusLabel }}</span>
