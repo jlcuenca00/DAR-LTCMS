@@ -41,7 +41,7 @@ WHERE contact_number LIKE '09996%'
    OR contact_number LIKE '09997%'
    OR contact_number LIKE '09999%';
 
-DO $
+DO $$
 BEGIN
     IF to_regclass('public.application_clearances') IS NOT NULL THEN
         DELETE FROM application_clearances
@@ -52,7 +52,7 @@ BEGIN
         DELETE FROM application_parcels
         WHERE land_transfer_application_id IN (SELECT id FROM dar_demo_application_ids);
     END IF;
-END $;
+END $$;
 
 DELETE FROM land_transfer_applications
 WHERE id IN (SELECT id FROM dar_demo_application_ids);
