@@ -1,0 +1,25 @@
+:root {
+  --md-primary-fg-color: #166b3a;
+  --md-primary-fg-color--light: #25814c;
+  --md-primary-fg-color--dark: #005326;
+  --md-accent-fg-color: #166b3a;
+}
+
+.md-header,
+.md-tabs {
+  box-shadow: none;
+}
+
+.md-typeset h1,
+.md-typeset h2 {
+  font-weight: 700;
+}
+
+.md-typeset a {
+  text-underline-offset: 0.15em;
+}
+
+.md-typeset .admonition.important,
+.md-typeset details.important {
+  border-color: #166b3a;
+}
