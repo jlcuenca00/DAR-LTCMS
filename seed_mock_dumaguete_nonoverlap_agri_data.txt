@@ -15,30 +15,47 @@ BEGIN;
 -- Safe rerun rule: only records using the DGT-AGRI / DGT-DEMO identifiers and the
 -- reserved 09996 demo contact range are removed.
 
+-- Capture only known DAR-LTCMS demo rows before any linked rows are removed.
+-- This deliberately avoids blanket deletion of every 2026-DGT-* application code.
+CREATE TEMP TABLE dar_demo_application_ids (id bigint PRIMARY KEY) ON COMMIT DROP;
+INSERT INTO dar_demo_application_ids (id)
+SELECT id
+FROM land_transfer_applications
+WHERE application_code LIKE '2026-DGT-DEMO-%'
+UNION
+SELECT DISTINCT ap.land_transfer_application_id
+FROM application_parcels ap
+JOIN parcels p ON p.id = ap.parcel_id
+WHERE p.parcel_code LIKE 'DGT-AGRI-%';
+
+CREATE TEMP TABLE dar_demo_landowner_ids (id bigint PRIMARY KEY) ON COMMIT DROP;
+INSERT INTO dar_demo_landowner_ids (id)
+SELECT DISTINCT lh.landowner_id
+FROM landholdings lh
+JOIN parcels p ON p.id = lh.parcel_id
+WHERE p.parcel_code LIKE 'DGT-AGRI-%'
+UNION
+SELECT id
+FROM landowners
+WHERE contact_number LIKE '09996%'
+   OR contact_number LIKE '09997%'
+   OR contact_number LIKE '09999%';
+
 DO $$
 BEGIN
     IF to_regclass('public.application_clearances') IS NOT NULL THEN
         DELETE FROM application_clearances
-        WHERE land_transfer_application_id IN (
-            SELECT id FROM land_transfer_applications
-            WHERE application_code LIKE '2026-DGT-DEMO-%'
-               OR application_code LIKE '2026-DGT-%'
-        );
+        WHERE land_transfer_application_id IN (SELECT id FROM dar_demo_application_ids);
     END IF;
 
     IF to_regclass('public.application_parcels') IS NOT NULL THEN
         DELETE FROM application_parcels
-        WHERE land_transfer_application_id IN (
-            SELECT id FROM land_transfer_applications
-            WHERE application_code LIKE '2026-DGT-DEMO-%'
-               OR application_code LIKE '2026-DGT-%'
-        );
+        WHERE land_transfer_application_id IN (SELECT id FROM dar_demo_application_ids);
     END IF;
 END $$;
 
 DELETE FROM land_transfer_applications
-WHERE application_code LIKE '2026-DGT-DEMO-%'
-   OR application_code LIKE '2026-DGT-%';
+WHERE id IN (SELECT id FROM dar_demo_application_ids);
 
 DELETE FROM legacy_records
 WHERE parcel_code LIKE 'DGT-AGRI-%'
@@ -64,9 +81,7 @@ WHERE parcel_id IN (SELECT id FROM parcels WHERE parcel_code LIKE 'DGT-AGRI-%');
 DELETE FROM parcels WHERE parcel_code LIKE 'DGT-AGRI-%';
 
 DELETE FROM landowners
-WHERE contact_number LIKE '09996%'
-   OR contact_number LIKE '09997%'
-   OR contact_number LIKE '09999%';
+WHERE id IN (SELECT id FROM dar_demo_landowner_ids);
 
 DO $$
 DECLARE
