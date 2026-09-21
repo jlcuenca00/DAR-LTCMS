@@ -1,0 +1,92 @@
+name: Refresh Production Demo Data
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: "Type REFRESH-DEMO-DATA to replace only the DAR-LTCMS demo parcel/application dataset"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: darltcms-production
+  cancel-in-progress: false
+
+jobs:
+  refresh-demo-data:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Verify explicit confirmation
+        env:
+          CONFIRMATION: ${{ inputs.confirmation }}
+        run: |
+          if [ "$CONFIRMATION" != "REFRESH-DEMO-DATA" ]; then
+            echo "Confirmation did not match REFRESH-DEMO-DATA."
+            exit 1
+          fi
+
+      - name: Checkout current main
+        uses: actions/checkout@v4
+
+      - name: Verify safe demo seed
+        run: |
+          grep -q "CREATE TEMP TABLE dar_demo_application_ids" seed_mock_dumaguete_nonoverlap_agri_data.txt
+          if grep -Fq "application_code LIKE '2026-DGT-%'" seed_mock_dumaguete_nonoverlap_agri_data.txt; then
+            echo "Unsafe broad DGT application cleanup detected."
+            exit 1
+          fi
+
+      - name: Configure deployment SSH key
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -p 22 -H "$SSH_HOST" >> ~/.ssh/known_hosts
+
+      - name: Prepare protected remote staging path
+        env:
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_USERNAME: ${{ secrets.SSH_USERNAME }}
+        run: |
+          ssh -i ~/.ssh/id_rsa -p 22 "$SSH_USERNAME@$SSH_HOST" \
+            'mkdir -p /home/darltcms/htdocs/darltcms.me/storage/app/private && chmod ug+rwX /home/darltcms/htdocs/darltcms.me/storage/app/private'
+
+      - name: Upload guarded demo refresh files
+        env:
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_USERNAME: ${{ secrets.SSH_USERNAME }}
+        run: |
+          scp -i ~/.ssh/id_rsa -P 22 \
+            seed_mock_dumaguete_nonoverlap_agri_data.txt \
+            "$SSH_USERNAME@$SSH_HOST:/home/darltcms/htdocs/darltcms.me/storage/app/private/demo-refresh.sql"
+
+          scp -i ~/.ssh/id_rsa -P 22 \
+            .github/scripts/refresh-production-demo-data.php \
+            "$SSH_USERNAME@$SSH_HOST:/home/darltcms/htdocs/darltcms.me/storage/app/private/.refresh-production-demo-data.php"
+
+      - name: Refresh production demo records
+        env:
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_USERNAME: ${{ secrets.SSH_USERNAME }}
+        run: |
+          ssh -i ~/.ssh/id_rsa -p 22 "$SSH_USERNAME@$SSH_HOST" 'bash -s' <<'REMOTE'
+          set -euo pipefail
+          cd /home/darltcms/htdocs/darltcms.me
+
+          cleanup() {
+            rm -f storage/app/private/demo-refresh.sql
+            rm -f storage/app/private/.refresh-production-demo-data.php
+          }
+          trap cleanup EXIT
+
+          test -f .env
+          test -f vendor/autoload.php
+          php storage/app/private/.refresh-production-demo-data.php
+          REMOTE
