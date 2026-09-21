@@ -17,8 +17,9 @@ Capture screenshots only from the final polished DAR-LTCMS UI using realistic no
 - [ ] Supporting document upload/review section
 - [ ] Requirement-specific document data fields
 - [ ] Workflow stage controls
-- [ ] Released final state
-- [ ] Denied final state
+- [ ] Approved final decision
+- [ ] Denied final decision
+- [ ] Ready for Release / Released to Client tracking
 - [ ] Locked finalized application state
 - [ ] Browser LTC Form No. 5 output
 - [ ] PDF LTC Form No. 5 output
@@ -93,8 +94,9 @@ Capture at least one clear final output showing:
 03-clearance-applications.png
 04-application-review.png
 05-requirement-data-fields.png
-06-released-locked-state.png
+06-approved-locked-state.png
 07-denied-locked-state.png
+08-release-tracking.png
 08-ltc-form5-output.png
 09-landowner-records.png
 10-parcel-records.png
@@ -110,7 +112,7 @@ Capture at least one clear final output showing:
 ## Screenshot quality rules
 
 - Use DAR-LTCMS branding only; do not show obsolete project branding.
-- Use the current **Released/Denied** user-facing workflow terminology.
+- Use the current **Approved/Denied** final-decision terminology and show release as a separate delivery status.
 - Do not expose real production credentials, personal data, `.env` values, or private file paths.
 - Avoid browser clutter that distracts from the system.
 - Capture enough of reports/outputs to make labels and scope understandable.
