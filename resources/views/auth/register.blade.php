@@ -12,45 +12,6 @@
         </div>
     @endif
 
-    @if ($googleClientId)
-        <div class="registration-google-section">
-            <p id="google-consent-error" role="alert" class="hidden registration-google-error">
-                Please accept the privacy notice below before continuing with Google.
-            </p>
-
-            <div class="flex justify-center">
-                <div id="g_id_onload"
-                    data-client_id="{{ $googleClientId }}"
-                    data-callback="handleGoogleRegistration"
-                    data-ux_mode="popup"
-                    data-auto_prompt="false">
-                </div>
-                <div class="g_id_signin"
-                    data-type="standard"
-                    data-size="large"
-                    data-theme="outline"
-                    data-text="continue_with"
-                    data-shape="pill"
-                    data-locale="en"
-                    data-logo_alignment="left">
-                </div>
-            </div>
-
-            <form id="google-registration-form" method="POST" action="{{ route('register.google') }}" class="hidden">
-                @csrf
-                <input id="google-registration-credential" type="hidden" name="credential">
-                <input type="hidden" name="intent" value="register">
-                <input id="google-registration-consent" type="hidden" name="privacy_consent" value="0">
-            </form>
-        </div>
-
-        <div class="registration-divider" aria-hidden="true">
-            <span></span>
-            <span>or register manually</span>
-            <span></span>
-        </div>
-    @endif
-
     <form id="manual-registration-form" method="POST" action="{{ route('register') }}" class="registration-form">
         @csrf
 
@@ -98,11 +59,51 @@
             {{ __('Create Landowner Account') }}
         </button>
 
-        <div class="registration-signin">
-            <span>Already registered?</span>
-            <a href="{{ route('login') }}">{{ __('Sign in') }}</a>
-        </div>
     </form>
+
+    @if ($googleClientId)
+        <div class="registration-divider" aria-hidden="true">
+            <span></span>
+            <span>or</span>
+            <span></span>
+        </div>
+
+        <div class="registration-google-section">
+            <p id="google-consent-error" role="alert" class="hidden registration-google-error">
+                Please accept the privacy notice above before continuing with Google.
+            </p>
+
+            <div class="flex justify-center">
+                <div id="g_id_onload"
+                    data-client_id="{{ $googleClientId }}"
+                    data-callback="handleGoogleRegistration"
+                    data-ux_mode="popup"
+                    data-auto_prompt="false">
+                </div>
+                <div class="g_id_signin"
+                    data-type="standard"
+                    data-size="large"
+                    data-theme="outline"
+                    data-text="continue_with"
+                    data-shape="pill"
+                    data-locale="en"
+                    data-logo_alignment="left">
+                </div>
+            </div>
+
+            <form id="google-registration-form" method="POST" action="{{ route('register.google') }}" class="hidden">
+                @csrf
+                <input id="google-registration-credential" type="hidden" name="credential">
+                <input type="hidden" name="intent" value="register">
+                <input id="google-registration-consent" type="hidden" name="privacy_consent" value="0">
+            </form>
+        </div>
+    @endif
+
+    <div class="registration-signin">
+        <span>Already registered?</span>
+        <a href="{{ route('login') }}">{{ __('Sign in') }}</a>
+    </div>
 
     @if ($googleClientId)
         <script>
