@@ -428,6 +428,10 @@ class ApplicationWorkflowController extends Controller
             return back()->withErrors(['release' => 'This decision output has already been released to the client.']);
         }
 
+        if ($application->release_status === LandTransferApplication::RELEASE_READY) {
+            return back()->withErrors(['release' => 'This decision output is already marked Ready for Release.']);
+        }
+
         $application->release_status = LandTransferApplication::RELEASE_READY;
         $application->ready_for_release_at = $application->ready_for_release_at ?: now();
         $application->save();
