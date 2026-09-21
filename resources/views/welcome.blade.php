@@ -232,7 +232,6 @@
                     <article class="requirement-card">
                         <div class="requirement-head"><h3>Transferor — person transferring the land</h3></div>
                         <ul class="requirement-list">
-                            <li>Official Receipt (LTC Fee Payment)</li>
                             <li>Electronic Copy of Title</li>
                             <li>Deed or Document to be Registered</li>
                             <li>Affidavit of Transferor</li>
@@ -249,7 +248,7 @@
                             <li>MARPO Certification (LTC Form No. 2)</li>
                         </ul>
                     </article>
-                    <div class="additional"><strong>When needed:</strong> Recent Tax Declaration, Death Certificate, City Assessor's Certificate, and other documents requested by DAR during review.</div>
+                    <div class="additional"><strong>When needed:</strong> Recent Tax Declaration, Death Certificate, City Assessor's Certificate, and other documents requested by DAR during review. The Official Receipt is recorded later after documentary completeness, Payment Order issuance, and cashier payment.</div>
                 </div>
             </div>
         </section>
