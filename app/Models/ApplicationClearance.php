@@ -29,6 +29,17 @@ class ApplicationClearance extends Model
         'generated_at' => 'datetime',
     ];
 
+    protected static function booted(): void
+    {
+        static::updating(function (): void {
+            throw new \LogicException('Final clearance snapshots are immutable and cannot be updated.');
+        });
+
+        static::deleting(function (): void {
+            throw new \LogicException('Final clearance snapshots are immutable and cannot be deleted.');
+        });
+    }
+
     public function application()
     {
         return $this->belongsTo(LandTransferApplication::class, 'land_transfer_application_id');
