@@ -479,6 +479,50 @@ class NotificationSystemTest extends TestCase
         ]);
     }
 
+    public function test_landowner_final_decision_and_release_notifications_have_distinct_targets(): void
+    {
+        $landownerUser = User::factory()->create([
+            'role' => User::ROLE_LANDOWNER,
+            'is_active' => true,
+        ]);
+
+        $application = LandTransferApplication::create([
+            'application_code' => 'APP-NOTIF-TARGET-001',
+            'transferor_name' => 'Target Transferor',
+            'transferee_name' => 'Target Transferee',
+            'municipality' => 'Dumaguete City',
+            'barangay' => 'Bantayan',
+            'status' => LandTransferApplication::STATUS_APPROVED,
+        ]);
+
+        $decisionNotification = SystemNotification::create([
+            'user_id' => $landownerUser->id,
+            'type' => 'landowner_final_decision',
+            'title' => 'Final decision recorded',
+            'message' => 'A final decision was recorded.',
+            'related_type' => LandTransferApplication::class,
+            'related_id' => $application->id,
+        ]);
+
+        $releaseNotification = SystemNotification::create([
+            'user_id' => $landownerUser->id,
+            'type' => 'landowner_clearance_released',
+            'title' => 'Decision output released',
+            'message' => 'The signed output was released.',
+            'related_type' => LandTransferApplication::class,
+            'related_id' => $application->id,
+        ]);
+
+        $this->assertSame(
+            route('landowner.applications.index'),
+            $decisionNotification->targetUrlFor($landownerUser)
+        );
+        $this->assertSame(
+            route('landowner.applications.clearance.show', $application),
+            $releaseNotification->targetUrlFor($landownerUser)
+        );
+    }
+
     public function test_landowner_parcel_notification_target_requires_landholding_link(): void
     {
         $landownerUser = User::factory()->create([
