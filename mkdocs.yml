@@ -1,0 +1,51 @@
+site_name: DAR-LTCMS Documentation
+site_description: Official user documentation for the DAR Land Transfer Clearance and Monitoring System of the DAR Negros Oriental Provincial Office.
+site_url: https://docs.darltcms.me/
+docs_dir: docs-site
+site_dir: site
+
+theme:
+  name: material
+  language: en
+  logo: assets/images/dar-logo.svg
+  favicon: assets/images/dar-logo.svg
+  palette:
+    scheme: default
+    primary: green
+    accent: green
+  features:
+    - navigation.sections
+    - navigation.top
+    - navigation.footer
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+
+plugins:
+  - search
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - md_in_html
+  - toc:
+      permalink: true
+  - pymdownx.details
+  - pymdownx.superfences
+
+extra_css:
+  - assets/stylesheets/extra.css
+
+nav:
+  - Home: index.md
+  - About DAR-LTCMS: about.md
+  - Scope & Limitations: scope-and-limitations.md
+  - Clearance Workflow: clearance-workflow.md
+  - User Guides:
+      - DAR Staff: guides/dar-staff.md
+      - Landowner: guides/landowner.md
+      - Geodetic Personnel: guides/geodetic.md
+  - Security & Auditability: security-and-auditability.md
+  - FAQ: faq.md
+
+copyright: "Department of Agrarian Reform — Negros Oriental Provincial Office"
