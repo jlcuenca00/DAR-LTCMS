@@ -310,6 +310,48 @@
             background: var(--dar-green-dark);
         }
 
+        .auth-divider {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-top: 1.35rem;
+            color: #9ca3af;
+            font-size: 0.78rem;
+            font-weight: 600;
+        }
+
+        .auth-divider > span:not(.auth-divider-text) {
+            height: 1px;
+            flex: 1;
+            background: #e5e7eb;
+        }
+
+        .auth-divider-text {
+            line-height: 1;
+        }
+
+        .google-signin-wrap {
+            margin-top: 1rem;
+            display: flex;
+            justify-content: center;
+        }
+
+        .registration-prompt {
+            margin-top: 1.15rem;
+            padding-top: 1.1rem;
+            border-top: 1px solid #edf0ee;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.35rem;
+            font-size: 0.84rem;
+        }
+
+        .registration-copy {
+            color: #6b7280;
+            font-weight: 500;
+        }
+
         .login-footer {
             margin-top: 2rem;
             text-align: center;

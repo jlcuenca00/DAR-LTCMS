@@ -144,13 +144,13 @@
                 </form>
 
                 @if ($googleClientId)
-                    <div style="display: flex; align-items: center; gap: .75rem; margin-top: 1.25rem; color: #9ca3af; font-size: .72rem; font-weight: 800; text-transform: uppercase; letter-spacing: .12em;">
-                        <span style="height: 1px; flex: 1; background: #e5e7eb;"></span>
-                        or continue with
-                        <span style="height: 1px; flex: 1; background: #e5e7eb;"></span>
+                    <div class="auth-divider" aria-hidden="true">
+                        <span></span>
+                        <span class="auth-divider-text">or</span>
+                        <span></span>
                     </div>
 
-                    <div style="margin-top: 1rem; display: flex; justify-content: center;">
+                    <div class="google-signin-wrap">
                         <script src="https://accounts.google.com/gsi/client?hl=en" async defer></script>
                         <div id="g_id_onload"
                             data-client_id="{{ $googleClientId }}"
@@ -175,9 +175,10 @@
                     </div>
                 @endif
 
-                <div style="margin-top: 1rem; text-align: center;">
+                <div class="registration-prompt">
+                    <span class="registration-copy">New landowner?</span>
                     <a href="{{ route('register') }}" class="registration-link">
-                        Register as Landowner
+                        Create an account
                     </a>
                 </div>
 
