@@ -88,7 +88,7 @@
 
         <div class="registration-consent-block">
             <label class="consent">
-                <input id="registration-privacy-consent" type="checkbox" name="privacy_consent" value="1" class="rounded border-gray-300 text-green-700 focus:ring-green-600" @checked(old('privacy_consent')) required>
+                <input id="registration-privacy-consent" form="manual-registration-form" type="checkbox" name="privacy_consent" value="1" class="rounded border-gray-300 text-green-700 focus:ring-green-600" @checked(old('privacy_consent')) required>
                 <span>I have read the <a href="{{ route('privacy') }}" target="_blank" rel="noopener">Privacy Policy</a>, consent to the use of my account details for registration and identity review, and agree to the <a href="{{ route('terms') }}" target="_blank" rel="noopener">Terms of Service</a>.</span>
             </label>
             <x-input-error :messages="$errors->get('privacy_consent')" class="mt-2" />
