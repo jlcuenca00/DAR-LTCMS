@@ -196,7 +196,7 @@ Landowners may view only their own linked parcel/application/status/final-output
 
 ### Geodetic Personnel
 
-Geodetic users have limited/read-only parcel, source/reference, and map access. They are not clearance approving/processing users and must not broadly edit ownership/application records.
+Geodetic users have limited parcel, source/reference, and map access. They may use the controlled parcel-geometry editor where authorized, but they are not clearance approving/processing users and must not edit ownership/application decision records.
 
 ## 13. Test notifications
 
