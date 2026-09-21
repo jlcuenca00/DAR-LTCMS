@@ -22,7 +22,10 @@ class RealisticDemoSeedDefinitionTest extends TestCase
         $this->assertStringContainsString("'released'", $sql);
         $this->assertStringContainsString('No ownership/registry mutation is simulated.', $sql);
         $this->assertStringContainsString('CREATE TEMP TABLE dar_demo_application_ids', $sql);
+        $this->assertStringContainsString("'NOR-AGRI-'", $sql);
+        $this->assertStringContainsString("'2026-NOR-DEMO-'", $sql);
         $this->assertStringNotContainsString("application_code LIKE '2026-DGT-%'", $sql);
+        $this->assertStringNotContainsString("application_code LIKE '2026-NOR-%'", $sql);
 
         foreach ([
             'pending_review_legal',
@@ -62,19 +65,33 @@ class RealisticDemoSeedDefinitionTest extends TestCase
 
         $allowedReleaseStatuses = ['not_ready', 'ready_for_release', 'released'];
         $allowedTitleTypes = ['tct', 'oct', 'untitled'];
-        $allowedBarangays = ['Balugo', 'Cantil-e', 'Cadawinonan'];
+        $allowedBarangays = ['Basak', 'Apolong', 'Baslay', 'Malongcay Dacu'];
+        $allowedMunicipalities = ['San Jose', 'Valencia', 'Dauin'];
 
         foreach ($rows as $row) {
             $this->assertContains($row['status'], $allowedStatuses);
             $this->assertContains($row['release_status'], $allowedReleaseStatuses);
             $this->assertContains($row['title_type'], $allowedTitleTypes);
             $this->assertContains($row['barangay'], $allowedBarangays);
+            $this->assertContains($row['municipality'], $allowedMunicipalities);
             $this->assertGreaterThanOrEqual(0.5, (float) $row['area']);
             $this->assertLessThanOrEqual(5.0, (float) $row['area']);
 
             $polygon = $row['poly'];
             $this->assertGreaterThanOrEqual(4, count($polygon));
             $this->assertSame($polygon[0], $polygon[count($polygon) - 1], 'GeoJSON polygon must be closed.');
+        }
+
+        $this->assertSame(
+            ['Dauin', 'San Jose', 'Valencia'],
+            collect($rows)->pluck('municipality')->unique()->sort()->values()->all()
+        );
+
+        foreach (['Balugo', 'Cantil-e', 'Cadawinonan', 'Batinguel'] as $oldUrbanBarangay) {
+            $this->assertFalse(
+                collect($rows)->contains(fn (array $row): bool => $row['barangay'] === $oldUrbanBarangay),
+                "Old Dumaguete demo barangay {$oldUrbanBarangay} must not remain in the canonical dataset."
+            );
         }
 
         for ($i = 0; $i < count($rows); $i++) {
