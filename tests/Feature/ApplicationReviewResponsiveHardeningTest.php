@@ -51,6 +51,7 @@ class ApplicationReviewResponsiveHardeningTest extends TestCase
 
         $this->assertStringContainsString('Final Decision Locked', $view);
         $this->assertStringContainsString('Uploads, document removals, resubmission,', $view);
-        $this->assertStringContainsString('and denial actions are locked for audit integrity.', $view);
+        $this->assertStringContainsString('and further decision changes are locked for audit integrity.', $view);
+        $this->assertStringContainsString('Authorized release tracking remains available and does not change the final decision.', $view);
     }
 }
