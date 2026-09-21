@@ -62,24 +62,34 @@ Geodetic users have limited/read-only review access. They can review authorized 
 ## Current Application Workflow
 
 ```text
-Pending Review by Legal Officer
+Legal Completeness Review
         ↓
-Endorsed to LTI Division
+Payment / Official Receipt Recording
         ↓
-Endorsed to Chief Legal
+Endorsed to LTID for Verification
         ↓
-Endorsed to PARPO II
+LTID Verification / Returned to Legal
         ↓
-For Releasing
+Legal Evaluation / CSW Preparation
         ↓
-Released
+Chief Legal Final Review
+        ↓
+Forwarded to PARPO II
+        ↓
+PARPO II Decision Pending
+        ↓
+Approved or Denied (FINAL)
+        ↓
+Signed Form No. 5 / Ready for Release
+        ↓
+Released to Client
 ```
 
-A separate application may end in **Denied** when required by the authorized decision.
+**Approved** and **Denied** are the current final application decision states. Once either decision is recorded, substantive editing and supporting-document changes are locked by the UI and backend.
 
-**Released** and **Denied** are the current final user-facing states. Once final, editing and supporting-document changes are locked by the UI and backend; authorized viewing, monitoring, reporting, audit, and archival access remain available.
+Client release is tracked separately through the release status. Recording a release never changes the final Approved/Denied decision and never transfers ownership or mutates registry records.
 
-Legacy database values such as `approved` and `not_approved` may still be recognized for historical compatibility, but current screens map them to **Released** and **Denied**.
+Historical database values such as `released`, `not_approved`, `pending_review`, and `draft` remain readable only for backward compatibility.
 
 ## Core Modules
 
