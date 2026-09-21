@@ -148,34 +148,40 @@ File upload is supporting evidence; metadata capture and validation checks remai
 
 For a complete positive-path test, process an application through:
 
-1. Pending Review by Legal Officer
-2. Endorsed to LTI Division
-3. Endorsed to Chief Legal
-4. Endorsed to PARPO II
-5. For Releasing
-6. Released
+1. Legal Completeness Review
+2. Payment Order / Official Receipt recording
+3. Endorsed to LTID for Verification
+4. LTID Verification / Returned to Legal
+5. Legal Evaluation / CSW Preparation
+6. Chief Legal Final Review
+7. Forwarded to PARPO II
+8. PARPO II Decision Pending
+9. Approved final decision
+10. Ready for Release
+11. Released to Client
 
-Also test a separate application that ends in **Denied**.
+Also test a separate application that receives a **Denied** final decision.
 
-Released and Denied are final user-facing states. After either final state, verify that:
+Approved and Denied are final application decisions. After either decision, verify that:
 
-- application editing is locked;
+- substantive application editing is locked;
 - supporting-document upload/removal is locked;
 - backend mutation attempts are rejected;
-- final output remains viewable by authorized users;
+- the immutable final output is generated;
 - audit logs preserve the decision/action history; and
-- role-appropriate notifications are generated.
+- release to the client is tracked separately without changing the final decision.
 
 ## 11. Verify LTC Form No. 5
 
-For final applications, verify the official output:
+For final Approved and Denied applications, verify the official output:
 
 - LTC number uses the annual sequence and page value;
-- result is GRANTED for Released or DENIED for Denied;
+- result is GRANTED for Approved or DENIED for Denied;
 - all linked parcel references/areas are represented correctly;
 - signatory is `ENGR. MANUEL M. GALON, JR., OIC PARPO II`;
 - notarial details display when encoded;
-- print/PDF uses the intended 8.5 x 13 inch format; and
+- print/PDF uses the intended 8.5 x 13 inch format;
+- Landowners can access the final output only after it is recorded as Released to Client; and
 - the output does not claim that ownership or registry records were automatically changed.
 
 ## 12. Test role-based access
