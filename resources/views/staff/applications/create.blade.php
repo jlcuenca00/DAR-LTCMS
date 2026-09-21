@@ -493,7 +493,7 @@
 
             <div class="form-footer">
                 <p class="footer-note">
-                    Saving creates a clearance application record under Pending Review by Legal Officer. Endorsement, release, denial, and clearance output generation remain separate staff actions.
+                    Saving creates a clearance application record under Legal Completeness Review. Payment/O.R. recording, endorsements, the final Approved/Denied decision, Form No. 5 generation, and client release remain later workflow actions.
                 </p>
 
                 <div class="footer-actions">
