@@ -129,6 +129,48 @@ class FinalLtcForm5Test extends TestCase
         $this->assertStringNotContainsString('registry has been updated', strtolower($html));
     }
 
+    public function test_form5_issuance_date_does_not_change_when_client_release_is_recorded_later(): void
+    {
+        $staff = User::factory()->create(['role' => 'staff']);
+        $application = $this->makeFinalApplication(
+            $staff,
+            'FORM5-IMMUTABLE-DATE-001',
+            1,
+            LandTransferApplication::STATUS_APPROVED
+        );
+
+        $application->forceFill([
+            'date_of_clearance_release' => '2026-09-30',
+        ])->save();
+        $application->load('documents');
+
+        $clearance = new ApplicationClearance([
+            'clearance_number' => '1803-2026-0052 (1)',
+            'decision_status' => LandTransferApplication::STATUS_APPROVED,
+            'application_code' => $application->application_code,
+            'transferor_name' => $application->transferorDisplayName(),
+            'transferee_name' => $application->transfereeDisplayName(),
+            'municipality' => 'Dumaguete City',
+            'barangay' => 'Bantayan',
+            'total_area_hectares' => '1.0000',
+            'parcel_snapshot' => [],
+            'review_officer_name' => $staff->name,
+            'reviewed_at' => '2026-09-20 09:00:00',
+            'generated_by' => $staff->id,
+            'generated_at' => '2026-09-20 09:05:00',
+        ]);
+
+        $html = view('staff.clearances.partials.form5-content', [
+            'application' => $application,
+            'clearance' => $clearance,
+            'showToolbar' => false,
+            'pdfMode' => false,
+        ])->render();
+
+        $this->assertStringContainsString('September 20, 2026', $html);
+        $this->assertStringNotContainsString('September 30, 2026', $html);
+    }
+
     public function test_denied_clearance_renders_denied_not_granted(): void
     {
         $staff = User::factory()->create(['role' => 'staff']);
