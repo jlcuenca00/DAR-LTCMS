@@ -56,7 +56,7 @@ class FinalLtcForm5Test extends TestCase
             ->generateForDecision($application, $staff->id);
 
         $this->assertSame('1803-2026-0043 (7)', $clearance->clearance_number);
-        $this->assertSame(LandTransferApplication::STATUS_RELEASED, $clearance->decision_status);
+        $this->assertSame(LandTransferApplication::STATUS_APPROVED, $clearance->decision_status);
         $this->assertSame('1.5000', (string) $clearance->total_area_hectares);
         $this->assertCount(1, $clearance->parcel_snapshot);
     }
@@ -68,7 +68,7 @@ class FinalLtcForm5Test extends TestCase
         $application->forceFill([
             'or_number' => 'OR-5001',
             'or_date' => '2026-08-20',
-            'amount_paid' => 150,
+            'amount_paid' => config('dar_ltc.filing_fee', 2000),
             'transfer_instruments' => [['name' => 'Deed of Absolute Sale']],
         ])->save();
         $application->load('documents');
@@ -76,7 +76,7 @@ class FinalLtcForm5Test extends TestCase
         $clearance = new ApplicationClearance([
             'land_transfer_application_id' => $application->id,
             'clearance_number' => '1803-2026-0050 (3)',
-            'decision_status' => LandTransferApplication::STATUS_RELEASED,
+            'decision_status' => LandTransferApplication::STATUS_APPROVED,
             'application_code' => $application->application_code,
             'transferor_name' => 'Juan Transferor',
             'transferee_name' => 'Maria Transferee',
@@ -208,7 +208,7 @@ class FinalLtcForm5Test extends TestCase
         User $staff,
         string $code,
         int $pageNumber,
-        string $status = LandTransferApplication::STATUS_RELEASED
+        string $status = LandTransferApplication::STATUS_APPROVED
     ): LandTransferApplication {
         return LandTransferApplication::create([
             'application_code' => $code,
