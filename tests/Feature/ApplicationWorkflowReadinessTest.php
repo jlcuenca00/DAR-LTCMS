@@ -233,6 +233,14 @@ class ApplicationWorkflowReadinessTest extends TestCase
         $application->refresh();
         $this->assertSame(LandTransferApplication::RELEASE_READY, $application->release_status);
         $this->assertSame(LandTransferApplication::STATUS_APPROVED, $application->status);
+        $readyAt = $application->ready_for_release_at;
+
+        $this->actingAs($staff)
+            ->post(route('staff.applications.ready_for_release', $application))
+            ->assertSessionHasErrors('release');
+
+        $application->refresh();
+        $this->assertSame($readyAt?->toDateTimeString(), $application->ready_for_release_at?->toDateTimeString());
 
         $this->actingAs($staff)
             ->post(route('staff.applications.release', $application), [
