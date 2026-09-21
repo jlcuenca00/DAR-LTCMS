@@ -19,7 +19,7 @@ BEGIN;
 -- contact range are removed.
 
 -- Capture only known DAR-LTCMS demo rows before any linked rows are removed.
--- This deliberately avoids blanket deletion of every 2026-DGT-* application code.
+-- This deliberately avoids blanket deletion of non-demo DGT/NOR application codes.
 CREATE TEMP TABLE dar_demo_application_ids (id bigint PRIMARY KEY) ON COMMIT DROP;
 INSERT INTO dar_demo_application_ids (id)
 SELECT id
@@ -420,7 +420,7 @@ COMMIT;
 -- Quick verification output.
 SELECT COUNT(*) AS total_demo_parcels
 FROM parcels
-WHERE parcel_code LIKE 'DGT-AGRI-%';
+WHERE parcel_code LIKE 'NOR-AGRI-%';
 
 SELECT parcel_code, barangay, municipality, area_hectares, agricultural_status
 FROM parcels
