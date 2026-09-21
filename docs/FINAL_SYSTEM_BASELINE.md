@@ -195,7 +195,7 @@ Parcel Map functions are for geographic review/reference/monitoring.
 
 - Staff: broader authorized Parcel view
 - Landowner: own linked Parcel view only
-- Geodetic: limited/read-only Parcel/reference view
+- Geodetic: limited Parcel/reference view with controlled geometry-only editing
 
 Map interaction must not automatically change Parcel ownership.
 
