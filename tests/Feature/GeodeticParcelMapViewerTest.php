@@ -50,7 +50,7 @@ class GeodeticParcelMapViewerTest extends TestCase
         $response->assertSee($parcel->parcel_code);
         $response->assertSee('T-GEO-001');
         $response->assertSee('TD-GEO-001');
-        $response->assertSee('Read-only Access');
+        $response->assertSee('Limited Access');
     }
 
     public function test_geodetic_user_can_view_read_only_parcel_details(): void
