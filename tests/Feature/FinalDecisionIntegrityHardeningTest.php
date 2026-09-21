@@ -301,6 +301,54 @@ class FinalDecisionIntegrityHardeningTest extends TestCase
         $this->assertDatabaseCount('application_clearances', 1);
     }
 
+    public function test_final_clearance_snapshot_rejects_model_update_and_delete(): void
+    {
+        $staff = User::factory()->create(['role' => 'staff']);
+        $parcel = $this->makeParcel('IMMUTABLE-MODEL-PARCEL');
+
+        $application = LandTransferApplication::create([
+            'application_code' => 'IMMUTABLE-MODEL-001',
+            'transferor_name' => 'Immutable Transferor',
+            'transferee_name' => 'Immutable Transferee',
+            'municipality' => 'Dumaguete City',
+            'barangay' => 'Bantayan',
+            'status' => LandTransferApplication::STATUS_APPROVED,
+            'encoded_by' => $staff->id,
+            'reviewed_by' => $staff->id,
+            'reviewed_at' => now(),
+        ]);
+
+        ApplicationParcel::create([
+            'land_transfer_application_id' => $application->id,
+            'parcel_id' => $parcel->id,
+            'parcel_code' => $parcel->parcel_code,
+            'title_no' => $parcel->title_no,
+            'lot_number' => $parcel->lot_number,
+            'area_hectares' => 1.0000,
+        ]);
+
+        $clearance = app(ApplicationClearanceService::class)
+            ->generateForDecision($application, $staff->id);
+
+        try {
+            $clearance->update(['transferor_name' => 'Tampered']);
+            $this->fail('Expected immutable clearance update to be rejected.');
+        } catch (\LogicException $exception) {
+            $this->assertStringContainsString('immutable', strtolower($exception->getMessage()));
+        }
+
+        $this->assertSame('Immutable Transferor', $clearance->fresh()->transferor_name);
+
+        try {
+            $clearance->delete();
+            $this->fail('Expected immutable clearance deletion to be rejected.');
+        } catch (\LogicException $exception) {
+            $this->assertStringContainsString('immutable', strtolower($exception->getMessage()));
+        }
+
+        $this->assertDatabaseHas('application_clearances', ['id' => $clearance->id]);
+    }
+
     private function finalStatuses(): array
     {
         return [
