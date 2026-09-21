@@ -21,6 +21,8 @@ class RealisticDemoSeedDefinitionTest extends TestCase
         $this->assertStringContainsString("'ready_for_release'", $sql);
         $this->assertStringContainsString("'released'", $sql);
         $this->assertStringContainsString('No ownership/registry mutation is simulated.', $sql);
+        $this->assertStringContainsString('CREATE TEMP TABLE dar_demo_application_ids', $sql);
+        $this->assertStringNotContainsString("application_code LIKE '2026-DGT-%'", $sql);
 
         foreach ([
             'pending_review_legal',
