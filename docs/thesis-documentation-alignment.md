@@ -87,7 +87,7 @@ Landowners do not create applications. They may view only their own linked Parce
 
 ### Geodetic Personnel
 
-Geodetic users have limited/read-only Parcel/reference/map review access. They are not primary clearance decision users and do not broadly edit ownership/application records.
+Geodetic users have limited Parcel/reference/map review access. Where explicitly authorized, they may edit only parcel map geometry through the controlled geometry workflow. They are not primary clearance decision users and do not edit ownership/application decision records.
 
 ## LTC Form No. 5 wording
 
