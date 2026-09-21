@@ -747,7 +747,7 @@
                     </details>
 
                     <div class="geo-access-chip">
-                        Read-only Access
+                        Limited Access
                     </div>
 
                     <x-account-menu :user="auth()->user()" />
