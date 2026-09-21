@@ -481,6 +481,11 @@ class NotificationSystemTest extends TestCase
 
     public function test_landowner_final_decision_and_release_notifications_have_distinct_targets(): void
     {
+        $staffUser = User::factory()->create([
+            'role' => User::ROLE_STAFF,
+            'is_active' => true,
+        ]);
+
         $landownerUser = User::factory()->create([
             'role' => User::ROLE_LANDOWNER,
             'is_active' => true,
@@ -493,6 +498,7 @@ class NotificationSystemTest extends TestCase
             'municipality' => 'Dumaguete City',
             'barangay' => 'Bantayan',
             'status' => LandTransferApplication::STATUS_APPROVED,
+            'encoded_by' => $staffUser->id,
         ]);
 
         $decisionNotification = SystemNotification::create([
