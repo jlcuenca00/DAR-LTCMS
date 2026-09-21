@@ -23,7 +23,7 @@ class StaffDashboardHeroRefreshTest extends TestCase
         $this->assertStringContainsString('active application', $script);
         $this->assertStringContainsString('Awaiting legal review', $script);
         $this->assertStringContainsString('In endorsement', $script);
-        $this->assertStringContainsString('Ready for release', $script);
+        $this->assertStringContainsString('PARPO II decision pending', $script);
         $this->assertStringNotContainsString('Select a queue to filter the preview below.', $script);
     }
 
