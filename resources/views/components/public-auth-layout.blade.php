@@ -23,6 +23,25 @@
         .public-auth .login-title { letter-spacing: 0 !important; line-height: 1.2; }
         .public-auth .auth-heading { margin: 1.5rem 0 .5rem; font-size: 1.25rem; font-weight: 700; text-align: center; color: #166b3a; }
         .public-auth .auth-intro { margin-bottom: 1.5rem; font-size: .875rem; line-height: 1.6; color: #4b5563; text-align: center; }
+        .public-auth .registration-header { margin-top: 1.15rem; }
+        .public-auth .registration-header .auth-heading { margin: 0 0 .45rem; }
+        .public-auth .registration-header .auth-intro { max-width: 38rem; margin: 0 auto; }
+        .public-auth .registration-google-section { margin-top: 1.25rem; text-align: center; }
+        .public-auth .registration-google-error { margin: 0 0 .7rem; color: #b91c1c; font-size: .8rem; font-weight: 700; }
+        .public-auth .registration-divider { display: flex; align-items: center; gap: .8rem; margin: 1.35rem 0 1.2rem; color: #9ca3af; font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; }
+        .public-auth .registration-divider > span:first-child,
+        .public-auth .registration-divider > span:last-child { height: 1px; flex: 1; background: #e5e7eb; }
+        .public-auth .registration-form { display: grid; gap: 1rem; }
+        .public-auth .registration-field { min-width: 0; }
+        .public-auth .registration-form .form-label { margin-bottom: .38rem; font-size: .88rem; }
+        .public-auth .registration-form .form-input { padding: .72rem .85rem; font-size: .9rem; }
+        .public-auth .registration-help { margin: .35rem 0 0; color: #7b8492; font-size: .74rem; line-height: 1.45; }
+        .public-auth .registration-consent-block { margin-top: .15rem; padding: .85rem .9rem; border: 1px solid #e3e9e5; border-radius: .6rem; background: #f8faf9; }
+        .public-auth .registration-consent-block .consent { font-size: .8rem; line-height: 1.45; }
+        .public-auth .registration-submit { margin-top: .05rem; }
+        .public-auth .registration-signin { display: flex; align-items: center; justify-content: center; gap: .35rem; margin-top: .15rem; color: #6b7280; font-size: .82rem; }
+        .public-auth .registration-signin a { font-weight: 700; text-decoration: none; }
+        .public-auth .registration-signin a:hover { text-decoration: underline; }
         .public-auth .login-card { min-width: 0; }
         .public-auth .consent { display: flex; align-items: flex-start; gap: .6rem; font-size: .875rem; line-height: 1.5; color: #4b5563; }
         .public-auth .consent input { flex-shrink: 0; margin-top: .25rem; accent-color: #166b3a; }
@@ -38,6 +57,10 @@
         @media (max-width: 480px) {
             .public-auth .login-card { padding: 1.25rem; }
             .public-auth .form-input { font-size: 1rem; }
+            .public-auth .registration-header { margin-top: 1rem; }
+            .public-auth .registration-divider { margin: 1.15rem 0 1rem; font-size: .68rem; }
+            .public-auth .registration-form { gap: .9rem; }
+            .public-auth .registration-consent-block { padding: .75rem .8rem; }
         }
     </style>
 </head>
