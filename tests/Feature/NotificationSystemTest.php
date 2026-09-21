@@ -285,6 +285,23 @@ class NotificationSystemTest extends TestCase
             'encoded_by' => $staffUser->id,
         ]);
 
+        $this->linkSubjectParcel($application, 'APP-NOTIF-FINAL-PARCEL');
+        $application->forceFill([
+            'payment_order_reference' => 'OP-APP-NOTIF-FINAL-001',
+            'payment_order_issued_at' => now(),
+            'or_number' => 'OR-APP-NOTIF-FINAL-001',
+            'or_date' => now()->toDateString(),
+            'amount_paid' => config('dar_ltc.filing_fee', 2000),
+            'ltc_form4_subject_land_findings' => ['subject_land_reviewed'],
+            'ltc_form4_recommendation_findings' => ['denial_recommended'],
+            'ltc_form4_recommendation_decision' => 'denial',
+            'ltc_form4_certified_at' => now()->toDateString(),
+            'ltc_form4_certifying_officer_name' => 'Authorized Review Officer',
+            'csw_reference' => 'CSW-APP-NOTIF-FINAL-001',
+            'csw_completed_at' => now(),
+            'csw_prepared_by' => $staffUser->id,
+        ])->save();
+
         $this->actingAs($staffUser)
             ->post(route('staff.applications.not_approved', $application), [
                 'final_decision_confirmation' => '1',
@@ -460,6 +477,56 @@ class NotificationSystemTest extends TestCase
             'user_id' => $staffUser->id,
             'type' => 'geodetic_reference_imported',
         ]);
+    }
+
+    public function test_landowner_final_decision_and_release_notifications_have_distinct_targets(): void
+    {
+        $staffUser = User::factory()->create([
+            'role' => User::ROLE_STAFF,
+            'is_active' => true,
+        ]);
+
+        $landownerUser = User::factory()->create([
+            'role' => User::ROLE_LANDOWNER,
+            'is_active' => true,
+        ]);
+
+        $application = LandTransferApplication::create([
+            'application_code' => 'APP-NOTIF-TARGET-001',
+            'transferor_name' => 'Target Transferor',
+            'transferee_name' => 'Target Transferee',
+            'municipality' => 'Dumaguete City',
+            'barangay' => 'Bantayan',
+            'status' => LandTransferApplication::STATUS_APPROVED,
+            'encoded_by' => $staffUser->id,
+        ]);
+
+        $decisionNotification = SystemNotification::create([
+            'user_id' => $landownerUser->id,
+            'type' => 'landowner_final_decision',
+            'title' => 'Final decision recorded',
+            'message' => 'A final decision was recorded.',
+            'related_type' => LandTransferApplication::class,
+            'related_id' => $application->id,
+        ]);
+
+        $releaseNotification = SystemNotification::create([
+            'user_id' => $landownerUser->id,
+            'type' => 'landowner_clearance_released',
+            'title' => 'Decision output released',
+            'message' => 'The signed output was released.',
+            'related_type' => LandTransferApplication::class,
+            'related_id' => $application->id,
+        ]);
+
+        $this->assertSame(
+            route('landowner.applications.index'),
+            $decisionNotification->targetUrlFor($landownerUser)
+        );
+        $this->assertSame(
+            route('landowner.applications.clearance.show', $application),
+            $releaseNotification->targetUrlFor($landownerUser)
+        );
     }
 
     public function test_landowner_parcel_notification_target_requires_landholding_link(): void

@@ -346,6 +346,18 @@ class ApplicationWorkflowController extends Controller
 
         [$snapshot] = $this->buildValidationSnapshot($application);
 
+        $readinessErrors = $this->workflowPrerequisiteErrors($snapshot['workflow_readiness']);
+
+        if (! (bool) data_get($snapshot, 'requirements.complete', false)) {
+            $readinessErrors['requirements'] = 'Applicable documentary requirements must remain complete before recording the final PARPO II denial.';
+        }
+
+        if (! empty($readinessErrors)) {
+            return back()->withErrors(array_merge([
+                'validation' => 'Resolve the following workflow-integrity issues before recording PARPO II denial:',
+            ], $readinessErrors));
+        }
+
         try {
             DB::transaction(function () use ($request, $application, $snapshot) {
                 $application = LandTransferApplication::query()
@@ -414,6 +426,10 @@ class ApplicationWorkflowController extends Controller
 
         if ($application->isReleasedToClient()) {
             return back()->withErrors(['release' => 'This decision output has already been released to the client.']);
+        }
+
+        if ($application->release_status === LandTransferApplication::RELEASE_READY) {
+            return back()->withErrors(['release' => 'This decision output is already marked Ready for Release.']);
         }
 
         $application->release_status = LandTransferApplication::RELEASE_READY;
@@ -555,29 +571,7 @@ class ApplicationWorkflowController extends Controller
     {
         [$snapshot, $hasCriticalFailures, $validationMessages] = $this->buildValidationSnapshot($application);
         $workflow = $snapshot['workflow_readiness'];
-        $errors = [];
-
-        if (! $workflow['linked_parties_complete']) {
-            $errors['parties'] = 'Every transferor and transferee must be linked to a Landowner record before PARPO II decision.';
-        }
-
-        if (! $workflow['has_linked_parcel']) {
-            $errors['parcel'] = 'At least one valid Parcel record must be linked before PARPO II decision.';
-        }
-
-        if (! $workflow['payment_complete']) {
-            $errors['payment'] = 'The Payment Order and Official Receipt details must be complete and match the configured filing fee.';
-        }
-
-        if (! $workflow['form4_complete']) {
-            $missing = implode(', ', $workflow['form4_missing_items']);
-            $errors['form4'] = 'Complete LTC Form No. 4 before PARPO II decision.'
-                . ($missing !== '' ? ' Missing: ' . $missing . '.' : '');
-        }
-
-        if (! $workflow['csw_complete']) {
-            $errors['csw'] = 'Completed Staff Work must be recorded before PARPO II decision.';
-        }
+        $errors = $this->workflowPrerequisiteErrors($workflow);
 
         if ($hasCriticalFailures) {
             $errors = array_merge($errors, $validationMessages);
@@ -636,6 +630,35 @@ class ApplicationWorkflowController extends Controller
         ];
 
         return [$snapshot, $hasCriticalFailures, $validationMessages];
+    }
+
+    private function workflowPrerequisiteErrors(array $workflow): array
+    {
+        $errors = [];
+
+        if (! ($workflow['linked_parties_complete'] ?? false)) {
+            $errors['parties'] = 'Every transferor and transferee must be linked to a Landowner record before PARPO II decision.';
+        }
+
+        if (! ($workflow['has_linked_parcel'] ?? false)) {
+            $errors['parcel'] = 'At least one valid Parcel record must be linked before PARPO II decision.';
+        }
+
+        if (! ($workflow['payment_complete'] ?? false)) {
+            $errors['payment'] = 'The Payment Order and Official Receipt details must be complete and match the configured filing fee.';
+        }
+
+        if (! ($workflow['form4_complete'] ?? false)) {
+            $missing = implode(', ', $workflow['form4_missing_items'] ?? []);
+            $errors['form4'] = 'Complete LTC Form No. 4 before PARPO II decision.'
+                . ($missing !== '' ? ' Missing: ' . $missing . '.' : '');
+        }
+
+        if (! ($workflow['csw_complete'] ?? false)) {
+            $errors['csw'] = 'Completed Staff Work must be recorded before PARPO II decision.';
+        }
+
+        return $errors;
     }
 
     private function workflowReadinessSnapshot(LandTransferApplication $application): array

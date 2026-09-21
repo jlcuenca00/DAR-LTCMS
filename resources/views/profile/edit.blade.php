@@ -11,8 +11,8 @@
         ],
         $isGeodeticProfile => [
             'portal' => 'Geodetic Portal',
-            'badge' => 'Read-only Account',
-            'note' => 'Manage your login profile and password. Geodetic access remains limited to parcel and map reference review only.',
+            'badge' => 'Limited Access',
+            'note' => 'Manage your login profile and password. Geodetic access is limited to parcel/reference review and controlled parcel-geometry editing; ownership and application decisions remain read-only.',
         ],
         default => [
             'portal' => 'Staff Workspace',

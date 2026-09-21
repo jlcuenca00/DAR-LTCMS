@@ -33,7 +33,7 @@ class DocumentationAlignmentTest extends TestCase
         }
     }
 
-    public function test_current_user_and_tester_guides_use_released_and_denied_final_states(): void
+    public function test_current_user_and_tester_guides_use_approved_and_denied_final_decisions(): void
     {
         $paths = [
             'docs/barebones-tester-handoff.md',
@@ -46,13 +46,9 @@ class DocumentationAlignmentTest extends TestCase
         foreach ($paths as $path) {
             $content = $this->read($path);
 
-            $this->assertStringContainsString('Released', $content, "{$path} must document Released.");
-            $this->assertStringContainsString('Denied', $content, "{$path} must document Denied.");
-            $this->assertDoesNotMatchRegularExpression(
-                '/(^|\n)\s*[-*]\s+approved\s*$/im',
-                $content,
-                "{$path} must not present Approved as a current final workflow option."
-            );
+            $this->assertStringContainsString('Approved', $content, "{$path} must document Approved as a final decision.");
+            $this->assertStringContainsString('Denied', $content, "{$path} must document Denied as a final decision.");
+            $this->assertStringContainsString('Released', $content, "{$path} must document release separately.");
             $this->assertDoesNotMatchRegularExpression(
                 '/(^|\n)\s*[-*]\s+not[ _-]?approved\s*$/im',
                 $content,
@@ -68,12 +64,13 @@ class DocumentationAlignmentTest extends TestCase
         $this->assertStringContainsString('DAR Negros Oriental Provincial Office', $baseline);
         $this->assertStringContainsString('manually encode applications', $baseline);
         $this->assertStringContainsString('Landowners', $baseline);
-        $this->assertStringContainsString('limited/read-only', $baseline);
+        $this->assertStringContainsString('limited Parcel/reference/map review access', $baseline);
         $this->assertStringContainsString('does **not** mean the platform has', $baseline);
         $this->assertStringContainsString('transferred legal ownership', $baseline);
         $this->assertStringContainsString('registry alteration', $baseline);
-        $this->assertStringContainsString('Released', $baseline);
+        $this->assertStringContainsString('Approved', $baseline);
         $this->assertStringContainsString('Denied', $baseline);
+        $this->assertStringContainsString('Released to Client', $baseline);
         $this->assertStringContainsString('editing is locked', $baseline);
         $this->assertStringContainsString('supporting-document upload/removal is locked', $baseline);
     }

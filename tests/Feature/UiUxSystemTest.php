@@ -81,9 +81,12 @@ class UiUxSystemTest extends TestCase
 
         $this->assertStringContainsString("route('staff.applications.approve', \$application)", $review);
         $this->assertStringContainsString("route('staff.applications.not_approved', \$application)", $review);
-        $this->assertStringContainsString('data-decision-confirm="release"', $review);
+        $this->assertStringContainsString('data-decision-confirm="approve"', $review);
         $this->assertStringContainsString('data-decision-confirm="deny"', $review);
         $this->assertStringContainsString('final_decision_confirmation', $review);
+        $this->assertStringContainsString('Approve application', $review);
+        $this->assertStringContainsString('Record Final Approval', $review);
+        $this->assertStringNotContainsString('Release Clearance', $review);
     }
 
     public function test_staff_dashboard_uses_actionable_attention_groups_instead_of_oldest_record_metrics(): void

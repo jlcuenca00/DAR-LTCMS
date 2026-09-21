@@ -60,7 +60,7 @@ class ParcelMapViewerTest extends TestCase
             'title_no' => 'T-TEST-002',
             'tax_decl_no' => 'TD-TEST-002',
             'municipality' => 'Sibulan',
-            'barangay' => 'Boloc-boloc',
+            'barangay' => 'Bolocboloc',
             'province' => 'Negros Oriental',
             'area_hectares' => 2.5000,
             'status' => 'active',
@@ -86,7 +86,7 @@ class ParcelMapViewerTest extends TestCase
         $response->assertSee('T-TEST-002');
         $response->assertSee('TD-TEST-002');
         $response->assertSee('Sibulan');
-        $response->assertSee('Boloc-boloc');
+        $response->assertSee('Bolocboloc');
     }
 
     public function test_guest_cannot_view_staff_parcel_map(): void

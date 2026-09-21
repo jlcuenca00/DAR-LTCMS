@@ -199,7 +199,7 @@
                     </div>
                     <div class="panel-body">
                         <div class="panel-row"><div class="panel-label">Applications</div><div class="panel-value">Entered by authorized DAR Staff</div></div>
-                        <div class="panel-row"><div class="panel-label">Final result</div><div class="panel-value">Released or Denied</div></div>
+                        <div class="panel-row"><div class="panel-label">Final decision</div><div class="panel-value">Approved or Denied</div></div>
                         <div class="panel-row"><div class="panel-label">Clearance form</div><div class="panel-value">LTC Form No. 5 · GRANTED / DENIED</div></div>
                     </div>
                 </aside>
@@ -232,7 +232,6 @@
                     <article class="requirement-card">
                         <div class="requirement-head"><h3>Transferor — person transferring the land</h3></div>
                         <ul class="requirement-list">
-                            <li>Official Receipt (LTC Fee Payment)</li>
                             <li>Electronic Copy of Title</li>
                             <li>Deed or Document to be Registered</li>
                             <li>Affidavit of Transferor</li>
@@ -249,7 +248,7 @@
                             <li>MARPO Certification (LTC Form No. 2)</li>
                         </ul>
                     </article>
-                    <div class="additional"><strong>When needed:</strong> Recent Tax Declaration, Death Certificate, City Assessor's Certificate, and other documents requested by DAR during review.</div>
+                    <div class="additional"><strong>When needed:</strong> Recent Tax Declaration, Death Certificate, City Assessor's Certificate, and other documents requested by DAR during review. The Official Receipt is recorded later after documentary completeness, Payment Order issuance, and cashier payment.</div>
                 </div>
             </div>
         </section>
@@ -263,14 +262,16 @@
                 </div>
                 <div>
                     <div class="workflow-grid">
-                        <div class="workflow-step"><span class="workflow-number">1</span><strong>Pending Review by Legal Officer</strong></div>
-                        <div class="workflow-step"><span class="workflow-number">2</span><strong>Endorsed to LTI Division</strong></div>
-                        <div class="workflow-step"><span class="workflow-number">3</span><strong>Endorsed to Chief Legal</strong></div>
-                        <div class="workflow-step"><span class="workflow-number">4</span><strong>Endorsed to PARPO II</strong></div>
-                        <div class="workflow-step"><span class="workflow-number">5</span><strong>For Releasing</strong></div>
-                        <div class="workflow-step"><span class="workflow-number">6</span><strong>Released or Denied</strong></div>
+                        <div class="workflow-step"><span class="workflow-number">1</span><strong>Legal Completeness Review</strong></div>
+                        <div class="workflow-step"><span class="workflow-number">2</span><strong>Payment / Official Receipt Recording</strong></div>
+                        <div class="workflow-step"><span class="workflow-number">3</span><strong>LTID Verification</strong></div>
+                        <div class="workflow-step"><span class="workflow-number">4</span><strong>Legal Evaluation / CSW Preparation</strong></div>
+                        <div class="workflow-step"><span class="workflow-number">5</span><strong>Chief Legal Final Review</strong></div>
+                        <div class="workflow-step"><span class="workflow-number">6</span><strong>PARPO II Final Decision</strong></div>
+                        <div class="workflow-step"><span class="workflow-number">7</span><strong>Signed Form No. 5 / Ready for Release</strong></div>
+                        <div class="workflow-step"><span class="workflow-number">8</span><strong>Release to Client</strong></div>
                     </div>
-                    <div class="decision-note">Once an application is Released or Denied, it is final in DAR-LTCMS. Its information and uploaded documents can no longer be changed.</div>
+                    <div class="decision-note">Approved or Denied is the final application decision in DAR-LTCMS. Release of the signed result is tracked separately, and approval does not itself change land ownership.</div>
                 </div>
             </div>
         </section>
@@ -282,7 +283,7 @@
                 <div class="role-grid">
                     <article class="role"><h3>DAR Staff</h3><p>Enter and review applications, manage DAR information, and prepare reports.</p></article>
                     <article class="role"><h3>Landowners</h3><p>View only their own linked land information and application progress. Landowners do not create applications in the system.</p></article>
-                    <article class="role"><h3>Geodetic Personnel</h3><p>View parcel and map information needed for checking land details. They do not approve clearance applications.</p></article>
+                    <article class="role"><h3>Geodetic Personnel</h3><p>Review parcel/reference/map information and, when authorized, update parcel map geometry only. They do not approve clearance applications or edit ownership records.</p></article>
                 </div>
             </div>
         </section>

@@ -153,6 +153,8 @@ class ParcelMapController extends Controller
      */
     public function editGeometry(Request $request, Parcel $parcel)
     {
+        abort_if($parcel->status === 'inactive', 403, 'Archived parcel geometry is read-only.');
+
         $this->pruneExpiredEditSessions();
 
         $editSession = ParcelGeometryEditSession::query()->updateOrCreate(
@@ -240,6 +242,19 @@ class ParcelMapController extends Controller
                 ->lockForUpdate()
                 ->firstOrFail();
 
+            if ($current->status === 'inactive') {
+                ParcelGeometryEditSession::query()
+                    ->where('parcel_id', $current->id)
+                    ->where('user_id', $actor->id)
+                    ->where('session_token', $data['edit_session_token'])
+                    ->delete();
+
+                return [
+                    'status' => 'inactive',
+                    'parcel' => $current,
+                ];
+            }
+
             $session = ParcelGeometryEditSession::query()
                 ->where('parcel_id', $current->id)
                 ->where('user_id', $actor->id)
@@ -324,6 +339,12 @@ class ParcelMapController extends Controller
                 'had_geometry_before' => $hadGeometryBefore,
             ];
         });
+
+        if ($result['status'] === 'inactive') {
+            return redirect()
+                ->route('geodetic.parcels.show', $result['parcel'])
+                ->with('error', 'This parcel has been archived. Its map geometry is read-only and was not changed.');
+        }
 
         if ($result['status'] === 'expired') {
             return redirect()

@@ -53,7 +53,10 @@ class SystemNotification extends Model
             }
 
             if ($viewer->role === User::ROLE_LANDOWNER) {
-                if ($this->type === 'landowner_final_decision' && Route::has('landowner.applications.clearance.show')) {
+                // A final decision may be visible before the signed output is
+                // physically released. Only the actual release notification
+                // should deep-link to the decision output.
+                if ($this->type === 'landowner_clearance_released' && Route::has('landowner.applications.clearance.show')) {
                     return route('landowner.applications.clearance.show', $this->related_id);
                 }
 

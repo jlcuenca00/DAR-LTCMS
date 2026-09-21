@@ -113,9 +113,11 @@ class UserManagementTest extends TestCase
                 'landowner_id' => null,
             ]);
 
-        $response->assertRedirect(route('staff.users.index'));
-
         $created = User::where('username', 'geo_test_01')->firstOrFail();
+        $response
+            ->assertRedirect(route('staff.users.edit', $created))
+            ->assertSessionHas('temporary_password')
+            ->assertSessionHas('temporary_password_username', 'geo_test_01');
         $this->assertTrue($created->must_change_password);
         $this->assertNotNull($created->password_changed_at);
         $this->assertDatabaseHas('audit_logs', [
@@ -141,7 +143,7 @@ class UserManagementTest extends TestCase
             'province' => 'Negros Oriental',
         ]);
 
-        $this->actingAs($staff)
+        $response = $this->actingAs($staff)
             ->post(route('staff.users.store'), [
                 'name' => 'Linked Landowner User',
                 'username' => 'linked_landowner',
@@ -151,10 +153,13 @@ class UserManagementTest extends TestCase
                 'role' => User::ROLE_LANDOWNER,
                 'is_active' => '1',
                 'landowner_id' => $landowner->id,
-            ])
-            ->assertRedirect(route('staff.users.index'));
+            ]);
 
         $created = User::where('username', 'linked_landowner')->firstOrFail();
+        $response
+            ->assertRedirect(route('staff.users.edit', $created))
+            ->assertSessionHas('temporary_password')
+            ->assertSessionHas('temporary_password_username', 'linked_landowner');
         $this->assertDatabaseHas('landowners', [
             'id' => $landowner->id,
             'user_id' => $created->id,
@@ -272,6 +277,7 @@ class UserManagementTest extends TestCase
 
         $target = User::factory()->create([
             'username' => 'reset_target',
+            'email' => null,
             'must_change_password' => false,
             'password_changed_at' => null,
         ]);

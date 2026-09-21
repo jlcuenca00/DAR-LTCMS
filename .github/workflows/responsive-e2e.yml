@@ -6,84 +6,23 @@ on:
     branches:
       - main
     paths:
+      - 'app/**'
+      - 'bootstrap/**'
+      - 'config/**'
+      - 'database/**'
+      - 'resources/**'
+      - 'routes/**'
+      - 'tests/**'
+      - 'docs/**'
       - 'README.md'
       - 'ISO_IEC_25010_2023_SYSTEM_READINESS.md'
-      - 'docs/**'
-      - 'resources/css/**'
-      - 'resources/js/**'
-      - 'resources/views/**'
-      - 'app/Http/Controllers/Staff/StaffDashboardController.php'
-      - 'app/Http/Controllers/Staff/MonitoringReportController.php'
-      - 'app/Http/Controllers/Staff/ParcelMapController.php'
-      - 'app/Http/Controllers/Staff/UserManagementController.php'
-      - 'app/Http/Controllers/Geodetic/ParcelMapController.php'
-      - 'app/Http/Controllers/Geodetic/GeodeticPortalController.php'
-      - 'app/Http/Controllers/Landowner/ParcelMapController.php'
-      - 'app/Http/Controllers/Landowner/LandownerDashboardController.php'
-      - 'app/Http/Controllers/Landowner/LandownerPortalController.php'
-      - 'app/Http/Controllers/ProfileController.php'
-      - 'app/Http/Controllers/Staff/ApplicationClearanceController.php'
-      - 'app/Http/Controllers/Staff/ProtectedStorageController.php'
-      - 'app/Http/Controllers/Landowner/ApplicationClearanceController.php'
-      - 'app/Http/Controllers/Staff/ApplicationWorkflowController.php'
-      - 'app/Http/Controllers/Staff/LandTransferApplicationController.php'
-      - 'app/Http/Controllers/Staff/ApplicationDocumentController.php'
-      - 'app/Http/Controllers/Staff/ApplicationLandownerLinkController.php'
-      - 'app/Http/Middleware/LockApplicationMutation.php'
-      - 'app/Http/Middleware/EnsureMutationAudited.php'
-      - 'app/Http/Middleware/SecurityHeaders.php'
-      - 'app/Http/Middleware/TrustHosts.php'
-      - 'app/Http/Middleware/TrustProxies.php'
-      - 'app/Models/AuditLog.php'
-      - 'app/Notifications/AccountCreatedNotification.php'
-      - 'app/Providers/AppServiceProvider.php'
-      - 'app/Services/AuditLogger.php'
-      - 'app/Services/ApplicationClearanceService.php'
-      - 'app/Services/ProductionReadinessScanner.php'
-      - 'config/app.php'
-      - 'config/filesystems.php'
-      - 'config/onboarding.php'
-      - 'config/session.php'
-      - 'database/migrations/**'
-      - 'bootstrap/app.php'
-      - 'routes/console.php'
-      - '.env.example'
-      - '.github/workflows/deploy.yml'
-      - 'tests/Feature/*Responsive*'
-      - 'tests/Feature/*MobilePortal*'
-      - 'tests/Feature/*Map*'
-      - 'tests/Feature/OnboardingTourTest.php'
-      - 'tests/Feature/UiUxSystemTest.php'
-      - 'tests/Feature/ApplicationModalViewportTest.php'
-      - 'tests/Feature/DashboardAttentionTest.php'
-      - 'tests/Feature/ClearancePrintReferenceTest.php'
-      - 'tests/Feature/FinalLtcForm5Test.php'
-      - 'tests/Feature/ReleasePreparationTest.php'
-      - 'tests/Feature/DocumentationAlignmentTest.php'
-      - 'tests/Feature/PresentationDemoAndUiPolishTest.php'
-      - 'tests/Feature/MonitoringReportTest.php'
-      - 'tests/Feature/SecurityHeadersTest.php'
-      - 'tests/Feature/ProductionSecurityHardeningTest.php'
-      - 'tests/Feature/PerformanceHardeningTest.php'
-      - 'tests/Feature/FinalUatTest.php'
-      - 'tests/Feature/GeodeticReadOnlyTest.php'
-      - 'tests/Feature/LandownerParcelMapViewerTest.php'
-      - 'tests/Feature/ProfilePhotoDeliveryTest.php'
-      - 'tests/Feature/RecordSearchPagesTest.php'
-      - 'tests/Feature/ApplicationSearchFilterTest.php'
-      - 'tests/Feature/FinalDecisionLockTest.php'
-      - 'tests/Feature/FinalDecisionIntegrityHardeningTest.php'
-      - 'tests/Feature/RbacSecurityHardeningTest.php'
-      - 'tests/Feature/ApplicationWorkflowReadinessTest.php'
-      - 'tests/Feature/HectareValidationWorkflowTest.php'
-      - 'tests/Feature/AccountCreationEmailTest.php'
-      - 'tests/Feature/NotificationSystemTest.php'
-      - 'tests/Feature/AuditLoggingTest.php'
-      - 'tests/Feature/AuditLogIntegrityHardeningTest.php'
-      - 'tests/Feature/BetaSystemRegressionTest.php'
-      - 'tests/Feature/DataIntegrityHardeningTest.php'
-      - 'tests/e2e/**'
+      - 'composer.json'
+      - 'composer.lock'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'vite.config.js'
       - 'playwright.config.mjs'
+      - '.env.example'
       - '.github/workflows/responsive-e2e.yml'
 
 permissions:
@@ -138,7 +77,7 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.4'
-          extensions: mbstring, pdo_pgsql, bcmath
+          extensions: mbstring, pdo_pgsql, bcmath, intl
           coverage: none
 
       - name: Install Composer dependencies
@@ -168,49 +107,8 @@ jobs:
       - name: Build frontend assets
         run: npm run build
 
-      - name: Run final UAT, Form 5, release, documentation, presentation, security, workflow, reports, performance, and integrity tests
-        run: |
-          php artisan test \
-            tests/Feature/PublicLegalPagesTest.php \
-            tests/Feature/GoogleSignInHeadersTest.php \
-            tests/Feature/Auth/RegistrationTest.php \
-            tests/Feature/ResponsiveUiFoundationTest.php \
-            tests/Feature/StaffMobilePortalNavigationTest.php \
-            tests/Feature/RoleMobilePortalNavigationTest.php \
-            tests/Feature/OnboardingTourTest.php \
-            tests/Feature/ApplicationReviewResponsiveHardeningTest.php \
-            tests/Feature/ApplicationModalViewportTest.php \
-            tests/Feature/ParcelMapResponsiveHardeningTest.php \
-            tests/Feature/StaffParcelMapResilienceTest.php \
-            tests/Feature/LandownerMapUiCleanupTest.php \
-            tests/Feature/UiUxSystemTest.php \
-            tests/Feature/ClearancePrintReferenceTest.php \
-            tests/Feature/FinalLtcForm5Test.php \
-            tests/Feature/ReleasePreparationTest.php \
-            tests/Feature/DocumentationAlignmentTest.php \
-            tests/Feature/PresentationDemoAndUiPolishTest.php \
-            tests/Feature/DashboardAttentionTest.php \
-            tests/Feature/MonitoringReportTest.php \
-            tests/Feature/SecurityHeadersTest.php \
-            tests/Feature/ProductionSecurityHardeningTest.php \
-            tests/Feature/PerformanceHardeningTest.php \
-            tests/Feature/FinalUatTest.php \
-            tests/Feature/GeodeticReadOnlyTest.php \
-            tests/Feature/LandownerParcelMapViewerTest.php \
-            tests/Feature/ProfilePhotoDeliveryTest.php \
-            tests/Feature/RecordSearchPagesTest.php \
-            tests/Feature/ApplicationSearchFilterTest.php \
-            tests/Feature/RbacSecurityHardeningTest.php \
-            tests/Feature/FinalDecisionLockTest.php \
-            tests/Feature/FinalDecisionIntegrityHardeningTest.php \
-            tests/Feature/ApplicationWorkflowReadinessTest.php \
-            tests/Feature/HectareValidationWorkflowTest.php \
-            tests/Feature/AccountCreationEmailTest.php \
-            tests/Feature/NotificationSystemTest.php \
-            tests/Feature/AuditLoggingTest.php \
-            tests/Feature/AuditLogIntegrityHardeningTest.php \
-            tests/Feature/BetaSystemRegressionTest.php \
-            tests/Feature/DataIntegrityHardeningTest.php
+      - name: Run full Laravel test suite
+        run: php artisan test
 
       - name: Create browser test Staff account
         run: |

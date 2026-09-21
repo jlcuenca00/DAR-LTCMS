@@ -108,12 +108,12 @@
             <div>
                 <p class="geo-record-kicker">Technical Reference View</p>
                 <h2 class="geo-record-title">Parcel and Landholding Records</h2>
-                <p class="geo-record-copy">Review encoded parcel references, linked landowners, hectare values, and geometry availability. Geodetic access remains read-only and does not include ownership changes or application approval.</p>
+                <p class="geo-record-copy">Review encoded parcel references, linked landowners, hectare values, and geometry availability. Ownership and application records remain read-only; parcel geometry may be updated only through the controlled Geodetic geometry workflow.</p>
             </div>
 
             <div class="geo-record-actions">
                 <span class="geo-record-count"><i class="fa-solid fa-layer-group"></i>{{ $landholdings->count() }} records</span>
-                <span class="geo-readonly-badge"><i class="fa-solid fa-lock"></i>Read Only</span>
+                <span class="geo-readonly-badge"><i class="fa-solid fa-shield-halved"></i>Limited Access</span>
                 <a href="{{ route('geodetic.parcel-map.index') }}" class="geo-button geo-button-primary">
                     <i class="fa-solid fa-map-location-dot"></i>
                     Open Map

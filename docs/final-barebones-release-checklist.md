@@ -104,14 +104,16 @@ storage/app/public administrative records
 
 ## 7. Current workflow expectations
 
-New applications use the DAR office workflow ending in either:
+New applications follow the Citizen's Charter-aligned administrative workflow and end with one of these final application decisions:
 
-- **Released**; or
+- **Approved**; or
 - **Denied**.
 
-Both are final states. After either final state, editing/uploads are locked and the record remains available for authorized viewing, monitoring, reporting, audit, and clearance output purposes.
+Both are final decision states. After either decision, substantive editing/uploads are locked and the record remains available for authorized viewing, monitoring, reporting, audit, clearance output, and controlled release-tracking purposes.
 
-A Released clearance does not automatically transfer land ownership or alter registry ownership records.
+A signed output may later be marked **Ready for Release** and **Released to Client**. These delivery statuses do not overwrite the final Approved/Denied decision.
+
+Approval, denial, or release does not automatically transfer land ownership or alter registry ownership records.
 
 ## 8. Production release reminder
 

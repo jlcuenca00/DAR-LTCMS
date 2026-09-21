@@ -326,9 +326,6 @@ public function store(Request $request)
         'applicant_type' => ['nullable', 'string', 'in:transferor,transferee,authorized_representative,other'],
         'authorized_representative_name' => ['nullable', 'string', 'max:255'],
         'has_special_power_of_attorney' => ['nullable', 'boolean'],
-        'or_number' => ['nullable', 'string', 'max:100'],
-        'or_date' => ['nullable', 'date'],
-        'amount_paid' => ['nullable', 'numeric', 'min:0', 'max:999999999.99'],
         'date_of_application' => ['nullable', 'date'],
 
         'transferor_name' => ['nullable', 'string', 'max:1000'],
@@ -337,7 +334,6 @@ public function store(Request $request)
         'municipality' => ['nullable', 'string', 'max:255'],
         'barangay' => ['nullable', 'string', 'max:255'],
         'date_filed' => ['nullable', 'date'],
-        'date_of_clearance_release' => ['nullable', 'date'],
         'transfer_nature' => ['nullable', 'string', 'max:255'],
         'transfer_instruments' => ['nullable', 'array'],
         'transfer_instruments.*.name' => ['nullable', 'string', 'max:255'],
@@ -388,9 +384,6 @@ public function store(Request $request)
             'applicant_type' => $applicantType,
             'authorized_representative_name' => $validated['authorized_representative_name'] ?? null,
             'has_special_power_of_attorney' => $hasSpecialPowerOfAttorney,
-            'or_number' => $validated['or_number'] ?? null,
-            'or_date' => $validated['or_date'] ?? null,
-            'amount_paid' => $validated['amount_paid'] ?? null,
             'date_of_application' => $applicationDate,
             'transferor_landowner_id' => $transferors[0]['landowner_id'] ?? ($validated['transferor_landowner_id'] ?? null),
             'transferee_landowner_id' => $transferees[0]['landowner_id'] ?? ($validated['transferee_landowner_id'] ?? null),
@@ -402,7 +395,6 @@ public function store(Request $request)
             'barangay' => $validated['barangay'] ?? null,
             'date_filed' => $validated['date_filed'] ?? $applicationDate,
             'date_of_transfer' => null,
-            'date_of_clearance_release' => $validated['date_of_clearance_release'] ?? null,
             'ltc_page_number' => 1,
             'transfer_nature' => $validated['transfer_nature'] ?? null,
             'transfer_instruments' => $transferInstruments,
@@ -462,7 +454,7 @@ public function store(Request $request)
 
     return redirect()
         ->route('staff.applications.show', $application)
-        ->with('success', 'Application encoded successfully and placed under Pending Review by Legal Officer.');
+        ->with('success', 'Application encoded successfully and placed under Legal Completeness Review.');
 }
 
 

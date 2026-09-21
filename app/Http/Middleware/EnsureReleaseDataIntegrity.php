@@ -30,7 +30,7 @@ class EnsureReleaseDataIntegrity
 
         if (! $integrity['valid']) {
             return back()->withErrors([
-                'validation' => 'Resolve the application data-integrity issues before preparing or releasing this clearance.',
+                'validation' => 'Resolve the application data-integrity issues before advancing to the PARPO II decision or recording final approval.',
                 'transferee_shares' => implode(' ', $integrity['issues']),
             ]);
         }

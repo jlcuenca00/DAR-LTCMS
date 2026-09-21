@@ -39,7 +39,7 @@ The implemented system covers:
 
 ## Critical legal/operational boundary
 
-A Released clearance means DAR-LTCMS has recorded and generated the administrative clearance result.
+An Approved or Denied application means DAR-LTCMS has recorded the final administrative clearance decision. Release of the signed output is tracked separately.
 
 It does **not** mean the platform has:
 
@@ -78,48 +78,59 @@ Landowners:
 
 Geodetic users:
 
-- have limited/read-only Parcel/reference/map access;
+- have limited Parcel/reference/map review access;
+- may edit only explicitly scoped parcel geometry through the controlled Geodetic geometry workflow;
 - are not primary clearance decision users;
-- do not broadly edit ownership/application records; and
+- do not edit ownership/application decision records; and
 - do not receive Staff-level administrative access.
 
 ## Current application workflow
 
 ```text
-Pending Review by Legal Officer
+Legal Completeness Review
         ↓
-Endorsed to LTI Division
+Payment / Official Receipt Recording
         ↓
-Endorsed to Chief Legal
+Endorsed to LTID for Verification
         ↓
-Endorsed to PARPO II
+LTID Verification / Returned to Legal
         ↓
-For Releasing
+Legal Evaluation / CSW Preparation
         ↓
-Released
+Chief Legal Final Review
+        ↓
+Forwarded to PARPO II
+        ↓
+PARPO II Decision Pending
+        ↓
+Approved or Denied (FINAL)
+        ↓
+Signed Form No. 5 / Ready for Release
+        ↓
+Released to Client
 ```
 
-An application may separately end in **Denied**.
+Current final application decision states:
 
-Current final user-facing states:
-
-- `Released`
+- `Approved`
 - `Denied`
 
-Legacy stored values `approved` and `not_approved` may be recognized for backward compatibility but display as Released/Denied and must not be used as the current workflow terminology in thesis screenshots/diagrams.
+Release is a separate administrative delivery status. A signed final output may be marked **Ready for Release** and later **Released to Client** without changing the final Approved/Denied decision.
+
+Legacy stored values `released`, `not_approved`, `pending_review`, and `draft` remain recognized only for historical compatibility.
 
 ## Final-decision freeze
 
-After Released or Denied:
+After Approved or Denied:
 
 - editing is locked;
 - supporting-document upload/removal is locked;
 - backend mutation requests are rejected;
 - UI reflects the locked final state;
-- final output remains viewable to authorized users;
+- final output remains viewable to authorized users according to release rules;
 - reporting/monitoring remains available;
 - audit history is preserved; and
-- only authorized viewing/archival actions remain appropriate.
+- only authorized release, viewing, monitoring, reporting, and archival actions remain appropriate.
 
 ## Supporting documents and requirement data
 
@@ -147,7 +158,7 @@ Final Form No. 5 behavior includes:
 - example appearance: `1803-2026-0043 (7)`
 - all linked Parcel title/Tax Declaration/lot/survey references as applicable
 - combined recorded area
-- `GRANTED` for Released
+- `GRANTED` for Approved
 - `DENIED` for Denied
 - signatory: `ENGR. MANUEL M. GALON, JR., OIC PARPO II`
 - notarial Doc No., Page No., Book No., Series when encoded
@@ -176,7 +187,7 @@ The system preserves:
 
 Monitoring Reports use administrative status/output data and may filter by date, status, and municipality.
 
-Released/Denied output totals and **Recorded Output Area** are monitoring/reporting metrics only; they do not represent registry mutation or conclusively completed legal ownership transfer.
+Approved/Denied output totals, release totals, and **Recorded Output Area** are monitoring/reporting metrics only; they do not represent registry mutation or conclusively completed legal ownership transfer.
 
 ## Map baseline
 
@@ -184,7 +195,7 @@ Parcel Map functions are for geographic review/reference/monitoring.
 
 - Staff: broader authorized Parcel view
 - Landowner: own linked Parcel view only
-- Geodetic: limited/read-only Parcel/reference view
+- Geodetic: limited Parcel/reference view with controlled geometry-only editing
 
 Map interaction must not automatically change Parcel ownership.
 

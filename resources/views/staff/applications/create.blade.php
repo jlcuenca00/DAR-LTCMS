@@ -253,20 +253,20 @@
                 <div>
                     <h2>New Clearance Application Record</h2>
                     <p>
-                        Encode the parties, location, filing dates, and optional parcel reference. The record will start under Pending Review by Legal Officer after saving.
+                        Encode the parties, location, filing dates, and optional parcel reference. The record will start under Legal Completeness Review after saving.
                     </p>
                 </div>
                 <span class="draft-pill">
                     <i class="fa-solid fa-file-pen"></i>
-                    Pending Legal Review
+                    Legal Completeness Review
                 </span>
             </div>
 
             <section class="form-section">
                 <div class="section-head">
                     <div>
-                        <h3 class="section-title">Application Intake and Payment Details</h3>
-                        <p class="section-copy">Record the applicant, official receipt, and application date used for DAR clearance processing.</p>
+                        <h3 class="section-title">Application Intake Details</h3>
+                        <p class="section-copy">Record the applicant and application date for initial Legal completeness review. Payment Order and Official Receipt details are recorded later in the workflow after documentary completeness.</p>
                     </div>
                 </div>
 
@@ -306,20 +306,6 @@
                         <input id="date_of_application" type="date" name="date_of_application" value="{{ old('date_of_application', now()->toDateString()) }}" class="staff-input">
                     </div>
 
-                    <div class="field-group">
-                        <label for="or_number" class="field-label">OR Number</label>
-                        <input id="or_number" type="text" name="or_number" value="{{ old('or_number') }}" class="staff-input" placeholder="Official Receipt number">
-                    </div>
-
-                    <div class="field-group">
-                        <label for="or_date" class="field-label">OR Date</label>
-                        <input id="or_date" type="date" name="or_date" value="{{ old('or_date') }}" class="staff-input">
-                    </div>
-
-                    <div class="field-group">
-                        <label for="amount_paid" class="field-label">Amount Paid (PHP)</label>
-                        <input id="amount_paid" type="number" step="0.01" min="0" name="amount_paid" value="{{ old('amount_paid') }}" class="staff-input" placeholder="0.00">
-                    </div>
                 </div>
             </section>
 
@@ -396,12 +382,6 @@
                         <select id="barangay" name="barangay" class="staff-select" data-location-barangay data-old-barangay="{{ old('barangay') }}">
                             <option value="">Select barangay</option>
                         </select>
-                    </div>
-
-                    <div class="field-group">
-                        <label for="date_of_clearance_release" class="field-label">Date of Releasing of Clearance</label>
-                        <input id="date_of_clearance_release" type="date" name="date_of_clearance_release" value="{{ old('date_of_clearance_release') }}" class="staff-input">
-                        <p class="field-help">For clearance output tracking only; this does not finalize ownership transfer.</p>
                     </div>
 
                 </div>
@@ -513,7 +493,7 @@
 
             <div class="form-footer">
                 <p class="footer-note">
-                    Saving creates a clearance application record under Pending Review by Legal Officer. Endorsement, release, denial, and clearance output generation remain separate staff actions.
+                    Saving creates a clearance application record under Legal Completeness Review. Payment/O.R. recording, endorsements, the final Approved/Denied decision, Form No. 5 generation, and client release remain later workflow actions.
                 </p>
 
                 <div class="footer-actions">

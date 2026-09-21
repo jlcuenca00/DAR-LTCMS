@@ -1516,7 +1516,7 @@
                                                 <label>Status *</label>
                                                 <select name="status" class="source-input">
                                                     <option value="active" @selected(old('status', 'active') === 'active')>Active</option>
-                                                    <option value="pending_legal_review" @selected(old('status') === 'pending_legal_review')>Pending Review by Legal Officer</option>
+                                                    <option value="pending_legal_review" @selected(old('status') === 'pending_legal_review')>Legal Completeness Review</option>
                                                     <option value="archived" @selected(old('status') === 'archived')>Archived</option>
                                                 </select>
                                             </div>

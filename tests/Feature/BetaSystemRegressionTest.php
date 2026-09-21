@@ -120,6 +120,39 @@ class BetaSystemRegressionTest extends TestCase
         ]);
     }
 
+    public function test_initial_application_encoding_cannot_prepopulate_payment_or_release_data(): void
+    {
+        $staff = $this->staffUser();
+
+        $this->actingAs($staff)
+            ->post(route('staff.applications.store'), [
+                'transferor_name' => 'Initial Transferor',
+                'transferee_name' => 'Initial Transferee',
+                'applicant_type' => 'transferor',
+                'municipality' => 'Dumaguete City',
+                'barangay' => 'Cadawinonan',
+                'date_of_application' => now()->toDateString(),
+
+                // These fields belong to later workflow stages and must be
+                // ignored even if a crafted request tries to submit them.
+                'or_number' => 'OR-TOO-EARLY',
+                'or_date' => now()->toDateString(),
+                'amount_paid' => config('dar_ltc.filing_fee', 2000),
+                'date_of_clearance_release' => now()->toDateString(),
+            ])
+            ->assertSessionHas('success');
+
+        $application = LandTransferApplication::latest('id')->firstOrFail();
+
+        $this->assertSame(LandTransferApplication::STATUS_PENDING_LEGAL_REVIEW, $application->status);
+        $this->assertNull($application->or_number);
+        $this->assertNull($application->or_date);
+        $this->assertNull($application->amount_paid);
+        $this->assertNull($application->date_of_clearance_release);
+        $this->assertNull($application->released_at);
+        $this->assertSame(LandTransferApplication::RELEASE_NOT_READY, $application->release_status);
+    }
+
     public function test_landholding_creation_requires_an_existing_parcel_record(): void
     {
         $staff = $this->staffUser();
@@ -283,6 +316,19 @@ class BetaSystemRegressionTest extends TestCase
         // workflow gates are exercised by the full-flow test above.
         $application->forceFill([
             'status' => LandTransferApplication::STATUS_FOR_RELEASING,
+            'payment_order_reference' => 'OP-BETA-DENIED-001',
+            'payment_order_issued_at' => now(),
+            'or_number' => 'OR-BETA-DENIED-001',
+            'or_date' => now()->toDateString(),
+            'amount_paid' => config('dar_ltc.filing_fee', 2000),
+            'ltc_form4_subject_land_findings' => ['subject_land_reviewed'],
+            'ltc_form4_recommendation_findings' => ['denial_recommended'],
+            'ltc_form4_recommendation_decision' => 'denial',
+            'ltc_form4_certified_at' => now()->toDateString(),
+            'ltc_form4_certifying_officer_name' => 'Authorized Review Officer',
+            'csw_reference' => 'CSW-BETA-DENIED-001',
+            'csw_completed_at' => now(),
+            'csw_prepared_by' => $staff->id,
         ])->save();
 
         $this->actingAs($staff)

@@ -61,7 +61,8 @@ class EmailOtpPasswordRecoveryTest extends TestCase
 
         $this->get(route('password.request'))
             ->assertOk()
-            ->assertSee('system intentionally does not display or mask the stored email address')
+            ->assertSee('Confirm Recovery Email')
+            ->assertSee('Recovery Email Address')
             ->assertDontSee('carl.martin@gmail.com')
             ->assertDontSee('c***.*****n@gmail.com');
 
@@ -198,7 +199,9 @@ class EmailOtpPasswordRecoveryTest extends TestCase
                 'role' => User::ROLE_STAFF,
                 'is_active' => '1',
             ])
-            ->assertRedirect(route('staff.users.index'));
+            ->assertRedirect()
+            ->assertSessionHas('temporary_password')
+            ->assertSessionHas('temporary_password_username', 'no_email_staff');
 
         $this->assertDatabaseHas('users', [
             'username' => 'no_email_staff',

@@ -177,7 +177,7 @@ function configureFinalDecisionCards(state) {
 
     if (!state.can_finalize_decision || !approveForm) return;
 
-    approveForm.dataset.decisionConfirm = 'release';
+    approveForm.dataset.decisionConfirm = 'approve';
     const title = approveForm.querySelector('.workflow-action-title');
     const copy = approveForm.querySelector('.workflow-action-copy');
     const note = approveForm.querySelector('.workflow-decision-note');

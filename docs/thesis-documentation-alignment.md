@@ -23,32 +23,39 @@ Do **not** describe it as:
 
 Recommended wording:
 
-> DAR-LTCMS is limited to the generation, processing, monitoring, and records management of Land Transfer Clearance applications within the DAR Negros Oriental Provincial Office. It does not automatically execute land ownership transfer, mutate Registry of Deeds records, or conclusively finalize legal land transfer. A Released clearance records and generates the administrative clearance result, locks the application decision, supports monitoring/reporting, and preserves audit trails. Any actual ownership transfer or registry alteration remains subject to separate legal and administrative procedures outside the system's automatic operations.
+> DAR-LTCMS is limited to the generation, processing, monitoring, and records management of Land Transfer Clearance applications within the DAR Negros Oriental Provincial Office. It does not automatically execute land ownership transfer, mutate Registry of Deeds records, or conclusively finalize legal land transfer. An Approved or Denied application records the final administrative clearance decision and locks the substantive application record. Release of the signed output is tracked separately. Any actual ownership transfer or registry alteration remains subject to separate legal and administrative procedures outside the system's automatic operations.
 
 ## Current application workflow terminology
 
 Use these current user-facing stages in thesis descriptions and diagrams:
 
-1. Pending Review by Legal Officer
-2. Endorsed to LTI Division
-3. Endorsed to Chief Legal
-4. Endorsed to PARPO II
-5. For Releasing
-6. Released
+1. Legal Completeness Review
+2. Payment / Official Receipt Recording
+3. Endorsed to LTID for Verification
+4. LTID Verification / Returned to Legal
+5. Legal Evaluation / CSW Preparation
+6. Chief Legal Final Review
+7. Forwarded to PARPO II
+8. PARPO II Decision Pending
+9. Approved or Denied — final application decision
+10. Signed Form No. 5 / Ready for Release
+11. Released to Client
 
-A separate application may end in **Denied**.
+Use **Approved** and **Denied** as the final application decision states. **Ready for Release** and **Released to Client** are separate delivery statuses and must not replace or overwrite the final decision.
 
-Use **Released** and **Denied** as the final user-facing states. Historical/internal values such as `approved` and `not_approved` may exist for backward compatibility, but they should not be presented as the current workflow labels in final thesis figures/screenshots.
+Historical/internal values such as `released`, `not_approved`, `pending_review`, and `draft` may remain for backward compatibility but should not be presented as the current workflow in final thesis figures/screenshots.
 
 ## Final decision rule
 
-Once an application is Released or Denied:
+Once an application is Approved or Denied:
 
 - editing is locked;
 - supporting-document changes are locked;
 - backend mutation attempts are rejected;
-- authorized viewing/monitoring/reporting remains available; and
+- authorized release/viewing/monitoring/reporting remains available; and
 - final decision/output/audit history is preserved.
+
+Release of the signed decision output is an administrative delivery event only and does not reopen or change the final decision.
 
 ## Agricultural classification wording
 
@@ -80,7 +87,7 @@ Landowners do not create applications. They may view only their own linked Parce
 
 ### Geodetic Personnel
 
-Geodetic users have limited/read-only Parcel/reference/map review access. They are not primary clearance decision users and do not broadly edit ownership/application records.
+Geodetic users have limited Parcel/reference/map review access. Where explicitly authorized, they may edit only parcel map geometry through the controlled geometry workflow. They are not primary clearance decision users and do not edit ownership/application decision records.
 
 ## LTC Form No. 5 wording
 
@@ -88,7 +95,7 @@ Form No. 5 is the final administrative clearance output generated from the recor
 
 Use these implementation facts when describing it:
 
-- Released → GRANTED output
+- Approved → GRANTED output
 - Denied → DENIED output
 - annual LTC number sequence and page reference
 - linked Parcel title/Tax Declaration/lot/survey references
@@ -136,7 +143,7 @@ Check these thesis sections for consistent wording:
 
 ## Diagram modeling rule
 
-Never model **Released/GRANTED clearance → change Parcel owner**.
+Never model **Approved/GRANTED clearance → change Parcel owner**.
 
 A final clearance may lead only to system-scope actions such as:
 

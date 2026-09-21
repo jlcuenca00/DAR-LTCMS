@@ -2502,23 +2502,16 @@
         $canAdvanceWorkflow = ! $isFinal
             && $nextWorkflowStatus
             && $nextWorkflowStatus !== 'released';
-        $canRelease = ! $isFinal
-            && in_array($application->status, ['for_releasing', 'pending_review'], true);
+        $canApprove = ! $isFinal
+            && $application->status === \App\Models\LandTransferApplication::STATUS_FOR_RELEASING;
         $canDeny = ! $isFinal
-            && in_array($application->status, [
-                'draft',
-                'pending_review',
-                'pending_legal_review',
-                'endorsed_lti',
-                'endorsed_chief_legal',
-                'endorsed_parpo',
-                'for_releasing',
-            ], true);
+            && $application->status === \App\Models\LandTransferApplication::STATUS_FOR_RELEASING;
         $statusBadgeClass = match ($application->status) {
-            'released' => 'staff-badge-green',
-            'pending_legal_review', 'endorsed_lti', 'endorsed_chief_legal', 'endorsed_parpo', 'for_releasing' => 'staff-badge-amber',
-            'denied' => 'staff-badge-red',
-            
+            'approved', 'released' => 'staff-badge-green',
+            'denied', 'not_approved' => 'staff-badge-red',
+            'pending_legal_review', 'returned_for_compliance', 'awaiting_payment',
+            'endorsed_lti', 'returned_to_legal', 'legal_evaluation',
+            'endorsed_chief_legal', 'endorsed_parpo', 'for_releasing' => 'staff-badge-amber',
             default => 'staff-badge-slate',
         };
         $allRequirements = $transferorRequirements->concat($transfereeRequirements);
@@ -2646,7 +2639,7 @@
                                     <h2 class="review-panel-title">Final Decision Locked</h2>
                                     <p class="review-panel-subtitle">
                                         This application already has a final decision. Uploads, document removals, resubmission,
-                                        release, and denial actions are locked for audit integrity.
+                                        and further decision changes are locked for audit integrity. Authorized release tracking remains available and does not change the final decision.
                                     </p>
                                 </div>
                                 <span class="staff-badge {{ $statusBadgeClass }}">{{ $statusLabel }}</span>
@@ -3780,7 +3773,7 @@
                     <div class="review-note-box">
                         Finalized record. Workflow actions are locked for audit integrity.
                     </div>
-                @elseif ($canAdvanceWorkflow || $canRelease || $canDeny)
+                @elseif ($canAdvanceWorkflow || $canApprove || $canDeny)
                     <div class="workflow-decision-grid">
                         @if ($canAdvanceWorkflow)
                             <form method="POST" action="{{ route('staff.applications.submit', $application) }}" class="workflow-decision-card approve-card">
@@ -3812,8 +3805,8 @@
                             </form>
                         @endif
 
-                        @if ($canRelease)
-                            <form method="POST" action="{{ route('staff.applications.approve', $application) }}" class="workflow-decision-card approve-card" data-decision-confirm="release">
+                        @if ($canApprove)
+                            <form method="POST" action="{{ route('staff.applications.approve', $application) }}" class="workflow-decision-card approve-card" data-decision-confirm="approve">
                                 @csrf
 
                                 <div class="workflow-decision-heading">
@@ -3822,9 +3815,9 @@
                                     </span>
 
                                     <div>
-                                        <p class="workflow-action-title">Release clearance</p>
+                                        <p class="workflow-action-title">Approve application</p>
                                         <p class="workflow-action-copy">
-                                            Generate and record the approved LTC Form No. 5 result.
+                                            Record PARPO II's final Approved clearance decision and generate the immutable LTC Form No. 5 output.
                                         </p>
                                     </div>
                                 </div>
@@ -3836,13 +3829,13 @@
                                     </div>
 
                                     <div class="workflow-decision-note">
-                                        Use only after PARPO II review/signature and when the clearance is ready for release.
+                                        Approval is final and locks the application. It does not transfer ownership. Client release is recorded separately afterward.
                                     </div>
                                 </div>
 
                                 <button type="submit" class="staff-button staff-button-primary">
                                     <i class="fa-solid fa-check"></i>
-                                    Release Clearance
+                                    Record Final Approval
                                 </button>
                             </form>
                         @endif
@@ -4153,14 +4146,14 @@
             let pendingDecisionForm = null;
 
             const decisionMessages = {
-                release: {
+                approve: {
                     icon: 'fa-check',
                     danger: false,
                     buttonClass: 'staff-button staff-button-primary',
-                    buttonText: 'Release Clearance',
-                    title: 'Release this clearance?',
-                    copy: 'This will generate and record the approved LTC Form No. 5 result for this application.',
-                    warning: 'This will record the final clearance result.'
+                    buttonText: 'Record Final Approval',
+                    title: 'Approve this application?',
+                    copy: 'This records PARPO II\'s final Approved clearance decision and generates LTC Form No. 5.',
+                    warning: 'This finalizes and locks the application. Release to the client remains a separate administrative step.'
                 },
                 deny: {
                     icon: 'fa-xmark',
@@ -4174,7 +4167,7 @@
             };
 
             function openDecisionModal(form, type) {
-                const config = decisionMessages[type] || decisionMessages.release;
+                const config = decisionMessages[type] || decisionMessages.approve;
                 pendingDecisionForm = form;
 
                 decisionModalIcon.className = 'decision-modal-icon' + (config.danger ? ' danger' : '');

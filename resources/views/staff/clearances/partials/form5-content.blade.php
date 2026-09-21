@@ -5,7 +5,10 @@
 
     $generatedAt = $clearance->generated_at;
     $reviewedAt = $clearance->reviewed_at;
-    $issueDate = $application->date_of_clearance_release ?? $generatedAt ?? $reviewedAt ?? now();
+    // Form No. 5 is an immutable final-decision output. Its issuance date
+    // comes from the preserved decision/output timestamps, never from the
+    // later client-delivery date.
+    $issueDate = $generatedAt ?? $reviewedAt ?? now();
 
     $parcels = collect($clearance->parcel_snapshot ?? []);
 

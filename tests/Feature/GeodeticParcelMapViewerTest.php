@@ -50,7 +50,7 @@ class GeodeticParcelMapViewerTest extends TestCase
         $response->assertSee($parcel->parcel_code);
         $response->assertSee('T-GEO-001');
         $response->assertSee('TD-GEO-001');
-        $response->assertSee('Read-only Access');
+        $response->assertSee('Limited Access');
     }
 
     public function test_geodetic_user_can_view_read_only_parcel_details(): void
@@ -64,7 +64,7 @@ class GeodeticParcelMapViewerTest extends TestCase
             'title_no' => 'T-GEO-002',
             'tax_decl_no' => 'TD-GEO-002',
             'municipality' => 'Sibulan',
-            'barangay' => 'Boloc-boloc',
+            'barangay' => 'Bolocboloc',
             'province' => 'Negros Oriental',
             'area_hectares' => 2.2500,
             'status' => 'active',
@@ -90,7 +90,7 @@ class GeodeticParcelMapViewerTest extends TestCase
         $response->assertSee('T-GEO-002');
         $response->assertSee('TD-GEO-002');
         $response->assertSee('Sibulan');
-        $response->assertSee('Boloc-boloc');
+        $response->assertSee('Bolocboloc');
         $response->assertSee('Geometry Reference');
         $response->assertDontSee('Approve');
         $response->assertDontSee('Generate Clearance');
