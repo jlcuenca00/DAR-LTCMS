@@ -462,7 +462,7 @@ public function store(Request $request)
 
     return redirect()
         ->route('staff.applications.show', $application)
-        ->with('success', 'Application encoded successfully and placed under Pending Review by Legal Officer.');
+        ->with('success', 'Application encoded successfully and placed under Legal Completeness Review.');
 }
 
 
