@@ -5,9 +5,9 @@ namespace App\Http\Controllers\Geodetic;
 use App\Http\Controllers\Controller;
 use App\Models\Parcel;
 use App\Models\ParcelGeometryEditSession;
-use App\Models\ParcelGeometryRevision;
 use App\Services\AuditLogger;
 use App\Services\NotificationService;
+use App\Services\ParcelGeometryService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -203,6 +203,15 @@ class ParcelMapController extends Controller
             ], 409);
         }
 
+        if ($parcel->status === 'inactive'
+            || (int) $session->base_geometry_version !== (int) $parcel->geometry_version) {
+            $session->delete();
+
+            return response()->json([
+                'message' => 'This parcel changed after you opened the editor. Reload the latest geometry before continuing.',
+            ], 409);
+        }
+
         $session->forceFill(['last_seen_at' => now()])->save();
 
         return response()->json([
@@ -233,7 +242,10 @@ class ParcelMapController extends Controller
             'edit_session_token' => ['required', 'uuid'],
         ]);
 
-        $geometry = $this->decodeParcelGeoJson($data['geometry_geojson']);
+        $geometry = app(ParcelGeometryService::class)->decodePolygon(
+            $data['geometry_geojson'],
+            required: true
+        );
         $actor = $request->user();
 
         $result = DB::transaction(function () use ($parcel, $data, $geometry, $actor) {
@@ -272,9 +284,11 @@ class ParcelMapController extends Controller
             }
 
             $submittedVersion = (int) $data['geometry_version'];
+            $sessionBaseVersion = (int) $session->base_geometry_version;
             $currentVersion = (int) $current->geometry_version;
 
-            if ($submittedVersion !== $currentVersion) {
+            if ($submittedVersion !== $sessionBaseVersion
+                || $sessionBaseVersion !== $currentVersion) {
                 $session->delete();
 
                 return [
@@ -298,20 +312,6 @@ class ParcelMapController extends Controller
             $previousVersion = $currentVersion;
             $hadGeometryBefore = ! empty($previousGeometry);
 
-            if ($hadGeometryBefore) {
-                ParcelGeometryRevision::query()->firstOrCreate(
-                    [
-                        'parcel_id' => $current->id,
-                        'geometry_version' => $previousVersion,
-                    ],
-                    [
-                        'geometry_geojson' => $previousGeometry,
-                        'actor_user_id' => null,
-                        'source' => 'baseline_snapshot',
-                    ]
-                );
-            }
-
             // Deliberately update only map geometry. Parcel::saving advances
             // geometry_version whenever geometry_geojson changes.
             $current->forceFill([
@@ -320,20 +320,20 @@ class ParcelMapController extends Controller
 
             $newVersion = (int) $current->geometry_version;
 
-            $revision = ParcelGeometryRevision::query()->create([
-                'parcel_id' => $current->id,
-                'geometry_version' => $newVersion,
-                'geometry_geojson' => $geometry,
-                'actor_user_id' => $actor->id,
-                'source' => 'geodetic_edit',
-            ]);
+            $revision = app(ParcelGeometryService::class)->recordRevision(
+                $current,
+                $previousGeometry,
+                $previousVersion,
+                $actor,
+                'geodetic_edit'
+            );
 
             $session->delete();
 
             return [
                 'status' => 'saved',
                 'parcel' => $current,
-                'revision_id' => $revision->id,
+                'revision_id' => $revision?->id,
                 'previous_version' => $previousVersion,
                 'new_version' => $newVersion,
                 'had_geometry_before' => $hadGeometryBefore,
@@ -422,27 +422,4 @@ class ParcelMapController extends Controller
             ->delete();
     }
 
-    private function decodeParcelGeoJson(string $value): array
-    {
-        $decoded = json_decode($value, true);
-
-        if (
-            json_last_error() !== JSON_ERROR_NONE ||
-            ! is_array($decoded) ||
-            empty($decoded['type']) ||
-            empty($decoded['coordinates'])
-        ) {
-            throw ValidationException::withMessages([
-                'geometry_geojson' => 'The geometry must be valid GeoJSON with a type and coordinates.',
-            ]);
-        }
-
-        if (($decoded['type'] ?? null) !== 'Polygon') {
-            throw ValidationException::withMessages([
-                'geometry_geojson' => 'Only GeoJSON Polygon geometry is supported for parcel records.',
-            ]);
-        }
-
-        return $decoded;
-    }
 }

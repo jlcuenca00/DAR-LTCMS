@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use LogicException;
 
 class ParcelGeometryRevision extends Model
 {
@@ -18,6 +19,18 @@ class ParcelGeometryRevision extends Model
         'geometry_version' => 'integer',
         'geometry_geojson' => 'array',
     ];
+
+    protected static function booted(): void
+    {
+        static::updating(function () {
+            throw new LogicException('Parcel geometry revisions are append-only and cannot be modified.');
+        });
+
+        static::deleting(function () {
+            throw new LogicException('Parcel geometry revisions are append-only and cannot be deleted.');
+        });
+    }
+
 
     public function parcel()
     {

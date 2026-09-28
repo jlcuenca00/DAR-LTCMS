@@ -9,6 +9,7 @@ use App\Models\LegacyRecord;
 use App\Models\Parcel;
 use App\Models\SourceRecordPackage;
 use App\Services\AuditLogger;
+use App\Services\ParcelGeometryService;
 use App\Services\NotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -322,13 +323,11 @@ class SourceRecordPackageController extends Controller
             'date_acquired' => ['nullable', 'date', 'after_or_equal:1900-01-01', 'before_or_equal:today'],
         ]);
 
-        $geometry = null;
+        $geometry = app(ParcelGeometryService::class)->decodePolygon(
+            $data['geometry_geojson'] ?? null
+        );
 
-        if (! empty($data['geometry_geojson'])) {
-            $geometry = $this->decodeGeoJson($data['geometry_geojson']);
-        }
-
-        DB::transaction(function () use ($data, $geometry, $sourceRecordPackage) {
+        DB::transaction(function () use ($data, $geometry, $sourceRecordPackage, $request) {
             $parcel = Parcel::create([
                 'parcel_code' => $data['parcel_code'],
                 'title_no' => $data['title_no'] ?: $sourceRecordPackage->title_number,
@@ -340,6 +339,16 @@ class SourceRecordPackageController extends Controller
                 'status' => $data['status'],
                 'remarks' => $data['remarks'] ?: 'Created from source package ' . $sourceRecordPackage->package_code . '.',
             ]);
+
+            if ($parcel->geometry_geojson !== null) {
+                app(ParcelGeometryService::class)->recordRevision(
+                    $parcel,
+                    null,
+                    0,
+                    $request->user(),
+                    'staff_create_from_source_package'
+                );
+            }
 
             if (! empty($data['landowner_id'])) {
                 Landholding::create([
