@@ -8,6 +8,7 @@ use App\Models\Landowner;
 use App\Models\Parcel;
 use App\Services\AuditLogger;
 use App\Services\NotificationService;
+use App\Services\ParcelGeometryService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -207,7 +208,7 @@ class RecordSearchController extends Controller
         // DAR clearance workflow is limited to agricultural land records.
         // Classification is not a reviewer decision field here; keep the internal default only.
         $data['agricultural_status'] = Parcel::DEFAULT_AGRICULTURAL_STATUS;
-        $data['geometry_geojson'] = $this->decodeParcelGeoJson($data['geometry_geojson'] ?? null);
+        $data['geometry_geojson'] = app(ParcelGeometryService::class)->decodePolygon($data['geometry_geojson'] ?? null);
 
         unset($data['reference_photo']);
         $newReferencePhotoPath = null;
@@ -220,6 +221,16 @@ class RecordSearchController extends Controller
         try {
             $parcel = DB::transaction(function () use ($data, $request) {
                 $parcel = Parcel::create($data);
+
+                if ($parcel->geometry_geojson !== null) {
+                    app(ParcelGeometryService::class)->recordRevision(
+                        $parcel,
+                        null,
+                        0,
+                        $request->user(),
+                        'staff_create'
+                    );
+                }
 
                 AuditLogger::record(
                     'parcel_created',
@@ -315,8 +326,21 @@ class RecordSearchController extends Controller
 
         try {
             DB::transaction(function () use ($parcel, $data, $request) {
+                $previousGeometry = $parcel->geometry_geojson;
+                $previousVersion = (int) $parcel->geometry_version;
+
                 $parcel->fill($data);
                 $parcel->save();
+
+                if ($parcel->wasChanged('geometry_geojson')) {
+                    app(ParcelGeometryService::class)->recordRevision(
+                        $parcel,
+                        $previousGeometry,
+                        $previousVersion,
+                        $request->user(),
+                        'staff_edit'
+                    );
+                }
 
                 AuditLogger::record(
                     'parcel_updated',
@@ -401,31 +425,4 @@ class RecordSearchController extends Controller
         return $data;
     }
 
-    private function decodeParcelGeoJson(?string $value): ?array
-    {
-        if (! filled($value)) {
-            return null;
-        }
-
-        $decoded = json_decode($value, true);
-
-        if (
-            json_last_error() !== JSON_ERROR_NONE ||
-            ! is_array($decoded) ||
-            empty($decoded['type']) ||
-            empty($decoded['coordinates'])
-        ) {
-            throw \Illuminate\Validation\ValidationException::withMessages([
-                'geometry_geojson' => 'The geometry must be valid GeoJSON. Use the polygon builder or provide JSON with type and coordinates.',
-            ]);
-        }
-
-        if (($decoded['type'] ?? null) !== 'Polygon') {
-            throw \Illuminate\Validation\ValidationException::withMessages([
-                'geometry_geojson' => 'Only GeoJSON Polygon geometry is supported for parcel records.',
-            ]);
-        }
-
-        return $decoded;
-    }
 }
