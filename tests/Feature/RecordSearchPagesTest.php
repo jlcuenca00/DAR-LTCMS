@@ -298,6 +298,31 @@ class RecordSearchPagesTest extends TestCase
             'actor_user_id' => $staffUser->id,
             'source' => 'staff_edit',
         ]);
+
+        $this->actingAs($staffUser)
+            ->patch(route('staff.records.parcels.update', $parcel), [
+                'parcel_code' => $parcel->parcel_code,
+                'province' => 'Negros Oriental',
+                'municipality' => 'Dumaguete City',
+                'barangay' => 'Bantayan',
+                'area_hectares' => 1.2500,
+                'status' => 'active',
+                'geometry_geojson' => '',
+            ])
+            ->assertRedirect();
+
+        $parcel->refresh();
+
+        $clearedRevision = ParcelGeometryRevision::query()
+            ->where('parcel_id', $parcel->id)
+            ->where('geometry_version', 3)
+            ->firstOrFail();
+
+        $this->assertSame(3, (int) $parcel->geometry_version);
+        $this->assertNull($parcel->geometry_geojson);
+        $this->assertNull($clearedRevision->geometry_geojson);
+        $this->assertSame($staffUser->id, $clearedRevision->actor_user_id);
+        $this->assertSame('staff_edit', $clearedRevision->source);
     }
 
     public function test_staff_parcel_geometry_rejects_malformed_polygon_server_side(): void
