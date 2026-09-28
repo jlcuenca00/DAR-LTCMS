@@ -8,9 +8,11 @@ use App\Models\Landowner;
 use App\Models\LandTransferApplication;
 use App\Models\LegacyRecord;
 use App\Models\Parcel;
+use App\Models\SourceRecordPackage;
 use App\Models\SourceRecordPackageImportBatch;
 use App\Models\User;
 use App\Services\DataIntegrityScanner;
+use Illuminate\Database\Eloquent\MassAssignmentException;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Artisan;
@@ -284,6 +286,141 @@ class DataIntegrityHardeningTest extends TestCase
         $this->assertFalse($result['clean']);
         $this->assertTrue($codes->contains('parcel_area_mismatch'));
         $this->assertSame(50000.0, (float) DB::table('parcels')->where('id', $parcel->id)->value('area_square_meters'));
+    }
+
+    public function test_testing_environment_rejects_silently_discarded_mass_assignment_attributes(): void
+    {
+        $staff = $this->staff();
+
+        $this->expectException(MassAssignmentException::class);
+
+        LandTransferApplication::create([
+            'application_code' => 'STRICT-MASS-ASSIGNMENT-001',
+            'transferor_name' => 'Strict Transferor',
+            'transferee_name' => 'Strict Transferee',
+            'status' => LandTransferApplication::STATUS_PENDING_LEGAL_REVIEW,
+            'encoded_by' => $staff->id,
+            'attribute_that_must_not_be_silently_discarded' => 'unexpected',
+        ]);
+    }
+
+    public function test_source_package_link_to_existing_parcel_rolls_back_when_record_reference_would_duplicate(): void
+    {
+        $staff = $this->staff();
+        $parcel = $this->parcel('PKG-DUP-LINK-001', 1.0000);
+
+        LegacyRecord::create([
+            'record_type' => LegacyRecord::TYPE_PARCEL_SOURCE,
+            'origin' => LegacyRecord::ORIGIN_IMPORTED,
+            'source_record_scope' => LegacyRecord::SOURCE_SCOPE_REFERENCE_ONLY,
+            'parcel_code' => $parcel->parcel_code,
+            'source_book' => 'Existing Parcel Source Book',
+            'transcribed_by' => 'Integrity Test',
+            'transcription_date' => now()->toDateString(),
+        ]);
+
+        $package = SourceRecordPackage::create([
+            'package_code' => 'PKG-DUP-LINK',
+            'status' => SourceRecordPackage::STATUS_ENCODED,
+            'source_record_scope' => LegacyRecord::SOURCE_SCOPE_REFERENCE_ONLY,
+            'encoded_by_user_id' => $staff->id,
+            'parcel_code' => 'PKG-TEMP-LINK-001',
+            'source_book' => 'Package Link Test Book',
+            'transcribed_by' => 'Integrity Test',
+            'transcription_date' => now()->toDateString(),
+        ]);
+
+        $record = LegacyRecord::create([
+            'record_type' => LegacyRecord::TYPE_PARCEL_SOURCE,
+            'origin' => LegacyRecord::ORIGIN_ENCODED,
+            'source_record_scope' => LegacyRecord::SOURCE_SCOPE_REFERENCE_ONLY,
+            'source_record_package_id' => $package->id,
+            'encoded_by_user_id' => $staff->id,
+            'parcel_code' => 'PKG-TEMP-LINK-001',
+            'source_book' => 'Package Link Test Book',
+            'transcribed_by' => 'Integrity Test',
+            'transcription_date' => now()->toDateString(),
+        ]);
+
+        $this->actingAs($staff)
+            ->post(route('staff.source-record-packages.link-parcel', $package), [
+                'parcel_id' => $parcel->id,
+            ])
+            ->assertSessionHasErrors('parcel_code');
+
+        $package->refresh();
+        $record->refresh();
+
+        $this->assertNull($package->parcel_id);
+        $this->assertSame(SourceRecordPackage::STATUS_ENCODED, $package->status);
+        $this->assertSame('PKG-TEMP-LINK-001', $package->parcel_code);
+        $this->assertNull($record->parcel_id);
+        $this->assertSame('PKG-TEMP-LINK-001', $record->parcel_code);
+    }
+
+    public function test_source_package_create_parcel_rolls_back_when_record_reference_would_duplicate(): void
+    {
+        $staff = $this->staff();
+        $newParcelCode = 'PKG-DUP-CREATE-001';
+
+        LegacyRecord::create([
+            'record_type' => LegacyRecord::TYPE_PARCEL_SOURCE,
+            'origin' => LegacyRecord::ORIGIN_IMPORTED,
+            'source_record_scope' => LegacyRecord::SOURCE_SCOPE_REFERENCE_ONLY,
+            'parcel_code' => $newParcelCode,
+            'source_book' => 'Existing Parcel Source Book',
+            'transcribed_by' => 'Integrity Test',
+            'transcription_date' => now()->toDateString(),
+        ]);
+
+        $package = SourceRecordPackage::create([
+            'package_code' => 'PKG-DUP-CREATE',
+            'status' => SourceRecordPackage::STATUS_ENCODED,
+            'source_record_scope' => LegacyRecord::SOURCE_SCOPE_REFERENCE_ONLY,
+            'encoded_by_user_id' => $staff->id,
+            'parcel_code' => 'PKG-TEMP-CREATE-001',
+            'source_book' => 'Package Create Test Book',
+            'transcribed_by' => 'Integrity Test',
+            'transcription_date' => now()->toDateString(),
+        ]);
+
+        $record = LegacyRecord::create([
+            'record_type' => LegacyRecord::TYPE_PARCEL_SOURCE,
+            'origin' => LegacyRecord::ORIGIN_ENCODED,
+            'source_record_scope' => LegacyRecord::SOURCE_SCOPE_REFERENCE_ONLY,
+            'source_record_package_id' => $package->id,
+            'encoded_by_user_id' => $staff->id,
+            'parcel_code' => 'PKG-TEMP-CREATE-001',
+            'source_book' => 'Package Create Test Book',
+            'transcribed_by' => 'Integrity Test',
+            'transcription_date' => now()->toDateString(),
+        ]);
+
+        $this->actingAs($staff)
+            ->post(route('staff.source-record-packages.create-parcel', $package), [
+                'parcel_code' => $newParcelCode,
+                'title_no' => null,
+                'municipality' => 'Dumaguete City',
+                'barangay' => 'Bantayan',
+                'province' => 'Negros Oriental',
+                'area_hectares' => 1.0000,
+                'geometry_geojson' => null,
+                'status' => 'active',
+                'remarks' => null,
+                'landowner_id' => null,
+                'date_acquired' => null,
+            ])
+            ->assertSessionHasErrors('parcel_code');
+
+        $package->refresh();
+        $record->refresh();
+
+        $this->assertDatabaseMissing('parcels', ['parcel_code' => $newParcelCode]);
+        $this->assertNull($package->parcel_id);
+        $this->assertSame(SourceRecordPackage::STATUS_ENCODED, $package->status);
+        $this->assertSame('PKG-TEMP-CREATE-001', $package->parcel_code);
+        $this->assertNull($record->parcel_id);
+        $this->assertSame('PKG-TEMP-CREATE-001', $record->parcel_code);
     }
 
     public function test_integrity_scanner_artisan_command_boots_and_reports_read_only_mode(): void
