@@ -154,11 +154,10 @@ class RegisteredUserController extends Controller
         }
 
         $name = trim((string) ($payload['name'] ?? 'Landowner'));
-        $user = User::create([
+        $user = new User([
             'name' => $name !== '' ? $name : 'Landowner',
             'username' => $this->uniqueGoogleUsername($email, $name),
             'email' => $email,
-            'email_verified_at' => filter_var($payload['email_verified'] ?? false, FILTER_VALIDATE_BOOLEAN) ? now() : null,
             'google_id' => $googleId,
             'auth_provider' => 'google',
             'password' => Hash::make(Str::random(64)),
@@ -168,6 +167,8 @@ class RegisteredUserController extends Controller
             'must_change_password' => false,
             'password_changed_at' => now(),
         ]);
+        $user->email_verified_at = now();
+        $user->save();
 
         event(new Registered($user));
 
