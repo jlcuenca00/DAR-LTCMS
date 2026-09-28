@@ -54,11 +54,14 @@ class ParcelGeometryService
             }
 
             foreach ($ring as $position) {
-                if (! is_array($position) || count($position) < 2) {
+                if (! is_array($position)
+                    || ! array_key_exists(0, $position)
+                    || ! array_key_exists(1, $position)) {
                     $this->invalidPolygon($field);
                 }
 
-                [$longitude, $latitude] = $position;
+                $longitude = $position[0];
+                $latitude = $position[1];
 
                 if (! is_numeric($longitude) || ! is_numeric($latitude)) {
                     $this->invalidPolygon($field);
