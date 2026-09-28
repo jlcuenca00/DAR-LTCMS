@@ -12,6 +12,7 @@ use App\Models\User;
 use App\Services\ProductionReadinessScanner;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\Exception\SuspiciousOperationException;
@@ -76,6 +77,63 @@ class ProductionSecurityHardeningTest extends TestCase
 
         auth()->logout();
         $this->get($url)->assertRedirect(route('login'));
+    }
+
+    public function test_source_package_file_replacement_and_removal_do_not_leave_stale_files(): void
+    {
+        Storage::fake('public');
+
+        $staff = User::factory()->create([
+            'role' => User::ROLE_STAFF,
+            'is_active' => true,
+        ]);
+
+        $oldPath = 'source-record-packages/original-reference.pdf';
+        Storage::disk('public')->put($oldPath, '%PDF-1.4 original reference');
+
+        $package = SourceRecordPackage::create([
+            'package_code' => 'SRC-FILE-LIFECYCLE-001',
+            'status' => SourceRecordPackage::STATUS_ENCODED,
+            'source_record_scope' => 'reference_only',
+            'encoded_by_user_id' => $staff->id,
+            'source_book' => 'File Lifecycle Test',
+            'transcribed_by' => $staff->name,
+            'transcription_date' => now()->toDateString(),
+            'source_file_path' => $oldPath,
+            'source_file_original_filename' => 'original-reference.pdf',
+            'source_file_mime_type' => 'application/pdf',
+            'source_file_uploaded_by_user_id' => $staff->id,
+            'source_file_uploaded_at' => now(),
+        ]);
+
+        $this->actingAs($staff)
+            ->post(route('staff.source-record-packages.source-file.store', $package), [
+                'source_file' => UploadedFile::fake()->create(
+                    'replacement-reference.pdf',
+                    20,
+                    'application/pdf'
+                ),
+            ])
+            ->assertRedirect();
+
+        $package->refresh();
+        $newPath = $package->source_file_path;
+
+        $this->assertNotNull($newPath);
+        $this->assertNotSame($oldPath, $newPath);
+        Storage::disk('public')->assertMissing($oldPath);
+        Storage::disk('public')->assertExists($newPath);
+
+        $this->actingAs($staff)
+            ->delete(route('staff.source-record-packages.source-file.destroy', $package))
+            ->assertRedirect();
+
+        $package->refresh();
+
+        $this->assertNull($package->source_file_path);
+        $this->assertNull($package->source_file_original_filename);
+        $this->assertNull($package->source_file_mime_type);
+        Storage::disk('public')->assertMissing($newPath);
     }
 
     public function test_registered_landholding_reference_photo_keeps_legacy_url_but_remains_staff_only(): void
