@@ -98,7 +98,7 @@ class ParcelGeometryService
         int $previousVersion,
         ?User $actor,
         string $source
-    ): ?ParcelGeometryRevision {
+    ): ParcelGeometryRevision {
         if ($previousGeometry !== null) {
             ParcelGeometryRevision::query()->firstOrCreate(
                 [
@@ -111,10 +111,6 @@ class ParcelGeometryService
                     'source' => 'baseline_snapshot',
                 ]
             );
-        }
-
-        if ($parcel->geometry_geojson === null) {
-            return null;
         }
 
         return ParcelGeometryRevision::query()->firstOrCreate(
