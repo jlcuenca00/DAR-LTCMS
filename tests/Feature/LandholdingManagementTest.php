@@ -7,6 +7,8 @@ use App\Models\Landowner;
 use App\Models\Parcel;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class LandholdingManagementTest extends TestCase
@@ -100,4 +102,61 @@ class LandholdingManagementTest extends TestCase
             'status' => Landholding::STATUS_ACTIVE,
         ]);
     }
+    public function test_replacing_landholding_reference_photo_removes_the_previous_file(): void
+    {
+        Storage::fake('public');
+
+        $staffUser = User::factory()->create([
+            'role' => User::ROLE_STAFF,
+            'is_active' => true,
+        ]);
+
+        $landowner = Landowner::create([
+            'first_name' => 'Photo',
+            'last_name' => 'Holder',
+            'province' => 'Negros Oriental',
+        ]);
+
+        $parcel = Parcel::create([
+            'parcel_code' => 'LH-PHOTO-REPLACE-001',
+            'province' => 'Negros Oriental',
+            'area_hectares' => 1.5000,
+            'status' => 'active',
+        ]);
+
+        $oldPath = 'reference-photos/landholdings/old-reference.png';
+        Storage::disk('public')->put(
+            $oldPath,
+            base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=')
+        );
+
+        $landholding = Landholding::create([
+            'landowner_id' => $landowner->id,
+            'parcel_id' => $parcel->id,
+            'area_hectares' => 1.5000,
+            'status' => Landholding::STATUS_ACTIVE,
+            'reference_photo_path' => $oldPath,
+        ]);
+
+        $this->actingAs($staffUser)
+            ->patch(route('staff.records.landowners.landholdings.update', [$landowner, $landholding]), [
+                'parcel_id' => $parcel->id,
+                'area_hectares' => 1.5000,
+                'status' => Landholding::STATUS_ACTIVE,
+                'reference_photo' => UploadedFile::fake()->createWithContent(
+                    'replacement-reference.png',
+                    base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=')
+                ),
+            ])
+            ->assertRedirect();
+
+        $landholding->refresh();
+        $newPath = $landholding->reference_photo_path;
+
+        $this->assertNotNull($newPath);
+        $this->assertNotSame($oldPath, $newPath);
+        Storage::disk('public')->assertMissing($oldPath);
+        Storage::disk('public')->assertExists($newPath);
+    }
+
 }

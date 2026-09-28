@@ -9,7 +9,10 @@ use App\Models\Parcel;
 use App\Services\AuditLogger;
 use App\Services\NotificationService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
+use Throwable;
 
 class RecordSearchController extends Controller
 {
@@ -207,28 +210,43 @@ class RecordSearchController extends Controller
         $data['geometry_geojson'] = $this->decodeParcelGeoJson($data['geometry_geojson'] ?? null);
 
         unset($data['reference_photo']);
+        $newReferencePhotoPath = null;
+
         if ($request->hasFile('reference_photo')) {
-            $data['reference_photo_path'] = $request->file('reference_photo')->store('reference-photos/parcels', 'public');
+            $newReferencePhotoPath = $request->file('reference_photo')->store('reference-photos/parcels', 'public');
+            $data['reference_photo_path'] = $newReferencePhotoPath;
         }
 
-        $parcel = Parcel::create($data);
+        try {
+            $parcel = DB::transaction(function () use ($data, $request) {
+                $parcel = Parcel::create($data);
 
-        AuditLogger::record(
-            'parcel_created',
-            null,
-            $parcel,
-            [
-                'parcel_id' => $parcel->id,
-                'parcel_code' => $parcel->parcel_code,
-                'municipality' => $parcel->municipality,
-                'barangay' => $parcel->barangay,
-                'area_hectares' => $parcel->area_hectares,
-                'dar_clearance_scope' => 'Agricultural land clearance record only',
-                'has_geometry' => ! empty($parcel->geometry_geojson),
-                'actor_user_id' => $request->user()?->id,
-                'actor_name' => $request->user()?->name,
-            ]
-        );
+                AuditLogger::record(
+                    'parcel_created',
+                    null,
+                    $parcel,
+                    [
+                        'parcel_id' => $parcel->id,
+                        'parcel_code' => $parcel->parcel_code,
+                        'municipality' => $parcel->municipality,
+                        'barangay' => $parcel->barangay,
+                        'area_hectares' => $parcel->area_hectares,
+                        'dar_clearance_scope' => 'Agricultural land clearance record only',
+                        'has_geometry' => ! empty($parcel->geometry_geojson),
+                        'actor_user_id' => $request->user()?->id,
+                        'actor_name' => $request->user()?->name,
+                    ]
+                );
+
+                return $parcel;
+            });
+        } catch (Throwable $e) {
+            if ($newReferencePhotoPath) {
+                Storage::disk('public')->delete($newReferencePhotoPath);
+            }
+
+            throw $e;
+        }
 
         return redirect()
             ->route('staff.records.parcels.show', $parcel)
@@ -286,26 +304,45 @@ class RecordSearchController extends Controller
         $data['agricultural_status'] = $parcel->agricultural_status ?: Parcel::DEFAULT_AGRICULTURAL_STATUS;
 
         unset($data['reference_photo']);
+
+        $oldReferencePhotoPath = $parcel->reference_photo_path;
+        $newReferencePhotoPath = null;
+
         if ($request->hasFile('reference_photo')) {
-            $data['reference_photo_path'] = $request->file('reference_photo')->store('reference-photos/parcels', 'public');
+            $newReferencePhotoPath = $request->file('reference_photo')->store('reference-photos/parcels', 'public');
+            $data['reference_photo_path'] = $newReferencePhotoPath;
         }
 
-        $parcel->fill($data);
-        $parcel->save();
+        try {
+            DB::transaction(function () use ($parcel, $data, $request) {
+                $parcel->fill($data);
+                $parcel->save();
 
-        AuditLogger::record(
-            'parcel_updated',
-            null,
-            $parcel,
-            [
-                'parcel_id' => $parcel->id,
-                'parcel_code' => $parcel->parcel_code,
-                'status' => $parcel->status,
-                'has_geometry' => ! empty($parcel->geometry_geojson),
-                'actor_user_id' => $request->user()?->id,
-                'actor_name' => $request->user()?->name,
-            ]
-        );
+                AuditLogger::record(
+                    'parcel_updated',
+                    null,
+                    $parcel,
+                    [
+                        'parcel_id' => $parcel->id,
+                        'parcel_code' => $parcel->parcel_code,
+                        'status' => $parcel->status,
+                        'has_geometry' => ! empty($parcel->geometry_geojson),
+                        'actor_user_id' => $request->user()?->id,
+                        'actor_name' => $request->user()?->name,
+                    ]
+                );
+            });
+        } catch (Throwable $e) {
+            if ($newReferencePhotoPath) {
+                Storage::disk('public')->delete($newReferencePhotoPath);
+            }
+
+            throw $e;
+        }
+
+        if ($newReferencePhotoPath && $oldReferencePhotoPath && $oldReferencePhotoPath !== $newReferencePhotoPath) {
+            Storage::disk('public')->delete($oldReferencePhotoPath);
+        }
 
         app(NotificationService::class)->notifyGeodeticParcelReferenceUpdated($parcel);
 
