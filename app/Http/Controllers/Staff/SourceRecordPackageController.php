@@ -278,10 +278,7 @@ class SourceRecordPackageController extends Controller
                 'status' => SourceRecordPackage::STATUS_LINKED,
             ]);
 
-            $sourceRecordPackage->records()->update([
-                'parcel_id' => $parcel->id,
-                'parcel_code' => $parcel->parcel_code,
-            ]);
+            $this->syncPackageRecordsToParcel($sourceRecordPackage, $parcel);
 
             AuditLogger::record(
                 'source_record_package_linked_to_parcel',
@@ -361,10 +358,7 @@ class SourceRecordPackageController extends Controller
                 'status' => SourceRecordPackage::STATUS_PARCEL_CREATED,
             ]);
 
-            $sourceRecordPackage->records()->update([
-                'parcel_id' => $parcel->id,
-                'parcel_code' => $parcel->parcel_code,
-            ]);
+            $this->syncPackageRecordsToParcel($sourceRecordPackage, $parcel);
 
             AuditLogger::record(
                 'parcel_created_from_source_record_package',
@@ -639,6 +633,24 @@ class SourceRecordPackageController extends Controller
             'source_notes' => ['nullable', 'string', 'max:5000'],
             'remarks' => ['nullable', 'string', 'max:5000'],
         ];
+    }
+
+    /**
+     * Update package records through Eloquent models so LegacyRecord saving
+     * safeguards (especially duplicate source-reference checks) always run.
+     * The caller already wraps this in the package/parcel transaction, so any
+     * rejected record rolls the entire link/create operation back.
+     */
+    private function syncPackageRecordsToParcel(SourceRecordPackage $sourceRecordPackage, Parcel $parcel): void
+    {
+        $sourceRecordPackage->records()
+            ->get()
+            ->each(function (LegacyRecord $record) use ($parcel): void {
+                $record->update([
+                    'parcel_id' => $parcel->id,
+                    'parcel_code' => $parcel->parcel_code,
+                ]);
+            });
     }
 
     private function storeSourceFile(Request $request): array
