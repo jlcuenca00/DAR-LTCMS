@@ -259,7 +259,10 @@ class RecordSearchPagesTest extends TestCase
                 'barangay' => 'Bantayan',
                 'area_hectares' => 1.2500,
                 'status' => 'active',
-                'reference_photo' => UploadedFile::fake()->image('replacement-reference.png', 10, 10),
+                'reference_photo' => UploadedFile::fake()->createWithContent(
+                    'replacement-reference.png',
+                    base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=')
+                ),
             ])
             ->assertRedirect();
 
