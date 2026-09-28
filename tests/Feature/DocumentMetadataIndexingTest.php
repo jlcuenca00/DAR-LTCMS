@@ -7,6 +7,7 @@ use App\Models\AuditLog;
 use App\Models\LandTransferApplication;
 use App\Models\RequiredDocument;
 use App\Models\User;
+use App\Services\ApplicationRequirementService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -142,6 +143,78 @@ class DocumentMetadataIndexingTest extends TestCase
         $this->assertNull($document->uploaded_by);
         $this->assertSame($staffUser->id, $document->metadata_encoded_by);
         $this->assertSame('T-META-001', $document->document_metadata['title_number']);
+
+        $evaluation = app(ApplicationRequirementService::class)->evaluate($application->fresh());
+        $row = collect($evaluation['requirements'])->firstWhere('id', $requiredDocument->id);
+
+        $this->assertTrue($row['present']);
+        $this->assertTrue($row['complete']);
+    }
+
+    public function test_remarks_only_placeholder_does_not_satisfy_a_required_document(): void
+    {
+        Storage::fake('local');
+
+        $staffUser = User::factory()->create(['role' => 'staff']);
+        $application = LandTransferApplication::create([
+            'application_code' => 'DOC-EMPTY-001',
+            'transferor_name' => 'Placeholder Transferor',
+            'transferee_name' => 'Placeholder Transferee',
+            'status' => LandTransferApplication::STATUS_PENDING_LEGAL_REVIEW,
+            'encoded_by' => $staffUser->id,
+        ]);
+        $requiredDocument = RequiredDocument::forceCreate([
+            'name' => 'Placeholder Requirement',
+            'applies_to' => 'transferor',
+            'is_mandatory' => true,
+        ]);
+
+        $this->actingAs($staffUser)->post(
+            route('staff.applications.documents.store', [$application, $requiredDocument]),
+            ['remarks' => 'Administrative follow-up note only.']
+        )->assertSessionHas('success');
+
+        $this->assertDatabaseHas('application_documents', [
+            'land_transfer_application_id' => $application->id,
+            'required_document_id' => $requiredDocument->id,
+            'remarks' => 'Administrative follow-up note only.',
+        ]);
+
+        $evaluation = app(ApplicationRequirementService::class)->evaluate($application->fresh());
+        $row = collect($evaluation['requirements'])->firstWhere('id', $requiredDocument->id);
+
+        $this->assertFalse($row['present']);
+        $this->assertFalse($row['complete']);
+    }
+
+    public function test_annex_reference_counts_as_reviewed_documentary_evidence_without_a_file(): void
+    {
+        Storage::fake('local');
+
+        $staffUser = User::factory()->create(['role' => 'staff']);
+        $application = LandTransferApplication::create([
+            'application_code' => 'DOC-ANNEX-001',
+            'transferor_name' => 'Annex Transferor',
+            'transferee_name' => 'Annex Transferee',
+            'status' => LandTransferApplication::STATUS_PENDING_LEGAL_REVIEW,
+            'encoded_by' => $staffUser->id,
+        ]);
+        $requiredDocument = RequiredDocument::forceCreate([
+            'name' => 'Physical Record Reviewed',
+            'applies_to' => 'transferor',
+            'is_mandatory' => true,
+        ]);
+
+        $this->actingAs($staffUser)->post(
+            route('staff.applications.documents.store', [$application, $requiredDocument]),
+            ['annex_reference' => 'Annex P-1']
+        )->assertSessionHas('success');
+
+        $evaluation = app(ApplicationRequirementService::class)->evaluate($application->fresh());
+        $row = collect($evaluation['requirements'])->firstWhere('id', $requiredDocument->id);
+
+        $this->assertTrue($row['present']);
+        $this->assertTrue($row['complete']);
     }
 
     public function test_document_metadata_is_locked_after_final_decision(): void
