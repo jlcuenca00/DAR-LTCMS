@@ -178,6 +178,107 @@ class MultipleApplicationPartyLinkTest extends TestCase
         $this->assertSame(2.0, $ownerB->fresh()->current_active_hectares);
     }
 
+    public function test_resyncing_current_transferor_shares_deactivates_stale_same_application_rows(): void
+    {
+        $staff = User::factory()->create([
+            'role' => User::ROLE_STAFF,
+            'is_active' => true,
+        ]);
+
+        $ownerA = Landowner::create([
+            'first_name' => 'Juan',
+            'last_name' => 'Cruz',
+            'province' => 'Negros Oriental',
+        ]);
+        $ownerB = Landowner::create([
+            'first_name' => 'Maria',
+            'last_name' => 'Cruz',
+            'province' => 'Negros Oriental',
+        ]);
+        $transferee = Landowner::create([
+            'first_name' => 'Pedro',
+            'last_name' => 'Santos',
+            'province' => 'Negros Oriental',
+        ]);
+        $parcel = Parcel::create([
+            'parcel_code' => 'CO-OWNED-RESYNC-001',
+            'province' => 'Negros Oriental',
+            'area_hectares' => 4.0000,
+            'status' => 'active',
+        ]);
+        $application = LandTransferApplication::create([
+            'application_code' => 'CO-OWNER-RESYNC-001',
+            'transferor_name' => 'Juan Cruz; Maria Cruz',
+            'transferors' => [
+                ['name' => 'Juan Cruz', 'landowner_id' => $ownerA->id],
+                ['name' => 'Maria Cruz', 'landowner_id' => $ownerB->id],
+            ],
+            'transferee_name' => 'Pedro Santos',
+            'transferees' => [
+                ['name' => 'Pedro Santos', 'landowner_id' => $transferee->id],
+            ],
+            'status' => LandTransferApplication::STATUS_PENDING_LEGAL_REVIEW,
+            'encoded_by' => $staff->id,
+        ]);
+        $applicationParcel = ApplicationParcel::create([
+            'land_transfer_application_id' => $application->id,
+            'parcel_id' => $parcel->id,
+            'area_hectares' => 4.0000,
+            'parcel_code' => $parcel->parcel_code,
+        ]);
+
+        $payload = [
+            'transferors' => [
+                [
+                    'name' => 'Juan Cruz',
+                    'landowner_id' => $ownerA->id,
+                    'parcel_shares' => [(string) $applicationParcel->id => 2.0000],
+                ],
+                [
+                    'name' => 'Maria Cruz',
+                    'landowner_id' => $ownerB->id,
+                    'parcel_shares' => [(string) $applicationParcel->id => 2.0000],
+                ],
+            ],
+            'transferees' => [
+                ['name' => 'Pedro Santos', 'landowner_id' => $transferee->id],
+            ],
+            'sync_current_landholdings' => 1,
+        ];
+
+        $this->actingAs($staff)
+            ->patch(route('staff.applications.landowner-links.update', $application), $payload)
+            ->assertRedirect();
+
+        $payload['transferors'][0]['parcel_shares'][(string) $applicationParcel->id] = 4.0000;
+        $payload['transferors'][1]['parcel_shares'][(string) $applicationParcel->id] = 0;
+
+        $this->actingAs($staff)
+            ->patch(route('staff.applications.landowner-links.update', $application), $payload)
+            ->assertRedirect()
+            ->assertSessionHas('success');
+
+        $holdingA = Landholding::query()
+            ->where('landowner_id', $ownerA->id)
+            ->where('parcel_id', $parcel->id)
+            ->firstOrFail();
+        $holdingB = Landholding::query()
+            ->where('landowner_id', $ownerB->id)
+            ->where('parcel_id', $parcel->id)
+            ->firstOrFail();
+
+        $this->assertSame(Landholding::STATUS_ACTIVE, $holdingA->status);
+        $this->assertSame(4.0, (float) $holdingA->area_hectares);
+        $this->assertSame($application->id, $holdingA->source_application_id);
+
+        $this->assertSame(Landholding::STATUS_INACTIVE, $holdingB->status);
+        $this->assertSame(2.0, (float) $holdingB->area_hectares);
+        $this->assertSame($application->id, $holdingB->source_application_id);
+
+        $this->assertSame(4.0, $ownerA->fresh()->current_active_hectares);
+        $this->assertSame(0.0, $ownerB->fresh()->current_active_hectares);
+    }
+
     public function test_five_hectare_validation_calculates_each_linked_transferee_share_separately(): void
     {
         $staff = User::factory()->create([

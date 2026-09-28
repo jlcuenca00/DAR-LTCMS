@@ -43,7 +43,7 @@ class ApplicationRequirementService
             $applicable = $requirement->appliesToApplication($application);
             $blocking = $requirement->blocksApplication($application);
             $document = $uploaded->get($requirement->id);
-            $present = $document !== null;
+            $present = $document !== null && $this->hasEvidence($document);
 
             $freshness = $this->freshnessState($requirement, $document?->document_metadata ?? [], $referenceDate);
             $complete = ! $blocking || ($present && $freshness['valid']);
@@ -102,6 +102,25 @@ class ApplicationRequirementService
             ->orderBy('applies_to')
             ->orderBy('id')
             ->get();
+    }
+
+    /**
+     * A saved row is only documentary evidence when Staff actually recorded a
+     * supporting file, meaningful indexed data, an existing source-record link,
+     * or an Annex reference for a reviewed physical record. Administrative
+     * remarks alone must never make a blocking requirement appear complete.
+     */
+    private function hasEvidence(\App\Models\ApplicationDocument $document): bool
+    {
+        if (filled($document->file_path)
+            || filled($document->annex_reference)
+            || filled($document->source_record_id)
+            || filled($document->source_record_package_id)) {
+            return true;
+        }
+
+        return collect((array) $document->document_metadata)
+            ->contains(fn ($value) => filled($value));
     }
 
     private function freshnessState(RequiredDocument $requirement, array $metadata, CarbonInterface $referenceDate): array

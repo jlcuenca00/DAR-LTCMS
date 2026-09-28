@@ -319,10 +319,20 @@ class ApplicationLandownerLinkController extends Controller
                 continue;
             }
 
+            /*
+             * Positive submitted owners are about to be replaced by the submitted
+             * shares. Active rows previously sourced from this same application
+             * may also be deactivated when a share becomes zero or a party link is
+             * corrected, so neither should be counted as immutable "other" area.
+             */
             $existingOtherShares = (float) Landholding::query()
                 ->where('parcel_id', $applicationParcel->parcel_id)
                 ->where('status', Landholding::STATUS_ACTIVE)
                 ->when(! empty($positiveOwnerIds), fn ($query) => $query->whereNotIn('landowner_id', array_unique($positiveOwnerIds)))
+                ->where(function ($query) use ($application) {
+                    $query->whereNull('source_application_id')
+                        ->orWhere('source_application_id', '!=', $application->id);
+                })
                 ->sum('area_hectares');
 
             $combinedActiveShares = round($existingOtherShares + $totalSubmittedShares, 4);
@@ -344,20 +354,49 @@ class ApplicationLandownerLinkController extends Controller
                 continue;
             }
 
-            foreach ($transferors as $row) {
-                $share = (float) data_get($row, 'parcel_shares.' . $applicationParcel->id, 0);
+            $positiveShares = collect($transferors)
+                ->filter(fn ($row) => filled($row['landowner_id'] ?? null))
+                ->mapWithKeys(function ($row) use ($applicationParcel) {
+                    $share = round((float) data_get($row, 'parcel_shares.' . $applicationParcel->id, 0), 4);
 
-                if (! $row['landowner_id'] || $share <= 0) {
-                    continue;
-                }
+                    return $share > 0
+                        ? [(int) $row['landowner_id'] => $share]
+                        : [];
+                });
 
+            /*
+             * Rows created/confirmed by an earlier sync of this same application
+             * must not remain active after Staff corrects a share to zero or
+             * changes the linked transferor. Preserve the record for traceability
+             * by marking it inactive rather than deleting it. Unrelated/manual
+             * landholdings are never deactivated here.
+             */
+            $staleRows = Landholding::query()
+                ->where('parcel_id', $applicationParcel->parcel_id)
+                ->where('source_application_id', $application->id)
+                ->where('status', Landholding::STATUS_ACTIVE)
+                ->when(
+                    $positiveShares->isNotEmpty(),
+                    fn ($query) => $query->whereNotIn('landowner_id', $positiveShares->keys()->all())
+                )
+                ->get();
+
+            foreach ($staleRows as $landholding) {
+                $landholding->status = Landholding::STATUS_INACTIVE;
+                $landholding->remarks = 'Current co-owner hectare share was superseded by a later DAR Staff synchronization for this clearance application. Administrative reference only.';
+                $landholding->save();
+
+                $syncedIds[] = $landholding->id;
+            }
+
+            foreach ($positiveShares as $landownerId => $share) {
                 $landholding = Landholding::updateOrCreate(
                     [
-                        'landowner_id' => $row['landowner_id'],
+                        'landowner_id' => $landownerId,
                         'parcel_id' => $applicationParcel->parcel_id,
                     ],
                     [
-                        'area_hectares' => round($share, 4),
+                        'area_hectares' => $share,
                         'status' => Landholding::STATUS_ACTIVE,
                         'source_application_id' => $application->id,
                         'remarks' => 'Current co-owner hectare share confirmed by DAR Staff during clearance application review. This is an administrative reference record only.',

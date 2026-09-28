@@ -605,9 +605,28 @@ private function generateApplicationCode(): string
     $year = now()->format('Y');
     $prefix = "{$year}-";
 
-    $nextNumber = LandTransferApplication::query()
+    /*
+     * Application codes are allocated inside the surrounding creation
+     * transaction. Serialize the annual sequence on PostgreSQL so concurrent
+     * Staff encoding requests cannot calculate the same next code.
+     */
+    if (DB::connection()->getDriverName() === 'pgsql') {
+        DB::statement('LOCK TABLE land_transfer_applications IN SHARE ROW EXCLUSIVE MODE');
+    }
+
+    $existingSequences = LandTransferApplication::query()
         ->where('application_code', 'LIKE', $prefix . '%')
-        ->count() + 1;
+        ->pluck('application_code')
+        ->map(function ($code) use ($year): ?int {
+            $pattern = '/^' . preg_quote($year, '/') . '-(\\d+)$/';
+
+            return preg_match($pattern, (string) $code, $matches)
+                ? (int) $matches[1]
+                : null;
+        })
+        ->filter(fn ($sequence) => $sequence !== null);
+
+    $nextNumber = max(1, ((int) $existingSequences->max()) + 1);
 
     do {
         $code = $prefix . str_pad((string) $nextNumber, 4, '0', STR_PAD_LEFT);
