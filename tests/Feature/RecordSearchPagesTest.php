@@ -6,6 +6,8 @@ use App\Models\Landowner;
 use App\Models\Parcel;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class RecordSearchPagesTest extends TestCase
@@ -222,6 +224,52 @@ class RecordSearchPagesTest extends TestCase
         $response->assertOk();
         $response->assertSee('VISIBLE-LOCATION-PARCEL');
         $response->assertDontSee('HIDDEN-LOCATION-PARCEL');
+    }
+
+    public function test_replacing_parcel_reference_photo_removes_the_previous_file(): void
+    {
+        Storage::fake('public');
+
+        $staffUser = User::factory()->create([
+            'role' => User::ROLE_STAFF,
+            'is_active' => true,
+        ]);
+
+        $oldPath = 'reference-photos/parcels/old-reference.png';
+        Storage::disk('public')->put(
+            $oldPath,
+            base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=')
+        );
+
+        $parcel = Parcel::create([
+            'parcel_code' => 'PHOTO-REPLACE-PARCEL-001',
+            'province' => 'Negros Oriental',
+            'municipality' => 'Dumaguete City',
+            'barangay' => 'Bantayan',
+            'area_hectares' => 1.2500,
+            'status' => 'active',
+            'reference_photo_path' => $oldPath,
+        ]);
+
+        $this->actingAs($staffUser)
+            ->patch(route('staff.records.parcels.update', $parcel), [
+                'parcel_code' => $parcel->parcel_code,
+                'province' => 'Negros Oriental',
+                'municipality' => 'Dumaguete City',
+                'barangay' => 'Bantayan',
+                'area_hectares' => 1.2500,
+                'status' => 'active',
+                'reference_photo' => UploadedFile::fake()->image('replacement-reference.png', 10, 10),
+            ])
+            ->assertRedirect();
+
+        $parcel->refresh();
+        $newPath = $parcel->reference_photo_path;
+
+        $this->assertNotNull($newPath);
+        $this->assertNotSame($oldPath, $newPath);
+        Storage::disk('public')->assertMissing($oldPath);
+        Storage::disk('public')->assertExists($newPath);
     }
 
     public function test_landowner_cannot_view_staff_record_search_pages(): void
