@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Landowner;
 use App\Models\Parcel;
+use App\Models\ParcelGeometryRevision;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
@@ -224,6 +225,113 @@ class RecordSearchPagesTest extends TestCase
         $response->assertOk();
         $response->assertSee('VISIBLE-LOCATION-PARCEL');
         $response->assertDontSee('HIDDEN-LOCATION-PARCEL');
+    }
+
+    public function test_staff_parcel_geometry_create_and_update_record_revision_history(): void
+    {
+        $staffUser = User::factory()->create([
+            'role' => User::ROLE_STAFF,
+            'is_active' => true,
+        ]);
+
+        $geometryOne = [
+            'type' => 'Polygon',
+            'coordinates' => [[
+                [123.30, 9.30],
+                [123.31, 9.30],
+                [123.31, 9.31],
+                [123.30, 9.30],
+            ]],
+        ];
+
+        $this->actingAs($staffUser)
+            ->post(route('staff.records.parcels.store'), [
+                'parcel_code' => 'STAFF-GEO-REV-001',
+                'province' => 'Negros Oriental',
+                'municipality' => 'Dumaguete City',
+                'barangay' => 'Bantayan',
+                'area_hectares' => 1.2500,
+                'status' => 'active',
+                'geometry_geojson' => json_encode($geometryOne),
+            ])
+            ->assertRedirect();
+
+        $parcel = Parcel::query()->where('parcel_code', 'STAFF-GEO-REV-001')->firstOrFail();
+
+        $this->assertSame(1, (int) $parcel->geometry_version);
+        $this->assertDatabaseHas('parcel_geometry_revisions', [
+            'parcel_id' => $parcel->id,
+            'geometry_version' => 1,
+            'actor_user_id' => $staffUser->id,
+            'source' => 'staff_create',
+        ]);
+
+        $geometryTwo = [
+            'type' => 'Polygon',
+            'coordinates' => [[
+                [123.40, 9.40],
+                [123.41, 9.40],
+                [123.41, 9.41],
+                [123.40, 9.40],
+            ]],
+        ];
+
+        $this->actingAs($staffUser)
+            ->patch(route('staff.records.parcels.update', $parcel), [
+                'parcel_code' => $parcel->parcel_code,
+                'province' => 'Negros Oriental',
+                'municipality' => 'Dumaguete City',
+                'barangay' => 'Bantayan',
+                'area_hectares' => 1.2500,
+                'status' => 'active',
+                'geometry_geojson' => json_encode($geometryTwo),
+            ])
+            ->assertRedirect();
+
+        $parcel->refresh();
+
+        $this->assertSame(2, (int) $parcel->geometry_version);
+        $this->assertSame(2, ParcelGeometryRevision::where('parcel_id', $parcel->id)->count());
+        $this->assertDatabaseHas('parcel_geometry_revisions', [
+            'parcel_id' => $parcel->id,
+            'geometry_version' => 2,
+            'actor_user_id' => $staffUser->id,
+            'source' => 'staff_edit',
+        ]);
+    }
+
+    public function test_staff_parcel_geometry_rejects_malformed_polygon_server_side(): void
+    {
+        $staffUser = User::factory()->create([
+            'role' => User::ROLE_STAFF,
+            'is_active' => true,
+        ]);
+
+        $this->actingAs($staffUser)
+            ->from(route('staff.records.parcels.create'))
+            ->post(route('staff.records.parcels.store'), [
+                'parcel_code' => 'STAFF-GEO-INVALID-001',
+                'province' => 'Negros Oriental',
+                'municipality' => 'Dumaguete City',
+                'barangay' => 'Bantayan',
+                'area_hectares' => 1.2500,
+                'status' => 'active',
+                'geometry_geojson' => json_encode([
+                    'type' => 'Polygon',
+                    'coordinates' => [[
+                        [123.30, 9.30],
+                        [123.31, 9.30],
+                        [123.31, 9.31],
+                        [123.32, 9.32],
+                    ]],
+                ]),
+            ])
+            ->assertRedirect(route('staff.records.parcels.create'))
+            ->assertSessionHasErrors('geometry_geojson');
+
+        $this->assertDatabaseMissing('parcels', [
+            'parcel_code' => 'STAFF-GEO-INVALID-001',
+        ]);
     }
 
     public function test_replacing_parcel_reference_photo_removes_the_previous_file(): void
