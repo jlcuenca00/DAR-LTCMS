@@ -309,7 +309,7 @@ class RecordSearchController extends Controller
 
         $data['province'] = $data['province'] ?: 'Negros Oriental';
         $data = $this->normalizeParcelRegistrationData($data);
-        $data['geometry_geojson'] = $this->decodeParcelGeoJson($data['geometry_geojson'] ?? null);
+        $data['geometry_geojson'] = app(ParcelGeometryService::class)->decodePolygon($data['geometry_geojson'] ?? null);
 
         // Keep the existing internal classification value. Staff no longer edits this as a clearance workflow field.
         $data['agricultural_status'] = $parcel->agricultural_status ?: Parcel::DEFAULT_AGRICULTURAL_STATUS;
