@@ -84,6 +84,8 @@ class BetaSystemRegressionTest extends TestCase
                 'transferee_name' => $transferee->full_name,
                 'municipality' => 'Bayawan City',
                 'barangay' => 'Banga',
+                'date_filed' => '2026-09-15',
+                'remarks' => 'Beta application intake remarks must persist.',
                 'transfer_nature' => 'sale',
                 'parcel_id' => $parcel->id,
                 'area_hectares' => '1.2500',
@@ -93,6 +95,8 @@ class BetaSystemRegressionTest extends TestCase
         $application = LandTransferApplication::latest('id')->firstOrFail();
 
         $this->assertSame(LandTransferApplication::STATUS_PENDING_LEGAL_REVIEW, $application->status);
+        $this->assertSame('2026-09-15', optional($application->date_filed)->toDateString());
+        $this->assertSame('Beta application intake remarks must persist.', $application->remarks);
 
         $this->assertDatabaseHas('landholdings', [
             'landowner_id' => $transferor->id,
@@ -117,6 +121,35 @@ class BetaSystemRegressionTest extends TestCase
             'type' => 'application_created',
             'related_type' => LandTransferApplication::class,
             'related_id' => $application->id,
+        ]);
+    }
+
+    public function test_application_code_allocation_continues_after_the_highest_annual_sequence(): void
+    {
+        $staff = $this->staffUser();
+        $year = now()->format('Y');
+
+        LandTransferApplication::create([
+            'application_code' => $year . '-0042',
+            'transferor_name' => 'Existing Transferor',
+            'transferors' => [['name' => 'Existing Transferor', 'landowner_id' => null]],
+            'transferee_name' => 'Existing Transferee',
+            'transferees' => [['name' => 'Existing Transferee', 'landowner_id' => null]],
+            'status' => LandTransferApplication::STATUS_PENDING_LEGAL_REVIEW,
+            'encoded_by' => $staff->id,
+        ]);
+
+        $this->actingAs($staff)
+            ->post(route('staff.applications.store'), [
+                'transferor_name' => 'New Transferor',
+                'transferee_name' => 'New Transferee',
+            ])
+            ->assertSessionHas('success');
+
+        $this->assertDatabaseHas('land_transfer_applications', [
+            'application_code' => $year . '-0043',
+            'transferor_name' => 'New Transferor',
+            'transferee_name' => 'New Transferee',
         ]);
     }
 
