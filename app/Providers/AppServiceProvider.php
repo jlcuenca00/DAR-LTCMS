@@ -32,8 +32,13 @@ class AppServiceProvider extends ServiceProvider
         Paginator::defaultView('components.pagination');
         Paginator::defaultSimpleView('components.pagination');
 
-        // Surface N+1 query problems during development and testing without
-        // affecting production availability.
+        // Catch model-usage mistakes before they can reach production.
+        // Production remains availability-first, while local/test/CI fail loudly
+        // on silently discarded mass-assignment attributes.
+        Model::preventSilentlyDiscardingAttributes(! app()->environment('production'));
+
+        // Surface N+1 query problems during local development without affecting
+        // production availability. Test/CI enforcement is audited separately.
         Model::preventLazyLoading(app()->environment('local'));
     }
 }
