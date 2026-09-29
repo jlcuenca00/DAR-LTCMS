@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Staff;
 use App\Http\Controllers\Controller;
 use App\Models\LandTransferApplication;
 use App\Services\ApplicationClearanceService;
+use App\Services\ApplicationParcelIntegrityService;
+use App\Services\ApplicationPartyIntegrityService;
 use App\Services\ApplicationRequirementService;
 use App\Services\AuditLogger;
 use App\Services\LandholdingAreaValidationService;
@@ -637,11 +639,11 @@ class ApplicationWorkflowController extends Controller
         $errors = [];
 
         if (! ($workflow['linked_parties_complete'] ?? false)) {
-            $errors['parties'] = 'Every transferor and transferee must be linked to a Landowner record before PARPO II decision.';
+            $errors['parties'] = 'Every transferor and transferee must be linked exactly once to an existing Landowner record before PARPO II decision.';
         }
 
         if (! ($workflow['has_linked_parcel'] ?? false)) {
-            $errors['parcel'] = 'At least one valid Parcel record must be linked before PARPO II decision.';
+            $errors['parcel'] = 'At least one active Parcel record with a positive transferred area must be linked, and every linked Parcel row must be valid before PARPO II decision.';
         }
 
         if (! ($workflow['payment_complete'] ?? false)) {
@@ -663,10 +665,8 @@ class ApplicationWorkflowController extends Controller
 
     private function workflowReadinessSnapshot(LandTransferApplication $application): array
     {
-        $linkedParcelCount = $application->applicationParcels()
-            ->whereNotNull('parcel_id')
-            ->whereHas('parcel')
-            ->count();
+        $partyIntegrity = app(ApplicationPartyIntegrityService::class)->inspect($application);
+        $parcelIntegrity = app(ApplicationParcelIntegrityService::class)->inspectApplication($application);
 
         $subjectFindings = collect((array) $application->ltc_form4_subject_land_findings)
             ->filter(fn ($value) => filled($value));
@@ -700,9 +700,15 @@ class ApplicationWorkflowController extends Controller
             && abs(((float) $application->amount_paid) - $expectedFee) <= 0.009;
 
         return [
-            'linked_parties_complete' => $application->allPartiesLinked(),
-            'linked_parcel_count' => $linkedParcelCount,
-            'has_linked_parcel' => $linkedParcelCount > 0,
+            'linked_parties_complete' => $application->allPartiesLinked() && $partyIntegrity['valid'],
+            'party_integrity_valid' => $partyIntegrity['valid'],
+            'party_integrity_issues' => $partyIntegrity['issues'],
+            'linked_parcel_count' => $parcelIntegrity['valid_count'],
+            'has_linked_parcel' => $parcelIntegrity['valid']
+                && $parcelIntegrity['valid_count'] > 0
+                && $parcelIntegrity['valid_count'] === $parcelIntegrity['total_count'],
+            'parcel_integrity_valid' => $parcelIntegrity['valid'],
+            'parcel_integrity_issues' => $parcelIntegrity['issues'],
             'payment_complete' => $paymentComplete,
             'expected_filing_fee' => $expectedFee,
             'form4_complete' => empty($form4MissingItems),
