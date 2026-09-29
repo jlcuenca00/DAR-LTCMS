@@ -351,11 +351,15 @@ public function store(Request $request)
 
     $application = null;
     $hasSpecialPowerOfAttorney = $request->boolean('has_special_power_of_attorney');
-    $isSuccessionCase = $request->boolean('is_succession_case') || str_contains(strtolower(collect($validated['transfer_instruments'] ?? [])->pluck('name')->implode(' ')), 'succession');
     $retentionCertificateRequired = $request->boolean('retention_certificate_required');
     $transferors = $this->normalizePartyRows($validated['transferors'] ?? [], $validated['transferor_name'] ?? null, $validated['transferor_landowner_id'] ?? null);
     $transferees = $this->normalizePartyRows($validated['transferees'] ?? [], $validated['transferee_name'] ?? null, $validated['transferee_landowner_id'] ?? null);
     $transferInstruments = $this->normalizeInstrumentRows($validated['transfer_instruments'] ?? [], $validated['transfer_nature'] ?? null);
+    $normalizedInstrumentText = mb_strtolower(collect($transferInstruments)->pluck('name')->implode(' '));
+    $isSuccessionCase = $request->boolean('is_succession_case')
+        || ($validated['transfer_nature'] ?? null) === 'succession'
+        || str_contains($normalizedInstrumentText, 'succession')
+        || str_contains($normalizedInstrumentText, 'inheritance');
 
     if (empty($transferors)) {
         return back()->withInput()->withErrors(['transferors.0.name' => 'At least one transferor is required.']);
@@ -374,6 +378,10 @@ public function store(Request $request)
         if (! filled($applicantName)) {
             $applicantName = match ($applicantType) {
                 'transferee' => $transfereeSummary,
+                'authorized_representative' => filled($validated['authorized_representative_name'] ?? null)
+                    ? trim((string) $validated['authorized_representative_name'])
+                    : null,
+                'other' => null,
                 default => $transferorSummary,
             };
         }
