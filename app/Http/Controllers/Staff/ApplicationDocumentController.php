@@ -8,6 +8,7 @@ use App\Models\LandTransferApplication;
 use App\Models\LegacyRecord;
 use App\Models\RequiredDocument;
 use App\Models\SourceRecordPackage;
+use App\Services\ApplicationMutationFileLifecycle;
 use App\Services\AuditLogger;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -119,6 +120,7 @@ class ApplicationDocumentController extends Controller
         try {
             if ($request->hasFile('file')) {
                 $newFilePath = $request->file('file')->store("application-documents/{$application->id}");
+                ApplicationMutationFileLifecycle::fromRequest($request)?->trackCreated($newFilePath);
 
                 $documentValues['original_filename'] = $request->file('file')->getClientOriginalName();
                 $documentValues['file_path'] = $newFilePath;
@@ -144,8 +146,14 @@ class ApplicationDocumentController extends Controller
             throw $exception;
         }
 
-        if ($newFilePath && $oldFilePath && $oldFilePath !== $newFilePath && Storage::exists($oldFilePath)) {
-            Storage::delete($oldFilePath);
+        if ($newFilePath && $oldFilePath && $oldFilePath !== $newFilePath) {
+            $fileLifecycle = ApplicationMutationFileLifecycle::fromRequest($request);
+
+            if ($fileLifecycle) {
+                $fileLifecycle->deleteAfterCommit($oldFilePath);
+            } elseif (Storage::exists($oldFilePath)) {
+                Storage::delete($oldFilePath);
+            }
         }
 
         $action = $existingDocument
@@ -193,9 +201,7 @@ class ApplicationDocumentController extends Controller
             return back()->with('error', 'Document not found.');
         }
 
-        if ($document->file_path && Storage::exists($document->file_path)) {
-            Storage::delete($document->file_path);
-        }
+        $filePath = $document->file_path;
 
         AuditLogger::record(
             'document_removed',
@@ -214,6 +220,16 @@ class ApplicationDocumentController extends Controller
         );
 
         $document->delete();
+
+        if ($filePath) {
+            $fileLifecycle = ApplicationMutationFileLifecycle::fromRequest(request());
+
+            if ($fileLifecycle) {
+                $fileLifecycle->deleteAfterCommit($filePath);
+            } elseif (Storage::exists($filePath)) {
+                Storage::delete($filePath);
+            }
+        }
 
         return redirect()
             ->route('staff.applications.show', ['application' => $application->id])
