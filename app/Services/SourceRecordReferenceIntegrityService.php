@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\LegacyRecord;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class SourceRecordReferenceIntegrityService
@@ -18,6 +19,8 @@ class SourceRecordReferenceIntegrityService
         if ($value === '') {
             return;
         }
+
+        $this->lockReferenceKey($record->record_type, $value);
 
         $exists = LegacyRecord::query()
             ->where('record_type', $record->record_type)
@@ -73,6 +76,23 @@ class SourceRecordReferenceIntegrityService
         $this->appendKey($keys, (bool) ($data['include_historical_clearance'] ?? false), 'historical_clearance', $data['control_number'] ?? null, 'control_number');
 
         return $keys;
+    }
+
+    private function lockReferenceKey(?string $type, string $value): void
+    {
+        if (
+            DB::connection()->getDriverName() !== 'pgsql'
+            || DB::transactionLevel() < 1
+        ) {
+            return;
+        }
+
+        $key = 'dar-ltcms:source-reference:'.($type ?: 'unknown').':'.mb_strtolower(trim($value));
+
+        DB::selectOne(
+            'SELECT pg_advisory_xact_lock(hashtextextended(?, 0))',
+            [$key]
+        );
     }
 
     private function appendKey(array &$keys, bool $included, string $type, $value, string $label): void
