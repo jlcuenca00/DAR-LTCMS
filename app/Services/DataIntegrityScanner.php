@@ -92,6 +92,8 @@ class DataIntegrityScanner
 
         $this->scanLocations($issues);
         $this->scanOrphans($issues);
+        $this->scanApplicationPartyLinks($issues);
+        $this->scanCurrentApplicationParcels($issues);
         $this->scanPartyShares($issues);
         $this->scanSourceReferenceDuplicates($issues);
 
@@ -184,6 +186,74 @@ class DataIntegrityScanner
                 ->whereNotNull('ap.parcel_id')
                 ->whereNull('p.id'),
             ['ap.id', 'ap.land_transfer_application_id', 'ap.parcel_id', 'ap.parcel_code']
+        );
+    }
+
+    private function scanApplicationPartyLinks(array &$issues): void
+    {
+        $invalid = [];
+        $service = app(ApplicationPartyIntegrityService::class);
+
+        LandTransferApplication::query()
+            ->orderBy('id')
+            ->chunkById(200, function ($applications) use (&$invalid, $service) {
+                foreach ($applications as $application) {
+                    $inspection = $service->inspect($application);
+
+                    if (! $inspection['valid']) {
+                        $invalid[] = [
+                            'application_id' => $application->id,
+                            'application_code' => $application->application_code,
+                            'issues' => $inspection['issues'],
+                        ];
+                    }
+                }
+            });
+
+        $this->addCollectionIssue(
+            $issues,
+            'invalid_application_party_links',
+            'Application party JSON, Landowner links, or compatibility fields are inconsistent.',
+            $invalid
+        );
+    }
+
+    private function scanCurrentApplicationParcels(array &$issues): void
+    {
+        $invalid = [];
+        $service = app(ApplicationParcelIntegrityService::class);
+        $processingStatuses = array_values(array_unique(array_merge(
+            LandTransferApplication::ACTIVE_STATUSES,
+            [
+                LandTransferApplication::STATUS_DRAFT,
+                LandTransferApplication::STATUS_PENDING_REVIEW,
+            ]
+        )));
+
+        LandTransferApplication::query()
+            ->with('applicationParcels.parcel')
+            ->whereIn('status', $processingStatuses)
+            ->whereHas('applicationParcels')
+            ->orderBy('id')
+            ->chunkById(200, function ($applications) use (&$invalid, $service) {
+                foreach ($applications as $application) {
+                    $inspection = $service->inspectApplication($application);
+
+                    if (! $inspection['valid']) {
+                        $invalid[] = [
+                            'application_id' => $application->id,
+                            'application_code' => $application->application_code,
+                            'issues' => $inspection['issues'],
+                        ];
+                    }
+                }
+            });
+
+        $this->addCollectionIssue(
+            $issues,
+            'invalid_current_application_parcels',
+            'An open application contains a missing, inactive, or non-positive subject Parcel reference.',
+            $invalid
         );
     }
 
