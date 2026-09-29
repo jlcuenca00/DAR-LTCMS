@@ -291,6 +291,11 @@ class ApplicationLandownerLinkController extends Controller
             $totalSubmittedShares = 0.0;
             $positiveOwnerIds = [];
 
+            if ($applicationParcel->parcel->status !== 'active') {
+                $errors['sync_current_landholdings'] = 'Current Landholding shares can only be synchronized to an active Parcel Record.';
+                continue;
+            }
+
             if ($parcelArea <= 0) {
                 $errors['sync_current_landholdings'] = 'Each linked Parcel Record must have a valid area before hectare shares can be synchronized.';
                 continue;
