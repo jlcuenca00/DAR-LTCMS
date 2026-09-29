@@ -16,6 +16,7 @@ use App\Models\Parcel;
 use App\Services\AuditLogger;
 use App\Services\LandholdingAreaValidationService;
 use App\Services\NotificationService;
+use App\Services\ParcelConcurrencyService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
@@ -479,53 +480,57 @@ public function store(Request $request)
             'area_hectares' => ['nullable', 'numeric', 'min:0.0001'],
         ]);
 
-        $parcel = Parcel::findOrFail($validated['parcel_id']);
-        $areaHectares = $validated['area_hectares'] ?? $parcel->area_hectares;
-        $areaSquareMeters = $areaHectares !== null
-            ? round(((float) $areaHectares) * 10000, 2)
-            : $parcel->area_square_meters;
+        return DB::transaction(function () use ($validated, $application) {
+            $parcel = app(ParcelConcurrencyService::class)
+                ->lockParcel((int) $validated['parcel_id']);
 
-        $applicationParcel = $application->applicationParcels()
-            ->where('parcel_id', $parcel->id)
-            ->first();
+            $areaHectares = $validated['area_hectares'] ?? $parcel->area_hectares;
+            $areaSquareMeters = $areaHectares !== null
+                ? round(((float) $areaHectares) * 10000, 2)
+                : $parcel->area_square_meters;
 
-        $payload = [
-            'parcel_id' => $parcel->id,
-            'area_hectares' => $areaHectares,
-            'area_square_meters' => $areaSquareMeters,
-            'parcel_code' => $parcel->parcel_code,
-            'title_no' => $parcel->title_no,
-            'tax_decl_no' => $parcel->tax_decl_no,
-            'lot_number' => $parcel->lot_number,
-            'survey_plan_number' => $parcel->survey_plan_number,
-            'title_type' => $parcel->title_type,
-            'rod_office' => $parcel->rod_office,
-        ];
+            $applicationParcel = $application->applicationParcels()
+                ->where('parcel_id', $parcel->id)
+                ->first();
 
-        if ($applicationParcel) {
-            $applicationParcel->update($payload);
-            $action = 'application_parcel_updated';
-            $message = 'Linked parcel reference updated.';
-        } else {
-            $applicationParcel = $application->applicationParcels()->create($payload);
-            $action = 'application_parcel_added';
-            $message = 'Parcel reference added to the application review.';
-        }
-
-        AuditLogger::record(
-            $action,
-            $application,
-            $application,
-            [
-                'application_parcel_id' => $applicationParcel->id,
+            $payload = [
                 'parcel_id' => $parcel->id,
-                'parcel_code' => $parcel->parcel_code,
                 'area_hectares' => $areaHectares,
-            ],
-            Auth::id()
-        );
+                'area_square_meters' => $areaSquareMeters,
+                'parcel_code' => $parcel->parcel_code,
+                'title_no' => $parcel->title_no,
+                'tax_decl_no' => $parcel->tax_decl_no,
+                'lot_number' => $parcel->lot_number,
+                'survey_plan_number' => $parcel->survey_plan_number,
+                'title_type' => $parcel->title_type,
+                'rod_office' => $parcel->rod_office,
+            ];
 
-        return back()->with('success', $message);
+            if ($applicationParcel) {
+                $applicationParcel->update($payload);
+                $action = 'application_parcel_updated';
+                $message = 'Linked parcel reference updated.';
+            } else {
+                $applicationParcel = $application->applicationParcels()->create($payload);
+                $action = 'application_parcel_added';
+                $message = 'Parcel reference added to the application review.';
+            }
+
+            AuditLogger::record(
+                $action,
+                $application,
+                $application,
+                [
+                    'application_parcel_id' => $applicationParcel->id,
+                    'parcel_id' => $parcel->id,
+                    'parcel_code' => $parcel->parcel_code,
+                    'area_hectares' => $areaHectares,
+                ],
+                Auth::id()
+            );
+
+            return back()->with('success', $message);
+        });
     }
 
     public function destroyParcel(LandTransferApplication $application, ApplicationParcel $applicationParcel)
