@@ -144,6 +144,7 @@ class DurabilityIntegrityHardeningTest extends TestCase
             'application_documents_uploaded_by_foreign',
             'application_clearances_land_transfer_application_id_foreign',
             'parcel_geometry_revisions_parcel_id_foreign',
+            'parcel_geometry_revisions_actor_user_id_foreign',
             'audit_logs_actor_user_id_foreign',
             'audit_logs_land_transfer_application_id_foreign',
         ];
