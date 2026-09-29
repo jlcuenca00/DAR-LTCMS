@@ -94,6 +94,10 @@ class DataIntegrityScanner
         $this->scanOrphans($issues);
         $this->scanApplicationPartyLinks($issues);
         $this->scanCurrentApplicationParcels($issues);
+        $this->scanApplicationBusinessStates($issues);
+        $this->scanApplicationClearances($issues);
+        $this->scanHistoricalApprovedReleaseBackfillSuspects($issues);
+        $this->scanHistoricalSnapshotDuplicates($issues);
         $this->scanPartyShares($issues);
         $this->scanSourceReferenceDuplicates($issues);
 
@@ -253,6 +257,162 @@ class DataIntegrityScanner
             $issues,
             'invalid_current_application_parcels',
             'An open application contains a missing, inactive, or non-positive subject Parcel reference.',
+            $invalid
+        );
+    }
+
+    private function scanApplicationBusinessStates(array &$issues): void
+    {
+        $invalid = [];
+        $service = app(ApplicationBusinessStateIntegrityService::class);
+
+        LandTransferApplication::query()
+            ->orderBy('id')
+            ->chunkById(200, function ($applications) use (&$invalid, $service) {
+                foreach ($applications as $application) {
+                    $inspection = $service->inspect($application);
+
+                    if (! $inspection['valid']) {
+                        $invalid[] = [
+                            'application_id' => $application->id,
+                            'application_code' => $application->application_code,
+                            'status' => $application->status,
+                            'release_status' => $application->release_status,
+                            'issues' => $inspection['issues'],
+                        ];
+                    }
+                }
+            });
+
+        $this->addCollectionIssue(
+            $issues,
+            'invalid_application_business_state',
+            'Application decision, validation, and release fields are internally inconsistent.',
+            $invalid
+        );
+    }
+
+    private function scanApplicationClearances(array &$issues): void
+    {
+        $invalid = [];
+        $service = app(ApplicationClearanceIntegrityService::class);
+
+        LandTransferApplication::query()
+            ->with('clearance')
+            ->orderBy('id')
+            ->chunkById(200, function ($applications) use (&$invalid, $service) {
+                foreach ($applications as $application) {
+                    $inspection = $service->inspect($application);
+
+                    if (! $inspection['valid']) {
+                        $invalid[] = [
+                            'application_id' => $application->id,
+                            'application_code' => $application->application_code,
+                            'status' => $application->status,
+                            'clearance_id' => $application->clearance?->id,
+                            'issues' => $inspection['issues'],
+                        ];
+                    }
+                }
+            });
+
+        $this->addCollectionIssue(
+            $issues,
+            'invalid_application_clearance_snapshot',
+            'Application final-decision data and immutable LTC Form No. 5 snapshot are inconsistent.',
+            $invalid
+        );
+    }
+
+    private function scanHistoricalApprovedReleaseBackfillSuspects(array &$issues): void
+    {
+        $this->addQueryIssue(
+            $issues,
+            'suspected_historical_approved_release_backfill',
+            'An Approved record is marked released but lacks normal client-release evidence. Review historical migration assumptions manually; do not auto-rewrite.',
+            DB::table('land_transfer_applications')
+                ->where('status', LandTransferApplication::STATUS_APPROVED)
+                ->where('release_status', LandTransferApplication::RELEASED_TO_CLIENT)
+                ->whereNull('ready_for_release_at')
+                ->whereNull('released_by')
+                ->where(function ($query) {
+                    $query->whereNull('release_recipient_name')
+                        ->orWhere('release_recipient_name', '');
+                })
+                ->where(function ($query) {
+                    $query->whereNull('release_logbook_reference')
+                        ->orWhere('release_logbook_reference', '');
+                }),
+            [
+                'id',
+                'application_code',
+                'status',
+                'release_status',
+                'reviewed_at',
+                'released_at',
+                'ready_for_release_at',
+                'released_by',
+                'release_recipient_name',
+                'release_logbook_reference',
+            ]
+        );
+    }
+
+    private function scanHistoricalSnapshotDuplicates(array &$issues): void
+    {
+        $invalid = [];
+        $finalStatuses = array_merge(
+            LandTransferApplication::FINAL_STATUSES,
+            LandTransferApplication::LEGACY_FINAL_STATUSES
+        );
+
+        LandTransferApplication::query()
+            ->with(['applicationParcels' => fn ($query) => $query->whereNull('parcel_id')->orderBy('id')])
+            ->whereIn('status', $finalStatuses)
+            ->whereHas('applicationParcels', fn ($query) => $query->whereNull('parcel_id'))
+            ->orderBy('id')
+            ->chunkById(200, function ($applications) use (&$invalid) {
+                foreach ($applications as $application) {
+                    $groups = $application->applicationParcels
+                        ->filter(function ($row) {
+                            return collect([
+                                $row->parcel_code,
+                                $row->title_no,
+                                $row->tax_decl_no,
+                                $row->lot_number,
+                                $row->survey_plan_number,
+                            ])->contains(fn ($value) => filled($value));
+                        })
+                        ->groupBy(function ($row) {
+                            return collect([
+                                $row->parcel_code,
+                                $row->title_no,
+                                $row->tax_decl_no,
+                                $row->lot_number,
+                                $row->survey_plan_number,
+                            ])
+                                ->map(fn ($value) => mb_strtolower(trim((string) $value)))
+                                ->push(number_format((float) $row->area_hectares, 4, '.', ''))
+                                ->implode('|');
+                        })
+                        ->filter(fn ($rows) => $rows->count() > 1);
+
+                    foreach ($groups as $fingerprint => $rows) {
+                        $invalid[] = [
+                            'application_id' => $application->id,
+                            'application_code' => $application->application_code,
+                            'fingerprint' => $fingerprint,
+                            'application_parcel_ids' => $rows->pluck('id')->values()->all(),
+                            'duplicate_count' => $rows->count(),
+                        ];
+                    }
+                }
+            });
+
+        $this->addCollectionIssue(
+            $issues,
+            'duplicate_historical_application_parcel_snapshot',
+            'A finalized application contains duplicate snapshot-only ApplicationParcel rows with the same identifying data and area.',
             $invalid
         );
     }
