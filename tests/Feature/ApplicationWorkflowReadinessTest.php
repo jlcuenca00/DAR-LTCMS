@@ -41,7 +41,11 @@ class ApplicationWorkflowReadinessTest extends TestCase
         $this->completeForm4($application);
         $this->completePaymentAndCsw($application, $staff);
 
-        $applicationParcel->parcel()->firstOrFail()->update(['status' => 'inactive']);
+        // Bypass the normal Parcel model guard to simulate a pre-existing
+        // inconsistent row that workflow readiness must still detect.
+        DB::table('parcels')
+            ->where('id', $applicationParcel->parcel_id)
+            ->update(['status' => 'inactive']);
 
         $this->actingAs($staff)
             ->post(route('staff.applications.submit', $application))
