@@ -41,7 +41,7 @@ class ParcelAgriculturalStatusTest extends TestCase
                 'barangay' => 'Banga',
                 'area_hectares' => '2.4000',
                 'status' => 'active',
-                'geometry_version' => $parcel->geometry_version,
+                'geometry_version' => (int) $parcel->fresh()->geometry_version,
                 'remarks' => 'Updated parcel without visible land type selector.',
             ]);
 
