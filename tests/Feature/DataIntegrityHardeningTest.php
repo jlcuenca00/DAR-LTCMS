@@ -423,6 +423,73 @@ class DataIntegrityHardeningTest extends TestCase
         $this->assertSame('PKG-TEMP-CREATE-001', $record->parcel_code);
     }
 
+    public function test_parcel_area_cannot_be_reduced_below_active_landholding_allocation(): void
+    {
+        $parcel = $this->parcel('PARCEL-AREA-GUARD-001', 2.0000);
+        $landowner = $this->landowner('Area', 'Guard');
+
+        Landholding::create([
+            'landowner_id' => $landowner->id,
+            'parcel_id' => $parcel->id,
+            'area_hectares' => 2.0000,
+            'status' => Landholding::STATUS_ACTIVE,
+        ]);
+
+        try {
+            $parcel->update(['area_hectares' => 1.5000]);
+            $this->fail('Expected Parcel area reduction to be rejected.');
+        } catch (\Illuminate\Validation\ValidationException $exception) {
+            $this->assertArrayHasKey('area_hectares', $exception->errors());
+        }
+
+        $this->assertSame(2.0, (float) $parcel->fresh()->area_hectares);
+    }
+
+    public function test_parcel_cannot_be_archived_while_active_landholdings_exist(): void
+    {
+        $parcel = $this->parcel('PARCEL-ARCHIVE-GUARD-001', 2.0000);
+        $landowner = $this->landowner('Archive', 'Guard');
+
+        Landholding::create([
+            'landowner_id' => $landowner->id,
+            'parcel_id' => $parcel->id,
+            'area_hectares' => 2.0000,
+            'status' => Landholding::STATUS_ACTIVE,
+        ]);
+
+        try {
+            $parcel->update(['status' => 'inactive']);
+            $this->fail('Expected Parcel archival to be rejected.');
+        } catch (\Illuminate\Validation\ValidationException $exception) {
+            $this->assertArrayHasKey('status', $exception->errors());
+        }
+
+        $this->assertSame('active', $parcel->fresh()->status);
+    }
+
+    public function test_integrity_scanner_reports_inactive_parcel_with_active_landholding(): void
+    {
+        $parcel = $this->parcel('PARCEL-INACTIVE-HOLDING-001', 2.0000);
+        $landowner = $this->landowner('Scanner', 'Guard');
+
+        Landholding::create([
+            'landowner_id' => $landowner->id,
+            'parcel_id' => $parcel->id,
+            'area_hectares' => 2.0000,
+            'status' => Landholding::STATUS_ACTIVE,
+        ]);
+
+        DB::table('parcels')
+            ->where('id', $parcel->id)
+            ->update(['status' => 'inactive']);
+
+        $result = app(\App\Services\DataIntegrityScanner::class)->scan();
+        $codes = collect($result['issues'])->pluck('code');
+
+        $this->assertFalse($result['clean']);
+        $this->assertTrue($codes->contains('inactive_parcel_active_landholding'));
+    }
+
     public function test_integrity_scanner_artisan_command_boots_and_reports_read_only_mode(): void
     {
         $exitCode = Artisan::call('dar:scan-data-integrity', ['--json' => true]);
