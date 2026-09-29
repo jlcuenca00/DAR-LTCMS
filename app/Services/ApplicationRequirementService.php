@@ -35,8 +35,12 @@ class ApplicationRequirementService
          * gate only; linking a parcel never changes ownership.
          */
         $structuralErrors = [];
+        $parcelIntegrity = app(ApplicationParcelIntegrityService::class)->inspectApplication($application);
+
         if ($application->applicationParcels->isEmpty()) {
             $structuralErrors['parcel'] = 'Link at least one subject Parcel record before completing the documentary intake review.';
+        } elseif (! $parcelIntegrity['valid']) {
+            $structuralErrors['parcel_integrity'] = 'Resolve the subject Parcel data before completing documentary intake review: '.implode(' ', $parcelIntegrity['issues']);
         }
 
         $rows = $requirements->map(function (RequiredDocument $requirement) use ($application, $uploaded, $referenceDate) {
@@ -77,7 +81,8 @@ class ApplicationRequirementService
             'incomplete_count' => $incomplete->count() + count($structuralErrors),
             'complete' => $errors === [],
             'errors' => $errors,
-            'has_subject_parcel' => $application->applicationParcels->isNotEmpty(),
+            'has_subject_parcel' => $application->applicationParcels->isNotEmpty() && $parcelIntegrity['valid'],
+            'parcel_integrity' => $parcelIntegrity,
             'scope_note' => 'Document completeness, age, and parcel-link checks are assistive administrative validations only and are not final legal determinations or ownership-transfer actions.',
         ];
     }
