@@ -285,6 +285,7 @@ class RecordSearchPagesTest extends TestCase
                 'area_hectares' => 1.2500,
                 'status' => 'active',
                 'geometry_geojson' => json_encode($geometryTwo),
+                'geometry_version' => $parcel->geometry_version,
             ])
             ->assertRedirect();
 
@@ -308,6 +309,7 @@ class RecordSearchPagesTest extends TestCase
                 'area_hectares' => 1.2500,
                 'status' => 'active',
                 'geometry_geojson' => '',
+                'geometry_version' => $parcel->geometry_version,
             ])
             ->assertRedirect();
 
@@ -323,6 +325,69 @@ class RecordSearchPagesTest extends TestCase
         $this->assertNull($clearedRevision->geometry_geojson);
         $this->assertSame($staffUser->id, $clearedRevision->actor_user_id);
         $this->assertSame('staff_edit', $clearedRevision->source);
+    }
+
+    public function test_staff_parcel_geometry_rejects_stale_geometry_version(): void
+    {
+        $staffUser = User::factory()->create([
+            'role' => User::ROLE_STAFF,
+            'is_active' => true,
+        ]);
+
+        $originalGeometry = [
+            'type' => 'Polygon',
+            'coordinates' => [[
+                [123.50, 9.50],
+                [123.51, 9.50],
+                [123.51, 9.51],
+                [123.50, 9.50],
+            ]],
+        ];
+
+        $newerGeometry = [
+            'type' => 'Polygon',
+            'coordinates' => [[
+                [123.60, 9.60],
+                [123.61, 9.60],
+                [123.61, 9.61],
+                [123.60, 9.60],
+            ]],
+        ];
+
+        $parcel = Parcel::create([
+            'parcel_code' => 'STAFF-GEO-STALE-001',
+            'province' => 'Negros Oriental',
+            'municipality' => 'Dumaguete City',
+            'barangay' => 'Bantayan',
+            'area_hectares' => 1.2500,
+            'status' => 'active',
+            'geometry_geojson' => $originalGeometry,
+        ]);
+
+        $staleVersion = (int) $parcel->geometry_version;
+
+        $parcel->forceFill(['geometry_geojson' => $newerGeometry])->save();
+        $parcel->refresh();
+
+        $this->actingAs($staffUser)
+            ->from(route('staff.records.parcels.edit', $parcel))
+            ->patch(route('staff.records.parcels.update', $parcel), [
+                'parcel_code' => $parcel->parcel_code,
+                'province' => 'Negros Oriental',
+                'municipality' => 'Dumaguete City',
+                'barangay' => 'Bantayan',
+                'area_hectares' => 1.2500,
+                'status' => 'active',
+                'geometry_geojson' => json_encode($originalGeometry),
+                'geometry_version' => $staleVersion,
+            ])
+            ->assertRedirect(route('staff.records.parcels.edit', $parcel))
+            ->assertSessionHasErrors('geometry_geojson');
+
+        $parcel->refresh();
+
+        $this->assertSame($newerGeometry, $parcel->geometry_geojson);
+        $this->assertSame($staleVersion + 1, (int) $parcel->geometry_version);
     }
 
     public function test_staff_parcel_geometry_rejects_malformed_polygon_server_side(): void
@@ -392,6 +457,7 @@ class RecordSearchPagesTest extends TestCase
                 'barangay' => 'Bantayan',
                 'area_hectares' => 1.2500,
                 'status' => 'active',
+                'geometry_version' => $parcel->geometry_version,
                 'reference_photo' => UploadedFile::fake()->createWithContent(
                     'replacement-reference.png',
                     base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=')
