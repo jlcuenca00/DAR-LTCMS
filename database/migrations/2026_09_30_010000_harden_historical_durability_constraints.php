@@ -62,9 +62,16 @@ return new class extends Migration
 
         Schema::table('parcel_geometry_revisions', function (Blueprint $table) {
             $table->dropForeign(['parcel_id']);
+            $table->dropForeign(['actor_user_id']);
+
             $table->foreign('parcel_id')
                 ->references('id')
                 ->on('parcels')
+                ->restrictOnDelete();
+
+            $table->foreign('actor_user_id')
+                ->references('id')
+                ->on('users')
                 ->restrictOnDelete();
         });
 
@@ -143,10 +150,17 @@ return new class extends Migration
 
         Schema::table('parcel_geometry_revisions', function (Blueprint $table) {
             $table->dropForeign(['parcel_id']);
+            $table->dropForeign(['actor_user_id']);
+
             $table->foreign('parcel_id')
                 ->references('id')
                 ->on('parcels')
                 ->cascadeOnDelete();
+
+            $table->foreign('actor_user_id')
+                ->references('id')
+                ->on('users')
+                ->nullOnDelete();
         });
 
         Schema::table('application_clearances', function (Blueprint $table) {
