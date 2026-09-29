@@ -377,6 +377,12 @@ class RecordSearchController extends Controller
 
     public function destroyParcel(Request $request, Parcel $parcel)
     {
+        if ($parcel->landholdings()->where('status', Landholding::STATUS_ACTIVE)->exists()) {
+            return redirect()
+                ->route('staff.records.parcels.show', $parcel)
+                ->with('error', 'This Parcel cannot be archived while active Landholding records remain. Resolve or deactivate those Landholding records first.');
+        }
+
         $oldStatus = $parcel->status;
 
         $parcel->forceFill([
