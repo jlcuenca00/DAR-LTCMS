@@ -186,6 +186,7 @@ class SourceRecordPackageImportController extends Controller
 
         $selectedRows = collect($request->input('selected_rows', []))
             ->map(fn ($value) => (int) $value)
+            ->unique()
             ->values()
             ->all();
 
