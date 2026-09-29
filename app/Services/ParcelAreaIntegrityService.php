@@ -43,30 +43,28 @@ class ParcelAreaIntegrityService
             ->where('status', Landholding::STATUS_ACTIVE)
             ->sum('area_hectares'), 4);
 
-        if ($activeArea <= self::HECTARE_TOLERANCE) {
-            return;
-        }
+        if ($activeArea > self::HECTARE_TOLERANCE) {
+            if ($parcel->isDirty('area_hectares')) {
+                $parcelArea = $parcel->getAttribute('area_hectares');
 
-        if ($parcel->isDirty('area_hectares')) {
-            $parcelArea = $parcel->getAttribute('area_hectares');
+                if ($parcelArea === null || $parcelArea === '') {
+                    throw ValidationException::withMessages([
+                        'area_hectares' => 'The Parcel area cannot be cleared while active Landholding records are linked to it.',
+                    ]);
+                }
 
-            if ($parcelArea === null || $parcelArea === '') {
-                throw ValidationException::withMessages([
-                    'area_hectares' => 'The Parcel area cannot be cleared while active Landholding records are linked to it.',
-                ]);
+                if ($activeArea - (float) $parcelArea > self::HECTARE_TOLERANCE) {
+                    throw ValidationException::withMessages([
+                        'area_hectares' => 'The Parcel area cannot be reduced below the currently allocated active Landholding area of '.number_format($activeArea, 4).' ha.',
+                    ]);
+                }
             }
 
-            if ($activeArea - (float) $parcelArea > self::HECTARE_TOLERANCE) {
+            if ($parcel->isDirty('status') && $parcel->status === 'inactive') {
                 throw ValidationException::withMessages([
-                    'area_hectares' => 'The Parcel area cannot be reduced below the currently allocated active Landholding area of '.number_format($activeArea, 4).' ha.',
+                    'status' => 'Resolve or deactivate the Parcel\'s active Landholding records before archiving this Parcel.',
                 ]);
             }
-        }
-
-        if ($parcel->isDirty('status') && $parcel->status === 'inactive') {
-            throw ValidationException::withMessages([
-                'status' => 'Resolve or deactivate the Parcel\'s active Landholding records before archiving this Parcel.',
-            ]);
         }
 
         if ($parcel->isDirty('status') && $parcel->status === 'inactive') {
