@@ -160,6 +160,16 @@ class DurabilityIntegrityHardeningTest extends TestCase
                 "Expected {$constraint} to use ON DELETE RESTRICT."
             );
         }
+
+        $validatedActorConstraints = DB::table('pg_constraint')
+            ->whereIn('conname', [
+                'land_transfer_applications_csw_prepared_by_foreign',
+                'land_transfer_applications_released_by_foreign',
+            ])
+            ->pluck('convalidated', 'conname');
+
+        $this->assertTrue((bool) ($validatedActorConstraints['land_transfer_applications_csw_prepared_by_foreign'] ?? false));
+        $this->assertTrue((bool) ($validatedActorConstraints['land_transfer_applications_released_by_foreign'] ?? false));
     }
 
     private function staff(): User
