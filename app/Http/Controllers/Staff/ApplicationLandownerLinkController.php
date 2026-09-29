@@ -7,9 +7,11 @@ use App\Models\Landholding;
 use App\Models\LandTransferApplication;
 use App\Models\Landowner;
 use App\Services\AuditLogger;
+use App\Services\ParcelConcurrencyService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class ApplicationLandownerLinkController extends Controller
 {
@@ -80,6 +82,23 @@ class ApplicationLandownerLinkController extends Controller
         ];
 
         DB::transaction(function () use ($application, $transferors, $transferees, $syncLandholdings, $oldLinks) {
+            if ($syncLandholdings) {
+                $parcelIds = $application->applicationParcels()
+                    ->whereNotNull('parcel_id')
+                    ->orderBy('parcel_id')
+                    ->pluck('parcel_id')
+                    ->all();
+
+                app(ParcelConcurrencyService::class)->lockParcels($parcelIds);
+                $application->load('applicationParcels.parcel');
+
+                $shareErrors = $this->validateCurrentLandholdingShares($transferors, $application);
+
+                if (! empty($shareErrors)) {
+                    throw ValidationException::withMessages($shareErrors);
+                }
+            }
+
             $this->savePartyRows($application, $transferors, $transferees);
 
             $landholdingSync = $syncLandholdings
