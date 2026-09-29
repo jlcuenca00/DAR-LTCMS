@@ -207,21 +207,28 @@ class LegacyRecordController extends Controller
 
         $parcel = Parcel::findOrFail($data['parcel_id']);
 
-        $legacyRecord->update([
-            'parcel_id' => $parcel->id,
-            'parcel_code' => $parcel->parcel_code,
-        ]);
+        DB::transaction(function () use ($legacyRecord, $parcel) {
+            $lockedRecord = LegacyRecord::query()
+                ->whereKey($legacyRecord->id)
+                ->lockForUpdate()
+                ->firstOrFail();
 
-        AuditLogger::record(
-            'source_record_linked_to_parcel',
-            null,
-            $legacyRecord,
-            [
-                'source_record_id' => $legacyRecord->id,
+            $lockedRecord->update([
                 'parcel_id' => $parcel->id,
                 'parcel_code' => $parcel->parcel_code,
-            ]
-        );
+            ]);
+
+            AuditLogger::record(
+                'source_record_linked_to_parcel',
+                null,
+                $lockedRecord,
+                [
+                    'source_record_id' => $lockedRecord->id,
+                    'parcel_id' => $parcel->id,
+                    'parcel_code' => $parcel->parcel_code,
+                ]
+            );
+        });
 
         return back()->with('success', 'Source record linked to parcel successfully.');
     }
