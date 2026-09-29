@@ -22,6 +22,12 @@ class BarebonesTesterSeeder extends Seeder
      */
     public function run(): void
     {
+        if (app()->environment('production')) {
+            throw new \LogicException(
+                'BarebonesTesterSeeder is destructive testing tooling and must never run in production.'
+            );
+        }
+
         $this->truncateApplicationData();
 
         $this->call(RequiredDocumentSeeder::class);
