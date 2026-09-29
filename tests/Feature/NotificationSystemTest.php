@@ -12,6 +12,7 @@ use App\Models\SystemNotification;
 use App\Models\User;
 use App\Services\NotificationService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Blade;
 use Tests\TestCase;
 
 class NotificationSystemTest extends TestCase
@@ -37,6 +38,51 @@ class NotificationSystemTest extends TestCase
         $response->assertOk();
         $response->assertSee('System Notifications');
         $response->assertSee('Clearance application encoded');
+    }
+
+    public function test_shared_notification_dropdown_renders_only_current_users_latest_notifications(): void
+    {
+        $user = User::factory()->create([
+            'role' => User::ROLE_STAFF,
+            'is_active' => true,
+        ]);
+
+        $otherUser = User::factory()->create([
+            'role' => User::ROLE_STAFF,
+            'is_active' => true,
+        ]);
+
+        SystemNotification::create([
+            'user_id' => $otherUser->id,
+            'type' => 'other_user_notification',
+            'title' => 'Other user private notification',
+            'message' => 'This notification must never appear in another user dropdown.',
+        ]);
+
+        for ($index = 1; $index <= 6; $index++) {
+            SystemNotification::forceCreate([
+                'user_id' => $user->id,
+                'type' => 'shared_dropdown_test',
+                'title' => 'Dropdown notification ' . $index,
+                'message' => 'Shared notification component test.',
+                'created_at' => now()->addSeconds($index),
+                'updated_at' => now()->addSeconds($index),
+            ]);
+        }
+
+        $this->actingAs($user);
+
+        $html = Blade::render('<x-notification-dropdown />');
+
+        $this->assertStringContainsString('data-notification-dropdown', $html);
+        $this->assertStringContainsString('notification-badge', $html);
+        $this->assertStringContainsString('>6<', preg_replace('/\\s+/', '', $html));
+        $this->assertStringNotContainsString('Other user private notification', $html);
+        $this->assertStringNotContainsString('Dropdown notification 1', $html);
+
+        foreach (range(2, 6) as $index) {
+            $this->assertStringContainsString('Dropdown notification ' . $index, $html);
+        }
     }
 
     public function test_user_cannot_mark_another_users_notification_as_read(): void
