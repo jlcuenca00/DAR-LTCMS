@@ -678,9 +678,6 @@
 <body>
     <a class="skip-link" href="#main-content">Skip to main content</a>
     @php
-        $notificationUser = auth()->user();
-        $notificationUnreadCount = $notificationUser?->unreadSystemNotifications()->count() ?? 0;
-        $recentSystemNotifications = $notificationUser?->systemNotifications()->latest()->limit(5)->get() ?? collect();
     @endphp
     <div class="geo-shell">
         <aside class="geo-sidebar">
@@ -732,19 +729,7 @@
 
                 <div class="geo-topbar-right">
 
-                    <details class="notification-dropdown" data-notification-dropdown data-read-all-url="{{ route('notifications.read-all') }}" data-csrf-token="{{ csrf_token() }}">
-                        <summary class="notification-bell-link" aria-label="Open recent notifications">
-                            <i class="fa-solid fa-bell"></i>
-                            @if ($notificationUnreadCount > 0)
-                                <span class="notification-badge">{{ $notificationUnreadCount > 99 ? '99+' : $notificationUnreadCount }}</span>
-                            @endif
-                        </summary>
-
-                        @include('notifications.partials.panel', [
-                            'notifications' => $recentSystemNotifications,
-                            'unreadCount' => $notificationUnreadCount,
-                        ])
-                    </details>
+                    <x-notification-dropdown />
 
                     <div class="geo-access-chip">
                         Limited Access
@@ -761,74 +746,7 @@
         </main>
     </div>
 
-    <script>
-        (function () {
-            function markDropdownAsRead(dropdown) {
-                if (!dropdown || dropdown.dataset.readTriggered === 'true') return;
-
-                const hasUnread = dropdown.querySelector('.notification-badge') || dropdown.querySelector('.notification-dropdown-item.is-unread');
-                if (!hasUnread) return;
-
-                dropdown.dataset.readTriggered = 'true';
-
-                dropdown.querySelectorAll('.notification-badge').forEach(function (badge) {
-                    badge.remove();
-                });
-
-                dropdown.querySelectorAll('.notification-dropdown-count').forEach(function (count) {
-                    count.textContent = 'All caught up';
-                    count.classList.add('is-clear');
-                });
-
-                dropdown.querySelectorAll('.notification-dropdown-item.is-unread').forEach(function (item) {
-                    item.classList.remove('is-unread');
-                });
-
-                const url = dropdown.dataset.readAllUrl;
-                const token = dropdown.dataset.csrfToken;
-
-                if (!url || !token) return;
-
-                fetch(url, {
-                    method: 'PATCH',
-                    headers: {
-                        'X-CSRF-TOKEN': token,
-                        'Accept': 'application/json',
-                        'X-Requested-With': 'XMLHttpRequest'
-                    },
-                    credentials: 'same-origin'
-                }).catch(function () {
-                    // If this fails, the next page load restores the actual unread count.
-                });
-            }
-
-            document.querySelectorAll('[data-notification-dropdown]').forEach(function (dropdown) {
-                dropdown.addEventListener('toggle', function () {
-                    // Keep new notifications visibly highlighted while the panel is open.
-                    // Treat them as read only after the user closes the panel.
-                    if (!dropdown.open) {
-                        markDropdownAsRead(dropdown);
-                    }
-                });
-            });
-
-            document.addEventListener('click', function (event) {
-                document.querySelectorAll('.notification-dropdown[open]').forEach(function (dropdown) {
-                    if (!dropdown.contains(event.target)) {
-                        dropdown.removeAttribute('open');
-                    }
-                });
-            });
-
-            document.addEventListener('keydown', function (event) {
-                if (event.key === 'Escape') {
-                    document.querySelectorAll('.notification-dropdown[open]').forEach(function (dropdown) {
-                        dropdown.removeAttribute('open');
-                    });
-                }
-            });
-        })();
-    </script>
+    
 
     @stack('scripts')
 </body>
