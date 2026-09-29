@@ -186,6 +186,7 @@ class SourceRecordPackageImportController extends Controller
 
         $selectedRows = collect($request->input('selected_rows', []))
             ->map(fn ($value) => (int) $value)
+            ->unique()
             ->values()
             ->all();
 
@@ -195,10 +196,23 @@ class SourceRecordPackageImportController extends Controller
             ]);
         }
 
-        $previewRows = collect($batch->preview_rows);
         $committed = 0;
+        $alreadyCommitted = false;
 
-        DB::transaction(function () use ($batch, $previewRows, $selectedRows, &$committed, $request) {
+        DB::transaction(function () use ($batch, $selectedRows, &$committed, &$alreadyCommitted, $request) {
+            $lockedBatch = SourceRecordPackageImportBatch::query()
+                ->whereKey($batch->id)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            if ($lockedBatch->status === 'committed') {
+                $alreadyCommitted = true;
+
+                return;
+            }
+
+            $previewRows = collect($lockedBatch->preview_rows);
+
             foreach ($selectedRows as $rowIndex) {
                 $preview = $previewRows->firstWhere('row_index', $rowIndex);
 
@@ -262,7 +276,7 @@ class SourceRecordPackageImportController extends Controller
                 $committed++;
             }
 
-            $batch->update([
+            $lockedBatch->update([
                 'status' => 'committed',
                 'committed_rows' => $committed,
                 'committed_by_user_id' => $request->user()->id,
@@ -272,15 +286,19 @@ class SourceRecordPackageImportController extends Controller
             AuditLogger::record(
                 'source_record_package_import_committed',
                 null,
-                $batch,
+                $lockedBatch,
                 [
-                    'batch_id' => $batch->id,
-                    'filename' => $batch->original_filename,
+                    'batch_id' => $lockedBatch->id,
+                    'filename' => $lockedBatch->original_filename,
                     'committed_rows' => $committed,
                     'selected_rows' => $selectedRows,
                 ]
             );
         });
+
+        if ($alreadyCommitted) {
+            return back()->with('success', 'This import batch has already been committed.');
+        }
 
         return redirect()
             ->route('staff.legacy-records.index')

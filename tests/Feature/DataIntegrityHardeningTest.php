@@ -13,6 +13,7 @@ use App\Models\SourceRecordPackage;
 use App\Models\SourceRecordPackageImportBatch;
 use App\Models\User;
 use App\Services\DataIntegrityScanner;
+use App\Services\ParcelConcurrencyService;
 use Illuminate\Database\Eloquent\MassAssignmentException;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -768,6 +769,160 @@ class DataIntegrityHardeningTest extends TestCase
         $this->assertSame('authorized_representative', $application->applicant_type);
         $this->assertTrue((bool) $application->is_succession_case);
         $this->assertSame('Succession / inheritance', data_get($application->transfer_instruments, '0.name'));
+    }
+
+    public function test_parcel_concurrency_service_uses_row_lock_inside_transaction(): void
+    {
+        if (DB::connection()->getDriverName() !== 'pgsql') {
+            $this->markTestSkipped('Row-lock SQL assertion applies to the production PostgreSQL stack.');
+        }
+
+        $parcel = $this->parcel('PARCEL-CONCURRENCY-LOCK-001', 2.0000);
+        $queries = [];
+
+        DB::listen(function ($query) use (&$queries) {
+            $queries[] = strtolower($query->sql);
+        });
+
+        DB::transaction(function () use ($parcel) {
+            $locked = app(ParcelConcurrencyService::class)->lockParcel($parcel->id);
+            $this->assertSame($parcel->id, $locked->id);
+        });
+
+        $this->assertTrue(
+            collect($queries)->contains(fn ($sql) => str_contains($sql, 'for update')),
+            'Expected ParcelConcurrencyService to issue SELECT ... FOR UPDATE.'
+        );
+    }
+
+    public function test_model_layer_rejects_archiving_parcel_used_by_open_application(): void
+    {
+        $staff = $this->staff();
+        $application = $this->application($staff, 'OPEN-APP-MODEL-ARCHIVE-001');
+        $parcel = $this->parcel('OPEN-APP-MODEL-PARCEL-001', 2.0000);
+
+        ApplicationParcel::create([
+            'land_transfer_application_id' => $application->id,
+            'parcel_id' => $parcel->id,
+            'parcel_code' => $parcel->parcel_code,
+            'area_hectares' => 1.0000,
+        ]);
+
+        try {
+            $parcel->update(['status' => 'inactive']);
+            $this->fail('Expected model-level Parcel archival guard to reject an open application dependency.');
+        } catch (ValidationException $exception) {
+            $this->assertArrayHasKey('status', $exception->errors());
+        }
+
+        $this->assertSame('active', $parcel->fresh()->status);
+    }
+
+    public function test_open_application_prevents_parcel_archive(): void
+    {
+        $staff = $this->staff();
+        $application = $this->application($staff, 'OPEN-APP-ARCHIVE-GUARD-001');
+        $parcel = $this->parcel('OPEN-APP-ARCHIVE-PARCEL-001', 2.0000);
+
+        ApplicationParcel::create([
+            'land_transfer_application_id' => $application->id,
+            'parcel_id' => $parcel->id,
+            'parcel_code' => $parcel->parcel_code,
+            'area_hectares' => 1.0000,
+        ]);
+
+        $this->actingAs($staff)
+            ->delete(route('staff.records.parcels.destroy', $parcel))
+            ->assertSessionHas(
+                'error',
+                'This Parcel cannot be archived while an open clearance application still depends on it. Finalize the application or resolve the Parcel link first.'
+            );
+
+        $this->assertSame('active', $parcel->fresh()->status);
+    }
+
+    public function test_source_reference_uniqueness_uses_postgresql_transaction_advisory_lock(): void
+    {
+        if (DB::connection()->getDriverName() !== 'pgsql') {
+            $this->markTestSkipped('Advisory-lock SQL assertion applies to the production PostgreSQL stack.');
+        }
+
+        $queries = [];
+
+        DB::listen(function ($query) use (&$queries) {
+            $queries[] = strtolower($query->sql);
+        });
+
+        DB::transaction(function () {
+            LegacyRecord::create([
+                'record_type' => LegacyRecord::TYPE_TITLE,
+                'origin' => LegacyRecord::ORIGIN_ENCODED,
+                'source_record_scope' => LegacyRecord::SOURCE_SCOPE_REFERENCE_ONLY,
+                'title_number' => 'TCT-ADVISORY-LOCK-001',
+                'landowner_name' => 'Concurrency Owner',
+                'source_book' => 'Concurrency Test Book',
+                'transcribed_by' => 'Concurrency Test',
+                'transcription_date' => now()->toDateString(),
+            ]);
+        });
+
+        $this->assertTrue(
+            collect($queries)->contains(fn ($sql) => str_contains($sql, 'pg_advisory_xact_lock')),
+            'Expected source reference validation to acquire a PostgreSQL transaction advisory lock.'
+        );
+    }
+
+    public function test_source_record_import_commit_row_locks_batch_before_marking_committed(): void
+    {
+        if (DB::connection()->getDriverName() !== 'pgsql') {
+            $this->markTestSkipped('Row-lock SQL assertion applies to the production PostgreSQL stack.');
+        }
+
+        $staff = $this->staff();
+
+        $batch = SourceRecordPackageImportBatch::create([
+            'original_filename' => 'concurrency-import.csv',
+            'status' => 'previewed',
+            'total_rows' => 1,
+            'valid_rows' => 0,
+            'error_rows' => 1,
+            'duplicate_rows' => 0,
+            'uploaded_by_user_id' => $staff->id,
+            'preview_rows' => [[
+                'row_index' => 2,
+                'status' => 'error',
+                'possible_duplicate' => false,
+                'errors' => ['Intentional no-op row for concurrency locking test.'],
+                'warnings' => [],
+                'data' => [],
+            ]],
+            'summary' => [
+                'valid_rows' => 0,
+                'error_rows' => 1,
+                'duplicate_rows' => 0,
+            ],
+        ]);
+
+        $queries = [];
+
+        DB::listen(function ($query) use (&$queries) {
+            $queries[] = strtolower($query->sql);
+        });
+
+        $this->actingAs($staff)
+            ->post(route('staff.source-record-package-imports.commit', $batch), [
+                'selected_rows' => [2],
+            ])
+            ->assertRedirect();
+
+        $this->assertSame('committed', $batch->fresh()->status);
+        $this->assertTrue(
+            collect($queries)->contains(
+                fn ($sql) => str_contains($sql, 'source_record_package_import_batches')
+                    && str_contains($sql, 'for update')
+            ),
+            'Expected import commit to row-lock its batch before importing.'
+        );
     }
 
     public function test_integrity_scanner_artisan_command_boots_and_reports_read_only_mode(): void

@@ -258,6 +258,7 @@
         <form method="POST" enctype="multipart/form-data" action="{{ route('staff.records.parcels.update', $parcel) }}" class="parcel-edit-layout">
             @csrf
             @method('PATCH')
+            <input type="hidden" name="geometry_version" value="{{ old('geometry_version', $parcel->geometry_version) }}">
 
             <main class="parcel-edit-main">
                 <section class="parcel-edit-card">

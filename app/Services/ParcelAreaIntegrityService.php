@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\ApplicationParcel;
 use App\Models\Landholding;
+use App\Models\LandTransferApplication;
 use App\Models\Parcel;
 use Illuminate\Validation\ValidationException;
 
@@ -42,30 +43,46 @@ class ParcelAreaIntegrityService
             ->where('status', Landholding::STATUS_ACTIVE)
             ->sum('area_hectares'), 4);
 
-        if ($activeArea <= self::HECTARE_TOLERANCE) {
-            return;
-        }
+        if ($activeArea > self::HECTARE_TOLERANCE) {
+            if ($parcel->isDirty('area_hectares')) {
+                $parcelArea = $parcel->getAttribute('area_hectares');
 
-        if ($parcel->isDirty('area_hectares')) {
-            $parcelArea = $parcel->getAttribute('area_hectares');
+                if ($parcelArea === null || $parcelArea === '') {
+                    throw ValidationException::withMessages([
+                        'area_hectares' => 'The Parcel area cannot be cleared while active Landholding records are linked to it.',
+                    ]);
+                }
 
-            if ($parcelArea === null || $parcelArea === '') {
-                throw ValidationException::withMessages([
-                    'area_hectares' => 'The Parcel area cannot be cleared while active Landholding records are linked to it.',
-                ]);
+                if ($activeArea - (float) $parcelArea > self::HECTARE_TOLERANCE) {
+                    throw ValidationException::withMessages([
+                        'area_hectares' => 'The Parcel area cannot be reduced below the currently allocated active Landholding area of '.number_format($activeArea, 4).' ha.',
+                    ]);
+                }
             }
 
-            if ($activeArea - (float) $parcelArea > self::HECTARE_TOLERANCE) {
+            if ($parcel->isDirty('status') && $parcel->status === 'inactive') {
                 throw ValidationException::withMessages([
-                    'area_hectares' => 'The Parcel area cannot be reduced below the currently allocated active Landholding area of '.number_format($activeArea, 4).' ha.',
+                    'status' => 'Resolve or deactivate the Parcel\'s active Landholding records before archiving this Parcel.',
                 ]);
             }
         }
 
         if ($parcel->isDirty('status') && $parcel->status === 'inactive') {
-            throw ValidationException::withMessages([
-                'status' => 'Resolve or deactivate the Parcel\'s active Landholding records before archiving this Parcel.',
-            ]);
+            $finalStatuses = array_values(array_unique(array_merge(
+                LandTransferApplication::FINAL_STATUSES,
+                LandTransferApplication::LEGACY_FINAL_STATUSES
+            )));
+
+            $hasOpenApplication = ApplicationParcel::query()
+                ->where('parcel_id', $parcel->getKey())
+                ->whereHas('application', fn ($query) => $query->whereNotIn('status', $finalStatuses))
+                ->exists();
+
+            if ($hasOpenApplication) {
+                throw ValidationException::withMessages([
+                    'status' => 'This Parcel is still linked to an open clearance application and cannot be archived until that application is finalized or the Parcel link is resolved.',
+                ]);
+            }
         }
     }
 

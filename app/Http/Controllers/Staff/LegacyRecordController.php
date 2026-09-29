@@ -130,29 +130,33 @@ class LegacyRecordController extends Controller
             $data['parcel_code'] = $linkedParcel?->parcel_code;
         }
 
-        $record = LegacyRecord::create(array_merge($data, [
-            'origin' => LegacyRecord::ORIGIN_ENCODED,
-            'encoded_by_user_id' => $request->user()->id,
-            'province' => $data['province'] ?? 'Negros Oriental',
-        ]));
+        $record = DB::transaction(function () use ($data, $request) {
+            $record = LegacyRecord::create(array_merge($data, [
+                'origin' => LegacyRecord::ORIGIN_ENCODED,
+                'encoded_by_user_id' => $request->user()->id,
+                'province' => $data['province'] ?? 'Negros Oriental',
+            ]));
 
-        AuditLogger::record(
-            'source_record_encoded',
-            null,
-            $record,
-            [
-                'record_type' => $record->record_type,
-                'origin' => $record->origin,
-                'source_record_scope' => $record->source_record_scope,
-                'parcel_id' => $record->parcel_id,
-                'parcel_code' => $record->parcel_code,
-                'title_number' => $record->title_number,
-                'control_number' => $record->control_number,
-                'landowner_name' => $record->landowner_name,
-                'source_book' => $record->source_book,
-                'page_number' => $record->page_number,
-            ]
-        );
+            AuditLogger::record(
+                'source_record_encoded',
+                null,
+                $record,
+                [
+                    'record_type' => $record->record_type,
+                    'origin' => $record->origin,
+                    'source_record_scope' => $record->source_record_scope,
+                    'parcel_id' => $record->parcel_id,
+                    'parcel_code' => $record->parcel_code,
+                    'title_number' => $record->title_number,
+                    'control_number' => $record->control_number,
+                    'landowner_name' => $record->landowner_name,
+                    'source_book' => $record->source_book,
+                    'page_number' => $record->page_number,
+                ]
+            );
+
+            return $record;
+        });
 
         return redirect()
             ->route('staff.legacy-records.show', $record)
@@ -203,21 +207,28 @@ class LegacyRecordController extends Controller
 
         $parcel = Parcel::findOrFail($data['parcel_id']);
 
-        $legacyRecord->update([
-            'parcel_id' => $parcel->id,
-            'parcel_code' => $parcel->parcel_code,
-        ]);
+        DB::transaction(function () use ($legacyRecord, $parcel) {
+            $lockedRecord = LegacyRecord::query()
+                ->whereKey($legacyRecord->id)
+                ->lockForUpdate()
+                ->firstOrFail();
 
-        AuditLogger::record(
-            'source_record_linked_to_parcel',
-            null,
-            $legacyRecord,
-            [
-                'source_record_id' => $legacyRecord->id,
+            $lockedRecord->update([
                 'parcel_id' => $parcel->id,
                 'parcel_code' => $parcel->parcel_code,
-            ]
-        );
+            ]);
+
+            AuditLogger::record(
+                'source_record_linked_to_parcel',
+                null,
+                $lockedRecord,
+                [
+                    'source_record_id' => $lockedRecord->id,
+                    'parcel_id' => $parcel->id,
+                    'parcel_code' => $parcel->parcel_code,
+                ]
+            );
+        });
 
         return back()->with('success', 'Source record linked to parcel successfully.');
     }
