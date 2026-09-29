@@ -516,6 +516,154 @@ class DataIntegrityHardeningTest extends TestCase
         $this->assertTrue($codes->contains('inactive_parcel_active_landholding'));
     }
 
+    public function test_application_party_rows_reject_duplicate_landowner_links(): void
+    {
+        $staff = $this->staff();
+        $owner = $this->landowner('Duplicate', 'Party');
+        $transferee = $this->landowner('Unique', 'Transferee');
+
+        $this->expectException(ValidationException::class);
+
+        LandTransferApplication::create([
+            'application_code' => 'PARTY-DUPLICATE-001',
+            'transferor_name' => 'Will be normalized',
+            'transferors' => [
+                $this->partyRow($owner),
+                $this->partyRow($owner),
+            ],
+            'transferee_name' => $transferee->full_name,
+            'transferees' => [$this->partyRow($transferee)],
+            'status' => LandTransferApplication::STATUS_PENDING_LEGAL_REVIEW,
+            'encoded_by' => $staff->id,
+        ]);
+    }
+
+    public function test_application_party_rows_reject_missing_landowner_json_links(): void
+    {
+        $staff = $this->staff();
+        $transferee = $this->landowner('Existing', 'Transferee');
+
+        $this->expectException(ValidationException::class);
+
+        LandTransferApplication::create([
+            'application_code' => 'PARTY-MISSING-LINK-001',
+            'transferor_name' => 'Missing Transferor',
+            'transferors' => [[
+                'name' => 'Missing Transferor',
+                'landowner_id' => 999999999,
+                'parcel_shares' => [],
+            ]],
+            'transferee_name' => $transferee->full_name,
+            'transferees' => [$this->partyRow($transferee)],
+            'status' => LandTransferApplication::STATUS_PENDING_LEGAL_REVIEW,
+            'encoded_by' => $staff->id,
+        ]);
+    }
+
+    public function test_application_party_json_synchronizes_compatibility_columns(): void
+    {
+        $staff = $this->staff();
+        $transferor = $this->landowner('Canonical', 'Transferor');
+        $transferee = $this->landowner('Canonical', 'Transferee');
+        $wrongOwner = $this->landowner('Wrong', 'Compatibility');
+
+        $application = LandTransferApplication::create([
+            'application_code' => 'PARTY-CANONICAL-001',
+            'transferor_name' => 'Wrong Transferor Summary',
+            'transferors' => [$this->partyRow($transferor)],
+            'transferee_name' => 'Wrong Transferee Summary',
+            'transferees' => [$this->partyRow($transferee)],
+            'transferor_landowner_id' => $wrongOwner->id,
+            'transferee_landowner_id' => $wrongOwner->id,
+            'status' => LandTransferApplication::STATUS_PENDING_LEGAL_REVIEW,
+            'encoded_by' => $staff->id,
+        ]);
+
+        $this->assertSame($transferor->full_name, $application->transferor_name);
+        $this->assertSame($transferee->full_name, $application->transferee_name);
+        $this->assertSame($transferor->id, (int) $application->transferor_landowner_id);
+        $this->assertSame($transferee->id, (int) $application->transferee_landowner_id);
+    }
+
+    public function test_open_application_parcel_requires_positive_transfer_area(): void
+    {
+        $staff = $this->staff();
+        $application = $this->application($staff, 'APP-PARCEL-POSITIVE-001');
+        $parcel = $this->parcel('APP-PARCEL-POSITIVE-MASTER', 2.0000);
+
+        try {
+            ApplicationParcel::create([
+                'land_transfer_application_id' => $application->id,
+                'parcel_id' => $parcel->id,
+                'parcel_code' => $parcel->parcel_code,
+                'area_hectares' => null,
+            ]);
+            $this->fail('Expected an open application Parcel without a positive transfer area to be rejected.');
+        } catch (ValidationException $exception) {
+            $this->assertArrayHasKey('parcel_id', $exception->errors());
+        }
+
+        $this->assertDatabaseMissing('application_parcels', [
+            'land_transfer_application_id' => $application->id,
+            'parcel_id' => $parcel->id,
+        ]);
+    }
+
+    public function test_open_application_parcel_cannot_link_inactive_master_parcel(): void
+    {
+        $staff = $this->staff();
+        $application = $this->application($staff, 'APP-PARCEL-ACTIVE-001');
+        $parcel = $this->parcel('APP-PARCEL-INACTIVE-MASTER', 2.0000);
+        $parcel->update(['status' => 'inactive']);
+
+        try {
+            ApplicationParcel::create([
+                'land_transfer_application_id' => $application->id,
+                'parcel_id' => $parcel->id,
+                'parcel_code' => $parcel->parcel_code,
+                'area_hectares' => 1.0000,
+            ]);
+            $this->fail('Expected an inactive master Parcel link to be rejected for an open application.');
+        } catch (ValidationException $exception) {
+            $this->assertArrayHasKey('parcel_id', $exception->errors());
+        }
+
+        $this->assertDatabaseMissing('application_parcels', [
+            'land_transfer_application_id' => $application->id,
+            'parcel_id' => $parcel->id,
+        ]);
+    }
+
+    public function test_integrity_scanner_reports_preexisting_application_party_drift_and_invalid_current_parcel(): void
+    {
+        $staff = $this->staff();
+        $application = $this->application($staff, 'APP-SCANNER-2C-001');
+        $parcel = $this->parcel('APP-SCANNER-2C-PARCEL', 2.0000);
+
+        $applicationParcel = ApplicationParcel::create([
+            'land_transfer_application_id' => $application->id,
+            'parcel_id' => $parcel->id,
+            'parcel_code' => $parcel->parcel_code,
+            'area_hectares' => 1.0000,
+        ]);
+
+        LandTransferApplication::withoutEvents(function () use ($application) {
+            $application->transferor_name = 'Drifted summary';
+            $application->save();
+        });
+
+        DB::table('application_parcels')
+            ->where('id', $applicationParcel->id)
+            ->update(['area_hectares' => null]);
+
+        $result = app(DataIntegrityScanner::class)->scan();
+        $codes = collect($result['issues'])->pluck('code');
+
+        $this->assertFalse($result['clean']);
+        $this->assertTrue($codes->contains('invalid_application_party_links'));
+        $this->assertTrue($codes->contains('invalid_current_application_parcels'));
+    }
+
     public function test_integrity_scanner_artisan_command_boots_and_reports_read_only_mode(): void
     {
         $exitCode = Artisan::call('dar:scan-data-integrity', ['--json' => true]);

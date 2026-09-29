@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Services\ApplicationParcelIntegrityService;
 use App\Services\ApplicationPartyShareIntegrityService;
 use App\Services\ParcelAreaIntegrityService;
 use Illuminate\Database\Eloquent\Model;
@@ -34,11 +35,17 @@ class ApplicationParcel extends Model
         static::saving(function (ApplicationParcel $applicationParcel) {
             app(ParcelAreaIntegrityService::class)->assertApplicationParcelArea($applicationParcel);
 
-            if ($applicationParcel->exists && $applicationParcel->land_transfer_application_id) {
-                $application = LandTransferApplication::query()->find($applicationParcel->land_transfer_application_id);
-                if ($application) {
-                    app(ApplicationPartyShareIntegrityService::class)->assertValid($application, $applicationParcel);
-                }
+            $application = $applicationParcel->land_transfer_application_id
+                ? LandTransferApplication::query()->find($applicationParcel->land_transfer_application_id)
+                : null;
+
+            if ($application) {
+                app(ApplicationParcelIntegrityService::class)
+                    ->assertCurrentWorkflowValid($applicationParcel, $application);
+            }
+
+            if ($applicationParcel->exists && $application) {
+                app(ApplicationPartyShareIntegrityService::class)->assertValid($application, $applicationParcel);
             }
         });
 
