@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\ApplicationParcel;
 use App\Models\Landholding;
+use App\Models\LandTransferApplication;
 use App\Models\Parcel;
 use Illuminate\Validation\ValidationException;
 
@@ -66,6 +67,24 @@ class ParcelAreaIntegrityService
             throw ValidationException::withMessages([
                 'status' => 'Resolve or deactivate the Parcel\'s active Landholding records before archiving this Parcel.',
             ]);
+        }
+
+        if ($parcel->isDirty('status') && $parcel->status === 'inactive') {
+            $finalStatuses = array_values(array_unique(array_merge(
+                LandTransferApplication::FINAL_STATUSES,
+                LandTransferApplication::LEGACY_FINAL_STATUSES
+            )));
+
+            $hasOpenApplication = ApplicationParcel::query()
+                ->where('parcel_id', $parcel->getKey())
+                ->whereHas('application', fn ($query) => $query->whereNotIn('status', $finalStatuses))
+                ->exists();
+
+            if ($hasOpenApplication) {
+                throw ValidationException::withMessages([
+                    'status' => 'This Parcel is still linked to an open clearance application and cannot be archived until that application is finalized or the Parcel link is resolved.',
+                ]);
+            }
         }
     }
 
