@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Landholding;
 use App\Models\Landowner;
 use App\Services\AuditLogger;
+use App\Services\ParcelConcurrencyService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -22,6 +23,8 @@ class LandholdingRecordController extends Controller
 
         try {
             $landholding = DB::transaction(function () use ($landowner, $validated) {
+                app(ParcelConcurrencyService::class)->lockParcel((int) $validated['parcel_id']);
+
                 $landholding = $landowner->landholdings()->create($validated);
 
                 AuditLogger::record(
@@ -63,16 +66,26 @@ class LandholdingRecordController extends Controller
 
         try {
             DB::transaction(function () use ($landholding, $validated, $landowner, $oldValues) {
-                $landholding->update($validated);
+                app(ParcelConcurrencyService::class)->lockParcels([
+                    $landholding->parcel_id,
+                    $validated['parcel_id'],
+                ]);
+
+                $lockedLandholding = Landholding::query()
+                    ->whereKey($landholding->id)
+                    ->lockForUpdate()
+                    ->firstOrFail();
+
+                $lockedLandholding->update($validated);
 
                 AuditLogger::record(
                     'landholding_record_updated',
                     null,
-                    $landholding,
+                    $lockedLandholding,
                     [
                         'landowner_id' => $landowner->id,
                         'old_values' => $oldValues,
-                        'new_values' => $landholding->fresh()->only(array_keys($validated)),
+                        'new_values' => $lockedLandholding->fresh()->only(array_keys($validated)),
                         'scope_note' => 'Administrative landholding record update only. This does not automatically transfer land ownership or mutate registry records.',
                     ]
                 );
