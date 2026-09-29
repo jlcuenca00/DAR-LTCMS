@@ -10,26 +10,22 @@ return new class extends Migration
 {
     public function up(): void
     {
-        $this->assertNoUserOrphans('csw_prepared_by');
-        $this->assertNoUserOrphans('released_by');
-
         Schema::table('land_transfer_applications', function (Blueprint $table) {
             $table->dropForeign(['encoded_by']);
             $table->foreign('encoded_by')
                 ->references('id')
                 ->on('users')
                 ->restrictOnDelete();
-
-            $table->foreign('csw_prepared_by', 'land_transfer_applications_csw_prepared_by_foreign')
-                ->references('id')
-                ->on('users')
-                ->restrictOnDelete();
-
-            $table->foreign('released_by', 'land_transfer_applications_released_by_foreign')
-                ->references('id')
-                ->on('users')
-                ->restrictOnDelete();
         });
+
+        $this->addUserForeignKey(
+            'csw_prepared_by',
+            'land_transfer_applications_csw_prepared_by_foreign'
+        );
+        $this->addUserForeignKey(
+            'released_by',
+            'land_transfer_applications_released_by_foreign'
+        );
 
         Schema::table('application_documents', function (Blueprint $table) {
             $table->dropForeign(['land_transfer_application_id']);
@@ -204,9 +200,45 @@ return new class extends Migration
         });
     }
 
-    private function assertNoUserOrphans(string $column): void
+    private function addUserForeignKey(string $column, string $constraint): void
     {
-        $orphanCount = DB::table('land_transfer_applications as applications')
+        $orphanCount = $this->userOrphanCount($column);
+
+        if (DB::connection()->getDriverName() === 'pgsql') {
+            DB::statement(
+                "ALTER TABLE land_transfer_applications
+                 ADD CONSTRAINT {$constraint}
+                 FOREIGN KEY ({$column}) REFERENCES users(id)
+                 ON DELETE RESTRICT NOT VALID"
+            );
+
+            if ($orphanCount === 0) {
+                DB::statement(
+                    "ALTER TABLE land_transfer_applications
+                     VALIDATE CONSTRAINT {$constraint}"
+                );
+            }
+
+            return;
+        }
+
+        if ($orphanCount > 0) {
+            throw new RuntimeException(
+                "Cannot add {$column} user foreign key: {$orphanCount} orphaned application row(s) require manual integrity review first."
+            );
+        }
+
+        Schema::table('land_transfer_applications', function (Blueprint $table) use ($column, $constraint) {
+            $table->foreign($column, $constraint)
+                ->references('id')
+                ->on('users')
+                ->restrictOnDelete();
+        });
+    }
+
+    private function userOrphanCount(string $column): int
+    {
+        return DB::table('land_transfer_applications as applications')
             ->whereNotNull("applications.{$column}")
             ->whereNotExists(function ($query) use ($column) {
                 $query->selectRaw('1')
@@ -214,11 +246,5 @@ return new class extends Migration
                     ->whereColumn('users.id', "applications.{$column}");
             })
             ->count();
-
-        if ($orphanCount > 0) {
-            throw new RuntimeException(
-                "Cannot add {$column} user foreign key: {$orphanCount} orphaned application row(s) require manual integrity review first."
-            );
-        }
     }
 };
