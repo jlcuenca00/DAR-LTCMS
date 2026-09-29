@@ -10,6 +10,7 @@ use App\Models\User;
 use App\Services\AuditLogger;
 use App\Services\LandholdingAreaValidationService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
 class LandownerRecordController extends Controller
@@ -89,20 +90,28 @@ class LandownerRecordController extends Controller
             $validated['spouse_name'] = null;
         }
 
-        $oldValues = $landowner->only(array_keys($validated));
+        $landowner = DB::transaction(function () use ($landowner, $validated) {
+            $lockedLandowner = Landowner::query()
+                ->whereKey($landowner->id)
+                ->lockForUpdate()
+                ->firstOrFail();
 
-        $landowner->update($validated);
+            $oldValues = $lockedLandowner->only(array_keys($validated));
+            $lockedLandowner->update($validated);
 
-        AuditLogger::record(
-            'landowner_record_updated',
-            null,
-            $landowner,
-            [
-                'old_values' => $oldValues,
-                'new_values' => $landowner->fresh()->only(array_keys($validated)),
-                'scope_note' => 'Administrative landowner/person record update only. Current hectares are computed from active landholding records and were not directly edited.',
-            ]
-        );
+            AuditLogger::record(
+                'landowner_record_updated',
+                null,
+                $lockedLandowner,
+                [
+                    'old_values' => $oldValues,
+                    'new_values' => $lockedLandowner->fresh()->only(array_keys($validated)),
+                    'scope_note' => 'Administrative landowner/person record update only. Current hectares are computed from active landholding records and were not directly edited.',
+                ]
+            );
+
+            return $lockedLandowner;
+        });
 
         return redirect()
             ->route('staff.records.landowners.show', $landowner)
@@ -147,17 +156,21 @@ class LandownerRecordController extends Controller
             $validated['spouse_name'] = null;
         }
 
-        $landowner = Landowner::create($validated);
+        $landowner = DB::transaction(function () use ($validated) {
+            $landowner = Landowner::create($validated);
 
-        AuditLogger::record(
-            'landowner_record_created',
-            null,
-            $landowner,
-            [
-                'new_values' => $landowner->only(array_keys($validated)),
-                'scope_note' => 'Administrative landowner/person record creation only. Landholding and parcel linkage must be encoded separately.',
-            ]
-        );
+            AuditLogger::record(
+                'landowner_record_created',
+                null,
+                $landowner,
+                [
+                    'new_values' => $landowner->only(array_keys($validated)),
+                    'scope_note' => 'Administrative landowner/person record creation only. Landholding and parcel linkage must be encoded separately.',
+                ]
+            );
+
+            return $landowner;
+        });
 
         return redirect()
             ->route('staff.records.landowners.show', $landowner)
