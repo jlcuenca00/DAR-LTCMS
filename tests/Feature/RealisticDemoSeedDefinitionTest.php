@@ -24,6 +24,10 @@ class RealisticDemoSeedDefinitionTest extends TestCase
         $this->assertStringContainsString('CREATE TEMP TABLE dar_demo_application_ids', $sql);
         $this->assertStringContainsString("'NOR-AGRI-'", $sql);
         $this->assertStringContainsString("'2026-NOR-DEMO-'", $sql);
+        $this->assertMatchesRegularExpression(
+            "/r\\.municipality, r\\.barangay,\\s*CURRENT_DATE - \\(r\\.seq \\* INTERVAL '2 days'\\),\\s*NULL,\\s*r\\.status/s",
+            $sql
+        );
         $this->assertStringNotContainsString("application_code LIKE '2026-DGT-%'", $sql);
         $this->assertStringNotContainsString("application_code LIKE '2026-NOR-%'", $sql);
 
