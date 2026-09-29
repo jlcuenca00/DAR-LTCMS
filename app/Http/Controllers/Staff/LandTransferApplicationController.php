@@ -421,7 +421,8 @@ public function store(Request $request)
         ]);
 
         if (! empty($validated['parcel_id'])) {
-            $parcel = Parcel::findOrFail($validated['parcel_id']);
+            $parcel = app(ParcelConcurrencyService::class)
+                ->lockParcel((int) $validated['parcel_id']);
 
             $application->applicationParcels()->create([
                 'parcel_id' => $parcel->id,
