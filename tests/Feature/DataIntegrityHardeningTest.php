@@ -795,6 +795,29 @@ class DataIntegrityHardeningTest extends TestCase
         );
     }
 
+    public function test_model_layer_rejects_archiving_parcel_used_by_open_application(): void
+    {
+        $staff = $this->staff();
+        $application = $this->application($staff, 'OPEN-APP-MODEL-ARCHIVE-001');
+        $parcel = $this->parcel('OPEN-APP-MODEL-PARCEL-001', 2.0000);
+
+        ApplicationParcel::create([
+            'land_transfer_application_id' => $application->id,
+            'parcel_id' => $parcel->id,
+            'parcel_code' => $parcel->parcel_code,
+            'area_hectares' => 1.0000,
+        ]);
+
+        try {
+            $parcel->update(['status' => 'inactive']);
+            $this->fail('Expected model-level Parcel archival guard to reject an open application dependency.');
+        } catch (ValidationException $exception) {
+            $this->assertArrayHasKey('status', $exception->errors());
+        }
+
+        $this->assertSame('active', $parcel->fresh()->status);
+    }
+
     public function test_open_application_prevents_parcel_archive(): void
     {
         $staff = $this->staff();
