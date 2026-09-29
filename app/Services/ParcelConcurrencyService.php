@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Parcel;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use LogicException;
@@ -43,7 +44,12 @@ class ParcelConcurrencyService
 
     public function lockParcel(int $parcelId): Parcel
     {
-        return $this->lockParcels([$parcelId])->get($parcelId)
-            ?? Parcel::query()->findOrFail($parcelId);
+        $parcel = $this->lockParcels([$parcelId])->get($parcelId);
+
+        if (! $parcel) {
+            throw (new ModelNotFoundException)->setModel(Parcel::class, [$parcelId]);
+        }
+
+        return $parcel;
     }
 }
