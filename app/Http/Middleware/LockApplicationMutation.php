@@ -3,10 +3,12 @@
 namespace App\Http\Middleware;
 
 use App\Models\LandTransferApplication;
+use App\Services\ApplicationMutationFileLifecycle;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpFoundation\Response;
+use Throwable;
 
 class LockApplicationMutation
 {
@@ -43,14 +45,30 @@ class LockApplicationMutation
             ? $routeApplication->getKey()
             : $routeApplication;
 
-        return DB::transaction(function () use ($request, $next, $applicationId) {
-            $lockedApplication = LandTransferApplication::query()
-                ->lockForUpdate()
-                ->findOrFail($applicationId);
+        $fileLifecycle = new ApplicationMutationFileLifecycle();
+        $request->attributes->set(
+            ApplicationMutationFileLifecycle::REQUEST_ATTRIBUTE,
+            $fileLifecycle
+        );
 
-            $request->route()->setParameter('application', $lockedApplication);
+        try {
+            $response = DB::transaction(function () use ($request, $next, $applicationId) {
+                $lockedApplication = LandTransferApplication::query()
+                    ->lockForUpdate()
+                    ->findOrFail($applicationId);
 
-            return $next($request);
-        });
+                $request->route()->setParameter('application', $lockedApplication);
+
+                return $next($request);
+            });
+
+            $fileLifecycle->commit();
+
+            return $response;
+        } catch (Throwable $exception) {
+            $fileLifecycle->rollback();
+
+            throw $exception;
+        }
     }
 }
