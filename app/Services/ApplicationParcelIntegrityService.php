@@ -43,11 +43,11 @@ class ApplicationParcelIntegrityService
         }
 
         $area = $applicationParcel->area_hectares;
-        if ($area === null || $area === '' || (float) $area <= self::AREA_TOLERANCE) {
+        if ($area === null || $area === '' || (float) $area <= 0) {
             $issues[] = 'The application Parcel must record a positive transferred area.';
         }
 
-        if ($parcel->area_hectares === null || (float) $parcel->area_hectares <= self::AREA_TOLERANCE) {
+        if ($parcel->area_hectares === null || (float) $parcel->area_hectares <= 0) {
             $issues[] = 'The linked Parcel master record must have a positive recorded area.';
         }
 
