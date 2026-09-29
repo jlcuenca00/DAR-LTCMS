@@ -538,6 +538,28 @@ class DataIntegrityHardeningTest extends TestCase
         ]);
     }
 
+    public function test_application_party_rows_reject_missing_landowner_json_links(): void
+    {
+        $staff = $this->staff();
+        $transferee = $this->landowner('Existing', 'Transferee');
+
+        $this->expectException(ValidationException::class);
+
+        LandTransferApplication::create([
+            'application_code' => 'PARTY-MISSING-LINK-001',
+            'transferor_name' => 'Missing Transferor',
+            'transferors' => [[
+                'name' => 'Missing Transferor',
+                'landowner_id' => 999999999,
+                'parcel_shares' => [],
+            ]],
+            'transferee_name' => $transferee->full_name,
+            'transferees' => [$this->partyRow($transferee)],
+            'status' => LandTransferApplication::STATUS_PENDING_LEGAL_REVIEW,
+            'encoded_by' => $staff->id,
+        ]);
+    }
+
     public function test_application_party_json_synchronizes_compatibility_columns(): void
     {
         $staff = $this->staff();
