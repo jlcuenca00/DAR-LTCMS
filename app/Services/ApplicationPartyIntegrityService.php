@@ -48,7 +48,13 @@ class ApplicationPartyIntegrityService
         $issues = [];
 
         foreach ($this->partyFields() as [$jsonField, $nameField, $linkField, $label]) {
-            $rows = collect((array) $application->getAttribute($jsonField))
+            $rawRows = collect((array) $application->getAttribute($jsonField))->values();
+
+            if ($rawRows->contains(fn ($row) => ! is_array($row))) {
+                $issues[] = ucfirst($label).' party JSON contains an invalid row structure.';
+            }
+
+            $rows = $rawRows
                 ->filter(fn ($row) => is_array($row))
                 ->values();
 
