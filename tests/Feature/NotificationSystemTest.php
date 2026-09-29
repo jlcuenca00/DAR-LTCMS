@@ -60,7 +60,7 @@ class NotificationSystemTest extends TestCase
         ]);
 
         for ($index = 1; $index <= 6; $index++) {
-            SystemNotification::create([
+            SystemNotification::forceCreate([
                 'user_id' => $user->id,
                 'type' => 'shared_dropdown_test',
                 'title' => 'Dropdown notification ' . $index,
