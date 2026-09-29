@@ -126,6 +126,12 @@ class ParcelAreaIntegrityService
             ]);
         }
 
+        if ($parcel->status !== 'active') {
+            throw ValidationException::withMessages([
+                'parcel_id' => 'An active Landholding cannot be linked to an inactive Parcel. Reactivate the Parcel or save the Landholding as a non-active historical record.',
+            ]);
+        }
+
         $otherActiveArea = (float) Landholding::query()
             ->where('parcel_id', $landholding->parcel_id)
             ->where('status', Landholding::STATUS_ACTIVE)
