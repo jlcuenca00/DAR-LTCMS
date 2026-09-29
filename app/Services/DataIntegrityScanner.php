@@ -191,6 +191,27 @@ class DataIntegrityScanner
                 ->whereNull('p.id'),
             ['ap.id', 'ap.land_transfer_application_id', 'ap.parcel_id', 'ap.parcel_code']
         );
+        $this->addQueryIssue(
+            $issues,
+            'orphan_application_csw_preparer',
+            'Application CSW preparer references a missing User account. Preserve the application and review the historical actor reference manually.',
+            DB::table('land_transfer_applications as a')
+                ->leftJoin('users as u', 'u.id', '=', 'a.csw_prepared_by')
+                ->whereNotNull('a.csw_prepared_by')
+                ->whereNull('u.id'),
+            ['a.id', 'a.application_code', 'a.csw_prepared_by']
+        );
+
+        $this->addQueryIssue(
+            $issues,
+            'orphan_application_release_actor',
+            'Application release actor references a missing User account. Preserve the application and review the historical actor reference manually.',
+            DB::table('land_transfer_applications as a')
+                ->leftJoin('users as u', 'u.id', '=', 'a.released_by')
+                ->whereNotNull('a.released_by')
+                ->whereNull('u.id'),
+            ['a.id', 'a.application_code', 'a.released_by']
+        );
     }
 
     private function scanApplicationPartyLinks(array &$issues): void

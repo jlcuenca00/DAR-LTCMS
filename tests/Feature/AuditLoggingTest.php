@@ -178,6 +178,7 @@ class AuditLoggingTest extends TestCase
         $this->assertDatabaseMissing('application_documents', [
             'id' => $document->id,
         ]);
+        Storage::assertMissing('application-documents/audit-existing.pdf');
 
         $this->assertDatabaseHas('audit_logs', [
             'actor_user_id' => $staffUser->id,

@@ -110,21 +110,28 @@ class SourceRecordLandownerLinkController extends Controller
 
         $landowner = Landowner::findOrFail($data['landowner_id']);
 
-        $legacyRecord->update([
-            'landowner_id' => $landowner->id,
-        ]);
+        DB::transaction(function () use ($legacyRecord, $landowner) {
+            $lockedRecord = LegacyRecord::query()
+                ->whereKey($legacyRecord->id)
+                ->lockForUpdate()
+                ->firstOrFail();
 
-        AuditLogger::record(
-            'source_record_linked_to_landowner',
-            null,
-            $legacyRecord,
-            [
-                'source_record_id' => $legacyRecord->id,
+            $lockedRecord->update([
                 'landowner_id' => $landowner->id,
-                'landowner_name' => $landowner->full_name,
-                'scope_note' => 'Administrative source-to-landowner linkage only. No ownership transfer or registry mutation was performed.',
-            ]
-        );
+            ]);
+
+            AuditLogger::record(
+                'source_record_linked_to_landowner',
+                null,
+                $lockedRecord,
+                [
+                    'source_record_id' => $lockedRecord->id,
+                    'landowner_id' => $landowner->id,
+                    'landowner_name' => $landowner->full_name,
+                    'scope_note' => 'Administrative source-to-landowner linkage only. No ownership transfer or registry mutation was performed.',
+                ]
+            );
+        });
 
         return back()->with('success', 'Source record linked to existing landowner record successfully.');
     }
