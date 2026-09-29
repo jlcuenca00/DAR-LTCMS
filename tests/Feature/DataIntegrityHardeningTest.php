@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\ApplicationClearance;
 use App\Models\ApplicationParcel;
 use App\Models\Landholding;
 use App\Models\Landowner;
@@ -662,6 +663,111 @@ class DataIntegrityHardeningTest extends TestCase
         $this->assertFalse($result['clean']);
         $this->assertTrue($codes->contains('invalid_application_party_links'));
         $this->assertTrue($codes->contains('invalid_current_application_parcels'));
+    }
+
+    public function test_integrity_scanner_reports_final_release_and_clearance_business_inconsistency(): void
+    {
+        $staff = $this->staff();
+        $application = $this->application(
+            $staff,
+            'BUSINESS-STATE-SCANNER-001',
+            LandTransferApplication::STATUS_APPROVED
+        );
+
+        $application->forceFill([
+            'release_status' => LandTransferApplication::RELEASED_TO_CLIENT,
+            'released_at' => now(),
+        ])->save();
+
+        ApplicationClearance::create([
+            'land_transfer_application_id' => $application->id,
+            'clearance_number' => '1803-2026-9901 (1)',
+            'decision_status' => LandTransferApplication::STATUS_DENIED,
+            'application_code' => 'WRONG-APPLICATION-CODE',
+            'transferor_name' => $application->transferorDisplayName(),
+            'transferee_name' => $application->transfereeDisplayName(),
+            'municipality' => $application->municipality,
+            'barangay' => $application->barangay,
+            'total_area_hectares' => 2.0000,
+            'parcel_snapshot' => [
+                ['parcel_code' => 'SNAPSHOT-001', 'area_hectares' => 1.0000],
+            ],
+            'review_officer_name' => $staff->name,
+            'reviewed_at' => now(),
+            'generated_by' => $staff->id,
+            'generated_at' => now(),
+        ]);
+
+        $result = app(DataIntegrityScanner::class)->scan();
+        $codes = collect($result['issues'])->pluck('code');
+
+        $this->assertFalse($result['clean']);
+        $this->assertTrue($codes->contains('invalid_application_business_state'));
+        $this->assertTrue($codes->contains('invalid_application_clearance_snapshot'));
+        $this->assertTrue($codes->contains('suspected_historical_approved_release_backfill'));
+    }
+
+    public function test_integrity_scanner_reports_duplicate_final_snapshot_only_application_parcels(): void
+    {
+        $staff = $this->staff();
+        $application = $this->application(
+            $staff,
+            'HISTORICAL-SNAPSHOT-DUPLICATE-001',
+            LandTransferApplication::STATUS_APPROVED
+        );
+
+        foreach ([1, 2] as $index) {
+            ApplicationParcel::create([
+                'land_transfer_application_id' => $application->id,
+                'parcel_id' => null,
+                'parcel_code' => 'HIST-SNAPSHOT-001',
+                'title_no' => 'T-HIST-SNAPSHOT-001',
+                'tax_decl_no' => 'TD-HIST-SNAPSHOT-001',
+                'lot_number' => 'LOT-HIST-SNAPSHOT-001',
+                'survey_plan_number' => 'PSD-HIST-SNAPSHOT-001',
+                'area_hectares' => 1.2500,
+                'area_square_meters' => 12500,
+            ]);
+        }
+
+        $result = app(DataIntegrityScanner::class)->scan();
+        $codes = collect($result['issues'])->pluck('code');
+
+        $this->assertFalse($result['clean']);
+        $this->assertTrue($codes->contains('duplicate_historical_application_parcel_snapshot'));
+    }
+
+    public function test_application_intake_normalizes_authorized_representative_and_succession_context(): void
+    {
+        $staff = $this->staff();
+        $transferor = $this->landowner('Representative', 'Transferor');
+        $transferee = $this->landowner('Representative', 'Transferee');
+
+        $this->actingAs($staff)
+            ->post(route('staff.applications.store'), [
+                'transferors' => [[
+                    'name' => $transferor->full_name,
+                    'landowner_id' => $transferor->id,
+                ]],
+                'transferees' => [[
+                    'name' => $transferee->full_name,
+                    'landowner_id' => $transferee->id,
+                ]],
+                'applicant_type' => 'authorized_representative',
+                'authorized_representative_name' => 'Atty. Authorized Representative',
+                'has_special_power_of_attorney' => 1,
+                'transfer_nature' => 'succession',
+                'municipality' => 'Dumaguete City',
+                'barangay' => 'Bantayan',
+            ])
+            ->assertSessionHas('success');
+
+        $application = LandTransferApplication::latest('id')->firstOrFail();
+
+        $this->assertSame('Atty. Authorized Representative', $application->applicant_name);
+        $this->assertSame('authorized_representative', $application->applicant_type);
+        $this->assertTrue((bool) $application->is_succession_case);
+        $this->assertSame('Succession / inheritance', data_get($application->transfer_instruments, '0.name'));
     }
 
     public function test_integrity_scanner_artisan_command_boots_and_reports_read_only_mode(): void

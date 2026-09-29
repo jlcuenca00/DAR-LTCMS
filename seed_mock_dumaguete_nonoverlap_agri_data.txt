@@ -302,7 +302,7 @@ BEGIN
             jsonb_build_array(jsonb_build_object('name', r.transferee, 'landowner_id', v_transferee_id, 'parcel_shares', jsonb_build_object())),
             r.municipality, r.barangay,
             CURRENT_DATE - (r.seq * INTERVAL '2 days'),
-            CURRENT_DATE - (r.seq * INTERVAL '1 day'),
+            NULL,
             r.status, r.release_status,
             CASE
                 WHEN r.status = 'returned_for_compliance' THEN 'Demo application returned for documentary compliance.'
