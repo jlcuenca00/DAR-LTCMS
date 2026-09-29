@@ -177,6 +177,7 @@ class LandTransferApplicationController extends Controller
         }
 
         $parcelOptions = Parcel::query()
+            ->where('status', 'active')
             ->orderBy('parcel_code')
             ->get();
 
@@ -298,6 +299,7 @@ public function create()
         ->get();
 
     $parcels = Parcel::query()
+        ->where('status', 'active')
         ->orderBy('parcel_code')
         ->get();
 
@@ -316,10 +318,10 @@ public function store(Request $request)
         'transferor_landowner_id' => ['nullable', 'exists:landowners,id'],
         'transferee_landowner_id' => ['nullable', 'exists:landowners,id'],
         'transferors' => ['nullable', 'array'],
-        'transferors.*.landowner_id' => ['nullable', 'exists:landowners,id'],
+        'transferors.*.landowner_id' => ['nullable', 'distinct', 'exists:landowners,id'],
         'transferors.*.name' => ['nullable', 'string', 'max:255'],
         'transferees' => ['nullable', 'array'],
-        'transferees.*.landowner_id' => ['nullable', 'exists:landowners,id'],
+        'transferees.*.landowner_id' => ['nullable', 'distinct', 'exists:landowners,id'],
         'transferees.*.name' => ['nullable', 'string', 'max:255'],
 
         'applicant_name' => ['nullable', 'string', 'max:255'],
@@ -344,7 +346,7 @@ public function store(Request $request)
         'remarks' => ['nullable', 'string'],
 
         'parcel_id' => ['nullable', 'exists:parcels,id'],
-        'area_hectares' => ['nullable', 'numeric', 'min:0'],
+        'area_hectares' => ['nullable', 'numeric', 'min:0.0001'],
     ]);
 
     $application = null;
