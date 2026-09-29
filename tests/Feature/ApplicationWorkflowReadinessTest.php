@@ -9,6 +9,7 @@ use App\Models\LandTransferApplication;
 use App\Models\Parcel;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 class ApplicationWorkflowReadinessTest extends TestCase
@@ -21,6 +22,48 @@ class ApplicationWorkflowReadinessTest extends TestCase
         $application = $this->application($staff, LandTransferApplication::STATUS_ENDORSED_PARPO);
         $this->completeForm4($application);
         $this->completePaymentAndCsw($application, $staff);
+
+        $this->actingAs($staff)
+            ->post(route('staff.applications.submit', $application))
+            ->assertSessionHasErrors(['validation', 'parcel']);
+
+        $this->assertSame(
+            LandTransferApplication::STATUS_ENDORSED_PARPO,
+            $application->fresh()->status
+        );
+    }
+
+    public function test_application_cannot_enter_parpo_decision_pending_with_inactive_linked_parcel(): void
+    {
+        $staff = $this->staffUser();
+        $application = $this->application($staff, LandTransferApplication::STATUS_ENDORSED_PARPO, 'READINESS-INACTIVE-PARCEL');
+        $applicationParcel = $this->linkParcel($application, 'READINESS-INACTIVE-PARCEL-MASTER');
+        $this->completeForm4($application);
+        $this->completePaymentAndCsw($application, $staff);
+
+        $applicationParcel->parcel()->firstOrFail()->update(['status' => 'inactive']);
+
+        $this->actingAs($staff)
+            ->post(route('staff.applications.submit', $application))
+            ->assertSessionHasErrors(['validation', 'parcel']);
+
+        $this->assertSame(
+            LandTransferApplication::STATUS_ENDORSED_PARPO,
+            $application->fresh()->status
+        );
+    }
+
+    public function test_application_cannot_enter_parpo_decision_pending_without_positive_transfer_area(): void
+    {
+        $staff = $this->staffUser();
+        $application = $this->application($staff, LandTransferApplication::STATUS_ENDORSED_PARPO, 'READINESS-MISSING-AREA');
+        $applicationParcel = $this->linkParcel($application, 'READINESS-MISSING-AREA-MASTER');
+        $this->completeForm4($application);
+        $this->completePaymentAndCsw($application, $staff);
+
+        DB::table('application_parcels')
+            ->where('id', $applicationParcel->id)
+            ->update(['area_hectares' => null, 'area_square_meters' => null]);
 
         $this->actingAs($staff)
             ->post(route('staff.applications.submit', $application))
