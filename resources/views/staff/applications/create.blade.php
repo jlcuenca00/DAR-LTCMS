@@ -472,7 +472,7 @@
 
                     <div class="field-group">
                         <label for="area_hectares" class="field-label">Application Area in Hectares</label>
-                        <input id="area_hectares" type="number" step="0.0001" min="0" name="area_hectares" value="{{ old('area_hectares') }}" class="staff-input" placeholder="Leave blank to use parcel area">
+                        <input id="area_hectares" type="number" step="0.0001" min="0.0001" name="area_hectares" value="{{ old('area_hectares') }}" class="staff-input" placeholder="Leave blank to use parcel area">
                     </div>
                 </div>
             </section>
