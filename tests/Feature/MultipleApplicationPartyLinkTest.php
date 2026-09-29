@@ -279,6 +279,169 @@ class MultipleApplicationPartyLinkTest extends TestCase
         $this->assertSame(0.0, $ownerB->fresh()->current_active_hectares);
     }
 
+    public function test_sync_preserves_matching_independently_sourced_landholding_provenance(): void
+    {
+        $staff = User::factory()->create([
+            'role' => User::ROLE_STAFF,
+            'is_active' => true,
+        ]);
+
+        $owner = Landowner::create([
+            'first_name' => 'Manual',
+            'last_name' => 'Owner',
+            'province' => 'Negros Oriental',
+        ]);
+        $transferee = Landowner::create([
+            'first_name' => 'Incoming',
+            'last_name' => 'Owner',
+            'province' => 'Negros Oriental',
+        ]);
+        $parcel = Parcel::create([
+            'parcel_code' => 'PROVENANCE-PRESERVE-001',
+            'province' => 'Negros Oriental',
+            'area_hectares' => 2.0000,
+            'status' => 'active',
+        ]);
+
+        $existing = Landholding::create([
+            'landowner_id' => $owner->id,
+            'parcel_id' => $parcel->id,
+            'area_hectares' => 2.0000,
+            'status' => Landholding::STATUS_ACTIVE,
+            'source_reference_number' => 'MANUAL-SOURCE-001',
+            'remarks' => 'Independently encoded landholding.',
+        ]);
+
+        $application = LandTransferApplication::create([
+            'application_code' => 'PROVENANCE-PRESERVE-APP',
+            'transferor_name' => $owner->full_name,
+            'transferors' => [
+                ['name' => $owner->full_name, 'landowner_id' => $owner->id],
+            ],
+            'transferee_name' => $transferee->full_name,
+            'transferees' => [
+                ['name' => $transferee->full_name, 'landowner_id' => $transferee->id],
+            ],
+            'transferor_landowner_id' => $owner->id,
+            'transferee_landowner_id' => $transferee->id,
+            'status' => LandTransferApplication::STATUS_PENDING_LEGAL_REVIEW,
+            'encoded_by' => $staff->id,
+        ]);
+
+        $applicationParcel = ApplicationParcel::create([
+            'land_transfer_application_id' => $application->id,
+            'parcel_id' => $parcel->id,
+            'area_hectares' => 2.0000,
+            'parcel_code' => $parcel->parcel_code,
+        ]);
+
+        $this->actingAs($staff)
+            ->patch(route('staff.applications.landowner-links.update', $application), [
+                'transferors' => [
+                    [
+                        'name' => $owner->full_name,
+                        'landowner_id' => $owner->id,
+                        'parcel_shares' => [(string) $applicationParcel->id => 2.0000],
+                    ],
+                ],
+                'transferees' => [
+                    ['name' => $transferee->full_name, 'landowner_id' => $transferee->id],
+                ],
+                'sync_current_landholdings' => 1,
+            ])
+            ->assertRedirect()
+            ->assertSessionHas('success');
+
+        $existing->refresh();
+
+        $this->assertNull($existing->source_application_id);
+        $this->assertSame('MANUAL-SOURCE-001', $existing->source_reference_number);
+        $this->assertSame('Independently encoded landholding.', $existing->remarks);
+        $this->assertSame(2.0, (float) $existing->area_hectares);
+        $this->assertSame(Landholding::STATUS_ACTIVE, $existing->status);
+    }
+
+    public function test_sync_rejects_overwrite_of_different_independently_sourced_landholding_share(): void
+    {
+        $staff = User::factory()->create([
+            'role' => User::ROLE_STAFF,
+            'is_active' => true,
+        ]);
+
+        $owner = Landowner::create([
+            'first_name' => 'Protected',
+            'last_name' => 'Owner',
+            'province' => 'Negros Oriental',
+        ]);
+        $transferee = Landowner::create([
+            'first_name' => 'Incoming',
+            'last_name' => 'Party',
+            'province' => 'Negros Oriental',
+        ]);
+        $parcel = Parcel::create([
+            'parcel_code' => 'PROVENANCE-CONFLICT-001',
+            'province' => 'Negros Oriental',
+            'area_hectares' => 2.0000,
+            'status' => 'active',
+        ]);
+
+        $existing = Landholding::create([
+            'landowner_id' => $owner->id,
+            'parcel_id' => $parcel->id,
+            'area_hectares' => 2.0000,
+            'status' => Landholding::STATUS_ACTIVE,
+            'source_reference_number' => 'MANUAL-SOURCE-CONFLICT',
+            'remarks' => 'Must not be rewritten by application sync.',
+        ]);
+
+        $application = LandTransferApplication::create([
+            'application_code' => 'PROVENANCE-CONFLICT-APP',
+            'transferor_name' => $owner->full_name,
+            'transferors' => [
+                ['name' => $owner->full_name, 'landowner_id' => $owner->id],
+            ],
+            'transferee_name' => $transferee->full_name,
+            'transferees' => [
+                ['name' => $transferee->full_name, 'landowner_id' => $transferee->id],
+            ],
+            'transferor_landowner_id' => $owner->id,
+            'transferee_landowner_id' => $transferee->id,
+            'status' => LandTransferApplication::STATUS_PENDING_LEGAL_REVIEW,
+            'encoded_by' => $staff->id,
+        ]);
+
+        $applicationParcel = ApplicationParcel::create([
+            'land_transfer_application_id' => $application->id,
+            'parcel_id' => $parcel->id,
+            'area_hectares' => 1.5000,
+            'parcel_code' => $parcel->parcel_code,
+        ]);
+
+        $this->actingAs($staff)
+            ->patch(route('staff.applications.landowner-links.update', $application), [
+                'transferors' => [
+                    [
+                        'name' => $owner->full_name,
+                        'landowner_id' => $owner->id,
+                        'parcel_shares' => [(string) $applicationParcel->id => 1.5000],
+                    ],
+                ],
+                'transferees' => [
+                    ['name' => $transferee->full_name, 'landowner_id' => $transferee->id],
+                ],
+                'sync_current_landholdings' => 1,
+            ])
+            ->assertSessionHasErrors("transferors.0.parcel_shares.{$applicationParcel->id}");
+
+        $existing->refresh();
+
+        $this->assertNull($existing->source_application_id);
+        $this->assertSame('MANUAL-SOURCE-CONFLICT', $existing->source_reference_number);
+        $this->assertSame('Must not be rewritten by application sync.', $existing->remarks);
+        $this->assertSame(2.0, (float) $existing->area_hectares);
+        $this->assertSame(Landholding::STATUS_ACTIVE, $existing->status);
+    }
+
     public function test_five_hectare_validation_calculates_each_linked_transferee_share_separately(): void
     {
         $staff = User::factory()->create([

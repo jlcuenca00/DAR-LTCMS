@@ -82,9 +82,9 @@ class ApplicationLandownerLinkController extends Controller
         DB::transaction(function () use ($application, $transferors, $transferees, $syncLandholdings, $oldLinks) {
             $this->savePartyRows($application, $transferors, $transferees);
 
-            $syncedLandholdings = $syncLandholdings
+            $landholdingSync = $syncLandholdings
                 ? $this->syncCurrentTransferorLandholdings($application, $transferors)
-                : [];
+                : ['synced_ids' => [], 'preserved_ids' => []];
 
             AuditLogger::record(
                 'application_landowner_links_updated',
@@ -97,7 +97,8 @@ class ApplicationLandownerLinkController extends Controller
                         'transferees' => $transferees,
                     ],
                     'current_landholdings_synced' => $syncLandholdings,
-                    'synced_landholding_ids' => $syncedLandholdings,
+                    'synced_landholding_ids' => $landholdingSync['synced_ids'],
+                    'preserved_existing_landholding_ids' => $landholdingSync['preserved_ids'],
                     'scope_note' => 'Application parties were linked for clearance processing, validation, and traceability. Any current landholding shares were saved only through the explicit staff-selected synchronization action. No approval, ownership transfer, or registry mutation was performed.',
                 ]
             );
@@ -290,6 +291,11 @@ class ApplicationLandownerLinkController extends Controller
             $totalSubmittedShares = 0.0;
             $positiveOwnerIds = [];
 
+            if ($applicationParcel->parcel->status !== 'active') {
+                $errors['sync_current_landholdings'] = 'Current Landholding shares can only be synchronized to an active Parcel Record.';
+                continue;
+            }
+
             if ($parcelArea <= 0) {
                 $errors['sync_current_landholdings'] = 'Each linked Parcel Record must have a valid area before hectare shares can be synchronized.';
                 continue;
@@ -309,8 +315,27 @@ class ApplicationLandownerLinkController extends Controller
                 }
 
                 if ($share > 0) {
-                    $positiveOwnerIds[] = (int) $row['landowner_id'];
+                    $landownerId = (int) $row['landowner_id'];
+                    $positiveOwnerIds[] = $landownerId;
                     $totalSubmittedShares += $share;
+
+                    $existingLandholding = Landholding::query()
+                        ->where('landowner_id', $landownerId)
+                        ->where('parcel_id', $applicationParcel->parcel_id)
+                        ->first();
+
+                    if (
+                        $existingLandholding
+                        && (int) ($existingLandholding->source_application_id ?? 0) !== (int) $application->id
+                    ) {
+                        $sameActiveShare = $existingLandholding->status === Landholding::STATUS_ACTIVE
+                            && abs((float) $existingLandholding->area_hectares - $share) <= 0.0001;
+
+                        if (! $sameActiveShare) {
+                            $errors["transferors.{$index}.parcel_shares.{$applicationParcel->id}"] =
+                                'This Landowner and Parcel already have an independently sourced Landholding record. Update that Landholding record separately before synchronizing this application.';
+                        }
+                    }
                 }
             }
 
@@ -348,6 +373,7 @@ class ApplicationLandownerLinkController extends Controller
     private function syncCurrentTransferorLandholdings(LandTransferApplication $application, array $transferors): array
     {
         $syncedIds = [];
+        $preservedIds = [];
 
         foreach ($application->applicationParcels as $applicationParcel) {
             if (! $applicationParcel->parcel_id) {
@@ -390,6 +416,22 @@ class ApplicationLandownerLinkController extends Controller
             }
 
             foreach ($positiveShares as $landownerId => $share) {
+                $existingLandholding = Landholding::query()
+                    ->where('landowner_id', $landownerId)
+                    ->where('parcel_id', $applicationParcel->parcel_id)
+                    ->first();
+
+                if (
+                    $existingLandholding
+                    && (int) ($existingLandholding->source_application_id ?? 0) !== (int) $application->id
+                ) {
+                    // Validation already confirmed that this independently sourced
+                    // record is active and matches the submitted share. Preserve
+                    // its provenance instead of rewriting source/application data.
+                    $preservedIds[] = $existingLandholding->id;
+                    continue;
+                }
+
                 $landholding = Landholding::updateOrCreate(
                     [
                         'landowner_id' => $landownerId,
@@ -407,7 +449,10 @@ class ApplicationLandownerLinkController extends Controller
             }
         }
 
-        return array_values(array_unique($syncedIds));
+        return [
+            'synced_ids' => array_values(array_unique($syncedIds)),
+            'preserved_ids' => array_values(array_unique($preservedIds)),
+        ];
     }
 
     private function savePartyRows(LandTransferApplication $application, array $transferors, array $transferees): void

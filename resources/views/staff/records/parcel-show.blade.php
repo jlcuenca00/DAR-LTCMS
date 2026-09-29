@@ -681,6 +681,12 @@
         $attachedSourceCount = $sourcePackages->count() + $legacyRecords->count();
     @endphp
 
+    @if (session('error'))
+        <div class="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-800" role="alert">
+            <i class="fa-solid fa-circle-exclamation mr-2"></i>{{ session('error') }}
+        </div>
+    @endif
+
     <div class="parcel-page-stack">
 
         <section class="parcel-hero-card">

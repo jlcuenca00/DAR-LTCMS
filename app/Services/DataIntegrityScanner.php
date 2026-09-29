@@ -70,6 +70,17 @@ class DataIntegrityScanner
 
         $this->addQueryIssue(
             $issues,
+            'inactive_parcel_active_landholding',
+            'An inactive Parcel still has one or more active Landholding records.',
+            DB::table('landholdings as h')
+                ->join('parcels as p', 'p.id', '=', 'h.parcel_id')
+                ->where('h.status', 'active')
+                ->where('p.status', 'inactive'),
+            ['h.id as landholding_id', 'h.landowner_id', 'h.parcel_id', 'h.area_hectares', 'p.parcel_code']
+        );
+
+        $this->addQueryIssue(
+            $issues,
             'landowner_user_role_mismatch',
             'A Landowner record is linked to a non-Landowner user account.',
             DB::table('landowners as l')

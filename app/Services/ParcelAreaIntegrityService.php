@@ -31,6 +31,44 @@ class ParcelAreaIntegrityService
         }
     }
 
+    public function assertParcelLandholdingCompatibility(Parcel $parcel): void
+    {
+        if (! $parcel->exists) {
+            return;
+        }
+
+        $activeArea = round((float) Landholding::query()
+            ->where('parcel_id', $parcel->getKey())
+            ->where('status', Landholding::STATUS_ACTIVE)
+            ->sum('area_hectares'), 4);
+
+        if ($activeArea <= self::HECTARE_TOLERANCE) {
+            return;
+        }
+
+        if ($parcel->isDirty('area_hectares')) {
+            $parcelArea = $parcel->getAttribute('area_hectares');
+
+            if ($parcelArea === null || $parcelArea === '') {
+                throw ValidationException::withMessages([
+                    'area_hectares' => 'The Parcel area cannot be cleared while active Landholding records are linked to it.',
+                ]);
+            }
+
+            if ($activeArea - (float) $parcelArea > self::HECTARE_TOLERANCE) {
+                throw ValidationException::withMessages([
+                    'area_hectares' => 'The Parcel area cannot be reduced below the currently allocated active Landholding area of '.number_format($activeArea, 4).' ha.',
+                ]);
+            }
+        }
+
+        if ($parcel->isDirty('status') && $parcel->status === 'inactive') {
+            throw ValidationException::withMessages([
+                'status' => 'Resolve or deactivate the Parcel\'s active Landholding records before archiving this Parcel.',
+            ]);
+        }
+    }
+
     public function assertApplicationParcelArea(ApplicationParcel $applicationParcel): void
     {
         $area = $applicationParcel->getAttribute('area_hectares');
@@ -85,6 +123,12 @@ class ParcelAreaIntegrityService
         if (! $parcel || $parcel->area_hectares === null) {
             throw ValidationException::withMessages([
                 'parcel_id' => 'The Parcel must have a recorded area before an active landholding can be saved.',
+            ]);
+        }
+
+        if ($parcel->status !== 'active') {
+            throw ValidationException::withMessages([
+                'parcel_id' => 'An active Landholding cannot be linked to an inactive Parcel. Reactivate the Parcel or save the Landholding as a non-active historical record.',
             ]);
         }
 

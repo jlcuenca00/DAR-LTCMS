@@ -95,6 +95,8 @@ class Parcel extends Model
                 app(ParcelAreaIntegrityService::class)->canonicalizeParcel($parcel);
             }
 
+            app(ParcelAreaIntegrityService::class)->assertParcelLandholdingCompatibility($parcel);
+
             // Geometry gets its own monotonic version so concurrent editors cannot
             // silently overwrite one another. Any geometry change, including a
             // Staff-side correction, advances the version.
