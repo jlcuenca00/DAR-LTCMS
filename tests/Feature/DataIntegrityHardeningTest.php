@@ -467,6 +467,32 @@ class DataIntegrityHardeningTest extends TestCase
         $this->assertSame('active', $parcel->fresh()->status);
     }
 
+    public function test_active_landholding_cannot_be_created_for_inactive_parcel(): void
+    {
+        $parcel = $this->parcel('PARCEL-INACTIVE-LINK-GUARD-001', 2.0000);
+        $parcel->update(['status' => 'inactive']);
+
+        $landowner = $this->landowner('Inactive', 'Link');
+
+        try {
+            Landholding::create([
+                'landowner_id' => $landowner->id,
+                'parcel_id' => $parcel->id,
+                'area_hectares' => 1.0000,
+                'status' => Landholding::STATUS_ACTIVE,
+            ]);
+            $this->fail('Expected active Landholding creation on an inactive Parcel to be rejected.');
+        } catch (\Illuminate\Validation\ValidationException $exception) {
+            $this->assertArrayHasKey('parcel_id', $exception->errors());
+        }
+
+        $this->assertDatabaseMissing('landholdings', [
+            'landowner_id' => $landowner->id,
+            'parcel_id' => $parcel->id,
+            'status' => Landholding::STATUS_ACTIVE,
+        ]);
+    }
+
     public function test_integrity_scanner_reports_inactive_parcel_with_active_landholding(): void
     {
         $parcel = $this->parcel('PARCEL-INACTIVE-HOLDING-001', 2.0000);
