@@ -62,10 +62,9 @@ class LandholdingRecordController extends Controller
         $oldReferencePhotoPath = $landholding->reference_photo_path;
         $validated = $this->storeReferencePhoto($request, $validated, 'reference-photos/landholdings');
         $newReferencePhotoPath = $validated['reference_photo_path'] ?? null;
-        $oldValues = $landholding->only(array_keys($validated));
 
         try {
-            DB::transaction(function () use ($landholding, $validated, $landowner, $oldValues) {
+            DB::transaction(function () use ($landholding, $validated, $landowner) {
                 app(ParcelConcurrencyService::class)->lockParcels([
                     $landholding->parcel_id,
                     $validated['parcel_id'],
@@ -76,6 +75,7 @@ class LandholdingRecordController extends Controller
                     ->lockForUpdate()
                     ->firstOrFail();
 
+                $oldValues = $lockedLandholding->only(array_keys($validated));
                 $lockedLandholding->update($validated);
 
                 AuditLogger::record(
