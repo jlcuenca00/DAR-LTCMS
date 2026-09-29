@@ -3,16 +3,20 @@
 namespace App\Http\Controllers\Staff;
 
 use App\Http\Controllers\Controller;
+use App\Models\ApplicationParcel;
 use App\Models\Landholding;
 use App\Models\Landowner;
+use App\Models\LandTransferApplication;
 use App\Models\Parcel;
 use App\Services\AuditLogger;
 use App\Services\NotificationService;
+use App\Services\ParcelConcurrencyService;
 use App\Services\ParcelGeometryService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Throwable;
 
 class RecordSearchController extends Controller
@@ -304,12 +308,15 @@ class RecordSearchController extends Controller
             'status' => ['required', Rule::in(array_keys(Parcel::statusOptions()))],
             'remarks' => ['nullable', 'string', 'max:5000'],
             'geometry_geojson' => ['nullable', 'string', 'max:200000'],
+            'geometry_version' => ['required', 'integer', 'min:0'],
             'reference_photo' => ['nullable', 'image', 'max:5120'],
         ]);
 
         $data['province'] = $data['province'] ?: 'Negros Oriental';
         $data = $this->normalizeParcelRegistrationData($data);
         $data['geometry_geojson'] = app(ParcelGeometryService::class)->decodePolygon($data['geometry_geojson'] ?? null);
+        $submittedGeometryVersion = (int) $data['geometry_version'];
+        unset($data['geometry_version']);
 
         // Keep the existing internal classification value. Staff no longer edits this as a clearance workflow field.
         $data['agricultural_status'] = $parcel->agricultural_status ?: Parcel::DEFAULT_AGRICULTURAL_STATUS;
@@ -325,16 +332,23 @@ class RecordSearchController extends Controller
         }
 
         try {
-            DB::transaction(function () use ($parcel, $data, $request) {
-                $previousGeometry = $parcel->geometry_geojson;
-                $previousVersion = (int) $parcel->geometry_version;
+            $savedParcel = DB::transaction(function () use ($parcel, $data, $request, $submittedGeometryVersion) {
+                $lockedParcel = app(ParcelConcurrencyService::class)->lockParcel((int) $parcel->id);
+                $previousGeometry = $lockedParcel->geometry_geojson;
+                $previousVersion = (int) $lockedParcel->geometry_version;
 
-                $parcel->fill($data);
-                $parcel->save();
+                if ($submittedGeometryVersion !== $previousVersion) {
+                    throw ValidationException::withMessages([
+                        'geometry_geojson' => 'This Parcel changed after you opened the edit page. Reload the latest record before saving so newer geometry is not overwritten.',
+                    ]);
+                }
 
-                if ($parcel->wasChanged('geometry_geojson')) {
+                $lockedParcel->fill($data);
+                $lockedParcel->save();
+
+                if ($lockedParcel->wasChanged('geometry_geojson')) {
                     app(ParcelGeometryService::class)->recordRevision(
-                        $parcel,
+                        $lockedParcel,
                         $previousGeometry,
                         $previousVersion,
                         $request->user(),
@@ -345,16 +359,20 @@ class RecordSearchController extends Controller
                 AuditLogger::record(
                     'parcel_updated',
                     null,
-                    $parcel,
+                    $lockedParcel,
                     [
-                        'parcel_id' => $parcel->id,
-                        'parcel_code' => $parcel->parcel_code,
-                        'status' => $parcel->status,
-                        'has_geometry' => ! empty($parcel->geometry_geojson),
+                        'parcel_id' => $lockedParcel->id,
+                        'parcel_code' => $lockedParcel->parcel_code,
+                        'status' => $lockedParcel->status,
+                        'has_geometry' => ! empty($lockedParcel->geometry_geojson),
+                        'previous_geometry_version' => $previousVersion,
+                        'new_geometry_version' => (int) $lockedParcel->geometry_version,
                         'actor_user_id' => $request->user()?->id,
                         'actor_name' => $request->user()?->name,
                     ]
                 );
+
+                return $lockedParcel;
             });
         } catch (Throwable $e) {
             if ($newReferencePhotoPath) {
@@ -368,42 +386,70 @@ class RecordSearchController extends Controller
             Storage::disk('public')->delete($oldReferencePhotoPath);
         }
 
-        app(NotificationService::class)->notifyGeodeticParcelReferenceUpdated($parcel);
+        app(NotificationService::class)->notifyGeodeticParcelReferenceUpdated($savedParcel);
 
         return redirect()
-            ->route('staff.records.parcels.show', $parcel)
+            ->route('staff.records.parcels.show', $savedParcel)
             ->with('success', 'Parcel record updated successfully.');
     }
 
     public function destroyParcel(Request $request, Parcel $parcel)
     {
-        if ($parcel->landholdings()->where('status', Landholding::STATUS_ACTIVE)->exists()) {
+        $result = DB::transaction(function () use ($request, $parcel) {
+            $lockedParcel = app(ParcelConcurrencyService::class)->lockParcel((int) $parcel->id);
+
+            if ($lockedParcel->landholdings()->where('status', Landholding::STATUS_ACTIVE)->exists()) {
+                return ['archived' => false, 'reason' => 'active_landholdings', 'parcel' => $lockedParcel];
+            }
+
+            $finalStatuses = array_values(array_unique(array_merge(
+                LandTransferApplication::FINAL_STATUSES,
+                LandTransferApplication::LEGACY_FINAL_STATUSES
+            )));
+
+            $hasOpenApplication = ApplicationParcel::query()
+                ->where('parcel_id', $lockedParcel->id)
+                ->whereHas('application', fn ($query) => $query->whereNotIn('status', $finalStatuses))
+                ->exists();
+
+            if ($hasOpenApplication) {
+                return ['archived' => false, 'reason' => 'open_application', 'parcel' => $lockedParcel];
+            }
+
+            $oldStatus = $lockedParcel->status;
+
+            $lockedParcel->forceFill([
+                'status' => 'inactive',
+                'remarks' => trim(($lockedParcel->remarks ? $lockedParcel->remarks . "\n\n" : '') . 'Archived by staff on ' . now()->timezone('Asia/Manila')->format('M d, Y h:i A') . '. Record retained for traceability.'),
+            ])->save();
+
+            AuditLogger::record(
+                'parcel_archived',
+                null,
+                $lockedParcel,
+                [
+                    'parcel_id' => $lockedParcel->id,
+                    'parcel_code' => $lockedParcel->parcel_code,
+                    'old_status' => $oldStatus,
+                    'new_status' => $lockedParcel->status,
+                    'actor_user_id' => $request->user()?->id,
+                    'actor_name' => $request->user()?->name,
+                    'archive_policy' => 'Record retained; no ownership or registry mutation performed.',
+                ]
+            );
+
+            return ['archived' => true, 'parcel' => $lockedParcel];
+        });
+
+        if (! $result['archived']) {
+            $message = $result['reason'] === 'open_application'
+                ? 'This Parcel cannot be archived while an open clearance application still depends on it. Finalize the application or resolve the Parcel link first.'
+                : 'This Parcel cannot be archived while active Landholding records remain. Resolve or deactivate those Landholding records first.';
+
             return redirect()
-                ->route('staff.records.parcels.show', $parcel)
-                ->with('error', 'This Parcel cannot be archived while active Landholding records remain. Resolve or deactivate those Landholding records first.');
+                ->route('staff.records.parcels.show', $result['parcel'])
+                ->with('error', $message);
         }
-
-        $oldStatus = $parcel->status;
-
-        $parcel->forceFill([
-            'status' => 'inactive',
-            'remarks' => trim(($parcel->remarks ? $parcel->remarks . "\n\n" : '') . 'Archived by staff on ' . now()->timezone('Asia/Manila')->format('M d, Y h:i A') . '. Record retained for traceability.'),
-        ])->save();
-
-        AuditLogger::record(
-            'parcel_archived',
-            null,
-            $parcel,
-            [
-                'parcel_id' => $parcel->id,
-                'parcel_code' => $parcel->parcel_code,
-                'old_status' => $oldStatus,
-                'new_status' => $parcel->status,
-                'actor_user_id' => $request->user()?->id,
-                'actor_name' => $request->user()?->name,
-                'archive_policy' => 'Record retained; no ownership or registry mutation performed.',
-            ]
-        );
 
         return redirect()
             ->route('staff.records.parcels.index')
