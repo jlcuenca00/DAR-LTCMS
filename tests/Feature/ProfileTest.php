@@ -66,13 +66,19 @@ class ProfileTest extends TestCase
             ])->assertSessionHasErrors('current_password');
         }
 
-        $this->patch('/profile', [
+        $response = $this->patch('/profile', [
             'name' => $user->name,
             'email' => 'rate-new@example.com',
             'current_password' => 'wrong-password',
-        ])->assertSessionHasErrors([
-            'current_password' => fn (string $message) => str_contains($message, 'Too many incorrect password attempts'),
         ]);
+
+        $response->assertSessionHasErrors('current_password');
+        $errors = $response->getSession()->get('errors');
+
+        $this->assertStringContainsString(
+            'Too many incorrect password attempts',
+            $errors->first('current_password')
+        );
 
         $this->assertSame('rate-old@example.com', $user->fresh()->email);
     }
