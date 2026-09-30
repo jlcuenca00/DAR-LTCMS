@@ -171,15 +171,15 @@ class FinalLtcForm5Test extends TestCase
         $this->assertStringNotContainsString('September 30, 2026', $html);
     }
 
-    public function test_denied_clearance_renders_denied_not_granted(): void
+    public function test_not_approved_clearance_renders_denied_not_granted(): void
     {
         $staff = User::factory()->create(['role' => 'staff']);
-        $application = $this->makeFinalApplication($staff, 'FORM5-DENIED-001', 1, LandTransferApplication::STATUS_DENIED);
+        $application = $this->makeFinalApplication($staff, 'FORM5-DENIED-001', 1, LandTransferApplication::STATUS_NOT_APPROVED);
         $application->load('documents');
 
         $clearance = new ApplicationClearance([
             'clearance_number' => '1803-2026-0051 (1)',
-            'decision_status' => LandTransferApplication::STATUS_DENIED,
+            'decision_status' => LandTransferApplication::STATUS_NOT_APPROVED,
             'application_code' => $application->application_code,
             'transferor_name' => $application->transferorDisplayName(),
             'transferee_name' => $application->transfereeDisplayName(),
