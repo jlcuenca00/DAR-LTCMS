@@ -112,7 +112,7 @@
             </div>
 
             <div class="geo-record-actions">
-                <span class="geo-record-count"><i class="fa-solid fa-layer-group"></i>{{ $landholdings->count() }} records</span>
+                <span class="geo-record-count"><i class="fa-solid fa-layer-group"></i>{{ $landholdings->total() }} records</span>
                 <span class="geo-readonly-badge"><i class="fa-solid fa-shield-halved"></i>Limited Access</span>
                 <a href="{{ route('geodetic.parcel-map.index') }}" class="geo-button geo-button-primary">
                     <i class="fa-solid fa-map-location-dot"></i>
@@ -194,6 +194,11 @@
                         </tbody>
                     </table>
                 </div>
+                @if ($landholdings->hasPages())
+                    <div class="mt-4">
+                        {{ $landholdings->links() }}
+                    </div>
+                @endif
             @endif
         </article>
     </section>
