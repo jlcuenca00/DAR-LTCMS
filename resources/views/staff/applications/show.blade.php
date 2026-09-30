@@ -3692,7 +3692,7 @@
             </div>
         </section>
 
-        <details class="review-panel timeline-collapsible">
+        <details class="review-panel timeline-collapsible" @if(request()->filled('timeline_page')) open @endif>
             <summary>
                 <div class="timeline-summary-row">
                     <div class="timeline-summary-left">
