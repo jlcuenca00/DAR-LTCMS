@@ -73,7 +73,7 @@ $applicationCount = DB::table('land_transfer_applications')
 
 $finalCount = DB::table('land_transfer_applications')
     ->where('application_code', 'like', '2026-NOR-DEMO-%')
-    ->whereIn('status', ['approved', 'denied'])
+    ->whereIn('status', ['approved', 'not_approved'])
     ->count();
 
 $badPaymentCount = DB::table('land_transfer_applications')
@@ -96,7 +96,7 @@ if ($applicationCount !== 16) {
 }
 
 if ($finalCount !== 5) {
-    throw new RuntimeException("Expected 5 final Approved/Denied demo applications; found {$finalCount}.");
+    throw new RuntimeException("Expected 5 final Approved/Not Approved demo applications; found {$finalCount}.");
 }
 
 if ($badPaymentCount !== 0) {
