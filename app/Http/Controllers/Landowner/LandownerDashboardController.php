@@ -100,9 +100,9 @@ class LandownerDashboardController extends Controller
                 'statuses' => [LandTransferApplication::STATUS_APPROVED, LandTransferApplication::STATUS_RELEASED],
             ],
             [
-                'status' => LandTransferApplication::STATUS_DENIED,
-                'label' => 'Denied',
-                'statuses' => [LandTransferApplication::STATUS_DENIED, LandTransferApplication::STATUS_NOT_APPROVED],
+                'status' => LandTransferApplication::STATUS_NOT_APPROVED,
+                'label' => 'Not Approved',
+                'statuses' => [LandTransferApplication::STATUS_NOT_APPROVED, LandTransferApplication::STATUS_DENIED],
             ],
         ])->map(function (array $summary) use ($statusCounts) {
             $summary['count'] = collect($summary['statuses'])
