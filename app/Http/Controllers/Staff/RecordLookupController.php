@@ -38,11 +38,14 @@ class RecordLookupController extends Controller
 
         if ($search !== '') {
             $needle = mb_strtolower($search);
+            $pattern = '%'.collect(preg_split('/\\s+/u', $needle))
+                ->filter()
+                ->implode('%').'%';
 
-            $query->where(function ($matching) use ($needle, $search) {
+            $query->where(function ($matching) use ($pattern, $search) {
                 $matching->whereRaw(
                     "LOWER(COALESCE(first_name, '') || ' ' || COALESCE(middle_name, '') || ' ' || COALESCE(last_name, '') || ' ' || COALESCE(registered_owner_status, '') || ' ' || COALESCE(spouse_name, '') || ' ' || COALESCE(contact_number, '') || ' ' || COALESCE(address_line, '')) LIKE ?",
-                    ["%{$needle}%"]
+                    [$pattern]
                 );
 
                 if (ctype_digit($search)) {
