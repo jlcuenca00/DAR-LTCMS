@@ -13,7 +13,7 @@ class EnsureForm4ReviewStage
         $application = $request->route('application');
 
         if ($application && method_exists($application, 'isFinalized') && $application->isFinalized()) {
-            return back()->with('error', 'LTC Form No. 4 review details are locked after the final Approved/Denied decision.');
+            return back()->with('error', 'LTC Form No. 4 review details are locked after the final Approved/Not Approved decision.');
         }
 
         if (! $application || ! method_exists($application, 'canEditForm4') || ! $application->canEditForm4()) {
