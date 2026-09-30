@@ -44,7 +44,7 @@ class MonitoringReportTest extends TestCase
         $response->assertSee('Municipality Breakdown');
         $response->assertSee('REPORT-RELEASED-001');
         $response->assertSee('REPORT-PENDING-001');
-        $response->assertSee('REPORT-DENIED-001');
+        $response->assertSee('REPORT-NOT-APPROVED-001');
         $response->assertSee('1803-2026-0001 (1)');
         $response->assertSee('not ownership transferred');
         $response->assertSee('do not automatically transfer land ownership');
