@@ -9,6 +9,7 @@ use App\Services\AuditLogger;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
@@ -73,9 +74,23 @@ class ProfileController extends Controller
         $emailChanged = mb_strtolower((string) $user->email) !== mb_strtolower((string) $newEmail);
 
         if ($emailChanged && ! $this->hasRecentPasswordConfirmation($request)) {
+            $challengeKey = 'profile-email-change:'.$user->id.'|'.$request->ip();
+
+            if (RateLimiter::tooManyAttempts($challengeKey, 5)) {
+                $seconds = RateLimiter::availableIn($challengeKey);
+
+                return back()
+                    ->withInput($request->except(['current_password']))
+                    ->withErrors([
+                        'current_password' => "Too many incorrect password attempts. Try again in {$seconds} seconds.",
+                    ]);
+            }
+
             $currentPassword = (string) ($validated['current_password'] ?? '');
 
             if ($currentPassword === '' || ! Hash::check($currentPassword, $user->password)) {
+                RateLimiter::hit($challengeKey, 60);
+
                 return back()
                     ->withInput($request->except(['current_password']))
                     ->withErrors([
@@ -83,6 +98,7 @@ class ProfileController extends Controller
                     ]);
             }
 
+            RateLimiter::clear($challengeKey);
             $request->session()->put('auth.password_confirmed_at', time());
         }
 
