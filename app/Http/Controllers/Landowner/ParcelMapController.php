@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Landholding;
 use App\Models\Parcel;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
 
 class ParcelMapController extends Controller
 {
@@ -91,6 +92,8 @@ class ParcelMapController extends Controller
 
     public function show(Parcel $parcel)
     {
+        Gate::authorize('view', $parcel);
+
         $landowner = Auth::user()->landowner;
 
         if (! $landowner) {
