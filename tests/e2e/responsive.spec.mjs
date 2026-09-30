@@ -252,9 +252,10 @@ test.describe('authenticated Staff responsive route matrix', () => {
 
     test('remote record selector searches and populates an application landowner field', async ({ page }) => {
         await page.goto('/staff/records/landowners/create');
-        await page.locator('input[name="first_name"]').fill('LookupE2E');
-        await page.locator('input[name="last_name"]').fill('Owner');
-        await page.locator('form').first().locator('button[type="submit"]').click();
+        const landownerForm = page.locator('form:has(input[name="first_name"])').first();
+        await landownerForm.locator('input[name="first_name"]').fill('LookupE2E');
+        await landownerForm.locator('input[name="last_name"]').fill('Owner');
+        await landownerForm.locator('button[type="submit"]').click();
         await expect(page).toHaveURL(/\/staff\/records\/landowners\/\d+$/);
 
         await page.goto('/staff/applications/create');
