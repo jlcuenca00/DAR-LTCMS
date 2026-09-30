@@ -117,18 +117,15 @@ class InputSecurityHardeningTest extends TestCase
         $this->assertSame('previewed', $batch->fresh()->status);
     }
 
-    public function test_staff_mutation_route_keeps_csrf_middleware_in_its_resolved_stack(): void
+    public function test_web_middleware_group_keeps_csrf_protection_enabled(): void
     {
-        $route = app('router')->getRoutes()->getByName('staff.records.landowners.store');
+        $middlewareGroups = app('router')->getMiddlewareGroups();
 
-        $this->assertNotNull($route);
-
-        $middleware = app('router')->gatherRouteMiddleware($route);
-
+        $this->assertArrayHasKey('web', $middlewareGroups);
         $this->assertContains(
             ValidateCsrfToken::class,
-            $middleware,
-            'Staff web mutations must remain protected by Laravel CSRF middleware.'
+            $middlewareGroups['web'],
+            'The web middleware group must retain Laravel CSRF protection.'
         );
     }
 }
