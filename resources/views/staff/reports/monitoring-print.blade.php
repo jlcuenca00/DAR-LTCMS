@@ -21,10 +21,10 @@
             'Forwarded to PARPO II' => (int) ($normalizedStatusCounts['endorsed_parpo'] ?? 0),
             'PARPO II Decision Pending' => (int) ($normalizedStatusCounts['for_releasing'] ?? 0),
             'Approved' => (int) (($normalizedStatusCounts['approved'] ?? 0) + ($normalizedStatusCounts['released'] ?? 0)),
-            'Denied' => (int) (($normalizedStatusCounts['denied'] ?? 0) + ($normalizedStatusCounts['not_approved'] ?? 0)),
+            'Not Approved' => (int) (($normalizedStatusCounts['not_approved'] ?? 0) + ($normalizedStatusCounts['denied'] ?? 0)),
         ];
 
-        $activeApplicationCount = collect($statusRows)->except(['Approved', 'Denied'])->sum();
+        $activeApplicationCount = collect($statusRows)->except(['Approved', 'Not Approved'])->sum();
         $approvedResults = (int) (($normalizedClearanceCounts['approved'] ?? 0) + ($normalizedClearanceCounts['released'] ?? 0));
         $deniedResults = (int) (($normalizedClearanceCounts['denied'] ?? 0) + ($normalizedClearanceCounts['not_approved'] ?? 0));
         $backParams = array_filter($filters ?? [], fn ($value) => filled($value));
