@@ -50,6 +50,33 @@ class ProfileTest extends TestCase
         $this->assertSame('old@example.com', $user->fresh()->email);
     }
 
+    public function test_profile_email_change_password_challenge_is_rate_limited(): void
+    {
+        $user = User::factory()->create([
+            'email' => 'rate-old@example.com',
+        ]);
+
+        $this->actingAs($user);
+
+        foreach (range(1, 5) as $attempt) {
+            $this->patch('/profile', [
+                'name' => $user->name,
+                'email' => 'rate-new@example.com',
+                'current_password' => 'wrong-password',
+            ])->assertSessionHasErrors('current_password');
+        }
+
+        $this->patch('/profile', [
+            'name' => $user->name,
+            'email' => 'rate-new@example.com',
+            'current_password' => 'wrong-password',
+        ])->assertSessionHasErrors([
+            'current_password' => fn (string $message) => str_contains($message, 'Too many incorrect password attempts'),
+        ]);
+
+        $this->assertSame('rate-old@example.com', $user->fresh()->email);
+    }
+
     public function test_profile_email_change_resets_verification_and_sends_signed_verification(): void
     {
         Notification::fake();
