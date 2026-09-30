@@ -160,9 +160,9 @@ For a complete positive-path test, process an application through:
 10. Ready for Release
 11. Released to Client
 
-Also test a separate application that receives a **Denied** final decision.
+Also test a separate application that receives a **Not Approved** final decision.
 
-Approved and Denied are final application decisions. After either decision, verify that:
+Approved and Not Approved are final application decisions. After either decision, verify that:
 
 - substantive application editing is locked;
 - supporting-document upload/removal is locked;
@@ -173,10 +173,10 @@ Approved and Denied are final application decisions. After either decision, veri
 
 ## 11. Verify LTC Form No. 5
 
-For final Approved and Denied applications, verify the official output:
+For final Approved and Not Approved applications, verify the official output:
 
 - LTC number uses the annual sequence and page value;
-- result is GRANTED for Approved or DENIED for Denied;
+- result is GRANTED for Approved or DENIED for Not Approved;
 - all linked parcel references/areas are represented correctly;
 - signatory is `ENGR. MANUEL M. GALON, JR., OIC PARPO II`;
 - notarial details display when encoded;
@@ -204,7 +204,7 @@ Use the notification bell/archive and verify that:
 
 - users see only notifications intended for them;
 - important application events link to the correct authorized page; and
-- final Released/Denied events display using current terminology.
+- final Released/Not Approved events display using current terminology.
 
 ## 14. Test monitoring and reports
 
@@ -212,6 +212,6 @@ After creating enough test data, open Monitoring Reports and confirm:
 
 - counts and filters reflect the test records;
 - current workflow statuses are used;
-- Released and Denied output totals are correct;
+- Released and Not Approved output totals are correct;
 - Recorded Output Area is presented as an administrative/reporting metric; and
 - report wording does not imply automatic legal land transfer.
