@@ -714,14 +714,25 @@
                                 <div class="user-disclosure-panel">
                                     <div class="user-field">
                                         <label class="user-label">Linked Landowner Record</label>
-                                        <select name="landowner_id" class="user-select">
-                                            <option value="">No linked landowner record</option>
-                                            @foreach ($landowners as $landowner)
-                                                <option value="{{ $landowner->id }}" {{ (string) old('landowner_id', $linkedLandownerId) === (string) $landowner->id ? 'selected' : '' }}>
-                                                    {{ $landowner->full_name }} — ID {{ $landowner->id }}
-                                                </option>
-                                            @endforeach
-                                        </select>
+                                        <div data-remote-record-select data-lookup-url="{{ route('staff.lookups.landowners', ['scope' => 'user-link', 'current_user_id' => $user->id]) }}" class="space-y-2">
+                                            <input type="search"
+                                                   class="user-select"
+                                                   placeholder="Search landowner name or record ID"
+                                                   autocomplete="off"
+                                                   data-remote-record-search>
+                                            <select name="landowner_id"
+                                                    class="user-select"
+                                                    data-remote-record-control
+                                                    data-placeholder="No linked landowner record">
+                                                <option value="">No linked landowner record</option>
+                                                @if ($selectedLandowner)
+                                                    <option value="{{ $selectedLandowner->id }}" selected>
+                                                        {{ $selectedLandowner->full_name }} — ID {{ $selectedLandowner->id }}
+                                                    </option>
+                                                @endif
+                                            </select>
+                                            <p class="user-card-copy" data-remote-record-status>Search loads a bounded set of eligible landowner records.</p>
+                                        </div>
                                         @error('landowner_id')
                                             <p class="user-error">{{ $message }}</p>
                                         @enderror
