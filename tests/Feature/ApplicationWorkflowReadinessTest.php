@@ -174,7 +174,7 @@ class ApplicationWorkflowReadinessTest extends TestCase
             ->assertSessionHas('success');
 
         $this->assertSame(
-            LandTransferApplication::STATUS_DENIED,
+            LandTransferApplication::STATUS_NOT_APPROVED,
             $complete->fresh()->status
         );
     }
