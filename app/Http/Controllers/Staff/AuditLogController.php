@@ -6,9 +6,12 @@ use App\Http\Controllers\Controller;
 use App\Models\AuditLog;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 
 class AuditLogController extends Controller
 {
+    private const PRINT_RECORD_LIMIT = 500;
+
     public function index(Request $request)
     {
         $filters = $this->validatedFilters($request);
@@ -51,13 +54,23 @@ class AuditLogController extends Controller
     {
         $filters = $this->validatedFilters($request);
 
-        $auditLogs = $this->filteredQuery($filters)->get();
+        $auditLogs = $this->filteredQuery($filters)
+            ->limit(self::PRINT_RECORD_LIMIT + 1)
+            ->get();
+
+        $printTruncated = $auditLogs->count() > self::PRINT_RECORD_LIMIT;
+
+        if ($printTruncated) {
+            $auditLogs = $auditLogs->take(self::PRINT_RECORD_LIMIT)->values();
+        }
 
         return view('staff.audit-logs.print', [
             'auditLogs' => $auditLogs,
             'filters' => $filters,
             'generatedAt' => now(),
             'generatedBy' => $request->user(),
+            'printTruncated' => $printTruncated,
+            'printLimit' => self::PRINT_RECORD_LIMIT,
         ]);
     }
 
@@ -67,6 +80,8 @@ class AuditLogController extends Controller
             'action' => ['nullable', 'string', 'max:100'],
             'application_code' => ['nullable', 'string', 'max:100'],
             'actor' => ['nullable', 'string', 'max:255'],
+            'date_from' => ['nullable', 'date'],
+            'date_to' => ['nullable', 'date', 'after_or_equal:date_from'],
         ]);
     }
 
@@ -96,6 +111,22 @@ class AuditLogController extends Controller
                     ->where('name', 'like', '%' . $filters['actor'] . '%')
                     ->orWhere('email', 'like', '%' . $filters['actor'] . '%');
             });
+        }
+
+        if (! empty($filters['date_from'])) {
+            $query->where(
+                'created_at',
+                '>=',
+                Carbon::parse($filters['date_from'])->startOfDay()
+            );
+        }
+
+        if (! empty($filters['date_to'])) {
+            $query->where(
+                'created_at',
+                '<',
+                Carbon::parse($filters['date_to'])->addDay()->startOfDay()
+            );
         }
 
         return $query;
