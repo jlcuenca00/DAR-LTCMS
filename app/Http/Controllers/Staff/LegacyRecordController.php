@@ -48,7 +48,7 @@ class LegacyRecordController extends Controller
                 $query->where('origin', $request->origin);
             })
             ->when($request->filled('municipality'), function ($query) use ($request) {
-                $query->where('municipality', 'ILIKE', '%' . $request->municipality . '%');
+                $query->where('municipality', $request->municipality);
             })
             ->when($request->filled('search'), function ($query) use ($request) {
                 $search = '%' . mb_strtolower($request->search) . '%';
