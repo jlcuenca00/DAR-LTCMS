@@ -455,7 +455,7 @@ class FinalDecisionLockTest extends TestCase
         $application->refresh();
         $existingLandholding->refresh();
 
-        $this->assertSame(LandTransferApplication::STATUS_DENIED, $application->status);
+        $this->assertSame(LandTransferApplication::STATUS_NOT_APPROVED, $application->status);
 
         $this->assertDatabaseHas('landholdings', [
             'id' => $existingLandholding->id,
