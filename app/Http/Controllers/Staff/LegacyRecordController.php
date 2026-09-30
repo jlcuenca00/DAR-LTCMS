@@ -25,23 +25,15 @@ class LegacyRecordController extends Controller
             ->with(['parcel', 'landowner'])
             ->withCount('records')
             ->when($request->filled('municipality'), function ($query) use ($request) {
-                $query->where('municipality', 'ILIKE', '%' . $request->municipality . '%');
+                $query->where('municipality', $request->municipality);
             })
             ->when($request->filled('search'), function ($query) use ($request) {
-                $search = '%' . $request->search . '%';
+                $search = '%' . mb_strtolower($request->search) . '%';
 
-                $query->where(function ($inner) use ($search) {
-                    $inner->where('package_code', 'ILIKE', $search)
-                        ->orWhere('title_number', 'ILIKE', $search)
-                        ->orWhere('control_number', 'ILIKE', $search)
-                        ->orWhere('parcel_code', 'ILIKE', $search)
-                        ->orWhere('lot_number', 'ILIKE', $search)
-                        ->orWhere('survey_number', 'ILIKE', $search)
-                        ->orWhere('landowner_name', 'ILIKE', $search)
-                        ->orWhere('transferor_name', 'ILIKE', $search)
-                        ->orWhere('transferee_name', 'ILIKE', $search)
-                        ->orWhere('landholding_reference_number', 'ILIKE', $search);
-                });
+                $query->whereRaw(
+                    "LOWER(COALESCE(package_code, '') || ' ' || COALESCE(title_number, '') || ' ' || COALESCE(control_number, '') || ' ' || COALESCE(parcel_code, '') || ' ' || COALESCE(lot_number, '') || ' ' || COALESCE(survey_number, '') || ' ' || COALESCE(landowner_name, '') || ' ' || COALESCE(transferor_name, '') || ' ' || COALESCE(transferee_name, '') || ' ' || COALESCE(landholding_reference_number, '')) LIKE ?",
+                    [$search]
+                );
             })
             ->latest()
             ->limit($archiveView === 'packages' ? 60 : 6)
@@ -59,21 +51,12 @@ class LegacyRecordController extends Controller
                 $query->where('municipality', 'ILIKE', '%' . $request->municipality . '%');
             })
             ->when($request->filled('search'), function ($query) use ($request) {
-                $search = '%' . $request->search . '%';
+                $search = '%' . mb_strtolower($request->search) . '%';
 
-                $query->where(function ($inner) use ($search) {
-                    $inner->where('title_number', 'ILIKE', $search)
-                        ->orWhere('control_number', 'ILIKE', $search)
-                        ->orWhere('application_reference_number', 'ILIKE', $search)
-                        ->orWhere('parcel_code', 'ILIKE', $search)
-                        ->orWhere('lot_number', 'ILIKE', $search)
-                        ->orWhere('survey_number', 'ILIKE', $search)
-                        ->orWhere('landowner_name', 'ILIKE', $search)
-                        ->orWhere('transferor_name', 'ILIKE', $search)
-                        ->orWhere('transferee_name', 'ILIKE', $search)
-                        ->orWhere('previous_dar_reference_number', 'ILIKE', $search)
-                        ->orWhere('landholding_reference_number', 'ILIKE', $search);
-                });
+                $query->whereRaw(
+                    "LOWER(COALESCE(title_number, '') || ' ' || COALESCE(control_number, '') || ' ' || COALESCE(application_reference_number, '') || ' ' || COALESCE(parcel_code, '') || ' ' || COALESCE(lot_number, '') || ' ' || COALESCE(survey_number, '') || ' ' || COALESCE(landowner_name, '') || ' ' || COALESCE(transferor_name, '') || ' ' || COALESCE(transferee_name, '') || ' ' || COALESCE(previous_dar_reference_number, '') || ' ' || COALESCE(landholding_reference_number, '')) LIKE ?",
+                    [$search]
+                );
             })
             ->latest()
             ->paginate(15)
