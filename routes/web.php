@@ -22,6 +22,7 @@ use App\Http\Controllers\Staff\MonitoringReportController;
 use App\Http\Controllers\Staff\ParcelMapController;
 use App\Http\Controllers\Staff\ParcelReviewFlagController;
 use App\Http\Controllers\Staff\RecordSearchController;
+use App\Http\Controllers\Staff\RecordLookupController;
 use App\Http\Controllers\Staff\SourceRecordLandownerLinkController;
 use App\Http\Controllers\Staff\SourceRecordPackageController;
 use App\Http\Controllers\Staff\SourceRecordPackageImportController;
@@ -76,6 +77,11 @@ Route::middleware(['auth', 'role:staff'])
             ->name('audit-logs.index');
         Route::get('/audit-logs/print', [AuditLogController::class, 'print'])
             ->name('audit-logs.print');
+
+        Route::get('/lookups/landowners', [RecordLookupController::class, 'landowners'])
+            ->name('lookups.landowners');
+        Route::get('/lookups/parcels', [RecordLookupController::class, 'parcels'])
+            ->name('lookups.parcels');
 
         Route::resource('users', UserManagementController::class)
             ->only(['index', 'create', 'store', 'edit', 'update']);
