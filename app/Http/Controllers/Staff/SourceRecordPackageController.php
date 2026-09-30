@@ -22,22 +22,16 @@ use Throwable;
 
 class SourceRecordPackageController extends Controller
 {
-    public function create()
+    public function create(Request $request)
     {
-        $parcels = Parcel::query()
-            ->orderBy('parcel_code')
-            ->limit(500)
-            ->get([
-                'id',
-                'parcel_code',
-                'title_no',
-                'municipality',
-                'barangay',
-            ]);
+        $selectedParcelId = $request->session()->getOldInput('parcel_id');
+        $selectedParcel = $selectedParcelId
+            ? Parcel::query()->find($selectedParcelId)
+            : null;
 
         return view('staff.source-record-packages.create', [
             'sourceScopes' => LegacyRecord::SOURCE_SCOPES,
-            'parcels' => $parcels,
+            'selectedParcel' => $selectedParcel,
         ]);
     }
 
@@ -169,35 +163,20 @@ class SourceRecordPackageController extends Controller
     {
         $sourceRecordPackage->load(['records', 'parcel', 'landowner', 'sourceFileUploadedBy']);
 
-        $parcels = Parcel::query()
-            ->orderBy('parcel_code')
-            ->limit(500)
-            ->get([
-                'id',
-                'parcel_code',
-                'title_no',
-                'municipality',
-                'barangay',
-            ]);
+        $selectedParcelId = request()->session()->getOldInput('parcel_id', $sourceRecordPackage->parcel_id);
+        $selectedParcel = $selectedParcelId
+            ? Parcel::query()->find($selectedParcelId)
+            : null;
 
-        $landowners = Landowner::query()
-            ->orderBy('last_name')
-            ->orderBy('first_name')
-            ->limit(500)
-            ->get([
-                'id',
-                'first_name',
-                'middle_name',
-                'last_name',
-                'suffix',
-                'municipality',
-                'barangay',
-            ]);
+        $selectedLandownerId = request()->session()->getOldInput('landowner_id', $sourceRecordPackage->landowner_id);
+        $selectedLandowner = $selectedLandownerId
+            ? Landowner::query()->find($selectedLandownerId)
+            : null;
 
         return view('staff.source-record-packages.show', [
             'package' => $sourceRecordPackage,
-            'parcels' => $parcels,
-            'landowners' => $landowners,
+            'selectedParcel' => $selectedParcel,
+            'selectedLandowner' => $selectedLandowner,
             'sourceScopes' => LegacyRecord::SOURCE_SCOPES,
         ]);
     }
