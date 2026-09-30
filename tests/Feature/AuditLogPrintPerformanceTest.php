@@ -76,9 +76,9 @@ class AuditLogPrintPerformanceTest extends TestCase
             return $logs->total() === 1
                 && $logs->first()?->action === 'inside_window';
         });
-        $index->assertSee('inside window');
-        $index->assertDontSee('before window');
-        $index->assertDontSee('after window');
+        $index->assertSee('Inside Window');
+        $index->assertDontSee('Before Window');
+        $index->assertDontSee('After Window');
 
         $print = $this->actingAs($staff)
             ->get(route('staff.audit-logs.print', $filters));
