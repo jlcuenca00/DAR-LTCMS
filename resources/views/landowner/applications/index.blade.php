@@ -390,7 +390,7 @@
             </div>
 
             <div class="lo-app-count">
-                <strong>{{ $applications->count() }}</strong>
+                <strong>{{ $applications->total() }}</strong>
                 <span>Linked records</span>
             </div>
         </article>
@@ -480,6 +480,11 @@
                     </article>
                 @endforeach
             </div>
+            @if ($applications->hasPages())
+                <div class="mt-4">
+                    {{ $applications->links() }}
+                </div>
+            @endif
         @endif
     </section>
 </x-landowner-shell>
