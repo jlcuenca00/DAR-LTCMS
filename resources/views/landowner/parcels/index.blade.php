@@ -111,7 +111,7 @@
             </div>
 
             <div class="lo-parcel-overview-actions">
-                <span class="lo-parcel-count"><i class="fa-solid fa-link"></i>{{ $landholdings->count() }} linked</span>
+                <span class="lo-parcel-count"><i class="fa-solid fa-link"></i>{{ $landholdings->total() }} linked</span>
                 <a href="{{ route('landowner.parcel-map.index') }}" class="lo-button lo-button-primary">
                     <i class="fa-solid fa-map-location-dot"></i>
                     Open Map
@@ -190,6 +190,11 @@
                         </tbody>
                     </table>
                 </div>
+                @if ($landholdings->hasPages())
+                    <div class="mt-4">
+                        {{ $landholdings->links() }}
+                    </div>
+                @endif
             @endif
         </article>
     </section>
