@@ -32,7 +32,7 @@
         $decisionLabel = function (?string $status): string {
             return match ($status) {
                 'approved', 'released' => 'Approved',
-                'denied', 'not_approved' => 'Denied',
+                'not_approved', 'denied' => 'Not Approved',
                 default => ucwords(str_replace('_', ' ', (string) $status)),
             };
         };
@@ -172,7 +172,7 @@
                 <tr>
                     <td><span class="label">Total Applications</span><div class="summary-number">{{ number_format($totalApplications) }}</div><div class="summary-note">Matching report filters</div></td>
                     <td><span class="label">Active Applications</span><div class="summary-number">{{ number_format($activeApplicationCount) }}</div><div class="summary-note">Still in clearance processing</div></td>
-                    <td><span class="label">Recorded Results</span><div class="summary-number">{{ number_format($totalClearances) }}</div><div class="summary-note">Approved or Denied snapshots</div></td>
+                    <td><span class="label">Recorded Results</span><div class="summary-number">{{ number_format($totalClearances) }}</div><div class="summary-note">Approved or Not Approved snapshots</div></td>
                     <td><span class="label">Recorded Output Area</span><div class="summary-number">{{ number_format((float) $totalClearanceArea, 4) }}</div><div class="summary-note">ha in final snapshots; not ownership transferred</div></td>
                 </tr>
             </table>
@@ -201,7 +201,7 @@
                                 <span>{{ number_format((float) $releasedOutputArea, 4) }} ha in snapshots</span>
                             </div>
                             <div class="result denied">
-                                <span class="label">Denied</span>
+                                <span class="label">Not Approved</span>
                                 <strong>{{ number_format($deniedResults) }}</strong>
                                 <span>{{ number_format((float) $deniedOutputArea, 4) }} ha in snapshots</span>
                             </div>
