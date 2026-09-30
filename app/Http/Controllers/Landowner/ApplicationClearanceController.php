@@ -3,16 +3,15 @@
 namespace App\Http\Controllers\Landowner;
 
 use App\Http\Controllers\Controller;
-use App\Models\Landowner;
 use App\Models\LandTransferApplication;
 use Barryvdh\DomPDF\Facade\Pdf;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
 
 class ApplicationClearanceController extends Controller
 {
     public function show(LandTransferApplication $application)
     {
-        $this->authorizeLandownerApplication($application);
+        Gate::authorize('viewDecisionOutput', $application);
         $application->load(['clearance', 'documents']);
 
         if (! $application->isFinalized()) {
@@ -43,7 +42,7 @@ class ApplicationClearanceController extends Controller
 
     public function pdf(LandTransferApplication $application)
     {
-        $this->authorizeLandownerApplication($application);
+        Gate::authorize('viewDecisionOutput', $application);
         $application->load(['clearance', 'documents']);
 
         if (! $application->isFinalized()) {
@@ -78,15 +77,4 @@ class ApplicationClearanceController extends Controller
         return $pdf->stream('LTC-Form-No-5-' . $safeApplicationCode . '.pdf');
     }
 
-    private function authorizeLandownerApplication(LandTransferApplication $application): void
-    {
-        $landownerIds = Landowner::query()
-            ->where('user_id', Auth::id())
-            ->pluck('id');
-
-        abort_unless(
-            $landownerIds->contains(fn ($landownerId) => $application->isLinkedToLandowner((int) $landownerId)),
-            403
-        );
-    }
 }

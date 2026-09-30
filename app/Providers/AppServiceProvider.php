@@ -3,9 +3,15 @@
 namespace App\Providers;
 
 use App\Models\LandTransferApplication;
+use App\Models\Parcel;
+use App\Models\SystemNotification;
 use App\Observers\LandTransferApplicationObserver;
+use App\Policies\LandTransferApplicationPolicy;
+use App\Policies\ParcelPolicy;
+use App\Policies\SystemNotificationPolicy;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Pagination\Paginator;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
 
@@ -25,6 +31,10 @@ class AppServiceProvider extends ServiceProvider
             ->symbols());
 
         LandTransferApplication::observe(LandTransferApplicationObserver::class);
+
+        Gate::policy(Parcel::class, ParcelPolicy::class);
+        Gate::policy(LandTransferApplication::class, LandTransferApplicationPolicy::class);
+        Gate::policy(SystemNotification::class, SystemNotificationPolicy::class);
 
         // Use the shared DAR-LTCMS pagination UI across all paginated lists.
         // Desktop shows numbered pages with the first/last page visible, while

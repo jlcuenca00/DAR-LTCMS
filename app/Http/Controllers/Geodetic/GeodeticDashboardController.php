@@ -55,6 +55,17 @@ class GeodeticDashboardController extends Controller
             });
 
         $recentParcels = Parcel::query()
+            ->select([
+                'id',
+                'parcel_code',
+                'title_no',
+                'tax_decl_no',
+                'municipality',
+                'barangay',
+                'area_hectares',
+                'geometry_geojson',
+                'created_at',
+            ])
             ->latest()
             ->limit(6)
             ->get();

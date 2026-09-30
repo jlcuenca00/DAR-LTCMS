@@ -12,7 +12,19 @@ class GeodeticPortalController extends Controller
      */
     public function parcels()
     {
-        $landholdings = Landholding::with(['parcel', 'landowner'])
+        $landholdings = Landholding::query()
+            ->select([
+                'id',
+                'landowner_id',
+                'parcel_id',
+                'area_hectares',
+                'status',
+                'created_at',
+            ])
+            ->with([
+                'parcel:id,parcel_code,title_no,tax_decl_no,survey_plan_number,municipality,barangay,province,agricultural_status,status,geometry_geojson',
+                'landowner:id,first_name,middle_name,last_name,suffix',
+            ])
             ->orderByDesc('created_at')
             ->paginate(20)
             ->withQueryString();

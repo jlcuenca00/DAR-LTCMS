@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\SystemNotification;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
 
 class NotificationController extends Controller
 {
@@ -26,7 +26,7 @@ class NotificationController extends Controller
 
     public function open(Request $request, SystemNotification $notification)
     {
-        abort_unless($notification->user_id === $request->user()->id, 403);
+        Gate::authorize('view', $notification);
 
         $notification->markAsRead();
 
@@ -35,7 +35,7 @@ class NotificationController extends Controller
 
     public function markAsRead(Request $request, SystemNotification $notification)
     {
-        abort_unless($notification->user_id === $request->user()->id, 403);
+        Gate::authorize('view', $notification);
 
         $notification->markAsRead();
 

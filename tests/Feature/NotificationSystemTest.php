@@ -111,6 +111,32 @@ class NotificationSystemTest extends TestCase
         $this->assertNull($notification->fresh()->read_at);
     }
 
+    public function test_user_cannot_open_another_users_notification(): void
+    {
+        $owner = User::factory()->create([
+            'role' => User::ROLE_STAFF,
+            'is_active' => true,
+        ]);
+
+        $otherUser = User::factory()->create([
+            'role' => User::ROLE_STAFF,
+            'is_active' => true,
+        ]);
+
+        $notification = SystemNotification::create([
+            'user_id' => $owner->id,
+            'type' => 'private_notification',
+            'title' => 'Private notification',
+            'message' => 'Only the assigned user may open this notification.',
+        ]);
+
+        $this->actingAs($otherUser)
+            ->get(route('notifications.open', $notification))
+            ->assertForbidden();
+
+        $this->assertNull($notification->fresh()->read_at);
+    }
+
     public function test_clicking_notification_opens_related_page_and_marks_it_read(): void
     {
         $staffUser = User::factory()->create([

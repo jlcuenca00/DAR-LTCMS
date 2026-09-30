@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Landholding;
 use App\Models\Landowner;
+use App\Models\LandTransferApplication;
 use App\Models\Parcel;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -50,6 +51,70 @@ class GeodeticReadOnlyTest extends TestCase
         $response->assertSee('GEO-PARCEL-001');
         $response->assertSee('GEO-TITLE-001');
         $response->assertSee('Geo Reference');
+    }
+
+    public function test_geodetic_reference_queries_do_not_load_unneeded_landowner_or_application_fields(): void
+    {
+        $staff = User::factory()->create(['role' => User::ROLE_STAFF]);
+        $geodetic = User::factory()->create(['role' => User::ROLE_GEODETIC]);
+
+        $landowner = Landowner::create([
+            'first_name' => 'Least',
+            'middle_name' => 'Privilege',
+            'last_name' => 'Owner',
+            'contact_number' => '09171234567',
+            'address_line' => 'Sensitive address line',
+            'province' => 'Negros Oriental',
+        ]);
+
+        $application = LandTransferApplication::create([
+            'application_code' => 'GEO-LIMITED-APP-001',
+            'transferor_name' => 'Least Privilege Owner',
+            'transferee_name' => 'Other Party',
+            'decision_notes' => 'Internal legal decision notes must not be loaded for Geodetic reference display.',
+            'status' => LandTransferApplication::STATUS_PENDING_LEGAL_REVIEW,
+            'encoded_by' => $staff->id,
+        ]);
+
+        $parcel = Parcel::create([
+            'parcel_code' => 'GEO-LIMITED-PARCEL-001',
+            'municipality' => 'Dumaguete City',
+            'barangay' => 'Bantayan',
+            'province' => 'Negros Oriental',
+            'area_hectares' => 1.2500,
+            'status' => 'active',
+        ]);
+
+        Landholding::create([
+            'landowner_id' => $landowner->id,
+            'parcel_id' => $parcel->id,
+            'source_application_id' => $application->id,
+            'area_hectares' => 1.2500,
+            'status' => 'active',
+        ]);
+
+        $this->actingAs($geodetic)
+            ->get(route('geodetic.parcels.index'))
+            ->assertOk()
+            ->assertViewHas('landholdings', function ($records) {
+                $holding = $records->first();
+
+                return $holding
+                    && ! array_key_exists('contact_number', $holding->landowner->getAttributes())
+                    && ! array_key_exists('address_line', $holding->landowner->getAttributes());
+            });
+
+        $this->actingAs($geodetic)
+            ->get(route('geodetic.parcels.show', $parcel))
+            ->assertOk()
+            ->assertViewHas('parcel', function ($viewParcel) {
+                $holding = $viewParcel->landholdings->first();
+
+                return $holding
+                    && ! array_key_exists('contact_number', $holding->landowner->getAttributes())
+                    && ! array_key_exists('address_line', $holding->landowner->getAttributes())
+                    && array_keys($holding->sourceApplication->getAttributes()) === ['id', 'application_code'];
+            });
     }
 
     public function test_geodetic_user_cannot_access_clearance_application_reference_page(): void
