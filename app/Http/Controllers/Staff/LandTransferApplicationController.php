@@ -225,13 +225,12 @@ class LandTransferApplicationController extends Controller
         ->latest();
 
     if (! empty($filters['search'])) {
-        $search = strtolower($filters['search']);
+        $search = mb_strtolower($filters['search']);
 
-        $applicationsQuery->where(function ($query) use ($search) {
-            $query->whereRaw('LOWER(application_code) LIKE ?', ["%{$search}%"])
-                ->orWhereRaw('LOWER(transferor_name) LIKE ?', ["%{$search}%"])
-                ->orWhereRaw('LOWER(transferee_name) LIKE ?', ["%{$search}%"]);
-        });
+        $applicationsQuery->whereRaw(
+            "LOWER(COALESCE(application_code, '') || ' ' || COALESCE(transferor_name, '') || ' ' || COALESCE(transferee_name, '')) LIKE ?",
+            ["%{$search}%"]
+        );
     }
 
     if (! empty($filters['status'])) {
@@ -620,16 +619,36 @@ private function generateApplicationCode(): string
 {
     $year = now()->format('Y');
     $prefix = "{$year}-";
+    $driver = DB::connection()->getDriverName();
 
     /*
      * Application codes are allocated inside the surrounding creation
-     * transaction. Serialize the annual sequence on PostgreSQL so concurrent
-     * Staff encoding requests cannot calculate the same next code.
+     * transaction. PostgreSQL uses a year-scoped advisory transaction lock so
+     * different annual sequences do not require locking the entire table.
      */
-    if (DB::connection()->getDriverName() === 'pgsql') {
-        DB::statement('LOCK TABLE land_transfer_applications IN SHARE ROW EXCLUSIVE MODE');
+    if ($driver === 'pgsql') {
+        DB::selectOne(
+            'SELECT pg_advisory_xact_lock(hashtextextended(?, 0))',
+            ['dar-ltcms:application-code:' . $year]
+        );
+
+        $row = DB::selectOne(
+            "SELECT COALESCE(MAX(CAST(SUBSTRING(application_code FROM '[0-9]+$') AS INTEGER)), 0) AS max_sequence
+             FROM land_transfer_applications
+             WHERE application_code LIKE ?
+               AND application_code ~ ?",
+            [$prefix . '%', '^' . preg_quote($year, '/') . '-[0-9]+$']
+        );
+
+        $nextNumber = ((int) ($row->max_sequence ?? 0)) + 1;
+
+        return $prefix . str_pad((string) $nextNumber, 4, '0', STR_PAD_LEFT);
     }
 
+    /*
+     * Non-PostgreSQL is used only by lightweight development/test setups.
+     * Preserve compatible behavior there without PostgreSQL-specific SQL.
+     */
     $existingSequences = LandTransferApplication::query()
         ->where('application_code', 'LIKE', $prefix . '%')
         ->pluck('application_code')
