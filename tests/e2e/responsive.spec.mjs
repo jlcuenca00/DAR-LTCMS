@@ -262,8 +262,11 @@ test.describe('authenticated Staff responsive route matrix', () => {
         await lookup.locator('[data-remote-record-search]').fill('LookupE2E Owner');
 
         const select = lookup.locator('[data-remote-record-control]');
-        await expect(select.locator('option')).toContainText(['LookupE2E Owner']);
-        await select.selectOption({ label: /LookupE2E Owner/ });
+        const matchingOption = select.locator('option').filter({ hasText: 'LookupE2E Owner' }).first();
+        await expect(matchingOption).toBeAttached();
+        const value = await matchingOption.getAttribute('value');
+        expect(value).toBeTruthy();
+        await select.selectOption(value);
 
         await expect(select).not.toHaveValue('');
     });
