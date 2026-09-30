@@ -75,6 +75,26 @@ class ProfileTest extends TestCase
         Notification::assertSentTo($user, EmailAddedVerificationNotification::class);
     }
 
+    public function test_recent_password_confirmation_allows_email_change_without_reentering_password(): void
+    {
+        Notification::fake();
+
+        $user = User::factory()->create([
+            'email' => 'confirmed-old@example.com',
+        ]);
+
+        $this->actingAs($user)
+            ->withSession(['auth.password_confirmed_at' => time()])
+            ->patch('/profile', [
+                'name' => $user->name,
+                'email' => 'confirmed-new@example.com',
+            ])
+            ->assertSessionHasNoErrors();
+
+        $this->assertSame('confirmed-new@example.com', $user->fresh()->email);
+        $this->assertNull($user->fresh()->email_verified_at);
+    }
+
     public function test_email_is_optional_for_username_based_accounts(): void
     {
         $user = User::factory()->create();
