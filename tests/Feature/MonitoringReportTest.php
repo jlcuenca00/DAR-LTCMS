@@ -18,10 +18,10 @@ class MonitoringReportTest extends TestCase
 
         $legacyReleased = $this->makeApplication($staff, 'REPORT-RELEASED-001', 'Dumaguete City', 'Bantayan', LandTransferApplication::STATUS_RELEASED, '2026-08-10');
         $pending = $this->makeApplication($staff, 'REPORT-PENDING-001', 'Valencia', 'North Poblacion', LandTransferApplication::STATUS_PENDING_LEGAL_REVIEW, '2026-08-11');
-        $denied = $this->makeApplication($staff, 'REPORT-DENIED-001', 'Dumaguete City', 'Cadawinonan', LandTransferApplication::STATUS_DENIED, '2026-08-12');
+        $notApproved = $this->makeApplication($staff, 'REPORT-NOT-APPROVED-001', 'Dumaguete City', 'Cadawinonan', LandTransferApplication::STATUS_NOT_APPROVED, '2026-08-12');
 
         $this->makeClearance($staff, $legacyReleased, LandTransferApplication::STATUS_RELEASED, 3.5000, '1803-2026-0001 (1)');
-        $this->makeClearance($staff, $denied, LandTransferApplication::STATUS_DENIED, 2.0000, '1803-2026-0002 (1)');
+        $this->makeClearance($staff, $notApproved, LandTransferApplication::STATUS_NOT_APPROVED, 2.0000, '1803-2026-0002 (1)');
 
         $response = $this->actingAs($staff)->get(route('staff.reports.monitoring.index'));
 
@@ -34,7 +34,7 @@ class MonitoringReportTest extends TestCase
         $response->assertViewHas('statusCounts', function ($counts) {
             return (int) ($counts[LandTransferApplication::STATUS_RELEASED] ?? 0) === 1
                 && (int) ($counts[LandTransferApplication::STATUS_PENDING_LEGAL_REVIEW] ?? 0) === 1
-                && (int) ($counts[LandTransferApplication::STATUS_DENIED] ?? 0) === 1;
+                && (int) ($counts[LandTransferApplication::STATUS_NOT_APPROVED] ?? 0) === 1;
         });
 
         $response->assertSee('Monitoring and Reports');
