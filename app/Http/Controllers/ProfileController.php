@@ -4,13 +4,16 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\ProfileUpdateRequest;
 use App\Models\User;
+use App\Notifications\EmailAddedVerificationNotification;
 use App\Services\AuditLogger;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\StreamedResponse;
+use Throwable;
 
 class ProfileController extends Controller
 {
@@ -69,6 +72,20 @@ class ProfileController extends Controller
             : null;
         $emailChanged = mb_strtolower((string) $user->email) !== mb_strtolower((string) $newEmail);
 
+        if ($emailChanged && ! $this->hasRecentPasswordConfirmation($request)) {
+            $currentPassword = (string) ($validated['current_password'] ?? '');
+
+            if ($currentPassword === '' || ! Hash::check($currentPassword, $user->password)) {
+                return back()
+                    ->withInput($request->except(['current_password']))
+                    ->withErrors([
+                        'current_password' => 'Confirm your current password before changing the recovery email. Google-only accounts without a local password should contact authorized DAR staff.',
+                    ]);
+            }
+
+            $request->session()->put('auth.password_confirmed_at', time());
+        }
+
         $user->fill([
             'name' => $validated['name'],
             'email' => $newEmail,
@@ -119,7 +136,59 @@ class ProfileController extends Controller
             ]
         );
 
-        return Redirect::route('profile.edit')->with('status', 'profile-updated');
+        $verificationMessage = null;
+
+        if ($emailChanged && filled($user->email)) {
+            try {
+                $user->notify(new EmailAddedVerificationNotification());
+
+                AuditLogger::record(
+                    'profile_email_verification_email_sent',
+                    null,
+                    $user,
+                    [
+                        'user_id' => $user->id,
+                        'username' => $user->username,
+                        'recipient_email' => $user->email,
+                        'verification_link_expires_in_hours' => 24,
+                    ]
+                );
+
+                $verificationMessage = 'Your email was changed. Verify the new address before it can be used for password recovery.';
+            } catch (Throwable $exception) {
+                report($exception);
+
+                AuditLogger::record(
+                    'profile_email_verification_email_failed',
+                    null,
+                    $user,
+                    [
+                        'user_id' => $user->id,
+                        'username' => $user->username,
+                        'recipient_email' => $user->email,
+                        'delivery_error_type' => $exception::class,
+                    ]
+                );
+
+                $verificationMessage = 'Your email was changed, but the verification message could not be sent. The address remains unavailable for password recovery.';
+            }
+        }
+
+        $response = Redirect::route('profile.edit')->with('status', 'profile-updated');
+
+        if ($verificationMessage !== null) {
+            $response->with('email_verification_status', $verificationMessage);
+        }
+
+        return $response;
+    }
+
+    private function hasRecentPasswordConfirmation(Request $request): bool
+    {
+        $confirmedAt = (int) $request->session()->get('auth.password_confirmed_at', 0);
+        $timeout = (int) config('auth.password_timeout', 10800);
+
+        return $confirmedAt > 0 && (time() - $confirmedAt) < $timeout;
     }
 
     /**
