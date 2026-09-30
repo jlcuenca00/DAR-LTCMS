@@ -269,7 +269,7 @@ class EmailOtpPasswordRecoveryTest extends TestCase
             ->post(route('staff.users.reset-password', $user))
             ->assertRedirect(route('staff.users.edit', $user))
             ->assertSessionHas('error', function (string $error) {
-                return str_contains($error, 'registered email address');
+                return str_contains($error, 'verified recovery email address');
             });
 
         $fresh = $user->fresh();
