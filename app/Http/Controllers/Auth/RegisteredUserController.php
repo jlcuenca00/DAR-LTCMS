@@ -333,7 +333,9 @@ class RegisteredUserController extends Controller
             return true;
         }
 
-        return filled($payload['hd'] ?? null);
+        $hostedDomain = mb_strtolower(trim((string) ($payload['hd'] ?? '')));
+
+        return $hostedDomain !== '' && hash_equals($hostedDomain, $domain);
     }
 
     private function uniqueGoogleUsername(string $email, string $name): string
