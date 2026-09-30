@@ -13,6 +13,8 @@
                 : null,
             'Application' => $filters['application_code'] ?? null,
             'Actor' => $filters['actor'] ?? null,
+            'Date From' => $filters['date_from'] ?? null,
+            'Date To' => $filters['date_to'] ?? null,
         ])->filter();
 
         $recordLabel = function ($log): string {
@@ -182,6 +184,18 @@
 
         .filters strong { color: #14532d; }
 
+        .print-limit-note {
+            margin: 0 0 13px;
+            padding: 9px 10px;
+            border: 1px solid #fed7aa;
+            background: #fff7ed;
+            color: #9a3412;
+            font-size: 10.5px;
+            line-height: 1.45;
+        }
+
+        .print-limit-note strong { color: #7c2d12; }
+
         table {
             width: 100%;
             border-collapse: collapse;
@@ -282,7 +296,7 @@
             </div>
             <div class="meta-item">
                 <span class="meta-label">Report Scope</span>
-                <span class="meta-value">{{ $activeFilters->isEmpty() ? 'All audit records' : 'Filtered audit records' }}</span>
+                <span class="meta-value">{{ $activeFilters->isEmpty() ? 'Newest audit records within safe print limit' : 'Filtered audit records' }}</span>
             </div>
         </section>
 
@@ -294,6 +308,13 @@
                 {{ $activeFilters->map(fn ($value, $label) => $label . ': ' . $value)->implode(' · ') }}
             @endif
         </div>
+
+        @if ($printTruncated)
+            <div class="print-limit-note">
+                <strong>Safe print limit applied.</strong>
+                Showing the newest {{ number_format($printLimit) }} matching audit entries. Narrow the date range or other filters to print older matching records in a separate batch.
+            </div>
+        @endif
 
         <table>
             <thead>
