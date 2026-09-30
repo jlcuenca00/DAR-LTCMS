@@ -656,7 +656,7 @@
                                         <label class="user-label">Linked Landowner Record</label>
                                         <div data-remote-record-select data-lookup-url="{{ route('staff.lookups.landowners', ['scope' => 'user-link']) }}" class="space-y-2">
                                             <input type="search"
-                                                   class="user-select"
+                                                   class="user-input"
                                                    placeholder="Search landowner name or record ID"
                                                    autocomplete="off"
                                                    data-remote-record-search>
