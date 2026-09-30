@@ -39,7 +39,7 @@ The implemented system covers:
 
 ## Critical legal/operational boundary
 
-An Approved or Denied application means DAR-LTCMS has recorded the final administrative clearance decision. Release of the signed output is tracked separately.
+An Approved or Not Approved application means DAR-LTCMS has recorded the final administrative clearance decision. Release of the signed output is tracked separately.
 
 It does **not** mean the platform has:
 
@@ -103,7 +103,7 @@ Forwarded to PARPO II
         ↓
 PARPO II Decision Pending
         ↓
-Approved or Denied (FINAL)
+Approved or Not Approved (FINAL)
         ↓
 Signed Form No. 5 / Ready for Release
         ↓
@@ -113,15 +113,15 @@ Released to Client
 Current final application decision states:
 
 - `Approved`
-- `Denied`
+- `Not Approved`
 
-Release is a separate administrative delivery status. A signed final output may be marked **Ready for Release** and later **Released to Client** without changing the final Approved/Denied decision.
+Release is a separate administrative delivery status. A signed final output may be marked **Ready for Release** and later **Released to Client** without changing the final Approved/Not Approved decision.
 
 Legacy stored values `released`, `not_approved`, `pending_review`, and `draft` remain recognized only for historical compatibility.
 
 ## Final-decision freeze
 
-After Approved or Denied:
+After Approved or Not Approved:
 
 - editing is locked;
 - supporting-document upload/removal is locked;
@@ -159,7 +159,7 @@ Final Form No. 5 behavior includes:
 - all linked Parcel title/Tax Declaration/lot/survey references as applicable
 - combined recorded area
 - `GRANTED` for Approved
-- `DENIED` for Denied
+- `DENIED` for Not Approved
 - signatory: `ENGR. MANUEL M. GALON, JR., OIC PARPO II`
 - notarial Doc No., Page No., Book No., Series when encoded
 - 8.5 x 13 inch print/PDF layout
@@ -187,7 +187,7 @@ The system preserves:
 
 Monitoring Reports use administrative status/output data and may filter by date, status, and municipality.
 
-Approved/Denied output totals, release totals, and **Recorded Output Area** are monitoring/reporting metrics only; they do not represent registry mutation or conclusively completed legal ownership transfer.
+Approved/Not Approved output totals, release totals, and **Recorded Output Area** are monitoring/reporting metrics only; they do not represent registry mutation or conclusively completed legal ownership transfer.
 
 ## Map baseline
 
