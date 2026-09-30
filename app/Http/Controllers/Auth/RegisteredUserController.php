@@ -76,12 +76,42 @@ class RegisteredUserController extends Controller
         if (filled($user->email)) {
             try {
                 $user->notify(new EmailAddedVerificationNotification());
+
+                AuditLogger::record(
+                    'user_email_verification_email_sent',
+                    null,
+                    $user,
+                    [
+                        'user_id' => $user->id,
+                        'username' => $user->username,
+                        'recipient_email' => $user->email,
+                        'reason' => 'self_registration',
+                        'verification_link_expires_in_hours' => 24,
+                    ],
+                    $user->id
+                );
+
                 $request->session()->flash(
                     'registration_email_status',
                     'A verification link was sent to your email. Verify it before using email password recovery.'
                 );
             } catch (Throwable $exception) {
                 report($exception);
+
+                AuditLogger::record(
+                    'user_email_verification_email_failed',
+                    null,
+                    $user,
+                    [
+                        'user_id' => $user->id,
+                        'username' => $user->username,
+                        'recipient_email' => $user->email,
+                        'reason' => 'self_registration',
+                        'delivery_error_type' => $exception::class,
+                    ],
+                    $user->id
+                );
+
                 $request->session()->flash(
                     'registration_email_warning',
                     'Your registration was received, but the email verification message could not be sent. Your account is still waiting for DAR review.'
@@ -219,12 +249,42 @@ class RegisteredUserController extends Controller
         if (! $googleEmailAuthoritative) {
             try {
                 $user->notify(new EmailAddedVerificationNotification());
+
+                AuditLogger::record(
+                    'user_email_verification_email_sent',
+                    null,
+                    $user,
+                    [
+                        'user_id' => $user->id,
+                        'username' => $user->username,
+                        'recipient_email' => $user->email,
+                        'reason' => 'google_third_party_email',
+                        'verification_link_expires_in_hours' => 24,
+                    ],
+                    $user->id
+                );
+
                 $request->session()->flash(
                     'registration_email_status',
                     'Google sign-in was verified, but this third-party email still needs a DAR-LTCMS verification link before it can be used for password recovery.'
                 );
             } catch (Throwable $exception) {
                 report($exception);
+
+                AuditLogger::record(
+                    'user_email_verification_email_failed',
+                    null,
+                    $user,
+                    [
+                        'user_id' => $user->id,
+                        'username' => $user->username,
+                        'recipient_email' => $user->email,
+                        'reason' => 'google_third_party_email',
+                        'delivery_error_type' => $exception::class,
+                    ],
+                    $user->id
+                );
+
                 $request->session()->flash(
                     'registration_email_warning',
                     'Your registration was received, but the local email verification message could not be sent. The address remains unavailable for password recovery.'
