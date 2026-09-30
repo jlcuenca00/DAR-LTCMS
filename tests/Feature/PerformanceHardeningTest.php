@@ -32,6 +32,16 @@ class PerformanceHardeningTest extends TestCase
             'parcels_active_mapped_location_idx',
             'parcels_unmapped_created_idx',
             'clearances_generated_at_idx',
+            'ltc_apps_search_trgm_idx',
+            'ltc_apps_application_code_trgm_idx',
+            'app_docs_reference_trgm_idx',
+            'landowners_search_trgm_idx',
+            'parcels_search_trgm_idx',
+            'users_search_trgm_idx',
+            'source_packages_search_trgm_idx',
+            'legacy_records_search_trgm_idx',
+            'legacy_records_parcel_ref_lower_idx',
+            'legacy_records_landholding_ref_lower_idx',
         ];
 
         $actual = DB::table('pg_indexes')
@@ -44,6 +54,10 @@ class PerformanceHardeningTest extends TestCase
         sort($actual);
 
         $this->assertSame($expected, $actual);
+        $this->assertTrue(
+            DB::table('pg_extension')->where('extname', 'pg_trgm')->exists(),
+            'Expected pg_trgm to support indexed contains-searches.'
+        );
     }
 
     public function test_staff_map_query_count_stays_bounded_as_parcel_rows_grow(): void
