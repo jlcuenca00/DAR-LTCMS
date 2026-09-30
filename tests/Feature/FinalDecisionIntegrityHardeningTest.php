@@ -162,7 +162,7 @@ class FinalDecisionIntegrityHardeningTest extends TestCase
                 'ltc_form4_other_findings' => 'This must never be written after final decision.',
                 'ltc_form4_recommendation_decision' => 'approval',
             ])
-            ->assertSessionHas('error', 'LTC Form No. 4 review details are locked after the final Approved/Denied decision.');
+            ->assertSessionHas('error', 'LTC Form No. 4 review details are locked after the final Approved/Not Approved decision.');
 
         $application->refresh();
         $this->assertNull($application->ltc_form4_other_findings);
