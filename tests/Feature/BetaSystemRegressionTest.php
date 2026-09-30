@@ -13,6 +13,7 @@ use App\Models\SystemNotification;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
@@ -151,6 +152,37 @@ class BetaSystemRegressionTest extends TestCase
             'transferor_name' => 'New Transferor',
             'transferee_name' => 'New Transferee',
         ]);
+    }
+
+    public function test_postgresql_application_code_allocation_uses_year_scoped_advisory_lock(): void
+    {
+        if (DB::getDriverName() !== 'pgsql') {
+            $this->markTestSkipped('PostgreSQL advisory-lock allocation is PostgreSQL-specific.');
+        }
+
+        $staff = $this->staffUser();
+
+        DB::flushQueryLog();
+        DB::enableQueryLog();
+
+        try {
+            $this->actingAs($staff)
+                ->post(route('staff.applications.store'), [
+                    'transferor_name' => 'Advisory Lock Transferor',
+                    'transferee_name' => 'Advisory Lock Transferee',
+                ])
+                ->assertSessionHas('success');
+
+            $sql = mb_strtolower(
+                collect(DB::getQueryLog())->pluck('query')->implode("\n")
+            );
+        } finally {
+            DB::disableQueryLog();
+        }
+
+        $this->assertStringContainsString('pg_advisory_xact_lock', $sql);
+        $this->assertStringContainsString('max(cast(substring(application_code', $sql);
+        $this->assertStringNotContainsString('lock table land_transfer_applications', $sql);
     }
 
     public function test_initial_application_encoding_cannot_prepopulate_payment_or_release_data(): void
