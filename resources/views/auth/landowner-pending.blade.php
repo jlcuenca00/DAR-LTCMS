@@ -34,6 +34,10 @@
                 : 'wait for DAR staff confirmation, or visit/contact the DAR Negros Oriental Provincial Office if they need to verify your details.' }}
         </div>
 
+        @if (session('registration_email_status'))
+            <p role="status" class="text-sm text-green-700">{{ session('registration_email_status') }}</p>
+        @endif
+
         @if (session('registration_email_warning'))
             <p role="status" class="text-sm text-gray-600">{{ session('registration_email_warning') }}</p>
         @endif
