@@ -111,7 +111,7 @@ class AuditLogController extends Controller
         if (! empty($filters['actor'])) {
             $query->whereHas('actor', function (Builder $actorQuery) use ($filters) {
                 $actorQuery->whereRaw(
-                    "LOWER(COALESCE(name, '') || ' ' || COALESCE(email, '')) LIKE ?",
+                    "LOWER(COALESCE(name, '') || ' ' || COALESCE(username, '') || ' ' || COALESCE(email, '')) LIKE ?",
                     ['%' . mb_strtolower($filters['actor']) . '%']
                 );
             });
