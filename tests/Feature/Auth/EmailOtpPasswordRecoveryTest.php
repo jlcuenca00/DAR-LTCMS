@@ -96,9 +96,10 @@ class EmailOtpPasswordRecoveryTest extends TestCase
             'username' => $user->username,
         ])->assertRedirect(route('password.request'));
 
-        $this->post(route('password.recovery.confirm-email'), [
-            'email' => $user->email,
-        ])
+        $this->from(route('password.request'))
+            ->post(route('password.recovery.confirm-email'), [
+                'email' => $user->email,
+            ])
             ->assertRedirect(route('password.request'))
             ->assertSessionHasErrors('email');
 
