@@ -249,4 +249,22 @@ test.describe('authenticated Staff responsive route matrix', () => {
         const duration = await page.locator('.dar-mobile-portal-nav-item').first().evaluate((node) => getComputedStyle(node).transitionDuration);
         expect(['0s', '0.001s']).toContain(duration);
     });
+
+    test('remote record selector searches and populates an application landowner field', async ({ page }) => {
+        await page.goto('/staff/records/landowners/create');
+        await page.locator('input[name="first_name"]').fill('LookupE2E');
+        await page.locator('input[name="last_name"]').fill('Owner');
+        await page.locator('form').first().locator('button[type="submit"]').click();
+        await expect(page).toHaveURL(/\/staff\/records\/landowners\/\d+$/);
+
+        await page.goto('/staff/applications/create');
+        const lookup = page.locator('[data-remote-record-select]').first();
+        await lookup.locator('[data-remote-record-search]').fill('LookupE2E Owner');
+
+        const select = lookup.locator('[data-remote-record-control]');
+        await expect(select.locator('option')).toContainText(['LookupE2E Owner']);
+        await select.selectOption({ label: /LookupE2E Owner/ });
+
+        await expect(select).not.toHaveValue('');
+    });
 });
