@@ -8,9 +8,9 @@ No. Approval records the administrative clearance decision. It does not automati
 
 No. Applications are manually encoded and processed by authorized DAR Staff.
 
-## Why can I not edit an Approved or Denied application?
+## Why can I not edit an Approved or Not Approved application?
 
-Approved and Denied are final decision states. DAR-LTCMS locks substantive changes to preserve the integrity and traceability of the final record.
+Approved and Not Approved are final decision states. DAR-LTCMS locks substantive changes to preserve the integrity and traceability of the final record.
 
 ## Is release the same as approval?
 
