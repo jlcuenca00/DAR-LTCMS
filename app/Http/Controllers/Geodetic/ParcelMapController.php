@@ -10,6 +10,7 @@ use App\Services\NotificationService;
 use App\Services\ParcelGeometryService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
@@ -139,9 +140,23 @@ class ParcelMapController extends Controller
 
     public function show(Parcel $parcel)
     {
+        Gate::authorize('view', $parcel);
+
         $parcel->load([
-            'landholdings.landowner',
-            'landholdings.sourceApplication',
+            'landholdings' => fn ($query) => $query->select([
+                'id',
+                'parcel_id',
+                'landowner_id',
+                'source_application_id',
+                'area_hectares',
+                'status',
+                'date_acquired',
+                'date_transferred',
+                'source_reference_number',
+                'remarks',
+            ]),
+            'landholdings.landowner:id,first_name,middle_name,last_name,suffix',
+            'landholdings.sourceApplication:id,application_code',
         ]);
 
         return view('geodetic.parcels.show', compact('parcel'));
@@ -153,6 +168,7 @@ class ParcelMapController extends Controller
      */
     public function editGeometry(Request $request, Parcel $parcel)
     {
+        Gate::authorize('updateGeometry', $parcel);
         abort_if($parcel->status === 'inactive', 403, 'Archived parcel geometry is read-only.');
 
         $this->pruneExpiredEditSessions();
@@ -185,6 +201,8 @@ class ParcelMapController extends Controller
 
     public function heartbeatGeometrySession(Request $request, Parcel $parcel)
     {
+        Gate::authorize('updateGeometry', $parcel);
+
         $data = $request->validate([
             'edit_session_token' => ['required', 'uuid'],
         ]);
@@ -221,6 +239,8 @@ class ParcelMapController extends Controller
 
     public function releaseGeometrySession(Request $request, Parcel $parcel)
     {
+        Gate::authorize('updateGeometry', $parcel);
+
         $data = $request->validate([
             'edit_session_token' => ['required', 'uuid'],
         ]);
@@ -236,6 +256,8 @@ class ParcelMapController extends Controller
 
     public function updateGeometry(Request $request, Parcel $parcel)
     {
+        Gate::authorize('updateGeometry', $parcel);
+
         $data = $request->validate([
             'geometry_geojson' => ['required', 'string', 'max:200000'],
             'geometry_version' => ['required', 'integer', 'min:0'],
