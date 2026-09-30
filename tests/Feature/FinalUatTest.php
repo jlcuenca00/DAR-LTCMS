@@ -81,6 +81,10 @@ class FinalUatTest extends TestCase
         $this->actingAs($landownerUser)
             ->get(route('landowner.applications.clearance.show', $hidden))
             ->assertForbidden();
+
+        $this->actingAs($landownerUser)
+            ->get(route('landowner.applications.clearance.pdf', $hidden))
+            ->assertForbidden();
     }
 
     public function test_landowner_cannot_create_or_change_clearance_applications_through_staff_routes(): void
