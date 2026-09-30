@@ -85,6 +85,22 @@ class RegistrationTest extends TestCase
         Notification::assertNotSentTo($user, EmailAddedVerificationNotification::class);
     }
 
+    public function test_workspace_hd_must_match_email_domain_before_local_verification_is_trusted(): void
+    {
+        Notification::fake();
+        $this->googlePayload([
+            'email' => 'landowner@other.example',
+            'hd' => 'agency.example',
+        ]);
+
+        $this->registerGoogle()->assertRedirect(route('landowner.registration.pending'));
+
+        $user = User::where('google_id', 'google-test-id')->firstOrFail();
+
+        $this->assertNull($user->email_verified_at);
+        Notification::assertSentTo($user, EmailAddedVerificationNotification::class);
+    }
+
     public function test_existing_google_registration_shows_conflict_without_signing_in(): void
     {
         Notification::fake();
