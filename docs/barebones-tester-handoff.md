@@ -75,8 +75,8 @@ php artisan serve
     - Chief Legal Final Review
     - Forwarded to PARPO II
     - PARPO II Decision Pending
-12. Record one **Approved** final decision and one **Denied** final decision.
-13. Confirm final-decision locking after Approved/Denied.
+12. Record one **Approved** final decision and one **Not Approved** final decision.
+13. Confirm final-decision locking after Approved/Not Approved.
 14. Mark a signed final output **Ready for Release**, then record **Released to Client** without changing the final decision.
 15. Confirm significant actions appear in Audit Logs.
 16. Confirm role-appropriate notifications.
@@ -89,6 +89,6 @@ php artisan serve
 
 DAR-LTCMS is a clearance generation, administrative processing, monitoring, parcel/reference review, and records-management system.
 
-An **Approved** or **Denied** application records the final administrative clearance decision. Release of the signed output is tracked separately. Neither approval nor release automatically transfers land ownership, mutates Registry of Deeds records, or conclusively executes a legal land transfer.
+An **Approved** or **Not Approved** application records the final administrative clearance decision. Release of the signed output is tracked separately. Neither approval nor release automatically transfers land ownership, mutates Registry of Deeds records, or conclusively executes a legal land transfer.
 
 Any actual ownership transfer, registry alteration, or legal mutation remains outside the automatic system scope and is subject to separate legal and administrative procedures.
