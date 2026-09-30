@@ -142,7 +142,7 @@
 
             .audit-filter-form {
                 display: grid;
-                grid-template-columns: minmax(190px, 1fr) minmax(180px, 1fr) minmax(180px, 1fr) auto;
+                grid-template-columns: minmax(170px, 1fr) minmax(180px, 1fr) minmax(180px, 1fr) minmax(145px, .8fr) minmax(145px, .8fr) auto;
                 align-items: end;
                 gap: 13px;
                 padding: 16px 19px 18px;
@@ -417,6 +417,7 @@
                 <h2 class="audit-title">Audit Trail Overview</h2>
                 <p class="audit-copy">
                     Review timestamped actions, responsible users, linked applications, and record context for system accountability.
+                    Print output is safely capped at the newest 500 matching entries; use the date filters to narrow older audit periods.
                 </p>
             </div>
             <div class="audit-hero-actions">
@@ -474,7 +475,7 @@
             <div class="audit-filter-header">
                 <div>
                     <h2 class="audit-section-title">Filter Audit Logs</h2>
-                    <p class="audit-section-copy">Narrow the audit trail by action, application code, or actor.</p>
+                    <p class="audit-section-copy">Narrow the audit trail by action, application code, actor, or recorded date range.</p>
                 </div>
                 @if ($hasFilters)
                     <span class="audit-active-filter">
@@ -521,6 +522,28 @@
                         name="actor"
                         value="{{ $filters['actor'] ?? '' }}"
                         placeholder="Name or email"
+                        class="w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-green-600 focus:ring-green-600"
+                    >
+                </div>
+
+                <div>
+                    <label class="staff-form-label" for="date_from">DATE FROM</label>
+                    <input
+                        id="date_from"
+                        type="date"
+                        name="date_from"
+                        value="{{ $filters['date_from'] ?? '' }}"
+                        class="w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-green-600 focus:ring-green-600"
+                    >
+                </div>
+
+                <div>
+                    <label class="staff-form-label" for="date_to">DATE TO</label>
+                    <input
+                        id="date_to"
+                        type="date"
+                        name="date_to"
+                        value="{{ $filters['date_to'] ?? '' }}"
                         class="w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-green-600 focus:ring-green-600"
                     >
                 </div>
