@@ -4,7 +4,6 @@ namespace Tests\Feature;
 
 use App\Models\SourceRecordPackageImportBatch;
 use App\Models\User;
-use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -117,15 +116,28 @@ class InputSecurityHardeningTest extends TestCase
         $this->assertSame('previewed', $batch->fresh()->status);
     }
 
-    public function test_web_middleware_group_keeps_csrf_protection_enabled(): void
+    public function test_web_mutation_rejects_a_missing_csrf_token(): void
     {
-        $middlewareGroups = app('router')->getMiddlewareGroups();
+        $originalEnvironment = app()->environment();
 
-        $this->assertArrayHasKey('web', $middlewareGroups);
-        $this->assertContains(
-            ValidateCsrfToken::class,
-            $middlewareGroups['web'],
-            'The web middleware group must retain Laravel CSRF protection.'
-        );
+        try {
+            // Laravel intentionally bypasses CSRF while running unit tests.
+            // Temporarily use a non-testing environment so this request exercises
+            // the real web middleware contract instead of the testing bypass.
+            app()['env'] = 'production';
+
+            $this->post(route('register'), [
+                'name' => 'CSRF Probe',
+                'username' => 'csrf.probe',
+                'password' => 'SecurePass321!',
+                'password_confirmation' => 'SecurePass321!',
+            ])->assertStatus(419);
+        } finally {
+            app()['env'] = $originalEnvironment;
+        }
+
+        $this->assertDatabaseMissing('users', [
+            'username' => 'csrf.probe',
+        ]);
     }
 }
