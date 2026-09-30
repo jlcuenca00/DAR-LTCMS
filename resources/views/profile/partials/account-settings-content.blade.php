@@ -168,6 +168,28 @@
                                 @error('email')
                                     <div class="profile-error">{{ $message }}</div>
                                 @enderror
+
+                                @if ($user->email && $user->email_verified_at === null)
+                                    <div class="profile-verify-box">
+                                        This email is not verified and cannot be used for password recovery yet.
+                                    </div>
+                                @endif
+                            </div>
+
+                            <div class="profile-field full">
+                                <label class="profile-label" for="profile_current_password">Current Password for Email Changes</label>
+                                <input id="profile_current_password"
+                                       name="current_password"
+                                       type="password"
+                                       class="profile-input"
+                                       autocomplete="current-password"
+                                       placeholder="Required only when changing the email address">
+                                <div class="mt-1 text-xs text-gray-500">
+                                    Name and profile-photo changes do not require this. Google-only users without a local password should contact authorized DAR staff to change their account email.
+                                </div>
+                                @error('current_password')
+                                    <div class="profile-error">{{ $message }}</div>
+                                @enderror
                             </div>
                         </div>
 
@@ -179,6 +201,10 @@
 
                             @if (session('status') === 'profile-updated')
                                 <span class="profile-saved">Saved.</span>
+                            @endif
+
+                            @if (session('email_verification_status'))
+                                <span class="profile-saved">{{ session('email_verification_status') }}</span>
                             @endif
                         </div>
                     </form>

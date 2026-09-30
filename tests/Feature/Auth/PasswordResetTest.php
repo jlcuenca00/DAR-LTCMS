@@ -14,7 +14,7 @@ class PasswordResetTest extends TestCase
         $this->get('/forgot-password')
             ->assertOk()
             ->assertSee('Recover Your Account')
-            ->assertSee('Use your username and registered recovery email to regain access.')
+            ->assertSee('Use your username and verified recovery email to regain access.')
             ->assertSee('Identify Account')
             ->assertDontSee('Email Password Reset Link');
     }

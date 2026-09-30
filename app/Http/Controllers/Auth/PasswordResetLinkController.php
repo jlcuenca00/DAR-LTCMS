@@ -332,7 +332,7 @@ class PasswordResetLinkController extends Controller
 
     private function hasRecoverableEmail(User $user): bool
     {
-        if (blank($user->email)) {
+        if (blank($user->email) || $user->email_verified_at === null) {
             return false;
         }
 

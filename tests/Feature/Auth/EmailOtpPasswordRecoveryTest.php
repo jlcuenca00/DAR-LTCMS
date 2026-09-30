@@ -50,7 +50,7 @@ class EmailOtpPasswordRecoveryTest extends TestCase
     {
         Notification::fake();
 
-        $user = User::factory()->unverified()->create([
+        $user = User::factory()->create([
             'username' => 'email_user',
             'email' => 'carl.martin@gmail.com',
         ]);
@@ -82,11 +82,35 @@ class EmailOtpPasswordRecoveryTest extends TestCase
         Notification::assertSentTo($user, PasswordRecoveryCodeNotification::class);
     }
 
-    public function test_valid_otp_uses_existing_forced_password_flow_without_temporary_password(): void
+    public function test_unverified_email_cannot_start_otp_recovery(): void
     {
         Notification::fake();
 
         $user = User::factory()->unverified()->create([
+            'username' => 'unverified_recovery',
+            'email' => 'unverified@example.com',
+            'is_active' => true,
+        ]);
+
+        $this->post(route('password.recovery.identify'), [
+            'username' => $user->username,
+        ])->assertRedirect(route('password.request'));
+
+        $this->from(route('password.request'))
+            ->post(route('password.recovery.confirm-email'), [
+                'email' => $user->email,
+            ])
+            ->assertRedirect(route('password.request'))
+            ->assertSessionHasErrors('email');
+
+        Notification::assertNothingSent();
+    }
+
+    public function test_valid_otp_uses_existing_forced_password_flow_without_temporary_password(): void
+    {
+        Notification::fake();
+
+        $user = User::factory()->create([
             'username' => 'recover_me',
             'email' => 'recover@example.com',
             'password' => 'OldPassword123!',
@@ -209,6 +233,26 @@ class EmailOtpPasswordRecoveryTest extends TestCase
         ]);
     }
 
+    public function test_staff_temporary_password_reset_remains_available_for_unverified_email(): void
+    {
+        $staff = User::factory()->create([
+            'role' => User::ROLE_STAFF,
+            'is_active' => true,
+        ]);
+
+        $user = User::factory()->unverified()->create([
+            'role' => User::ROLE_GEODETIC,
+            'email' => 'unverified-geodetic@example.com',
+        ]);
+
+        $this->actingAs($staff)
+            ->post(route('staff.users.reset-password', $user))
+            ->assertRedirect()
+            ->assertSessionHas('temporary_password');
+
+        $this->assertTrue($user->fresh()->must_change_password);
+    }
+
     public function test_staff_temporary_password_reset_is_blocked_when_user_has_recovery_email(): void
     {
         $staff = User::factory()->create([
@@ -226,7 +270,7 @@ class EmailOtpPasswordRecoveryTest extends TestCase
             ->post(route('staff.users.reset-password', $user))
             ->assertRedirect(route('staff.users.edit', $user))
             ->assertSessionHas('error', function (string $error) {
-                return str_contains($error, 'registered email address');
+                return str_contains($error, 'verified recovery email address');
             });
 
         $fresh = $user->fresh();

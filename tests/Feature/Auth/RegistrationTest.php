@@ -3,6 +3,7 @@
 namespace Tests\Feature\Auth;
 
 use App\Models\User;
+use App\Notifications\EmailAddedVerificationNotification;
 use App\Notifications\LandownerRegistrationReceived;
 use App\Services\GoogleIdentity;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -41,6 +42,8 @@ class RegistrationTest extends TestCase
         $this->assertSame(User::REGISTRATION_PENDING, $user->registration_status);
         $this->assertAuthenticatedAs($user);
         Notification::assertSentTo($user, LandownerRegistrationReceived::class);
+        Notification::assertSentTo($user, EmailAddedVerificationNotification::class);
+        $this->assertNull($user->email_verified_at);
         $mail = (new LandownerRegistrationReceived)->toMail($user);
         $this->assertSame('emails.landowner-registration-received', $mail->view);
         $html = view($mail->view, $mail->viewData)->render();
@@ -48,6 +51,54 @@ class RegistrationTest extends TestCase
         $this->assertStringContainsString('not an approval', $html);
         $this->assertStringContainsString('Pending DAR review', $html);
         $this->assertStringContainsString(asset('images/favicon.png'), $html);
+    }
+
+    public function test_gmail_google_registration_is_locally_verified_without_extra_email_challenge(): void
+    {
+        Notification::fake();
+        $this->googlePayload([
+            'email' => 'landowner@gmail.com',
+        ]);
+
+        $this->registerGoogle()->assertRedirect(route('landowner.registration.pending'));
+
+        $user = User::where('google_id', 'google-test-id')->firstOrFail();
+
+        $this->assertNotNull($user->email_verified_at);
+        Notification::assertSentTo($user, LandownerRegistrationReceived::class);
+        Notification::assertNotSentTo($user, EmailAddedVerificationNotification::class);
+    }
+
+    public function test_workspace_google_registration_is_locally_verified_when_hd_claim_is_present(): void
+    {
+        Notification::fake();
+        $this->googlePayload([
+            'email' => 'landowner@agency.example',
+            'hd' => 'agency.example',
+        ]);
+
+        $this->registerGoogle()->assertRedirect(route('landowner.registration.pending'));
+
+        $user = User::where('google_id', 'google-test-id')->firstOrFail();
+
+        $this->assertNotNull($user->email_verified_at);
+        Notification::assertNotSentTo($user, EmailAddedVerificationNotification::class);
+    }
+
+    public function test_workspace_hd_must_match_email_domain_before_local_verification_is_trusted(): void
+    {
+        Notification::fake();
+        $this->googlePayload([
+            'email' => 'landowner@other.example',
+            'hd' => 'agency.example',
+        ]);
+
+        $this->registerGoogle()->assertRedirect(route('landowner.registration.pending'));
+
+        $user = User::where('google_id', 'google-test-id')->firstOrFail();
+
+        $this->assertNull($user->email_verified_at);
+        Notification::assertSentTo($user, EmailAddedVerificationNotification::class);
     }
 
     public function test_existing_google_registration_shows_conflict_without_signing_in(): void
@@ -98,7 +149,7 @@ class RegistrationTest extends TestCase
 
     public function test_email_failure_does_not_undo_registration(): void
     {
-        $this->googlePayload();
+        $this->googlePayload(['email' => 'landowner@gmail.com']);
         Notification::shouldReceive('send')->once()->andThrow(new \RuntimeException('Mail unavailable'));
         $this->registerGoogle()->assertRedirect(route('landowner.registration.pending'))
             ->assertSessionHas('registration_email_warning');
@@ -113,6 +164,25 @@ class RegistrationTest extends TestCase
             $this->get($url)->assertOk()->assertSee('data-locale="en"', false)
                 ->assertSee('data-shape="pill"', false)->assertSee('gsi/client?hl=en', false);
         }
+    }
+
+    public function test_manual_registration_email_stays_unverified_until_signed_link_is_used(): void
+    {
+        Notification::fake();
+
+        $this->post('/register', [
+            'name' => 'Maria Santos',
+            'username' => 'maria_landowner',
+            'email' => 'maria@example.com',
+            'password' => 'Example-Password-123!',
+            'password_confirmation' => 'Example-Password-123!',
+            'privacy_consent' => '1',
+        ])->assertRedirect(route('landowner.registration.pending'));
+
+        $user = User::query()->where('username', 'maria_landowner')->firstOrFail();
+
+        $this->assertNull($user->email_verified_at);
+        Notification::assertSentTo($user, EmailAddedVerificationNotification::class);
     }
 
     public function test_landowner_can_register_without_email_and_is_kept_pending(): void

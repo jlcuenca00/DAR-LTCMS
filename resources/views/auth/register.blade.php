@@ -31,7 +31,7 @@
         <div class="registration-field">
             <x-input-label class="form-label" for="email" :value="__('Email (optional)')" />
             <x-text-input id="email" class="form-input" type="email" name="email" :value="old('email')" autocomplete="email" />
-            <p class="registration-help">Leave this blank if you do not use email. Password recovery will require help from DAR staff.</p>
+            <p class="registration-help">If you add an email, verify the link we send before using email password recovery. Leave it blank if you do not use email.</p>
             <x-input-error :messages="$errors->get('email')" class="mt-2" />
         </div>
 

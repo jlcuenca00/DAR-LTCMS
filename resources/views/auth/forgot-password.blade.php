@@ -256,7 +256,7 @@
                 </div>
 
                 <h1>Recover Your Account</h1>
-                <p class="intro">Use your username and registered recovery email to regain access.</p>
+                <p class="intro">Use your username and verified recovery email to regain access.</p>
 
                 @if (session('status'))
                     <div class="status">{{ session('status') }}</div>
