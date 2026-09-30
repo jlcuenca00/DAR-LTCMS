@@ -41,17 +41,12 @@ class RecordSearchController extends Controller
             ->latest();
 
         if (! empty($filters['search'])) {
-            $search = strtolower($filters['search']);
+            $search = mb_strtolower($filters['search']);
 
-            $landownersQuery->where(function ($query) use ($search) {
-                $query->whereRaw('LOWER(first_name) LIKE ?', ["%{$search}%"])
-                    ->orWhereRaw('LOWER(middle_name) LIKE ?', ["%{$search}%"])
-                    ->orWhereRaw('LOWER(last_name) LIKE ?', ["%{$search}%"])
-                    ->orWhereRaw('LOWER(registered_owner_status) LIKE ?', ["%{$search}%"])
-                    ->orWhereRaw('LOWER(spouse_name) LIKE ?', ["%{$search}%"])
-                    ->orWhereRaw('LOWER(contact_number) LIKE ?', ["%{$search}%"])
-                    ->orWhereRaw('LOWER(address_line) LIKE ?', ["%{$search}%"]);
-            });
+            $landownersQuery->whereRaw(
+                "LOWER(COALESCE(first_name, '') || ' ' || COALESCE(middle_name, '') || ' ' || COALESCE(last_name, '') || ' ' || COALESCE(registered_owner_status, '') || ' ' || COALESCE(spouse_name, '') || ' ' || COALESCE(contact_number, '') || ' ' || COALESCE(address_line, '')) LIKE ?",
+                ["%{$search}%"]
+            );
         }
 
         if (! empty($filters['municipality'])) {
@@ -120,17 +115,12 @@ class RecordSearchController extends Controller
             ->latest();
 
         if (! empty($filters['search'])) {
-            $search = strtolower($filters['search']);
+            $search = mb_strtolower($filters['search']);
 
-            $parcelsQuery->where(function ($query) use ($search) {
-                $query->whereRaw('LOWER(parcel_code) LIKE ?', ["%{$search}%"])
-                    ->orWhereRaw('LOWER(title_no) LIKE ?', ["%{$search}%"])
-                    ->orWhereRaw('LOWER(tax_decl_no) LIKE ?', ["%{$search}%"])
-                    ->orWhereRaw('LOWER(lot_number) LIKE ?', ["%{$search}%"])
-                    ->orWhereRaw('LOWER(survey_plan_number) LIKE ?', ["%{$search}%"])
-                    ->orWhereRaw('LOWER(rod_office) LIKE ?', ["%{$search}%"])
-                    ->orWhereRaw('LOWER(remarks) LIKE ?', ["%{$search}%"]);
-            });
+            $parcelsQuery->whereRaw(
+                "LOWER(COALESCE(parcel_code, '') || ' ' || COALESCE(title_no, '') || ' ' || COALESCE(tax_decl_no, '') || ' ' || COALESCE(lot_number, '') || ' ' || COALESCE(survey_plan_number, '') || ' ' || COALESCE(rod_office, '') || ' ' || COALESCE(remarks, '')) LIKE ?",
+                ["%{$search}%"]
+            );
         }
 
         if (! empty($filters['municipality'])) {
