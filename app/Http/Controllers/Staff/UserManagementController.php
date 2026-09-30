@@ -150,7 +150,7 @@ class UserManagementController extends Controller
 
         $emailDelivery = 'not_available';
 
-        if ($this->hasRecoveryEmail($user)) {
+        if ($this->hasDeliverableEmail($user)) {
             try {
                 $user->notify(new AccountCreatedNotification($initialPassword));
                 $emailDelivery = 'sent';
@@ -406,10 +406,10 @@ class UserManagementController extends Controller
             return back()->with('error', 'Use your profile settings to change your own password.');
         }
 
-        if ($this->hasRecoveryEmail($user)) {
+        if ($this->hasVerifiedRecoveryEmail($user)) {
             return back()->with(
                 'error',
-                'This account has a registered email address. Ask the user to use Forgot Password and the email verification-code recovery flow instead of generating a temporary password.'
+                'This account has a verified recovery email address. Ask the user to use Forgot Password and the email verification-code recovery flow instead of generating a temporary password.'
             );
         }
 
@@ -469,9 +469,15 @@ class UserManagementController extends Controller
         return $email === '' ? null : Str::lower($email);
     }
 
-    private function hasRecoveryEmail(User $user): bool
+    private function hasDeliverableEmail(User $user): bool
     {
         return filled($user->email)
             && ! str_ends_with(Str::lower($user->email), '@dar-ltcms.local');
+    }
+
+    private function hasVerifiedRecoveryEmail(User $user): bool
+    {
+        return $this->hasDeliverableEmail($user)
+            && $user->email_verified_at !== null;
     }
 }
