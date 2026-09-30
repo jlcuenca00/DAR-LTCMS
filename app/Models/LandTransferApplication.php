@@ -24,7 +24,7 @@ class LandTransferApplication extends Model
     public const STATUS_ENDORSED_PARPO = 'endorsed_parpo';
     public const STATUS_FOR_RELEASING = 'for_releasing'; // PARPO II decision pending
     public const STATUS_APPROVED = 'approved';
-    public const STATUS_DENIED = 'denied';
+    public const STATUS_NOT_APPROVED = 'not_approved';
 
     /**
      * Legacy values retained so historical records remain readable.
@@ -32,7 +32,7 @@ class LandTransferApplication extends Model
     public const STATUS_DRAFT = 'draft';
     public const STATUS_PENDING_REVIEW = 'pending_review';
     public const STATUS_RELEASED = 'released';
-    public const STATUS_NOT_APPROVED = 'not_approved';
+    public const STATUS_DENIED = 'denied';
 
     public const RELEASE_NOT_READY = 'not_ready';
     public const RELEASE_READY = 'ready_for_release';
@@ -40,12 +40,12 @@ class LandTransferApplication extends Model
 
     public const FINAL_STATUSES = [
         self::STATUS_APPROVED,
-        self::STATUS_DENIED,
+        self::STATUS_NOT_APPROVED,
     ];
 
     public const LEGACY_FINAL_STATUSES = [
         self::STATUS_RELEASED,
-        self::STATUS_NOT_APPROVED,
+        self::STATUS_DENIED,
     ];
 
     public const ACTIVE_STATUSES = [
@@ -181,13 +181,13 @@ class LandTransferApplication extends Model
             self::STATUS_ENDORSED_PARPO => 'Forwarded to PARPO II',
             self::STATUS_FOR_RELEASING => 'PARPO II Decision Pending',
             self::STATUS_APPROVED => 'Approved',
-            self::STATUS_DENIED => 'Denied',
+            self::STATUS_NOT_APPROVED => 'Not Approved',
 
             // Historical compatibility only.
             self::STATUS_DRAFT => 'Legal Completeness Review',
             self::STATUS_PENDING_REVIEW => 'Legal Completeness Review',
             self::STATUS_RELEASED => 'Released (Legacy Record)',
-            self::STATUS_NOT_APPROVED => 'Denied (Legacy Record)',
+            self::STATUS_DENIED => 'Not Approved (Legacy Record)',
         ];
     }
 
@@ -204,7 +204,7 @@ class LandTransferApplication extends Model
             self::STATUS_ENDORSED_PARPO => 'Forwarded to PARPO II',
             self::STATUS_FOR_RELEASING => 'PARPO II Decision Pending',
             self::STATUS_APPROVED => 'Approved',
-            self::STATUS_DENIED => 'Denied',
+            self::STATUS_NOT_APPROVED => 'Not Approved',
         ];
     }
 
