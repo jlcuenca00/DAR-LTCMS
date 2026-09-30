@@ -62,7 +62,8 @@ class LandTransferApplicationController extends Controller
         $applicationTimeline = AuditLog::with('actor')
             ->where('land_transfer_application_id', $application->id)
             ->latest()
-            ->get();
+            ->paginate(20, ['*'], 'timeline_page')
+            ->withQueryString();
 
         $applicationParcels = $application->applicationParcels
             ->pluck('parcel')
@@ -177,25 +178,11 @@ class LandTransferApplicationController extends Controller
                 ->get();
         }
 
-        $parcelOptions = Parcel::query()
-            ->where('status', 'active')
-            ->orderBy('parcel_code')
-            ->get();
-
         $linkedLandownerIds = $application->linkedLandownerIds();
         $landowners = Landowner::query()
             ->whereIn('id', $linkedLandownerIds)
             ->get()
-            ->concat(
-                Landowner::query()
-                    ->orderBy('last_name')
-                    ->orderBy('first_name')
-                    ->limit(500)
-                    ->get()
-            )
-            ->unique('id')
-            ->sortBy(fn (Landowner $landowner) => mb_strtolower($landowner->last_name . ' ' . $landowner->first_name))
-            ->values();
+            ->keyBy('id');
 
         return view('staff.applications.show', compact(
             'application',
@@ -207,7 +194,6 @@ class LandTransferApplicationController extends Controller
             'applicationTimeline',
             'matchedSourceRecords',
             'matchedSourcePackages',
-            'parcelOptions',
             'landowners',
         ));
     }
@@ -291,23 +277,36 @@ class LandTransferApplicationController extends Controller
     ));
 
 }
-public function create()
+public function create(Request $request)
 {
-    $landowners = Landowner::query()
-        ->orderBy('last_name')
-        ->orderBy('first_name')
-        ->get();
+    $oldTransferors = collect((array) $request->session()->getOldInput('transferors', []));
+    $oldTransferees = collect((array) $request->session()->getOldInput('transferees', []));
 
-    $parcels = Parcel::query()
-        ->where('status', 'active')
-        ->orderBy('parcel_code')
-        ->get();
+    $selectedLandownerIds = $oldTransferors
+        ->merge($oldTransferees)
+        ->pluck('landowner_id')
+        ->push($request->session()->getOldInput('transferor_landowner_id'))
+        ->push($request->session()->getOldInput('transferee_landowner_id'))
+        ->filter()
+        ->map(fn ($id) => (int) $id)
+        ->unique()
+        ->values();
+
+    $selectedLandowners = Landowner::query()
+        ->whereIn('id', $selectedLandownerIds)
+        ->get()
+        ->keyBy('id');
+
+    $selectedParcelId = $request->session()->getOldInput('parcel_id');
+    $selectedParcel = $selectedParcelId
+        ? Parcel::query()->where('status', 'active')->find($selectedParcelId)
+        : null;
 
     $locationOptions = config('dar_locations.municipalities', []);
 
     return view('staff.applications.create', compact(
-        'landowners',
-        'parcels',
+        'selectedLandowners',
+        'selectedParcel',
         'locationOptions'
     ));
 }
