@@ -81,6 +81,7 @@ class GeodeticReadOnlyTest extends TestCase
             'municipality' => 'Dumaguete City',
             'barangay' => 'Bantayan',
             'province' => 'Negros Oriental',
+            'area_hectares' => 1.2500,
             'status' => 'active',
         ]);
 
