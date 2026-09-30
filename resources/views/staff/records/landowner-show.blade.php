@@ -810,15 +810,31 @@
                             <div class="landholding-form-grid">
                                 <div class="landholding-field span-6">
                                     <label class="landholding-field-label">Parcel</label>
-                                    <select name="parcel_id" class="landholding-input" required data-parcel-autofill>
-                                        <option value="">Select parcel record</option>
-                                        @foreach ($parcels as $parcel)
-                                            @php($parcelReferenceText = collect([filled($parcel->title_no) ? 'Title: '.$parcel->title_no : null, filled($parcel->tax_decl_no) ? 'Tax Declaration: '.$parcel->tax_decl_no : null])->filter()->implode(' / '))
-                                            <option value="{{ $parcel->id }}" data-area="{{ $parcel->area_hectares }}" data-reference="{{ $parcelReferenceText }}" @selected(old('parcel_id') == $parcel->id)>
-                                                {{ $parcel->parcel_code }} @if($parcel->title_no) — {{ $parcel->title_no }} @endif @if($parcel->municipality) — {{ $parcel->municipality }} @endif
-                                            </option>
-                                        @endforeach
-                                    </select>
+                                    <div data-remote-record-select data-lookup-url="{{ route('staff.lookups.parcels') }}" class="space-y-2">
+                                        <input type="search"
+                                               class="landholding-input"
+                                               placeholder="Search parcel code, title, lot, survey, or record ID"
+                                               autocomplete="off"
+                                               data-remote-record-search>
+                                        <select name="parcel_id"
+                                                class="landholding-input"
+                                                required
+                                                data-parcel-autofill
+                                                data-remote-record-control
+                                                data-placeholder="Select parcel record">
+                                            <option value="">Select parcel record</option>
+                                            @if ($selectedParcel)
+                                                @php($selectedParcelReference = collect([filled($selectedParcel->title_no) ? 'Title: '.$selectedParcel->title_no : null, filled($selectedParcel->tax_decl_no) ? 'Tax Declaration: '.$selectedParcel->tax_decl_no : null])->filter()->implode(' / '))
+                                                <option value="{{ $selectedParcel->id }}"
+                                                        data-area="{{ $selectedParcel->area_hectares }}"
+                                                        data-reference="{{ $selectedParcelReference }}"
+                                                        selected>
+                                                    {{ $selectedParcel->parcel_code }} @if($selectedParcel->title_no) — {{ $selectedParcel->title_no }} @endif @if($selectedParcel->municipality) — {{ $selectedParcel->municipality }} @endif
+                                                </option>
+                                            @endif
+                                        </select>
+                                        <p class="landholding-field-help" data-remote-record-status>Search loads a bounded set of matching parcel records.</p>
+                                    </div>
                                 </div>
 
                                 <div class="landholding-field span-3">
@@ -960,12 +976,31 @@
 
                                             <div class="landholding-edit-field span-6">
                                                 <label class="landholding-field-label">Parcel</label>
-                                                <select name="parcel_id" class="landholding-input" required data-parcel-autofill>
-                                                    @foreach ($parcels as $parcel)
-                                                        @php($parcelReferenceText = collect([filled($parcel->title_no) ? 'Title: '.$parcel->title_no : null, filled($parcel->tax_decl_no) ? 'Tax Declaration: '.$parcel->tax_decl_no : null])->filter()->implode(' / '))
-                                                        <option value="{{ $parcel->id }}" data-area="{{ $parcel->area_hectares }}" data-reference="{{ $parcelReferenceText }}" @selected((int) $holding->parcel_id === (int) $parcel->id)>{{ $parcel->parcel_code }} @if($parcel->title_no) — {{ $parcel->title_no }} @endif</option>
-                                                    @endforeach
-                                                </select>
+                                                @php($holdingParcelReference = collect([filled($holding->parcel?->title_no) ? 'Title: '.$holding->parcel->title_no : null, filled($holding->parcel?->tax_decl_no) ? 'Tax Declaration: '.$holding->parcel->tax_decl_no : null])->filter()->implode(' / '))
+                                                <div data-remote-record-select data-lookup-url="{{ route('staff.lookups.parcels') }}" class="space-y-2">
+                                                    <input type="search"
+                                                           class="landholding-input"
+                                                           placeholder="Search parcel code, title, lot, survey, or record ID"
+                                                           autocomplete="off"
+                                                           data-remote-record-search>
+                                                    <select name="parcel_id"
+                                                            class="landholding-input"
+                                                            required
+                                                            data-parcel-autofill
+                                                            data-remote-record-control
+                                                            data-placeholder="Select parcel record">
+                                                        <option value="">Select parcel record</option>
+                                                        @if ($holding->parcel)
+                                                            <option value="{{ $holding->parcel->id }}"
+                                                                    data-area="{{ $holding->parcel->area_hectares }}"
+                                                                    data-reference="{{ $holdingParcelReference }}"
+                                                                    selected>
+                                                                {{ $holding->parcel->parcel_code }} @if($holding->parcel->title_no) — {{ $holding->parcel->title_no }} @endif
+                                                            </option>
+                                                        @endif
+                                                    </select>
+                                                    <p class="landholding-field-help" data-remote-record-status>Search loads a bounded set of matching parcel records.</p>
+                                                </div>
                                             </div>
 
                                             <div class="landholding-edit-field span-3">
