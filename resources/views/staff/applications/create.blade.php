@@ -335,14 +335,27 @@
                             <div class="field-grid">
                                 <div class="field-group field-span-2">
                                     <label class="field-label">{{ $partyGroup['label'] }} Landowner Record</label>
-                                    <select name="{{ $partyKey }}[{{ $index }}][landowner_id]" class="staff-select" data-party-landowner-select>
-                                        <option value="">No linked landowner record</option>
-                                        @foreach ($landowners as $landowner)
-                                            <option value="{{ $landowner->id }}" data-name="{{ $landowner->full_name }}" @selected(($party['landowner_id'] ?? null) == $landowner->id)>
-                                                {{ $landowner->full_name }} — {{ $landowner->municipality ?? 'No municipality' }}
-                                            </option>
-                                        @endforeach
-                                    </select>
+                                    @php($selectedLandowner = $selectedLandowners->get((int) ($party['landowner_id'] ?? 0)))
+                                    <div data-remote-record-select data-lookup-url="{{ route('staff.lookups.landowners') }}" class="space-y-2">
+                                        <input type="search"
+                                               class="staff-input"
+                                               placeholder="Search landowner name or record ID"
+                                               autocomplete="off"
+                                               data-remote-record-search>
+                                        <select name="{{ $partyKey }}[{{ $index }}][landowner_id]"
+                                                class="staff-select"
+                                                data-party-landowner-select
+                                                data-remote-record-control
+                                                data-placeholder="No linked landowner record">
+                                            <option value="">No linked landowner record</option>
+                                            @if ($selectedLandowner)
+                                                <option value="{{ $selectedLandowner->id }}" data-name="{{ $selectedLandowner->full_name }}" selected>
+                                                    {{ $selectedLandowner->full_name }} — ID {{ $selectedLandowner->id }}@if($selectedLandowner->municipality) — {{ $selectedLandowner->municipality }}@endif
+                                                </option>
+                                            @endif
+                                        </select>
+                                        <p class="field-help" data-remote-record-status>Search loads a bounded set of matching records.</p>
+                                    </div>
                                 </div>
                                 <div class="field-group field-span-2">
                                     <label class="field-label">{{ $partyGroup['label'] }} Name <span class="required-mark">*</span></label>
@@ -454,20 +467,28 @@
                 <div class="mt-4 field-grid">
                     <div class="field-group">
                         <label for="parcel_id" class="field-label">Main Parcel Record</label>
-                        <select id="parcel_id" name="parcel_id" class="staff-select">
-                            <option value="">No parcel linked yet</option>
-                            @foreach ($parcels as $parcel)
-                                <option value="{{ $parcel->id }}" data-area="{{ $parcel->area_hectares }}" @selected(old('parcel_id') == $parcel->id)>
-                                    {{ $parcel->parcel_code }}
-                                    @if ($parcel->title_no)
-                                        — {{ $parcel->title_no }}
-                                    @endif
-                                    @if ($parcel->municipality)
-                                        — {{ $parcel->municipality }}
-                                    @endif
-                                </option>
-                            @endforeach
-                        </select>
+                        <div data-remote-record-select data-lookup-url="{{ route('staff.lookups.parcels', ['scope' => 'active']) }}" class="space-y-2">
+                            <input type="search"
+                                   class="staff-input"
+                                   placeholder="Search parcel code, title, lot, survey, or record ID"
+                                   autocomplete="off"
+                                   data-remote-record-search>
+                            <select id="parcel_id"
+                                    name="parcel_id"
+                                    class="staff-select"
+                                    data-remote-record-control
+                                    data-placeholder="No parcel linked yet">
+                                <option value="">No parcel linked yet</option>
+                                @if ($selectedParcel)
+                                    <option value="{{ $selectedParcel->id }}" data-area="{{ $selectedParcel->area_hectares }}" selected>
+                                        {{ $selectedParcel->parcel_code }}
+                                        @if ($selectedParcel->title_no) — {{ $selectedParcel->title_no }} @endif
+                                        @if ($selectedParcel->municipality) — {{ $selectedParcel->municipality }} @endif
+                                    </option>
+                                @endif
+                            </select>
+                            <p class="field-help" data-remote-record-status>Search loads a bounded set of active parcel records.</p>
+                        </div>
                     </div>
 
                     <div class="field-group">
@@ -511,7 +532,7 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', function () {
-        const landownerOptionsHtml = @json(view('staff.applications.partials.landowner-options', ['landowners' => $landowners])->render());
+        const landownerLookupUrl = @json(route('staff.lookups.landowners'));
         const locationOptions = @json($locationOptions ?? []);
 
         function refreshPartyList(list) {
@@ -549,7 +570,7 @@
                 const item = document.createElement('div');
                 item.className = 'repeatable-item';
                 item.setAttribute('data-party-item', '');
-                item.innerHTML = `<div class="repeatable-item-head"><span>${label} #<span data-party-number>${index + 1}</span></span><button type="button" class="mini-remove" data-remove-party>Remove</button></div><div class="field-grid"><div class="field-group field-span-2"><label class="field-label">${label} Landowner Record</label><select name="${type}[${index}][landowner_id]" class="staff-select" data-party-landowner-select>${landownerOptionsHtml}</select></div><div class="field-group field-span-2"><label class="field-label">${label} Name <span class="required-mark">*</span></label><input type="text" name="${type}[${index}][name]" class="staff-input" required data-party-name-input placeholder="Name as written in the application"></div></div>`;
+                item.innerHTML = `<div class="repeatable-item-head"><span>${label} #<span data-party-number>${index + 1}</span></span><button type="button" class="mini-remove" data-remove-party>Remove</button></div><div class="field-grid"><div class="field-group field-span-2"><label class="field-label">${label} Landowner Record</label><div data-remote-record-select data-lookup-url="${landownerLookupUrl}" class="space-y-2"><input type="search" class="staff-input" placeholder="Search landowner name or record ID" autocomplete="off" data-remote-record-search><select name="${type}[${index}][landowner_id]" class="staff-select" data-party-landowner-select data-remote-record-control data-placeholder="No linked landowner record"><option value="">No linked landowner record</option></select><p class="field-help" data-remote-record-status>Search loads a bounded set of matching records.</p></div></div><div class="field-group field-span-2"><label class="field-label">${label} Name <span class="required-mark">*</span></label><input type="text" name="${type}[${index}][name]" class="staff-input" required data-party-name-input placeholder="Name as written in the application"></div></div>`;
                 list.appendChild(item);
                 wirePartyItem(item);
                 refreshPartyList(list);
