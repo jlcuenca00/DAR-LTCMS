@@ -17,10 +17,14 @@ class AuditLogController extends Controller
         $filters = $this->validatedFilters($request);
         $filteredQuery = $this->filteredQuery($filters);
 
+        $todayStart = today();
+        $tomorrowStart = today()->addDay();
+
         $summary = [
             'matching_records' => (clone $filteredQuery)->count(),
             'actions_today' => (clone $filteredQuery)
-                ->whereDate('created_at', today())
+                ->where('created_at', '>=', $todayStart)
+                ->where('created_at', '<', $tomorrowStart)
                 ->count(),
             'active_actors' => (clone $filteredQuery)
                 ->whereNotNull('actor_user_id')
@@ -97,19 +101,19 @@ class AuditLogController extends Controller
 
         if (! empty($filters['application_code'])) {
             $query->whereHas('application', function (Builder $applicationQuery) use ($filters) {
-                $applicationQuery->where(
-                    'application_code',
-                    'like',
-                    '%' . $filters['application_code'] . '%'
+                $applicationQuery->whereRaw(
+                    'LOWER(application_code) LIKE ?',
+                    ['%' . mb_strtolower($filters['application_code']) . '%']
                 );
             });
         }
 
         if (! empty($filters['actor'])) {
             $query->whereHas('actor', function (Builder $actorQuery) use ($filters) {
-                $actorQuery
-                    ->where('name', 'like', '%' . $filters['actor'] . '%')
-                    ->orWhere('email', 'like', '%' . $filters['actor'] . '%');
+                $actorQuery->whereRaw(
+                    "LOWER(COALESCE(name, '') || ' ' || COALESCE(username, '') || ' ' || COALESCE(email, '')) LIKE ?",
+                    ['%' . mb_strtolower($filters['actor']) . '%']
+                );
             });
         }
 

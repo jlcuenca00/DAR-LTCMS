@@ -49,11 +49,12 @@ class UserManagementController extends Controller
         }
 
         if (! empty($filters['search'])) {
-            $usersQuery->where(function ($query) use ($filters) {
-                $query->where('name', 'like', '%' . $filters['search'] . '%')
-                    ->orWhere('username', 'like', '%' . $filters['search'] . '%')
-                    ->orWhere('email', 'like', '%' . $filters['search'] . '%');
-            });
+            $search = mb_strtolower($filters['search']);
+
+            $usersQuery->whereRaw(
+                "LOWER(COALESCE(name, '') || ' ' || COALESCE(username, '') || ' ' || COALESCE(email, '')) LIKE ?",
+                ["%{$search}%"]
+            );
         }
 
         $users = $usersQuery
