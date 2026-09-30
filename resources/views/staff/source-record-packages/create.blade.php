@@ -966,24 +966,35 @@
                     <div class="source-field-grid two">
                         <div class="source-field">
                             <label for="parcel_id">Link Existing Parcel Record</label>
-                            <select id="parcel_id" name="parcel_id" class="w-full rounded-lg border-gray-300 text-sm" data-source-parcel-autofill>
-                                <option value="">No linked parcel yet</option>
-                                @foreach ($parcels as $parcel)
-                                    <option
-                                        value="{{ $parcel->id }}"
-                                        data-parcel-code="{{ $parcel->parcel_code }}"
-                                        data-title="{{ $parcel->title_no }}"
-                                        data-municipality="{{ $parcel->municipality }}"
-                                        data-barangay="{{ $parcel->barangay }}"
-                                        @selected((string) old('parcel_id') === (string) $parcel->id)
-                                    >
-                                        {{ $parcel->parcel_code }}
-                                        @if($parcel->title_no)
-                                            — {{ $parcel->title_no }}
-                                        @endif
-                                    </option>
-                                @endforeach
-                            </select>
+                            <div data-remote-record-select data-lookup-url="{{ route('staff.lookups.parcels') }}" class="space-y-2">
+                                <input type="search"
+                                       class="w-full rounded-lg border-gray-300 text-sm"
+                                       placeholder="Search parcel code, title, lot, survey, or record ID"
+                                       autocomplete="off"
+                                       data-remote-record-search>
+                                <select id="parcel_id"
+                                        name="parcel_id"
+                                        class="w-full rounded-lg border-gray-300 text-sm"
+                                        data-source-parcel-autofill
+                                        data-remote-record-control
+                                        data-placeholder="No linked parcel yet">
+                                    <option value="">No linked parcel yet</option>
+                                    @if ($selectedParcel)
+                                        <option
+                                            value="{{ $selectedParcel->id }}"
+                                            data-parcel-code="{{ $selectedParcel->parcel_code }}"
+                                            data-title="{{ $selectedParcel->title_no }}"
+                                            data-municipality="{{ $selectedParcel->municipality }}"
+                                            data-barangay="{{ $selectedParcel->barangay }}"
+                                            selected
+                                        >
+                                            {{ $selectedParcel->parcel_code }}
+                                            @if($selectedParcel->title_no) — {{ $selectedParcel->title_no }} @endif
+                                        </option>
+                                    @endif
+                                </select>
+                                <p class="source-field-help" data-remote-record-status>Search loads a bounded set of matching parcel records.</p>
+                            </div>
                         </div>
 
                         <div class="source-field">

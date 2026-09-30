@@ -14,7 +14,8 @@ class GeodeticPortalController extends Controller
     {
         $landholdings = Landholding::with(['parcel', 'landowner'])
             ->orderByDesc('created_at')
-            ->get();
+            ->paginate(20)
+            ->withQueryString();
 
         return view('geodetic.parcels.index', compact('landholdings'));
     }

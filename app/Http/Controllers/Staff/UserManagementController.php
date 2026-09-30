@@ -64,15 +64,14 @@ class UserManagementController extends Controller
         return view('staff.users.index', compact('users', 'filters', 'accountCounts'));
     }
 
-    public function create()
+    public function create(Request $request)
     {
-        $landowners = Landowner::query()
-            ->whereNull('user_id')
-            ->orderBy('last_name')
-            ->orderBy('first_name')
-            ->get();
+        $selectedLandownerId = $request->session()->getOldInput('landowner_id');
+        $selectedLandowner = $selectedLandownerId
+            ? Landowner::query()->find($selectedLandownerId)
+            : null;
 
-        return view('staff.users.create', compact('landowners'));
+        return view('staff.users.create', compact('selectedLandowner'));
     }
 
     public function store(Request $request)
@@ -203,22 +202,17 @@ class UserManagementController extends Controller
             ->with('temporary_password_username', $user->username);
     }
 
-    public function edit(User $user)
+    public function edit(Request $request, User $user)
     {
-        $landowners = Landowner::query()
-            ->where(function ($query) use ($user) {
-                $query->whereNull('user_id')
-                    ->orWhere('user_id', $user->id);
-            })
-            ->orderBy('last_name')
-            ->orderBy('first_name')
-            ->get();
-
         $linkedLandownerId = optional($user->landowner)->id;
+        $selectedLandownerId = $request->session()->getOldInput('landowner_id', $linkedLandownerId);
+        $selectedLandowner = $selectedLandownerId
+            ? Landowner::query()->find($selectedLandownerId)
+            : null;
 
         return view('staff.users.edit', compact(
             'user',
-            'landowners',
+            'selectedLandowner',
             'linkedLandownerId'
         ));
     }

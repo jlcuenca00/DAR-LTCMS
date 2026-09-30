@@ -42,10 +42,13 @@ class RecordSearchController extends Controller
 
         if (! empty($filters['search'])) {
             $search = mb_strtolower($filters['search']);
+            $pattern = '%'.collect(preg_split('/\\s+/u', $search))
+                ->filter()
+                ->implode('%').'%';
 
             $landownersQuery->whereRaw(
                 "LOWER(COALESCE(first_name, '') || ' ' || COALESCE(middle_name, '') || ' ' || COALESCE(last_name, '') || ' ' || COALESCE(registered_owner_status, '') || ' ' || COALESCE(spouse_name, '') || ' ' || COALESCE(contact_number, '') || ' ' || COALESCE(address_line, '')) LIKE ?",
-                ["%{$search}%"]
+                [$pattern]
             );
         }
 

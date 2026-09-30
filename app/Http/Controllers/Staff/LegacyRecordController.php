@@ -79,22 +79,10 @@ class LegacyRecordController extends Controller
             $recordType = LegacyRecord::TYPE_TITLE;
         }
 
-        $parcels = Parcel::query()
-            ->orderBy('parcel_code')
-            ->limit(500)
-            ->get([
-                'id',
-                'parcel_code',
-                'title_no',
-                'municipality',
-                'barangay',
-            ]);
-
         return view('staff.legacy-records.create', [
             'recordType' => $recordType,
             'recordTypes' => LegacyRecord::RECORD_TYPES,
             'sourceScopes' => LegacyRecord::SOURCE_SCOPES,
-            'parcels' => $parcels,
         ]);
     }
 
@@ -148,37 +136,22 @@ class LegacyRecordController extends Controller
 
     public function show(LegacyRecord $legacyRecord)
     {
-        $legacyRecord->load(['parcel', 'package']);
+        $legacyRecord->load(['parcel', 'package', 'landowner']);
 
-        $parcels = Parcel::query()
-            ->orderBy('parcel_code')
-            ->limit(500)
-            ->get([
-                'id',
-                'parcel_code',
-                'title_no',
-                'municipality',
-                'barangay',
-            ]);
+        $selectedParcelId = request()->session()->getOldInput('parcel_id', $legacyRecord->parcel_id);
+        $selectedParcel = $selectedParcelId
+            ? Parcel::query()->find($selectedParcelId)
+            : null;
 
-        $landowners = Landowner::query()
-            ->orderBy('last_name')
-            ->orderBy('first_name')
-            ->limit(500)
-            ->get([
-                'id',
-                'first_name',
-                'middle_name',
-                'last_name',
-                'suffix',
-                'municipality',
-                'barangay',
-            ]);
+        $selectedLandownerId = request()->session()->getOldInput('landowner_id', $legacyRecord->landowner_id);
+        $selectedLandowner = $selectedLandownerId
+            ? Landowner::query()->find($selectedLandownerId)
+            : null;
 
         return view('staff.legacy-records.show', [
             'record' => $legacyRecord,
-            'parcels' => $parcels,
-            'landowners' => $landowners,
+            'selectedParcel' => $selectedParcel,
+            'selectedLandowner' => $selectedLandowner,
         ]);
     }
 

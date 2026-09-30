@@ -20,7 +20,8 @@ class LandownerPortalController extends Controller
         $landholdings = Landholding::with(['parcel', 'landowner'])
             ->whereIn('landowner_id', $landownerIds)
             ->orderByDesc('created_at')
-            ->get();
+            ->paginate(20)
+            ->withQueryString();
 
         return view('landowner.parcels.index', compact('landholdings'));
     }
@@ -42,7 +43,8 @@ class LandownerPortalController extends Controller
             ])
             ->linkedToLandownerIds($landownerIds)
             ->orderByDesc('created_at')
-            ->get();
+            ->paginate(15)
+            ->withQueryString();
 
         return view('landowner.applications.index', compact('applications'));
     }

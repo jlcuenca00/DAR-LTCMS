@@ -2582,11 +2582,7 @@
             ];
         })->values();
 
-        $landownerOptions = $landowners ?? \App\Models\Landowner::query()
-            ->orderBy('last_name')
-            ->orderBy('first_name')
-            ->limit(500)
-            ->get();
+        $landownerOptions = collect($landowners ?? []);
 
         $transferorRows = collect(old('transferors', $application->partyRows('transferor')))->values();
         $transfereeRows = collect(old('transferees', $application->partyRows('transferee')))->values();
@@ -2846,16 +2842,23 @@
 
                         <div>
                             <label for="application_parcel_id">Parcel record</label>
-                            <select id="application_parcel_id" name="parcel_id" class="review-input" required data-application-parcel-select>
-                                <option value="">Select parcel record</option>
-                                @foreach (($parcelOptions ?? collect()) as $parcel)
-                                    <option value="{{ $parcel->id }}" data-area="{{ $parcel->area_hectares }}">
-                                        {{ $parcel->parcel_code }}
-                                        @if ($parcel->title_no) — {{ $parcel->title_no }} @endif
-                                        @if ($parcel->municipality) — {{ $parcel->municipality }} @endif
-                                    </option>
-                                @endforeach
-                            </select>
+                            <div data-remote-record-select data-lookup-url="{{ route('staff.lookups.parcels', ['scope' => 'active']) }}" class="space-y-2">
+                                <input type="search"
+                                       class="review-input"
+                                       placeholder="Search parcel code, title, lot, survey, or record ID"
+                                       autocomplete="off"
+                                       data-remote-record-search>
+                                <select id="application_parcel_id"
+                                        name="parcel_id"
+                                        class="review-input"
+                                        required
+                                        data-application-parcel-select
+                                        data-remote-record-control
+                                        data-placeholder="Select parcel record">
+                                    <option value="">Select parcel record</option>
+                                </select>
+                                <p class="review-panel-subtitle" data-remote-record-status>Search loads a bounded set of active parcel records.</p>
+                            </div>
                         </div>
 
                         <div>
@@ -2929,17 +2932,30 @@
 
                                         <div class="landowner-link-field">
                                             <label for="{{ $partyKey }}_{{ $partyIndex }}_landowner_id">Existing Landowner Record</label>
-                                            <select id="{{ $partyKey }}_{{ $partyIndex }}_landowner_id"
-                                                    name="{{ $partyKey }}[{{ $partyIndex }}][landowner_id]"
-                                                    class="review-input"
-                                                    @disabled($isFinal)>
-                                                <option value="">No linked landowner record</option>
-                                                @foreach ($landownerOptions as $landowner)
-                                                    <option value="{{ $landowner->id }}" @selected((int) $linkedId === (int) $landowner->id)>
-                                                        {{ $landowner->full_name }} — {{ $landowner->municipality ?? 'No municipality' }}
-                                                    </option>
-                                                @endforeach
-                                            </select>
+                                            <div data-remote-record-select data-lookup-url="{{ route('staff.lookups.landowners') }}" class="space-y-2">
+                                                <input type="search"
+                                                       class="review-input"
+                                                       placeholder="Search landowner name or record ID"
+                                                       autocomplete="off"
+                                                       data-remote-record-search
+                                                       @disabled($isFinal)>
+                                                <select id="{{ $partyKey }}_{{ $partyIndex }}_landowner_id"
+                                                        name="{{ $partyKey }}[{{ $partyIndex }}][landowner_id]"
+                                                        class="review-input"
+                                                        data-remote-record-control
+                                                        data-placeholder="No linked landowner record"
+                                                        @disabled($isFinal)>
+                                                    <option value="">No linked landowner record</option>
+                                                    @if ($linkedOwner)
+                                                        <option value="{{ $linkedOwner->id }}" data-name="{{ $linkedOwner->full_name }}" selected>
+                                                            {{ $linkedOwner->full_name }} — ID {{ $linkedOwner->id }}@if($linkedOwner->municipality) — {{ $linkedOwner->municipality }}@endif
+                                                        </option>
+                                                    @endif
+                                                </select>
+                                                @unless ($isFinal)
+                                                    <p class="review-panel-subtitle" data-remote-record-status>Search loads a bounded set of matching landowner records.</p>
+                                                @endunless
+                                            </div>
                                         </div>
 
                                         @if ($linkedOwner)
@@ -3676,14 +3692,14 @@
             </div>
         </section>
 
-        <details class="review-panel timeline-collapsible">
+        <details class="review-panel timeline-collapsible" @if(request()->filled('timeline_page')) open @endif>
             <summary>
                 <div class="timeline-summary-row">
                     <div class="timeline-summary-left">
                         <span class="timeline-summary-icon" aria-hidden="true"><i class="fa-solid fa-clock-rotate-left"></i></span>
                         <div>
                             <h2 class="review-panel-title">Application Timeline / Status History</h2>
-                            <p class="review-panel-subtitle">{{ $applicationTimeline->count() }} recorded action(s). Open this section only when you need to inspect the audit-based status trail.</p>
+                            <p class="review-panel-subtitle">{{ $applicationTimeline->total() }} recorded action(s). Open this section only when you need to inspect the audit-based status trail.</p>
                         </div>
                     </div>
                     <span class="timeline-chevron" aria-hidden="true"><i class="fa-solid fa-chevron-down"></i></span>
@@ -3737,6 +3753,11 @@
                             </article>
                         @endforeach
                     </div>
+                    @if ($applicationTimeline->hasPages())
+                        <div class="mt-4">
+                            {{ $applicationTimeline->links() }}
+                        </div>
+                    @endif
                 @endif
             </div>
         </details>

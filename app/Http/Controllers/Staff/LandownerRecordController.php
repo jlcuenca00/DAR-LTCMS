@@ -25,10 +25,10 @@ class LandownerRecordController extends Controller
             'sourceRecordPackages',
         ]);
 
-        $parcels = Parcel::query()
-            ->orderBy('parcel_code')
-            ->limit(500)
-            ->get(['id', 'parcel_code', 'title_no', 'municipality', 'barangay', 'area_hectares']);
+        $selectedParcelId = request()->session()->getOldInput('parcel_id');
+        $selectedParcel = $selectedParcelId
+            ? Parcel::query()->find($selectedParcelId)
+            : null;
 
         $hectareSummary = $hectareValidator->forLandowner($landowner);
 
@@ -39,7 +39,7 @@ class LandownerRecordController extends Controller
 
         return view('staff.records.landowner-show', compact(
             'landowner',
-            'parcels',
+            'selectedParcel',
             'hectareSummary',
             'relatedApplications'
         ));
