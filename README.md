@@ -78,7 +78,7 @@ Forwarded to PARPO II
         ↓
 PARPO II Decision Pending
         ↓
-Approved or Denied (FINAL)
+Approved or Not Approved (FINAL)
         ↓
 Signed Form No. 5 / Ready for Release
         ↓
@@ -87,7 +87,7 @@ Released to Client
 
 **Approved** and **Denied** are the current final application decision states. Once either decision is recorded, substantive editing and supporting-document changes are locked by the UI and backend.
 
-Client release is tracked separately through the release status. Recording a release never changes the final Approved/Denied decision and never transfers ownership or mutates registry records.
+Client release is tracked separately through the release status. Recording a release never changes the final Approved/Not Approved decision and never transfers ownership or mutates registry records.
 
 Historical database values such as `released`, `not_approved`, `pending_review`, and `draft` remain readable only for backward compatibility.
 

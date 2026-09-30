@@ -30,7 +30,7 @@ class PresentationDemoAndUiPolishTest extends TestCase
         $response->assertSee('PARPO II Final Decision');
         $response->assertSee('Signed Form No. 5 / Ready for Release');
         $response->assertSee('Release to Client');
-        $response->assertSee('Approved or Denied');
+        $response->assertSee('Approved or Not Approved');
         $response->assertSee('LTC Form No. 5');
         $response->assertDontSee('A GRANTED clearance does not mean the land has already changed owners.');
         $response->assertSee('Landowners do not create applications in the system.');

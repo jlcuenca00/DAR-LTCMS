@@ -18,7 +18,7 @@ Capture screenshots only from the final polished DAR-LTCMS UI using realistic no
 - [ ] Requirement-specific document data fields
 - [ ] Workflow stage controls
 - [ ] Approved final decision
-- [ ] Denied final decision
+- [ ] Not Approved final decision
 - [ ] Ready for Release / Released to Client tracking
 - [ ] Locked finalized application state
 - [ ] Browser LTC Form No. 5 output
@@ -112,7 +112,7 @@ Capture at least one clear final output showing:
 ## Screenshot quality rules
 
 - Use DAR-LTCMS branding only; do not show obsolete project branding.
-- Use the current **Approved/Denied** final-decision terminology and show release as a separate delivery status.
+- Use the current **Approved/Not Approved** final-decision terminology and show release as a separate delivery status.
 - Do not expose real production credentials, personal data, `.env` values, or private file paths.
 - Avoid browser clutter that distracts from the system.
 - Capture enough of reports/outputs to make labels and scope understandable.

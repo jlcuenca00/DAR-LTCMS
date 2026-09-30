@@ -54,15 +54,15 @@
                 'count' => (int) (($normalizedStatusCounts['approved'] ?? 0) + ($normalizedStatusCounts['released'] ?? 0)),
                 'class' => 'bg-green-50 text-green-800 border-green-200',
             ],
-            'denied' => [
-                'label' => 'Denied',
+            'not_approved' => [
+                'label' => 'Not Approved',
                 'count' => (int) (($normalizedStatusCounts['denied'] ?? 0) + ($normalizedStatusCounts['not_approved'] ?? 0)),
                 'class' => 'bg-red-50 text-red-800 border-red-200',
             ],
         ];
 
         $activeApplicationCount = collect($statusRows)
-            ->except(['approved', 'denied'])
+            ->except(['approved', 'not_approved'])
             ->sum('count');
 
         $approvedResults = (int) (($normalizedClearanceCounts['approved'] ?? 0) + ($normalizedClearanceCounts['released'] ?? 0));
@@ -82,7 +82,7 @@
         $decisionLabel = function (?string $status): string {
             return match ($status) {
                 'approved', 'released' => 'Approved',
-                'denied', 'not_approved' => 'Denied',
+                'not_approved', 'denied' => 'Not Approved',
                 default => ucwords(str_replace('_', ' ', (string) $status)),
             };
         };
@@ -94,7 +94,7 @@
                 <p class="text-xs font-black uppercase tracking-[0.18em] text-green-700">Administrative monitoring</p>
                 <h1 class="mt-1 text-2xl font-black text-slate-950">Monitoring and Reports</h1>
                 <p class="mt-2 max-w-3xl text-sm font-semibold leading-6 text-slate-500">
-                    Review clearance-processing activity using one consistent filtered dataset. Approved/Denied is the final PARPO II decision; client release is a separate administrative delivery record.
+                    Review clearance-processing activity using one consistent filtered dataset. Approved/Not Approved is the final PARPO II decision; client release is a separate administrative delivery record.
                 </p>
             </div>
             <div class="flex flex-col gap-2 sm:flex-row lg:flex-col lg:items-end">
@@ -182,7 +182,7 @@
             <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
                 <p class="text-xs font-black uppercase tracking-wide text-slate-500">Recorded Results</p>
                 <p class="mt-2 text-3xl font-black text-slate-950">{{ number_format($totalClearances) }}</p>
-                <p class="mt-2 text-xs font-semibold text-slate-500">Immutable Approved or Denied decision-output snapshots.</p>
+                <p class="mt-2 text-xs font-semibold text-slate-500">Immutable Approved or Not Approved decision-output snapshots.</p>
             </article>
             <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
                 <p class="text-xs font-black uppercase tracking-wide text-slate-500">Recorded Output Area</p>
@@ -223,7 +223,7 @@
                             <p class="mt-1 text-xs font-semibold text-green-800">{{ number_format((float) $releasedOutputArea, 4) }} ha in snapshots</p>
                         </div>
                         <div class="rounded-xl border border-red-200 bg-red-50 p-4">
-                            <p class="text-xs font-black uppercase tracking-wide text-red-700">Denied</p>
+                            <p class="text-xs font-black uppercase tracking-wide text-red-700">Not Approved</p>
                             <p class="mt-2 text-2xl font-black text-red-950">{{ number_format($deniedResults) }}</p>
                             <p class="mt-1 text-xs font-semibold text-red-800">{{ number_format((float) $deniedOutputArea, 4) }} ha in snapshots</p>
                         </div>

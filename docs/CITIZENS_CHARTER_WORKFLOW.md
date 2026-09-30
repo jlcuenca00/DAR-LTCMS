@@ -14,7 +14,7 @@ This implementation aligns the administrative Land Transfer Clearance workflow w
 8. Legal evaluation, Completed Staff Work (CSW), and clearance preparation
 9. Chief Legal final review
 10. Forward to PARPO II
-11. PARPO II final decision: Approved or Denied
+11. PARPO II final decision: Approved or Not Approved
 12. Generate and preserve the immutable LTC Form No. 5 decision output
 13. Record return of the signed output to Legal / Ready for Release
 14. Record actual release to the client or authorized representative and logbook/CSM reference

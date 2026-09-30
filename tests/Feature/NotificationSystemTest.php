@@ -300,7 +300,7 @@ class NotificationSystemTest extends TestCase
         ]);
     }
 
-    public function test_final_denied_decision_creates_staff_and_landowner_notifications(): void
+    public function test_final_not_approved_decision_creates_staff_and_landowner_notifications(): void
     {
         $staffUser = User::factory()->create([
             'role' => User::ROLE_STAFF,
@@ -358,7 +358,7 @@ class NotificationSystemTest extends TestCase
 
         $this->assertDatabaseHas('system_notifications', [
             'user_id' => $staffUser->id,
-            'type' => 'application_denied',
+            'type' => 'application_not_approved',
         ]);
 
         $this->assertDatabaseHas('system_notifications', [

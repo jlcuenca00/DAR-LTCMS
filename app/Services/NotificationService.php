@@ -22,6 +22,7 @@ class NotificationService
         'application_created',
         'application_submitted',
         'application_approved',
+        'application_not_approved',
         'application_denied',
         'application_ready_for_release',
         'application_released',
@@ -134,15 +135,23 @@ class NotificationService
         $this->notifyStaffApplicationReleasedToClient($application);
     }
 
-    public function notifyStaffApplicationDenied(LandTransferApplication $application): void
+    public function notifyStaffApplicationNotApproved(LandTransferApplication $application): void
     {
         $this->notifyActiveStaff(
-            'application_denied',
-            'PARPO II denial recorded',
-            'A final Denied clearance decision was recorded for application ' . $application->application_code . '.',
+            'application_not_approved',
+            'PARPO II Not Approved decision recorded',
+            'A final Not Approved clearance decision was recorded for application ' . $application->application_code . '.',
             $application,
             $this->staffApplicationData($application)
         );
+    }
+
+    /**
+     * Historical/internal compatibility wrapper.
+     */
+    public function notifyStaffApplicationDenied(LandTransferApplication $application): void
+    {
+        $this->notifyStaffApplicationNotApproved($application);
     }
 
     public function notifyStaffApplicationReadyForRelease(LandTransferApplication $application): void
@@ -393,8 +402,8 @@ class NotificationService
     {
         return match ($application->status) {
             LandTransferApplication::STATUS_APPROVED => 'Approved',
-            LandTransferApplication::STATUS_DENIED,
-            LandTransferApplication::STATUS_NOT_APPROVED => 'Denied',
+            LandTransferApplication::STATUS_NOT_APPROVED => 'Not Approved',
+            LandTransferApplication::STATUS_DENIED => 'Not Approved (legacy record)',
             LandTransferApplication::STATUS_RELEASED => 'Released (legacy record)',
             default => $application->statusLabel(),
         };

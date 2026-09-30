@@ -334,7 +334,7 @@ class ApplicationWorkflowController extends Controller
         }
 
         if ($application->status !== LandTransferApplication::STATUS_FOR_RELEASING) {
-            return back()->withErrors(['status' => 'Final denial is only available at PARPO II Decision Pending. Use Return for Compliance for intake deficiencies.']);
+            return back()->withErrors(['status' => 'Final Not Approved decision is only available at PARPO II Decision Pending. Use Return for Compliance for intake deficiencies.']);
         }
 
         $request->validate([
@@ -342,8 +342,8 @@ class ApplicationWorkflowController extends Controller
             'decision_reason' => ['required', 'string', 'max:1000'],
             'decision_notes' => ['nullable', 'string', 'max:4000'],
         ], [
-            'final_decision_confirmation.accepted' => 'Confirm the final PARPO II denied decision before continuing.',
-            'decision_reason.required' => 'A denial reason is required before recording the final Denied decision.',
+            'final_decision_confirmation.accepted' => 'Confirm the final PARPO II Not Approved decision before continuing.',
+            'decision_reason.required' => 'A reason is required before recording the final Not Approved decision.',
         ]);
 
         [$snapshot] = $this->buildValidationSnapshot($application);
@@ -351,12 +351,12 @@ class ApplicationWorkflowController extends Controller
         $readinessErrors = $this->workflowPrerequisiteErrors($snapshot['workflow_readiness']);
 
         if (! (bool) data_get($snapshot, 'requirements.complete', false)) {
-            $readinessErrors['requirements'] = 'Applicable documentary requirements must remain complete before recording the final PARPO II denial.';
+            $readinessErrors['requirements'] = 'Applicable documentary requirements must remain complete before recording the final PARPO II Not Approved decision.';
         }
 
         if (! empty($readinessErrors)) {
             return back()->withErrors(array_merge([
-                'validation' => 'Resolve the following workflow-integrity issues before recording PARPO II denial:',
+                'validation' => 'Resolve the following workflow-integrity issues before recording the PARPO II Not Approved decision:',
             ], $readinessErrors));
         }
 
@@ -371,10 +371,10 @@ class ApplicationWorkflowController extends Controller
                 }
 
                 if ($application->status !== LandTransferApplication::STATUS_FOR_RELEASING) {
-                    throw new \RuntimeException('The application status changed before denial. Refresh and review the current stage.');
+                    throw new \RuntimeException('The application status changed before the Not Approved decision. Refresh and review the current stage.');
                 }
 
-                $application->status = LandTransferApplication::STATUS_DENIED;
+                $application->status = LandTransferApplication::STATUS_NOT_APPROVED;
                 $application->release_status = LandTransferApplication::RELEASE_NOT_READY;
                 $application->reviewed_by = Auth::id();
                 $application->reviewed_at = now();
@@ -387,7 +387,7 @@ class ApplicationWorkflowController extends Controller
                 $form4Recommendation = $application->ltc_form4_recommendation_decision;
 
                 AuditLogger::record(
-                    'application_denied',
+                    'application_not_approved',
                     $application,
                     $application,
                     [
@@ -400,26 +400,26 @@ class ApplicationWorkflowController extends Controller
                             : null,
                         'ownership_transfer_performed' => false,
                         'registry_mutation_performed' => false,
-                        'scope_note' => 'Final DAR clearance decision only. Denial does not alter ownership or registry records.',
+                        'scope_note' => 'Final DAR clearance decision only. A Not Approved decision does not alter ownership or registry records.',
                     ],
                     Auth::id()
                 );
 
                 app(ApplicationClearanceService::class)->generateForDecision($application, Auth::id());
-                app(NotificationService::class)->notifyStaffApplicationDenied($application);
+                app(NotificationService::class)->notifyStaffApplicationNotApproved($application);
                 app(NotificationService::class)->notifyLinkedLandownersFinalDecision($application);
             });
         } catch (\Throwable $e) {
-            return back()->with('error', 'Denied decision failed: ' . $e->getMessage());
+            return back()->with('error', 'Not Approved decision failed: ' . $e->getMessage());
         }
 
-        return back()->with('success', 'PARPO II denied decision recorded. The application is now locked.');
+        return back()->with('success', 'PARPO II Not Approved decision recorded. The application is now locked.');
     }
 
     public function markReadyForRelease(Request $request, LandTransferApplication $application)
     {
-        if (! $application->isFinalized() || in_array($application->status, LandTransferApplication::LEGACY_FINAL_STATUSES, true)) {
-            return back()->withErrors(['status' => 'Only a current Approved or Denied decision may be marked Ready for Release.']);
+        if (! $application->isFinalized() || $application->status === LandTransferApplication::STATUS_RELEASED) {
+            return back()->withErrors(['status' => 'Only an Approved or Not Approved decision may be marked Ready for Release.']);
         }
 
         if (! $application->clearance()->exists()) {
@@ -458,7 +458,7 @@ class ApplicationWorkflowController extends Controller
     public function release(Request $request, LandTransferApplication $application)
     {
         if (! $application->isFinalized()) {
-            return back()->withErrors(['status' => 'A final Approved or Denied decision is required before release to the client.']);
+            return back()->withErrors(['status' => 'A final Approved or Not Approved decision is required before release to the client.']);
         }
 
         if (! $application->isReleaseReady()) {

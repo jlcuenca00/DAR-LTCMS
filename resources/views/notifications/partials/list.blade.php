@@ -6,7 +6,8 @@
         // Legacy display compatibility only; current Staff triggers do not emit this event.
         'application_approved' => 'Application approved',
         'application_released' => 'Clearance released',
-        'application_denied' => 'Application denied',
+        'application_not_approved' => 'Application not approved',
+        'application_denied' => 'Application not approved (legacy)',
         'landowner_application_status' => 'Application status',
         'landowner_final_decision' => 'Final clearance decision',
         'geodetic_reference_available' => 'Source reference available',
@@ -14,16 +15,7 @@
         'geodetic_reference_updated' => 'Parcel reference updated',
     ];
 
-    $cleanNotificationText = function (?string $value): string {
-        $value = (string) $value;
-
-        return str($value)
-            ->replace('Not Approved', 'Denied')
-            ->replace('not approved', 'denied')
-            ->replace('not-approved', 'denied')
-            ->replace('NOT APPROVED', 'DENIED')
-            ->toString();
-    };
+    $cleanNotificationText = fn (?string $value): string => (string) $value;
 @endphp
 
 <div class="notification-center-page space-y-4">

@@ -107,11 +107,11 @@ storage/app/public administrative records
 New applications follow the Citizen's Charter-aligned administrative workflow and end with one of these final application decisions:
 
 - **Approved**; or
-- **Denied**.
+- **Not Approved**.
 
 Both are final decision states. After either decision, substantive editing/uploads are locked and the record remains available for authorized viewing, monitoring, reporting, audit, clearance output, and controlled release-tracking purposes.
 
-A signed output may later be marked **Ready for Release** and **Released to Client**. These delivery statuses do not overwrite the final Approved/Denied decision.
+A signed output may later be marked **Ready for Release** and **Released to Client**. These delivery statuses do not overwrite the final Approved/Not Approved decision.
 
 Approval, denial, or release does not automatically transfer land ownership or alter registry ownership records.
 

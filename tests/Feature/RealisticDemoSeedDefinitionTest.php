@@ -17,7 +17,7 @@ class RealisticDemoSeedDefinitionTest extends TestCase
         $this->assertStringContainsString("'private_agricultural'", $sql);
         $this->assertStringContainsString("'transferor'", $sql);
         $this->assertStringContainsString("'approved'", $sql);
-        $this->assertStringContainsString("'denied'", $sql);
+        $this->assertStringContainsString("'not_approved'", $sql);
         $this->assertStringContainsString("'ready_for_release'", $sql);
         $this->assertStringContainsString("'released'", $sql);
         $this->assertStringContainsString('No ownership/registry mutation is simulated.', $sql);
@@ -64,7 +64,7 @@ class RealisticDemoSeedDefinitionTest extends TestCase
             'endorsed_parpo',
             'for_releasing',
             'approved',
-            'denied',
+            'not_approved',
         ];
 
         $allowedReleaseStatuses = ['not_ready', 'ready_for_release', 'released'];
@@ -134,7 +134,7 @@ class RealisticDemoSeedDefinitionTest extends TestCase
             'endorsed_parpo',
             'for_releasing',
             'approved',
-            'denied',
+            'not_approved',
         ] as $status) {
             $this->assertTrue(
                 $rows->contains(fn (array $row): bool => $row['status'] === $status),
@@ -155,7 +155,7 @@ class RealisticDemoSeedDefinitionTest extends TestCase
                 && $row['release_status'] === 'released'
         ));
         $this->assertTrue($rows->contains(
-            fn (array $row): bool => $row['status'] === 'denied'
+            fn (array $row): bool => $row['status'] === 'not_approved'
                 && $row['release_status'] === 'released'
         ));
     }

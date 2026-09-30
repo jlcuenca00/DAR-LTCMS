@@ -23,7 +23,7 @@ Do **not** describe it as:
 
 Recommended wording:
 
-> DAR-LTCMS is limited to the generation, processing, monitoring, and records management of Land Transfer Clearance applications within the DAR Negros Oriental Provincial Office. It does not automatically execute land ownership transfer, mutate Registry of Deeds records, or conclusively finalize legal land transfer. An Approved or Denied application records the final administrative clearance decision and locks the substantive application record. Release of the signed output is tracked separately. Any actual ownership transfer or registry alteration remains subject to separate legal and administrative procedures outside the system's automatic operations.
+> DAR-LTCMS is limited to the generation, processing, monitoring, and records management of Land Transfer Clearance applications within the DAR Negros Oriental Provincial Office. It does not automatically execute land ownership transfer, mutate Registry of Deeds records, or conclusively finalize legal land transfer. An Approved or Not Approved application records the final administrative clearance decision and locks the substantive application record. Release of the signed output is tracked separately. Any actual ownership transfer or registry alteration remains subject to separate legal and administrative procedures outside the system's automatic operations.
 
 ## Current application workflow terminology
 
@@ -37,7 +37,7 @@ Use these current user-facing stages in thesis descriptions and diagrams:
 6. Chief Legal Final Review
 7. Forwarded to PARPO II
 8. PARPO II Decision Pending
-9. Approved or Denied — final application decision
+9. Approved or Not Approved — final application decision
 10. Signed Form No. 5 / Ready for Release
 11. Released to Client
 
@@ -47,7 +47,7 @@ Historical/internal values such as `released`, `not_approved`, `pending_review`,
 
 ## Final decision rule
 
-Once an application is Approved or Denied:
+Once an application is Approved or Not Approved:
 
 - editing is locked;
 - supporting-document changes are locked;

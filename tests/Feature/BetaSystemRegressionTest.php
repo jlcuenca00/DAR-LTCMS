@@ -407,14 +407,14 @@ class BetaSystemRegressionTest extends TestCase
         $application->refresh();
         $landholding->refresh();
 
-        $this->assertSame(LandTransferApplication::STATUS_DENIED, $application->status);
+        $this->assertSame(LandTransferApplication::STATUS_NOT_APPROVED, $application->status);
         $this->assertSame($staff->id, $application->reviewed_by);
         $this->assertNotNull($application->validated_at);
         $this->assertNotNull($application->clearance()->first());
 
         $this->assertDatabaseHas('audit_logs', [
             'actor_user_id' => $staff->id,
-            'action' => 'application_denied',
+            'action' => 'application_not_approved',
             'land_transfer_application_id' => $application->id,
         ]);
 
@@ -433,7 +433,7 @@ class BetaSystemRegressionTest extends TestCase
 
         $this->assertDatabaseHas('system_notifications', [
             'user_id' => $staff->id,
-            'type' => 'application_denied',
+            'type' => 'application_not_approved',
             'related_type' => LandTransferApplication::class,
             'related_id' => $application->id,
         ]);
@@ -455,7 +455,7 @@ class BetaSystemRegressionTest extends TestCase
 
         foreach ([
             LandTransferApplication::STATUS_APPROVED,
-            LandTransferApplication::STATUS_DENIED,
+            LandTransferApplication::STATUS_NOT_APPROVED,
         ] as $status) {
             $application = LandTransferApplication::create([
                 'application_code' => 'BETA-FINAL-' . strtoupper($status),

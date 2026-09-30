@@ -33,7 +33,7 @@ class DocumentationAlignmentTest extends TestCase
         }
     }
 
-    public function test_current_user_and_tester_guides_use_approved_and_denied_final_decisions(): void
+    public function test_current_user_and_tester_guides_use_approved_and_not_approved_final_decisions(): void
     {
         $paths = [
             'docs/barebones-tester-handoff.md',
@@ -47,13 +47,8 @@ class DocumentationAlignmentTest extends TestCase
             $content = $this->read($path);
 
             $this->assertStringContainsString('Approved', $content, "{$path} must document Approved as a final decision.");
-            $this->assertStringContainsString('Denied', $content, "{$path} must document Denied as a final decision.");
+            $this->assertStringContainsString('Not Approved', $content, "{$path} must document Not Approved as a final decision.");
             $this->assertStringContainsString('Released', $content, "{$path} must document release separately.");
-            $this->assertDoesNotMatchRegularExpression(
-                '/(^|\n)\s*[-*]\s+not[ _-]?approved\s*$/im',
-                $content,
-                "{$path} must not present Not Approved as a current final workflow option."
-            );
         }
     }
 
@@ -69,7 +64,7 @@ class DocumentationAlignmentTest extends TestCase
         $this->assertStringContainsString('transferred legal ownership', $baseline);
         $this->assertStringContainsString('registry alteration', $baseline);
         $this->assertStringContainsString('Approved', $baseline);
-        $this->assertStringContainsString('Denied', $baseline);
+        $this->assertStringContainsString('Not Approved', $baseline);
         $this->assertStringContainsString('Released to Client', $baseline);
         $this->assertStringContainsString('editing is locked', $baseline);
         $this->assertStringContainsString('supporting-document upload/removal is locked', $baseline);

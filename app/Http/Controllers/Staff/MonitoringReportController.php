@@ -57,9 +57,9 @@ class MonitoringReportController extends Controller
 
         $validDecisionStatuses = [
             LandTransferApplication::STATUS_APPROVED,
-            LandTransferApplication::STATUS_DENIED,
-            LandTransferApplication::STATUS_RELEASED,
             LandTransferApplication::STATUS_NOT_APPROVED,
+            LandTransferApplication::STATUS_RELEASED,
+            LandTransferApplication::STATUS_DENIED,
         ];
 
         $clearances = ApplicationClearance::query()
@@ -91,8 +91,8 @@ class MonitoringReportController extends Controller
                 [
                     LandTransferApplication::STATUS_APPROVED,
                     LandTransferApplication::STATUS_RELEASED,
-                    LandTransferApplication::STATUS_DENIED,
                     LandTransferApplication::STATUS_NOT_APPROVED,
+                    LandTransferApplication::STATUS_DENIED,
                 ]
             )
             ->first();
@@ -138,7 +138,7 @@ class MonitoringReportController extends Controller
             'hasActiveFilters' => $filterLabels->isNotEmpty(),
             'statusOptions' => $statusOptions,
             'municipalities' => $municipalities,
-            'scopeNotice' => 'This report is for administrative monitoring, records management, and decision support. Approved/Denied are final clearance decisions; release to the client is tracked separately. Approved and Denied clearance decisions do not automatically transfer land ownership. No clearance decision or release record mutates parcel ownership or registry records, or replaces separate legal and administrative procedures.',
+            'scopeNotice' => 'This report is for administrative monitoring, records management, and decision support. Approved/Not Approved are final clearance decisions; release to the client is tracked separately. Approved and Denied clearance decisions do not automatically transfer land ownership. No clearance decision or release record mutates parcel ownership or registry records, or replaces separate legal and administrative procedures.',
             'areaNotice' => 'Recorded output area is the summed parcel area preserved in final clearance snapshots. It is not a measurement of land whose legal ownership has been transferred.',
         ];
     }

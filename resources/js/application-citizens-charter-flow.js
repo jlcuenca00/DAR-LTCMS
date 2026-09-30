@@ -124,7 +124,7 @@ function configureAdvanceForm(state) {
             break;
 
         case 'endorsed_parpo':
-            if (copy) copy.textContent = 'Place the complete folder at PARPO II Decision Pending for the final Approved or Denied decision.';
+            if (copy) copy.textContent = 'Place the complete folder at PARPO II Decision Pending for the final Approved or Not Approved decision.';
             if (note) note.textContent = 'The system rechecks requirements, payment, Form No. 4, CSW, parcel links, and assistive hectare validation before this stage.';
             break;
 
@@ -206,7 +206,7 @@ function configureFinalDecisionCards(state) {
     if (denyForm) {
         const copy = denyForm.querySelector('.workflow-action-copy');
         const note = denyForm.querySelector('.workflow-decision-note');
-        if (copy) copy.textContent = 'Record PARPO II’s final Denied decision and generate the immutable DENIED LTC Form No. 5 output.';
+        if (copy) copy.textContent = 'Record PARPO II’s final Not Approved decision and generate the immutable DENIED LTC Form No. 5 output.';
         if (note) note.textContent = 'Use this only for the final PARPO II decision. Earlier deficiencies must use Return for Compliance.';
     }
 }

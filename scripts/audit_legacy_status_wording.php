@@ -1,7 +1,7 @@
 <?php
 
 /**
- * DAR-iLAND legacy status/wording audit.
+ * DAR-LTCMS legacy status/wording audit.
  *
  * This script only scans and reports. It does not modify files.
  * Use it before final cleanup so we do not accidentally remove compatibility
@@ -24,14 +24,11 @@ $scanDirs = [
 ];
 
 $patterns = [
-    'approved' => 'legacy approved status / wording',
-    'not_approved' => 'legacy not_approved status / wording',
-    'Not Approved' => 'legacy display wording',
-    'not approved' => 'legacy display wording',
+    "STATUS_DENIED" => 'legacy denied compatibility constant',
+    "'denied'" => 'legacy denied status/value',
+    'application_denied' => 'legacy negative-decision notification/audit event type',
     'Released Clearance' => 'old display wording; Form No. 5 should show APPROVED when referring to official form decision',
     'Approved Clearance' => 'old notification/output wording',
-    'application_approved' => 'old notification/audit event type',
-    'application_not_approved' => 'old notification/audit event type',
     'pending_review' => 'legacy pending review status',
     'draft' => 'legacy draft status',
     'ownership mutation' => 'scope wording check',
@@ -40,8 +37,7 @@ $patterns = [
 
 $allowedHints = [
     'app/Models/LandTransferApplication.php' => [
-        'STATUS_APPROVED',
-        'STATUS_NOT_APPROVED',
+        'STATUS_DENIED',
         'LEGACY_FINAL_STATUSES',
         'STATUS_PENDING_REVIEW',
         'STATUS_DRAFT',
@@ -122,7 +118,7 @@ if (empty($results)) {
     exit(0);
 }
 
-echo "DAR-iLAND Legacy Status / Scope Wording Audit\n";
+echo "DAR-LTCMS Legacy Status / Scope Wording Audit\n";
 echo "=============================================\n\n";
 echo "Total matches: " . count($results) . "\n\n";
 

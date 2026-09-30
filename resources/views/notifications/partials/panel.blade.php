@@ -10,20 +10,13 @@
             'application_submitted', 'application_status_updated' => 'Application status updated',
             'application_approved' => 'Application approved',
             'application_released' => 'Clearance released',
-            'application_not_approved', 'application_denied' => 'Application denied',
+            'application_not_approved' => 'Application not approved',
+            'application_denied' => 'Application not approved (legacy)',
             default => ucwords(str_replace('_', ' ', (string) $type)),
         };
     };
 
-    $normalizeNotificationText = function (?string $value): string {
-        return strtr((string) $value, [
-            'Not Approved' => 'Denied',
-            'not approved' => 'denied',
-            'NOT APPROVED' => 'DENIED',
-            'not-approved' => 'denied',
-            'Not-approved' => 'Denied',
-        ]);
-    };
+    $normalizeNotificationText = fn (?string $value): string => (string) $value;
 @endphp
 
 <div class="notification-dropdown-panel" role="menu" aria-label="Recent notifications">
