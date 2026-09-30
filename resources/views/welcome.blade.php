@@ -199,7 +199,7 @@
                     </div>
                     <div class="panel-body">
                         <div class="panel-row"><div class="panel-label">Applications</div><div class="panel-value">Entered by authorized DAR Staff</div></div>
-                        <div class="panel-row"><div class="panel-label">Final decision</div><div class="panel-value">Approved or Denied</div></div>
+                        <div class="panel-row"><div class="panel-label">Final decision</div><div class="panel-value">Approved or Not Approved</div></div>
                         <div class="panel-row"><div class="panel-label">Clearance form</div><div class="panel-value">LTC Form No. 5 · GRANTED / DENIED</div></div>
                     </div>
                 </aside>
@@ -271,7 +271,7 @@
                         <div class="workflow-step"><span class="workflow-number">7</span><strong>Signed Form No. 5 / Ready for Release</strong></div>
                         <div class="workflow-step"><span class="workflow-number">8</span><strong>Release to Client</strong></div>
                     </div>
-                    <div class="decision-note">Approved or Denied is the final application decision in DAR-LTCMS. Release of the signed result is tracked separately, and approval does not itself change land ownership.</div>
+                    <div class="decision-note">Approved or Not Approved is the final application decision in DAR-LTCMS. Release of the signed result is tracked separately, and approval does not itself change land ownership.</div>
                 </div>
             </div>
         </section>
