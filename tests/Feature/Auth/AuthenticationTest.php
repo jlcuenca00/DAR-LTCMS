@@ -64,6 +64,25 @@ class AuthenticationTest extends TestCase
         $this->assertGuest();
     }
 
+    public function test_password_confirmation_attempts_are_rate_limited(): void
+    {
+        $user = User::factory()->create([
+            'password' => Hash::make('CorrectPassword123!'),
+        ]);
+
+        $this->actingAs($user);
+
+        foreach (range(1, 6) as $attempt) {
+            $this->post('/confirm-password', [
+                'password' => 'wrong-password',
+            ])->assertSessionHasErrors('password');
+        }
+
+        $this->post('/confirm-password', [
+            'password' => 'wrong-password',
+        ])->assertStatus(429);
+    }
+
     public function test_users_can_logout(): void
     {
         $user = User::factory()->create();
