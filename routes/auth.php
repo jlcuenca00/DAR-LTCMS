@@ -16,8 +16,8 @@ use Illuminate\Support\Facades\Route;
 |--------------------------------------------------------------------------
 |
 | DAR-LTCMS accounts are created and managed only by authorized DAR Staff.
-| Username remains the account identifier. Accounts with a registered email
-| may use email-confirmed OTP password recovery; accounts without email use
+| Username remains the account identifier. Accounts with a verified registered email
+| may use email-confirmed OTP password recovery; accounts without a verified email use
 | the existing DAR Staff-assisted reset process.
 |
 */
