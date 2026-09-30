@@ -67,13 +67,13 @@ Verify a positive-path application moves through:
 
 Also verify a separate application can receive:
 
-- [ ] Denied final decision
+- [ ] Not Approved final decision
 
-Expected: **Approved** and **Denied** are the final application decisions. Ready for Release and Released to Client are separate administrative delivery statuses.
+Expected: **Approved** and **Not Approved** are the final application decisions. Ready for Release and Released to Client are separate administrative delivery statuses.
 
 ## 6. Final-decision lock
 
-Test one Approved and one Denied application.
+Test one Approved and one Not Approved application.
 
 - [ ] Edit controls are hidden/disabled after finalization
 - [ ] Supporting-document upload/removal is locked
@@ -81,21 +81,21 @@ Test one Approved and one Denied application.
 - [ ] Backend rejects post-final upload/removal attempts
 - [ ] UI clearly shows the final/locked decision state
 - [ ] Authorized release tracking, viewing, reporting, audit, and archival access remains available
-- [ ] Marking Ready for Release does not change Approved/Denied
-- [ ] Recording Released to Client does not change Approved/Denied
+- [ ] Marking Ready for Release does not change Approved/Not Approved
+- [ ] Recording Released to Client does not change Approved/Not Approved
 
 Expected: final decision records are preserved and protected while delivery is tracked separately.
 
 ## 7. LTC Form No. 5
 
-For Approved and Denied records:
+For Approved and Not Approved records:
 
 - [ ] Browser output opens
 - [ ] Direct PDF output opens/downloads
 - [ ] 8.5 x 13 inch page format is correct
 - [ ] LTC number uses the annual sequence and stored page value
 - [ ] Approved record prints GRANTED
-- [ ] Denied record prints DENIED
+- [ ] Not Approved record prints DENIED
 - [ ] All linked Parcel title/TD/lot/survey references are correct
 - [ ] Combined recorded area is correct
 - [ ] Signatory is `ENGR. MANUEL M. GALON, JR., OIC PARPO II`
@@ -176,7 +176,7 @@ Expected: map features support review/reference only and do not mutate ownership
 - [ ] Monitoring dashboard loads
 - [ ] Date, status, and municipality filters work consistently
 - [ ] Workflow status breakdown uses current labels
-- [ ] Approved and Denied output totals and release tracking are correct
+- [ ] Approved and Not Approved output totals and release tracking are correct
 - [ ] Recorded Output Area is labeled as an administrative output metric
 - [ ] Printable report opens
 - [ ] Scope/limitation wording is visible
@@ -196,7 +196,7 @@ Expected: map features support review/reference only and do not mutate ownership
 - [ ] Notification bell/panel works
 - [ ] Full notification archive opens
 - [ ] Users only see notifications intended for them
-- [ ] Staff notifications distinguish Approved/Denied final decisions from Ready for Release and Released to Client events
+- [ ] Staff notifications distinguish Approved/Not Approved final decisions from Ready for Release and Released to Client events
 - [ ] Landowner notifications expose only their own application information
 
 ## 17. User / Role Management
@@ -264,4 +264,4 @@ Manually inspect major pages including:
 - [ ] `/geodetic/parcel-map`
 - [ ] `/profile`
 
-Expected: no broken routes, obsolete project branding, outdated Approved/Not Approved user-facing workflow language, or wording that exceeds the approved clearance-processing scope.
+Expected: no broken routes, obsolete project branding, outdated Approved/Denied user-facing workflow language, or wording that exceeds the approved clearance-processing scope.
