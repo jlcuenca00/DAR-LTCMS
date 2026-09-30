@@ -464,15 +464,69 @@ class GeodeticGeometryWorkflowTest extends TestCase
             'edit_session_token' => '00000000-0000-4000-8000-000000000000',
         ];
 
-        $this->actingAs($landowner)
-            ->patch(route('geodetic.parcels.geometry.update', $parcel), $payload)
-            ->assertForbidden();
+        foreach ([$landowner, $staff] as $unauthorizedUser) {
+            $this->actingAs($unauthorizedUser)
+                ->get(route('geodetic.parcels.geometry.edit', $parcel))
+                ->assertForbidden();
 
-        $this->actingAs($staff)
-            ->patch(route('geodetic.parcels.geometry.update', $parcel), $payload)
-            ->assertForbidden();
+            $this->actingAs($unauthorizedUser)
+                ->postJson(route('geodetic.parcels.geometry.session.heartbeat', $parcel), [
+                    'edit_session_token' => $payload['edit_session_token'],
+                ])
+                ->assertForbidden();
+
+            $this->actingAs($unauthorizedUser)
+                ->postJson(route('geodetic.parcels.geometry.session.release', $parcel), [
+                    'edit_session_token' => $payload['edit_session_token'],
+                ])
+                ->assertForbidden();
+
+            $this->actingAs($unauthorizedUser)
+                ->patch(route('geodetic.parcels.geometry.update', $parcel), $payload)
+                ->assertForbidden();
+        }
 
         $this->assertNull($parcel->fresh()->geometry_geojson);
+        $this->assertSame(0, ParcelGeometryEditSession::where('parcel_id', $parcel->id)->count());
+    }
+
+    public function test_geodetic_user_cannot_reuse_another_users_edit_session_token(): void
+    {
+        $owner = User::factory()->create(['role' => 'geodetic', 'name' => 'Session Owner']);
+        $attacker = User::factory()->create(['role' => 'geodetic', 'name' => 'Other Engineer']);
+
+        $parcel = Parcel::create([
+            'parcel_code' => 'GEO-STOLEN-TOKEN-001',
+            'municipality' => 'Dumaguete City',
+            'barangay' => 'Bantayan',
+            'province' => 'Negros Oriental',
+            'status' => 'active',
+        ]);
+
+        $session = $this->openEditor($owner, $parcel);
+
+        $this->actingAs($attacker)
+            ->postJson(route('geodetic.parcels.geometry.session.heartbeat', $parcel), [
+                'edit_session_token' => $session->session_token,
+            ])
+            ->assertStatus(409);
+
+        $this->actingAs($attacker)
+            ->patch(route('geodetic.parcels.geometry.update', $parcel), [
+                'geometry_geojson' => json_encode($this->polygon(123.30, 9.30)),
+                'geometry_version' => 0,
+                'edit_session_token' => $session->session_token,
+            ])
+            ->assertRedirect(route('geodetic.parcels.geometry.edit', $parcel))
+            ->assertSessionHas('error');
+
+        $this->assertNull($parcel->fresh()->geometry_geojson);
+        $this->assertSame(0, (int) $parcel->fresh()->geometry_version);
+        $this->assertDatabaseHas('parcel_geometry_edit_sessions', [
+            'id' => $session->id,
+            'user_id' => $owner->id,
+            'parcel_id' => $parcel->id,
+        ]);
     }
 
     private function openEditor(User $user, Parcel $parcel): ParcelGeometryEditSession
