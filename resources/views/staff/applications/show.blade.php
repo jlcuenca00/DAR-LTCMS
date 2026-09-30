@@ -3871,27 +3871,27 @@
                                     </span>
 
                                     <div>
-                                        <p class="workflow-action-title">Deny application</p>
+                                        <p class="workflow-action-title">Mark application Not Approved</p>
                                         <p class="workflow-action-copy">
-                                            Record the final denied decision and lock the review record.
+                                            Record the final Not Approved decision and lock the review record.
                                         </p>
                                     </div>
                                 </div>
 
                                 <div class="workflow-decision-actions">
                                     <div class="workflow-form-fields">
-                                        <input type="text" name="decision_reason" placeholder="Denial reason / basis (required)" class="review-input" required>
+                                        <input type="text" name="decision_reason" placeholder="Not Approved reason / basis (required)" class="review-input" required>
                                         <input type="text" name="decision_notes" placeholder="Internal notes (optional)" class="review-input">
                                     </div>
 
                                     <div class="workflow-decision-note">
-                                        This finalizes the application as Denied and preserves the record for monitoring and audit review.
+                                        This finalizes the application as Not Approved and preserves the record for monitoring and audit review.
                                     </div>
                                 </div>
 
                                 <button type="submit" class="staff-button staff-button-danger">
                                     <i class="fa-solid fa-xmark"></i>
-                                    Mark as Denied
+                                    Mark as Not Approved
                                 </button>
                             </form>
                         @endif
@@ -4180,9 +4180,9 @@
                     icon: 'fa-xmark',
                     danger: true,
                     buttonClass: 'staff-button staff-button-danger',
-                    buttonText: 'Mark as Denied',
-                    title: 'Deny this application?',
-                    copy: 'This will record a final denied decision for this application.',
+                    buttonText: 'Mark as Not Approved',
+                    title: 'Mark this application Not Approved?',
+                    copy: 'This will record a final Not Approved decision for this application.',
                     warning: 'This finalizes the application and locks further editing or document uploads for audit integrity.'
                 }
             };
