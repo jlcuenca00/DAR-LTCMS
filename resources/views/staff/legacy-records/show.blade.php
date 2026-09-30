@@ -447,17 +447,26 @@
                             @csrf
                             <div>
                                 <label class="staff-form-label">EXISTING LANDOWNER RECORD</label>
-                                <select name="landowner_id" required class="w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-green-600 focus:ring-green-600">
-                                    <option value="">Select landowner</option>
-                                    @foreach ($landowners as $landowner)
-                                        <option value="{{ $landowner->id }}" @selected($record->landowner_id === $landowner->id)>
-                                            {{ $landowner->full_name }}
-                                            @if ($landowner->barangay || $landowner->municipality)
-                                                — {{ $landowner->barangay ?? 'N/A' }}, {{ $landowner->municipality ?? 'N/A' }}
-                                            @endif
-                                        </option>
-                                    @endforeach
-                                </select>
+                                <div data-remote-record-select data-lookup-url="{{ route('staff.lookups.landowners') }}" class="space-y-2">
+                                    <input type="search"
+                                           class="w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-green-600 focus:ring-green-600"
+                                           placeholder="Search landowner name or record ID"
+                                           autocomplete="off"
+                                           data-remote-record-search>
+                                    <select name="landowner_id"
+                                            required
+                                            class="w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-green-600 focus:ring-green-600"
+                                            data-remote-record-control
+                                            data-placeholder="Select landowner">
+                                        <option value="">Select landowner</option>
+                                        @if ($selectedLandowner)
+                                            <option value="{{ $selectedLandowner->id }}" selected>
+                                                {{ $selectedLandowner->full_name }} — ID {{ $selectedLandowner->id }}
+                                            </option>
+                                        @endif
+                                    </select>
+                                    <p class="mt-1 text-xs text-gray-500" data-remote-record-status>Search loads a bounded set of matching landowner records.</p>
+                                </div>
                             </div>
                             <button type="submit" class="staff-button staff-button-primary justify-center">
                                 <i class="fa-solid fa-link"></i>
@@ -552,16 +561,27 @@
                             @csrf
                             <div>
                                 <label class="staff-form-label">EXISTING PARCEL</label>
-                                <select name="parcel_id" class="w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-green-600 focus:ring-green-600">
-                                    <option value="">Select parcel</option>
-                                    @foreach ($parcels as $parcel)
-                                        <option value="{{ $parcel->id }}">
-                                            {{ $parcel->parcel_code }}
-                                            @if ($parcel->title_no) — {{ $parcel->title_no }} @endif
-                                            @if ($parcel->barangay || $parcel->municipality) — {{ $parcel->barangay ?? 'N/A' }}, {{ $parcel->municipality ?? 'N/A' }} @endif
-                                        </option>
-                                    @endforeach
-                                </select>
+                                <div data-remote-record-select data-lookup-url="{{ route('staff.lookups.parcels') }}" class="space-y-2">
+                                    <input type="search"
+                                           class="w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-green-600 focus:ring-green-600"
+                                           placeholder="Search parcel code, title, lot, survey, or record ID"
+                                           autocomplete="off"
+                                           data-remote-record-search>
+                                    <select name="parcel_id"
+                                            class="w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-green-600 focus:ring-green-600"
+                                            data-remote-record-control
+                                            data-placeholder="Select parcel">
+                                        <option value="">Select parcel</option>
+                                        @if ($selectedParcel)
+                                            <option value="{{ $selectedParcel->id }}" selected>
+                                                {{ $selectedParcel->parcel_code }}
+                                                @if ($selectedParcel->title_no) — {{ $selectedParcel->title_no }} @endif
+                                                @if ($selectedParcel->barangay || $selectedParcel->municipality) — {{ $selectedParcel->barangay ?? 'N/A' }}, {{ $selectedParcel->municipality ?? 'N/A' }} @endif
+                                            </option>
+                                        @endif
+                                    </select>
+                                    <p class="mt-1 text-xs text-gray-500" data-remote-record-status>Search loads a bounded set of matching parcel records.</p>
+                                </div>
                             </div>
                             <button type="submit" class="staff-button staff-button-primary justify-center">
                                 <i class="fa-solid fa-link"></i>
@@ -610,15 +630,25 @@
                                     </div>
                                     <div class="md:col-span-2">
                                         <label class="staff-form-label">LINK EXISTING LANDOWNER AS ACTIVE LANDHOLDING</label>
-                                        <select name="landowner_id" class="w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-green-600 focus:ring-green-600">
-                                            <option value="">Do not link landowner yet</option>
-                                            @foreach ($landowners as $landowner)
-                                                <option value="{{ $landowner->id }}">
-                                                    {{ $landowner->full_name }}
-                                                    @if ($landowner->barangay || $landowner->municipality) — {{ $landowner->barangay ?? 'N/A' }}, {{ $landowner->municipality ?? 'N/A' }} @endif
-                                                </option>
-                                            @endforeach
-                                        </select>
+                                        <div data-remote-record-select data-lookup-url="{{ route('staff.lookups.landowners') }}" class="space-y-2">
+                                            <input type="search"
+                                                   class="w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-green-600 focus:ring-green-600"
+                                                   placeholder="Search landowner name or record ID"
+                                                   autocomplete="off"
+                                                   data-remote-record-search>
+                                            <select name="landowner_id"
+                                                    class="w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-green-600 focus:ring-green-600"
+                                                    data-remote-record-control
+                                                    data-placeholder="Do not link landowner yet">
+                                                <option value="">Do not link landowner yet</option>
+                                                @if ($selectedLandowner)
+                                                    <option value="{{ $selectedLandowner->id }}" selected>
+                                                        {{ $selectedLandowner->full_name }} — ID {{ $selectedLandowner->id }}
+                                                    </option>
+                                                @endif
+                                            </select>
+                                            <p class="mt-1 text-xs text-gray-500" data-remote-record-status>Search loads a bounded set of matching landowner records.</p>
+                                        </div>
                                         <p class="mt-1 text-xs text-gray-500">The map gets owner names through active landholding records.</p>
                                     </div>
                                     <div>
