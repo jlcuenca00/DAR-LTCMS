@@ -22,14 +22,14 @@ class ApplicationClearanceService
 
             $allowedDecisionStatuses = [
                 LandTransferApplication::STATUS_APPROVED,
-                LandTransferApplication::STATUS_DENIED,
+                LandTransferApplication::STATUS_NOT_APPROVED,
                 // Historical compatibility only.
                 LandTransferApplication::STATUS_RELEASED,
-                LandTransferApplication::STATUS_NOT_APPROVED,
+                LandTransferApplication::STATUS_DENIED,
             ];
 
             if (! in_array($application->status, $allowedDecisionStatuses, true)) {
-                throw new \RuntimeException('LTC Form No. 5 can only be generated for final Approved or Denied decisions.');
+                throw new \RuntimeException('LTC Form No. 5 can only be generated for final Approved or Not Approved decisions.');
             }
 
             /*
