@@ -16,6 +16,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Route;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use Tests\TestCase;
 
 class FinalDecisionIntegrityHardeningTest extends TestCase
@@ -107,85 +108,41 @@ class FinalDecisionIntegrityHardeningTest extends TestCase
         }
     }
 
-    public function test_not_approved_uses_the_same_transferee_share_integrity_gate_as_approval(): void
+    public function test_negative_final_statuses_are_historical_only_and_cannot_be_created_by_current_workflow(): void
     {
         $staff = User::factory()->create(['role' => 'staff']);
-        $transferor = $this->makeLandowner('Share Gate', 'Transferor');
-        $firstTransferee = $this->makeLandowner('Share Gate', 'First');
-        $secondTransferee = $this->makeLandowner('Share Gate', 'Second');
-        $parcel = $this->makeParcel('FINAL-SHARE-GATE-PARCEL');
-
-        $application = LandTransferApplication::create([
-            'application_code' => 'FINAL-SHARE-GATE-001',
-            'transferor_name' => $transferor->full_name,
-            'transferors' => [[
-                'name' => $transferor->full_name,
-                'landowner_id' => $transferor->id,
-                'parcel_shares' => [],
-            ]],
-            'transferee_name' => $firstTransferee->full_name . '; ' . $secondTransferee->full_name,
-            'transferees' => [
-                [
-                    'name' => $firstTransferee->full_name,
-                    'landowner_id' => $firstTransferee->id,
-                    'parcel_shares' => [],
-                ],
-                [
-                    'name' => $secondTransferee->full_name,
-                    'landowner_id' => $secondTransferee->id,
-                    'parcel_shares' => [],
-                ],
-            ],
-            'transferor_landowner_id' => $transferor->id,
-            'transferee_landowner_id' => $firstTransferee->id,
-            'municipality' => 'Dumaguete City',
-            'barangay' => 'Bantayan',
-            'status' => LandTransferApplication::STATUS_FOR_RELEASING,
-            'encoded_by' => $staff->id,
-        ]);
-
-        $applicationParcel = ApplicationParcel::create([
-            'land_transfer_application_id' => $application->id,
-            'parcel_id' => $parcel->id,
-            'parcel_code' => $parcel->parcel_code,
-            'area_hectares' => 1.0000,
-        ]);
-
-        LandTransferApplication::withoutEvents(function () use (
-            $application,
-            $applicationParcel,
-            $firstTransferee,
-            $secondTransferee
-        ): void {
-            $application->forceFill([
-                'transferees' => [
-                    [
-                        'name' => $firstTransferee->full_name,
-                        'landowner_id' => $firstTransferee->id,
-                        'parcel_shares' => [(string) $applicationParcel->id => 0.7500],
-                    ],
-                    [
-                        'name' => $secondTransferee->full_name,
-                        'landowner_id' => $secondTransferee->id,
-                        'parcel_shares' => [],
-                    ],
-                ],
-            ])->save();
-        });
+        $application = $this->makeApplication(
+            $staff,
+            LandTransferApplication::STATUS_FOR_RELEASING,
+            'NO-CURRENT-NEGATIVE-DECISION'
+        );
 
         $this->actingAs($staff)
-            ->post(route('staff.applications.not_approved', $application), [
+            ->post('/staff/applications/' . $application->id . '/not-approved', [
                 'final_decision_confirmation' => '1',
-                'decision_officer_name' => 'PARPO II Share Gate Signatory',
-                'decision_date' => now()->toDateString(),
-                'decision_reason' => 'Regression test for symmetric final-decision integrity.',
             ])
-            ->assertSessionHasErrors(['validation', 'transferee_shares']);
+            ->assertNotFound();
 
-        $this->assertSame(
-            LandTransferApplication::STATUS_FOR_RELEASING,
-            $application->fresh()->status
-        );
+        foreach ([
+            LandTransferApplication::STATUS_NOT_APPROVED,
+            LandTransferApplication::STATUS_DENIED,
+        ] as $historicalStatus) {
+            $candidate = $application->fresh();
+            $candidate->status = $historicalStatus;
+
+            try {
+                $candidate->save();
+                $this->fail("Expected {$historicalStatus} to be rejected as historical-only.");
+            } catch (ValidationException $e) {
+                $this->assertArrayHasKey('status', $e->errors());
+            }
+
+            $this->assertSame(
+                LandTransferApplication::STATUS_FOR_RELEASING,
+                $application->fresh()->status
+            );
+        }
+
         $this->assertDatabaseMissing('application_clearances', [
             'land_transfer_application_id' => $application->id,
         ]);
@@ -344,7 +301,7 @@ class FinalDecisionIntegrityHardeningTest extends TestCase
                 'ltc_form4_other_findings' => 'This must never be written after final decision.',
                 'ltc_form4_recommendation_decision' => 'approval',
             ])
-            ->assertSessionHas('error', 'LTC Form No. 4 review details are locked after the final Approved/Not Approved decision.');
+            ->assertSessionHas('error', 'LTC Form No. 4 review details are locked after a final clearance decision record.');
 
         $application->refresh();
         $this->assertNull($application->ltc_form4_other_findings);
@@ -392,9 +349,14 @@ class FinalDecisionIntegrityHardeningTest extends TestCase
             ]],
             'municipality' => 'Dumaguete City',
             'barangay' => 'Bantayan',
-            'status' => LandTransferApplication::STATUS_DENIED,
+            'status' => LandTransferApplication::STATUS_PENDING_LEGAL_REVIEW,
             'encoded_by' => $staff->id,
         ]);
+
+        DB::table('land_transfer_applications')
+            ->where('id', $application->id)
+            ->update(['status' => LandTransferApplication::STATUS_DENIED]);
+        $application->refresh();
 
         $beforeCount = Landowner::count();
 
@@ -544,16 +506,31 @@ class FinalDecisionIntegrityHardeningTest extends TestCase
     private function makeApplication(User $staff, string $status, ?string $suffix = null): LandTransferApplication
     {
         $suffix ??= strtoupper(str_replace('_', '-', $status));
+        $historicalNegative = in_array($status, [
+            LandTransferApplication::STATUS_NOT_APPROVED,
+            LandTransferApplication::STATUS_DENIED,
+        ], true);
 
-        return LandTransferApplication::create([
+        $application = LandTransferApplication::create([
             'application_code' => 'INTEGRITY-' . $suffix,
             'transferor_name' => 'Integrity Transferor',
             'transferee_name' => 'Integrity Transferee',
             'municipality' => 'Dumaguete City',
             'barangay' => 'Bantayan',
-            'status' => $status,
+            'status' => $historicalNegative
+                ? LandTransferApplication::STATUS_PENDING_LEGAL_REVIEW
+                : $status,
             'encoded_by' => $staff->id,
         ]);
+
+        if ($historicalNegative) {
+            DB::table('land_transfer_applications')
+                ->where('id', $application->id)
+                ->update(['status' => $status]);
+            $application->refresh();
+        }
+
+        return $application;
     }
 
     private function makeParcel(string $code): Parcel
