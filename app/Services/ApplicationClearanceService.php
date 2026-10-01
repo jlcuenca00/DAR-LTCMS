@@ -11,7 +11,7 @@ class ApplicationClearanceService
     public function generateForDecision(LandTransferApplication $application, int $userId): ApplicationClearance
     {
         return DB::transaction(function () use ($application, $userId) {
-            $application = LandTransferApplication::with(['applicationParcels.parcel'])
+            $application = LandTransferApplication::with(['applicationParcels.parcel', 'documents'])
                 ->lockForUpdate()
                 ->findOrFail($application->id);
 
@@ -131,6 +131,7 @@ class ApplicationClearanceService
                 'barangay' => $application->barangay,
                 'total_area_hectares' => $totalArea,
                 'parcel_snapshot' => $parcelSnapshot,
+                'form_snapshot' => $this->buildFormSnapshot($application),
                 // Legacy snapshot columns remain populated for backward compatibility.
                 // review_officer_name now mirrors the official decision officer rather
                 // than the authenticated Legal Staff recorder.
@@ -154,6 +155,7 @@ class ApplicationClearanceService
                     'recorded_at' => optional($clearance->decision_recorded_at)->toDateTimeString(),
                     'total_area_hectares' => $clearance->total_area_hectares,
                     'parcel_count' => count($parcelSnapshot),
+                    'form_snapshot_version' => data_get($clearance->form_snapshot, 'snapshot_version'),
                     'scope_note' => 'Immutable final clearance decision snapshot only. No ownership transfer or registry mutation was performed.',
                 ],
                 $userId
@@ -161,5 +163,49 @@ class ApplicationClearanceService
 
             return $clearance;
         });
+    }
+
+    private function buildFormSnapshot(LandTransferApplication $application): array
+    {
+        $metadataItems = collect($application->documents)
+            ->map(fn ($document) => $document->document_metadata ?? [])
+            ->filter(fn ($metadata) => is_array($metadata) && ! empty($metadata));
+
+        $metaFirst = function (array $keys) use ($metadataItems): ?string {
+            foreach ($metadataItems as $metadata) {
+                foreach ($keys as $key) {
+                    $value = data_get($metadata, $key);
+
+                    if (! filled($value)) {
+                        continue;
+                    }
+
+                    return is_array($value)
+                        ? implode('; ', array_filter($value, fn ($item) => filled($item)))
+                        : trim((string) $value);
+                }
+            }
+
+            return null;
+        };
+
+        return [
+            'snapshot_version' => 1,
+            'owner_name' => $metaFirst(['title_owner_names', 'document_owner_names'])
+                ?: $application->transferorDisplayName(),
+            'subject_of' => $metaFirst(['transfer_document_title'])
+                ?: $application->transferInstrumentDisplay(),
+            'subject_date' => $metaFirst(['notarization_date', 'date_issued']),
+            'notarial_document_number' => $metaFirst(['notarial_document_number']),
+            'notarial_page_number' => $metaFirst(['notarial_page_number']),
+            'notarial_book_number' => $metaFirst(['notarial_book_number']),
+            'notarial_series' => $metaFirst(['notarial_series']),
+            'notary_public' => $metaFirst(['notary_public']),
+            'or_number' => filled($application->or_number) ? (string) $application->or_number : null,
+            'or_date' => $application->or_date?->toDateString(),
+            'amount_paid' => $application->amount_paid !== null
+                ? number_format((float) $application->amount_paid, 2, '.', '')
+                : null,
+        ];
     }
 }
