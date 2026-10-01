@@ -104,6 +104,52 @@ class MonitoringReportTest extends TestCase
         $response->assertSee('To 2026-08-31');
     }
 
+    public function test_not_approved_filter_includes_current_and_legacy_negative_decisions(): void
+    {
+        $staff = $this->makeStaff();
+
+        $current = $this->makeApplication(
+            $staff,
+            'FILTER-NOT-APPROVED-CURRENT',
+            'Dumaguete City',
+            'Bantayan',
+            LandTransferApplication::STATUS_NOT_APPROVED,
+            '2026-08-10'
+        );
+
+        $legacy = $this->makeApplication(
+            $staff,
+            'FILTER-NOT-APPROVED-LEGACY',
+            'Dumaguete City',
+            'Bantayan',
+            LandTransferApplication::STATUS_DENIED,
+            '2026-08-11'
+        );
+
+        $this->makeApplication(
+            $staff,
+            'FILTER-NOT-APPROVED-DROP',
+            'Dumaguete City',
+            'Bantayan',
+            LandTransferApplication::STATUS_APPROVED,
+            '2026-08-12'
+        );
+
+        $response = $this->actingAs($staff)->get(route('staff.reports.monitoring.index', [
+            'status' => LandTransferApplication::STATUS_NOT_APPROVED,
+        ]));
+
+        $response->assertOk();
+        $response->assertViewHas('totalApplications', 2);
+        $response->assertViewHas('recentApplications', function ($rows) use ($current, $legacy) {
+            return $rows->pluck('id')->sort()->values()->all()
+                === collect([$current->id, $legacy->id])->sort()->values()->all();
+        });
+        $response->assertSee('FILTER-NOT-APPROVED-CURRENT');
+        $response->assertSee('FILTER-NOT-APPROVED-LEGACY');
+        $response->assertDontSee('FILTER-NOT-APPROVED-DROP');
+    }
+
     public function test_date_bounds_can_be_used_independently(): void
     {
         $staff = $this->makeStaff();
