@@ -71,7 +71,7 @@
 
                             <div style="margin-top:22px;padding:14px 16px;border-left:4px solid #0d6b38;background:#f0fdf4;font-size:13px;line-height:21px;color:#365b43;">
                                 <strong>Password change required on first sign-in.</strong><br>
-                                After your first successful login, DAR-LTCMS will require you to replace this temporary password before you can continue using the system.
+                                This temporary password expires {{ $temporaryPasswordLifetimeHours }} hours after it is generated. After a successful login, DAR-LTCMS will require you to replace it before you can continue using the system.
                             </div>
 
                             <p style="margin:20px 0 0;font-size:13px;line-height:21px;color:#64748b;">
