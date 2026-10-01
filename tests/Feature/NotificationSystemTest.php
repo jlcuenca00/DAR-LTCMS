@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\ApplicationClearance;
 use App\Models\ApplicationParcel;
 use App\Models\LandTransferApplication;
 use App\Models\Landholding;
@@ -294,6 +295,142 @@ class NotificationSystemTest extends TestCase
             'user_id' => $landownerUser->id,
             'type' => 'landowner_application_status',
         ]);
+    }
+
+    public function test_return_for_compliance_persists_context_and_notifies_linked_landowner(): void
+    {
+        $staffUser = User::factory()->create([
+            'role' => User::ROLE_STAFF,
+            'is_active' => true,
+        ]);
+
+        $landownerUser = User::factory()->create([
+            'role' => User::ROLE_LANDOWNER,
+            'is_active' => true,
+        ]);
+
+        $landowner = Landowner::create([
+            'user_id' => $landownerUser->id,
+            'first_name' => 'Compliance',
+            'last_name' => 'Landowner',
+            'province' => 'Negros Oriental',
+        ]);
+
+        $application = LandTransferApplication::create([
+            'application_code' => 'APP-NOTIF-COMPLIANCE-001',
+            'transferor_name' => $landowner->full_name,
+            'transferee_name' => 'Compliance Transferee',
+            'transferor_landowner_id' => $landowner->id,
+            'municipality' => 'Dumaguete City',
+            'barangay' => 'Bantayan',
+            'status' => LandTransferApplication::STATUS_PENDING_LEGAL_REVIEW,
+            'encoded_by' => $staffUser->id,
+        ]);
+
+        $reason = 'Submit the missing certified title copy and valid identification.';
+
+        $this->actingAs($staffUser)
+            ->post(route('staff.applications.return_for_compliance', $application), [
+                'compliance_reason' => $reason,
+            ])
+            ->assertSessionHas('success');
+
+        $application->refresh();
+
+        $this->assertSame(LandTransferApplication::STATUS_RETURNED_FOR_COMPLIANCE, $application->status);
+        $this->assertSame($reason, $application->latest_compliance_reason);
+        $this->assertSame($staffUser->id, $application->returned_for_compliance_by);
+        $this->assertNotNull($application->returned_for_compliance_at);
+
+        $notification = SystemNotification::query()
+            ->where('user_id', $landownerUser->id)
+            ->where('type', 'landowner_returned_for_compliance')
+            ->firstOrFail();
+
+        $this->assertSame($reason, $notification->data['compliance_reason']);
+        $this->assertSame(
+            route('landowner.applications.index'),
+            $notification->targetUrlFor($landownerUser)
+        );
+
+        $this->actingAs($landownerUser)
+            ->get(route('landowner.applications.index'))
+            ->assertOk()
+            ->assertSee('Compliance Needed')
+            ->assertSee($reason);
+    }
+
+    public function test_ready_for_release_notifies_linked_landowner_without_exposing_extra_case_data(): void
+    {
+        $staffUser = User::factory()->create([
+            'role' => User::ROLE_STAFF,
+            'is_active' => true,
+        ]);
+
+        $landownerUser = User::factory()->create([
+            'role' => User::ROLE_LANDOWNER,
+            'is_active' => true,
+        ]);
+
+        $landowner = Landowner::create([
+            'user_id' => $landownerUser->id,
+            'first_name' => 'Release',
+            'last_name' => 'Landowner',
+            'province' => 'Negros Oriental',
+        ]);
+
+        $application = LandTransferApplication::create([
+            'application_code' => 'APP-NOTIF-READY-001',
+            'transferor_name' => $landowner->full_name,
+            'transferee_name' => 'Release Transferee',
+            'transferor_landowner_id' => $landowner->id,
+            'municipality' => 'Dumaguete City',
+            'barangay' => 'Bantayan',
+            'status' => LandTransferApplication::STATUS_APPROVED,
+            'release_status' => LandTransferApplication::RELEASE_NOT_READY,
+            'encoded_by' => $staffUser->id,
+        ]);
+
+        ApplicationClearance::create([
+            'land_transfer_application_id' => $application->id,
+            'clearance_number' => '1803-2026-NOTIF-READY (1)',
+            'decision_status' => LandTransferApplication::STATUS_APPROVED,
+            'application_code' => $application->application_code,
+            'transferor_name' => $application->transferor_name,
+            'transferee_name' => $application->transferee_name,
+            'municipality' => $application->municipality,
+            'barangay' => $application->barangay,
+            'total_area_hectares' => '0.0000',
+            'parcel_snapshot' => [],
+            'review_officer_name' => 'PARPO II Notification Signatory',
+            'reviewed_at' => now(),
+            'decision_authority' => LandTransferApplication::FINAL_DECISION_AUTHORITY,
+            'decision_officer_name' => 'PARPO II Notification Signatory',
+            'decision_date' => now()->toDateString(),
+            'generated_by' => $staffUser->id,
+            'generated_at' => now(),
+        ]);
+
+        $this->actingAs($staffUser)
+            ->post(route('staff.applications.ready_for_release', $application))
+            ->assertSessionHas('success');
+
+        $application->refresh();
+        $this->assertSame(LandTransferApplication::RELEASE_READY, $application->release_status);
+
+        $notification = SystemNotification::query()
+            ->where('user_id', $landownerUser->id)
+            ->where('type', 'landowner_ready_for_release')
+            ->firstOrFail();
+
+        $this->assertSame(LandTransferApplication::RELEASE_READY, $notification->data['release_status']);
+        $this->assertSame($application->application_code, $notification->data['application_code']);
+        $this->assertArrayNotHasKey('transferor_name', $notification->data);
+        $this->assertArrayNotHasKey('transferee_name', $notification->data);
+        $this->assertSame(
+            route('landowner.applications.index'),
+            $notification->targetUrlFor($landownerUser)
+        );
     }
 
     public function test_legacy_submission_into_review_creates_staff_submitted_notification(): void
