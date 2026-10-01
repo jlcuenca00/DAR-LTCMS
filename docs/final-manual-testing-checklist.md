@@ -65,37 +65,46 @@ Verify a positive-path application moves through:
 - [ ] Ready for Release
 - [ ] Released to Client
 
-Also verify a separate application can receive:
+Also verify the reusable Compliance Required loop:
 
-- [ ] Not Approved final decision recorded with PARPO II authority, officer/signatory, official date, and Legal Staff recorder
+- [ ] Request Compliance is available from supported open workflow stages, including PARPO II Decision Ready to Record
+- [ ] A predefined category can be selected with detailed instructions
+- [ ] Selecting **Other** requires custom category text
+- [ ] Optional items/documents to bring can be recorded
+- [ ] The linked Landowner receives an Action Required notification
+- [ ] The Landowner dashboard and Applications page keep the alert visible while unresolved
+- [ ] Mark Compliance Resolved returns the same application to its saved prior stage
+- [ ] A second compliance cycle can be recorded and resolved on the same application
+- [ ] No current Not Approved / Denied Staff action, route, or final-decision button exists
 
-Expected: **Approved** and **Not Approved** are the final application decisions. Ready for Release and Released to Client are separate administrative delivery statuses.
+Expected: **Approved** is the only current final application decision. Compliance Required is an open corrective state. Ready for Release and Released to Client are separate administrative delivery statuses.
 
 ## 6. Final-decision lock
 
-Test one Approved and one Not Approved application.
+Test one Approved application and, if historical negative fixtures exist, verify those historical records are read-only.
 
-- [ ] Edit controls are hidden/disabled after finalization
+- [ ] Edit controls are hidden/disabled after Approved finalization
 - [ ] Supporting-document upload/removal is locked
 - [ ] Backend rejects post-final substantive application mutations
 - [ ] Backend rejects post-final upload/removal attempts
-- [ ] UI clearly shows the final/locked decision state
+- [ ] UI clearly shows the final/locked Approved state
 - [ ] Authorized release tracking, viewing, reporting, audit, and archival access remains available
-- [ ] Marking Ready for Release does not change Approved/Not Approved
-- [ ] Recording Released to Client does not change Approved/Not Approved
+- [ ] Marking Ready for Release does not change Approved
+- [ ] Recording Released to Client does not change Approved
+- [ ] Historical Not Approved / Denied records cannot be recreated or moved back into current workflow
 
 Expected: final decision records are preserved and protected while delivery is tracked separately.
 
 ## 7. LTC Form No. 5
 
-For Approved and Not Approved records:
+For a current Approved record:
 
 - [ ] Browser output opens
 - [ ] Direct PDF output opens/downloads
 - [ ] 8.5 x 13 inch page format is correct
 - [ ] LTC number uses the annual sequence and stored page value
 - [ ] Approved record prints GRANTED
-- [ ] Not Approved record prints DENIED
+- [ ] Historical DENIED output, if present, remains view-only and is not newly generated
 - [ ] All linked Parcel title/TD/lot/survey references are correct
 - [ ] Combined recorded area is correct
 - [ ] Signatory matches the PARPO II decision officer/signatory preserved in the immutable final-decision record
@@ -176,7 +185,8 @@ Expected: map features support review/reference only and do not mutate ownership
 - [ ] Monitoring dashboard loads
 - [ ] Date, status, and municipality filters work consistently
 - [ ] Workflow status breakdown uses current labels
-- [ ] Approved and Not Approved output totals and release tracking are correct
+- [ ] Approved output totals and release tracking are correct
+- [ ] Historical Not Approved / Denied totals, if present, are clearly identified as historical
 - [ ] Recorded Output Area is labeled as an administrative output metric
 - [ ] Printable report opens
 - [ ] Scope/limitation wording is visible
@@ -196,8 +206,10 @@ Expected: map features support review/reference only and do not mutate ownership
 - [ ] Notification bell/panel works
 - [ ] Full notification archive opens
 - [ ] Users only see notifications intended for them
-- [ ] Legal Clearance Staff notifications distinguish Approved/Not Approved final decisions from Ready for Release and Released to Client events
+- [ ] Landowner Action Required / Compliance Resolved notifications point to the correct own application
+- [ ] Approved, Ready for Release, and Released to Client notifications remain distinct
 - [ ] Landowner notifications expose only their own application information
+- [ ] Reading/dismissing a notification does not remove an unresolved persistent compliance alert
 
 ## 17. User / Role Management
 
