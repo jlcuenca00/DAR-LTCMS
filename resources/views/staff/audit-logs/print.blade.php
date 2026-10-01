@@ -341,11 +341,22 @@
                             @endif
                         </td>
                         <td>
-                            <div class="primary">{{ $log->actor?->name ?? 'System' }}</div>
-                            <div class="secondary">{{ $log->actor?->email ?? 'No user account' }}</div>
+                            <div class="primary">{{ $log->actor_name_snapshot ?? $log->actor?->name ?? 'System / unknown actor' }}</div>
+                            <div class="secondary">
+                                @if ($log->actor_username_snapshot)
+                                    {{ '@' . $log->actor_username_snapshot }}
+                                @elseif ($log->actor?->username)
+                                    {{ '@' . $log->actor->username }}
+                                @else
+                                    No username snapshot
+                                @endif
+                                @if ($log->actor_role_snapshot)
+                                    · {{ $log->actor_role_snapshot }}
+                                @endif
+                            </div>
                         </td>
                         <td>
-                            <div class="primary">{{ $log->application?->application_code ?? 'Not linked' }}</div>
+                            <div class="primary">{{ $log->application_code_snapshot ?? $log->application?->application_code ?? 'Not linked' }}</div>
                         </td>
                         <td>
                             <div class="primary">{{ $recordLabel($log) }}</div>
