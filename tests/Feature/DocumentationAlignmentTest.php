@@ -80,7 +80,7 @@ class DocumentationAlignmentTest extends TestCase
         $entry = $this->read('docs/tester-data-entry-guide.md');
 
         $this->assertStringContainsString('five active Legal Clearance Staff tester accounts', $handoff);
-        $this->assertStringContainsString('5 Staff tester accounts', $reset);
+        $this->assertStringContainsString('5 Legal Clearance Staff tester accounts', $reset);
         $this->assertStringContainsString('staff.tester@dar-ltcms.local', $handoff);
         $this->assertStringContainsString('Never run `migrate:fresh`', $reset);
 
