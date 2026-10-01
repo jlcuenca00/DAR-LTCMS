@@ -41,21 +41,37 @@ class LoginRequest extends FormRequest
     {
         $this->ensureIsNotRateLimited();
 
-                if (! Auth::attempt(['username' => $this->input('username'), 'password' => $this->input('password')], $this->boolean('remember'))) {
-            RateLimiter::hit($this->throttleKey());
+        if (! Auth::attempt([
+            'username' => $this->input('username'),
+            'password' => $this->input('password'),
+        ], $this->boolean('remember'))) {
+            $this->hitRateLimits();
 
             throw ValidationException::withMessages([
                 'username' => trans('auth.failed'),
             ]);
         }
 
-        if (! Auth::user()?->is_active) {
-            Auth::guard('web')->logout();
+        $user = Auth::user();
 
-            RateLimiter::hit($this->throttleKey());
+        if (! $user?->is_active) {
+            Auth::guard('web')->logout();
+            $this->hitRateLimits();
 
             throw ValidationException::withMessages([
                 'username' => 'This account is inactive. Please contact an authorized DAR staff account manager.',
+            ]);
+        }
+
+        if (
+            $user->must_change_password
+            && $user->temporary_password_expires_at?->isPast()
+        ) {
+            Auth::guard('web')->logout();
+            $this->hitRateLimits();
+
+            throw ValidationException::withMessages([
+                'username' => 'This temporary password has expired. Contact authorized DAR Staff for a new temporary password.',
             ]);
         }
 
@@ -69,13 +85,19 @@ class LoginRequest extends FormRequest
      */
     public function ensureIsNotRateLimited(): void
     {
-        if (! RateLimiter::tooManyAttempts($this->throttleKey(), 5)) {
+        $identityLimited = RateLimiter::tooManyAttempts($this->throttleKey(), 5);
+        $ipLimited = RateLimiter::tooManyAttempts($this->ipThrottleKey(), 30);
+
+        if (! $identityLimited && ! $ipLimited) {
             return;
         }
 
         event(new Lockout($this));
 
-        $seconds = RateLimiter::availableIn($this->throttleKey());
+        $seconds = max(
+            $identityLimited ? RateLimiter::availableIn($this->throttleKey()) : 0,
+            $ipLimited ? RateLimiter::availableIn($this->ipThrottleKey()) : 0,
+        );
 
         throw ValidationException::withMessages([
             'username' => trans('auth.throttle', [
@@ -91,5 +113,16 @@ class LoginRequest extends FormRequest
     public function throttleKey(): string
     {
         return Str::transliterate(Str::lower($this->string('username')).'|'.$this->ip());
+    }
+
+    public function ipThrottleKey(): string
+    {
+        return 'login-ip|'.$this->ip();
+    }
+
+    private function hitRateLimits(): void
+    {
+        RateLimiter::hit($this->throttleKey(), 60);
+        RateLimiter::hit($this->ipThrottleKey(), 60);
     }
 }
