@@ -81,6 +81,7 @@ class ProductionSecurityHardeningTest extends TestCase
 
     public function test_source_package_file_replacement_and_removal_do_not_leave_stale_files(): void
     {
+        Storage::fake('local');
         Storage::fake('public');
 
         $staff = User::factory()->create([
@@ -122,7 +123,8 @@ class ProductionSecurityHardeningTest extends TestCase
         $this->assertNotNull($newPath);
         $this->assertNotSame($oldPath, $newPath);
         Storage::disk('public')->assertMissing($oldPath);
-        Storage::disk('public')->assertExists($newPath);
+        Storage::disk('public')->assertMissing($newPath);
+        Storage::disk('local')->assertExists($newPath);
 
         $this->actingAs($staff)
             ->delete(route('staff.source-record-packages.source-file.destroy', $package))
@@ -133,7 +135,56 @@ class ProductionSecurityHardeningTest extends TestCase
         $this->assertNull($package->source_file_path);
         $this->assertNull($package->source_file_original_filename);
         $this->assertNull($package->source_file_mime_type);
+        Storage::disk('local')->assertMissing($newPath);
         Storage::disk('public')->assertMissing($newPath);
+    }
+
+    public function test_source_scan_uses_detected_mime_even_if_stored_metadata_is_spoofed(): void
+    {
+        Storage::fake('local');
+        Storage::fake('public');
+
+        $staff = User::factory()->create([
+            'role' => User::ROLE_STAFF,
+            'is_active' => true,
+        ]);
+
+        $package = SourceRecordPackage::create([
+            'package_code' => 'SRC-MIME-HARDENING-001',
+            'status' => SourceRecordPackage::STATUS_ENCODED,
+            'source_record_scope' => 'reference_only',
+            'encoded_by_user_id' => $staff->id,
+            'source_book' => 'MIME Hardening Source',
+            'transcribed_by' => $staff->name,
+            'transcription_date' => now()->toDateString(),
+        ]);
+
+        $png = base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=');
+
+        $this->actingAs($staff)
+            ->post(route('staff.source-record-packages.source-file.store', $package), [
+                'source_file' => UploadedFile::fake()->createWithContent('reference.png', $png),
+            ])
+            ->assertRedirect();
+
+        $package->refresh();
+        $path = $package->source_file_path;
+
+        $this->assertNotNull($path);
+        Storage::disk('local')->assertExists($path);
+        Storage::disk('public')->assertMissing($path);
+
+        $detected = Storage::disk('local')->mimeType($path);
+        $this->assertSame($detected, $package->source_file_mime_type);
+
+        $package->forceFill(['source_file_mime_type' => 'text/html'])->save();
+
+        $response = $this->actingAs($staff)
+            ->get(route('staff.protected-storage.show', ['path' => $path]))
+            ->assertOk()
+            ->assertHeader('X-Content-Type-Options', 'nosniff');
+
+        $this->assertSame($detected, $response->headers->get('Content-Type'));
     }
 
     public function test_registered_landholding_reference_photo_keeps_legacy_url_but_remains_staff_only(): void
