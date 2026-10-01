@@ -27,6 +27,7 @@ class MonitoringReportController extends Controller
     private function buildReportData(Request $request): array
     {
         $statusOptions = LandTransferApplication::workflowStatusOptions();
+        $statusOptions[LandTransferApplication::STATUS_NOT_APPROVED] = 'Not Approved / Denied (Historical Records)';
 
         $municipalities = array_keys((array) config('dar_locations.municipalities', []));
 
@@ -55,12 +56,10 @@ class MonitoringReportController extends Controller
         $applications = LandTransferApplication::query();
         $this->applyApplicationFilters($applications, $filters);
 
-        $validDecisionStatuses = [
-            LandTransferApplication::STATUS_APPROVED,
-            LandTransferApplication::STATUS_NOT_APPROVED,
-            LandTransferApplication::STATUS_RELEASED,
-            LandTransferApplication::STATUS_DENIED,
-        ];
+        $validDecisionStatuses = array_values(array_unique(array_merge(
+            LandTransferApplication::FINAL_STATUSES,
+            LandTransferApplication::LEGACY_FINAL_STATUSES
+        )));
 
         $clearances = ApplicationClearance::query()
             ->whereIn('decision_status', $validDecisionStatuses)
@@ -138,7 +137,7 @@ class MonitoringReportController extends Controller
             'hasActiveFilters' => $filterLabels->isNotEmpty(),
             'statusOptions' => $statusOptions,
             'municipalities' => $municipalities,
-            'scopeNotice' => 'This report is for administrative monitoring, records management, and decision support. Approved/Not Approved are final clearance decisions; release to the client is tracked separately. Approved and Denied clearance decisions do not automatically transfer land ownership. No clearance decision or release record mutates parcel ownership or registry records, or replaces separate legal and administrative procedures.',
+            'scopeNotice' => 'This report is for administrative monitoring, records management, and decision support. Approved is the only current final clearance decision; older Not Approved / Denied records remain historical and read-only. Client release is tracked separately. No clearance decision or release record mutates parcel ownership or registry records, or replaces separate legal and administrative procedures.',
             'areaNotice' => 'Recorded output area is the summed parcel area preserved in final clearance snapshots. It is not a measurement of land whose legal ownership has been transferred.',
         ];
     }
