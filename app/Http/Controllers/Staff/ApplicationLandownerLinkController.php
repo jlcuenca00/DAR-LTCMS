@@ -67,6 +67,7 @@ class ApplicationLandownerLinkController extends Controller
             $transferees = $this->applyEqualShares($transferees, $application, 'transferee');
         }
 
+        $splitEqually = $request->boolean('split_equally');
         $syncLandholdings = $request->boolean('sync_current_landholdings');
 
         if ($syncLandholdings) {
@@ -82,7 +83,7 @@ class ApplicationLandownerLinkController extends Controller
             'transferees' => $application->partyRows('transferee'),
         ];
 
-        DB::transaction(function () use ($application, $transferors, $transferees, $syncLandholdings, $oldLinks) {
+        DB::transaction(function () use ($application, $transferors, $transferees, $splitEqually, $syncLandholdings, $oldLinks) {
             $landownerIds = collect(array_merge(
                 $oldLinks['transferors'],
                 $oldLinks['transferees'],
@@ -100,6 +101,11 @@ class ApplicationLandownerLinkController extends Controller
 
             app(ParcelConcurrencyService::class)->lockParcels($parcelIds);
             $application->load('applicationParcels.parcel');
+
+            if ($splitEqually) {
+                $transferors = $this->applyEqualShares($transferors, $application, 'transferor');
+                $transferees = $this->applyEqualShares($transferees, $application, 'transferee');
+            }
 
             if ($syncLandholdings) {
                 $shareErrors = $this->validateCurrentLandholdingShares($transferors, $application);
