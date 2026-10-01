@@ -72,6 +72,39 @@ class FinalDecisionIntegrityHardeningTest extends TestCase
         );
     }
 
+    public function test_legacy_final_records_cannot_enter_current_release_tracking(): void
+    {
+        $staff = User::factory()->create(['role' => 'staff']);
+
+        foreach ([
+            LandTransferApplication::STATUS_RELEASED,
+            LandTransferApplication::STATUS_DENIED,
+        ] as $index => $status) {
+            $application = $this->makeApplication(
+                $staff,
+                $status,
+                'LEGACY-RELEASE-' . $index
+            );
+
+            $application->forceFill([
+                'release_status' => LandTransferApplication::RELEASE_READY,
+            ])->save();
+
+            $this->assertFalse($application->fresh()->isReleaseReady());
+
+            $this->actingAs($staff)
+                ->post(route('staff.applications.ready_for_release', $application))
+                ->assertSessionHasErrors('status');
+
+            $this->actingAs($staff)
+                ->post(route('staff.applications.release', $application), [
+                    'release_confirmation' => '1',
+                    'release_recipient_name' => 'Legacy Recipient',
+                ])
+                ->assertSessionHasErrors('status');
+        }
+    }
+
     public function test_all_final_statuses_reject_linked_parcel_additions(): void
     {
         $staff = User::factory()->create(['role' => 'staff']);
