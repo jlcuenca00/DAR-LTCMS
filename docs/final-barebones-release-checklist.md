@@ -104,16 +104,17 @@ storage/app/public administrative records
 
 ## 7. Current workflow expectations
 
-New applications follow the Citizen's Charter-aligned administrative workflow and end with one of these final application decisions:
+New applications follow the Citizen's Charter-aligned administrative workflow and have one current final application decision:
 
-- **Approved**; or
-- **Not Approved**.
+- **Approved**.
 
-Both are final decision states. After either decision, substantive editing/uploads are locked and the record remains available for authorized viewing, monitoring, reporting, audit, clearance output, and controlled release-tracking purposes.
+When an issue prevents continued processing or approval, Staff use **Request Compliance / Action Required**. The application remains open, preserves the requested correction/instructions and resume stage, and returns to that saved stage after Staff records Compliance Resolved.
 
-A signed output may later be marked **Ready for Release** and **Released to Client**. These delivery statuses do not overwrite the final Approved/Not Approved decision.
+After Approved, substantive editing/uploads are locked and the record remains available for authorized viewing, monitoring, reporting, audit, clearance output, and controlled release-tracking purposes.
 
-Approval, denial, or release does not automatically transfer land ownership or alter registry ownership records.
+A signed output may later be marked **Ready for Release** and **Released to Client**. These delivery statuses do not overwrite the final Approved decision.
+
+Older Not Approved / Denied records remain historical and read-only. Approval, a historical negative record, or release does not automatically transfer land ownership or alter registry ownership records.
 
 ## 8. Production release reminder
 
