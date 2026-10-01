@@ -106,7 +106,20 @@ For password-recovery email to work for real users, production should use a real
 
 Do not create a `public/storage` symlink. Uploaded administrative records are intentionally kept behind authenticated routes.
 
-## 4. Deploy and verify the exact version
+## 4. GitHub production protection
+
+Before relying on automatic production deployment, configure the repository's `production` Environment in GitHub:
+
+- require an authorized maintainer/reviewer before a production job may start;
+- keep the production SSH credentials restricted to that Environment when possible;
+- keep the `Protect main` ruleset active; and
+- require the `Responsive Browser Regression / responsive-browser-tests` status check before merging to `main`.
+
+The deployment workflow also runs its own secret-free verification job before the production job. A failed verification therefore prevents the SSH deployment job from starting even if a commit has already reached `main`.
+
+All third-party GitHub Actions in the repository are pinned to immutable commit SHAs. When intentionally upgrading an Action, review the new upstream release/tag first, then update the pinned SHA in a pull request.
+
+## 5. Deploy and verify the exact version
 
 Merging to `main` automatically deploys the current version to CloudPanel.
 
@@ -124,7 +137,7 @@ cat /home/darltcms/htdocs/darltcms.me/.release-commit
 
 The value should match the intended `main` commit on GitHub.
 
-## 5. Final smoke test after deployment
+## 6. Final smoke test after deployment
 
 A smoke test is a short check that the most important parts still open and work after deployment.
 
@@ -158,7 +171,7 @@ A smoke test is a short check that the most important parts still open and work 
 - Confirm parcel/reference/map information can be viewed as intended.
 - Confirm editing/approval actions are not available.
 
-## 6. If something goes wrong after release
+## 7. If something goes wrong after release
 
 Do not immediately restore a database backup for a visual or code-only problem.
 
@@ -187,7 +200,7 @@ php artisan up
 
 A PostgreSQL restore should be performed by an authorized administrator/developer who has confirmed the target database and backup file. Do not run a destructive restore command from copied instructions without checking both first.
 
-## 7. When to create `v1.0.0`
+## 8. When to create `v1.0.0`
 
 Create the final version tag/release only when all of these are true:
 

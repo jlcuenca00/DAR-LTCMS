@@ -11,6 +11,9 @@ use App\Policies\ParcelPolicy;
 use App\Policies\SystemNotificationPolicy;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Pagination\Paginator;
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
@@ -29,6 +32,12 @@ class AppServiceProvider extends ServiceProvider
             ->mixedCase()
             ->numbers()
             ->symbols());
+
+        RateLimiter::for('password-change', function (Request $request) {
+            $userKey = $request->user()?->getAuthIdentifier() ?? 'guest';
+
+            return Limit::perMinute(6)->by($userKey.'|'.$request->ip());
+        });
 
         LandTransferApplication::observe(LandTransferApplicationObserver::class);
 

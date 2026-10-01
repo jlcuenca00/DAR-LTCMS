@@ -120,6 +120,8 @@ class UserManagementTest extends TestCase
             ->assertSessionHas('temporary_password_username', 'geo_test_01');
         $this->assertTrue($created->must_change_password);
         $this->assertNotNull($created->password_changed_at);
+        $this->assertNotNull($created->temporary_password_expires_at);
+        $this->assertTrue($created->temporary_password_expires_at->isFuture());
         $this->assertDatabaseHas('audit_logs', [
             'actor_user_id' => $staff->id,
             'action' => 'user_created',
@@ -306,6 +308,8 @@ class UserManagementTest extends TestCase
         $this->assertTrue(Hash::check($temporaryPassword, $target->password));
         $this->assertTrue($target->must_change_password);
         $this->assertNotNull($target->password_changed_at);
+        $this->assertNotNull($target->temporary_password_expires_at);
+        $this->assertTrue($target->temporary_password_expires_at->isFuture());
         $this->assertDatabaseHas('audit_logs', [
             'actor_user_id' => $staff->id,
             'action' => 'user_password_reset',

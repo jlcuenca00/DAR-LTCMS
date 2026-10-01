@@ -11,7 +11,8 @@ class AccountCreatedNotification extends Notification
     use Queueable;
 
     public function __construct(
-        public readonly string $temporaryPassword
+        public readonly string $temporaryPassword,
+        public readonly int $temporaryPasswordLifetimeHours = 24,
     ) {
     }
 
@@ -28,6 +29,7 @@ class AccountCreatedNotification extends Notification
                 'name' => $notifiable->name ?? null,
                 'username' => $notifiable->username ?? null,
                 'temporaryPassword' => $this->temporaryPassword,
+                'temporaryPasswordLifetimeHours' => $this->temporaryPasswordLifetimeHours,
                 'isActive' => (bool) ($notifiable->is_active ?? false),
                 'loginUrl' => route('login'),
                 'logoUrl' => asset('images/favicon.png'),

@@ -108,8 +108,9 @@ class UserManagementController extends Controller
 
         $email = $this->normalizeEmail($validated['email'] ?? null);
         $initialPassword = $this->generateTemporaryPassword();
+        $temporaryPasswordExpiresAt = $this->temporaryPasswordExpiresAt();
 
-        $user = DB::transaction(function () use ($validated, $email, $initialPassword) {
+        $user = DB::transaction(function () use ($validated, $email, $initialPassword, $temporaryPasswordExpiresAt) {
             $user = User::create([
                 'name' => $validated['name'],
                 'username' => $validated['username'],
@@ -120,6 +121,7 @@ class UserManagementController extends Controller
                 'is_active' => (bool) ($validated['is_active'] ?? false),
                 'must_change_password' => true,
                 'password_changed_at' => now(),
+                'temporary_password_expires_at' => $temporaryPasswordExpiresAt,
             ]);
 
             if ($validated['role'] === User::ROLE_LANDOWNER && ! empty($validated['landowner_id'])) {
@@ -142,6 +144,7 @@ class UserManagementController extends Controller
                     'linked_landowner_id' => $validated['landowner_id'] ?? null,
                     'must_change_password' => true,
                     'temporary_password_generated_by_system' => true,
+                    'temporary_password_expires_at' => $temporaryPasswordExpiresAt->toIso8601String(),
                 ]
             );
 
@@ -152,7 +155,10 @@ class UserManagementController extends Controller
 
         if ($this->hasDeliverableEmail($user)) {
             try {
-                $user->notify(new AccountCreatedNotification($initialPassword));
+                $user->notify(new AccountCreatedNotification(
+                    $initialPassword,
+                    (int) config('auth.temporary_password_hours', 24)
+                ));
                 $emailDelivery = 'sent';
 
                 AuditLogger::record(
@@ -414,12 +420,14 @@ class UserManagementController extends Controller
         }
 
         $temporaryPassword = $this->generateTemporaryPassword();
+        $temporaryPasswordExpiresAt = $this->temporaryPasswordExpiresAt();
 
-        DB::transaction(function () use ($user, $temporaryPassword, $request) {
+        DB::transaction(function () use ($user, $temporaryPassword, $temporaryPasswordExpiresAt, $request) {
             $user->forceFill([
                 'password' => $temporaryPassword,
                 'must_change_password' => true,
                 'password_changed_at' => now(),
+                'temporary_password_expires_at' => $temporaryPasswordExpiresAt,
                 'remember_token' => Str::random(60),
             ])->save();
 
@@ -433,6 +441,7 @@ class UserManagementController extends Controller
                     'account_active' => $user->is_active,
                     'force_change_on_next_login' => true,
                     'reset_method' => 'staff_assisted_temporary_password',
+                    'temporary_password_expires_at' => $temporaryPasswordExpiresAt->toIso8601String(),
                 ],
                 $request->user()->id
             );
@@ -446,6 +455,13 @@ class UserManagementController extends Controller
             ->with('success', $statusMessage)
             ->with('temporary_password', $temporaryPassword)
             ->with('temporary_password_username', $user->username);
+    }
+
+    private function temporaryPasswordExpiresAt()
+    {
+        $hours = max(1, (int) config('auth.temporary_password_hours', 24));
+
+        return now()->addHours($hours);
     }
 
     private function generateTemporaryPassword(): string

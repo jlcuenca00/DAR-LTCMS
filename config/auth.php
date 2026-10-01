@@ -112,4 +112,6 @@ return [
 
     'password_timeout' => env('AUTH_PASSWORD_TIMEOUT', 10800),
 
+    'temporary_password_hours' => (int) env('AUTH_TEMPORARY_PASSWORD_HOURS', 24),
+
 ];

@@ -16,6 +16,17 @@ class ProductionReadinessScanner
         $this->require($issues, $appScheme === 'https' && filled($appHost), 'app_url_not_https', 'APP_URL must be a complete HTTPS URL for the deployed DAR-LTCMS host.');
         $this->require($issues, filled(config('app.key')), 'app_key_missing', 'APP_KEY must be configured before production deployment.');
 
+        $trustedProxies = (array) config('app.trusted_proxies', []);
+        $usesWildcardTrustedProxy = collect($trustedProxies)
+            ->contains(fn ($proxy) => in_array(trim((string) $proxy), ['*', '**'], true));
+
+        $this->require(
+            $issues,
+            ! $usesWildcardTrustedProxy,
+            'trusted_proxy_wildcard_unsafe',
+            'TRUSTED_PROXIES must use explicit proxy IPs/CIDRs in production; wildcard trust can make forwarded client IP data attacker-controlled.'
+        );
+
         $this->require($issues, config('session.driver') === 'database', 'session_driver_not_database', 'SESSION_DRIVER must remain database for the production deployment.');
         $this->require($issues, config('session.encrypt') === true, 'session_encryption_disabled', 'SESSION_ENCRYPT must be true.');
         $this->require($issues, config('session.secure') === true, 'session_cookie_not_secure', 'SESSION_SECURE_COOKIE must be true for HTTPS production.');
@@ -37,6 +48,12 @@ class ProductionReadinessScanner
         );
         $this->require($issues, is_dir(storage_path('app/private')) && is_writable(storage_path('app/private')), 'private_storage_not_writable', 'storage/app/private must exist and be writable.');
         $this->require($issues, is_dir(storage_path('app/public')) && is_readable(storage_path('app/public')), 'legacy_source_storage_not_readable', 'storage/app/public must remain readable only for protected legacy administrative files; new uploads use private storage.');
+        $this->recommend(
+            $issues,
+            $this->legacyPublicStorageIsReadOnly(),
+            'legacy_source_storage_writable',
+            'storage/app/public should be runtime read-only after legacy files are migrated to private storage.'
+        );
 
         $mailDriver = (string) config('mail.default');
         $this->recommend($issues, ! in_array($mailDriver, ['log', 'array'], true), 'mail_not_deliverable', 'MAIL_MAILER should use a real delivery transport in production so password-recovery messages can be delivered.');
@@ -86,6 +103,19 @@ class ProductionReadinessScanner
             'code' => $code,
             'message' => $message,
         ];
+    }
+
+    private function legacyPublicStorageIsReadOnly(): bool
+    {
+        $path = storage_path('app/public');
+
+        if (! is_dir($path) || ! is_readable($path)) {
+            return false;
+        }
+
+        $permissions = fileperms($path);
+
+        return $permissions !== false && ($permissions & 0222) === 0;
     }
 
     private function activeLogLevels(): array

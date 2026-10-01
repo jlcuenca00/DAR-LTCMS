@@ -9,6 +9,7 @@ use App\Models\Landowner;
 use App\Models\Parcel;
 use App\Models\SourceRecordPackage;
 use App\Models\User;
+use App\Services\LegacyAdministrativeStorageMigrator;
 use App\Services\ProductionReadinessScanner;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Request;
@@ -25,6 +26,10 @@ class ProductionSecurityHardeningTest extends TestCase
     protected function tearDown(): void
     {
         Request::setTrustedHosts([]);
+
+        if (is_dir(storage_path('app/public'))) {
+            @chmod(storage_path('app/public'), 0775);
+        }
 
         parent::tearDown();
     }
@@ -265,6 +270,43 @@ class ProductionSecurityHardeningTest extends TestCase
             ->assertNotFound();
     }
 
+    public function test_registered_legacy_files_are_migrated_to_private_storage_before_runtime_lockdown(): void
+    {
+        Storage::fake('local');
+        Storage::fake('public');
+
+        $staff = User::factory()->create([
+            'role' => User::ROLE_STAFF,
+            'is_active' => true,
+        ]);
+
+        $path = 'source-record-packages/legacy-migration.pdf';
+        Storage::disk('public')->put($path, '%PDF-1.4 legacy migration test');
+
+        SourceRecordPackage::create([
+            'package_code' => 'SRC-LEGACY-MIGRATION-001',
+            'status' => SourceRecordPackage::STATUS_ENCODED,
+            'source_record_scope' => 'reference_only',
+            'encoded_by_user_id' => $staff->id,
+            'source_book' => 'Legacy Migration Test',
+            'transcribed_by' => $staff->name,
+            'transcription_date' => now()->toDateString(),
+            'source_file_path' => $path,
+            'source_file_original_filename' => 'legacy-migration.pdf',
+            'source_file_mime_type' => 'application/pdf',
+            'source_file_uploaded_by_user_id' => $staff->id,
+            'source_file_uploaded_at' => now(),
+        ]);
+
+        $result = app(LegacyAdministrativeStorageMigrator::class)->migrate();
+
+        $this->assertSame(1, $result['registered_paths']);
+        $this->assertSame(1, $result['migrated']);
+        $this->assertSame(0, $result['conflicts']);
+        Storage::disk('local')->assertExists($path);
+        Storage::disk('public')->assertMissing($path);
+    }
+
     public function test_storage_configuration_has_no_public_web_symlink_contract(): void
     {
         $this->assertSame([], config('filesystems.links'));
@@ -314,16 +356,70 @@ class ProductionSecurityHardeningTest extends TestCase
         $this->assertSame(['127.0.0.1', '10.0.0.0/8'], $middleware->resolvedProxies());
     }
 
+    public function test_production_workflows_are_pinned_and_environment_bound(): void
+    {
+        $workflowPaths = [
+            '.github/workflows/deploy.yml',
+            '.github/workflows/refresh-production-demo-data.yml',
+            '.github/workflows/responsive-e2e.yml',
+            '.github/workflows/docs-build.yml',
+        ];
+
+        foreach ($workflowPaths as $workflowPath) {
+            $contents = (string) file_get_contents(base_path($workflowPath));
+
+            foreach (preg_split('/\R/', $contents) ?: [] as $line) {
+                if (! str_contains($line, 'uses:')) {
+                    continue;
+                }
+
+                $reference = trim((string) str($line)->after('uses:')->before(' #'));
+
+                $this->assertMatchesRegularExpression(
+                    '/^[^@]+@[0-9a-f]{40}$/',
+                    $reference,
+                    "{$workflowPath} contains a non-immutable Action reference: {$reference}"
+                );
+            }
+        }
+
+        $deploy = (string) file_get_contents(base_path('.github/workflows/deploy.yml'));
+        $refresh = (string) file_get_contents(base_path('.github/workflows/refresh-production-demo-data.yml'));
+
+        $this->assertStringContainsString('  verify:', $deploy);
+        $this->assertStringContainsString('    needs: verify', $deploy);
+        $this->assertStringContainsString('      name: production', $deploy);
+        $this->assertStringContainsString('      name: production', $refresh);
+    }
+
+    public function test_deploy_migrates_and_locks_legacy_storage_before_readiness_check(): void
+    {
+        $deploy = (string) file_get_contents(base_path('.github/workflows/deploy.yml'));
+
+        $migrateAt = strpos($deploy, 'php artisan dar:migrate-legacy-private-storage');
+        $lockAt = strpos($deploy, 'chmod -R a-w storage/app/public');
+        $readinessAt = strpos($deploy, 'php artisan dar:check-production-readiness');
+
+        $this->assertNotFalse($migrateAt);
+        $this->assertNotFalse($lockAt);
+        $this->assertNotFalse($readinessAt);
+        $this->assertLessThan($lockAt, $migrateAt);
+        $this->assertLessThan($readinessAt, $lockAt);
+        $this->assertStringNotContainsString('test -w storage/app/public', $deploy);
+    }
+
     public function test_production_readiness_scanner_passes_hardened_core_configuration(): void
     {
         File::ensureDirectoryExists(storage_path('app/private'));
         File::ensureDirectoryExists(storage_path('app/public'));
+        chmod(storage_path('app/public'), 0555);
 
         config([
             'app.env' => 'production',
             'app.debug' => false,
             'app.url' => 'https://darltcms.me',
             'app.key' => 'base64:'.base64_encode(str_repeat('k', 32)),
+            'app.trusted_proxies' => ['127.0.0.1'],
             'session.driver' => 'database',
             'session.encrypt' => true,
             'session.secure' => true,
@@ -355,6 +451,7 @@ class ProductionSecurityHardeningTest extends TestCase
             'app.debug' => true,
             'app.url' => 'http://darltcms.me',
             'app.key' => 'base64:'.base64_encode(str_repeat('k', 32)),
+            'app.trusted_proxies' => ['*'],
             'session.driver' => 'database',
             'session.encrypt' => true,
             'session.secure' => false,
@@ -375,6 +472,8 @@ class ProductionSecurityHardeningTest extends TestCase
         $this->assertSame('blocking', $issues['app_url_not_https']['severity']);
         $this->assertSame('blocking', $issues['session_cookie_not_secure']['severity']);
         $this->assertSame('blocking', $issues['source_storage_url_not_protected']['severity']);
+        $this->assertSame('blocking', $issues['trusted_proxy_wildcard_unsafe']['severity']);
+        $this->assertSame('warning', $issues['legacy_source_storage_writable']['severity']);
         $this->assertSame('warning', $issues['mail_not_deliverable']['severity']);
         $this->assertSame('warning', $issues['debug_log_level_single']['severity']);
     }

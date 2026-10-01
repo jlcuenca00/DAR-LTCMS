@@ -41,6 +41,7 @@ class AuthenticationTest extends TestCase
             'password' => Hash::make('temporary123'),
             'must_change_password' => true,
             'password_changed_at' => now(),
+            'temporary_password_expires_at' => now()->addHour(),
         ]);
 
         $response = $this->post('/login', [
@@ -50,6 +51,44 @@ class AuthenticationTest extends TestCase
 
         $this->assertAuthenticated();
         $response->assertRedirect(route('password.required'));
+    }
+
+    public function test_unbounded_or_expired_temporary_password_cannot_authenticate(): void
+    {
+        foreach ([null, now()->subMinute()] as $expiresAt) {
+            $user = User::factory()->create([
+                'username' => 'expired_temp_'.($expiresAt ? 'past' : 'null'),
+                'password' => Hash::make('Temporary-123!'),
+                'must_change_password' => true,
+                'password_changed_at' => now(),
+                'temporary_password_expires_at' => $expiresAt,
+            ]);
+
+            $this->post('/login', [
+                'username' => $user->username,
+                'password' => 'Temporary-123!',
+            ])->assertSessionHasErrors('username');
+
+            $this->assertGuest();
+        }
+    }
+
+    public function test_login_has_an_ip_wide_password_spraying_limit(): void
+    {
+        foreach (range(1, 30) as $attempt) {
+            $this->post('/login', [
+                'username' => 'spray-user-'.$attempt,
+                'password' => 'wrong-password',
+            ])->assertSessionHasErrors('username');
+        }
+
+        $response = $this->post('/login', [
+            'username' => 'spray-user-31',
+            'password' => 'wrong-password',
+        ])->assertSessionHasErrors('username');
+
+        $errors = $response->getSession()->get('errors');
+        $this->assertStringContainsString('Too many login attempts', $errors->first('username'));
     }
 
     public function test_users_cannot_authenticate_with_invalid_password(): void
