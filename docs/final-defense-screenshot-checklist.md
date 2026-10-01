@@ -31,7 +31,7 @@ Capture at least one clear final output showing:
 - [ ] LTC number and page value
 - [ ] GRANTED or DENIED result
 - [ ] linked Parcel references/area
-- [ ] `ENGR. MANUEL M. GALON, JR., OIC PARPO II`
+- [ ] recorded PARPO II decision officer/signatory matches the final-decision metadata
 - [ ] notarial details when populated
 - [ ] 8.5 x 13 inch print/PDF layout
 - [ ] no wording that suggests automatic ownership/registry mutation
