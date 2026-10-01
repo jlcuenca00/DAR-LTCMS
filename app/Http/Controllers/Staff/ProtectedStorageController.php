@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Landholding;
 use App\Models\Parcel;
 use App\Models\SourceRecordPackage;
+use App\Services\ProtectedAdministrativeStorage;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -19,13 +20,16 @@ class ProtectedStorageController extends Controller
         $metadata = $this->resolveRegisteredFile($path);
         abort_unless($metadata !== null, 404);
 
-        $disk = Storage::disk('public');
-        abort_unless($disk->exists($path), 404);
+        $storage = app(ProtectedAdministrativeStorage::class);
+        $disk = $storage->diskForPath($path);
+        abort_unless($disk !== null, 404);
 
         $filename = $metadata['filename'] ?: basename($path);
-        $mimeType = $metadata['mime_type']
-            ?: $disk->mimeType($path)
-            ?: 'application/octet-stream';
+        $filename = preg_replace('/[\\x00-\\x1F\\x7F]/u', '_', basename((string) $filename)) ?: 'administrative-file';
+        $detectedMimeType = $disk->mimeType($path) ?: 'application/octet-stream';
+        $inlineMimeTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp'];
+        $inline = in_array($detectedMimeType, $inlineMimeTypes, true);
+        $mimeType = $inline ? $detectedMimeType : 'application/octet-stream';
 
         return $disk->response(
             $path,
@@ -38,7 +42,7 @@ class ProtectedStorageController extends Controller
                 'X-Robots-Tag' => 'noindex, nofollow, noarchive',
                 'Cross-Origin-Resource-Policy' => 'same-origin',
             ],
-            'inline'
+            $inline ? 'inline' : 'attachment'
         );
     }
 
@@ -48,7 +52,7 @@ class ProtectedStorageController extends Controller
      * from becoming a generic file browser even though legacy files remain on the
      * historical public disk for deployment compatibility.
      *
-     * @return array{filename: string, mime_type: ?string}|null
+     * @return array{filename: string}|null
      */
     private function resolveRegisteredFile(string $path): ?array
     {
@@ -64,7 +68,6 @@ class ProtectedStorageController extends Controller
 
             return [
                 'filename' => $package->source_file_original_filename ?: basename($path),
-                'mime_type' => $package->source_file_mime_type,
             ];
         }
 
@@ -74,7 +77,7 @@ class ProtectedStorageController extends Controller
                 ->exists();
 
             return $registered
-                ? ['filename' => basename($path), 'mime_type' => null]
+                ? ['filename' => basename($path)]
                 : null;
         }
 
