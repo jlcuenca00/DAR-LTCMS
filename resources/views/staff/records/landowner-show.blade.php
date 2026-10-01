@@ -941,10 +941,17 @@
                                     <div class="landholding-record-field">
                                         <p class="landholding-record-label">Reference Photo / Scan</p>
                                         <div class="landholding-record-value">
-                                            @if ($holding->reference_photo_path)
+                                            @php
+                                                $referencePhotoExists = $holding->reference_photo_path
+                                                    && app(\App\Services\ProtectedAdministrativeStorage::class)->exists($holding->reference_photo_path);
+                                                $referencePhotoUrl = $referencePhotoExists
+                                                    ? route('staff.protected-storage.show', ['path' => $holding->reference_photo_path])
+                                                    : null;
+                                            @endphp
+                                            @if ($referencePhotoExists)
                                                 <div class="landholding-photo-preview">
-                                                    <img src="{{ asset('storage/' . $holding->reference_photo_path) }}" alt="Landholding reference photo" class="landholding-photo-thumb">
-                                                    <a href="{{ asset('storage/' . $holding->reference_photo_path) }}" target="_blank" rel="noopener" class="landholding-photo-link">
+                                                    <img src="{{ $referencePhotoUrl }}" alt="Landholding reference photo" class="landholding-photo-thumb">
+                                                    <a href="{{ $referencePhotoUrl }}" target="_blank" rel="noopener" class="landholding-photo-link">
                                                         Open reference
                                                     </a>
                                                 </div>
