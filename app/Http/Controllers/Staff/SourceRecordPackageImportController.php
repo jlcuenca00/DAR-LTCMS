@@ -508,17 +508,6 @@ class SourceRecordPackageImportController extends Controller
         return in_array(Str::lower(trim($value)), ['1', 'yes', 'y', 'true', 'included'], true);
     }
 
-    private function validDate(string $value): bool
-    {
-        $timestamp = strtotime($value);
-
-        if (! $timestamp) {
-            return false;
-        }
-
-        return date('Y-m-d', $timestamp) === $value;
-    }
-
     private function isEmptyCsvLine(array $line): bool
     {
         foreach ($line as $value) {
