@@ -18,6 +18,15 @@ return new class extends Migration
             $table->timestamp('decision_recorded_at')->nullable()->after('decision_recorded_by');
         });
 
+        Schema::table('application_clearances', function (Blueprint $table): void {
+            $table->string('decision_authority', 100)->nullable()->after('decision_status');
+            $table->string('decision_officer_name')->nullable()->after('decision_authority');
+            $table->date('decision_date')->nullable()->after('decision_officer_name');
+            $table->foreignId('decision_recorded_by')->nullable()->after('decision_date')
+                ->constrained('users')->nullOnDelete();
+            $table->timestamp('decision_recorded_at')->nullable()->after('decision_recorded_by');
+        });
+
         DB::table('land_transfer_applications')
             ->whereIn('status', ['approved', 'not_approved', 'released', 'denied'])
             ->orderBy('id')
@@ -39,6 +48,16 @@ return new class extends Migration
 
     public function down(): void
     {
+        Schema::table('application_clearances', function (Blueprint $table): void {
+            $table->dropConstrainedForeignId('decision_recorded_by');
+            $table->dropColumn([
+                'decision_authority',
+                'decision_officer_name',
+                'decision_date',
+                'decision_recorded_at',
+            ]);
+        });
+
         Schema::table('land_transfer_applications', function (Blueprint $table): void {
             $table->dropConstrainedForeignId('decision_recorded_by');
             $table->dropColumn([
