@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Staff;
 
 use App\Http\Controllers\Controller;
 use App\Models\LandTransferApplication;
+use App\Services\ApplicationClearanceIntegrityService;
 use App\Services\ApplicationClearanceService;
 use App\Services\ApplicationParcelIntegrityService;
 use App\Services\ApplicationPartyIntegrityService;
@@ -480,6 +481,13 @@ class ApplicationWorkflowController extends Controller
             return back()->withErrors(['clearance' => 'The final LTC Form No. 5 output must exist before it can be marked Ready for Release.']);
         }
 
+        $clearanceIntegrity = app(ApplicationClearanceIntegrityService::class)->inspect($application);
+        if (! $clearanceIntegrity['valid']) {
+            return back()->withErrors([
+                'clearance' => 'The final decision output failed its integrity check. Preserve the record and resolve the reported integrity issue before release tracking continues.',
+            ]);
+        }
+
         if ($application->isReleasedToClient()) {
             return back()->withErrors(['release' => 'This decision output has already been released to the client.']);
         }
@@ -518,6 +526,13 @@ class ApplicationWorkflowController extends Controller
 
         if (! $application->isReleaseReady()) {
             return back()->withErrors(['release' => 'Mark the signed decision output Ready for Release before recording client release.']);
+        }
+
+        $clearanceIntegrity = app(ApplicationClearanceIntegrityService::class)->inspect($application);
+        if (! $clearanceIntegrity['valid']) {
+            return back()->withErrors([
+                'clearance' => 'The final decision output failed its integrity check. Preserve the record and resolve the reported integrity issue before client release.',
+            ]);
         }
 
         $validated = $request->validate([
