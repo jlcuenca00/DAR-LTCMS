@@ -14,7 +14,7 @@ return new class extends Migration
             $table->string('decision_officer_name')->nullable()->after('decision_authority');
             $table->date('decision_date')->nullable()->after('decision_officer_name');
             $table->foreignId('decision_recorded_by')->nullable()->after('decision_date')
-                ->constrained('users')->nullOnDelete();
+                ->constrained('users')->restrictOnDelete();
             $table->timestamp('decision_recorded_at')->nullable()->after('decision_recorded_by');
         });
 
@@ -23,7 +23,7 @@ return new class extends Migration
             $table->string('decision_officer_name')->nullable()->after('decision_authority');
             $table->date('decision_date')->nullable()->after('decision_officer_name');
             $table->foreignId('decision_recorded_by')->nullable()->after('decision_date')
-                ->constrained('users')->nullOnDelete();
+                ->constrained('users')->restrictOnDelete();
             $table->timestamp('decision_recorded_at')->nullable()->after('decision_recorded_by');
         });
 
