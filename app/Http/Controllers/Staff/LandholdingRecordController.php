@@ -7,6 +7,7 @@ use App\Models\Landholding;
 use App\Models\Landowner;
 use App\Services\AuditLogger;
 use App\Services\ParcelConcurrencyService;
+use App\Services\ProtectedAdministrativeStorage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -43,7 +44,7 @@ class LandholdingRecordController extends Controller
             });
         } catch (Throwable $e) {
             if ($newReferencePhotoPath) {
-                Storage::disk('public')->delete($newReferencePhotoPath);
+                app(ProtectedAdministrativeStorage::class)->delete($newReferencePhotoPath);
             }
 
             throw $e;
@@ -92,14 +93,14 @@ class LandholdingRecordController extends Controller
             });
         } catch (Throwable $e) {
             if ($newReferencePhotoPath) {
-                Storage::disk('public')->delete($newReferencePhotoPath);
+                app(ProtectedAdministrativeStorage::class)->delete($newReferencePhotoPath);
             }
 
             throw $e;
         }
 
         if ($newReferencePhotoPath && $oldReferencePhotoPath && $oldReferencePhotoPath !== $newReferencePhotoPath) {
-            Storage::disk('public')->delete($oldReferencePhotoPath);
+            app(ProtectedAdministrativeStorage::class)->delete($oldReferencePhotoPath);
         }
 
         return redirect()
@@ -112,7 +113,7 @@ class LandholdingRecordController extends Controller
         unset($validated['reference_photo']);
 
         if ($request->hasFile('reference_photo')) {
-            $validated['reference_photo_path'] = $request->file('reference_photo')->store($directory, 'public');
+            $validated['reference_photo_path'] = $request->file('reference_photo')->store($directory, ProtectedAdministrativeStorage::PRIVATE_DISK);
         }
 
         return $validated;
