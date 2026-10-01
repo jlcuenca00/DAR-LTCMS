@@ -22,7 +22,7 @@ class LandTransferApplication extends Model
     public const STATUS_LEGAL_EVALUATION = 'legal_evaluation';
     public const STATUS_ENDORSED_CHIEF_LEGAL = 'endorsed_chief_legal';
     public const STATUS_ENDORSED_PARPO = 'endorsed_parpo';
-    public const STATUS_FOR_RELEASING = 'for_releasing'; // PARPO II decision pending
+    public const STATUS_FOR_RELEASING = 'for_releasing'; // PARPO II decision ready for Legal recording
     public const STATUS_APPROVED = 'approved';
     public const STATUS_NOT_APPROVED = 'not_approved';
 
