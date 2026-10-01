@@ -11,6 +11,7 @@ use App\Models\SourceRecordPackage;
 use App\Services\ApplicationMutationFileLifecycle;
 use App\Services\AuditLogger;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -18,6 +19,35 @@ use Illuminate\Validation\ValidationException;
 
 class ApplicationDocumentController extends Controller
 {
+    private const DOCUMENT_METADATA_KEYS = [
+        'title_number',
+        'tax_declaration_number',
+        'document_number',
+        'date_issued',
+        'reference_lot_or_parcel',
+        'document_owner_names',
+        'title_owner_names',
+        'payor_or_owner_name',
+        'transfer_document_title',
+        'transferor_names',
+        'transferee_names',
+        'transfer_area',
+        'transfer_lot_number',
+        'notarization_date',
+        'notary_public',
+        'notarial_page_number',
+        'notarial_book_number',
+        'notarial_document_number',
+        'notarial_series',
+        'marpo_has_tenants',
+        'marpo_no_tenants',
+        'marpo_no_illegal_conversion',
+        'marpo_no_conflict_claims',
+        'marpo_certification_place',
+        'marpo_designated_personnel',
+        'verification_notes',
+    ];
+
     public function show(LandTransferApplication $application, RequiredDocument $requiredDocument)
     {
         $document = ApplicationDocument::where('land_transfer_application_id', $application->id)
@@ -61,7 +91,7 @@ class ApplicationDocumentController extends Controller
             'source_record_link' => ['nullable', 'string', 'max:100'],
 
 
-            'document_metadata' => ['nullable', 'array'],
+            'document_metadata' => ['nullable', 'array:'.implode(',', self::DOCUMENT_METADATA_KEYS)],
             'document_metadata.title_number' => ['nullable', 'string', 'max:150'],
             'document_metadata.tax_declaration_number' => ['nullable', 'string', 'max:150'],
             'document_metadata.document_number' => ['nullable', 'string', 'max:150'],
@@ -238,7 +268,7 @@ class ApplicationDocumentController extends Controller
 
     private function cleanMetadata(array $metadata): array
     {
-        return collect($metadata)
+        return collect(Arr::only($metadata, self::DOCUMENT_METADATA_KEYS))
             ->map(fn ($value) => is_string($value) ? trim($value) : $value)
             ->filter(fn ($value) => filled($value))
             ->toArray();

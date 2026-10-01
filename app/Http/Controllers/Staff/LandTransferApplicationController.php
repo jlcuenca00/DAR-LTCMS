@@ -19,6 +19,7 @@ use App\Services\NotificationService;
 use App\Services\ParcelConcurrencyService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 
 class LandTransferApplicationController extends Controller
 {
@@ -676,10 +677,20 @@ private function generateApplicationCode(): string
         }
 
         $validated = $request->validate([
-            'ltc_form4_subject_land_findings' => ['nullable', 'array'],
-            'ltc_form4_subject_land_findings.*' => ['nullable', 'string', 'max:120'],
-            'ltc_form4_recommendation_findings' => ['nullable', 'array'],
-            'ltc_form4_recommendation_findings.*' => ['nullable', 'string', 'max:120'],
+            'ltc_form4_subject_land_findings' => ['nullable', 'array', 'max:'.count(LandTransferApplication::form4SubjectLandOptions())],
+            'ltc_form4_subject_land_findings.*' => [
+                'required',
+                'string',
+                'distinct',
+                Rule::in(array_keys(LandTransferApplication::form4SubjectLandOptions())),
+            ],
+            'ltc_form4_recommendation_findings' => ['nullable', 'array', 'max:'.count(LandTransferApplication::form4RecommendationOptions())],
+            'ltc_form4_recommendation_findings.*' => [
+                'required',
+                'string',
+                'distinct',
+                Rule::in(array_keys(LandTransferApplication::form4RecommendationOptions())),
+            ],
             'ltc_form4_recommendation_decision' => ['nullable', 'in:approval,denial'],
             'ltc_form4_other_findings' => ['nullable', 'string', 'max:2000'],
             'ltc_form4_certified_at' => ['nullable', 'date'],
