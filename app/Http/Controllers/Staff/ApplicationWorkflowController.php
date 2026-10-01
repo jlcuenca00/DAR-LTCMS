@@ -229,7 +229,11 @@ class ApplicationWorkflowController extends Controller
         ]);
 
         $oldStatus = $application->status;
+        $returnedAt = now();
         $application->status = LandTransferApplication::STATUS_RETURNED_FOR_COMPLIANCE;
+        $application->latest_compliance_reason = $validated['compliance_reason'];
+        $application->returned_for_compliance_at = $returnedAt;
+        $application->returned_for_compliance_by = Auth::id();
         $application->save();
 
         AuditLogger::record(
@@ -243,13 +247,13 @@ class ApplicationWorkflowController extends Controller
                 'administrative_authority' => 'Legal Division',
                 'recorded_by_user_id' => Auth::id(),
                 'recorded_by_role' => 'Legal Clearance Staff',
-                'recorded_at' => now()->toIso8601String(),
+                'recorded_at' => $returnedAt->toIso8601String(),
                 'scope_note' => 'The application remains open for documentary compliance; this is not a final denial.',
             ],
             Auth::id()
         );
 
-        app(NotificationService::class)->notifyLinkedLandownersStatusChanged($application, $application->statusLabel());
+        app(NotificationService::class)->notifyLinkedLandownersReturnedForCompliance($application);
 
         return back()->with('success', 'Application returned for compliance. It remains open and editable.');
     }
@@ -501,6 +505,7 @@ class ApplicationWorkflowController extends Controller
         );
 
         app(NotificationService::class)->notifyStaffApplicationReadyForRelease($application);
+        app(NotificationService::class)->notifyLinkedLandownersReadyForRelease($application);
 
         return back()->with('success', 'Signed decision output marked Ready for Release.');
     }
