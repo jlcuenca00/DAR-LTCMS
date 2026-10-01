@@ -135,7 +135,7 @@
 
     $darLogo = $logoAsset('dar-logo.svg');
     $bagongLogo = $logoAsset('bagong-pilipinas.png');
-@endphpp
+@endphp
 
 <style>
     @page { size: 8.5in 13in; margin: 0; }
