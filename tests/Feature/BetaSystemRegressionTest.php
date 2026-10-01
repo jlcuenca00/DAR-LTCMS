@@ -301,6 +301,8 @@ class BetaSystemRegressionTest extends TestCase
         $this->actingAs($staff)
             ->post(route('staff.applications.approve', $application), [
                 'final_decision_confirmation' => '1',
+                'decision_officer_name' => 'PARPO II Test Signatory',
+                'decision_date' => now()->toDateString(),
                 'decision_reason' => 'PARPO II approval validated for beta regression testing.',
                 'decision_notes' => 'Final decision path verified.',
             ])
@@ -399,6 +401,8 @@ class BetaSystemRegressionTest extends TestCase
         $this->actingAs($staff)
             ->post(route('staff.applications.not_approved', $application), [
                 'final_decision_confirmation' => '1',
+                'decision_officer_name' => 'PARPO II Test Signatory',
+                'decision_date' => now()->toDateString(),
                 'decision_reason' => 'Substantive review did not support clearance approval.',
                 'decision_notes' => 'Beta denial path verified.',
             ])
@@ -543,6 +547,8 @@ class BetaSystemRegressionTest extends TestCase
         $this->actingAs($geodetic)
             ->post(route('staff.applications.not_approved', $application), [
                 'final_decision_confirmation' => '1',
+                'decision_officer_name' => 'PARPO II Test Signatory',
+                'decision_date' => now()->toDateString(),
                 'decision_reason' => 'Should be blocked.',
             ])
             ->assertForbidden();
