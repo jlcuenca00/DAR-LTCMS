@@ -669,9 +669,11 @@ class ApplicationWorkflowController extends Controller
         $parcelIntegrity = app(ApplicationParcelIntegrityService::class)->inspectApplication($application);
 
         $subjectFindings = collect((array) $application->ltc_form4_subject_land_findings)
-            ->filter(fn ($value) => filled($value));
+            ->filter(fn ($value) => filled($value))
+            ->intersect(array_keys(LandTransferApplication::form4SubjectLandOptions()));
         $recommendationFindings = collect((array) $application->ltc_form4_recommendation_findings)
-            ->filter(fn ($value) => filled($value));
+            ->filter(fn ($value) => filled($value))
+            ->intersect(array_keys(LandTransferApplication::form4RecommendationOptions()));
         $hasMeaningfulFindings = $subjectFindings->isNotEmpty()
             || $recommendationFindings->isNotEmpty()
             || filled($application->ltc_form4_other_findings);
