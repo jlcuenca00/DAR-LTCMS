@@ -22,6 +22,7 @@ class ApplicationClearance extends Model
         'barangay',
         'total_area_hectares',
         'parcel_snapshot',
+        'form_snapshot',
         'review_officer_name',
         'reviewed_at',
         'generated_by',
@@ -30,6 +31,7 @@ class ApplicationClearance extends Model
 
     protected $casts = [
         'parcel_snapshot' => 'array',
+        'form_snapshot' => 'array',
         'decision_date' => 'date',
         'decision_recorded_at' => 'datetime',
         'reviewed_at' => 'datetime',
