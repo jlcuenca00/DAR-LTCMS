@@ -3986,9 +3986,9 @@
                                     </span>
 
                                     <div>
-                                        <p class="workflow-action-title">Advance to {{ $nextWorkflowStatusLabel }}</p>
+                                        <p class="workflow-action-title">{{ $workflowActionLabel }}</p>
                                         <p class="workflow-action-copy">
-                                            Move this application to the next DAR office workflow stage.
+                                            Record the completed administrative step and update the tracked stage. External DAR offices do not need DAR-LTCMS accounts.
                                         </p>
                                     </div>
                                 </div>
@@ -4001,7 +4001,7 @@
 
                                 <button type="submit" class="staff-button staff-button-primary">
                                     <i class="fa-solid fa-arrow-right"></i>
-                                    Advance Stage
+                                    {{ $workflowActionLabel }}
                                 </button>
                             </form>
                         @endif
@@ -4016,9 +4016,9 @@
                                     </span>
 
                                     <div>
-                                        <p class="workflow-action-title">Approve application</p>
+                                        <p class="workflow-action-title">Record PARPO II Approved Decision</p>
                                         <p class="workflow-action-copy">
-                                            Record PARPO II's final Approved clearance decision and generate the immutable LTC Form No. 5 output.
+                                            Record the official PARPO II Approved decision received by Legal Division, including the decision officer/signatory and official decision date.
                                         </p>
                                     </div>
                                 </div>
@@ -4044,7 +4044,7 @@
 
                                 <button type="submit" class="staff-button staff-button-primary">
                                     <i class="fa-solid fa-check"></i>
-                                    Record Final Approval
+                                    Record Approved Decision
                                 </button>
                             </form>
                         @endif
@@ -4059,9 +4059,9 @@
                                     </span>
 
                                     <div>
-                                        <p class="workflow-action-title">Mark application Not Approved</p>
+                                        <p class="workflow-action-title">Record PARPO II Not Approved Decision</p>
                                         <p class="workflow-action-copy">
-                                            Record the final Not Approved decision and lock the review record.
+                                            Record the official PARPO II Not Approved decision received by Legal Division and lock the review record.
                                         </p>
                                     </div>
                                 </div>
@@ -4087,7 +4087,7 @@
 
                                 <button type="submit" class="staff-button staff-button-danger">
                                     <i class="fa-solid fa-xmark"></i>
-                                    Mark as Not Approved
+                                    Record Not Approved Decision
                                 </button>
                             </form>
                         @endif
