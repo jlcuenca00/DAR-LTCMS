@@ -76,6 +76,7 @@ Route::middleware('auth')->group(function () {
         ->middleware('throttle:6,1');
 
     Route::put('password', [PasswordController::class, 'update'])
+        ->middleware('throttle:password-change')
         ->name('password.update');
 
     Route::get('onboarding-tours/{tourKey}', [OnboardingTourController::class, 'show'])
