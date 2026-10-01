@@ -2,28 +2,9 @@
     $subjectLandFindings = collect((array) old('ltc_form4_subject_land_findings', $application->ltc_form4_subject_land_findings ?? []));
     $recommendationFindings = collect((array) old('ltc_form4_recommendation_findings', $application->ltc_form4_recommendation_findings ?? []));
 
-    $subjectLandOptions = [
-        'pd27_not_covered_tenanted_retained_area' => 'Not covered by P.D. No. 27/E.O. No. 228 — Tenanted retained area',
-        'pd27_not_covered_not_tenanted_retained_area' => 'Not covered by P.D. No. 27/E.O. No. 228 — Not tenanted retained area',
-        'ra6657_not_covered_tenanted_retained_area' => 'Not covered by R.A. No. 6657, as amended by R.A. No. 9700 — Tenanted retained area',
-        'ra6657_not_covered_not_tenanted_retained_area' => 'Not covered by R.A. No. 6657, as amended by R.A. No. 9700 — Not tenanted retained area',
-        'ra6657_not_covered_personally_tilled' => 'Not covered by R.A. No. 6657 — Personally tilled by the landowner',
-        'ra6657_not_covered_above_18_slope' => 'Not covered by R.A. No. 6657 — Un-acquired portion above 18% slope',
-        'pd27_covered_cf_under_process' => 'Covered by P.D. No. 27/E.O. No. 228 — CF under process',
-        'pd27_covered_dnyd' => 'Covered by P.D. No. 27/E.O. No. 228 — Distributed but not yet documented (DNYD)',
-        'pd27_covered_dnyp' => 'Covered by P.D. No. 27/E.O. No. 228 — Distributed but not yet paid (DNYP)',
-        'pd27_covered_under_protest' => 'Covered by P.D. No. 27/E.O. No. 228 — Under protest',
-        'ra6657_covered_cf_under_process' => 'Covered by R.A. No. 6657 — CF under process',
-        'ra6657_covered_dnyd' => 'Covered by R.A. No. 6657 — Distributed but not yet documented (DNYD)',
-        'ra6657_covered_dnyp' => 'Covered by R.A. No. 6657 — Distributed but not yet paid (DNYP)',
-        'ra6657_covered_under_protest' => 'Covered by R.A. No. 6657 — Under protest',
-    ];
+    $subjectLandOptions = \App\Models\LandTransferApplication::form4SubjectLandOptions();
 
-    $recommendationOptions = [
-        'application_complete' => 'The duly accomplished application/request is in order and complete.',
-        'requirements_complete_consistent' => 'The mandatory documentary requirements and pertinent documents are complete and consistent in form and substance.',
-        'no_pending_case_or_conflict' => 'There is no pending case, protest, or conflict of claims involving the subject land.',
-    ];
+    $recommendationOptions = \App\Models\LandTransferApplication::form4RecommendationOptions();
 
     $form4Decision = old('ltc_form4_recommendation_decision', $application->ltc_form4_recommendation_decision);
 
