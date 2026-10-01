@@ -61,7 +61,7 @@ class SystemNotification extends Model
                 }
 
                 if (Route::has('landowner.applications.index')) {
-                    return route('landowner.applications.index');
+                    return route('landowner.applications.index') . '#application-' . $this->related_id;
                 }
             }
         }
