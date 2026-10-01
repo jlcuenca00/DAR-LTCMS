@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\ApplicationComplianceNotice;
 use App\Models\ApplicationParcel;
 use App\Models\AuditLog;
 use App\Models\Landowner;
@@ -263,54 +264,91 @@ class ApplicationWorkflowReadinessTest extends TestCase
         );
     }
 
-    public function test_final_denial_rechecks_workflow_prerequisites_but_can_record_an_adverse_decision(): void
+    public function test_final_decision_stage_uses_compliance_loop_then_resumes_and_approves(): void
     {
         $staff = $this->staffUser();
-
-        $missingParcel = $this->application(
+        $application = $this->application(
             $staff,
             LandTransferApplication::STATUS_FOR_RELEASING,
-            'READINESS-DENIAL-NO-PARCEL'
+            'READINESS-COMPLIANCE-FINAL-STAGE'
         );
-        $this->completeForm4($missingParcel, 'denial');
-        $this->completePaymentAndCsw($missingParcel, $staff);
+        $this->linkParcel($application, 'READINESS-COMPLIANCE-FINAL-STAGE-PARCEL');
+        $this->completeForm4($application);
+        $this->completePaymentAndCsw($application, $staff);
 
         $this->actingAs($staff)
-            ->post(route('staff.applications.not_approved', $missingParcel), [
+            ->post('/staff/applications/' . $application->id . '/not-approved', [
                 'final_decision_confirmation' => '1',
-                'decision_officer_name' => 'PARPO II Test Signatory',
-                'decision_date' => now()->toDateString(),
-                'decision_reason' => 'Adverse PARPO II decision.',
             ])
-            ->assertSessionHasErrors(['validation', 'parcel']);
-
-        $this->assertSame(
-            LandTransferApplication::STATUS_FOR_RELEASING,
-            $missingParcel->fresh()->status
-        );
-
-        $complete = $this->application(
-            $staff,
-            LandTransferApplication::STATUS_FOR_RELEASING,
-            'READINESS-DENIAL-COMPLETE'
-        );
-        $this->linkParcel($complete, 'READINESS-DENIAL-COMPLETE-PARCEL');
-        $this->completeForm4($complete, 'denial');
-        $this->completePaymentAndCsw($complete, $staff);
+            ->assertNotFound();
 
         $this->actingAs($staff)
-            ->post(route('staff.applications.not_approved', $complete), [
+            ->post(route('staff.applications.compliance.request', $application), [
+                'category' => ApplicationComplianceNotice::CATEGORY_OTHER,
+                'other_category' => 'PARPO clarification requested',
+                'details' => 'Bring the original supporting instrument for clarification before approval can be recorded.',
+                'requested_items' => 'Original supporting instrument',
+            ])
+            ->assertSessionHas('success');
+
+        $application->refresh();
+        $this->assertSame(LandTransferApplication::STATUS_RETURNED_FOR_COMPLIANCE, $application->status);
+
+        $notice = $application->complianceNotices()->latest('id')->firstOrFail();
+        $this->assertSame(LandTransferApplication::STATUS_FOR_RELEASING, $notice->resume_status);
+        $this->assertSame(ApplicationComplianceNotice::CATEGORY_OTHER, $notice->category);
+        $this->assertSame('PARPO clarification requested', $notice->other_category);
+        $this->assertNull($notice->resolved_at);
+
+        $this->actingAs($staff)
+            ->post(route('staff.applications.compliance.resolve', $application), [
+                'resolution_note' => 'Original instrument was presented and reviewed at the office.',
+            ])
+            ->assertSessionHas('success');
+
+        $application->refresh();
+        $notice->refresh();
+
+        $this->assertSame(LandTransferApplication::STATUS_FOR_RELEASING, $application->status);
+        $this->assertNotNull($notice->resolved_at);
+        $this->assertSame($staff->id, $notice->resolved_by);
+
+        $this->actingAs($staff)
+            ->post(route('staff.applications.approve', $application), [
                 'final_decision_confirmation' => '1',
-                'decision_officer_name' => 'PARPO II Test Signatory',
+                'decision_officer_name' => 'PARPO II Compliance Test Signatory',
                 'decision_date' => now()->toDateString(),
-                'decision_reason' => 'Substantive review supports denial.',
+                'decision_reason' => 'All compliance issues were resolved.',
             ])
             ->assertSessionHas('success');
 
         $this->assertSame(
-            LandTransferApplication::STATUS_NOT_APPROVED,
-            $complete->fresh()->status
+            LandTransferApplication::STATUS_APPROVED,
+            $application->fresh()->status
         );
+    }
+
+    public function test_other_compliance_category_requires_custom_text(): void
+    {
+        $staff = $this->staffUser();
+        $application = $this->application(
+            $staff,
+            LandTransferApplication::STATUS_LEGAL_EVALUATION,
+            'READINESS-COMPLIANCE-OTHER'
+        );
+
+        $this->actingAs($staff)
+            ->post(route('staff.applications.compliance.request', $application), [
+                'category' => ApplicationComplianceNotice::CATEGORY_OTHER,
+                'details' => 'A case-specific issue requires clarification.',
+            ])
+            ->assertSessionHasErrors('other_category');
+
+        $this->assertSame(
+            LandTransferApplication::STATUS_LEGAL_EVALUATION,
+            $application->fresh()->status
+        );
+        $this->assertDatabaseCount('application_compliance_notices', 0);
     }
 
     public function test_complete_application_can_follow_the_full_citizens_charter_flow_then_release_the_output(): void
