@@ -20,6 +20,7 @@ use App\Services\ParcelConcurrencyService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class LandTransferApplicationController extends Controller
 {
@@ -336,14 +337,14 @@ public function store(Request $request)
         'applicant_type' => ['nullable', 'string', 'in:transferor,transferee,authorized_representative,other'],
         'authorized_representative_name' => ['nullable', 'string', 'max:255'],
         'has_special_power_of_attorney' => ['nullable', 'boolean'],
-        'date_of_application' => ['nullable', 'date'],
+        'date_of_application' => ['nullable', 'date', 'before_or_equal:today'],
 
         'transferor_name' => ['nullable', 'string', 'max:1000'],
         'transferee_name' => ['nullable', 'string', 'max:1000'],
 
         'municipality' => ['nullable', 'string', 'max:255'],
         'barangay' => ['nullable', 'string', 'max:255'],
-        'date_filed' => ['nullable', 'date'],
+        'date_filed' => ['nullable', 'date', 'before_or_equal:today'],
         'transfer_nature' => ['nullable', 'string', 'max:255'],
         'transfer_instruments' => ['nullable', 'array'],
         'transfer_instruments.*.name' => ['nullable', 'string', 'max:255'],
@@ -701,7 +702,7 @@ private function generateApplicationCode(): string
             ],
             'ltc_form4_recommendation_decision' => ['nullable', 'in:approval,denial'],
             'ltc_form4_other_findings' => ['nullable', 'string', 'max:2000'],
-            'ltc_form4_certified_at' => ['nullable', 'date'],
+            'ltc_form4_certified_at' => ['nullable', 'date', 'before_or_equal:today'],
             'ltc_form4_certifying_officer_name' => ['nullable', 'string', 'max:255'],
         ]);
 
