@@ -215,14 +215,14 @@ Route::middleware(['auth', 'role:staff'])
             ->name('applications.documents.destroy');
         Route::get('/applications/{application}/workflow-state', [ApplicationWorkflowController::class, 'state'])
             ->name('applications.workflow_state');
-        Route::post('/applications/{application}/return-for-compliance', [ApplicationWorkflowController::class, 'returnForCompliance'])
-            ->name('applications.return_for_compliance');
+        Route::post('/applications/{application}/compliance/request', [ApplicationWorkflowController::class, 'requestCompliance'])
+            ->name('applications.compliance.request');
+        Route::post('/applications/{application}/compliance/resolve', [ApplicationWorkflowController::class, 'resolveCompliance'])
+            ->name('applications.compliance.resolve');
         Route::post('/applications/{application}/submit', [ApplicationWorkflowController::class, 'submit'])
             ->name('applications.submit');
         Route::post('/applications/{application}/approve', [ApplicationWorkflowController::class, 'approve'])
             ->name('applications.approve');
-        Route::post('/applications/{application}/not-approved', [ApplicationWorkflowController::class, 'notApproved'])
-            ->name('applications.not_approved');
         Route::post('/applications/{application}/ready-for-release', [ApplicationWorkflowController::class, 'markReadyForRelease'])
             ->name('applications.ready_for_release');
         Route::post('/applications/{application}/release', [ApplicationWorkflowController::class, 'release'])
