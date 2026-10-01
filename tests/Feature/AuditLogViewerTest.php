@@ -30,6 +30,10 @@ class AuditLogViewerTest extends TestCase
 
         AuditLog::create([
             'actor_user_id' => $staffUser->id,
+            'actor_name_snapshot' => $staffUser->name,
+            'actor_username_snapshot' => $staffUser->username,
+            'actor_role_snapshot' => $staffUser->role,
+            'application_code_snapshot' => $application->application_code,
             'action' => 'document_uploaded',
             'land_transfer_application_id' => $application->id,
             'auditable_type' => LandTransferApplication::class,
@@ -52,7 +56,9 @@ class AuditLogViewerTest extends TestCase
         $response->assertSee('AUDIT-VIEW-001');
         $response->assertSee('TCT-TEST-001');
         $response->assertSee($staffUser->name);
-        $response->assertSee($staffUser->email);
+        $response->assertSee('@' . $staffUser->username);
+        $response->assertSee($staffUser->role);
+        $response->assertDontSee($staffUser->email);
     }
 
     public function test_staff_can_filter_audit_logs_by_action(): void
