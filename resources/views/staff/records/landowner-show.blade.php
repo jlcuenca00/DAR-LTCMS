@@ -941,17 +941,10 @@
                                     <div class="landholding-record-field">
                                         <p class="landholding-record-label">Reference Photo / Scan</p>
                                         <div class="landholding-record-value">
-                                            @php
-                                                $referencePhotoExists = $holding->reference_photo_path
-                                                    && app(\App\Services\ProtectedAdministrativeStorage::class)->exists($holding->reference_photo_path);
-                                                $referencePhotoUrl = $referencePhotoExists
-                                                    ? route('staff.protected-storage.show', ['path' => $holding->reference_photo_path])
-                                                    : null;
-                                            @endphp
-                                            @if ($referencePhotoExists)
+                                            @if ($holding->reference_photo_path && app(\App\Services\ProtectedAdministrativeStorage::class)->exists($holding->reference_photo_path))
                                                 <div class="landholding-photo-preview">
-                                                    <img src="{{ $referencePhotoUrl }}" alt="Landholding reference photo" class="landholding-photo-thumb">
-                                                    <a href="{{ $referencePhotoUrl }}" target="_blank" rel="noopener" class="landholding-photo-link">
+                                                    <img src="{{ route('staff.protected-storage.show', ['path' => $holding->reference_photo_path]) }}" alt="Landholding reference photo" class="landholding-photo-thumb">
+                                                    <a href="{{ route('staff.protected-storage.show', ['path' => $holding->reference_photo_path]) }}" target="_blank" rel="noopener" class="landholding-photo-link">
                                                         Open reference
                                                     </a>
                                                 </div>
