@@ -52,6 +52,7 @@ class User extends Authenticatable
         'is_active',
         'must_change_password',
         'password_changed_at',
+        'temporary_password_expires_at',
         'profile_photo_path',
         'last_login_at',
         'onboarding_state',
@@ -81,6 +82,7 @@ class User extends Authenticatable
             'is_active' => 'boolean',
             'must_change_password' => 'boolean',
             'password_changed_at' => 'datetime',
+            'temporary_password_expires_at' => 'datetime',
             'last_login_at' => 'datetime',
             'onboarding_state' => 'array',
         ];
