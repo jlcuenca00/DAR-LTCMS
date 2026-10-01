@@ -15,6 +15,7 @@ use App\Models\SourceRecordPackage;
 use App\Models\Parcel;
 use App\Services\AuditLogger;
 use App\Services\LandholdingAreaValidationService;
+use App\Services\LandownerConcurrencyService;
 use App\Services\NotificationService;
 use App\Services\ParcelConcurrencyService;
 use Illuminate\Support\Facades\Auth;
@@ -381,6 +382,10 @@ public function store(Request $request)
     $transfereeSummary = collect($transferees)->pluck('name')->filter()->implode('; ');
 
     DB::transaction(function () use ($validated, $hasSpecialPowerOfAttorney, $isSuccessionCase, $retentionCertificateRequired, $transferors, $transferees, $transferInstruments, $transferorSummary, $transfereeSummary, &$application) {
+        app(LandownerConcurrencyService::class)->lockLandowners(
+            collect($transferees)->pluck('landowner_id')->filter()->all()
+        );
+
         $applicantType = $validated['applicant_type'] ?? null;
         $applicantName = $validated['applicant_name'] ?? null;
 
@@ -490,6 +495,10 @@ public function store(Request $request)
         ]);
 
         return DB::transaction(function () use ($validated, $application) {
+            app(LandownerConcurrencyService::class)->lockLandowners(
+                $application->linkedLandownerIds('transferee')->all()
+            );
+
             $parcel = app(ParcelConcurrencyService::class)
                 ->lockParcel((int) $validated['parcel_id']);
 
@@ -552,24 +561,34 @@ public function store(Request $request)
             abort(404);
         }
 
-        $auditPayload = [
-            'application_parcel_id' => $applicationParcel->id,
-            'parcel_id' => $applicationParcel->parcel_id,
-            'parcel_code' => $applicationParcel->parcel_code,
-            'area_hectares' => $applicationParcel->area_hectares,
-        ];
+        return DB::transaction(function () use ($application, $applicationParcel) {
+            app(LandownerConcurrencyService::class)->lockLandowners(
+                $application->linkedLandownerIds('transferee')->all()
+            );
 
-        $applicationParcel->delete();
+            if ($applicationParcel->parcel_id) {
+                app(ParcelConcurrencyService::class)->lockParcel((int) $applicationParcel->parcel_id);
+            }
 
-        AuditLogger::record(
-            'application_parcel_removed',
-            $application,
-            $application,
-            $auditPayload,
-            Auth::id()
-        );
+            $auditPayload = [
+                'application_parcel_id' => $applicationParcel->id,
+                'parcel_id' => $applicationParcel->parcel_id,
+                'parcel_code' => $applicationParcel->parcel_code,
+                'area_hectares' => $applicationParcel->area_hectares,
+            ];
 
-        return back()->with('success', 'Linked parcel reference removed from the application review.');
+            $applicationParcel->delete();
+
+            AuditLogger::record(
+                'application_parcel_removed',
+                $application,
+                $application,
+                $auditPayload,
+                Auth::id()
+            );
+
+            return back()->with('success', 'Linked parcel reference removed from the application review.');
+        });
     }
 
 
