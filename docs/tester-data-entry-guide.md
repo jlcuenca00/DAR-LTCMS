@@ -160,23 +160,32 @@ For a complete positive-path test, process an application through:
 10. Ready for Release
 11. Released to Client
 
-Also test a separate application that receives a **Not Approved** final decision.
+Also exercise the **Compliance Required** loop from more than one open stage:
 
-Approved and Not Approved are final application decisions. After either decision, verify that:
+- select a predefined compliance category and enter detailed instructions;
+- select **Other** and verify custom category text is required;
+- verify the linked Landowner receives an Action Required notification and persistent alert;
+- mark compliance resolved and verify the same application resumes its saved prior stage;
+- repeat a second compliance cycle on the same application; and
+- verify no Not Approved / Denied action or route exists for current Staff workflow.
+
+Approved is the only current final application decision. After approval, verify that:
 
 - substantive application editing is locked;
 - supporting-document upload/removal is locked;
 - backend mutation attempts are rejected;
-- the immutable final output is generated;
+- the immutable GRANTED final output is generated;
 - audit logs preserve the decision/action history; and
 - release to the client is tracked separately without changing the final decision.
 
+If historical Not Approved / Denied records exist in the dataset, verify they remain readable and locked but cannot be recreated or edited as current decisions.
+
 ## 11. Verify LTC Form No. 5
 
-For final Approved and Not Approved applications, verify the official output:
+For a current final Approved application, verify the official output:
 
 - LTC number uses the annual sequence and page value;
-- result is GRANTED for Approved or DENIED for Not Approved;
+- result is GRANTED;
 - all linked parcel references/areas are represented correctly;
 - signatory matches the PARPO II decision officer/signatory recorded for that final decision;
 - notarial details display when encoded;
@@ -204,7 +213,9 @@ Use the notification bell/archive and verify that:
 
 - users see only notifications intended for them;
 - important application events link to the correct authorized page; and
-- final Released/Not Approved events display using current terminology.
+- Action Required and Compliance Resolved events link to the correct application;
+- Approved, Ready for Release, and Released to Client events remain distinct; and
+- any historical Not Approved / Denied events are clearly labeled as historical.
 
 ## 14. Test monitoring and reports
 
@@ -212,6 +223,7 @@ After creating enough test data, open Monitoring Reports and confirm:
 
 - counts and filters reflect the test records;
 - current workflow statuses are used;
-- Released and Not Approved output totals are correct;
+- Approved/release totals are correct;
+- preserved historical Not Approved / Denied totals, if present, are clearly labeled as historical;
 - Recorded Output Area is presented as an administrative/reporting metric; and
 - report wording does not imply automatic legal land transfer.
