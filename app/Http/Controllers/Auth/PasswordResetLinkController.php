@@ -218,6 +218,7 @@ class PasswordResetLinkController extends Controller
         $user->forceFill([
             'email_verified_at' => $user->email_verified_at ?? now(),
             'must_change_password' => true,
+            'temporary_password_expires_at' => null,
         ])->save();
 
         AuditLogger::record(
