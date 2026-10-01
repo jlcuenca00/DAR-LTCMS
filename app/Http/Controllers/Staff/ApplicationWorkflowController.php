@@ -167,9 +167,7 @@ class ApplicationWorkflowController extends Controller
         // Before Legal Division records the final PARPO II decision, verify the full
         // administrative record. Form 4 remains recommendatory only.
         if ($nextStatus === LandTransferApplication::STATUS_FOR_RELEASING) {
-            $this->validateDecisionChronology($application, $validated['decision_date']);
-
-        [$snapshot, $readinessErrors] = $this->decisionReadiness($application);
+            [$snapshot, $readinessErrors] = $this->decisionReadiness($application);
 
             if (! empty($readinessErrors)) {
                 return back()->withErrors(array_merge([
@@ -280,6 +278,8 @@ class ApplicationWorkflowController extends Controller
         ], [
             'final_decision_confirmation.accepted' => 'Confirm the final PARPO II approval before continuing.',
         ]);
+
+        $this->validateDecisionChronology($application, $validated['decision_date']);
 
         [$snapshot, $readinessErrors] = $this->decisionReadiness($application);
 
@@ -531,7 +531,8 @@ class ApplicationWorkflowController extends Controller
                     ->lockForUpdate()
                     ->findOrFail($application->id);
 
-                if (! $application->isFinalized() || $application->release_status !== LandTransferApplication::RELEASE_READY) {
+                if (! in_array($application->status, LandTransferApplication::FINAL_STATUSES, true)
+                    || $application->release_status !== LandTransferApplication::RELEASE_READY) {
                     throw new \RuntimeException('The release state changed. Refresh the page before recording release.');
                 }
 
