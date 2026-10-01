@@ -542,7 +542,10 @@ class LandTransferApplication extends Model
     public function canRequestCompliance(): bool
     {
         return ! $this->isFinalized()
-            && in_array($this->status, self::COMPLIANCE_RESUME_STATUSES, true);
+            && (
+                in_array($this->status, self::COMPLIANCE_RESUME_STATUSES, true)
+                || in_array($this->status, [self::STATUS_DRAFT, self::STATUS_PENDING_REVIEW], true)
+            );
     }
 
     public function returnedForComplianceBy()
