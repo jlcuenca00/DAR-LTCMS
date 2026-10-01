@@ -261,6 +261,7 @@ class AccountCreationEmailTest extends TestCase
             'name' => 'Sample User',
             'username' => 'sample_user',
             'temporaryPassword' => 'Temporary-123!',
+            'temporaryPasswordLifetimeHours' => 24,
             'isActive' => true,
             'loginUrl' => 'https://darltcms.me/login',
             'logoUrl' => 'https://darltcms.me/images/favicon.png',
@@ -269,6 +270,7 @@ class AccountCreationEmailTest extends TestCase
         $this->assertStringContainsString('sample_user', $html);
         $this->assertStringContainsString('Temporary-123!', $html);
         $this->assertStringContainsString('Password change required on first sign-in.', $html);
+        $this->assertStringContainsString('expires 24 hours after it is generated', $html);
         $this->assertStringContainsString('DAR-LTCMS', $html);
     }
 }
