@@ -16,8 +16,7 @@ use Illuminate\Validation\ValidationException;
 
 class SourceRecordPackageImportController extends Controller
 {
-    private const MAX_IMPORT_ROWS = 5000;
-    private const MAX_COMMIT_SELECTIONS = self::MAX_IMPORT_ROWS;
+    private const DEFAULT_MAX_IMPORT_ROWS = 5000;
 
     private array $headers = [
         'include_title',
@@ -169,10 +168,10 @@ class SourceRecordPackageImportController extends Controller
         }
 
         $validated = $request->validate([
-            'selected_rows' => ['required', 'array', 'min:1', 'max:'.self::MAX_COMMIT_SELECTIONS],
+            'selected_rows' => ['required', 'array', 'min:1', 'max:'.$this->maxImportRows()],
             'selected_rows.*' => ['required', 'integer', 'min:2', 'distinct'],
         ], [
-            'selected_rows.max' => 'A single commit may contain at most '.self::MAX_COMMIT_SELECTIONS.' selected rows.',
+            'selected_rows.max' => 'A single commit may contain at most '.$this->maxImportRows().' selected rows.',
         ]);
 
         $selectedRows = collect($validated['selected_rows'])
@@ -343,9 +342,9 @@ class SourceRecordPackageImportController extends Controller
                     continue;
                 }
 
-                if (count($rows) >= self::MAX_IMPORT_ROWS) {
+                if (count($rows) >= $this->maxImportRows()) {
                     throw ValidationException::withMessages([
-                        'import_file' => 'A single import may contain at most '.self::MAX_IMPORT_ROWS.' non-empty rows. Split larger imports into multiple batches.',
+                        'import_file' => 'A single import may contain at most '.$this->maxImportRows().' non-empty rows. Split larger imports into multiple batches.',
                     ]);
                 }
 
@@ -494,6 +493,14 @@ class SourceRecordPackageImportController extends Controller
             'transcription_date' => $package->transcription_date,
             'source_notes' => $package->source_notes,
         ]);
+    }
+
+    private function maxImportRows(): int
+    {
+        return max(
+            1,
+            (int) config('dar_ltc.source_import_max_rows', self::DEFAULT_MAX_IMPORT_ROWS)
+        );
     }
 
     private function truthy(string $value): bool
