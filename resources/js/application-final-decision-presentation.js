@@ -28,7 +28,7 @@ function normalizeFinalDecisionPresentation() {
     if (outputSubtitle) {
         outputSubtitle.textContent = approved
             ? 'Immutable LTC Form No. 5 output generated from the final PARPO II Approved decision.'
-            : 'Immutable LTC Form No. 5 output generated from the final PARPO II Not Approved decision.';
+            : 'Historical immutable LTC Form No. 5 output preserved from a prior Not Approved decision.';
     }
 }
 
