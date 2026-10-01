@@ -2802,14 +2802,39 @@
                         </div>
 
                         @if ($application->clearance)
+                            @php
+                                $clearanceDecisionStatus = strtolower((string) $application->clearance->decision_status);
+                                $clearanceDecisionApproved = in_array(
+                                    $clearanceDecisionStatus,
+                                    [
+                                        \App\Models\LandTransferApplication::STATUS_APPROVED,
+                                        \App\Models\LandTransferApplication::STATUS_RELEASED,
+                                    ],
+                                    true
+                                );
+                                $clearanceDecisionNotApproved = in_array(
+                                    $clearanceDecisionStatus,
+                                    [
+                                        \App\Models\LandTransferApplication::STATUS_NOT_APPROVED,
+                                        \App\Models\LandTransferApplication::STATUS_DENIED,
+                                    ],
+                                    true
+                                );
+                                $clearanceDecisionLabel = $clearanceDecisionApproved
+                                    ? 'APPROVED'
+                                    : ($clearanceDecisionNotApproved ? 'NOT APPROVED' : 'UNKNOWN DECISION');
+                                $clearanceDecisionBadgeClass = $clearanceDecisionApproved
+                                    ? 'staff-badge-green'
+                                    : ($clearanceDecisionNotApproved ? 'staff-badge-red' : 'staff-badge-slate');
+                            @endphp
                             <div class="final-clearance-card">
                                 <div class="final-clearance-title-row">
                                     <div>
                                         <h2 class="review-panel-title">Generated Decision Output</h2>
                                         <p class="review-panel-subtitle">Decision output generated from the final application result.</p>
                                     </div>
-                                    <span class="staff-badge {{ $application->clearance->decision_status === 'released' ? 'staff-badge-green' : 'staff-badge-red' }}">
-                                        {{ $application->clearance->decision_status === 'released' ? 'APPROVED' : 'DENIED' }}
+                                    <span class="staff-badge {{ $clearanceDecisionBadgeClass }}">
+                                        {{ $clearanceDecisionLabel }}
                                     </span>
                                 </div>
 
