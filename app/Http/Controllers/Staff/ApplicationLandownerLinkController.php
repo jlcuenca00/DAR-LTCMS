@@ -7,6 +7,7 @@ use App\Models\Landholding;
 use App\Models\LandTransferApplication;
 use App\Models\Landowner;
 use App\Services\AuditLogger;
+use App\Services\LandownerConcurrencyService;
 use App\Services\ParcelConcurrencyService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -82,16 +83,25 @@ class ApplicationLandownerLinkController extends Controller
         ];
 
         DB::transaction(function () use ($application, $transferors, $transferees, $syncLandholdings, $oldLinks) {
+            $landownerIds = collect(array_merge(
+                $oldLinks['transferors'],
+                $oldLinks['transferees'],
+                $transferors,
+                $transferees
+            ))->pluck('landowner_id')->filter()->all();
+
+            app(LandownerConcurrencyService::class)->lockLandowners($landownerIds);
+
+            $parcelIds = $application->applicationParcels()
+                ->whereNotNull('parcel_id')
+                ->orderBy('parcel_id')
+                ->pluck('parcel_id')
+                ->all();
+
+            app(ParcelConcurrencyService::class)->lockParcels($parcelIds);
+            $application->load('applicationParcels.parcel');
+
             if ($syncLandholdings) {
-                $parcelIds = $application->applicationParcels()
-                    ->whereNotNull('parcel_id')
-                    ->orderBy('parcel_id')
-                    ->pluck('parcel_id')
-                    ->all();
-
-                app(ParcelConcurrencyService::class)->lockParcels($parcelIds);
-                $application->load('applicationParcels.parcel');
-
                 $shareErrors = $this->validateCurrentLandholdingShares($transferors, $application);
 
                 if (! empty($shareErrors)) {
