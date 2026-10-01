@@ -465,7 +465,7 @@
                                     @endif
 
                                     @if ($application->isFinalized() && $application->clearance && $application->isReleasedToClient())
-                                        <span class="lo-output-state">{{ $application->releaseStatusLabel() }}</span>
+                                        <span class="lo-output-state">Released to Client</span>
                                         <a href="{{ route('landowner.applications.clearance.show', $application) }}" class="lo-clearance-link">
                                             <i class="fa-solid fa-file-lines" aria-hidden="true"></i>
                                             View Decision Output
