@@ -46,6 +46,7 @@ class ForcedPasswordController extends Controller
             'password' => $validated['password'],
             'must_change_password' => false,
             'password_changed_at' => now(),
+            'temporary_password_expires_at' => null,
             'remember_token' => Str::random(60),
         ])->save();
 
