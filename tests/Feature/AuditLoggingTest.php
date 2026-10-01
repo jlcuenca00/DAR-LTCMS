@@ -265,6 +265,8 @@ class AuditLoggingTest extends TestCase
             route('staff.applications.approve', $application),
             [
                 'final_decision_confirmation' => '1',
+                'decision_officer_name' => 'PARPO II Test Signatory',
+                'decision_date' => now()->toDateString(),
                 'decision_reason' => 'Audit approval reason',
                 'decision_notes' => 'Audit approval notes',
             ]
