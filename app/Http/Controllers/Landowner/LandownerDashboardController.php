@@ -56,7 +56,7 @@ class LandownerDashboardController extends Controller
             ],
             [
                 'status' => LandTransferApplication::STATUS_RETURNED_FOR_COMPLIANCE,
-                'label' => 'Returned for Compliance',
+                'label' => 'Compliance Required',
                 'statuses' => [LandTransferApplication::STATUS_RETURNED_FOR_COMPLIANCE],
             ],
             [
@@ -101,7 +101,7 @@ class LandownerDashboardController extends Controller
             ],
             [
                 'status' => LandTransferApplication::STATUS_NOT_APPROVED,
-                'label' => 'Not Approved',
+                'label' => 'Historical Not Approved / Denied',
                 'statuses' => [LandTransferApplication::STATUS_NOT_APPROVED, LandTransferApplication::STATUS_DENIED],
             ],
         ])->map(function (array $summary) use ($statusCounts) {
