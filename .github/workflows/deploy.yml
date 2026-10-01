@@ -161,136 +161,180 @@ jobs:
           npm ci
           npm run build
 
-      - name: Deploy to CloudPanel
-        uses: easingthemes/ssh-deploy@ece05a22752e524363164bfb2f69a5ba4f8ded0d # v5.1.0
-        with:
+      - name: Configure trusted production SSH host
+        env:
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-          REMOTE_HOST: ${{ secrets.SSH_HOST }}
-          REMOTE_USER: ${{ secrets.SSH_USERNAME }}
-          REMOTE_PORT: "22"
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_KNOWN_HOSTS: ${{ secrets.SSH_KNOWN_HOSTS }}
+        run: |
+          set -euo pipefail
 
-          SOURCE: "./"
-          TARGET: "/home/darltcms/htdocs/darltcms.me"
+          test -n "$SSH_PRIVATE_KEY" || {
+            echo "SSH_PRIVATE_KEY is not configured."
+            exit 1
+          }
 
-          ARGS: "-rlzvc"
+          test -n "$SSH_HOST" || {
+            echo "SSH_HOST is not configured."
+            exit 1
+          }
 
-          EXCLUDE: >-
-            /.git/,
-            /.github/,
-            /.env,
-            /node_modules/,
-            /vendor/,
-            /tests/,
-            /storage/backups/,
-            /storage/app/private/,
-            /storage/app/public/,
-            /storage/logs/,
-            /storage/framework/cache/data/,
-            /storage/framework/sessions/,
-            /storage/framework/views/,
-            /public/storage/,
-            /*.sql,
-            /*_audit.txt,
-            /seed_mock_*.txt
+          test -n "$SSH_KNOWN_HOSTS" || {
+            echo "SSH_KNOWN_HOSTS is not configured. Refusing an unverified production SSH connection."
+            exit 1
+          }
 
-          SCRIPT_AFTER: |
-            set -e
+          install -m 700 -d "$HOME/.ssh"
+          printf '%s\n' "$SSH_PRIVATE_KEY" > "$HOME/.ssh/id_rsa"
+          printf '%s\n' "$SSH_KNOWN_HOSTS" > "$HOME/.ssh/known_hosts"
+          chmod 600 "$HOME/.ssh/id_rsa" "$HOME/.ssh/known_hosts"
 
-            cd /home/darltcms/htdocs/darltcms.me
+          if ! ssh-keygen -F "$SSH_HOST" -f "$HOME/.ssh/known_hosts" >/dev/null; then
+            echo "SSH_KNOWN_HOSTS does not contain an entry for the configured SSH_HOST."
+            exit 1
+          fi
 
-            test -f .env || {
-              echo "Production .env is missing."
-              exit 1
-            }
+      - name: Sync application files to CloudPanel
+        env:
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_USERNAME: ${{ secrets.SSH_USERNAME }}
+        run: |
+          set -euo pipefail
 
-            php -m | grep -q pdo_pgsql || {
-              echo "PHP PostgreSQL driver is missing."
-              exit 1
-            }
+          rsync -rlzvc \
+            --exclude='/.git/' \
+            --exclude='/.github/' \
+            --exclude='/.env' \
+            --exclude='/node_modules/' \
+            --exclude='/vendor/' \
+            --exclude='/tests/' \
+            --exclude='/storage/backups/' \
+            --exclude='/storage/app/private/' \
+            --exclude='/storage/app/public/' \
+            --exclude='/storage/logs/' \
+            --exclude='/storage/framework/cache/data/' \
+            --exclude='/storage/framework/sessions/' \
+            --exclude='/storage/framework/views/' \
+            --exclude='/public/storage/' \
+            --exclude='/*.sql' \
+            --exclude='/*_audit.txt' \
+            --exclude='/seed_mock_*.txt' \
+            -e "ssh -i $HOME/.ssh/id_rsa -p 22 -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile=$HOME/.ssh/known_hosts" \
+            ./ "$SSH_USERNAME@$SSH_HOST:/home/darltcms/htdocs/darltcms.me"
 
-            mkdir -p bootstrap/cache
-            mkdir -p storage/app/private
-            mkdir -p storage/app/public
-            mkdir -p storage/fonts
-            mkdir -p storage/logs
-            mkdir -p storage/framework/cache/data
-            mkdir -p storage/framework/sessions
-            mkdir -p storage/framework/views
+      - name: Finalize CloudPanel deployment
+        env:
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_USERNAME: ${{ secrets.SSH_USERNAME }}
+          RELEASE_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
 
-            chmod -R ug+rwX bootstrap/cache storage/app/private storage/fonts storage/logs storage/framework
+          ssh \
+            -i "$HOME/.ssh/id_rsa" \
+            -p 22 \
+            -o IdentitiesOnly=yes \
+            -o StrictHostKeyChecking=yes \
+            -o "UserKnownHostsFile=$HOME/.ssh/known_hosts" \
+            "$SSH_USERNAME@$SSH_HOST" \
+            bash -se -- "$RELEASE_SHA" <<'REMOTE'
+          set -euo pipefail
 
-            composer install \
-              --no-dev \
-              --no-interaction \
-              --prefer-dist \
-              --optimize-autoloader
+          RELEASE_SHA="$1"
+          cd /home/darltcms/htdocs/darltcms.me
 
-            php artisan config:clear
-            php artisan route:clear
-            php artisan view:clear
+          test -f .env || {
+            echo "Production .env is missing."
+            exit 1
+          }
 
-            php artisan migrate --force
-            php artisan cache:clear
+          php -m | grep -q pdo_pgsql || {
+            echo "PHP PostgreSQL driver is missing."
+            exit 1
+          }
 
-            # Source-package scans and application documents are administrative
-            # records. They must never be exposed through a public storage symlink.
-            if [ -L public/storage ]; then
-              rm public/storage
-            elif [ -e public/storage ]; then
-              echo "public/storage exists but is not a symbolic link. Refusing to leave an unknown public storage path in production."
-              exit 1
-            fi
+          mkdir -p bootstrap/cache
+          mkdir -p storage/app/private
+          mkdir -p storage/app/public
+          mkdir -p storage/fonts
+          mkdir -p storage/logs
+          mkdir -p storage/framework/cache/data
+          mkdir -p storage/framework/sessions
+          mkdir -p storage/framework/views
 
-            test ! -e public/storage && test ! -L public/storage || {
-              echo "public/storage must not exist in production."
-              exit 1
-            }
+          chmod -R ug+rwX bootstrap/cache storage/app/private storage/fonts storage/logs storage/framework
 
-            test -w storage/app/private || {
-              echo "storage/app/private is not writable by the deployment user."
-              exit 1
-            }
+          composer install \
+            --no-dev \
+            --no-interaction \
+            --prefer-dist \
+            --optimize-autoloader
 
-            test -r storage/app/public || {
-              echo "storage/app/public is not readable for legacy migration."
-              exit 1
-            }
+          php artisan config:clear
+          php artisan route:clear
+          php artisan view:clear
 
-            # New administrative uploads use storage/app/private. During deployment,
-            # temporarily allow the owner to remove registered legacy copies, migrate
-            # and verify them, then lock the fallback directory read-only at runtime.
-            chmod -R u+rwX storage/app/public
-            php artisan dar:migrate-legacy-private-storage
-            chmod -R a-w storage/app/public
+          php artisan migrate --force
+          php artisan cache:clear
 
-            if find storage/app/public -type f -print -quit | grep -q .; then
-              echo "Unregistered legacy files remain under storage/app/public. They are preserved read-only for manual review."
-            fi
+          # Source-package scans and application documents are administrative
+          # records. They must never be exposed through a public storage symlink.
+          if [ -L public/storage ]; then
+            rm public/storage
+          elif [ -e public/storage ]; then
+            echo "public/storage exists but is not a symbolic link. Refusing to leave an unknown public storage path in production."
+            exit 1
+          fi
 
-            test -w storage/fonts || {
-              echo "storage/fonts is not writable by the deployment user."
-              exit 1
-            }
+          test ! -e public/storage && test ! -L public/storage || {
+            echo "public/storage must not exist in production."
+            exit 1
+          }
 
-            # Blocks unsafe runtime settings (debug, HTTP URL, insecure session
-            # cookies, public document exposure, etc.). Delivery/logging warnings
-            # are reported but do not interrupt routine deployment; --strict is
-            # reserved for the final v1.0 release gate.
-            php artisan dar:check-production-readiness
+          test -w storage/app/private || {
+            echo "storage/app/private is not writable by the deployment user."
+            exit 1
+          }
 
-            php artisan config:cache
-            php artisan route:cache
-            php artisan view:cache
+          test -r storage/app/public || {
+            echo "storage/app/public is not readable for legacy migration."
+            exit 1
+          }
 
-            chmod -R ug+rwX bootstrap/cache storage/app/private storage/fonts storage/logs storage/framework
+          # New administrative uploads use storage/app/private. During deployment,
+          # temporarily allow the owner to remove registered legacy copies, migrate
+          # and verify them, then lock the fallback directory read-only at runtime.
+          chmod -R u+rwX storage/app/public
+          php artisan dar:migrate-legacy-private-storage
+          chmod -R a-w storage/app/public
 
-            php artisan about
-            php artisan migrate:status
+          if find storage/app/public -type f -print -quit | grep -q .; then
+            echo "Unregistered legacy files remain under storage/app/public. They are preserved read-only for manual review."
+          fi
 
-            # Production intentionally excludes .git. Persist the exact deployed
-            # source revision so backups can retain application-version traceability.
-            printf '%s\n' '${{ github.sha }}' > .release-commit
-            chmod 644 .release-commit
-            echo "Recorded deployed commit: $(cat .release-commit)"
+          test -w storage/fonts || {
+            echo "storage/fonts is not writable by the deployment user."
+            exit 1
+          }
 
-          SCRIPT_AFTER_REQUIRED: true
+          # Blocks unsafe runtime settings (debug, HTTP URL, insecure session
+          # cookies, public document exposure, etc.). Delivery/logging warnings
+          # are reported but do not interrupt routine deployment; --strict is
+          # reserved for the final v1.0 release gate.
+          php artisan dar:check-production-readiness
+
+          php artisan config:cache
+          php artisan route:cache
+          php artisan view:cache
+
+          chmod -R ug+rwX bootstrap/cache storage/app/private storage/fonts storage/logs storage/framework
+
+          php artisan about
+          php artisan migrate:status
+
+          # Production intentionally excludes .git. Persist the exact deployed
+          # source revision so backups can retain application-version traceability.
+          printf '%s\n' "$RELEASE_SHA" > .release-commit
+          chmod 644 .release-commit
+          echo "Recorded deployed commit: $(cat .release-commit)"
+          REMOTE
