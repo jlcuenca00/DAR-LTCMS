@@ -12,6 +12,7 @@ use App\Services\AuditLogger;
 use App\Services\NotificationService;
 use App\Services\ParcelConcurrencyService;
 use App\Services\ParcelGeometryService;
+use App\Services\ProtectedAdministrativeStorage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -211,7 +212,7 @@ class RecordSearchController extends Controller
         $newReferencePhotoPath = null;
 
         if ($request->hasFile('reference_photo')) {
-            $newReferencePhotoPath = $request->file('reference_photo')->store('reference-photos/parcels', 'public');
+            $newReferencePhotoPath = $request->file('reference_photo')->store('reference-photos/parcels', ProtectedAdministrativeStorage::PRIVATE_DISK);
             $data['reference_photo_path'] = $newReferencePhotoPath;
         }
 
@@ -250,7 +251,7 @@ class RecordSearchController extends Controller
             });
         } catch (Throwable $e) {
             if ($newReferencePhotoPath) {
-                Storage::disk('public')->delete($newReferencePhotoPath);
+                app(ProtectedAdministrativeStorage::class)->delete($newReferencePhotoPath);
             }
 
             throw $e;
@@ -320,7 +321,7 @@ class RecordSearchController extends Controller
         $newReferencePhotoPath = null;
 
         if ($request->hasFile('reference_photo')) {
-            $newReferencePhotoPath = $request->file('reference_photo')->store('reference-photos/parcels', 'public');
+            $newReferencePhotoPath = $request->file('reference_photo')->store('reference-photos/parcels', ProtectedAdministrativeStorage::PRIVATE_DISK);
             $data['reference_photo_path'] = $newReferencePhotoPath;
         }
 
@@ -369,14 +370,14 @@ class RecordSearchController extends Controller
             });
         } catch (Throwable $e) {
             if ($newReferencePhotoPath) {
-                Storage::disk('public')->delete($newReferencePhotoPath);
+                app(ProtectedAdministrativeStorage::class)->delete($newReferencePhotoPath);
             }
 
             throw $e;
         }
 
         if ($newReferencePhotoPath && $oldReferencePhotoPath && $oldReferencePhotoPath !== $newReferencePhotoPath) {
-            Storage::disk('public')->delete($oldReferencePhotoPath);
+            app(ProtectedAdministrativeStorage::class)->delete($oldReferencePhotoPath);
         }
 
         app(NotificationService::class)->notifyGeodeticParcelReferenceUpdated($savedParcel);
