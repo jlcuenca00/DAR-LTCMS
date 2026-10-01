@@ -146,6 +146,7 @@ class StaffDashboardController extends Controller
                                 ->where('decision_recorded_at', '<', $tomorrowStart);
                         })->orWhere(function ($legacyFallback) use ($todayStart, $tomorrowStart) {
                             $legacyFallback
+                                ->whereIn('status', LandTransferApplication::LEGACY_FINAL_STATUSES)
                                 ->whereNull('decision_recorded_at')
                                 ->whereNotNull('reviewed_at')
                                 ->where('reviewed_at', '>=', $todayStart)
