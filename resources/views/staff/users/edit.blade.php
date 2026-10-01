@@ -596,7 +596,7 @@
                 </div>
 
                 <div class="user-editor-badges">
-                    <span class="staff-badge staff-badge-slate">{{ ucwords($user->role) }}</span>
+                    <span class="staff-badge staff-badge-slate">{{ $user->role === 'staff' ? 'Legal Clearance Staff' : ucwords($user->role) }}</span>
                     <span class="staff-badge {{ $user->is_active ? 'staff-badge-green' : 'staff-badge-red' }}">
                         {{ $user->is_active ? 'Active' : 'Inactive' }}
                     </span>
