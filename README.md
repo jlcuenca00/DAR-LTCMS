@@ -8,7 +8,7 @@ DAR-LTCMS is a web-based administrative processing, records-management, clearanc
 
 **Production site:** https://darltcms.me
 
-The deployed system is intended for authorized DAR personnel and approved stakeholders. Access to functions and records is controlled by role and record ownership.
+The deployed internal workflow is operated by authorized Legal Clearance Staff, with approved Landowner and Geodetic stakeholder access according to role. Access to functions and records is controlled by role and record ownership.
 
 ## Project Scope
 
@@ -17,7 +17,7 @@ DAR-LTCMS supports:
 - Landowner record management
 - Parcel record management
 - Landholding record management
-- Staff-encoded Land Transfer Clearance applications
+- Legal Clearance Staff-encoded Land Transfer Clearance applications
 - supporting-document upload/review and requirement-specific data capture
 - application workflow/status monitoring
 - role-based access control
@@ -27,23 +27,28 @@ DAR-LTCMS supports:
 - monitoring and report generation
 - LTC form and clearance output generation
 
-The platform is an administrative processing and decision-support system. An **Approved** or **Denied** application records the final administrative clearance decision. Release of the signed result is tracked separately. Neither approval nor release automatically transfers land ownership, mutates Registry of Deeds records, or conclusively executes a legal land transfer. Any actual ownership transfer or registry alteration remains subject to separate legal and administrative procedures outside DAR-LTCMS automatic operations.
+The platform is an administrative processing and decision-support system. An **Approved** or **Not Approved** application records the final administrative clearance decision. Release of the signed result is tracked separately. Neither approval nor release automatically transfers land ownership, mutates Registry of Deeds records, or conclusively executes a legal land transfer. Any actual ownership transfer or registry alteration remains subject to separate legal and administrative procedures outside DAR-LTCMS automatic operations.
 
 ## User Roles
 
-### DAR Staff
+### Legal Clearance Staff
 
-Staff are the primary operators. They can:
+The internal Staff workspace is operated by the small Legal Division team responsible for clearance entry, processing records, monitoring, and exit/release tracking. The stored role value remains `staff` for compatibility.
+
+Legal Clearance Staff can:
 
 - encode/manage Landowner, Parcel, and Landholding records
 - manually encode Clearance Applications
 - upload/review supporting documents
-- process applications through the authorized DAR office workflow
+- record workflow movements/results received from LTID, Chief Legal, PARPO II, the cashier, and other DAR offices
+- record the official PARPO II decision while remaining identified as the system recorder
 - generate/view LTC forms and final clearance outputs
 - monitor application status/history
 - generate reports
 - review audit trails
 - manage authorized system accounts
+
+LTID, Chief Legal, PARPO II, cashier, and other DAR offices are tracked administrative authorities/stages, not separate DAR-LTCMS login roles.
 
 ### Landowner
 
@@ -66,17 +71,17 @@ Legal Completeness Review
         ↓
 Payment / Official Receipt Recording
         ↓
-Endorsed to LTID for Verification
+With LTID for Verification
         ↓
-LTID Verification / Returned to Legal
+Returned to Legal Division
         ↓
 Legal Evaluation / CSW Preparation
         ↓
-Chief Legal Final Review
+With Chief Legal for Review
         ↓
-Forwarded to PARPO II
+With PARPO II for Decision
         ↓
-PARPO II Decision Pending
+PARPO II Decision Ready to Record
         ↓
 Approved or Not Approved (FINAL)
         ↓
@@ -85,7 +90,7 @@ Signed Form No. 5 / Ready for Release
 Released to Client
 ```
 
-**Approved** and **Denied** are the current final application decision states. Once either decision is recorded, substantive editing and supporting-document changes are locked by the UI and backend.
+**Approved** and **Not Approved** are the current final application decision states. Once either decision is recorded, substantive editing and supporting-document changes are locked by the UI and backend.
 
 Client release is tracked separately through the release status. Recording a release never changes the final Approved/Not Approved decision and never transfers ownership or mutates registry records.
 
@@ -130,7 +135,7 @@ DAR-LTCMS prioritizes government-grade traceability and controlled access throug
 - strict role-based access control
 - Landowner record isolation
 - limited Geodetic access
-- Staff-controlled application encoding/processing
+- Legal Clearance Staff-controlled application encoding and workflow recording
 - protected supporting documents/source scans
 - final-decision locking
 - timestamped actor-based audit logs
