@@ -9,8 +9,7 @@
         $recommendationFindings = collect((array) ($application->ltc_form4_recommendation_findings ?? []));
 
         $subjectLandOptions = \App\Models\LandTransferApplication::form4SubjectLandOptions();
-
-    $recommendationOptions = \App\Models\LandTransferApplication::form4RecommendationOptions();
+        $recommendationOptions = \App\Models\LandTransferApplication::form4RecommendationOptions();
 
         $checkbox = fn (bool $checked) => $checked ? '✓' : '';
 
