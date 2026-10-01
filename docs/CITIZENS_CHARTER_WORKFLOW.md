@@ -21,7 +21,7 @@ This implementation aligns the administrative Land Transfer Clearance workflow w
 
 ## Final-decision rule
 
-`approved` and `denied` are final application decision states. Once either state is recorded, application edits, supporting-document changes, LTC Form No. 4 changes, parcel-link changes, and other decision-record mutations are locked.
+`approved` and `not_approved` are the current final application decision states. Once either state is recorded, application edits, supporting-document changes, LTC Form No. 4 changes, parcel-link changes, and other decision-record mutations are locked. The older `released` and `denied` values are retained only for historical-record compatibility.
 
 The later `release_status` tracks administrative delivery only:
 
