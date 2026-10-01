@@ -385,7 +385,7 @@
                 <p class="lo-app-kicker">Status Monitoring</p>
                 <h2 class="lo-app-title">My Clearance Applications</h2>
                 <p class="lo-app-copy">
-                    Track applications linked to your landowner record. Encoding, document review, workflow decisions, and clearance processing remain with authorized DAR staff.
+                    Track applications linked to your landowner record. Encoding, document review, workflow decisions, and clearance processing remain with authorized Legal Clearance Staff.
                 </p>
             </div>
 
