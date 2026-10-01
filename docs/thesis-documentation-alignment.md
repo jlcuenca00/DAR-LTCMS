@@ -31,19 +31,28 @@ Use these current user-facing stages in thesis descriptions and diagrams:
 
 1. Legal Completeness Review
 2. Payment / Official Receipt Recording
-3. Endorsed to LTID for Verification
-4. LTID Verification / Returned to Legal
+3. With LTID for Verification
+4. Returned to Legal Division
 5. Legal Evaluation / CSW Preparation
-6. Chief Legal Final Review
-7. Forwarded to PARPO II
-8. PARPO II Decision Pending
+6. With Chief Legal for Review
+7. With PARPO II for Decision
+8. PARPO II Decision Ready to Record
 9. Approved or Not Approved — final application decision
 10. Signed Form No. 5 / Ready for Release
 11. Released to Client
 
-Use **Approved** and **Denied** as the final application decision states. **Ready for Release** and **Released to Client** are separate delivery statuses and must not replace or overwrite the final decision.
+Use **Approved** and **Not Approved** as the final application decision states. **Ready for Release** and **Released to Client** are separate delivery statuses and must not replace or overwrite the final decision.
 
 Historical/internal values such as `released`, `not_approved`, `pending_review`, and `draft` may remain for backward compatibility but should not be presented as the current workflow in final thesis figures/screenshots.
+
+## Authority versus recorder rule
+
+For official actions performed outside DAR-LTCMS, distinguish:
+
+- **administrative authority / decision officer** — the DAR office or official who performed/authorized the real-world action; and
+- **recorded by** — the authenticated Legal Clearance Staff user who encoded that action/result in DAR-LTCMS.
+
+For the final decision, preserve PARPO II as the decision authority together with the decision officer/signatory and official decision date. The Legal Clearance Staff account must be identified only as the recorder.
 
 ## Final decision rule
 
@@ -77,9 +86,11 @@ Avoid over-labeling every screen as “agricultural.” The approved system scop
 
 ## Role access summary
 
-### DAR Staff
+### Legal Clearance Staff
 
-Staff manually encode applications; manage Landowner, Parcel, Landholding, Source/Reference, and application records; upload/review supporting documents; process the office workflow; generate/view clearance outputs and reports; manage authorized users; and review Audit Logs.
+Only the Legal Division personnel assigned to clearance entry/exit and processing records operate the internal Staff workspace. They manually encode applications; manage Landowner, Parcel, Landholding, Source/Reference, and application records; upload/review supporting documents; record the progress/results of the administrative workflow; generate/view clearance outputs and reports; manage authorized users; and review Audit Logs.
+
+LTID, Chief Legal, PARPO II, cashier, and other DAR offices are **administrative authorities in the tracked workflow**, not separate DAR-LTCMS login roles. Thesis diagrams must distinguish the external/official authority from the Legal Clearance Staff user who records the event in the system.
 
 ### Landowner
 
