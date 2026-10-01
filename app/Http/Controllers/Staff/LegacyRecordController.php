@@ -19,20 +19,35 @@ class LegacyRecordController extends Controller
 {
     public function index(Request $request)
     {
-        $archiveView = $request->query('view') === 'packages' ? 'packages' : 'individual';
+        $filters = $request->validate([
+            'view' => ['nullable', Rule::in(['individual', 'packages'])],
+            'search' => ['nullable', 'string', 'max:255'],
+            'municipality' => ['nullable', 'string', 'max:255'],
+            'record_type' => ['nullable', Rule::in(array_keys(LegacyRecord::RECORD_TYPES))],
+            'origin' => ['nullable', Rule::in(array_keys(LegacyRecord::ORIGINS))],
+        ]);
+
+        $archiveView = ($filters['view'] ?? 'individual') === 'packages'
+            ? 'packages'
+            : 'individual';
+
+        $search = trim((string) ($filters['search'] ?? ''));
+        $municipality = trim((string) ($filters['municipality'] ?? ''));
+        $recordType = $filters['record_type'] ?? null;
+        $origin = $filters['origin'] ?? null;
 
         $sourcePackages = SourceRecordPackage::query()
             ->with(['parcel', 'landowner'])
             ->withCount('records')
-            ->when($request->filled('municipality'), function ($query) use ($request) {
-                $query->where('municipality', $request->municipality);
+            ->when($municipality !== '', function ($query) use ($municipality) {
+                $query->where('municipality', $municipality);
             })
-            ->when($request->filled('search'), function ($query) use ($request) {
-                $search = '%' . mb_strtolower($request->search) . '%';
+            ->when($search !== '', function ($query) use ($search) {
+                $pattern = '%' . mb_strtolower($search) . '%';
 
                 $query->whereRaw(
                     "LOWER(COALESCE(package_code, '') || ' ' || COALESCE(title_number, '') || ' ' || COALESCE(control_number, '') || ' ' || COALESCE(parcel_code, '') || ' ' || COALESCE(lot_number, '') || ' ' || COALESCE(survey_number, '') || ' ' || COALESCE(landowner_name, '') || ' ' || COALESCE(transferor_name, '') || ' ' || COALESCE(transferee_name, '') || ' ' || COALESCE(landholding_reference_number, '')) LIKE ?",
-                    [$search]
+                    [$pattern]
                 );
             })
             ->latest()
@@ -41,31 +56,38 @@ class LegacyRecordController extends Controller
 
         $records = LegacyRecord::query()
             ->with('parcel')
-            ->when($request->filled('record_type'), function ($query) use ($request) {
-                $query->where('record_type', $request->record_type);
+            ->when($recordType, function ($query) use ($recordType) {
+                $query->where('record_type', $recordType);
             })
-            ->when($request->filled('origin'), function ($query) use ($request) {
-                $query->where('origin', $request->origin);
+            ->when($origin, function ($query) use ($origin) {
+                $query->where('origin', $origin);
             })
-            ->when($request->filled('municipality'), function ($query) use ($request) {
-                $query->where('municipality', $request->municipality);
+            ->when($municipality !== '', function ($query) use ($municipality) {
+                $query->where('municipality', $municipality);
             })
-            ->when($request->filled('search'), function ($query) use ($request) {
-                $search = '%' . mb_strtolower($request->search) . '%';
+            ->when($search !== '', function ($query) use ($search) {
+                $pattern = '%' . mb_strtolower($search) . '%';
 
                 $query->whereRaw(
                     "LOWER(COALESCE(title_number, '') || ' ' || COALESCE(control_number, '') || ' ' || COALESCE(application_reference_number, '') || ' ' || COALESCE(parcel_code, '') || ' ' || COALESCE(lot_number, '') || ' ' || COALESCE(survey_number, '') || ' ' || COALESCE(landowner_name, '') || ' ' || COALESCE(transferor_name, '') || ' ' || COALESCE(transferee_name, '') || ' ' || COALESCE(previous_dar_reference_number, '') || ' ' || COALESCE(landholding_reference_number, '')) LIKE ?",
-                    [$search]
+                    [$pattern]
                 );
             })
             ->latest()
             ->paginate(15)
             ->withQueryString();
 
+        $filters = array_merge($filters, [
+            'view' => $archiveView,
+            'search' => $search,
+            'municipality' => $municipality,
+        ]);
+
         return view('staff.legacy-records.index', [
             'records' => $records,
             'sourcePackages' => $sourcePackages,
             'archiveView' => $archiveView,
+            'filters' => $filters,
             'recordTypes' => LegacyRecord::RECORD_TYPES,
             'origins' => LegacyRecord::ORIGINS,
         ]);

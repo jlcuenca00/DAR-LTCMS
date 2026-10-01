@@ -74,6 +74,29 @@ function findResetLink(form) {
     return Array.from(form.querySelectorAll('a')).find((link) => /^(reset|clear|clear all|clear filters)$/i.test(link.textContent.trim()));
 }
 
+function createFilterChip(control, wrapper) {
+    const label = fieldLabel(control, wrapper);
+    const chip = document.createElement('a');
+    chip.className = 'staff-filter-chip';
+    chip.href = chipHref(control);
+    chip.title = `Remove ${label}`;
+
+    const text = document.createElement('span');
+    text.append(document.createTextNode(`${label}: `));
+
+    const value = document.createElement('strong');
+    value.textContent = displayValue(control);
+    text.appendChild(value);
+
+    const icon = document.createElement('i');
+    icon.className = 'fa-solid fa-xmark';
+    icon.setAttribute('aria-hidden', 'true');
+
+    chip.append(text, icon);
+
+    return chip;
+}
+
 function renderActiveFilters(form, toolbar, popover, resetLink) {
     form.querySelector('.staff-active-filters')?.remove();
 
@@ -104,12 +127,7 @@ function renderActiveFilters(form, toolbar, popover, resetLink) {
 
     controls.forEach((control) => {
         const wrapper = fieldWrapper(control, form);
-        const chip = document.createElement('a');
-        chip.className = 'staff-filter-chip';
-        chip.href = chipHref(control);
-        chip.title = `Remove ${fieldLabel(control, wrapper)}`;
-        chip.innerHTML = `<span>${fieldLabel(control, wrapper)}: <strong>${displayValue(control)}</strong></span><i class="fa-solid fa-xmark" aria-hidden="true"></i>`;
-        row.appendChild(chip);
+        row.appendChild(createFilterChip(control, wrapper));
     });
 
     if (resetLink?.href) {
@@ -143,12 +161,7 @@ function renderApplicationActiveFilters(form, toolbar, resetLink) {
 
     controls.forEach((control) => {
         const wrapper = fieldWrapper(control, form);
-        const chip = document.createElement('a');
-        chip.className = 'staff-filter-chip';
-        chip.href = chipHref(control);
-        chip.title = `Remove ${fieldLabel(control, wrapper)}`;
-        chip.innerHTML = `<span>${fieldLabel(control, wrapper)}: <strong>${displayValue(control)}</strong></span><i class="fa-solid fa-xmark" aria-hidden="true"></i>`;
-        row.appendChild(chip);
+        row.appendChild(createFilterChip(control, wrapper));
     });
 
     if (resetLink?.href) {

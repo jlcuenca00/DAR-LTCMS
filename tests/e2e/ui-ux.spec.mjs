@@ -172,6 +172,21 @@ test.describe('authenticated UI UX behavior', () => {
         expect(bounds.height).toBeGreaterThanOrEqual(viewport.height - 1);
     });
 
+    test('active filter chips render untrusted search values as text, not HTML', async ({ page }) => {
+        const payload = '<img src=x onerror="window.__filterXssExecuted = true">';
+        await page.goto('/staff/records/parcels?search=' + encodeURIComponent(payload));
+        await waitForUiUx(page);
+        await page.waitForTimeout(100);
+
+        const chip = page.locator('.staff-filter-chip').filter({ hasText: payload }).first();
+        await expect(chip).toBeVisible();
+        await expect(chip.locator('strong')).toHaveText(payload);
+        await expect(chip.locator('img')).toHaveCount(0);
+
+        const executed = await page.evaluate(() => window.__filterXssExecuted === true);
+        expect(executed).toBe(false);
+    });
+
     test('Audit Logs identifies Philippine Time explicitly', async ({ page }) => {
         await page.goto('/staff/audit-logs');
         await waitForUiUx(page);

@@ -15,6 +15,8 @@ use Illuminate\Validation\ValidationException;
 
 class SourceRecordPackageImportController extends Controller
 {
+    private const MAX_COMMIT_SELECTIONS = 10000;
+
     private array $headers = [
         'include_title',
         'include_landholding',
@@ -184,17 +186,17 @@ class SourceRecordPackageImportController extends Controller
             return back()->with('success', 'This import batch has already been committed.');
         }
 
-        $selectedRows = collect($request->input('selected_rows', []))
+        $validated = $request->validate([
+            'selected_rows' => ['required', 'array', 'min:1', 'max:'.self::MAX_COMMIT_SELECTIONS],
+            'selected_rows.*' => ['required', 'integer', 'min:2', 'distinct'],
+        ], [
+            'selected_rows.max' => 'A single commit may contain at most '.self::MAX_COMMIT_SELECTIONS.' selected rows.',
+        ]);
+
+        $selectedRows = collect($validated['selected_rows'])
             ->map(fn ($value) => (int) $value)
-            ->unique()
             ->values()
             ->all();
-
-        if (count($selectedRows) === 0) {
-            throw ValidationException::withMessages([
-                'selected_rows' => 'Select at least one valid row to commit.',
-            ]);
-        }
 
         $committed = 0;
         $alreadyCommitted = false;
@@ -212,14 +214,24 @@ class SourceRecordPackageImportController extends Controller
             }
 
             $previewRows = collect($lockedBatch->preview_rows);
+            $validRowIndexes = $previewRows
+                ->filter(fn ($row) => ($row['status'] ?? null) === 'valid')
+                ->pluck('row_index')
+                ->map(fn ($rowIndex) => (int) $rowIndex)
+                ->values();
 
-            foreach ($selectedRows as $rowIndex) {
+            $authorizedRows = collect($selectedRows)
+                ->intersect($validRowIndexes)
+                ->values();
+
+            if ($authorizedRows->count() !== count($selectedRows)) {
+                throw ValidationException::withMessages([
+                    'selected_rows' => 'One or more selected rows are not valid rows from this import preview.',
+                ]);
+            }
+
+            foreach ($authorizedRows as $rowIndex) {
                 $preview = $previewRows->firstWhere('row_index', $rowIndex);
-
-                if (! $preview || $preview['status'] !== 'valid') {
-                    continue;
-                }
-
                 $data = $preview['data'];
 
                 $package = SourceRecordPackage::create([

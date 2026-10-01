@@ -143,7 +143,12 @@
     </style>
 
     @php
-        $activeArchiveView = $archiveView ?? (request('view') === 'packages' ? 'packages' : 'individual');
+        $activeArchiveView = $archiveView ?? 'individual';
+        $validatedFilterParams = array_filter(
+            $filters ?? [],
+            fn ($value, $key) => $key !== 'view' && filled($value),
+            ARRAY_FILTER_USE_BOTH
+        );
     @endphp
 
     <div class="source-page">
@@ -173,11 +178,11 @@
             </div>
 
             <div class="mt-5 source-mode-tabs" aria-label="Source record view">
-                <a href="{{ route('staff.legacy-records.index', request()->except('view') + ['view' => 'individual']) }}" class="source-mode-tab {{ $activeArchiveView === 'individual' ? 'active' : '' }}">
+                <a href="{{ route('staff.legacy-records.index', array_merge($validatedFilterParams, ['view' => 'individual'])) }}" class="source-mode-tab {{ $activeArchiveView === 'individual' ? 'active' : '' }}">
                     <i class="fa-solid fa-list-ul"></i>
                     Generated Records
                 </a>
-                <a href="{{ route('staff.legacy-records.index', request()->except('view') + ['view' => 'packages']) }}" class="source-mode-tab {{ $activeArchiveView === 'packages' ? 'active' : '' }}">
+                <a href="{{ route('staff.legacy-records.index', array_merge($validatedFilterParams, ['view' => 'packages'])) }}" class="source-mode-tab {{ $activeArchiveView === 'packages' ? 'active' : '' }}">
                     <i class="fa-solid fa-box-open"></i>
                     Source Packages
                 </a>
@@ -188,7 +193,7 @@
 
                 <div class="staff-filter-field">
                     <label class="staff-form-label">SEARCH</label>
-                    <input type="text" name="search" value="{{ request('search') }}" placeholder="Title, control number, parcel, party, or source reference" class="w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-green-600 focus:ring-green-600">
+                    <input type="text" name="search" value="{{ $filters['search'] ?? '' }}" placeholder="Title, control number, parcel, party, or source reference" class="w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-green-600 focus:ring-green-600">
                 </div>
 
                 @if ($activeArchiveView === 'individual')
@@ -197,7 +202,7 @@
                         <select name="record_type" class="w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-green-600 focus:ring-green-600">
                             <option value="">All types</option>
                             @foreach ($recordTypes as $value => $label)
-                                <option value="{{ $value }}" @selected(request('record_type') === $value)>{{ $label }}</option>
+                                <option value="{{ $value }}" @selected(($filters['record_type'] ?? '') === $value)>{{ $label }}</option>
                             @endforeach
                         </select>
                     </div>
@@ -207,7 +212,7 @@
                         <select name="origin" class="w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-green-600 focus:ring-green-600">
                             <option value="">All origins</option>
                             @foreach ($origins as $value => $label)
-                                <option value="{{ $value }}" @selected(request('origin') === $value)>{{ $label }}</option>
+                                <option value="{{ $value }}" @selected(($filters['origin'] ?? '') === $value)>{{ $label }}</option>
                             @endforeach
                         </select>
                     </div>
@@ -215,7 +220,7 @@
 
                 <div class="staff-filter-field">
                     <label class="staff-form-label">MUNICIPALITY</label>
-                    <input type="text" name="municipality" value="{{ request('municipality') }}" placeholder="Municipality" class="w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-green-600 focus:ring-green-600">
+                    <input type="text" name="municipality" value="{{ $filters['municipality'] ?? '' }}" placeholder="Municipality" class="w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-green-600 focus:ring-green-600">
                 </div>
 
                 <div class="source-filter-actions">
