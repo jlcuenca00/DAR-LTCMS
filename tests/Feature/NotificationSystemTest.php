@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\ApplicationClearance;
 use App\Models\ApplicationParcel;
+use App\Models\AuditLog;
 use App\Models\LandTransferApplication;
 use App\Models\Landholding;
 use App\Models\Landowner;
@@ -341,6 +342,14 @@ class NotificationSystemTest extends TestCase
         $this->assertSame($reason, $application->latest_compliance_reason);
         $this->assertSame($staffUser->id, $application->returned_for_compliance_by);
         $this->assertNotNull($application->returned_for_compliance_at);
+
+        $auditLog = AuditLog::query()
+            ->where('land_transfer_application_id', $application->id)
+            ->where('action', 'application_returned_for_compliance')
+            ->firstOrFail();
+
+        $this->assertSame($reason, $auditLog->metadata['compliance_reason']);
+        $this->assertSame($staffUser->id, $auditLog->actor_user_id);
 
         $notification = SystemNotification::query()
             ->where('user_id', $landownerUser->id)
