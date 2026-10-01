@@ -497,6 +497,10 @@ class LandTransferApplication extends Model
 
     public function workflowAuthorityLabel(): string
     {
+        if ($this->isFinalized()) {
+            return $this->decision_authority ?: self::FINAL_DECISION_AUTHORITY;
+        }
+
         return self::workflowAuthorityLabels()[$this->status] ?? 'Legal Division';
     }
 
