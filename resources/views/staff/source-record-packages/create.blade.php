@@ -1448,7 +1448,15 @@
                                 const errorLine = document.createElement('p');
                                 errorLine.className = 'source-inline-error';
                                 errorLine.dataset.validationFor = fieldName;
-                                errorLine.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i><span>' + message + '</span>';
+
+                                const errorIcon = document.createElement('i');
+                                errorIcon.className = 'fa-solid fa-circle-exclamation';
+                                errorIcon.setAttribute('aria-hidden', 'true');
+
+                                const errorText = document.createElement('span');
+                                errorText.textContent = String(message || '');
+
+                                errorLine.append(errorIcon, errorText);
                                 wrapper.appendChild(errorLine);
                             }
                         }
