@@ -18,6 +18,9 @@ concurrency:
 jobs:
   refresh-demo-data:
     runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: https://darltcms.me
 
     steps:
       - name: Verify explicit confirmation
@@ -30,7 +33,7 @@ jobs:
           fi
 
       - name: Checkout current main
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
       - name: Verify safe demo seed
         run: |
