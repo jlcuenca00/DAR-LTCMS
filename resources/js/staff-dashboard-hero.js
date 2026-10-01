@@ -39,7 +39,7 @@ function initializeStaffDashboardHeroContext() {
     const shortDescriptions = {
         pending_legal_review: 'Awaiting legal review',
         active_workflow: 'In endorsement',
-        for_releasing: 'PARPO II decision pending',
+        for_releasing: 'PARPO II decision ready to record',
     };
 
     queue?.querySelectorAll('[data-dashboard-filter]').forEach((button) => {
