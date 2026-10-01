@@ -7,6 +7,7 @@ use App\Models\AuditLog;
 use App\Models\Landowner;
 use App\Models\LandTransferApplication;
 use App\Models\Parcel;
+use App\Models\RequiredDocument;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -15,6 +16,131 @@ use Tests\TestCase;
 class ApplicationWorkflowReadinessTest extends TestCase
 {
     use RefreshDatabase;
+
+    public function test_failed_legacy_draft_advancement_does_not_normalize_the_status(): void
+    {
+        $staff = $this->staffUser();
+        $application = $this->application($staff, LandTransferApplication::STATUS_DRAFT, 'READINESS-LEGACY-DRAFT');
+
+        RequiredDocument::forceCreate([
+            'name' => 'Legacy Draft Required Document',
+            'applies_to' => 'transferor',
+            'is_mandatory' => true,
+            'blocks_acceptance' => true,
+        ]);
+
+        $this->actingAs($staff)
+            ->post(route('staff.applications.submit', $application))
+            ->assertSessionHasErrors('validation');
+
+        $this->assertSame(
+            LandTransferApplication::STATUS_DRAFT,
+            $application->fresh()->status
+        );
+    }
+
+    public function test_active_workflow_dates_cannot_be_future_dated(): void
+    {
+        $staff = $this->staffUser();
+
+        $this->actingAs($staff)
+            ->post(route('staff.applications.store'), [
+                'transferor_name' => 'Future Date Transferor',
+                'transferee_name' => 'Future Date Transferee',
+                'date_of_application' => now()->addDay()->toDateString(),
+                'date_filed' => now()->addDay()->toDateString(),
+            ])
+            ->assertSessionHasErrors(['date_of_application', 'date_filed']);
+
+        $application = $this->application(
+            $staff,
+            LandTransferApplication::STATUS_ENDORSED_LTI,
+            'READINESS-FUTURE-FORM4'
+        );
+
+        $this->actingAs($staff)
+            ->patch(route('staff.applications.form4.update', $application), [
+                'ltc_form4_subject_land_findings' => ['ra6657_not_covered_not_tenanted_retained_area'],
+                'ltc_form4_recommendation_findings' => ['application_complete'],
+                'ltc_form4_recommendation_decision' => 'approval',
+                'ltc_form4_certified_at' => now()->addDay()->toDateString(),
+                'ltc_form4_certifying_officer_name' => 'Authorized Review Officer',
+            ])
+            ->assertSessionHasErrors('ltc_form4_certified_at');
+    }
+
+    public function test_official_receipt_date_cannot_be_future_or_predate_the_payment_order(): void
+    {
+        $staff = $this->staffUser();
+
+        $futureOr = $this->application(
+            $staff,
+            LandTransferApplication::STATUS_AWAITING_PAYMENT,
+            'READINESS-FUTURE-OR'
+        );
+        $futureOr->forceFill([
+            'payment_order_reference' => 'OP-READINESS-FUTURE-OR',
+            'payment_order_issued_at' => now(),
+        ])->save();
+
+        $this->actingAs($staff)
+            ->post(route('staff.applications.submit', $futureOr), [
+                'or_number' => 'OR-FUTURE',
+                'or_date' => now()->addDay()->toDateString(),
+                'amount_paid' => config('dar_ltc.filing_fee', 2000),
+            ])
+            ->assertSessionHasErrors('or_date');
+
+        $earlyOr = $this->application(
+            $staff,
+            LandTransferApplication::STATUS_AWAITING_PAYMENT,
+            'READINESS-EARLY-OR'
+        );
+        $earlyOr->forceFill([
+            'payment_order_reference' => 'OP-READINESS-EARLY-OR',
+            'payment_order_issued_at' => now(),
+        ])->save();
+
+        $this->actingAs($staff)
+            ->post(route('staff.applications.submit', $earlyOr), [
+                'or_number' => 'OR-EARLY',
+                'or_date' => now()->subDay()->toDateString(),
+                'amount_paid' => config('dar_ltc.filing_fee', 2000),
+            ])
+            ->assertSessionHasErrors('or_date');
+
+        $this->assertSame(
+            LandTransferApplication::STATUS_AWAITING_PAYMENT,
+            $earlyOr->fresh()->status
+        );
+    }
+
+    public function test_final_decision_date_cannot_predate_required_workflow_milestones(): void
+    {
+        $staff = $this->staffUser();
+        $application = $this->application(
+            $staff,
+            LandTransferApplication::STATUS_FOR_RELEASING,
+            'READINESS-EARLY-DECISION'
+        );
+        $this->linkParcel($application, 'READINESS-EARLY-DECISION-PARCEL');
+        $this->completeForm4($application);
+        $this->completePaymentAndCsw($application, $staff);
+
+        $this->actingAs($staff)
+            ->post(route('staff.applications.approve', $application), [
+                'final_decision_confirmation' => '1',
+                'decision_officer_name' => 'PARPO II Test Signatory',
+                'decision_date' => now()->subDay()->toDateString(),
+                'decision_reason' => 'Chronology regression test.',
+            ])
+            ->assertSessionHasErrors('decision_date');
+
+        $this->assertSame(
+            LandTransferApplication::STATUS_FOR_RELEASING,
+            $application->fresh()->status
+        );
+    }
 
     public function test_application_cannot_enter_parpo_decision_pending_without_a_linked_parcel(): void
     {
