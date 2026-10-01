@@ -69,7 +69,10 @@ class AuditLoggingTest extends TestCase
 
         $this->assertSame(LandTransferApplication::STATUS_PENDING_LEGAL_REVIEW, $log->metadata['old_status']);
         $this->assertSame(LandTransferApplication::STATUS_AWAITING_PAYMENT, $log->metadata['new_status']);
-        $this->assertSame('Administrative status advancement only. No ownership transfer or registry mutation was performed.', $log->metadata['scope_note']);
+        $this->assertSame('Legal Division', $log->metadata['administrative_authority']);
+        $this->assertSame($staffUser->id, $log->metadata['recorded_by_user_id']);
+        $this->assertSame('Legal Clearance Staff', $log->metadata['recorded_by_role']);
+        $this->assertStringContainsString('Administrative workflow recording only.', $log->metadata['scope_note']);
         $this->assertTrue($log->metadata['requirements_checked']);
     }
 
@@ -292,6 +295,17 @@ class AuditLoggingTest extends TestCase
 
         $approvalLog = AuditLog::where('action', 'application_approved')->first();
 
+        $application->refresh();
+        $this->assertSame(LandTransferApplication::FINAL_DECISION_AUTHORITY, $application->decision_authority);
+        $this->assertSame('PARPO II Test Signatory', $application->decision_officer_name);
+        $this->assertSame(now()->toDateString(), $application->decision_date?->toDateString());
+        $this->assertSame($staffUser->id, $application->decision_recorded_by);
+        $this->assertNotNull($application->decision_recorded_at);
+
+        $this->assertSame(LandTransferApplication::FINAL_DECISION_AUTHORITY, $approvalLog->metadata['decision_authority']);
+        $this->assertSame('PARPO II Test Signatory', $approvalLog->metadata['decision_officer_name']);
+        $this->assertSame($staffUser->id, $approvalLog->metadata['recorded_by_user_id']);
+        $this->assertSame('Legal Clearance Staff', $approvalLog->metadata['recorded_by_role']);
         $this->assertSame('Audit approval reason', $approvalLog->metadata['decision_reason']);
         $this->assertSame('Audit approval notes', $approvalLog->metadata['decision_notes']);
         $this->assertTrue($approvalLog->metadata['form4_recommendation_matches_final_decision']);
