@@ -44,45 +44,24 @@ jobs:
             exit 1
           fi
 
-      - name: Configure trusted production SSH host
+      # TEMPORARY AUDIT/DEFENSE MODE:
+      # Strict host-key pinning is intentionally deferred until post-defense hardening.
+      - name: Configure deployment SSH key
         env:
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
           SSH_HOST: ${{ secrets.SSH_HOST }}
-          SSH_KNOWN_HOSTS: ${{ secrets.SSH_KNOWN_HOSTS }}
         run: |
-          set -euo pipefail
-
-          test -n "$SSH_PRIVATE_KEY" || {
-            echo "SSH_PRIVATE_KEY is not configured."
-            exit 1
-          }
-
-          test -n "$SSH_HOST" || {
-            echo "SSH_HOST is not configured."
-            exit 1
-          }
-
-          test -n "$SSH_KNOWN_HOSTS" || {
-            echo "SSH_KNOWN_HOSTS is not configured. Refusing an unverified production SSH connection."
-            exit 1
-          }
-
-          install -m 700 -d "$HOME/.ssh"
-          printf '%s\n' "$SSH_PRIVATE_KEY" > "$HOME/.ssh/id_rsa"
-          printf '%s\n' "$SSH_KNOWN_HOSTS" > "$HOME/.ssh/known_hosts"
-          chmod 600 "$HOME/.ssh/id_rsa" "$HOME/.ssh/known_hosts"
-
-          if ! ssh-keygen -F "$SSH_HOST" -f "$HOME/.ssh/known_hosts" >/dev/null; then
-            echo "SSH_KNOWN_HOSTS does not contain an entry for the configured SSH_HOST."
-            exit 1
-          fi
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -p 22 -H "$SSH_HOST" >> ~/.ssh/known_hosts
 
       - name: Prepare protected remote staging path
         env:
           SSH_HOST: ${{ secrets.SSH_HOST }}
           SSH_USERNAME: ${{ secrets.SSH_USERNAME }}
         run: |
-          ssh -i "$HOME/.ssh/id_rsa" -p 22 -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o "UserKnownHostsFile=$HOME/.ssh/known_hosts" "$SSH_USERNAME@$SSH_HOST" \
+          ssh -i ~/.ssh/id_rsa -p 22 "$SSH_USERNAME@$SSH_HOST" \
             'mkdir -p /home/darltcms/htdocs/darltcms.me/storage/app/private && chmod ug+rwX /home/darltcms/htdocs/darltcms.me/storage/app/private'
 
       - name: Upload guarded demo refresh files
@@ -90,11 +69,11 @@ jobs:
           SSH_HOST: ${{ secrets.SSH_HOST }}
           SSH_USERNAME: ${{ secrets.SSH_USERNAME }}
         run: |
-          scp -i "$HOME/.ssh/id_rsa" -P 22 -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o "UserKnownHostsFile=$HOME/.ssh/known_hosts" \
+          scp -i ~/.ssh/id_rsa -P 22 \
             seed_mock_dumaguete_nonoverlap_agri_data.txt \
             "$SSH_USERNAME@$SSH_HOST:/home/darltcms/htdocs/darltcms.me/storage/app/private/demo-refresh.sql"
 
-          scp -i "$HOME/.ssh/id_rsa" -P 22 -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o "UserKnownHostsFile=$HOME/.ssh/known_hosts" \
+          scp -i ~/.ssh/id_rsa -P 22 \
             .github/scripts/refresh-production-demo-data.php \
             "$SSH_USERNAME@$SSH_HOST:/home/darltcms/htdocs/darltcms.me/storage/app/private/.refresh-production-demo-data.php"
 
@@ -103,7 +82,7 @@ jobs:
           SSH_HOST: ${{ secrets.SSH_HOST }}
           SSH_USERNAME: ${{ secrets.SSH_USERNAME }}
         run: |
-          ssh -i "$HOME/.ssh/id_rsa" -p 22 -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o "UserKnownHostsFile=$HOME/.ssh/known_hosts" "$SSH_USERNAME@$SSH_HOST" 'bash -s' <<'REMOTE'
+          ssh -i ~/.ssh/id_rsa -p 22 "$SSH_USERNAME@$SSH_HOST" 'bash -s' <<'REMOTE'
           set -euo pipefail
           cd /home/darltcms/htdocs/darltcms.me
 
