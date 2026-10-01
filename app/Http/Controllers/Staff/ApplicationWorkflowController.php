@@ -159,7 +159,7 @@ class ApplicationWorkflowController extends Controller
             ]);
         }
 
-        // Before PARPO II receives the final-decision action, verify the full
+        // Before Legal Division records the final PARPO II decision, verify the full
         // administrative record. Form 4 remains recommendatory only.
         if ($nextStatus === LandTransferApplication::STATUS_FOR_RELEASING) {
             [$snapshot, $readinessErrors] = $this->decisionReadiness($application);
@@ -261,7 +261,7 @@ class ApplicationWorkflowController extends Controller
         }
 
         if ($application->status !== LandTransferApplication::STATUS_FOR_RELEASING) {
-            return back()->withErrors(['status' => 'Only an application at PARPO II Decision Pending may receive a final approval.']);
+            return back()->withErrors(['status' => 'Only an application at PARPO II Decision Ready to Record may receive a final approval.']);
         }
 
         $validated = $request->validate([
@@ -323,12 +323,6 @@ class ApplicationWorkflowController extends Controller
                         'recorded_by_user_id' => $application->decision_recorded_by,
                         'recorded_by_role' => 'Legal Clearance Staff',
                         'recorded_at' => optional($application->decision_recorded_at)->toDateTimeString(),
-                        'decision_authority' => $application->decision_authority,
-                        'decision_officer_name' => $application->decision_officer_name,
-                        'decision_date' => optional($application->decision_date)->toDateString(),
-                        'recorded_by_user_id' => $application->decision_recorded_by,
-                        'recorded_by_role' => 'Legal Clearance Staff',
-                        'recorded_at' => optional($application->decision_recorded_at)->toDateTimeString(),
                         'decision_reason' => $application->decision_reason,
                         'decision_notes' => $application->decision_notes,
                         'validated_at' => optional($application->validated_at)->toDateTimeString(),
@@ -365,7 +359,7 @@ class ApplicationWorkflowController extends Controller
         }
 
         if ($application->status !== LandTransferApplication::STATUS_FOR_RELEASING) {
-            return back()->withErrors(['status' => 'Final Not Approved decision is only available at PARPO II Decision Pending. Use Return for Compliance for intake deficiencies.']);
+            return back()->withErrors(['status' => 'Final Not Approved decision is only available at PARPO II Decision Ready to Record. Use Return for Compliance for intake deficiencies.']);
         }
 
         $validated = $request->validate([
@@ -430,6 +424,12 @@ class ApplicationWorkflowController extends Controller
                     $application,
                     $application,
                     [
+                        'decision_authority' => $application->decision_authority,
+                        'decision_officer_name' => $application->decision_officer_name,
+                        'decision_date' => optional($application->decision_date)->toDateString(),
+                        'recorded_by_user_id' => $application->decision_recorded_by,
+                        'recorded_by_role' => 'Legal Clearance Staff',
+                        'recorded_at' => optional($application->decision_recorded_at)->toDateTimeString(),
                         'decision_reason' => $application->decision_reason,
                         'decision_notes' => $application->decision_notes,
                         'validated_at' => optional($application->validated_at)->toDateTimeString(),
