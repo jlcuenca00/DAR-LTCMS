@@ -8,6 +8,7 @@ use App\Models\RequiredDocument;
 use App\Models\SourceRecordPackageImportBatch;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 use Tests\TestCase;
 
 class InputSecurityHardeningTest extends TestCase
@@ -119,6 +120,77 @@ class InputSecurityHardeningTest extends TestCase
         $this->assertSame('previewed', $batch->fresh()->status);
     }
 
+    public function test_source_import_preview_enforces_a_bounded_row_count(): void
+    {
+        config(['dar_ltc.source_import_max_rows' => 2]);
+
+        $staff = User::factory()->create([
+            'role' => User::ROLE_STAFF,
+            'is_active' => true,
+        ]);
+
+        $csv = $this->sourceImportCsv([
+            $this->sourceImportRow('TCT-BOUND-001'),
+            $this->sourceImportRow('TCT-BOUND-002'),
+            $this->sourceImportRow('TCT-BOUND-003'),
+        ]);
+
+        $this->actingAs($staff)
+            ->from(route('staff.source-record-package-imports.create'))
+            ->post(route('staff.source-record-package-imports.preview.store'), [
+                'import_file' => UploadedFile::fake()->createWithContent('bounded-import.csv', $csv),
+            ])
+            ->assertRedirect(route('staff.source-record-package-imports.create'))
+            ->assertSessionHasErrors('import_file');
+
+        $this->assertDatabaseCount('source_record_package_import_batches', 0);
+    }
+
+    public function test_source_import_preview_uses_manual_field_limits_and_location_normalization(): void
+    {
+        $staff = User::factory()->create([
+            'role' => User::ROLE_STAFF,
+            'is_active' => true,
+        ]);
+
+        $invalid = $this->sourceImportRow('TCT-VALIDATION-001');
+        $invalid[5] = str_repeat('x', 256);
+        $invalid[14] = '1000000';
+
+        $csv = $this->sourceImportCsv([$invalid]);
+
+        $this->actingAs($staff)
+            ->post(route('staff.source-record-package-imports.preview.store'), [
+                'import_file' => UploadedFile::fake()->createWithContent('validation-import.csv', $csv),
+            ])
+            ->assertRedirect();
+
+        $batch = SourceRecordPackageImportBatch::latest('id')->firstOrFail();
+        $this->assertSame('error', $batch->preview_rows[0]['status']);
+        $this->assertNotEmpty($batch->preview_rows[0]['errors']);
+
+        $valid = $this->sourceImportRow('TCT-VALIDATION-002');
+        $valid[17] = 'dumaguete city';
+        $valid[16] = 'bantayan';
+
+        $this->actingAs($staff)
+            ->post(route('staff.source-record-package-imports.preview.store'), [
+                'import_file' => UploadedFile::fake()->createWithContent(
+                    'normalized-import.csv',
+                    $this->sourceImportCsv([$valid])
+                ),
+            ])
+            ->assertRedirect();
+
+        $normalizedBatch = SourceRecordPackageImportBatch::latest('id')->firstOrFail();
+        $row = $normalizedBatch->preview_rows[0];
+
+        $this->assertSame('valid', $row['status']);
+        $this->assertSame('Dumaguete City', $row['data']['municipality']);
+        $this->assertSame('Bantayan', $row['data']['barangay']);
+        $this->assertSame('Negros Oriental', $row['data']['province']);
+    }
+
     public function test_form4_rejects_unknown_finding_codes(): void
     {
         $staff = User::factory()->create([
@@ -227,6 +299,83 @@ class InputSecurityHardeningTest extends TestCase
         $this->assertIsString($view);
         $this->assertStringContainsString("errorText.textContent = String(message || '');", $view);
         $this->assertStringNotContainsString('errorLine.innerHTML', $view);
+    }
+
+    private function sourceImportCsv(array $rows): string
+    {
+        $stream = fopen('php://temp', 'r+');
+        fputcsv($stream, [
+            'include_title',
+            'include_landholding',
+            'include_parcel_source',
+            'include_historical_clearance',
+            'source_record_scope',
+            'landowner_name',
+            'parcel_code',
+            'title_number',
+            'landholding_reference_number',
+            'control_number',
+            'transferor_name',
+            'transferee_name',
+            'lot_number',
+            'survey_number',
+            'area_hectares',
+            'crop_or_land_use',
+            'barangay',
+            'municipality',
+            'province',
+            'source_geometry_geojson',
+            'boundary_description',
+            'source_book',
+            'page_number',
+            'transcribed_by',
+            'transcription_date',
+            'remarks',
+            'source_notes',
+        ]);
+
+        foreach ($rows as $row) {
+            fputcsv($stream, $row);
+        }
+
+        rewind($stream);
+        $csv = stream_get_contents($stream);
+        fclose($stream);
+
+        return (string) $csv;
+    }
+
+    private function sourceImportRow(string $titleNumber): array
+    {
+        return [
+            'yes',
+            'no',
+            'no',
+            'no',
+            'reference_only',
+            'CSV Import Owner',
+            '',
+            $titleNumber,
+            '',
+            '',
+            '',
+            '',
+            '',
+            '',
+            '1.2500',
+            'Agricultural',
+            'Bantayan',
+            'Dumaguete City',
+            'Negros Oriental',
+            '',
+            '',
+            'Security Import Book',
+            '',
+            'Security Import Test',
+            now()->toDateString(),
+            '',
+            '',
+        ];
     }
 
     public function test_web_mutation_rejects_a_missing_csrf_token(): void
