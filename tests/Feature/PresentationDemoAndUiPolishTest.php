@@ -24,16 +24,17 @@ class PresentationDemoAndUiPolishTest extends TestCase
         $response->assertSee('Land Transfer Clearance and Monitoring System');
         $response->assertSee('Legal Completeness Review');
         $response->assertSee('Payment / Official Receipt Recording');
-        $response->assertSee('LTID Verification');
+        $response->assertSee('With LTID for Verification');
         $response->assertSee('Legal Evaluation / CSW Preparation');
-        $response->assertSee('Chief Legal Final Review');
-        $response->assertSee('PARPO II Final Decision');
+        $response->assertSee('With Chief Legal for Review');
+        $response->assertSee('PARPO II Decision Recorded by Legal');
         $response->assertSee('Signed Form No. 5 / Ready for Release');
         $response->assertSee('Release to Client');
         $response->assertSee('Approved or Not Approved');
         $response->assertSee('LTC Form No. 5');
         $response->assertDontSee('A GRANTED clearance does not mean the land has already changed owners.');
         $response->assertSee('Landowners do not create applications in the system.');
+        $response->assertSee('Legal Clearance Staff');
         $response->assertDontSee('This site is still undergoing development');
     }
 
