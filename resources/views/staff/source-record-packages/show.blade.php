@@ -891,9 +891,12 @@
         $suggestedFirstName = $nameParts[0] ?? '';
         $suggestedLastName = count($nameParts) > 1 ? implode(' ', array_slice($nameParts, 1)) : '';
         $recordCount = $package->records->count();
-        $sourceFileExists = $package->source_file_path && \Illuminate\Support\Facades\Storage::disk('public')->exists($package->source_file_path);
-        $sourceFileUrl = $sourceFileExists ? \Illuminate\Support\Facades\Storage::disk('public')->url($package->source_file_path) : null;
-        $sourceFileMime = $package->source_file_mime_type;
+        $protectedStorage = app(\App\Services\ProtectedAdministrativeStorage::class);
+        $sourceFileExists = $package->source_file_path && $protectedStorage->exists($package->source_file_path);
+        $sourceFileUrl = $sourceFileExists
+            ? route('staff.protected-storage.show', ['path' => $package->source_file_path])
+            : null;
+        $sourceFileMime = $sourceFileExists ? $protectedStorage->mimeType($package->source_file_path) : null;
         $sourceFileIsImage = $sourceFileMime && str_starts_with((string) $sourceFileMime, 'image/');
         $sourceFileIsPdf = $sourceFileMime === 'application/pdf';
     @endphp
