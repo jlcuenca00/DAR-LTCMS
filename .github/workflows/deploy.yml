@@ -204,7 +204,7 @@ jobs:
             # New administrative uploads use storage/app/private. During deployment,
             # temporarily allow the owner to remove registered legacy copies, migrate
             # and verify them, then lock the fallback directory read-only at runtime.
-            chmod u+rwx storage/app/public
+            chmod -R u+rwX storage/app/public
             php artisan dar:migrate-legacy-private-storage
             chmod -R a-w storage/app/public
 
