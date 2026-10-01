@@ -5,10 +5,11 @@
 
     $generatedAt = $clearance->generated_at;
     $reviewedAt = $clearance->reviewed_at;
-    // Form No. 5 is an immutable final-decision output. Its issuance date
-    // comes from the preserved decision/output timestamps, never from the
-    // later client-delivery date.
-    $issueDate = $generatedAt ?? $reviewedAt ?? now();
+    $decisionDate = $clearance->decision_date;
+    // Form No. 5 is an immutable final-decision output. Prefer the preserved
+    // official PARPO II decision date; never derive issuance from the later
+    // Legal Staff recording timestamp or client-delivery date.
+    $issueDate = $decisionDate ?? $generatedAt ?? $reviewedAt ?? now();
 
     $parcels = collect($clearance->parcel_snapshot ?? []);
 
