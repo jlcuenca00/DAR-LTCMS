@@ -65,7 +65,10 @@ class LoginRequest extends FormRequest
 
         if (
             $user->must_change_password
-            && $user->temporary_password_expires_at?->isPast()
+            && (
+                $user->temporary_password_expires_at === null
+                || $user->temporary_password_expires_at->isPast()
+            )
         ) {
             Auth::guard('web')->logout();
             $this->hitRateLimits();
