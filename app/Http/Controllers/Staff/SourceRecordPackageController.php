@@ -11,6 +11,8 @@ use App\Models\SourceRecordPackage;
 use App\Services\AuditLogger;
 use App\Services\ParcelGeometryService;
 use App\Services\NotificationService;
+use App\Services\ProtectedAdministrativeStorage;
+use App\Services\SourceRecordPackageInputService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Database\UniqueConstraintViolationException;
@@ -37,45 +39,12 @@ class SourceRecordPackageController extends Controller
 
     public function store(Request $request)
     {
-        $data = $request->validate($this->rules());
-
-        if (
-            ! $request->boolean('include_title') &&
-            ! $request->boolean('include_landholding') &&
-            ! $request->boolean('include_parcel_source') &&
-            ! $request->boolean('include_historical_clearance')
-        ) {
-            throw ValidationException::withMessages([
-                'include_title' => 'Select at least one source record section to save.',
-            ]);
-        }
-
-        if ($request->boolean('include_title') && empty($data['title_number'])) {
-            throw ValidationException::withMessages([
-                'title_number' => 'Title number is required when including a title source record.',
-            ]);
-        }
-
-        if ($request->boolean('include_landholding') && empty($data['landholding_reference_number'])) {
-            throw ValidationException::withMessages([
-                'landholding_reference_number' => 'Landholding reference number is required when including a landholding source record.',
-            ]);
-        }
-
-        if ($request->boolean('include_parcel_source') && empty($data['parcel_code'])) {
-            throw ValidationException::withMessages([
-                'parcel_code' => 'Parcel reference code is required when including a parcel source record.',
-            ]);
-        }
-
-        if ($request->boolean('include_historical_clearance') && empty($data['control_number'])) {
-            throw ValidationException::withMessages([
-                'control_number' => 'Clearance control number is required when including a historical clearance source record.',
-            ]);
-        }
+        $inputService = app(SourceRecordPackageInputService::class);
+        $data = $request->validate($inputService->createRules());
+        $inputService->assertIncludedSections($data);
 
         if (! empty($data['source_geometry_geojson'])) {
-            $data['source_geometry_geojson'] = $this->decodeGeoJson($data['source_geometry_geojson']);
+            $data['source_geometry_geojson'] = $inputService->decodeGeoJson($data['source_geometry_geojson']);
         }
 
         if (empty($data['parcel_code']) && ! empty($data['parcel_id'])) {
@@ -140,7 +109,7 @@ class SourceRecordPackageController extends Controller
             });
         } catch (UniqueConstraintViolationException $e) {
             if ($newSourceFilePath) {
-                Storage::disk('public')->delete($newSourceFilePath);
+                app(ProtectedAdministrativeStorage::class)->delete($newSourceFilePath);
             }
 
             throw ValidationException::withMessages([
@@ -148,7 +117,7 @@ class SourceRecordPackageController extends Controller
             ]);
         } catch (Throwable $e) {
             if ($newSourceFilePath) {
-                Storage::disk('public')->delete($newSourceFilePath);
+                app(ProtectedAdministrativeStorage::class)->delete($newSourceFilePath);
             }
 
             throw $e;
@@ -184,10 +153,11 @@ class SourceRecordPackageController extends Controller
 
     public function update(Request $request, SourceRecordPackage $sourceRecordPackage)
     {
-        $data = $request->validate($this->updateRules());
+        $inputService = app(SourceRecordPackageInputService::class);
+        $data = $request->validate($inputService->updateRules());
 
         if (! empty($data['source_geometry_geojson'])) {
-            $data['source_geometry_geojson'] = $this->decodeGeoJson($data['source_geometry_geojson']);
+            $data['source_geometry_geojson'] = $inputService->decodeGeoJson($data['source_geometry_geojson']);
         } else {
             $data['source_geometry_geojson'] = null;
         }
@@ -398,14 +368,14 @@ class SourceRecordPackageController extends Controller
             });
         } catch (Throwable $e) {
             if ($newSourceFilePath) {
-                Storage::disk('public')->delete($newSourceFilePath);
+                app(ProtectedAdministrativeStorage::class)->delete($newSourceFilePath);
             }
 
             throw $e;
         }
 
         if ($oldSourceFilePath && $oldSourceFilePath !== $newSourceFilePath) {
-            Storage::disk('public')->delete($oldSourceFilePath);
+            app(ProtectedAdministrativeStorage::class)->delete($oldSourceFilePath);
         }
 
         app(NotificationService::class)->notifyGeodeticSourcePackageAvailable($sourceRecordPackage->refresh());
@@ -437,7 +407,7 @@ class SourceRecordPackageController extends Controller
         });
 
         if ($oldSourceFilePath) {
-            Storage::disk('public')->delete($oldSourceFilePath);
+            app(ProtectedAdministrativeStorage::class)->delete($oldSourceFilePath);
         }
 
         return back()->with('success', 'Source file removed from source package.');
@@ -546,137 +516,6 @@ class SourceRecordPackageController extends Controller
             'transcription_date' => $package->transcription_date,
             'source_notes' => $package->source_notes,
         ]);
-    }
-
-    private function rules(): array
-    {
-        return [
-            'source_record_scope' => ['required', Rule::in(array_keys(LegacyRecord::SOURCE_SCOPES))],
-            'parcel_id' => ['nullable', 'exists:parcels,id'],
-
-            'include_title' => ['nullable', 'boolean'],
-            'include_landholding' => ['nullable', 'boolean'],
-            'include_parcel_source' => ['nullable', 'boolean'],
-            'include_historical_clearance' => ['nullable', 'boolean'],
-
-            'parcel_code' => ['nullable', 'string', 'max:255'],
-            'title_number' => ['nullable', 'string', 'max:255'],
-            'landholding_reference_number' => ['nullable', 'string', 'max:255'],
-            'control_number' => ['nullable', 'string', 'max:255'],
-
-            'landowner_name' => ['required', 'string', 'max:255'],
-            'transferor_name' => ['nullable', 'string', 'max:255'],
-            'transferee_name' => ['nullable', 'string', 'max:255'],
-
-            'lot_number' => ['nullable', 'string', 'max:255'],
-            'survey_number' => ['nullable', 'string', 'max:255'],
-            'area_hectares' => ['nullable', 'numeric', 'min:0', 'max:999999.9999'],
-            'crop_or_land_use' => ['nullable', 'string', 'max:255'],
-
-            'barangay' => ['nullable', 'string', 'max:255'],
-            'municipality' => ['nullable', 'string', 'max:255'],
-            'province' => ['nullable', 'string', 'max:255'],
-
-            'source_geometry_geojson' => ['nullable', 'string', 'max:200000'],
-            'boundary_description' => ['nullable', 'string', 'max:5000'],
-
-            'source_book' => ['required', 'string', 'max:255'],
-            'page_number' => ['nullable', 'string', 'max:100'],
-            'transcribed_by' => ['required', 'string', 'max:255'],
-            'transcription_date' => ['required', 'date', 'after_or_equal:1900-01-01', 'before_or_equal:today'],
-            'source_notes' => ['nullable', 'string', 'max:5000'],
-            'remarks' => ['nullable', 'string', 'max:5000'],
-
-            'date_acquired' => ['nullable', 'date', 'after_or_equal:1900-01-01', 'before_or_equal:today'],
-
-            'source_file' => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:10240'],
-        ];
-    }
-
-
-    private function updateRules(): array
-    {
-        return [
-            'source_record_scope' => ['required', Rule::in(array_keys(LegacyRecord::SOURCE_SCOPES))],
-            'parcel_code' => ['nullable', 'string', 'max:255'],
-            'title_number' => ['nullable', 'string', 'max:255'],
-            'landholding_reference_number' => ['nullable', 'string', 'max:255'],
-            'control_number' => ['nullable', 'string', 'max:255'],
-            'landowner_name' => ['required', 'string', 'max:255'],
-            'transferor_name' => ['nullable', 'string', 'max:255'],
-            'transferee_name' => ['nullable', 'string', 'max:255'],
-            'lot_number' => ['nullable', 'string', 'max:255'],
-            'survey_number' => ['nullable', 'string', 'max:255'],
-            'area_hectares' => ['nullable', 'numeric', 'min:0', 'max:999999.9999'],
-            'crop_or_land_use' => ['nullable', 'string', 'max:255'],
-            'barangay' => ['nullable', 'string', 'max:255'],
-            'municipality' => ['nullable', 'string', 'max:255'],
-            'province' => ['nullable', 'string', 'max:255'],
-            'source_geometry_geojson' => ['nullable', 'string', 'max:200000'],
-            'boundary_description' => ['nullable', 'string', 'max:5000'],
-            'source_book' => ['required', 'string', 'max:255'],
-            'page_number' => ['nullable', 'string', 'max:100'],
-            'transcribed_by' => ['required', 'string', 'max:255'],
-            'transcription_date' => ['required', 'date', 'after_or_equal:1900-01-01', 'before_or_equal:today'],
-            'source_notes' => ['nullable', 'string', 'max:5000'],
-            'remarks' => ['nullable', 'string', 'max:5000'],
-        ];
-    }
-
-    /**
-     * Update package records through Eloquent models so LegacyRecord saving
-     * safeguards (especially duplicate source-reference checks) always run.
-     * The caller already wraps this in the package/parcel transaction, so any
-     * rejected record rolls the entire link/create operation back.
-     */
-    private function syncPackageRecordsToParcel(SourceRecordPackage $sourceRecordPackage, Parcel $parcel): void
-    {
-        $sourceRecordPackage->records()
-            ->get()
-            ->each(function (LegacyRecord $record) use ($parcel): void {
-                $record->update([
-                    'parcel_id' => $parcel->id,
-                    'parcel_code' => $parcel->parcel_code,
-                ]);
-            });
-    }
-
-    private function storeSourceFile(Request $request): array
-    {
-        $file = $request->file('source_file');
-
-        if (! $file) {
-            return [];
-        }
-
-        $path = $file->store('source-record-packages', 'public');
-
-        return [
-            'source_file_path' => $path,
-            'source_file_original_filename' => $file->getClientOriginalName(),
-            'source_file_mime_type' => $file->getClientMimeType(),
-            'source_file_uploaded_by_user_id' => $request->user()->id,
-            'source_file_uploaded_at' => now(),
-        ];
-    }
-
-    private function decodeGeoJson(string $value): array
-    {
-        $decoded = json_decode($value, true);
-
-        if (
-            json_last_error() !== JSON_ERROR_NONE ||
-            ! is_array($decoded) ||
-            empty($decoded['type']) ||
-            empty($decoded['coordinates'])
-        ) {
-            throw ValidationException::withMessages([
-                'source_geometry_geojson' => 'The geometry must be valid GeoJSON with type and coordinates.',
-                'geometry_geojson' => 'The geometry must be valid GeoJSON with type and coordinates.',
-            ]);
-        }
-
-        return $decoded;
     }
 
     private function generatePackageCode(): string
