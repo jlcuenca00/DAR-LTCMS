@@ -30,8 +30,10 @@ class ApplicationComplianceNotice extends Model
         'requested_items',
         'resume_status',
         'requested_by',
+        'requested_by_name_snapshot',
         'requested_at',
         'resolved_by',
+        'resolved_by_name_snapshot',
         'resolved_at',
         'resolution_note',
     ];
