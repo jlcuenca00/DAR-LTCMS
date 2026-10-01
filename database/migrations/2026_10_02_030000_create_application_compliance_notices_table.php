@@ -20,8 +20,10 @@ return new class extends Migration
             $table->text('requested_items')->nullable();
             $table->string('resume_status', 80);
             $table->foreignId('requested_by')->constrained('users')->restrictOnDelete();
+            $table->string('requested_by_name_snapshot', 255);
             $table->timestamp('requested_at');
             $table->foreignId('resolved_by')->nullable()->constrained('users')->restrictOnDelete();
+            $table->string('resolved_by_name_snapshot', 255)->nullable();
             $table->timestamp('resolved_at')->nullable();
             $table->text('resolution_note')->nullable();
             $table->timestamps();
