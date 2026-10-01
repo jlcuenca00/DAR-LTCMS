@@ -400,7 +400,7 @@
         @else
             <div class="lo-app-list">
                 @foreach ($applications as $application)
-                    <article class="lo-app-card">
+                    <article id="application-{{ $application->id }}" class="lo-app-card">
                         <header class="lo-app-card-header">
                             <div class="lo-app-identity">
                                 <h3 class="lo-app-code">{{ $application->application_code }}</h3>
@@ -452,14 +452,23 @@
                                 <div class="lo-decision-stack">
                                     @if (
                                         $application->status === LandTransferApplication::STATUS_RETURNED_FOR_COMPLIANCE
-                                        && filled($application->latest_compliance_reason)
+                                        && $application->activeComplianceNotice
                                     )
+                                        @php($notice = $application->activeComplianceNotice)
                                         <div class="lo-denial-reason">
-                                            <strong>Compliance Needed</strong>
-                                            {{ $application->latest_compliance_reason }}
-                                            @if ($application->returned_for_compliance_at)
-                                                <div class="mt-1 text-xs text-slate-500">
-                                                    Recorded {{ $application->returned_for_compliance_at->timezone('Asia/Manila')->format('M d, Y · h:i A') }}
+                                            <strong>Action Required — {{ $notice->categoryLabel() }}</strong>
+                                            {{ $notice->details }}
+
+                                            @if (filled($notice->requested_items))
+                                                <div class="mt-2">
+                                                    <strong>Bring / provide:</strong>
+                                                    {{ $notice->requested_items }}
+                                                </div>
+                                            @endif
+
+                                            @if ($notice->requested_at)
+                                                <div class="mt-2 text-xs text-slate-500">
+                                                    Requested {{ $notice->requested_at->timezone('Asia/Manila')->format('M d, Y · h:i A') }}
                                                 </div>
                                             @endif
                                         </div>
