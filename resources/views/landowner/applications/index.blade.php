@@ -459,7 +459,7 @@
                                             {{ $application->latest_compliance_reason }}
                                             @if ($application->returned_for_compliance_at)
                                                 <div class="mt-1 text-xs text-slate-500">
-                                                    Recorded {{ $application->returned_for_compliance_at->format('M d, Y · h:i A') }}
+                                                    Recorded {{ $application->returned_for_compliance_at->timezone('Asia/Manila')->format('M d, Y · h:i A') }}
                                                 </div>
                                             @endif
                                         </div>
