@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\ApplicationClearance;
 use App\Models\Landowner;
 use App\Models\LandTransferApplication;
 use App\Models\User;
@@ -85,6 +86,84 @@ class FinalUatTest extends TestCase
         $this->actingAs($landownerUser)
             ->get(route('landowner.applications.clearance.pdf', $hidden))
             ->assertForbidden();
+    }
+
+    public function test_landowner_decision_output_controls_follow_release_state(): void
+    {
+        $staff = User::factory()->create([
+            'role' => User::ROLE_STAFF,
+            'is_active' => true,
+        ]);
+        $landownerUser = User::factory()->create([
+            'role' => User::ROLE_LANDOWNER,
+            'is_active' => true,
+        ]);
+        $landowner = Landowner::create([
+            'user_id' => $landownerUser->id,
+            'first_name' => 'Release',
+            'last_name' => 'Aware Owner',
+            'province' => 'Negros Oriental',
+        ]);
+
+        $application = $this->application($staff, 'UAT-RELEASE-AWARE-001', [
+            'transferor_landowner_id' => $landowner->id,
+            'transferor_name' => $landowner->full_name,
+            'status' => LandTransferApplication::STATUS_APPROVED,
+            'release_status' => LandTransferApplication::RELEASE_NOT_READY,
+            'decision_authority' => LandTransferApplication::FINAL_DECISION_AUTHORITY,
+            'decision_officer_name' => 'PARPO II UAT Signatory',
+            'decision_date' => now()->toDateString(),
+        ]);
+
+        ApplicationClearance::create([
+            'land_transfer_application_id' => $application->id,
+            'clearance_number' => '1803-2026-UAT (1)',
+            'decision_status' => LandTransferApplication::STATUS_APPROVED,
+            'decision_authority' => LandTransferApplication::FINAL_DECISION_AUTHORITY,
+            'decision_officer_name' => 'PARPO II UAT Signatory',
+            'decision_date' => now()->toDateString(),
+            'application_code' => $application->application_code,
+            'transferor_name' => $application->transferorDisplayName(),
+            'transferee_name' => $application->transfereeDisplayName(),
+            'municipality' => $application->municipality,
+            'barangay' => $application->barangay,
+            'total_area_hectares' => '0.0000',
+            'parcel_snapshot' => [],
+            'generated_by' => $staff->id,
+            'generated_at' => now(),
+        ]);
+
+        $pending = $this->actingAs($landownerUser)
+            ->get(route('landowner.applications.index'));
+
+        $pending->assertOk();
+        $pending->assertSee('Decision recorded — signed output pending');
+        $pending->assertDontSee('View Decision Output');
+
+        $application->forceFill([
+            'release_status' => LandTransferApplication::RELEASE_READY,
+            'ready_for_release_at' => now(),
+        ])->save();
+
+        $ready = $this->actingAs($landownerUser)
+            ->get(route('landowner.applications.index'));
+
+        $ready->assertOk();
+        $ready->assertSee('Ready for Release');
+        $ready->assertDontSee('View Decision Output');
+
+        $application->forceFill([
+            'release_status' => LandTransferApplication::RELEASED_TO_CLIENT,
+            'released_at' => now(),
+            'released_by' => $staff->id,
+        ])->save();
+
+        $released = $this->actingAs($landownerUser)
+            ->get(route('landowner.applications.index'));
+
+        $released->assertOk();
+        $released->assertSee('Released to Client');
+        $released->assertSee('View Decision Output');
     }
 
     public function test_landowner_cannot_create_or_change_clearance_applications_through_staff_routes(): void
