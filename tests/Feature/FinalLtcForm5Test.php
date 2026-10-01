@@ -81,6 +81,9 @@ class FinalLtcForm5Test extends TestCase
             'land_transfer_application_id' => $application->id,
             'clearance_number' => '1803-2026-0050 (3)',
             'decision_status' => LandTransferApplication::STATUS_APPROVED,
+            'decision_authority' => LandTransferApplication::FINAL_DECISION_AUTHORITY,
+            'decision_officer_name' => 'PARPO II Snapshot Signatory',
+            'decision_date' => '2026-08-22',
             'application_code' => $application->application_code,
             'transferor_name' => 'Juan Transferor',
             'transferee_name' => 'Maria Transferee',
@@ -125,7 +128,9 @@ class FinalLtcForm5Test extends TestCase
         $this->assertStringContainsString('TD Number TD-1001; TD-1002', $html);
         $this->assertStringContainsString('LOT-1001, PSD-1001; LOT-1002, PSD-1002, with a total area of 30000 sq. m.', $html);
         $this->assertStringContainsString('GRANTED', $html);
-        $this->assertStringContainsString('ENGR. MANUEL M. GALON, JR.', $html);
+        $this->assertStringContainsString('PARPO II Snapshot Signatory', $html);
+        $this->assertStringContainsString(LandTransferApplication::FINAL_DECISION_AUTHORITY, $html);
+        $this->assertStringNotContainsString('ENGR. MANUEL M. GALON, JR.', $html);
         $this->assertStringContainsString('images/dar-logo.svg', $html);
         $this->assertStringContainsString('images/bagong-pilipinas.png', $html);
         $this->assertStringNotContainsString('raw.githubusercontent.com', $html);

@@ -459,16 +459,31 @@
                                         && filled($application->decision_reason)
                                     )
                                         <div class="lo-denial-reason">
-                                            <strong>Reason for denial</strong>
+                                            <strong>Decision Reason</strong>
                                             {{ $application->decision_reason }}
                                         </div>
                                     @endif
 
-                                    @if ($application->isFinalized() && $application->clearance)
+                                    @if ($application->isFinalized() && $application->clearance && $application->isReleasedToClient())
+                                        <span class="lo-output-state">Released to Client</span>
                                         <a href="{{ route('landowner.applications.clearance.show', $application) }}" class="lo-clearance-link">
                                             <i class="fa-solid fa-file-lines" aria-hidden="true"></i>
                                             View Decision Output
                                         </a>
+                                    @elseif (
+                                        in_array($application->status, LandTransferApplication::FINAL_STATUSES, true)
+                                        && $application->release_status === LandTransferApplication::RELEASE_READY
+                                    )
+                                        <span class="lo-output-state">Ready for Release</span>
+                                    @elseif (
+                                        in_array($application->status, LandTransferApplication::FINAL_STATUSES, true)
+                                        && $application->clearance
+                                    )
+                                        <span class="lo-output-state">Decision recorded — signed output pending</span>
+                                    @elseif (
+                                        in_array($application->status, LandTransferApplication::LEGACY_FINAL_STATUSES, true)
+                                    )
+                                        <span class="lo-output-state">Legacy decision record — release not tracked</span>
                                     @elseif ($application->isFinalized())
                                         <span class="lo-output-state">Decision output pending</span>
                                     @else

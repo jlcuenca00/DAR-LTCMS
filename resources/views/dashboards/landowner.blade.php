@@ -17,6 +17,29 @@
             default => 'is-amber',
         };
     };
+
+    $releaseStateLabel = function (LandTransferApplication $application): ?string {
+        if (! $application->isFinalized()) {
+            return null;
+        }
+
+        if ($application->isReleasedToClient()) {
+            return 'Released to Client';
+        }
+
+        if (
+            in_array($application->status, LandTransferApplication::FINAL_STATUSES, true)
+            && $application->release_status === LandTransferApplication::RELEASE_READY
+        ) {
+            return 'Ready for Release';
+        }
+
+        if (in_array($application->status, LandTransferApplication::FINAL_STATUSES, true)) {
+            return 'Signed output pending';
+        }
+
+        return 'Legacy release state not tracked';
+    };
 @endphp
 
 <x-landowner-shell title="Landowner Dashboard" active="dashboard">
@@ -128,6 +151,8 @@
             .lo-app-party { color: #344054; font-size: 12px; line-height: 1.35; overflow-wrap: anywhere; }
             .lo-app-party span { display: inline-block; width: 34px; color: #667085; font-size: 10px; font-weight: 900; text-transform: uppercase; }
             .lo-app-date { color: #667085; font-size: 12px; white-space: nowrap; }
+            .lo-app-status-stack { display: grid; gap: 4px; justify-items: start; }
+            .lo-release-state { color: #667085; font-size: 10px; font-weight: 800; line-height: 1.25; }
 
             .lo-status-badge {
                 display: inline-flex;
@@ -239,7 +264,12 @@
                                     <div class="lo-app-party"><span>From</span>{{ $application->transferorDisplayName() ?: 'N/A' }}</div>
                                     <div class="lo-app-party"><span>To</span>{{ $application->transfereeDisplayName() ?: 'N/A' }}</div>
                                 </div>
-                                <span class="lo-status-badge {{ $statusClass($application->status) }}">{{ $application->statusLabel() }}</span>
+                                <div class="lo-app-status-stack">
+                                    <span class="lo-status-badge {{ $statusClass($application->status) }}">{{ $application->statusLabel() }}</span>
+                                    @if ($releaseState = $releaseStateLabel($application))
+                                        <span class="lo-release-state">{{ $releaseState }}</span>
+                                    @endif
+                                </div>
                                 <div class="lo-app-date">{{ $application->updated_at?->format('M d, Y') ?? 'N/A' }}</div>
                             </div>
                         @endforeach

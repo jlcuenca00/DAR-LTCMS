@@ -178,7 +178,7 @@ For final Approved and Not Approved applications, verify the official output:
 - LTC number uses the annual sequence and page value;
 - result is GRANTED for Approved or DENIED for Not Approved;
 - all linked parcel references/areas are represented correctly;
-- signatory is `ENGR. MANUEL M. GALON, JR., OIC PARPO II`;
+- signatory matches the PARPO II decision officer/signatory recorded for that final decision;
 - notarial details display when encoded;
 - print/PDF uses the intended 8.5 x 13 inch format;
 - Landowners can access the final output only after it is recorded as Released to Client; and

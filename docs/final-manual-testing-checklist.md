@@ -98,7 +98,7 @@ For Approved and Not Approved records:
 - [ ] Not Approved record prints DENIED
 - [ ] All linked Parcel title/TD/lot/survey references are correct
 - [ ] Combined recorded area is correct
-- [ ] Signatory is `ENGR. MANUEL M. GALON, JR., OIC PARPO II`
+- [ ] Signatory matches the PARPO II decision officer/signatory preserved in the immutable final-decision record
 - [ ] Notarial Doc/Page/Book/Series details appear when encoded
 - [ ] No printed signature/stamp placeholder is presented as an executed signature
 - [ ] Output wording does not claim that legal ownership or registry records were automatically changed

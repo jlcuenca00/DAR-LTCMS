@@ -2,6 +2,14 @@
     $rawDecisionStatus = strtolower((string) $clearance->decision_status);
     $isGranted = in_array($rawDecisionStatus, ['released', 'approved'], true);
     $decisionLabel = $isGranted ? 'GRANTED' : 'DENIED';
+    $decisionOfficerName = trim((string) ($clearance->decision_officer_name ?? ''));
+    $decisionOfficerName = $decisionOfficerName !== ''
+        ? $decisionOfficerName
+        : 'Official decision officer not recorded';
+    $decisionAuthority = trim((string) ($clearance->decision_authority ?? ''));
+    $decisionAuthority = $decisionAuthority !== ''
+        ? $decisionAuthority
+        : \App\Models\LandTransferApplication::FINAL_DECISION_AUTHORITY;
 
     $generatedAt = $clearance->generated_at;
     $reviewedAt = $clearance->reviewed_at;
@@ -333,8 +341,8 @@
             </table>
         </div>
         <div class="signature">
-            <div class="signatory">ENGR. MANUEL M. GALON, JR.</div>
-            <div class="signatory-title">OIC Provincial Agrarian Reform Program Officer II</div>
+            <div class="signatory">{{ $decisionOfficerName }}</div>
+            <div class="signatory-title">{{ $decisionAuthority }}</div>
         </div>
     </div>
 

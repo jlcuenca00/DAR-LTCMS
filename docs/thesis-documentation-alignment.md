@@ -111,7 +111,7 @@ Use these implementation facts when describing it:
 - annual LTC number sequence and page reference
 - linked Parcel title/Tax Declaration/lot/survey references
 - combined recorded area
-- signatory: `ENGR. MANUEL M. GALON, JR., OIC PARPO II`
+- signatory: recorded PARPO II decision officer/signatory preserved with the final decision
 - notarial Doc/Page/Book/Series information when encoded
 - 8.5 x 13 inch print/PDF format
 

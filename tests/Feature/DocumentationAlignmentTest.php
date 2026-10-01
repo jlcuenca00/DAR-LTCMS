@@ -97,7 +97,8 @@ class DocumentationAlignmentTest extends TestCase
         $release = $this->read('docs/RELEASE_PREPARATION.md');
 
         foreach ([$readme, $baseline] as $content) {
-            $this->assertStringContainsString('ENGR. MANUEL M. GALON, JR., OIC PARPO II', $content);
+            $this->assertStringContainsString('recorded PARPO II decision officer/signatory', $content);
+            $this->assertStringNotContainsString('ENGR. MANUEL M. GALON, JR., OIC PARPO II', $content);
             $this->assertStringContainsString('8.5 x 13', $content);
             $this->assertStringContainsString('GRANTED', $content);
             $this->assertStringContainsString('DENIED', $content);

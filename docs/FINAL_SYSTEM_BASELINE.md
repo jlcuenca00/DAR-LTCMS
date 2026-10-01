@@ -165,7 +165,7 @@ Final Form No. 5 behavior includes:
 - combined recorded area
 - `GRANTED` for Approved
 - `DENIED` for Not Approved
-- signatory: `ENGR. MANUEL M. GALON, JR., OIC PARPO II`
+- signatory: recorded PARPO II decision officer/signatory preserved in the immutable final-decision metadata
 - notarial Doc No., Page No., Book No., Series when encoded
 - 8.5 x 13 inch print/PDF layout
 - no printed signature/stamp presented as an executed signature
