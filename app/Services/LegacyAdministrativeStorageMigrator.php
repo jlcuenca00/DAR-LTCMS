@@ -89,6 +89,7 @@ class LegacyAdministrativeStorageMigrator
             ->merge(ApplicationDocument::query()->whereNotNull('file_path')->pluck('file_path'))
             ->filter(fn ($path) => is_string($path) && trim($path) !== '')
             ->map(fn ($path) => ltrim(trim($path), '/'))
+            ->filter(fn ($path) => ! in_array('..', explode('/', $path), true))
             ->unique()
             ->values();
     }
@@ -102,7 +103,11 @@ class LegacyAdministrativeStorageMigrator
             return false;
         }
 
-        return hash_file('sha256', $private->path($path))
-            === hash_file('sha256', $legacy->path($path));
+        $privateHash = hash_file('sha256', $private->path($path));
+        $legacyHash = hash_file('sha256', $legacy->path($path));
+
+        return is_string($privateHash)
+            && is_string($legacyHash)
+            && hash_equals($privateHash, $legacyHash);
     }
 }
