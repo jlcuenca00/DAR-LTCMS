@@ -108,21 +108,32 @@ Do not create a `public/storage` symlink. Uploaded administrative records are in
 
 ## 4. GitHub production protection
 
-Before relying on automatic production deployment, configure the repository's `production` Environment in GitHub:
+### Temporary audit / defense mode
 
-- require an authorized maintainer/reviewer before a production job may start;
-- keep the production SSH credentials restricted to that Environment when possible;
-- configure an Environment secret named `SSH_KNOWN_HOSTS` containing the **trusted production SSH host public key entry** for the same host stored in `SSH_HOST`;
-- keep the `Protect main` ruleset active; and
-- require the `Responsive Browser Regression / responsive-browser-tests` status check before merging to `main`.
+While DAR-LTCMS is still under active audit and pre-defense iteration, production deployment temporarily uses the previously working SSH deployment method so verified `main` changes can continue reaching the CloudPanel server without requiring the not-yet-configured `SSH_KNOWN_HOSTS` secret.
 
-Obtain the host public key from a trusted server/CloudPanel console or another independently authenticated administrative channel. Do **not** populate `SSH_KNOWN_HOSTS` by running `ssh-keyscan` from the deployment workflow or by accepting the first key returned over an unverified network connection. The workflow deliberately fails closed when the configured host key is absent or does not match.
+During this temporary period:
 
-For example, if the protected `SSH_HOST` value is the production hostname, the secret should contain a normal OpenSSH `known_hosts` entry for that exact hostname and the server's verified host public key.
+- keep production SSH credentials restricted to the GitHub `production` Environment when possible;
+- keep the `Protect main` ruleset active;
+- keep the verification job before deployment;
+- require the `Responsive Browser Regression / responsive-browser-tests` status check before merging to `main`; and
+- keep all third-party GitHub Actions pinned to immutable commit SHAs.
 
-The deployment workflow also runs its own secret-free verification job before the production job. A failed verification therefore prevents the SSH deployment job from starting even if a commit has already reached `main`.
+### Mandatory post-defense hardening
 
-All third-party GitHub Actions in the repository are pinned to immutable commit SHAs. When intentionally upgrading an Action, review the new upstream release/tag first, then update the pinned SHA in a pull request.
+Before the final `v1.0.0` release, restore strict SSH host verification:
+
+- configure an Environment secret named `SSH_KNOWN_HOSTS` containing the trusted production SSH host public-key entry for the same host stored in `SSH_HOST`;
+- use `StrictHostKeyChecking=yes` with that preconfigured `known_hosts` file;
+- remove first-use host-key acceptance / `ssh-keyscan` from production workflows; and
+- rerun the full deployment and release-readiness checks after the strict verification is restored.
+
+Obtain the trusted host public key from the CloudPanel/server console or another independently authenticated administrative channel.
+
+The deployment workflow continues to run its secret-free verification job before production deployment. A failed verification therefore still prevents production synchronization even during temporary audit mode.
+
+When intentionally upgrading a third-party GitHub Action, review the new upstream release/tag first, then update the pinned SHA in a pull request.
 
 ## 5. Deploy and verify the exact version
 
@@ -209,6 +220,7 @@ A PostgreSQL restore should be performed by an authorized administrator/develope
 
 Create the final version tag/release only when all of these are true:
 
+- strict verified SSH host checking has been restored for production workflows;
 - the final automatic test run is green;
 - `php artisan dar:release-check` is clean on production;
 - a fresh database backup exists;
