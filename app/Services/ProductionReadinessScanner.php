@@ -36,7 +36,7 @@ class ProductionReadinessScanner
             'public/storage must not exist in production because source-package scans are sensitive administrative records.'
         );
         $this->require($issues, is_dir(storage_path('app/private')) && is_writable(storage_path('app/private')), 'private_storage_not_writable', 'storage/app/private must exist and be writable.');
-        $this->require($issues, is_dir(storage_path('app/public')) && is_writable(storage_path('app/public')), 'legacy_source_storage_not_writable', 'storage/app/public must remain writable for protected legacy source-package scans.');
+        $this->require($issues, is_dir(storage_path('app/public')) && is_readable(storage_path('app/public')), 'legacy_source_storage_not_readable', 'storage/app/public must remain readable only for protected legacy administrative files; new uploads use private storage.');
 
         $mailDriver = (string) config('mail.default');
         $this->recommend($issues, ! in_array($mailDriver, ['log', 'array'], true), 'mail_not_deliverable', 'MAIL_MAILER should use a real delivery transport in production so password-recovery messages can be delivered.');

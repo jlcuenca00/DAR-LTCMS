@@ -8,4 +8,8 @@ return [
     // The system validates document age only as an administrative aid.
     // Final legal acceptance remains with authorized DAR personnel.
     'document_validity_months' => 6,
+
+    // Bound CSV preview batches so uploaded source-record files cannot expand into
+    // unbounded in-memory/JSON payloads. Larger imports can be split into batches.
+    'source_import_max_rows' => (int) env('DAR_LTC_SOURCE_IMPORT_MAX_ROWS', 5000),
 ];

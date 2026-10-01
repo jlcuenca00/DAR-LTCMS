@@ -8,6 +8,7 @@ use App\Models\Parcel;
 use App\Models\SourceRecordPackage;
 use App\Models\SourceRecordPackageImportBatch;
 use App\Services\AuditLogger;
+use App\Services\SourceRecordPackageInputService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -15,7 +16,7 @@ use Illuminate\Validation\ValidationException;
 
 class SourceRecordPackageImportController extends Controller
 {
-    private const MAX_COMMIT_SELECTIONS = 10000;
+    private const DEFAULT_MAX_IMPORT_ROWS = 5000;
 
     private array $headers = [
         'include_title',
@@ -105,37 +106,17 @@ class SourceRecordPackageImportController extends Controller
         ]);
 
         $path = $request->file('import_file')->getRealPath();
+        $previewRows = $this->readPreviewRows($path);
 
-        $rows = $this->readCsv($path);
-
-        if (count($rows) === 0) {
+        if (count($previewRows) === 0) {
             throw ValidationException::withMessages([
                 'import_file' => 'The uploaded CSV has no rows.',
             ]);
         }
 
-        $previewRows = [];
-        $validCount = 0;
-        $errorCount = 0;
-        $duplicateCount = 0;
-
-        foreach ($rows as $index => $row) {
-            $analysis = $this->analyzeRow($row, $index + 2);
-
-            if ($analysis['status'] === 'valid') {
-                $validCount++;
-            }
-
-            if ($analysis['status'] === 'error') {
-                $errorCount++;
-            }
-
-            if ($analysis['possible_duplicate']) {
-                $duplicateCount++;
-            }
-
-            $previewRows[] = $analysis;
-        }
+        $validCount = collect($previewRows)->where('status', 'valid')->count();
+        $errorCount = collect($previewRows)->where('status', 'error')->count();
+        $duplicateCount = collect($previewRows)->where('possible_duplicate', true)->count();
 
         $batch = SourceRecordPackageImportBatch::create([
             'original_filename' => $request->file('import_file')->getClientOriginalName(),
@@ -187,10 +168,10 @@ class SourceRecordPackageImportController extends Controller
         }
 
         $validated = $request->validate([
-            'selected_rows' => ['required', 'array', 'min:1', 'max:'.self::MAX_COMMIT_SELECTIONS],
+            'selected_rows' => ['required', 'array', 'min:1', 'max:'.$this->maxImportRows()],
             'selected_rows.*' => ['required', 'integer', 'min:2', 'distinct'],
         ], [
-            'selected_rows.max' => 'A single commit may contain at most '.self::MAX_COMMIT_SELECTIONS.' selected rows.',
+            'selected_rows.max' => 'A single commit may contain at most '.$this->maxImportRows().' selected rows.',
         ]);
 
         $selectedRows = collect($validated['selected_rows'])
@@ -317,132 +298,108 @@ class SourceRecordPackageImportController extends Controller
             ->with('success', $committed . ' source package row(s) imported successfully.');
     }
 
-    private function readCsv(string $path): array
+    private function readPreviewRows(string $path): array
     {
         $file = fopen($path, 'r');
 
-        $header = fgetcsv($file);
-
-        if (! $header) {
-            fclose($file);
-
+        if ($file === false) {
             throw ValidationException::withMessages([
-                'import_file' => 'The uploaded CSV has no header row.',
+                'import_file' => 'The uploaded CSV could not be opened.',
             ]);
         }
 
-        $header = array_map(fn ($value) => trim((string) $value), $header);
+        try {
+            $header = fgetcsv($file);
 
-        $missingHeaders = array_diff($this->headers, $header);
+            if (! $header) {
+                throw ValidationException::withMessages([
+                    'import_file' => 'The uploaded CSV has no header row.',
+                ]);
+            }
 
-        if (count($missingHeaders) > 0) {
+            $header = array_map(fn ($value) => trim((string) $value), $header);
+            $missingHeaders = array_values(array_diff($this->headers, $header));
+
+            if (count($missingHeaders) > 0) {
+                throw ValidationException::withMessages([
+                    'import_file' => 'Missing required columns: '.implode(', ', $missingHeaders),
+                ]);
+            }
+
+            if (count($header) !== count(array_unique($header))) {
+                throw ValidationException::withMessages([
+                    'import_file' => 'The uploaded CSV contains duplicate column names.',
+                ]);
+            }
+
+            $rows = [];
+            $rowIndex = 1;
+
+            while (($line = fgetcsv($file)) !== false) {
+                $rowIndex++;
+
+                if ($this->isEmptyCsvLine($line)) {
+                    continue;
+                }
+
+                if (count($rows) >= $this->maxImportRows()) {
+                    throw ValidationException::withMessages([
+                        'import_file' => 'A single import may contain at most '.$this->maxImportRows().' non-empty rows. Split larger imports into multiple batches.',
+                    ]);
+                }
+
+                $row = [];
+
+                foreach ($header as $index => $column) {
+                    $row[$column] = isset($line[$index]) ? trim((string) $line[$index]) : '';
+                }
+
+                $rows[] = $this->analyzeRow($row, $rowIndex);
+            }
+
+            return $rows;
+        } finally {
             fclose($file);
-
-            throw ValidationException::withMessages([
-                'import_file' => 'Missing required columns: ' . implode(', ', $missingHeaders),
-            ]);
         }
-
-        $rows = [];
-
-        while (($line = fgetcsv($file)) !== false) {
-            if ($this->isEmptyCsvLine($line)) {
-                continue;
-            }
-
-            $row = [];
-
-            foreach ($header as $index => $column) {
-                $row[$column] = isset($line[$index]) ? trim((string) $line[$index]) : '';
-            }
-
-            $rows[] = $row;
-        }
-
-        fclose($file);
-
-        return $rows;
     }
 
     private function analyzeRow(array $row, int $rowIndex): array
     {
-        $errors = [];
-        $warnings = [];
-
         $data = [];
 
         foreach ($this->headers as $header) {
             $data[$header] = $row[$header] ?? '';
         }
 
-        $data['include_title'] = $this->truthy($data['include_title']);
-        $data['include_landholding'] = $this->truthy($data['include_landholding']);
-        $data['include_parcel_source'] = $this->truthy($data['include_parcel_source']);
-        $data['include_historical_clearance'] = $this->truthy($data['include_historical_clearance']);
+        $data['include_title'] = $this->truthy((string) $data['include_title']);
+        $data['include_landholding'] = $this->truthy((string) $data['include_landholding']);
+        $data['include_parcel_source'] = $this->truthy((string) $data['include_parcel_source']);
+        $data['include_historical_clearance'] = $this->truthy((string) $data['include_historical_clearance']);
 
-        if (! $data['include_title'] && ! $data['include_landholding'] && ! $data['include_parcel_source'] && ! $data['include_historical_clearance']) {
-            $errors[] = 'Select at least one included source section.';
+        try {
+            $data = app(SourceRecordPackageInputService::class)->validateImportRow($data);
+        } catch (ValidationException $exception) {
+            $errors = collect($exception->errors())
+                ->flatten()
+                ->map(fn ($message) => (string) $message)
+                ->unique()
+                ->values()
+                ->all();
+
+            return [
+                'row_index' => $rowIndex,
+                'status' => 'error',
+                'possible_duplicate' => false,
+                'errors' => $errors,
+                'warnings' => [],
+                'data' => array_merge($data, [
+                    'source_geometry_geojson_decoded' => null,
+                ]),
+            ];
         }
 
-        if (! in_array($data['source_record_scope'], array_keys(LegacyRecord::SOURCE_SCOPES), true)) {
-            $errors[] = 'Invalid source_record_scope. Use current_active, historical, or reference_only.';
-        }
-
-        if ($data['landowner_name'] === '') {
-            $errors[] = 'landowner_name is required.';
-        }
-
-        if ($data['source_book'] === '') {
-            $errors[] = 'source_book is required.';
-        }
-
-        if ($data['transcribed_by'] === '') {
-            $errors[] = 'transcribed_by is required.';
-        }
-
-        if ($data['transcription_date'] === '') {
-            $errors[] = 'transcription_date is required.';
-        } elseif (! $this->validDate($data['transcription_date'])) {
-            $errors[] = 'transcription_date must be a valid date in YYYY-MM-DD format.';
-        }
-
-        if ($data['include_title'] && $data['title_number'] === '') {
-            $errors[] = 'title_number is required when include_title is yes.';
-        }
-
-        if ($data['include_landholding'] && $data['landholding_reference_number'] === '') {
-            $errors[] = 'landholding_reference_number is required when include_landholding is yes.';
-        }
-
-        if ($data['include_parcel_source'] && $data['parcel_code'] === '') {
-            $errors[] = 'parcel_code is required when include_parcel_source is yes.';
-        }
-
-        if ($data['include_historical_clearance'] && $data['control_number'] === '') {
-            $errors[] = 'control_number is required when include_historical_clearance is yes.';
-        }
-
-        if ($data['area_hectares'] !== '' && ! is_numeric($data['area_hectares'])) {
-            $errors[] = 'area_hectares must be numeric.';
-        }
-
-        $data['source_geometry_geojson_decoded'] = null;
-
-        if ($data['source_geometry_geojson'] !== '') {
-            $decoded = json_decode($data['source_geometry_geojson'], true);
-
-            if (
-                json_last_error() !== JSON_ERROR_NONE ||
-                ! is_array($decoded) ||
-                empty($decoded['type']) ||
-                empty($decoded['coordinates'])
-            ) {
-                $errors[] = 'source_geometry_geojson must be valid GeoJSON with type and coordinates.';
-            } else {
-                $data['source_geometry_geojson_decoded'] = $decoded;
-            }
-        }
-
+        $errors = [];
+        $warnings = [];
         $possibleDuplicate = false;
 
         if ($data['title_number'] !== '') {
@@ -538,20 +495,17 @@ class SourceRecordPackageImportController extends Controller
         ]);
     }
 
+    private function maxImportRows(): int
+    {
+        return max(
+            1,
+            (int) config('dar_ltc.source_import_max_rows', self::DEFAULT_MAX_IMPORT_ROWS)
+        );
+    }
+
     private function truthy(string $value): bool
     {
         return in_array(Str::lower(trim($value)), ['1', 'yes', 'y', 'true', 'included'], true);
-    }
-
-    private function validDate(string $value): bool
-    {
-        $timestamp = strtotime($value);
-
-        if (! $timestamp) {
-            return false;
-        }
-
-        return date('Y-m-d', $timestamp) === $value;
     }
 
     private function isEmptyCsvLine(array $line): bool

@@ -33,10 +33,10 @@ return [
 
         /*
          * Historical source-package scans and selected Staff reference images
-         * were written to this disk. Files remain under storage/app/public for
-         * deployment compatibility, but DAR-LTCMS deliberately does NOT create
-         * public/storage. URLs point to an authenticated Staff controller which
-         * serves only paths registered to approved administrative record types.
+         * were written to this disk. New administrative uploads use the private
+         * local disk; this disk remains only as a protected legacy fallback.
+         * DAR-LTCMS deliberately does NOT create public/storage. URLs point to an
+         * authenticated Staff controller which serves only registered records.
          */
         'public' => [
             'driver' => 'local',

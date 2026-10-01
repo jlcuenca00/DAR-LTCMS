@@ -104,6 +104,7 @@ class LandholdingManagementTest extends TestCase
     }
     public function test_replacing_landholding_reference_photo_removes_the_previous_file(): void
     {
+        Storage::fake('local');
         Storage::fake('public');
 
         $staffUser = User::factory()->create([
@@ -156,7 +157,8 @@ class LandholdingManagementTest extends TestCase
         $this->assertNotNull($newPath);
         $this->assertNotSame($oldPath, $newPath);
         Storage::disk('public')->assertMissing($oldPath);
-        Storage::disk('public')->assertExists($newPath);
+        Storage::disk('public')->assertMissing($newPath);
+        Storage::disk('local')->assertExists($newPath);
     }
 
 }

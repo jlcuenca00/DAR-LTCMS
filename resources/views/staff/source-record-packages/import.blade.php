@@ -396,6 +396,10 @@
                                 <i class="fa-solid fa-table-columns"></i>
                                 Do not rename headers
                             </span>
+                            <span class="source-import-help-pill">
+                                <i class="fa-solid fa-list-ol"></i>
+                                Up to {{ number_format((int) config('dar_ltc.source_import_max_rows', 5000)) }} rows per batch
+                            </span>
                         </div>
                     </div>
 
