@@ -20,7 +20,6 @@ use App\Services\ParcelConcurrencyService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
-use Illuminate\Validation\ValidationException;
 
 class LandTransferApplicationController extends Controller
 {
