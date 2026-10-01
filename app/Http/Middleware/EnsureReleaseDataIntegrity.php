@@ -19,6 +19,7 @@ class EnsureReleaseDataIntegrity
         }
 
         $requiresCheck = $request->routeIs('staff.applications.approve')
+            || $request->routeIs('staff.applications.not_approved')
             || ($request->routeIs('staff.applications.submit')
                 && $application->status === LandTransferApplication::STATUS_ENDORSED_PARPO);
 
@@ -30,7 +31,7 @@ class EnsureReleaseDataIntegrity
 
         if (! $integrity['valid']) {
             return back()->withErrors([
-                'validation' => 'Resolve the application data-integrity issues before advancing to the PARPO II decision or recording final approval.',
+                'validation' => 'Resolve the application data-integrity issues before advancing to the PARPO II decision or recording a final decision.',
                 'transferee_shares' => implode(' ', $integrity['issues']),
             ]);
         }
