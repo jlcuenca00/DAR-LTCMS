@@ -17,21 +17,16 @@ class ApplicationReviewResponsiveHardeningTest extends TestCase
         $this->assertStringContainsString('max-height: min(36dvh, 320px) !important;', $css);
     }
 
-    public function test_application_review_workflow_action_stops_floating_on_compact_viewports(): void
+    public function test_application_review_uses_integrated_workflow_panel_and_compact_topbar_control(): void
     {
-        $responsiveCss = file_get_contents(resource_path('css/responsive-hardening.css'));
-        $lastMileCss = file_get_contents(resource_path('css/ui-ux-last-mile.css'));
+        $view = file_get_contents(resource_path('views/staff/applications/show.blade.php'));
 
-        $this->assertStringContainsString('.application-review-page .workflow-fab {', $responsiveCss);
-        $this->assertStringContainsString('position: static !important;', $responsiveCss);
-        $this->assertStringContainsString('width: 100% !important;', $responsiveCss);
-
-        // The trigger is rendered immediately after the application-review wrapper, so it also
-        // needs an unscoped compact rule to prevent the fixed desktop FAB from covering fields.
-        $this->assertStringContainsString('@media (max-width: 1100px)', $lastMileCss);
-        $this->assertStringContainsString('.workflow-fab {', $lastMileCss);
-        $this->assertStringContainsString('inset: auto !important;', $lastMileCss);
-        $this->assertStringContainsString('margin: 4px 0 24px !important;', $lastMileCss);
+        $this->assertStringContainsString('id="workflow-overview"', $view);
+        $this->assertStringContainsString('id="workflow-topbar-control"', $view);
+        $this->assertStringContainsString('data-workflow-modal-open', $view);
+        $this->assertStringContainsString('IntersectionObserver', $view);
+        $this->assertStringContainsString("staffTopbar?.classList.toggle('has-workflow-sticky', scrolledPast)", $view);
+        $this->assertStringNotContainsString('workflow-fab', $view);
     }
 
     public function test_application_review_modals_are_dynamic_viewport_bounded(): void
