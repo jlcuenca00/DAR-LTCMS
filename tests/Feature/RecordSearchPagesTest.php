@@ -426,6 +426,7 @@ class RecordSearchPagesTest extends TestCase
 
     public function test_replacing_parcel_reference_photo_removes_the_previous_file(): void
     {
+        Storage::fake('local');
         Storage::fake('public');
 
         $staffUser = User::factory()->create([
@@ -471,7 +472,8 @@ class RecordSearchPagesTest extends TestCase
         $this->assertNotNull($newPath);
         $this->assertNotSame($oldPath, $newPath);
         Storage::disk('public')->assertMissing($oldPath);
-        Storage::disk('public')->assertExists($newPath);
+        Storage::disk('public')->assertMissing($newPath);
+        Storage::disk('local')->assertExists($newPath);
     }
 
     public function test_landowner_cannot_view_staff_record_search_pages(): void
