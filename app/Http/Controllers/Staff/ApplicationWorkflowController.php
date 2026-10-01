@@ -317,7 +317,9 @@ class ApplicationWorkflowController extends Controller
                 app(NotificationService::class)->notifyLinkedLandownersFinalDecision($application);
             });
         } catch (\Throwable $e) {
-            return back()->with('error', 'Approval failed: ' . $e->getMessage());
+            report($e);
+
+            return back()->with('error', 'Approval could not be completed. Refresh the application and try again. If the problem continues, check the server logs or contact the system administrator.');
         }
 
         return back()->with('success', 'PARPO II approval recorded. The final decision is locked; release to the client is tracked separately.');
@@ -410,7 +412,9 @@ class ApplicationWorkflowController extends Controller
                 app(NotificationService::class)->notifyLinkedLandownersFinalDecision($application);
             });
         } catch (\Throwable $e) {
-            return back()->with('error', 'Not Approved decision failed: ' . $e->getMessage());
+            report($e);
+
+            return back()->with('error', 'The Not Approved decision could not be completed. Refresh the application and try again. If the problem continues, check the server logs or contact the system administrator.');
         }
 
         return back()->with('success', 'PARPO II Not Approved decision recorded. The application is now locked.');
@@ -516,7 +520,9 @@ class ApplicationWorkflowController extends Controller
                 app(NotificationService::class)->notifyLinkedLandownersReleasedToClient($application);
             });
         } catch (\Throwable $e) {
-            return back()->with('error', 'Release recording failed: ' . $e->getMessage());
+            report($e);
+
+            return back()->with('error', 'Client release could not be recorded. Refresh the application and try again. If the problem continues, check the server logs or contact the system administrator.');
         }
 
         return back()->with('success', 'Release to client recorded. The PARPO II decision remains unchanged and locked.');

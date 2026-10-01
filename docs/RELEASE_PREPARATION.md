@@ -112,8 +112,13 @@ Before relying on automatic production deployment, configure the repository's `p
 
 - require an authorized maintainer/reviewer before a production job may start;
 - keep the production SSH credentials restricted to that Environment when possible;
+- configure an Environment secret named `SSH_KNOWN_HOSTS` containing the **trusted production SSH host public key entry** for the same host stored in `SSH_HOST`;
 - keep the `Protect main` ruleset active; and
 - require the `Responsive Browser Regression / responsive-browser-tests` status check before merging to `main`.
+
+Obtain the host public key from a trusted server/CloudPanel console or another independently authenticated administrative channel. Do **not** populate `SSH_KNOWN_HOSTS` by running `ssh-keyscan` from the deployment workflow or by accepting the first key returned over an unverified network connection. The workflow deliberately fails closed when the configured host key is absent or does not match.
+
+For example, if the protected `SSH_HOST` value is the production hostname, the secret should contain a normal OpenSSH `known_hosts` entry for that exact hostname and the server's verified host public key.
 
 The deployment workflow also runs its own secret-free verification job before the production job. A failed verification therefore prevents the SSH deployment job from starting even if a commit has already reached `main`.
 

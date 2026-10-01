@@ -301,6 +301,15 @@ class InputSecurityHardeningTest extends TestCase
         $this->assertStringNotContainsString('errorLine.innerHTML', $view);
     }
 
+    public function test_staff_workflow_failures_do_not_render_raw_exception_messages(): void
+    {
+        $controller = file_get_contents(app_path('Http/Controllers/Staff/ApplicationWorkflowController.php'));
+
+        $this->assertIsString($controller);
+        $this->assertStringNotContainsString("getMessage()", $controller);
+        $this->assertGreaterThanOrEqual(3, substr_count($controller, 'report($e);'));
+    }
+
     private function sourceImportCsv(array $rows): string
     {
         $stream = fopen('php://temp', 'r+');

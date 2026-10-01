@@ -68,7 +68,7 @@ class ReleasePreparationTest extends TestCase
         $this->assertStringContainsString('/storage/backups/', $deployment);
         $this->assertStringContainsString('/storage/app/private/', $deployment);
         $this->assertStringContainsString('/storage/app/public/', $deployment);
-        $this->assertStringContainsString('/.env,', $deployment);
+        $this->assertStringContainsString("--exclude='/.env'", $deployment);
         $this->assertStringContainsString("printf '%s\\n'", $deployment);
         $this->assertStringContainsString('> .release-commit', $deployment);
     }
