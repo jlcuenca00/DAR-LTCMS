@@ -75,21 +75,21 @@ php artisan serve
     - With Chief Legal for Review
     - With PARPO II for Decision
     - PARPO II Decision Ready to Record
-12. Record one **Approved** final decision and one **Not Approved** final decision.
-13. Confirm final-decision locking after Approved/Not Approved.
-14. Mark a signed final output **Ready for Release**, then record **Released to Client** without changing the final decision.
-15. Confirm significant actions appear in Audit Logs.
-16. Confirm role-appropriate notifications.
-17. Confirm Landowner privacy/isolation and post-release final-output visibility.
-18. Confirm Geodetic access remains limited to parcel/reference review and explicitly scoped geometry editing.
-19. Confirm Monitoring Reports and Parcel Map behavior.
-20. Confirm LTC Form No. 5 output for final applications.
+12. From at least two open stages, record **Request Compliance / Action Required**, including one **Other** category with custom text.
+13. Confirm the linked Landowner sees the persistent Action Required alert and own-application notification.
+14. Resolve each compliance request and confirm the same application resumes its saved stage.
+15. Record the **Approved** final decision and confirm final-decision locking.
+16. Confirm no current Not Approved / Denied action or route is available.
+17. Mark the signed output **Ready for Release**, then record **Released to Client** without changing the Approved decision.
+18. Confirm significant actions appear in Audit Logs, including compliance request/resolution.
+19. Confirm role-appropriate notifications and Landowner privacy/isolation.
+20. Confirm Monitoring Reports, Parcel Map behavior, and GRANTED LTC Form No. 5 output.
 
 ## Scope reminder for testers
 
 DAR-LTCMS is a clearance generation, administrative processing, monitoring, parcel/reference review, and records-management system.
 
-An **Approved** or **Not Approved** application records the final administrative clearance decision. Release of the signed output is tracked separately. Neither approval nor release automatically transfers land ownership, mutates Registry of Deeds records, or conclusively executes a legal land transfer.
+An **Approved** application records the only current final administrative clearance decision. Problems that block approval use **Compliance Required**, which keeps the same application open until staff resolves the notice and resumes its saved stage. Historical Not Approved / Denied records are read-only compatibility records. Release of the signed output is tracked separately. Neither approval nor release automatically transfers land ownership, mutates Registry of Deeds records, or conclusively executes a legal land transfer.
 
 Any actual ownership transfer, registry alteration, or legal mutation remains outside the automatic system scope and is subject to separate legal and administrative procedures.
 
