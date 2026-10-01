@@ -167,6 +167,7 @@ Final Form No. 5 behavior includes:
 - `DENIED` for Not Approved
 - signatory: recorded PARPO II decision officer/signatory preserved in the immutable final-decision metadata
 - notarial Doc No., Page No., Book No., Series when encoded
+- payment/notarial/transfer-document display values are captured into the immutable Form No. 5 snapshot at final decision; later rendering does not depend on mutable live application/document fields
 - 8.5 x 13 inch print/PDF layout
 - no printed signature/stamp presented as an executed signature
 
