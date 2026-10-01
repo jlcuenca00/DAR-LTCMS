@@ -50,7 +50,12 @@ class ApplicationWorkflowController extends Controller
         $auditMetadata = [
             'old_status' => $oldStatus,
             'new_status' => $nextStatus,
-            'scope_note' => 'Administrative status advancement only. No ownership transfer or registry mutation was performed.',
+            'workflow_action' => LandTransferApplication::workflowActionLabels()[$currentStatus] ?? 'Record workflow update',
+            'administrative_authority' => LandTransferApplication::workflowAuthorityLabels()[$currentStatus] ?? 'Legal Division',
+            'recorded_by_user_id' => Auth::id(),
+            'recorded_by_role' => 'Legal Clearance Staff',
+            'recorded_at' => now()->toIso8601String(),
+            'scope_note' => 'Administrative workflow recording only. The logged-in Legal Clearance Staff user records the office action/status; no ownership transfer or registry mutation was performed.',
         ];
 
         // Legal intake / completeness review -> payment-order stage.
@@ -154,7 +159,7 @@ class ApplicationWorkflowController extends Controller
             ]);
         }
 
-        // Before PARPO II receives the final-decision action, verify the full
+        // Before Legal Division records the final PARPO II decision, verify the full
         // administrative record. Form 4 remains recommendatory only.
         if ($nextStatus === LandTransferApplication::STATUS_FOR_RELEASING) {
             [$snapshot, $readinessErrors] = $this->decisionReadiness($application);
@@ -197,7 +202,7 @@ class ApplicationWorkflowController extends Controller
 
         app(NotificationService::class)->notifyLinkedLandownersStatusChanged($application, $statusLabel);
 
-        return back()->with('success', 'Application moved to ' . $statusLabel . '.');
+        return back()->with('success', 'Workflow update recorded. Application is now ' . $statusLabel . '.');
     }
 
     public function returnForCompliance(Request $request, LandTransferApplication $application)
@@ -230,6 +235,10 @@ class ApplicationWorkflowController extends Controller
                 'old_status' => $oldStatus,
                 'new_status' => $application->status,
                 'compliance_reason' => $validated['compliance_reason'],
+                'administrative_authority' => 'Legal Division',
+                'recorded_by_user_id' => Auth::id(),
+                'recorded_by_role' => 'Legal Clearance Staff',
+                'recorded_at' => now()->toIso8601String(),
                 'scope_note' => 'The application remains open for documentary compliance; this is not a final denial.',
             ],
             Auth::id()
@@ -252,11 +261,13 @@ class ApplicationWorkflowController extends Controller
         }
 
         if ($application->status !== LandTransferApplication::STATUS_FOR_RELEASING) {
-            return back()->withErrors(['status' => 'Only an application at PARPO II Decision Pending may receive a final approval.']);
+            return back()->withErrors(['status' => 'Only an application at PARPO II Decision Ready to Record may receive a final approval.']);
         }
 
-        $request->validate([
+        $validated = $request->validate([
             'final_decision_confirmation' => ['accepted'],
+            'decision_officer_name' => ['required', 'string', 'max:255'],
+            'decision_date' => ['required', 'date', 'before_or_equal:today'],
             'decision_reason' => ['nullable', 'string', 'max:1000'],
             'decision_notes' => ['nullable', 'string', 'max:4000'],
         ], [
@@ -272,7 +283,7 @@ class ApplicationWorkflowController extends Controller
         }
 
         try {
-            DB::transaction(function () use ($request, $application, $snapshot) {
+            DB::transaction(function () use ($validated, $application, $snapshot) {
                 $application = LandTransferApplication::query()
                     ->lockForUpdate()
                     ->findOrFail($application->id);
@@ -287,12 +298,18 @@ class ApplicationWorkflowController extends Controller
 
                 $application->status = LandTransferApplication::STATUS_APPROVED;
                 $application->release_status = LandTransferApplication::RELEASE_NOT_READY;
-                $application->reviewed_by = Auth::id();
-                $application->reviewed_at = now();
-                $application->validated_at = now();
+                $recordedAt = now();
+                $application->reviewed_by = Auth::id(); // Legacy compatibility: recorder, not the PARPO II decision-maker.
+                $application->reviewed_at = $recordedAt;
+                $application->decision_authority = LandTransferApplication::FINAL_DECISION_AUTHORITY;
+                $application->decision_officer_name = $validated['decision_officer_name'];
+                $application->decision_date = $validated['decision_date'];
+                $application->decision_recorded_by = Auth::id();
+                $application->decision_recorded_at = $recordedAt;
+                $application->validated_at = $recordedAt;
                 $application->validation_snapshot = $snapshot;
-                $application->decision_reason = $request->input('decision_reason');
-                $application->decision_notes = $request->input('decision_notes');
+                $application->decision_reason = $validated['decision_reason'] ?? null;
+                $application->decision_notes = $validated['decision_notes'] ?? null;
                 $application->save();
 
                 AuditLogger::record(
@@ -300,6 +317,12 @@ class ApplicationWorkflowController extends Controller
                     $application,
                     $application,
                     [
+                        'decision_authority' => $application->decision_authority,
+                        'decision_officer_name' => $application->decision_officer_name,
+                        'decision_date' => optional($application->decision_date)->toDateString(),
+                        'recorded_by_user_id' => $application->decision_recorded_by,
+                        'recorded_by_role' => 'Legal Clearance Staff',
+                        'recorded_at' => optional($application->decision_recorded_at)->toDateTimeString(),
                         'decision_reason' => $application->decision_reason,
                         'decision_notes' => $application->decision_notes,
                         'validated_at' => optional($application->validated_at)->toDateTimeString(),
@@ -322,7 +345,7 @@ class ApplicationWorkflowController extends Controller
             return back()->with('error', 'Approval could not be completed. Refresh the application and try again. If the problem continues, check the server logs or contact the system administrator.');
         }
 
-        return back()->with('success', 'PARPO II approval recorded. The final decision is locked; release to the client is tracked separately.');
+        return back()->with('success', 'PARPO II Approved decision recorded by Legal Clearance Staff. The final decision is locked; release to the client is tracked separately.');
     }
 
     /**
@@ -336,11 +359,13 @@ class ApplicationWorkflowController extends Controller
         }
 
         if ($application->status !== LandTransferApplication::STATUS_FOR_RELEASING) {
-            return back()->withErrors(['status' => 'Final Not Approved decision is only available at PARPO II Decision Pending. Use Return for Compliance for intake deficiencies.']);
+            return back()->withErrors(['status' => 'Final Not Approved decision is only available at PARPO II Decision Ready to Record. Use Return for Compliance for intake deficiencies.']);
         }
 
-        $request->validate([
+        $validated = $request->validate([
             'final_decision_confirmation' => ['accepted'],
+            'decision_officer_name' => ['required', 'string', 'max:255'],
+            'decision_date' => ['required', 'date', 'before_or_equal:today'],
             'decision_reason' => ['required', 'string', 'max:1000'],
             'decision_notes' => ['nullable', 'string', 'max:4000'],
         ], [
@@ -363,7 +388,7 @@ class ApplicationWorkflowController extends Controller
         }
 
         try {
-            DB::transaction(function () use ($request, $application, $snapshot) {
+            DB::transaction(function () use ($validated, $application, $snapshot) {
                 $application = LandTransferApplication::query()
                     ->lockForUpdate()
                     ->findOrFail($application->id);
@@ -378,12 +403,18 @@ class ApplicationWorkflowController extends Controller
 
                 $application->status = LandTransferApplication::STATUS_NOT_APPROVED;
                 $application->release_status = LandTransferApplication::RELEASE_NOT_READY;
-                $application->reviewed_by = Auth::id();
-                $application->reviewed_at = now();
-                $application->validated_at = now();
+                $recordedAt = now();
+                $application->reviewed_by = Auth::id(); // Legacy compatibility: recorder, not the PARPO II decision-maker.
+                $application->reviewed_at = $recordedAt;
+                $application->decision_authority = LandTransferApplication::FINAL_DECISION_AUTHORITY;
+                $application->decision_officer_name = $validated['decision_officer_name'];
+                $application->decision_date = $validated['decision_date'];
+                $application->decision_recorded_by = Auth::id();
+                $application->decision_recorded_at = $recordedAt;
+                $application->validated_at = $recordedAt;
                 $application->validation_snapshot = $snapshot;
-                $application->decision_reason = $request->input('decision_reason');
-                $application->decision_notes = $request->input('decision_notes');
+                $application->decision_reason = $validated['decision_reason'];
+                $application->decision_notes = $validated['decision_notes'] ?? null;
                 $application->save();
 
                 $form4Recommendation = $application->ltc_form4_recommendation_decision;
@@ -393,6 +424,12 @@ class ApplicationWorkflowController extends Controller
                     $application,
                     $application,
                     [
+                        'decision_authority' => $application->decision_authority,
+                        'decision_officer_name' => $application->decision_officer_name,
+                        'decision_date' => optional($application->decision_date)->toDateString(),
+                        'recorded_by_user_id' => $application->decision_recorded_by,
+                        'recorded_by_role' => 'Legal Clearance Staff',
+                        'recorded_at' => optional($application->decision_recorded_at)->toDateTimeString(),
                         'decision_reason' => $application->decision_reason,
                         'decision_notes' => $application->decision_notes,
                         'validated_at' => optional($application->validated_at)->toDateTimeString(),
@@ -417,7 +454,7 @@ class ApplicationWorkflowController extends Controller
             return back()->with('error', 'The Not Approved decision could not be completed. Refresh the application and try again. If the problem continues, check the server logs or contact the system administrator.');
         }
 
-        return back()->with('success', 'PARPO II Not Approved decision recorded. The application is now locked.');
+        return back()->with('success', 'PARPO II Not Approved decision recorded by Legal Clearance Staff. The application is now locked.');
     }
 
     public function markReadyForRelease(Request $request, LandTransferApplication $application)
@@ -543,6 +580,8 @@ class ApplicationWorkflowController extends Controller
             'application_code' => $application->application_code,
             'status' => $application->status,
             'status_label' => $application->statusLabel(),
+            'workflow_action_label' => $application->workflowActionLabel(),
+            'workflow_authority_label' => $application->workflowAuthorityLabel(),
             'next_status' => $nextStatus,
             'next_status_label' => $nextStatus ? (LandTransferApplication::statusLabels()[$nextStatus] ?? $nextStatus) : null,
             'is_final' => $application->isFinalized(),
@@ -571,6 +610,10 @@ class ApplicationWorkflowController extends Controller
             'release_recipient_name' => $application->release_recipient_name,
             'release_logbook_reference' => $application->release_logbook_reference,
             'csm_status' => $application->csm_status,
+            'decision_authority' => $application->decision_authority,
+            'decision_officer_name' => $application->decision_officer_name,
+            'decision_date' => optional($application->decision_date)->toDateString(),
+            'decision_recorded_at' => optional($application->decision_recorded_at)->toDateTimeString(),
             'requirements' => $requirements,
         ]);
     }

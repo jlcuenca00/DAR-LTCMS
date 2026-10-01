@@ -53,17 +53,22 @@ Any real ownership transfer or registry alteration remains outside automatic sys
 
 ## User roles
 
-### DAR Staff
+### Legal Clearance Staff
 
-Staff:
+The internal DAR-LTCMS operator role is limited to the Legal Division personnel assigned to clearance entry, processing records, and exit/release tracking. The existing database role value remains `staff` for compatibility.
+
+Legal Clearance Staff:
 
 - manually encode applications;
 - manage Landowner, Parcel, Landholding, Source/Reference, and application records;
 - upload/review supporting requirements;
-- process applications through the office workflow;
+- record administrative workflow movements and results received from other DAR offices;
+- record the official PARPO II decision without impersonating the decision authority;
 - generate/view reports and clearance outputs;
 - review audit logs; and
 - manage authorized system accounts.
+
+LTID personnel, Chief Legal, PARPO II, the cashier, and other DAR offices are tracked as **administrative authorities/stages**, not DAR-LTCMS user accounts. The logged-in Legal Clearance Staff user is the system recorder of those external office actions.
 
 ### Landowner
 
@@ -91,17 +96,17 @@ Legal Completeness Review
         ↓
 Payment / Official Receipt Recording
         ↓
-Endorsed to LTID for Verification
+With LTID for Verification
         ↓
-LTID Verification / Returned to Legal
+Returned to Legal Division
         ↓
 Legal Evaluation / CSW Preparation
         ↓
-Chief Legal Final Review
+With Chief Legal for Review
         ↓
-Forwarded to PARPO II
+With PARPO II for Decision
         ↓
-PARPO II Decision Pending
+PARPO II Decision Ready to Record
         ↓
 Approved or Not Approved (FINAL)
         ↓
@@ -219,6 +224,8 @@ Until those live production checks are complete, the project should be described
 ## Thesis/diagram rule
 
 Never draw a flow where Released/GRANTED clearance directly changes Parcel ownership.
+
+For auditability, DAR-LTCMS distinguishes the **official administrative authority/action** from the **Legal Clearance Staff user who records it**. Final decisions store the PARPO II authority, decision officer/signatory, official decision date, recorder, and recording timestamp.
 
 A final clearance may lead to:
 

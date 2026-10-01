@@ -20,7 +20,7 @@
                 'class' => 'bg-amber-50 text-amber-800 border-amber-200',
             ],
             'endorsed_lti' => [
-                'label' => 'Endorsed to LTID for Verification',
+                'label' => 'With LTID for Verification',
                 'count' => (int) ($normalizedStatusCounts['endorsed_lti'] ?? 0),
                 'class' => 'bg-blue-50 text-blue-800 border-blue-200',
             ],
@@ -35,17 +35,17 @@
                 'class' => 'bg-blue-50 text-blue-800 border-blue-200',
             ],
             'endorsed_chief_legal' => [
-                'label' => 'Chief Legal Final Review',
+                'label' => 'With Chief Legal for Review',
                 'count' => (int) ($normalizedStatusCounts['endorsed_chief_legal'] ?? 0),
                 'class' => 'bg-indigo-50 text-indigo-800 border-indigo-200',
             ],
             'endorsed_parpo' => [
-                'label' => 'Forwarded to PARPO II',
+                'label' => 'With PARPO II for Decision',
                 'count' => (int) ($normalizedStatusCounts['endorsed_parpo'] ?? 0),
                 'class' => 'bg-indigo-50 text-indigo-800 border-indigo-200',
             ],
             'for_releasing' => [
-                'label' => 'PARPO II Decision Pending',
+                'label' => 'PARPO II Decision Ready to Record',
                 'count' => (int) ($normalizedStatusCounts['for_releasing'] ?? 0),
                 'class' => 'bg-violet-50 text-violet-800 border-violet-200',
             ],

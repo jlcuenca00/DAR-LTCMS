@@ -10,6 +10,11 @@ class ApplicationClearance extends Model
         'land_transfer_application_id',
         'clearance_number',
         'decision_status',
+        'decision_authority',
+        'decision_officer_name',
+        'decision_date',
+        'decision_recorded_by',
+        'decision_recorded_at',
         'application_code',
         'transferor_name',
         'transferee_name',
@@ -25,6 +30,8 @@ class ApplicationClearance extends Model
 
     protected $casts = [
         'parcel_snapshot' => 'array',
+        'decision_date' => 'date',
+        'decision_recorded_at' => 'datetime',
         'reviewed_at' => 'datetime',
         'generated_at' => 'datetime',
     ];
@@ -43,6 +50,11 @@ class ApplicationClearance extends Model
     public function application()
     {
         return $this->belongsTo(LandTransferApplication::class, 'land_transfer_application_id');
+    }
+
+    public function decisionRecordedBy()
+    {
+        return $this->belongsTo(User::class, 'decision_recorded_by');
     }
 
     public function generatedByUser()

@@ -634,7 +634,7 @@
                                 <label class="user-label">Role</label>
                                 <select name="role" required class="user-select">
                                     <option value="">Select role</option>
-                                    <option value="staff" {{ old('role') === 'staff' ? 'selected' : '' }}>Staff</option>
+                                    <option value="staff" {{ old('role') === 'staff' ? 'selected' : '' }}>Legal Clearance Staff</option>
                                     <option value="landowner" {{ old('role') === 'landowner' ? 'selected' : '' }}>Landowner</option>
                                     <option value="geodetic" {{ old('role') === 'geodetic' ? 'selected' : '' }}>Geodetic</option>
                                 </select>

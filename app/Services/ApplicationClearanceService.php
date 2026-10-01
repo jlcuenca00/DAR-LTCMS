@@ -4,7 +4,6 @@ namespace App\Services;
 
 use App\Models\ApplicationClearance;
 use App\Models\LandTransferApplication;
-use App\Models\User;
 use Illuminate\Support\Facades\DB;
 
 class ApplicationClearanceService
@@ -74,14 +73,18 @@ class ApplicationClearanceService
                 ];
             }
 
-            $reviewOfficer = User::find($application->reviewed_by);
-
-            $reviewOfficerName = $reviewOfficer?->name
-                ?? ('User #' . ($application->reviewed_by ?? $userId));
+            $decisionAuthority = $application->decision_authority
+                ?: LandTransferApplication::FINAL_DECISION_AUTHORITY;
+            $decisionOfficerName = $application->decision_officer_name
+                ?: 'Official decision officer not recorded';
+            $decisionDate = $application->decision_date
+                ?? $application->reviewed_at?->toDateString()
+                ?? now()->toDateString();
 
             // The LTC number belongs to the immutable PARPO II decision output,
-            // not to the later administrative delivery date.
-            $decisionYear = ($application->reviewed_at ?? now())->format('Y');
+            // not to the later administrative delivery date or the Legal Staff
+            // system-recording timestamp.
+            $decisionYear = \Illuminate\Support\Carbon::parse($decisionDate)->format('Y');
             $pageNumber = max(1, (int) ($application->ltc_page_number ?: 1));
 
             /*
@@ -116,6 +119,11 @@ class ApplicationClearanceService
                 'land_transfer_application_id' => $application->id,
                 'clearance_number' => $clearanceNumber,
                 'decision_status' => $application->status,
+                'decision_authority' => $decisionAuthority,
+                'decision_officer_name' => $decisionOfficerName,
+                'decision_date' => $decisionDate,
+                'decision_recorded_by' => $application->decision_recorded_by ?: $userId,
+                'decision_recorded_at' => $application->decision_recorded_at ?? $application->reviewed_at ?? now(),
                 'application_code' => $application->application_code,
                 'transferor_name' => $application->transferorDisplayName(),
                 'transferee_name' => $application->transfereeDisplayName(),
@@ -123,8 +131,11 @@ class ApplicationClearanceService
                 'barangay' => $application->barangay,
                 'total_area_hectares' => $totalArea,
                 'parcel_snapshot' => $parcelSnapshot,
-                'review_officer_name' => $reviewOfficerName,
-                'reviewed_at' => $application->reviewed_at,
+                // Legacy snapshot columns remain populated for backward compatibility.
+                // review_officer_name now mirrors the official decision officer rather
+                // than the authenticated Legal Staff recorder.
+                'review_officer_name' => $decisionOfficerName,
+                'reviewed_at' => $application->decision_recorded_at ?? $application->reviewed_at,
                 'generated_by' => $userId,
                 'generated_at' => now(),
             ]);
@@ -136,6 +147,11 @@ class ApplicationClearanceService
                 [
                     'clearance_number' => $clearance->clearance_number,
                     'decision_status' => $clearance->decision_status,
+                    'decision_authority' => $clearance->decision_authority,
+                    'decision_officer_name' => $clearance->decision_officer_name,
+                    'decision_date' => optional($clearance->decision_date)->toDateString(),
+                    'recorded_by_user_id' => $clearance->decision_recorded_by,
+                    'recorded_at' => optional($clearance->decision_recorded_at)->toDateTimeString(),
                     'total_area_hectares' => $clearance->total_area_hectares,
                     'parcel_count' => count($parcelSnapshot),
                     'scope_note' => 'Immutable final clearance decision snapshot only. No ownership transfer or registry mutation was performed.',

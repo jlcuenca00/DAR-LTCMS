@@ -24,7 +24,7 @@ php artisan migrate:fresh --seeder=BarebonesTesterSeeder
 Expected test state:
 
 ```text
-5 Staff tester accounts
+5 Legal Clearance Staff tester accounts
 required document reference list
 0 demo Landowners
 0 demo Geodetic accounts

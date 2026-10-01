@@ -17,7 +17,7 @@ Expected: build and automated tests pass before manual UAT.
 
 ## 2. Login and role routing
 
-- [ ] Staff can log in
+- [ ] Legal Clearance Staff can log in
 - [ ] Landowner A can log in
 - [ ] Landowner B can log in
 - [ ] Geodetic user can log in
@@ -26,26 +26,26 @@ Expected: build and automated tests pass before manual UAT.
 
 Expected: role-based dashboards/navigation are correct.
 
-## 3. Staff dashboard and navigation
+## 3. Legal Clearance Staff dashboard and navigation
 
-- [ ] Staff Dashboard loads
+- [ ] Legal Clearance Staff Dashboard loads
 - [ ] Quick actions open the correct modules
 - [ ] Sidebar active states are correct
 - [ ] User Management remains an administrative function
 - [ ] Logout works
 
-## 4. Staff application encoding and document review
+## 4. Legal Clearance Staff application encoding and document review
 
-- [ ] Staff can open Clearance Applications
-- [ ] Staff can manually encode an application
-- [ ] Staff can encode/select multiple transferor/s and transferee/s where applicable
-- [ ] Staff can link the relevant Parcel record/s
-- [ ] Staff can upload/review supporting documents
+- [ ] Legal Clearance Staff can open Clearance Applications
+- [ ] Legal Clearance Staff can manually encode an application
+- [ ] Legal Clearance Staff can encode/select multiple transferor/s and transferee/s where applicable
+- [ ] Legal Clearance Staff can link the relevant Parcel record/s
+- [ ] Legal Clearance Staff can upload/review supporting documents
 - [ ] Requirement-specific data fields display correctly
 - [ ] Date issued is available where applicable
 - [ ] Transfer-instrument fields display for deeds/instruments
 - [ ] Notarial fields display for notarized requirements
-- [ ] Staff can submit/process the application through the workflow
+- [ ] Legal Clearance Staff can record the application through the tracked administrative workflow
 
 Expected: document data capture supports administrative review only; it is not automatic legal verification.
 
@@ -55,19 +55,19 @@ Verify a positive-path application moves through:
 
 - [ ] Legal Completeness Review
 - [ ] Payment / Official Receipt Recording
-- [ ] Endorsed to LTID for Verification
-- [ ] LTID Verification / Returned to Legal
+- [ ] With LTID for Verification
+- [ ] Returned to Legal Division
 - [ ] Legal Evaluation / CSW Preparation
-- [ ] Chief Legal Final Review
-- [ ] Forwarded to PARPO II
-- [ ] PARPO II Decision Pending
-- [ ] Approved final decision
+- [ ] With Chief Legal for Review
+- [ ] With PARPO II for Decision
+- [ ] PARPO II Decision Ready to Record
+- [ ] Approved final decision recorded with PARPO II authority, officer/signatory, official date, and Legal Staff recorder
 - [ ] Ready for Release
 - [ ] Released to Client
 
 Also verify a separate application can receive:
 
-- [ ] Not Approved final decision
+- [ ] Not Approved final decision recorded with PARPO II authority, officer/signatory, official date, and Legal Staff recorder
 
 Expected: **Approved** and **Not Approved** are the final application decisions. Ready for Release and Released to Client are separate administrative delivery statuses.
 
@@ -196,16 +196,16 @@ Expected: map features support review/reference only and do not mutate ownership
 - [ ] Notification bell/panel works
 - [ ] Full notification archive opens
 - [ ] Users only see notifications intended for them
-- [ ] Staff notifications distinguish Approved/Not Approved final decisions from Ready for Release and Released to Client events
+- [ ] Legal Clearance Staff notifications distinguish Approved/Not Approved final decisions from Ready for Release and Released to Client events
 - [ ] Landowner notifications expose only their own application information
 
 ## 17. User / Role Management
 
 - [ ] Staff can list/create/update authorized users
-- [ ] Available roles are Staff, Landowner, and Geodetic
+- [ ] Available roles are Legal Clearance Staff (stored internally as `staff`), Landowner, and Geodetic
 - [ ] Activate/deactivate controls work
 - [ ] Landowner account linkage works
-- [ ] User management remains Staff-only
+- [ ] User management remains Legal Clearance Staff-only
 - [ ] Significant account actions are audit logged
 
 ## 18. Security and protected files

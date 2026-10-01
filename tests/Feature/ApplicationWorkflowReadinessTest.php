@@ -107,6 +107,8 @@ class ApplicationWorkflowReadinessTest extends TestCase
         $this->actingAs($staff)
             ->post(route('staff.applications.approve', $missingParcel), [
                 'final_decision_confirmation' => '1',
+                'decision_officer_name' => 'PARPO II Test Signatory',
+                'decision_date' => now()->toDateString(),
                 'decision_reason' => 'Decision readiness regression.',
             ])
             ->assertSessionHasErrors(['validation', 'parcel']);
@@ -123,6 +125,8 @@ class ApplicationWorkflowReadinessTest extends TestCase
         $this->actingAs($staff)
             ->post(route('staff.applications.approve', $missingForm4), [
                 'final_decision_confirmation' => '1',
+                'decision_officer_name' => 'PARPO II Test Signatory',
+                'decision_date' => now()->toDateString(),
                 'decision_reason' => 'Decision readiness regression.',
             ])
             ->assertSessionHasErrors(['validation', 'form4']);
@@ -148,6 +152,8 @@ class ApplicationWorkflowReadinessTest extends TestCase
         $this->actingAs($staff)
             ->post(route('staff.applications.not_approved', $missingParcel), [
                 'final_decision_confirmation' => '1',
+                'decision_officer_name' => 'PARPO II Test Signatory',
+                'decision_date' => now()->toDateString(),
                 'decision_reason' => 'Adverse PARPO II decision.',
             ])
             ->assertSessionHasErrors(['validation', 'parcel']);
@@ -169,6 +175,8 @@ class ApplicationWorkflowReadinessTest extends TestCase
         $this->actingAs($staff)
             ->post(route('staff.applications.not_approved', $complete), [
                 'final_decision_confirmation' => '1',
+                'decision_officer_name' => 'PARPO II Test Signatory',
+                'decision_date' => now()->toDateString(),
                 'decision_reason' => 'Substantive review supports denial.',
             ])
             ->assertSessionHas('success');
@@ -259,6 +267,8 @@ class ApplicationWorkflowReadinessTest extends TestCase
         $this->actingAs($staff)
             ->post(route('staff.applications.approve', $application), [
                 'final_decision_confirmation' => '1',
+                'decision_officer_name' => 'PARPO II Test Signatory',
+                'decision_date' => now()->toDateString(),
                 'decision_reason' => 'Record is ready for final PARPO II approval.',
                 'decision_notes' => 'Citizen Charter workflow regression.',
             ])
@@ -315,6 +325,8 @@ class ApplicationWorkflowReadinessTest extends TestCase
         $this->actingAs($staff)
             ->post(route('staff.applications.approve', $application), [
                 'final_decision_confirmation' => '1',
+                'decision_officer_name' => 'PARPO II Test Signatory',
+                'decision_date' => now()->toDateString(),
                 'decision_reason' => 'Authorized PARPO II approval after review of the recommendation.',
             ])
             ->assertSessionHas('success');

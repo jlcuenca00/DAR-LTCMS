@@ -402,7 +402,7 @@
                         <select id="user-role" name="role" class="user-management-control">
                             <option value="">All roles</option>
                             @foreach (\App\Models\User::ROLES as $role)
-                                <option value="{{ $role }}" @selected(($filters['role'] ?? '') === $role)>{{ ucwords($role) }}</option>
+                                <option value="{{ $role }}" @selected(($filters['role'] ?? '') === $role)>{{ $role === 'staff' ? 'Legal Clearance Staff' : ucwords($role) }}</option>
                             @endforeach
                         </select>
                     </div>
@@ -468,7 +468,7 @@
                                 <td>
                                     <span class="user-management-role {{ $user->role === 'staff' ? 'staff' : '' }}">
                                         <i class="fa-solid {{ $roleIcon }}" aria-hidden="true"></i>
-                                        {{ ucwords($user->role) }}
+                                        {{ $user->role === 'staff' ? 'Legal Clearance Staff' : ucwords($user->role) }}
                                     </span>
                                 </td>
                                 <td>

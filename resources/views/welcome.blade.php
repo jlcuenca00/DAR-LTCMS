@@ -198,7 +198,7 @@
                         </div>
                     </div>
                     <div class="panel-body">
-                        <div class="panel-row"><div class="panel-label">Applications</div><div class="panel-value">Entered by authorized DAR Staff</div></div>
+                        <div class="panel-row"><div class="panel-label">Applications</div><div class="panel-value">Entered by Legal Clearance Staff</div></div>
                         <div class="panel-row"><div class="panel-label">Final decision</div><div class="panel-value">Approved or Not Approved</div></div>
                         <div class="panel-row"><div class="panel-label">Clearance form</div><div class="panel-value">LTC Form No. 5 · GRANTED / DENIED</div></div>
                     </div>
@@ -213,7 +213,7 @@
                     <h2 class="section-title" id="about-title">What DAR-LTCMS helps with.</h2>
                 </div>
                 <div class="feature-line">
-                    <article class="feature"><span class="feature-number">01</span><h3>Applications</h3><p>DAR Staff record and review land transfer clearance applications.</p></article>
+                    <article class="feature"><span class="feature-number">01</span><h3>Applications</h3><p>Legal Clearance Staff encode applications and record their progress through the DAR administrative process.</p></article>
                     <article class="feature"><span class="feature-number">02</span><h3>Land Information</h3><p>Keep landowner, parcel, and landholding information together.</p></article>
                     <article class="feature"><span class="feature-number">03</span><h3>Updates</h3><p>See where an application is in the DAR process and view its final result.</p></article>
                     <article class="feature"><span class="feature-number">04</span><h3>Privacy</h3><p>Users only see the information allowed for their account.</p></article>
@@ -258,16 +258,16 @@
                 <div class="side-note">
                     <p class="section-kicker">Process</p>
                     <h2 class="section-title" id="process-title">How an application moves through DAR.</h2>
-                    <p class="section-intro">DAR Staff update the application as it passes through each office step.</p>
+                    <p class="section-intro">Legal Clearance Staff update the record as the application passes through each real-world DAR office step.</p>
                 </div>
                 <div>
                     <div class="workflow-grid">
                         <div class="workflow-step"><span class="workflow-number">1</span><strong>Legal Completeness Review</strong></div>
                         <div class="workflow-step"><span class="workflow-number">2</span><strong>Payment / Official Receipt Recording</strong></div>
-                        <div class="workflow-step"><span class="workflow-number">3</span><strong>LTID Verification</strong></div>
+                        <div class="workflow-step"><span class="workflow-number">3</span><strong>With LTID for Verification</strong></div>
                         <div class="workflow-step"><span class="workflow-number">4</span><strong>Legal Evaluation / CSW Preparation</strong></div>
-                        <div class="workflow-step"><span class="workflow-number">5</span><strong>Chief Legal Final Review</strong></div>
-                        <div class="workflow-step"><span class="workflow-number">6</span><strong>PARPO II Final Decision</strong></div>
+                        <div class="workflow-step"><span class="workflow-number">5</span><strong>With Chief Legal for Review</strong></div>
+                        <div class="workflow-step"><span class="workflow-number">6</span><strong>PARPO II Decision Recorded by Legal</strong></div>
                         <div class="workflow-step"><span class="workflow-number">7</span><strong>Signed Form No. 5 / Ready for Release</strong></div>
                         <div class="workflow-step"><span class="workflow-number">8</span><strong>Release to Client</strong></div>
                     </div>
@@ -281,7 +281,7 @@
                 <p class="section-kicker">Users</p>
                 <h2 class="section-title" id="access-title">Who can use DAR-LTCMS?</h2>
                 <div class="role-grid">
-                    <article class="role"><h3>DAR Staff</h3><p>Enter and review applications, manage DAR information, and prepare reports.</p></article>
+                    <article class="role"><h3>Legal Clearance Staff</h3><p>Encode clearance applications, record administrative workflow updates received from other DAR offices, manage supporting records, and prepare monitoring outputs.</p></article>
                     <article class="role"><h3>Landowners</h3><p>View only their own linked land information and application progress. Landowners do not create applications in the system.</p></article>
                     <article class="role"><h3>Geodetic Personnel</h3><p>Review parcel/reference/map information and, when authorized, update parcel map geometry only. They do not approve clearance applications or edit ownership records.</p></article>
                 </div>

@@ -141,7 +141,7 @@ test.describe('authenticated UI UX behavior', () => {
         await expect(body).toBeHidden();
     });
 
-    test('Application Actions backdrop covers the complete browser viewport', async ({ page }) => {
+    test('Manage Workflow opens from the integrated workflow panel and covers the viewport', async ({ page }) => {
         await page.setViewportSize({ width: 1440, height: 900 });
         await page.goto('/staff/applications');
         await waitForUiUx(page);
@@ -152,8 +152,11 @@ test.describe('authenticated UI UX behavior', () => {
         await firstApplication.click();
         await waitForUiUx(page);
 
-        const trigger = page.locator('#workflow-modal-open');
-        if (!(await trigger.count())) test.skip(true, 'Application Actions is not available for this record.');
+        const trigger = page.locator('#workflow-overview [data-workflow-modal-open]').first();
+        if (!(await trigger.count())) test.skip(true, 'Manage Workflow is not available for this record.');
+
+        await expect(page.locator('#workflow-overview')).toBeVisible();
+        await expect(page.locator('.workflow-fab')).toHaveCount(0);
 
         const backdrop = page.locator('body > .workflow-modal-backdrop');
         await expect(backdrop).toHaveAttribute('data-ui-viewport-portal', 'true');

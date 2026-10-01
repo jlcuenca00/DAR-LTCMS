@@ -36,7 +36,7 @@ class BarebonesTesterSeeder extends Seeder
         $password = Hash::make('password');
 
         $users = [
-            ['name' => 'DAR Staff Tester', 'email' => 'staff.tester@dar-ltcms.local'],
+            ['name' => 'Legal Clearance Staff Tester', 'email' => 'staff.tester@dar-ltcms.local'],
             ['name' => 'Jay', 'email' => 'jay.staff@dar-ltcms.local'],
             ['name' => 'Miles', 'email' => 'miles.staff@dar-ltcms.local'],
             ['name' => 'Vea', 'email' => 'vea.staff@dar-ltcms.local'],
