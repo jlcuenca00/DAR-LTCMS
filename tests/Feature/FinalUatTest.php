@@ -129,6 +129,8 @@ class FinalUatTest extends TestCase
             'barangay' => $application->barangay,
             'total_area_hectares' => '0.0000',
             'parcel_snapshot' => [],
+            'review_officer_name' => 'PARPO II UAT Signatory',
+            'reviewed_at' => now(),
             'generated_by' => $staff->id,
             'generated_at' => now(),
         ]);
