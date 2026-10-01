@@ -302,7 +302,7 @@ class FinalLtcForm5Test extends TestCase
             'generated_at' => now(),
         ]);
 
-        $this->expectException(\LogicException::class);
+        $this->expectException(\Illuminate\View\ViewException::class);
         $this->expectExceptionMessage('Invalid final decision status');
 
         view('staff.clearances.partials.form5-content', [
