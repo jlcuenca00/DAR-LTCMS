@@ -7,7 +7,6 @@ use App\Models\Landholding;
 use App\Models\Parcel;
 use App\Models\SourceRecordPackage;
 use App\Services\ProtectedAdministrativeStorage;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -58,7 +57,7 @@ class ProtectedStorageController extends Controller
     {
         if (Str::startsWith($path, 'source-record-packages/')) {
             $package = SourceRecordPackage::query()
-                ->select(['source_file_original_filename', 'source_file_mime_type'])
+                ->select(['source_file_original_filename'])
                 ->where('source_file_path', $path)
                 ->first();
 
@@ -87,7 +86,7 @@ class ProtectedStorageController extends Controller
                 ->exists();
 
             return $registered
-                ? ['filename' => basename($path), 'mime_type' => null]
+                ? ['filename' => basename($path)]
                 : null;
         }
 
