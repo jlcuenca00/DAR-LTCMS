@@ -184,9 +184,9 @@ class MonitoringReportController extends Controller
                     LandTransferApplication::STATUS_APPROVED,
                     LandTransferApplication::STATUS_RELEASED,
                 ],
-                LandTransferApplication::STATUS_DENIED => [
-                    LandTransferApplication::STATUS_DENIED,
+                LandTransferApplication::STATUS_NOT_APPROVED => [
                     LandTransferApplication::STATUS_NOT_APPROVED,
+                    LandTransferApplication::STATUS_DENIED,
                 ],
                 default => [$filters['status']],
             };
