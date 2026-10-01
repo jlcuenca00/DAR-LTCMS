@@ -518,6 +518,49 @@ class SourceRecordPackageController extends Controller
         ]);
     }
 
+    /**
+     * Update package records through Eloquent models so LegacyRecord saving
+     * safeguards (especially duplicate source-reference checks) always run.
+     * The caller already wraps this in the package/parcel transaction, so any
+     * rejected record rolls the entire link/create operation back.
+     */
+    private function syncPackageRecordsToParcel(SourceRecordPackage $sourceRecordPackage, Parcel $parcel): void
+    {
+        $sourceRecordPackage->records()
+            ->get()
+            ->each(function (LegacyRecord $record) use ($parcel): void {
+                $record->update([
+                    'parcel_id' => $parcel->id,
+                    'parcel_code' => $parcel->parcel_code,
+                ]);
+            });
+    }
+
+    private function storeSourceFile(Request $request): array
+    {
+        $file = $request->file('source_file');
+
+        if (! $file) {
+            return [];
+        }
+
+        $path = $file->store(
+            'source-record-packages',
+            ProtectedAdministrativeStorage::PRIVATE_DISK
+        );
+        $mimeType = Storage::disk(ProtectedAdministrativeStorage::PRIVATE_DISK)->mimeType($path)
+            ?: $file->getMimeType()
+            ?: 'application/octet-stream';
+
+        return [
+            'source_file_path' => $path,
+            'source_file_original_filename' => $file->getClientOriginalName(),
+            'source_file_mime_type' => $mimeType,
+            'source_file_uploaded_by_user_id' => $request->user()->id,
+            'source_file_uploaded_at' => now(),
+        ];
+    }
+
     private function generatePackageCode(): string
     {
         do {
