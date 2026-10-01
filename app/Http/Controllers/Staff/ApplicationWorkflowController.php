@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Staff;
 
 use App\Http\Controllers\Controller;
 use App\Models\LandTransferApplication;
+use App\Services\ApplicationBusinessStateIntegrityService;
 use App\Services\ApplicationClearanceIntegrityService;
 use App\Services\ApplicationClearanceService;
 use App\Services\ApplicationParcelIntegrityService;
@@ -11,7 +12,9 @@ use App\Services\ApplicationPartyIntegrityService;
 use App\Services\ApplicationRequirementService;
 use App\Services\AuditLogger;
 use App\Services\LandholdingAreaValidationService;
+use App\Services\LandownerConcurrencyService;
 use App\Services\NotificationService;
+use App\Services\ParcelConcurrencyService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -284,18 +287,8 @@ class ApplicationWorkflowController extends Controller
             'final_decision_confirmation.accepted' => 'Confirm the final PARPO II approval before continuing.',
         ]);
 
-        $this->validateDecisionChronology($application, $validated['decision_date']);
-
-        [$snapshot, $readinessErrors] = $this->decisionReadiness($application);
-
-        if (! empty($readinessErrors)) {
-            return back()->withErrors(array_merge([
-                'validation' => 'Resolve the following before recording PARPO II approval:',
-            ], $readinessErrors));
-        }
-
         try {
-            DB::transaction(function () use ($validated, $application, $snapshot) {
+            DB::transaction(function () use ($validated, $application) {
                 $application = LandTransferApplication::query()
                     ->lockForUpdate()
                     ->findOrFail($application->id);
@@ -306,6 +299,17 @@ class ApplicationWorkflowController extends Controller
 
                 if ($application->status !== LandTransferApplication::STATUS_FOR_RELEASING) {
                     throw new \RuntimeException('The application status changed before the final decision. Refresh and review the current stage.');
+                }
+
+                $this->lockFinalDecisionDependencies($application);
+                $this->validateDecisionChronology($application, $validated['decision_date']);
+
+                [$snapshot, $readinessErrors] = $this->decisionReadiness($application);
+
+                if (! empty($readinessErrors)) {
+                    throw ValidationException::withMessages(array_merge([
+                        'validation' => 'Resolve the following before recording PARPO II approval:',
+                    ], $readinessErrors));
                 }
 
                 $application->status = LandTransferApplication::STATUS_APPROVED;
@@ -351,6 +355,8 @@ class ApplicationWorkflowController extends Controller
                 app(NotificationService::class)->notifyStaffApplicationApproved($application);
                 app(NotificationService::class)->notifyLinkedLandownersFinalDecision($application);
             });
+        } catch (ValidationException $e) {
+            throw $e;
         } catch (\Throwable $e) {
             report($e);
 
@@ -385,24 +391,8 @@ class ApplicationWorkflowController extends Controller
             'decision_reason.required' => 'A reason is required before recording the final Not Approved decision.',
         ]);
 
-        $this->validateDecisionChronology($application, $validated['decision_date']);
-
-        [$snapshot] = $this->buildValidationSnapshot($application);
-
-        $readinessErrors = $this->workflowPrerequisiteErrors($snapshot['workflow_readiness']);
-
-        if (! (bool) data_get($snapshot, 'requirements.complete', false)) {
-            $readinessErrors['requirements'] = 'Applicable documentary requirements must remain complete before recording the final PARPO II Not Approved decision.';
-        }
-
-        if (! empty($readinessErrors)) {
-            return back()->withErrors(array_merge([
-                'validation' => 'Resolve the following workflow-integrity issues before recording the PARPO II Not Approved decision:',
-            ], $readinessErrors));
-        }
-
         try {
-            DB::transaction(function () use ($validated, $application, $snapshot) {
+            DB::transaction(function () use ($validated, $application) {
                 $application = LandTransferApplication::query()
                     ->lockForUpdate()
                     ->findOrFail($application->id);
@@ -413,6 +403,22 @@ class ApplicationWorkflowController extends Controller
 
                 if ($application->status !== LandTransferApplication::STATUS_FOR_RELEASING) {
                     throw new \RuntimeException('The application status changed before the Not Approved decision. Refresh and review the current stage.');
+                }
+
+                $this->lockFinalDecisionDependencies($application);
+                $this->validateDecisionChronology($application, $validated['decision_date']);
+
+                [$snapshot] = $this->buildValidationSnapshot($application);
+                $readinessErrors = $this->workflowPrerequisiteErrors($snapshot['workflow_readiness']);
+
+                if (! (bool) data_get($snapshot, 'requirements.complete', false)) {
+                    $readinessErrors['requirements'] = 'Applicable documentary requirements must remain complete before recording the final PARPO II Not Approved decision.';
+                }
+
+                if (! empty($readinessErrors)) {
+                    throw ValidationException::withMessages(array_merge([
+                        'validation' => 'Resolve the following workflow-integrity issues before recording the PARPO II Not Approved decision:',
+                    ], $readinessErrors));
                 }
 
                 $application->status = LandTransferApplication::STATUS_NOT_APPROVED;
@@ -462,6 +468,8 @@ class ApplicationWorkflowController extends Controller
                 app(NotificationService::class)->notifyStaffApplicationNotApproved($application);
                 app(NotificationService::class)->notifyLinkedLandownersFinalDecision($application);
             });
+        } catch (ValidationException $e) {
+            throw $e;
         } catch (\Throwable $e) {
             report($e);
 
@@ -475,6 +483,13 @@ class ApplicationWorkflowController extends Controller
     {
         if (! in_array($application->status, LandTransferApplication::FINAL_STATUSES, true)) {
             return back()->withErrors(['status' => 'Only a current Approved or Not Approved decision may enter release tracking. Legacy final records remain read-only.']);
+        }
+
+        $businessStateIntegrity = app(ApplicationBusinessStateIntegrityService::class)->inspect($application);
+        if (! $businessStateIntegrity['valid']) {
+            return back()->withErrors([
+                'release_integrity' => 'The application release state is internally inconsistent. Preserve the record and resolve the integrity issue before release tracking continues.',
+            ]);
         }
 
         if (! $application->clearance()->exists()) {
@@ -522,6 +537,13 @@ class ApplicationWorkflowController extends Controller
     {
         if (! in_array($application->status, LandTransferApplication::FINAL_STATUSES, true)) {
             return back()->withErrors(['status' => 'Only a current Approved or Not Approved decision may be released through this workflow. Legacy final records remain read-only.']);
+        }
+
+        $businessStateIntegrity = app(ApplicationBusinessStateIntegrityService::class)->inspect($application);
+        if (! $businessStateIntegrity['valid']) {
+            return back()->withErrors([
+                'release_integrity' => 'The application release state is internally inconsistent. Preserve the record and resolve the integrity issue before recording client release.',
+            ]);
         }
 
         if (! $application->isReleaseReady()) {
@@ -604,6 +626,10 @@ class ApplicationWorkflowController extends Controller
         $application->loadMissing('clearance');
         $requirements = app(ApplicationRequirementService::class)->evaluate($application);
         $nextStatus = $application->nextWorkflowStatus();
+        $businessStateIntegrity = app(ApplicationBusinessStateIntegrityService::class)->inspect($application);
+        $clearanceIntegrity = $application->clearance
+            ? app(ApplicationClearanceIntegrityService::class)->inspect($application)
+            : ['valid' => false, 'issues' => ['Final decision output does not exist.']];
 
         return response()->json([
             'application_id' => $application->id,
@@ -625,8 +651,15 @@ class ApplicationWorkflowController extends Controller
             'can_mark_ready_for_release' => in_array($application->status, LandTransferApplication::FINAL_STATUSES, true)
                 && ! $application->isReleasedToClient()
                 && $application->release_status !== LandTransferApplication::RELEASE_READY
-                && (bool) $application->clearance,
-            'can_release_output' => $application->isReleaseReady(),
+                && (bool) $application->clearance
+                && $businessStateIntegrity['valid']
+                && $clearanceIntegrity['valid'],
+            'can_release_output' => $application->isReleaseReady()
+                && $businessStateIntegrity['valid']
+                && $clearanceIntegrity['valid'],
+            'business_state_integrity_valid' => $businessStateIntegrity['valid'],
+            'business_state_integrity_issues' => $businessStateIntegrity['issues'],
+            'clearance_integrity_valid' => $clearanceIntegrity['valid'],
             'form4_editable' => $application->canEditForm4(),
             'applicant_is_juridical_entity' => (bool) $application->applicant_is_juridical_entity,
             'payment_order_reference' => $application->payment_order_reference,
@@ -645,6 +678,26 @@ class ApplicationWorkflowController extends Controller
             'decision_recorded_at' => optional($application->decision_recorded_at)->toDateTimeString(),
             'requirements' => $requirements,
         ]);
+    }
+
+    private function lockFinalDecisionDependencies(LandTransferApplication $application): void
+    {
+        app(LandownerConcurrencyService::class)->lockLandowners(
+            $application->linkedLandownerIds('transferee')->all()
+        );
+
+        $parcelIds = $application->applicationParcels()
+            ->whereNotNull('parcel_id')
+            ->orderBy('parcel_id')
+            ->pluck('parcel_id')
+            ->all();
+
+        app(ParcelConcurrencyService::class)->lockParcels($parcelIds);
+
+        // Any relation values loaded before these locks may be stale. Force the
+        // readiness services to re-read the locked shared records.
+        $application->unsetRelation('applicationParcels');
+        $application->unsetRelation('documents');
     }
 
     private function validateDecisionChronology(LandTransferApplication $application, string $decisionDate): void

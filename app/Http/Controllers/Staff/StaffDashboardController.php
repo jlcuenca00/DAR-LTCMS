@@ -138,8 +138,21 @@ class StaffDashboardController extends Controller
                         LandTransferApplication::FINAL_STATUSES,
                         LandTransferApplication::LEGACY_FINAL_STATUSES
                     ))
-                    ->where('updated_at', '>=', $todayStart)
-                    ->where('updated_at', '<', $tomorrowStart)
+                    ->where(function ($query) use ($todayStart, $tomorrowStart) {
+                        $query->where(function ($decisionQuery) use ($todayStart, $tomorrowStart) {
+                            $decisionQuery
+                                ->whereNotNull('decision_recorded_at')
+                                ->where('decision_recorded_at', '>=', $todayStart)
+                                ->where('decision_recorded_at', '<', $tomorrowStart);
+                        })->orWhere(function ($legacyFallback) use ($todayStart, $tomorrowStart) {
+                            $legacyFallback
+                                ->whereIn('status', LandTransferApplication::LEGACY_FINAL_STATUSES)
+                                ->whereNull('decision_recorded_at')
+                                ->whereNotNull('reviewed_at')
+                                ->where('reviewed_at', '>=', $todayStart)
+                                ->where('reviewed_at', '<', $tomorrowStart);
+                        });
+                    })
                     ->count(),
                 'icon' => 'fa-gavel',
             ],

@@ -7,6 +7,7 @@ use App\Models\Landholding;
 use App\Models\LandTransferApplication;
 use App\Models\Landowner;
 use App\Services\AuditLogger;
+use App\Services\LandownerConcurrencyService;
 use App\Services\ParcelConcurrencyService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -66,6 +67,7 @@ class ApplicationLandownerLinkController extends Controller
             $transferees = $this->applyEqualShares($transferees, $application, 'transferee');
         }
 
+        $splitEqually = $request->boolean('split_equally');
         $syncLandholdings = $request->boolean('sync_current_landholdings');
 
         if ($syncLandholdings) {
@@ -81,17 +83,31 @@ class ApplicationLandownerLinkController extends Controller
             'transferees' => $application->partyRows('transferee'),
         ];
 
-        DB::transaction(function () use ($application, $transferors, $transferees, $syncLandholdings, $oldLinks) {
+        DB::transaction(function () use ($application, $transferors, $transferees, $splitEqually, $syncLandholdings, $oldLinks) {
+            $landownerIds = collect(array_merge(
+                $oldLinks['transferors'],
+                $oldLinks['transferees'],
+                $transferors,
+                $transferees
+            ))->pluck('landowner_id')->filter()->all();
+
+            app(LandownerConcurrencyService::class)->lockLandowners($landownerIds);
+
+            $parcelIds = $application->applicationParcels()
+                ->whereNotNull('parcel_id')
+                ->orderBy('parcel_id')
+                ->pluck('parcel_id')
+                ->all();
+
+            app(ParcelConcurrencyService::class)->lockParcels($parcelIds);
+            $application->load('applicationParcels.parcel');
+
+            if ($splitEqually) {
+                $transferors = $this->applyEqualShares($transferors, $application, 'transferor');
+                $transferees = $this->applyEqualShares($transferees, $application, 'transferee');
+            }
+
             if ($syncLandholdings) {
-                $parcelIds = $application->applicationParcels()
-                    ->whereNotNull('parcel_id')
-                    ->orderBy('parcel_id')
-                    ->pluck('parcel_id')
-                    ->all();
-
-                app(ParcelConcurrencyService::class)->lockParcels($parcelIds);
-                $application->load('applicationParcels.parcel');
-
                 $shareErrors = $this->validateCurrentLandholdingShares($transferors, $application);
 
                 if (! empty($shareErrors)) {

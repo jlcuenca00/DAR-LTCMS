@@ -9,6 +9,7 @@ use App\Models\LegacyRecord;
 use App\Models\Parcel;
 use App\Models\SourceRecordPackage;
 use App\Services\AuditLogger;
+use App\Services\LandownerConcurrencyService;
 use App\Services\ParcelGeometryService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -239,6 +240,10 @@ class LegacyRecordController extends Controller
         );
 
         DB::transaction(function () use ($data, $geometry, $legacyRecord, $request) {
+            if (! empty($data['landowner_id'])) {
+                app(LandownerConcurrencyService::class)->lockLandowner((int) $data['landowner_id']);
+            }
+
             $parcel = Parcel::create([
                 'parcel_code' => $data['parcel_code'],
                 'title_no' => $data['title_no'] ?: $legacyRecord->title_number,

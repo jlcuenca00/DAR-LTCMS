@@ -440,6 +440,131 @@ class ApplicationWorkflowReadinessTest extends TestCase
         $this->assertNotNull($application->released_at);
     }
 
+    public function test_final_decision_locks_shared_transferee_and_parcel_dependencies_before_readiness_snapshot(): void
+    {
+        if (DB::connection()->getDriverName() !== 'pgsql') {
+            $this->markTestSkipped('Shared row-lock SQL assertion applies to the production PostgreSQL stack.');
+        }
+
+        $staff = $this->staffUser();
+        $application = $this->application(
+            $staff,
+            LandTransferApplication::STATUS_FOR_RELEASING,
+            'READINESS-SHARED-LOCKS'
+        );
+        $this->linkParcel($application, 'READINESS-SHARED-LOCKS-PARCEL');
+        $this->completeForm4($application);
+        $this->completePaymentAndCsw($application, $staff);
+
+        $queries = [];
+        DB::listen(function ($query) use (&$queries) {
+            $queries[] = strtolower($query->sql);
+        });
+
+        $this->actingAs($staff)
+            ->post(route('staff.applications.approve', $application), [
+                'final_decision_confirmation' => '1',
+                'decision_officer_name' => 'PARPO II Shared Lock Signatory',
+                'decision_date' => now()->toDateString(),
+                'decision_reason' => 'Shared dependency lock regression.',
+            ])
+            ->assertSessionHas('success');
+
+        $this->assertTrue(
+            collect($queries)->contains(
+                fn ($sql) => str_contains($sql, 'landowners')
+                    && str_contains($sql, 'for update')
+            ),
+            'Expected final-decision readiness to row-lock linked transferee Landowner records.'
+        );
+
+        $this->assertTrue(
+            collect($queries)->contains(
+                fn ($sql) => str_contains($sql, 'parcels')
+                    && str_contains($sql, 'for update')
+            ),
+            'Expected final-decision readiness to row-lock linked Parcel records.'
+        );
+    }
+
+    public function test_release_tracking_fails_closed_when_application_business_state_is_inconsistent(): void
+    {
+        $staff = $this->staffUser();
+        $application = $this->application(
+            $staff,
+            LandTransferApplication::STATUS_FOR_RELEASING,
+            'READINESS-RELEASE-INTEGRITY'
+        );
+        $this->linkParcel($application, 'READINESS-RELEASE-INTEGRITY-PARCEL');
+        $this->completeForm4($application);
+        $this->completePaymentAndCsw($application, $staff);
+
+        $this->actingAs($staff)
+            ->post(route('staff.applications.approve', $application), [
+                'final_decision_confirmation' => '1',
+                'decision_officer_name' => 'PARPO II Release Integrity Signatory',
+                'decision_date' => now()->toDateString(),
+                'decision_reason' => 'Release integrity regression.',
+            ])
+            ->assertSessionHas('success');
+
+        DB::table('land_transfer_applications')
+            ->where('id', $application->id)
+            ->update(['ready_for_release_at' => now()]);
+
+        $this->actingAs($staff)
+            ->get(route('staff.applications.workflow_state', $application))
+            ->assertOk()
+            ->assertJson([
+                'business_state_integrity_valid' => false,
+                'can_mark_ready_for_release' => false,
+            ]);
+
+        $this->actingAs($staff)
+            ->post(route('staff.applications.ready_for_release', $application))
+            ->assertSessionHasErrors('release_integrity');
+
+        $this->assertSame(
+            LandTransferApplication::RELEASE_NOT_READY,
+            $application->fresh()->release_status
+        );
+
+        DB::table('land_transfer_applications')
+            ->where('id', $application->id)
+            ->update(['ready_for_release_at' => null]);
+
+        $this->actingAs($staff)
+            ->post(route('staff.applications.ready_for_release', $application))
+            ->assertSessionHas('success');
+
+        DB::table('land_transfer_applications')
+            ->where('id', $application->id)
+            ->update([
+                'released_at' => now(),
+                'release_recipient_name' => 'Premature Recipient',
+            ]);
+
+        $this->actingAs($staff)
+            ->get(route('staff.applications.workflow_state', $application))
+            ->assertOk()
+            ->assertJson([
+                'business_state_integrity_valid' => false,
+                'can_release_output' => false,
+            ]);
+
+        $this->actingAs($staff)
+            ->post(route('staff.applications.release', $application), [
+                'release_confirmation' => '1',
+                'release_recipient_name' => 'Authorized Recipient',
+            ])
+            ->assertSessionHasErrors('release_integrity');
+
+        $this->assertSame(
+            LandTransferApplication::RELEASE_READY,
+            $application->fresh()->release_status
+        );
+    }
+
     public function test_form4_recommendation_does_not_automatically_make_the_final_decision(): void
     {
         $staff = $this->staffUser();

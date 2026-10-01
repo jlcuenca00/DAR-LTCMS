@@ -201,6 +201,10 @@ class FinalDecisionIntegrityHardeningTest extends TestCase
         );
 
         $application->forceFill([
+            'reviewed_by' => $staff->id,
+            'reviewed_at' => '2026-10-01 10:00:00',
+            'validated_at' => '2026-10-01 10:00:00',
+            'validation_snapshot' => ['workflow_readiness' => ['complete' => true]],
             'decision_authority' => LandTransferApplication::FINAL_DECISION_AUTHORITY,
             'decision_officer_name' => 'PARPO II Correct Signatory',
             'decision_date' => '2026-10-01',

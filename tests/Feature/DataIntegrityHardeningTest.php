@@ -795,6 +795,47 @@ class DataIntegrityHardeningTest extends TestCase
         );
     }
 
+    public function test_landholding_mutation_locks_landowner_before_parcel_capacity_state(): void
+    {
+        if (DB::connection()->getDriverName() !== 'pgsql') {
+            $this->markTestSkipped('Shared row-lock SQL assertion applies to the production PostgreSQL stack.');
+        }
+
+        $staff = $this->staff();
+        $landowner = $this->landowner('Concurrency', 'Landowner');
+        $parcel = $this->parcel('LANDHOLDING-CONCURRENCY-PARCEL', 2.0000);
+        $queries = [];
+
+        DB::listen(function ($query) use (&$queries) {
+            $queries[] = strtolower($query->sql);
+        });
+
+        $this->actingAs($staff)
+            ->post(route('staff.records.landowners.landholdings.store', $landowner), [
+                'parcel_id' => $parcel->id,
+                'area_hectares' => 1.0000,
+                'status' => Landholding::STATUS_ACTIVE,
+            ])
+            ->assertSessionHas('success');
+
+        $landownerLockIndex = collect($queries)->search(
+            fn ($sql) => str_contains($sql, 'landowners')
+                && str_contains($sql, 'for update')
+        );
+        $parcelLockIndex = collect($queries)->search(
+            fn ($sql) => str_contains($sql, 'parcels')
+                && str_contains($sql, 'for update')
+        );
+
+        $this->assertNotFalse($landownerLockIndex, 'Expected Landholding mutation to row-lock its Landowner.');
+        $this->assertNotFalse($parcelLockIndex, 'Expected Landholding mutation to row-lock its Parcel.');
+        $this->assertLessThan(
+            $parcelLockIndex,
+            $landownerLockIndex,
+            'Landowner locks must be acquired before Parcel locks to keep the shared lock order deterministic.'
+        );
+    }
+
     public function test_model_layer_rejects_archiving_parcel_used_by_open_application(): void
     {
         $staff = $this->staff();
