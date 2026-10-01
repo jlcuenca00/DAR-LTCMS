@@ -13,7 +13,7 @@ class ClearancePrintReferenceTest extends TestCase
 
         foreach ([$staffController, $landownerController] as $controller) {
             $this->assertStringContainsString("return view('staff.clearances.show'", $controller);
-            $this->assertStringContainsString("$application->load('clearance')", $controller);
+            $this->assertStringContainsString("\$application->load('clearance')", $controller);
             $this->assertStringNotContainsString("'clearance', 'documents'", $controller);
             $this->assertStringContainsString("'isRemoteEnabled' => false", $controller);
             $this->assertStringContainsString("'defaultFont' => 'Helvetica'", $controller);
