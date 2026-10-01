@@ -17,8 +17,10 @@ Capture screenshots only from the final polished DAR-LTCMS UI using realistic no
 - [ ] Supporting document upload/review section
 - [ ] Requirement-specific document data fields
 - [ ] Workflow stage controls
+- [ ] Request Compliance / Action Required Staff workflow
+- [ ] Landowner persistent Action Required alert
+- [ ] Compliance Resolved / resumed workflow state
 - [ ] Approved final decision
-- [ ] Not Approved final decision
 - [ ] Ready for Release / Released to Client tracking
 - [ ] Locked finalized application state
 - [ ] Browser LTC Form No. 5 output
@@ -29,7 +31,7 @@ Capture screenshots only from the final polished DAR-LTCMS UI using realistic no
 Capture at least one clear final output showing:
 
 - [ ] LTC number and page value
-- [ ] GRANTED or DENIED result
+- [ ] GRANTED result for the current Approved workflow
 - [ ] linked Parcel references/area
 - [ ] recorded PARPO II decision officer/signatory matches the final-decision metadata
 - [ ] notarial details when populated
@@ -94,10 +96,12 @@ Capture at least one clear final output showing:
 03-clearance-applications.png
 04-application-review.png
 05-requirement-data-fields.png
-06-approved-locked-state.png
-07-denied-locked-state.png
-08-release-tracking.png
-08-ltc-form5-output.png
+06-compliance-required-staff.png
+07-landowner-action-required.png
+08-compliance-resolved.png
+09-approved-locked-state.png
+10-release-tracking.png
+11-ltc-form5-output.png
 09-landowner-records.png
 10-parcel-records.png
 11-source-records.png
@@ -112,7 +116,7 @@ Capture at least one clear final output showing:
 ## Screenshot quality rules
 
 - Use DAR-LTCMS branding only; do not show obsolete project branding.
-- Use the current **Approved/Not Approved** final-decision terminology and show release as a separate delivery status.
+- Use **Approved** as the only current final-decision terminology. Show Compliance Required as an open corrective state and release as a separate delivery status. Historical Not Approved / Denied records, if shown, must be clearly labeled historical.
 - Do not expose real production credentials, personal data, `.env` values, or private file paths.
 - Avoid browser clutter that distracts from the system.
 - Capture enough of reports/outputs to make labels and scope understandable.
