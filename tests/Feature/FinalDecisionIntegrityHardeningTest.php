@@ -151,20 +151,27 @@ class FinalDecisionIntegrityHardeningTest extends TestCase
             'area_hectares' => 1.0000,
         ]);
 
-        $application->forceFill([
-            'transferees' => [
-                [
-                    'name' => $firstTransferee->full_name,
-                    'landowner_id' => $firstTransferee->id,
-                    'parcel_shares' => [(string) $applicationParcel->id => 0.7500],
+        LandTransferApplication::withoutEvents(function () use (
+            $application,
+            $applicationParcel,
+            $firstTransferee,
+            $secondTransferee
+        ): void {
+            $application->forceFill([
+                'transferees' => [
+                    [
+                        'name' => $firstTransferee->full_name,
+                        'landowner_id' => $firstTransferee->id,
+                        'parcel_shares' => [(string) $applicationParcel->id => 0.7500],
+                    ],
+                    [
+                        'name' => $secondTransferee->full_name,
+                        'landowner_id' => $secondTransferee->id,
+                        'parcel_shares' => [],
+                    ],
                 ],
-                [
-                    'name' => $secondTransferee->full_name,
-                    'landowner_id' => $secondTransferee->id,
-                    'parcel_shares' => [],
-                ],
-            ],
-        ])->save();
+            ])->save();
+        });
 
         $this->actingAs($staff)
             ->post(route('staff.applications.not_approved', $application), [
