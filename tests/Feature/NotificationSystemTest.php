@@ -398,6 +398,15 @@ class NotificationSystemTest extends TestCase
             'status' => LandTransferApplication::STATUS_APPROVED,
             'release_status' => LandTransferApplication::RELEASE_NOT_READY,
             'encoded_by' => $staffUser->id,
+            'reviewed_by' => $staffUser->id,
+            'reviewed_at' => now(),
+            'validated_at' => now(),
+            'validation_snapshot' => ['workflow_readiness' => ['complete' => true]],
+            'decision_authority' => LandTransferApplication::FINAL_DECISION_AUTHORITY,
+            'decision_officer_name' => 'PARPO II Notification Signatory',
+            'decision_date' => now()->toDateString(),
+            'decision_recorded_by' => $staffUser->id,
+            'decision_recorded_at' => now(),
         ]);
 
         ApplicationClearance::create([
