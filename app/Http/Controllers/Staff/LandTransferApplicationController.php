@@ -32,6 +32,7 @@ class LandTransferApplicationController extends Controller
             'transfereeLandowner',
             'clearance',
             'decisionRecordedBy',
+            'returnedForComplianceBy',
         ]);
 
         // 1) Required documents (checklist)
