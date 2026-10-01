@@ -10,6 +10,7 @@ use App\Models\SystemNotification;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Str;
 
 class NotificationService
 {
@@ -190,6 +191,42 @@ class NotificationService
             'Your clearance application ' . $application->application_code . ' is now ' . $statusLabel . '.',
             $application,
             $this->landownerApplicationData($application)
+        );
+    }
+
+    public function notifyLinkedLandownersReturnedForCompliance(LandTransferApplication $application): void
+    {
+        $users = $this->linkedLandownerUsers($application);
+        $reason = Str::limit(trim((string) $application->latest_compliance_reason), 500);
+
+        $this->notifyUsers(
+            $users,
+            'landowner_returned_for_compliance',
+            'Compliance required',
+            'Your clearance application ' . $application->application_code . ' was returned for compliance.'
+                . ($reason !== '' ? ' Required compliance: ' . $reason : ''),
+            $application,
+            array_merge($this->landownerApplicationData($application), [
+                'compliance_reason' => $reason !== '' ? $reason : null,
+                'returned_for_compliance_at' => optional($application->returned_for_compliance_at)->toDateTimeString(),
+            ])
+        );
+    }
+
+    public function notifyLinkedLandownersReadyForRelease(LandTransferApplication $application): void
+    {
+        $users = $this->linkedLandownerUsers($application);
+
+        $this->notifyUsers(
+            $users,
+            'landowner_ready_for_release',
+            'Decision output ready for release',
+            'The signed clearance decision for application ' . $application->application_code . ' is ready for release.',
+            $application,
+            array_merge($this->landownerApplicationData($application), [
+                'release_status' => $application->release_status,
+                'ready_for_release_at' => optional($application->ready_for_release_at)->toDateTimeString(),
+            ])
         );
     }
 
