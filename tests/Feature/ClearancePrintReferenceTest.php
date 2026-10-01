@@ -57,7 +57,9 @@ class ClearancePrintReferenceTest extends TestCase
         $this->assertStringNotContainsString('raw.githubusercontent.com', $form);
         $this->assertStringContainsString('CERTIFICATION', $form);
         $this->assertStringContainsString('(Land Transfer Clearance)', $form);
-        $this->assertStringContainsString('ENGR. MANUEL M. GALON, JR.', $form);
+        $this->assertStringContainsString('$decisionOfficerName', $form);
+        $this->assertStringContainsString('$decisionAuthority', $form);
+        $this->assertStringNotContainsString('ENGR. MANUEL M. GALON, JR.', $form);
         $this->assertStringContainsString('Not official if not sealed', $form);
 
         $this->assertStringContainsString('size: 8.5in 13in', $pdf);
