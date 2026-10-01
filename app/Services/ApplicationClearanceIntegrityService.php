@@ -52,7 +52,7 @@ class ApplicationClearanceIntegrityService
         $hasVersionedFormSnapshot = is_array($clearance->form_snapshot)
             && filled(data_get($clearance->form_snapshot, 'snapshot_version'));
 
-        if ($hasVersionedFormSnapshot) {
+        if ($hasVersionedFormSnapshot && $isCurrentFinal) {
             $decisionComparisons = [
                 'decision_authority' => [
                     (string) ($clearance->decision_authority ?? ''),
