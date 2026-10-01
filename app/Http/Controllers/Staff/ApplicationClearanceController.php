@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\ApplicationDocument;
 use App\Models\LandTransferApplication;
 use App\Models\RequiredDocument;
+use App\Services\ApplicationClearanceIntegrityService;
 use App\Services\ApplicationRequirementService;
 use Barryvdh\DomPDF\Facade\Pdf;
 
@@ -13,7 +14,7 @@ class ApplicationClearanceController extends Controller
 {
     public function show(LandTransferApplication $application)
     {
-        $application->load(['clearance', 'documents']);
+        $application->load('clearance');
 
         if (! $application->isFinalized()) {
             return back()->with('error', 'Decision output is only available after a final Approved or Not Approved PARPO II decision.');
@@ -21,6 +22,14 @@ class ApplicationClearanceController extends Controller
 
         if (! $application->clearance) {
             return back()->with('error', 'Decision output record not found for this application.');
+        }
+
+        $integrity = app(ApplicationClearanceIntegrityService::class)->inspect($application);
+        if (! $integrity['valid']) {
+            return back()->with(
+                'error',
+                'Decision output integrity check failed. Preserve the record and review the data-integrity report before printing or releasing this output.'
+            );
         }
 
         return view('staff.clearances.show', [
@@ -33,7 +42,7 @@ class ApplicationClearanceController extends Controller
 
     public function pdf(LandTransferApplication $application)
     {
-        $application->load(['clearance', 'documents']);
+        $application->load('clearance');
 
         if (! $application->isFinalized()) {
             return back()->with('error', 'Decision output is only available after a final Approved or Not Approved PARPO II decision.');
@@ -41,6 +50,14 @@ class ApplicationClearanceController extends Controller
 
         if (! $application->clearance) {
             return back()->with('error', 'Decision output record not found for this application.');
+        }
+
+        $integrity = app(ApplicationClearanceIntegrityService::class)->inspect($application);
+        if (! $integrity['valid']) {
+            return back()->with(
+                'error',
+                'Decision output integrity check failed. Preserve the record and review the data-integrity report before printing or releasing this output.'
+            );
         }
 
         $safeApplicationCode = str_replace(['/', '\\', ' '], '-', (string) $application->application_code);
