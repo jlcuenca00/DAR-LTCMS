@@ -94,6 +94,19 @@ class UiUxSystemTest extends TestCase
         $this->assertStringNotContainsString('Release Clearance', $review);
     }
 
+    public function test_generated_decision_output_recognizes_current_and_legacy_final_statuses(): void
+    {
+        $review = file_get_contents(resource_path('views/staff/applications/show.blade.php'));
+
+        $this->assertStringContainsString('STATUS_APPROVED', $review);
+        $this->assertStringContainsString('STATUS_NOT_APPROVED', $review);
+        $this->assertStringContainsString('STATUS_RELEASED', $review);
+        $this->assertStringContainsString('STATUS_DENIED', $review);
+        $this->assertStringContainsString("'NOT APPROVED'", $review);
+        $this->assertStringContainsString("'UNKNOWN DECISION'", $review);
+        $this->assertStringNotContainsString("decision_status === 'released' ? 'APPROVED' : 'DENIED'", $review);
+    }
+
     public function test_staff_dashboard_uses_actionable_attention_groups_instead_of_oldest_record_metrics(): void
     {
         $controller = file_get_contents(app_path('Http/Controllers/Staff/StaffDashboardController.php'));
