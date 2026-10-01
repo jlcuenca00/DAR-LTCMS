@@ -9,7 +9,7 @@ DAR-LTCMS is a web-based administrative processing, records-management, clearanc
 DAR-LTCMS supports:
 
 - landowner, parcel, and landholding record management;
-- manual encoding and processing of land transfer clearance applications by DAR Staff;
+- manual encoding and administrative workflow recording by Legal Clearance Staff;
 - upload and review of supporting documents;
 - application status monitoring;
 - limited parcel and map review for authorized geodetic personnel;
@@ -25,6 +25,6 @@ DAR-LTCMS supports:
 
 - [Understand the system scope](scope-and-limitations.md)
 - [Review the clearance workflow](clearance-workflow.md)
-- [DAR Staff guide](guides/dar-staff.md)
+- [Legal Clearance Staff guide](guides/dar-staff.md)
 - [Landowner guide](guides/landowner.md)
 - [Geodetic Personnel guide](guides/geodetic.md)
