@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Landholding;
 use App\Models\Landowner;
 use App\Services\AuditLogger;
+use App\Services\LandownerConcurrencyService;
 use App\Services\ParcelConcurrencyService;
 use App\Services\ProtectedAdministrativeStorage;
 use Illuminate\Http\Request;
@@ -23,9 +24,11 @@ class LandholdingRecordController extends Controller
 
         try {
             $landholding = DB::transaction(function () use ($landowner, $validated) {
+                app(LandownerConcurrencyService::class)->lockLandowner((int) $landowner->id);
                 app(ParcelConcurrencyService::class)->lockParcel((int) $validated['parcel_id']);
 
-                $landholding = $landowner->landholdings()->create($validated);
+                $lockedLandowner = Landowner::query()->findOrFail($landowner->id);
+                $landholding = $lockedLandowner->landholdings()->create($validated);
 
                 AuditLogger::record(
                     'landholding_record_created',
@@ -65,6 +68,7 @@ class LandholdingRecordController extends Controller
 
         try {
             DB::transaction(function () use ($landholding, $validated, $landowner) {
+                app(LandownerConcurrencyService::class)->lockLandowner((int) $landowner->id);
                 app(ParcelConcurrencyService::class)->lockParcels([
                     $landholding->parcel_id,
                     $validated['parcel_id'],
