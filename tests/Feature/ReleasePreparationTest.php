@@ -11,6 +11,15 @@ class ReleasePreparationTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function tearDown(): void
+    {
+        if (is_dir(storage_path('app/public'))) {
+            @chmod(storage_path('app/public'), 0775);
+        }
+
+        parent::tearDown();
+    }
+
     public function test_final_release_check_passes_only_when_data_and_production_configuration_are_clean(): void
     {
         $this->configureCleanProductionEnvironment();
@@ -68,12 +77,14 @@ class ReleasePreparationTest extends TestCase
     {
         File::ensureDirectoryExists(storage_path('app/private'));
         File::ensureDirectoryExists(storage_path('app/public'));
+        chmod(storage_path('app/public'), 0555);
 
         config([
             'app.env' => 'production',
             'app.debug' => false,
             'app.url' => 'https://darltcms.me',
             'app.key' => 'base64:'.base64_encode(str_repeat('r', 32)),
+            'app.trusted_proxies' => ['127.0.0.1'],
             'session.driver' => 'database',
             'session.encrypt' => true,
             'session.secure' => true,
