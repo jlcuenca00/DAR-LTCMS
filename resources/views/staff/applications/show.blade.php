@@ -1697,7 +1697,7 @@
 
 
             .application-review-page {
-                padding-bottom: 88px;
+                padding-bottom: 0;
             }
 
             .requirement-card {
@@ -2567,11 +2567,6 @@
                 .requirement-rail:hover .requirement-rail-panel,
                 .requirement-rail:focus-within .requirement-rail-panel {
                     width: min(296px, calc(100vw - 24px));
-                }
-
-                .workflow-fab {
-                    right: 16px;
-                    bottom: 16px;
                 }
 
                 .checklist-compact-score {
@@ -4373,18 +4368,18 @@
                     icon: 'fa-check',
                     danger: false,
                     buttonClass: 'staff-button staff-button-primary',
-                    buttonText: 'Record Final Approval',
-                    title: 'Approve this application?',
-                    copy: 'This records PARPO II\'s final Approved clearance decision and generates LTC Form No. 5.',
+                    buttonText: 'Record Approved Decision',
+                    title: 'Record the PARPO II Approved decision?',
+                    copy: 'This records the official PARPO II Approved decision received by Legal Division and generates LTC Form No. 5.',
                     warning: 'This finalizes and locks the application. Release to the client remains a separate administrative step.'
                 },
                 deny: {
                     icon: 'fa-xmark',
                     danger: true,
                     buttonClass: 'staff-button staff-button-danger',
-                    buttonText: 'Mark as Not Approved',
-                    title: 'Mark this application Not Approved?',
-                    copy: 'This will record a final Not Approved decision for this application.',
+                    buttonText: 'Record Not Approved Decision',
+                    title: 'Record the PARPO II Not Approved decision?',
+                    copy: 'This records the official PARPO II Not Approved decision received by Legal Division.',
                     warning: 'This finalizes the application and locks further editing or document uploads for audit integrity.'
                 }
             };
