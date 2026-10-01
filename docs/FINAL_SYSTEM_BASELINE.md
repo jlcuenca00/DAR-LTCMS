@@ -225,7 +225,7 @@ Until those live production checks are complete, the project should be described
 
 Never draw a flow where Released/GRANTED clearance directly changes Parcel ownership.
 
-For auditability, DAR-LTCMS distinguishes the **official administrative authority/action** from the **Legal Clearance Staff user who records it**. Final decisions store the PARPO II authority, officer/signatory, official decision date, recorder, and recording timestamp.
+For auditability, DAR-LTCMS distinguishes the **official administrative authority/action** from the **Legal Clearance Staff user who records it**. Final decisions store the PARPO II authority, decision officer/signatory, official decision date, recorder, and recording timestamp.
 
 A final clearance may lead to:
 
