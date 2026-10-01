@@ -3,12 +3,14 @@
 namespace Tests\Feature;
 
 use App\Http\Middleware\LockApplicationMutation;
+use App\Models\ApplicationClearance;
 use App\Models\ApplicationParcel;
 use App\Models\Landowner;
 use App\Models\LandTransferApplication;
 use App\Models\Parcel;
 use App\Models\RequiredDocument;
 use App\Models\User;
+use App\Services\ApplicationClearanceIntegrityService;
 use App\Services\ApplicationClearanceService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Request;
@@ -103,6 +105,149 @@ class FinalDecisionIntegrityHardeningTest extends TestCase
                 ])
                 ->assertSessionHasErrors('status');
         }
+    }
+
+    public function test_not_approved_uses_the_same_transferee_share_integrity_gate_as_approval(): void
+    {
+        $staff = User::factory()->create(['role' => 'staff']);
+        $transferor = $this->makeLandowner('Share Gate', 'Transferor');
+        $firstTransferee = $this->makeLandowner('Share Gate', 'First');
+        $secondTransferee = $this->makeLandowner('Share Gate', 'Second');
+        $parcel = $this->makeParcel('FINAL-SHARE-GATE-PARCEL');
+
+        $application = LandTransferApplication::create([
+            'application_code' => 'FINAL-SHARE-GATE-001',
+            'transferor_name' => $transferor->full_name,
+            'transferors' => [[
+                'name' => $transferor->full_name,
+                'landowner_id' => $transferor->id,
+                'parcel_shares' => [],
+            ]],
+            'transferee_name' => $firstTransferee->full_name . '; ' . $secondTransferee->full_name,
+            'transferees' => [
+                [
+                    'name' => $firstTransferee->full_name,
+                    'landowner_id' => $firstTransferee->id,
+                    'parcel_shares' => [],
+                ],
+                [
+                    'name' => $secondTransferee->full_name,
+                    'landowner_id' => $secondTransferee->id,
+                    'parcel_shares' => [],
+                ],
+            ],
+            'transferor_landowner_id' => $transferor->id,
+            'transferee_landowner_id' => $firstTransferee->id,
+            'municipality' => 'Dumaguete City',
+            'barangay' => 'Bantayan',
+            'status' => LandTransferApplication::STATUS_FOR_RELEASING,
+            'encoded_by' => $staff->id,
+        ]);
+
+        $applicationParcel = ApplicationParcel::create([
+            'land_transfer_application_id' => $application->id,
+            'parcel_id' => $parcel->id,
+            'parcel_code' => $parcel->parcel_code,
+            'area_hectares' => 1.0000,
+        ]);
+
+        LandTransferApplication::withoutEvents(function () use (
+            $application,
+            $applicationParcel,
+            $firstTransferee,
+            $secondTransferee
+        ): void {
+            $application->forceFill([
+                'transferees' => [
+                    [
+                        'name' => $firstTransferee->full_name,
+                        'landowner_id' => $firstTransferee->id,
+                        'parcel_shares' => [(string) $applicationParcel->id => 0.7500],
+                    ],
+                    [
+                        'name' => $secondTransferee->full_name,
+                        'landowner_id' => $secondTransferee->id,
+                        'parcel_shares' => [],
+                    ],
+                ],
+            ])->save();
+        });
+
+        $this->actingAs($staff)
+            ->post(route('staff.applications.not_approved', $application), [
+                'final_decision_confirmation' => '1',
+                'decision_officer_name' => 'PARPO II Share Gate Signatory',
+                'decision_date' => now()->toDateString(),
+                'decision_reason' => 'Regression test for symmetric final-decision integrity.',
+            ])
+            ->assertSessionHasErrors(['validation', 'transferee_shares']);
+
+        $this->assertSame(
+            LandTransferApplication::STATUS_FOR_RELEASING,
+            $application->fresh()->status
+        );
+        $this->assertDatabaseMissing('application_clearances', [
+            'land_transfer_application_id' => $application->id,
+        ]);
+    }
+
+    public function test_clearance_integrity_checks_versioned_final_decision_identity_fields(): void
+    {
+        $staff = User::factory()->create(['role' => 'staff']);
+        $application = $this->makeApplication(
+            $staff,
+            LandTransferApplication::STATUS_APPROVED,
+            'DECISION-IDENTITY-001'
+        );
+
+        $application->forceFill([
+            'decision_authority' => LandTransferApplication::FINAL_DECISION_AUTHORITY,
+            'decision_officer_name' => 'PARPO II Correct Signatory',
+            'decision_date' => '2026-10-01',
+            'decision_recorded_by' => $staff->id,
+            'decision_recorded_at' => '2026-10-01 10:00:00',
+        ])->save();
+
+        ApplicationClearance::create([
+            'land_transfer_application_id' => $application->id,
+            'clearance_number' => '1803-2026-9801 (1)',
+            'decision_status' => LandTransferApplication::STATUS_APPROVED,
+            'decision_authority' => LandTransferApplication::FINAL_DECISION_AUTHORITY,
+            'decision_officer_name' => 'PARPO II Wrong Signatory',
+            'decision_date' => '2026-10-01',
+            'decision_recorded_by' => $staff->id,
+            'decision_recorded_at' => '2026-10-01 10:00:00',
+            'application_code' => $application->application_code,
+            'transferor_name' => $application->transferorDisplayName(),
+            'transferee_name' => $application->transfereeDisplayName(),
+            'municipality' => $application->municipality,
+            'barangay' => $application->barangay,
+            'total_area_hectares' => '0.0000',
+            'parcel_snapshot' => [],
+            'form_snapshot' => ['snapshot_version' => 1],
+            'review_officer_name' => 'PARPO II Wrong Signatory',
+            'reviewed_at' => '2026-10-01 10:00:00',
+            'generated_by' => $staff->id,
+            'generated_at' => '2026-10-01 10:00:00',
+        ]);
+
+        $inspection = app(ApplicationClearanceIntegrityService::class)
+            ->inspect($application->fresh());
+
+        $this->assertFalse($inspection['valid']);
+        $this->assertContains(
+            'Clearance decision_officer_name does not match the frozen application final-decision record.',
+            $inspection['issues']
+        );
+
+        $this->actingAs($staff)
+            ->post(route('staff.applications.ready_for_release', $application))
+            ->assertSessionHasErrors('clearance');
+
+        $this->assertSame(
+            LandTransferApplication::RELEASE_NOT_READY,
+            $application->fresh()->release_status
+        );
     }
 
     public function test_all_final_statuses_reject_linked_parcel_additions(): void

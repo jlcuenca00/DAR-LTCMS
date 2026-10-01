@@ -1,7 +1,13 @@
 @php
     $rawDecisionStatus = strtolower((string) $clearance->decision_status);
-    $isGranted = in_array($rawDecisionStatus, ['released', 'approved'], true);
-    $decisionLabel = $isGranted ? 'GRANTED' : 'DENIED';
+    $decisionLabel = match ($rawDecisionStatus) {
+        \App\Models\LandTransferApplication::STATUS_APPROVED,
+        \App\Models\LandTransferApplication::STATUS_RELEASED => 'GRANTED',
+        \App\Models\LandTransferApplication::STATUS_NOT_APPROVED,
+        \App\Models\LandTransferApplication::STATUS_DENIED => 'DENIED',
+        default => throw new \LogicException('Invalid final decision status in LTC Form No. 5 snapshot.'),
+    };
+
     $decisionOfficerName = trim((string) ($clearance->decision_officer_name ?? ''));
     $decisionOfficerName = $decisionOfficerName !== ''
         ? $decisionOfficerName
@@ -14,12 +20,10 @@
     $generatedAt = $clearance->generated_at;
     $reviewedAt = $clearance->reviewed_at;
     $decisionDate = $clearance->decision_date;
-    // Form No. 5 is an immutable final-decision output. Prefer the preserved
-    // official PARPO II decision date; never derive issuance from the later
-    // Legal Staff recording timestamp or client-delivery date.
-    $issueDate = $decisionDate ?? $generatedAt ?? $reviewedAt ?? now();
+    $issueDate = $decisionDate ?? $generatedAt ?? $reviewedAt;
 
     $parcels = collect($clearance->parcel_snapshot ?? []);
+    $formSnapshot = is_array($clearance->form_snapshot) ? $clearance->form_snapshot : [];
 
     $titleEntries = $parcels
         ->map(function (array $parcel): ?string {
@@ -79,29 +83,13 @@
     $location = trim(($clearance->barangay ? $clearance->barangay . ', ' : '') . ($clearance->municipality ?? ''));
     $location = $location !== '' ? $location . ', Negros Oriental' : '__________';
 
-    $metadataItems = collect($application->documents ?? [])
-        ->map(fn ($document) => $document->document_metadata ?? [])
-        ->filter(fn ($metadata) => is_array($metadata) && ! empty($metadata));
+    $ownerName = trim((string) data_get($formSnapshot, 'owner_name', ''));
+    $ownerName = $ownerName !== '' ? $ownerName : ($clearance->transferor_name ?: '__________');
 
-    $metaFirst = function (array $keys) use ($metadataItems) {
-        foreach ($metadataItems as $metadata) {
-            foreach ($keys as $key) {
-                $value = data_get($metadata, $key);
-                if (filled($value)) {
-                    return is_array($value) ? implode('; ', array_filter($value)) : (string) $value;
-                }
-            }
-        }
-
-        return null;
-    };
-
-    $ownerName = $metaFirst(['title_owner_names', 'document_owner_names'])
-        ?: ($clearance->transferor_name ?: $application->transferorDisplayName());
-    $subjectOf = $metaFirst(['transfer_document_title']) ?: $application->transferInstrumentDisplay();
-    $subjectDate = $metaFirst(['notarization_date', 'date_issued']);
-    $subjectLine = $subjectOf ?: '__________';
-    if ($subjectDate) {
+    $subjectOf = trim((string) data_get($formSnapshot, 'subject_of', ''));
+    $subjectDate = data_get($formSnapshot, 'subject_date');
+    $subjectLine = $subjectOf !== '' ? $subjectOf : '__________';
+    if (filled($subjectDate)) {
         try {
             $subjectLine .= ' dated ' . \Illuminate\Support\Carbon::parse($subjectDate)->format('m/d/Y');
         } catch (\Throwable $e) {
@@ -109,11 +97,11 @@
         }
     }
 
-    $docNo = $metaFirst(['notarial_document_number']);
-    $pageNo = $metaFirst(['notarial_page_number']);
-    $bookNo = $metaFirst(['notarial_book_number']);
-    $series = $metaFirst(['notarial_series']);
-    $notary = $metaFirst(['notary_public']);
+    $docNo = data_get($formSnapshot, 'notarial_document_number');
+    $pageNo = data_get($formSnapshot, 'notarial_page_number');
+    $bookNo = data_get($formSnapshot, 'notarial_book_number');
+    $series = data_get($formSnapshot, 'notarial_series');
+    $notary = data_get($formSnapshot, 'notary_public');
 
     $notarialLineParts = [];
     if ($docNo) $notarialLineParts[] = 'Doc No. ' . $docNo;
@@ -124,16 +112,17 @@
         ? implode(', ', $notarialLineParts)
         : 'Doc No. __, Page No. __, Book No. __, Series of ____';
 
-    $transferorNames = $clearance->transferor_name ?: $application->transferorDisplayName();
-    $transfereeNames = $clearance->transferee_name ?: $application->transfereeDisplayName();
+    $transferorNames = $clearance->transferor_name ?: '__________';
+    $transfereeNames = $clearance->transferee_name ?: '__________';
+    $orNumber = data_get($formSnapshot, 'or_number');
+    $orDate = data_get($formSnapshot, 'or_date');
+    $amountPaid = data_get($formSnapshot, 'amount_paid');
 
     $showToolbar = $showToolbar ?? false;
     $pdfMode = $pdfMode ?? false;
     $returnRoute = $returnRoute ?? route('staff.applications.show', $application);
     $returnLabel = $returnLabel ?? 'Back to Application';
 
-    // Official Form 5 assets are shipped with DAR-LTCMS under public/images.
-    // This avoids role-dependent storage URLs and keeps PDF rendering offline.
     $logoAsset = function (string $filename) use ($pdfMode): ?string {
         $path = public_path('images/' . $filename);
 
@@ -335,9 +324,9 @@
         <div>
             <table class="payment-table">
                 <tr><td class="head" colspan="2">Certification Fee</td></tr>
-                <tr><td>O.R. No. :</td><td>{{ $application->or_number ?: '__________' }}</td></tr>
-                <tr><td>Date :</td><td>{{ $application->or_date ? $application->or_date->format('m/d/Y') : '__________' }}</td></tr>
-                <tr><td>Amount :</td><td>{{ $application->amount_paid ? rtrim(rtrim(number_format((float) $application->amount_paid, 2, '.', ''), '0'), '.') : '__________' }}</td></tr>
+                <tr><td>O.R. No. :</td><td>{{ $orNumber ?: '__________' }}</td></tr>
+                <tr><td>Date :</td><td>{{ $orDate ? \Illuminate\Support\Carbon::parse($orDate)->format('m/d/Y') : '__________' }}</td></tr>
+                <tr><td>Amount :</td><td>{{ filled($amountPaid) ? rtrim(rtrim(number_format((float) $amountPaid, 2, '.', ''), '0'), '.') : '__________' }}</td></tr>
             </table>
         </div>
         <div class="signature">

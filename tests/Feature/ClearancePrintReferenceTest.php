@@ -13,7 +13,8 @@ class ClearancePrintReferenceTest extends TestCase
 
         foreach ([$staffController, $landownerController] as $controller) {
             $this->assertStringContainsString("return view('staff.clearances.show'", $controller);
-            $this->assertStringContainsString("'clearance', 'documents'", $controller);
+            $this->assertStringContainsString("\$application->load('clearance')", $controller);
+            $this->assertStringNotContainsString("'clearance', 'documents'", $controller);
             $this->assertStringContainsString("'isRemoteEnabled' => false", $controller);
             $this->assertStringContainsString("'defaultFont' => 'Helvetica'", $controller);
             $this->assertStringContainsString('612, 936', $controller);
@@ -59,6 +60,9 @@ class ClearancePrintReferenceTest extends TestCase
         $this->assertStringContainsString('(Land Transfer Clearance)', $form);
         $this->assertStringContainsString('$decisionOfficerName', $form);
         $this->assertStringContainsString('$decisionAuthority', $form);
+        $this->assertStringContainsString('$clearance->form_snapshot', $form);
+        $this->assertStringNotContainsString('$application->documents', $form);
+        $this->assertStringNotContainsString('$application->or_number', $form);
         $this->assertStringNotContainsString('ENGR. MANUEL M. GALON, JR.', $form);
         $this->assertStringContainsString('Not official if not sealed', $form);
 
