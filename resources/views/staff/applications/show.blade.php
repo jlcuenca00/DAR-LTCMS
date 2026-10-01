@@ -1429,6 +1429,10 @@
                 align-items: stretch;
             }
 
+            .workflow-decision-grid.is-single {
+                grid-template-columns: minmax(0, 1fr);
+            }
+
             .workflow-decision-card {
                 border: 1px solid #dbe4dd;
                 background: #f8faf9;
@@ -1445,17 +1449,14 @@
                 background: linear-gradient(180deg, #f0fdf4 0%, #ffffff 100%);
             }
 
-            .workflow-decision-card.not-approved-card {
-                border-color: #fecaca;
-                background: linear-gradient(180deg, #fef2f2 0%, #ffffff 100%);
-            }
-
-            .workflow-decision-card.not-approved-card {
-                order: 1;
+            .workflow-decision-card.compliance-card {
+                border-color: #fde68a;
+                background: linear-gradient(180deg, #fffbeb 0%, #ffffff 100%);
+                order: 2;
             }
 
             .workflow-decision-card.approve-card {
-                order: 2;
+                order: 1;
             }
 
             .workflow-decision-note {
@@ -1482,7 +1483,7 @@
             }
 
             .workflow-action-icon.warning {
-                background: #dc2626;
+                background: #d97706;
             }
 
             .workflow-action-title {
@@ -1535,9 +1536,9 @@
                 color: #14532d;
             }
 
-            .workflow-decision-card.not-approved-card .workflow-decision-note {
-                border-color: #fecaca;
-                color: #991b1b;
+            .workflow-decision-card.compliance-card .workflow-decision-note {
+                border-color: #fde68a;
+                color: #92400e;
             }
 
 
@@ -2612,10 +2613,14 @@
         $canAdvanceWorkflow = ! $isFinal
             && $nextWorkflowStatus
             && $nextWorkflowStatus !== 'released';
+        $activeComplianceNotice = $application->activeComplianceNotice;
         $canApprove = ! $isFinal
             && $application->status === \App\Models\LandTransferApplication::STATUS_FOR_RELEASING;
-        $canDeny = ! $isFinal
-            && $application->status === \App\Models\LandTransferApplication::STATUS_FOR_RELEASING;
+        $canRequestCompliance = $application->canRequestCompliance()
+            && ! $activeComplianceNotice;
+        $canResolveCompliance = ! $isFinal
+            && $application->status === \App\Models\LandTransferApplication::STATUS_RETURNED_FOR_COMPLIANCE
+            && (bool) $activeComplianceNotice;
         $statusBadgeClass = match ($application->status) {
             'approved', 'released' => 'staff-badge-green',
             'denied', 'not_approved' => 'staff-badge-red',
@@ -2970,19 +2975,21 @@
                             @endif
                         </div>
 
-                        @if (
-                            $application->status === \App\Models\LandTransferApplication::STATUS_RETURNED_FOR_COMPLIANCE
-                            && filled($application->latest_compliance_reason)
-                        )
+                        @if ($activeComplianceNotice)
                             <div class="review-note-box">
-                                <strong>Latest compliance request:</strong>
-                                {{ $application->latest_compliance_reason }}
-                                <div class="mt-1 text-xs text-slate-500">
-                                    @if ($application->returnedForComplianceBy)
-                                        Recorded by {{ $application->returnedForComplianceBy->name }}
-                                    @endif
-                                    @if ($application->returned_for_compliance_at)
-                                        · {{ $application->returned_for_compliance_at->timezone('Asia/Manila')->format('M d, Y h:i A') }}
+                                <strong>Compliance required — {{ $activeComplianceNotice->categoryLabel() }}</strong>
+                                <div class="mt-1">{{ $activeComplianceNotice->details }}</div>
+                                @if (filled($activeComplianceNotice->requested_items))
+                                    <div class="mt-2">
+                                        <strong>Requested items / documents:</strong>
+                                        {{ $activeComplianceNotice->requested_items }}
+                                    </div>
+                                @endif
+                                <div class="mt-2 text-xs text-slate-500">
+                                    Resume stage: {{ $statusLabels[$activeComplianceNotice->resume_status] ?? ucwords(str_replace('_', ' ', $activeComplianceNotice->resume_status)) }}
+                                    · Recorded by {{ $activeComplianceNotice->requested_by_name_snapshot }}
+                                    @if ($activeComplianceNotice->requested_at)
+                                        · {{ $activeComplianceNotice->requested_at->timezone('Asia/Manila')->format('M d, Y h:i A') }}
                                     @endif
                                 </div>
                             </div>
@@ -3995,7 +4002,7 @@
             <div class="workflow-modal-header">
                 <div>
                     <h2 id="workflow-modal-title" class="workflow-modal-title">Manage Workflow</h2>
-                    <p class="workflow-modal-copy">Record the current administrative stage or an official result received by Legal Division.</p>
+                    <p class="workflow-modal-copy">Record the current administrative stage, request compliance when something blocks processing, or record the final Approved decision.</p>
                 </div>
                 <button type="button" class="staff-button staff-button-light" id="workflow-modal-close-top">
                     <i class="fa-solid fa-xmark"></i>
@@ -4019,8 +4026,8 @@
                     <div class="review-note-box">
                         Finalized record. Workflow actions are locked for audit integrity.
                     </div>
-                @elseif ($canAdvanceWorkflow || $canApprove || $canDeny)
-                    <div class="workflow-decision-grid">
+                @elseif ($canAdvanceWorkflow || $canApprove || $canRequestCompliance || $canResolveCompliance)
+                    <div class="workflow-decision-grid {{ collect([$canAdvanceWorkflow, $canApprove, $canRequestCompliance, $canResolveCompliance])->filter()->count() === 1 ? 'is-single' : '' }}">
                         @if ($canAdvanceWorkflow)
                             <form method="POST" action="{{ route('staff.applications.submit', $application) }}" class="workflow-decision-card approve-card">
                                 @csrf
@@ -4094,45 +4101,105 @@
                             </form>
                         @endif
 
-                        @if ($canDeny)
-                            <form method="POST" action="{{ route('staff.applications.not_approved', $application) }}" class="workflow-decision-card not-approved-card" data-decision-confirm="deny">
+                        @if ($canRequestCompliance)
+                            <form method="POST" action="{{ route('staff.applications.compliance.request', $application) }}" class="workflow-decision-card compliance-card" data-compliance-request-form>
                                 @csrf
 
                                 <div class="workflow-decision-heading">
                                     <span class="workflow-action-icon warning" aria-hidden="true">
-                                        <i class="fa-solid fa-xmark"></i>
+                                        <i class="fa-solid fa-triangle-exclamation"></i>
                                     </span>
 
                                     <div>
-                                        <p class="workflow-action-title">Record PARPO II Not Approved Decision</p>
+                                        <p class="workflow-action-title">Request Compliance / Action Required</p>
                                         <p class="workflow-action-copy">
-                                            Record the official PARPO II Not Approved decision received by Legal Division and lock the review record.
+                                            Use this whenever something must be corrected, clarified, amended, or provided before processing can continue. The application remains open.
                                         </p>
                                     </div>
                                 </div>
 
                                 <div class="workflow-decision-actions">
                                     <div class="workflow-form-fields">
-                                        <div>
-                                            <label class="summary-label" for="denial-decision-officer">PARPO II decision officer / signatory</label>
-                                            <input id="denial-decision-officer" type="text" name="decision_officer_name" placeholder="Name appearing on the official decision" class="review-input" required>
+                                        <label class="summary-label" for="compliance-category">Compliance category</label>
+                                        <select id="compliance-category" name="category" class="review-input" data-compliance-category required>
+                                            <option value="">Select a category</option>
+                                            @foreach (\App\Models\ApplicationComplianceNotice::categoryOptions() as $categoryValue => $categoryLabel)
+                                                <option value="{{ $categoryValue }}" @selected(old('category') === $categoryValue)>{{ $categoryLabel }}</option>
+                                            @endforeach
+                                        </select>
+
+                                        <div data-compliance-other-field @if(old('category') !== \App\Models\ApplicationComplianceNotice::CATEGORY_OTHER) hidden @endif>
+                                            <label class="summary-label" for="compliance-other-category">Specify issue / category</label>
+                                            <input id="compliance-other-category" type="text" name="other_category" value="{{ old('other_category') }}" class="review-input" maxlength="150" placeholder="Describe the issue category">
                                         </div>
+
                                         <div>
-                                            <label class="summary-label" for="denial-decision-date">Official decision date</label>
-                                            <input id="denial-decision-date" type="date" name="decision_date" max="{{ now()->toDateString() }}" class="review-input" required>
+                                            <label class="summary-label" for="compliance-details">Details / instructions</label>
+                                            <textarea id="compliance-details" name="details" rows="4" class="review-input" style="height:auto;padding-top:10px;" required placeholder="Explain exactly what must be corrected, clarified, amended, or provided.">{{ old('details') }}</textarea>
                                         </div>
-                                        <input type="text" name="decision_reason" placeholder="Not Approved reason / basis (required)" class="review-input" required>
-                                        <input type="text" name="decision_notes" placeholder="Internal notes (optional)" class="review-input">
+
+                                        <div>
+                                            <label class="summary-label" for="compliance-requested-items">Items / documents to bring or provide (optional)</label>
+                                            <textarea id="compliance-requested-items" name="requested_items" rows="3" class="review-input" style="height:auto;padding-top:10px;" placeholder="List any documents, originals, copies, information, or other items needed.">{{ old('requested_items') }}</textarea>
+                                        </div>
                                     </div>
 
                                     <div class="workflow-decision-note">
-                                        This finalizes the application as Not Approved and preserves the record for monitoring and audit review.
+                                        When resolved, this same application returns to {{ $statusLabel }}. No new clearance application is created.
                                     </div>
                                 </div>
 
-                                <button type="submit" class="staff-button staff-button-danger">
-                                    <i class="fa-solid fa-xmark"></i>
-                                    Record Not Approved Decision
+                                <button type="submit" class="staff-button staff-button-light">
+                                    <i class="fa-solid fa-bell"></i>
+                                    Request Compliance
+                                </button>
+                            </form>
+                        @endif
+
+                        @if ($canResolveCompliance && $activeComplianceNotice)
+                            <form method="POST" action="{{ route('staff.applications.compliance.resolve', $application) }}" class="workflow-decision-card approve-card">
+                                @csrf
+
+                                <div class="workflow-decision-heading">
+                                    <span class="workflow-action-icon" aria-hidden="true">
+                                        <i class="fa-solid fa-check"></i>
+                                    </span>
+
+                                    <div>
+                                        <p class="workflow-action-title">Mark Compliance Resolved</p>
+                                        <p class="workflow-action-copy">
+                                            Confirm that the requested correction, clarification, or requirement has been received or otherwise resolved.
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div class="workflow-decision-actions">
+                                    <div class="review-note-box">
+                                        <strong>{{ $activeComplianceNotice->categoryLabel() }}</strong><br>
+                                        {{ $activeComplianceNotice->details }}
+                                        @if (filled($activeComplianceNotice->requested_items))
+                                            <br><br><strong>Requested items:</strong> {{ $activeComplianceNotice->requested_items }}
+                                        @endif
+                                        <br><br>
+                                        <strong>Resume stage:</strong>
+                                        {{ $statusLabels[$activeComplianceNotice->resume_status] ?? ucwords(str_replace('_', ' ', $activeComplianceNotice->resume_status)) }}
+                                    </div>
+
+                                    <div class="workflow-form-fields">
+                                        <div>
+                                            <label class="summary-label" for="compliance-resolution-note">Resolution note (optional)</label>
+                                            <textarea id="compliance-resolution-note" name="resolution_note" rows="3" class="review-input" style="height:auto;padding-top:10px;" placeholder="Optional note about what was received or corrected."></textarea>
+                                        </div>
+                                    </div>
+
+                                    <div class="workflow-decision-note">
+                                        Resolving compliance resumes the previous workflow stage. It does not approve the clearance by itself.
+                                    </div>
+                                </div>
+
+                                <button type="submit" class="staff-button staff-button-primary">
+                                    <i class="fa-solid fa-check"></i>
+                                    Mark Compliance Resolved
                                 </button>
                             </form>
                         @endif
@@ -4166,7 +4233,7 @@
 
                 <div class="decision-modal-body">
                     <div id="decision-confirm-warning" class="decision-modal-warning">
-                        Finalized applications lock further edits and document uploads for audit integrity.
+                        Approved applications lock further edits and document uploads for audit integrity.
                     </div>
                 </div>
 
@@ -4422,15 +4489,6 @@
                     title: 'Record the PARPO II Approved decision?',
                     copy: 'This records the official PARPO II Approved decision received by Legal Division and generates LTC Form No. 5.',
                     warning: 'This finalizes and locks the application. Release to the client remains a separate administrative step.'
-                },
-                deny: {
-                    icon: 'fa-xmark',
-                    danger: true,
-                    buttonClass: 'staff-button staff-button-danger',
-                    buttonText: 'Record Not Approved Decision',
-                    title: 'Record the PARPO II Not Approved decision?',
-                    copy: 'This records the official PARPO II Not Approved decision received by Legal Division.',
-                    warning: 'This finalizes the application and locks further editing or document uploads for audit integrity.'
                 }
             };
 
