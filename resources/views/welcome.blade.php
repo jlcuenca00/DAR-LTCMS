@@ -198,7 +198,7 @@
                         </div>
                     </div>
                     <div class="panel-body">
-                        <div class="panel-row"><div class="panel-label">Applications</div><div class="panel-value">Entered by authorized DAR Staff</div></div>
+                        <div class="panel-row"><div class="panel-label">Applications</div><div class="panel-value">Entered by Legal Clearance Staff</div></div>
                         <div class="panel-row"><div class="panel-label">Final decision</div><div class="panel-value">Approved or Not Approved</div></div>
                         <div class="panel-row"><div class="panel-label">Clearance form</div><div class="panel-value">LTC Form No. 5 · GRANTED / DENIED</div></div>
                     </div>
@@ -281,7 +281,7 @@
                 <p class="section-kicker">Users</p>
                 <h2 class="section-title" id="access-title">Who can use DAR-LTCMS?</h2>
                 <div class="role-grid">
-                    <article class="role"><h3>DAR Staff</h3><p>Enter and review applications, manage DAR information, and prepare reports.</p></article>
+                    <article class="role"><h3>Legal Clearance Staff</h3><p>Encode clearance applications, record administrative workflow updates received from other DAR offices, manage supporting records, and prepare monitoring outputs.</p></article>
                     <article class="role"><h3>Landowners</h3><p>View only their own linked land information and application progress. Landowners do not create applications in the system.</p></article>
                     <article class="role"><h3>Geodetic Personnel</h3><p>Review parcel/reference/map information and, when authorized, update parcel map geometry only. They do not approve clearance applications or edit ownership records.</p></article>
                 </div>
