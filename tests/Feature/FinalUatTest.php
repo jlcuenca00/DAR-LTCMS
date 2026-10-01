@@ -140,6 +140,11 @@ class FinalUatTest extends TestCase
         $pending->assertSee('Decision recorded — signed output pending');
         $pending->assertDontSee('View Decision Output');
 
+        $this->actingAs($landownerUser)
+            ->get(route('landowner.applications.clearance.show', $application))
+            ->assertRedirect(route('landowner.applications.index'))
+            ->assertSessionHas('error', 'The final decision has been recorded, but the signed output has not yet been released to the client.');
+
         $application->forceFill([
             'release_status' => LandTransferApplication::RELEASE_READY,
             'ready_for_release_at' => now(),
@@ -164,6 +169,11 @@ class FinalUatTest extends TestCase
         $released->assertOk();
         $released->assertSee('Released to Client');
         $released->assertSee('View Decision Output');
+
+        $this->actingAs($landownerUser)
+            ->get(route('landowner.applications.clearance.show', $application))
+            ->assertOk()
+            ->assertSee('PARPO II UAT Signatory');
     }
 
     public function test_landowner_cannot_create_or_change_clearance_applications_through_staff_routes(): void
