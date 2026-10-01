@@ -168,6 +168,7 @@ class ApplicationClearanceService
     private function buildFormSnapshot(LandTransferApplication $application): array
     {
         $metadataItems = collect($application->documents)
+            ->sortBy('id')
             ->map(fn ($document) => $document->document_metadata ?? [])
             ->filter(fn ($metadata) => is_array($metadata) && ! empty($metadata));
 
