@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Staff;
 
 use App\Http\Controllers\Controller;
+use App\Models\ApplicationComplianceNotice;
 use App\Models\LandTransferApplication;
 use App\Services\ApplicationBusinessStateIntegrityService;
 use App\Services\ApplicationClearanceIntegrityService;
@@ -18,6 +19,7 @@ use App\Services\ParcelConcurrencyService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
 class ApplicationWorkflowController extends Controller
@@ -214,52 +216,219 @@ class ApplicationWorkflowController extends Controller
         return back()->with('success', 'Workflow update recorded. Application is now ' . $statusLabel . '.');
     }
 
-    public function returnForCompliance(Request $request, LandTransferApplication $application)
+    public function requestCompliance(Request $request, LandTransferApplication $application)
     {
         if ($application->isFinalized()) {
-            return back()->withErrors(['status' => 'A finalized application cannot be returned for compliance.']);
-        }
-
-        if (! in_array($application->status, [
-            LandTransferApplication::STATUS_PENDING_LEGAL_REVIEW,
-            LandTransferApplication::STATUS_DRAFT,
-            LandTransferApplication::STATUS_PENDING_REVIEW,
-        ], true)) {
-            return back()->withErrors(['status' => 'Return for Compliance is only available during Legal completeness review.']);
+            return back()->withErrors(['status' => 'A finalized application cannot receive a compliance request.']);
         }
 
         $validated = $request->validate([
-            'compliance_reason' => ['required', 'string', 'max:2000'],
+            'category' => ['required', Rule::in(ApplicationComplianceNotice::CATEGORIES)],
+            'other_category' => [
+                'nullable',
+                'string',
+                'max:150',
+                Rule::requiredIf(fn () => $request->input('category') === ApplicationComplianceNotice::CATEGORY_OTHER),
+            ],
+            'details' => ['required', 'string', 'max:3000'],
+            'requested_items' => ['nullable', 'string', 'max:3000'],
+        ], [
+            'other_category.required' => 'Specify the compliance category when Other is selected.',
+            'details.required' => 'Describe what must be corrected, clarified, or provided before processing can continue.',
         ]);
 
-        $oldStatus = $application->status;
-        $returnedAt = now();
-        $application->status = LandTransferApplication::STATUS_RETURNED_FOR_COMPLIANCE;
-        $application->latest_compliance_reason = $validated['compliance_reason'];
-        $application->returned_for_compliance_at = $returnedAt;
-        $application->returned_for_compliance_by = Auth::id();
-        $application->save();
+        try {
+            DB::transaction(function () use ($validated, $application) {
+                $application = LandTransferApplication::query()
+                    ->lockForUpdate()
+                    ->findOrFail($application->id);
 
-        AuditLogger::record(
-            'application_returned_for_compliance',
-            $application,
-            $application,
-            [
-                'old_status' => $oldStatus,
-                'new_status' => $application->status,
-                'compliance_reason' => $validated['compliance_reason'],
-                'administrative_authority' => 'Legal Division',
-                'recorded_by_user_id' => Auth::id(),
-                'recorded_by_role' => 'Legal Clearance Staff',
-                'recorded_at' => $returnedAt->toIso8601String(),
-                'scope_note' => 'The application remains open for documentary compliance; this is not a final denial.',
-            ],
-            Auth::id()
-        );
+                if ($application->isFinalized()) {
+                    throw ValidationException::withMessages([
+                        'status' => 'This application was finalized by another request and can no longer receive compliance notices.',
+                    ]);
+                }
 
-        app(NotificationService::class)->notifyLinkedLandownersReturnedForCompliance($application);
+                $resumeStatus = match ($application->status) {
+                    LandTransferApplication::STATUS_DRAFT,
+                    LandTransferApplication::STATUS_PENDING_REVIEW => LandTransferApplication::STATUS_PENDING_LEGAL_REVIEW,
+                    default => $application->status,
+                };
 
-        return back()->with('success', 'Application returned for compliance. It remains open and editable.');
+                if (! in_array($resumeStatus, LandTransferApplication::COMPLIANCE_RESUME_STATUSES, true)) {
+                    throw ValidationException::withMessages([
+                        'status' => 'A compliance request is not available from the application’s current workflow state.',
+                    ]);
+                }
+
+                $activeNoticeExists = ApplicationComplianceNotice::query()
+                    ->where('land_transfer_application_id', $application->id)
+                    ->whereNull('resolved_at')
+                    ->lockForUpdate()
+                    ->exists();
+
+                if ($activeNoticeExists) {
+                    throw ValidationException::withMessages([
+                        'compliance' => 'Resolve the current compliance request before creating another one.',
+                    ]);
+                }
+
+                $requestedAt = now();
+                $requester = Auth::user();
+                $details = trim($validated['details']);
+                $requestedItems = filled($validated['requested_items'] ?? null)
+                    ? trim((string) $validated['requested_items'])
+                    : null;
+                $otherCategory = $validated['category'] === ApplicationComplianceNotice::CATEGORY_OTHER
+                    ? trim((string) $validated['other_category'])
+                    : null;
+
+                $notice = ApplicationComplianceNotice::create([
+                    'land_transfer_application_id' => $application->id,
+                    'category' => $validated['category'],
+                    'other_category' => $otherCategory,
+                    'details' => $details,
+                    'requested_items' => $requestedItems,
+                    'resume_status' => $resumeStatus,
+                    'requested_by' => Auth::id(),
+                    'requested_by_name_snapshot' => $requester?->name ?: 'Legal Clearance Staff',
+                    'requested_at' => $requestedAt,
+                ]);
+
+                $oldStatus = $application->status;
+                $application->status = LandTransferApplication::STATUS_RETURNED_FOR_COMPLIANCE;
+                $application->latest_compliance_reason = $details;
+                $application->returned_for_compliance_at = $requestedAt;
+                $application->returned_for_compliance_by = Auth::id();
+                $application->save();
+
+                AuditLogger::record(
+                    'application_compliance_requested',
+                    $application,
+                    $notice,
+                    [
+                        'notice_id' => $notice->id,
+                        'old_status' => $oldStatus,
+                        'new_status' => $application->status,
+                        'resume_status' => $notice->resume_status,
+                        'category' => $notice->category,
+                        'category_label' => $notice->categoryLabel(),
+                        'other_category' => $notice->other_category,
+                        'details' => $notice->details,
+                        'requested_items' => $notice->requested_items,
+                        'recorded_by_user_id' => Auth::id(),
+                        'recorded_by_role' => 'Legal Clearance Staff',
+                        'recorded_at' => $requestedAt->toIso8601String(),
+                        'scope_note' => 'Compliance is an open corrective workflow state, not a final negative clearance decision.',
+                    ],
+                    Auth::id()
+                );
+
+                app(NotificationService::class)->notifyLinkedLandownersComplianceRequested($application, $notice);
+            });
+        } catch (ValidationException $e) {
+            throw $e;
+        } catch (\Throwable $e) {
+            report($e);
+
+            return back()->with('error', 'The compliance request could not be recorded. Refresh the application and try again.');
+        }
+
+        return back()->with('success', 'Compliance request recorded. The application remains open and will resume its previous workflow stage after resolution.');
+    }
+
+    public function resolveCompliance(Request $request, LandTransferApplication $application)
+    {
+        $validated = $request->validate([
+            'resolution_note' => ['nullable', 'string', 'max:3000'],
+        ]);
+
+        try {
+            DB::transaction(function () use ($validated, $application) {
+                $application = LandTransferApplication::query()
+                    ->lockForUpdate()
+                    ->findOrFail($application->id);
+
+                if ($application->isFinalized()) {
+                    throw ValidationException::withMessages([
+                        'status' => 'A finalized application cannot resolve or resume compliance workflow.',
+                    ]);
+                }
+
+                if ($application->status !== LandTransferApplication::STATUS_RETURNED_FOR_COMPLIANCE) {
+                    throw ValidationException::withMessages([
+                        'status' => 'This application is not currently waiting for compliance.',
+                    ]);
+                }
+
+                $notice = ApplicationComplianceNotice::query()
+                    ->where('land_transfer_application_id', $application->id)
+                    ->whereNull('resolved_at')
+                    ->latest('id')
+                    ->lockForUpdate()
+                    ->first();
+
+                if (! $notice) {
+                    throw ValidationException::withMessages([
+                        'compliance' => 'No active compliance request was found. Preserve the record and review its audit history before continuing.',
+                    ]);
+                }
+
+                if (! in_array($notice->resume_status, LandTransferApplication::COMPLIANCE_RESUME_STATUSES, true)) {
+                    throw ValidationException::withMessages([
+                        'compliance' => 'The saved workflow resume stage is invalid. Preserve the record and review its audit history before continuing.',
+                    ]);
+                }
+
+                $resolvedAt = now();
+                $resolver = Auth::user();
+                $oldStatus = $application->status;
+
+                $notice->resolved_by = Auth::id();
+                $notice->resolved_by_name_snapshot = $resolver?->name ?: 'Legal Clearance Staff';
+                $notice->resolved_at = $resolvedAt;
+                $notice->resolution_note = filled($validated['resolution_note'] ?? null)
+                    ? trim((string) $validated['resolution_note'])
+                    : null;
+                $notice->save();
+
+                $application->status = $notice->resume_status;
+                $application->latest_compliance_reason = null;
+                $application->returned_for_compliance_at = null;
+                $application->returned_for_compliance_by = null;
+                $application->save();
+
+                AuditLogger::record(
+                    'application_compliance_resolved',
+                    $application,
+                    $notice,
+                    [
+                        'notice_id' => $notice->id,
+                        'old_status' => $oldStatus,
+                        'new_status' => $application->status,
+                        'resume_status' => $notice->resume_status,
+                        'category' => $notice->category,
+                        'category_label' => $notice->categoryLabel(),
+                        'resolution_note' => $notice->resolution_note,
+                        'resolved_by_user_id' => Auth::id(),
+                        'resolved_by_role' => 'Legal Clearance Staff',
+                        'resolved_at' => $resolvedAt->toIso8601String(),
+                        'scope_note' => 'Compliance was resolved and the same application resumed processing; no application recreation or ownership mutation occurred.',
+                    ],
+                    Auth::id()
+                );
+
+                app(NotificationService::class)->notifyLinkedLandownersComplianceResolved($application, $notice);
+            });
+        } catch (ValidationException $e) {
+            throw $e;
+        } catch (\Throwable $e) {
+            report($e);
+
+            return back()->with('error', 'Compliance resolution could not be recorded. Refresh the application and try again.');
+        }
+
+        return back()->with('success', 'Compliance resolved. The application resumed its previous workflow stage.');
     }
 
     /**
@@ -366,123 +535,10 @@ class ApplicationWorkflowController extends Controller
         return back()->with('success', 'PARPO II Approved decision recorded by Legal Clearance Staff. The final decision is locked; release to the client is tracked separately.');
     }
 
-    /**
-     * PARPO II negative final decision. Early documentary deficiencies must use
-     * Return for Compliance instead of this final action.
-     */
-    public function notApproved(Request $request, LandTransferApplication $application)
-    {
-        if ($application->isFinalized()) {
-            return back()->withErrors(['status' => 'This application already has a final PARPO II decision.']);
-        }
-
-        if ($application->status !== LandTransferApplication::STATUS_FOR_RELEASING) {
-            return back()->withErrors(['status' => 'Final Not Approved decision is only available at PARPO II Decision Ready to Record. Use Return for Compliance for intake deficiencies.']);
-        }
-
-        $validated = $request->validate([
-            'final_decision_confirmation' => ['accepted'],
-            'decision_officer_name' => ['required', 'string', 'max:255'],
-            'decision_date' => ['required', 'date', 'before_or_equal:today'],
-            'decision_reason' => ['required', 'string', 'max:1000'],
-            'decision_notes' => ['nullable', 'string', 'max:4000'],
-        ], [
-            'final_decision_confirmation.accepted' => 'Confirm the final PARPO II Not Approved decision before continuing.',
-            'decision_reason.required' => 'A reason is required before recording the final Not Approved decision.',
-        ]);
-
-        try {
-            DB::transaction(function () use ($validated, $application) {
-                $application = LandTransferApplication::query()
-                    ->lockForUpdate()
-                    ->findOrFail($application->id);
-
-                if ($application->isFinalized()) {
-                    throw new \RuntimeException('This application was already finalized by another request.');
-                }
-
-                if ($application->status !== LandTransferApplication::STATUS_FOR_RELEASING) {
-                    throw new \RuntimeException('The application status changed before the Not Approved decision. Refresh and review the current stage.');
-                }
-
-                $this->lockFinalDecisionDependencies($application);
-                $this->validateDecisionChronology($application, $validated['decision_date']);
-
-                [$snapshot] = $this->buildValidationSnapshot($application);
-                $readinessErrors = $this->workflowPrerequisiteErrors($snapshot['workflow_readiness']);
-
-                if (! (bool) data_get($snapshot, 'requirements.complete', false)) {
-                    $readinessErrors['requirements'] = 'Applicable documentary requirements must remain complete before recording the final PARPO II Not Approved decision.';
-                }
-
-                if (! empty($readinessErrors)) {
-                    throw ValidationException::withMessages(array_merge([
-                        'validation' => 'Resolve the following workflow-integrity issues before recording the PARPO II Not Approved decision:',
-                    ], $readinessErrors));
-                }
-
-                $application->status = LandTransferApplication::STATUS_NOT_APPROVED;
-                $application->release_status = LandTransferApplication::RELEASE_NOT_READY;
-                $recordedAt = now();
-                $application->reviewed_by = Auth::id(); // Legacy compatibility: recorder, not the PARPO II decision-maker.
-                $application->reviewed_at = $recordedAt;
-                $application->decision_authority = LandTransferApplication::FINAL_DECISION_AUTHORITY;
-                $application->decision_officer_name = $validated['decision_officer_name'];
-                $application->decision_date = $validated['decision_date'];
-                $application->decision_recorded_by = Auth::id();
-                $application->decision_recorded_at = $recordedAt;
-                $application->validated_at = $recordedAt;
-                $application->validation_snapshot = $snapshot;
-                $application->decision_reason = $validated['decision_reason'];
-                $application->decision_notes = $validated['decision_notes'] ?? null;
-                $application->save();
-
-                $form4Recommendation = $application->ltc_form4_recommendation_decision;
-
-                AuditLogger::record(
-                    'application_not_approved',
-                    $application,
-                    $application,
-                    [
-                        'decision_authority' => $application->decision_authority,
-                        'decision_officer_name' => $application->decision_officer_name,
-                        'decision_date' => optional($application->decision_date)->toDateString(),
-                        'recorded_by_user_id' => $application->decision_recorded_by,
-                        'recorded_by_role' => 'Legal Clearance Staff',
-                        'recorded_at' => optional($application->decision_recorded_at)->toDateTimeString(),
-                        'decision_reason' => $application->decision_reason,
-                        'decision_notes' => $application->decision_notes,
-                        'validated_at' => optional($application->validated_at)->toDateTimeString(),
-                        'form4_recommendation_decision' => $form4Recommendation,
-                        'form4_recommendation_matches_final_decision' => filled($form4Recommendation)
-                            ? $form4Recommendation === 'denial'
-                            : null,
-                        'ownership_transfer_performed' => false,
-                        'registry_mutation_performed' => false,
-                        'scope_note' => 'Final DAR clearance decision only. A Not Approved decision does not alter ownership or registry records.',
-                    ],
-                    Auth::id()
-                );
-
-                app(ApplicationClearanceService::class)->generateForDecision($application, Auth::id());
-                app(NotificationService::class)->notifyStaffApplicationNotApproved($application);
-                app(NotificationService::class)->notifyLinkedLandownersFinalDecision($application);
-            });
-        } catch (ValidationException $e) {
-            throw $e;
-        } catch (\Throwable $e) {
-            report($e);
-
-            return back()->with('error', 'The Not Approved decision could not be completed. Refresh the application and try again. If the problem continues, check the server logs or contact the system administrator.');
-        }
-
-        return back()->with('success', 'PARPO II Not Approved decision recorded by Legal Clearance Staff. The application is now locked.');
-    }
-
     public function markReadyForRelease(Request $request, LandTransferApplication $application)
     {
         if (! in_array($application->status, LandTransferApplication::FINAL_STATUSES, true)) {
-            return back()->withErrors(['status' => 'Only a current Approved or Not Approved decision may enter release tracking. Legacy final records remain read-only.']);
+            return back()->withErrors(['status' => 'Only a current Approved decision may enter release tracking. Historical negative decision records remain read-only.']);
         }
 
         $businessStateIntegrity = app(ApplicationBusinessStateIntegrityService::class)->inspect($application);
@@ -536,7 +592,7 @@ class ApplicationWorkflowController extends Controller
     public function release(Request $request, LandTransferApplication $application)
     {
         if (! in_array($application->status, LandTransferApplication::FINAL_STATUSES, true)) {
-            return back()->withErrors(['status' => 'Only a current Approved or Not Approved decision may be released through this workflow. Legacy final records remain read-only.']);
+            return back()->withErrors(['status' => 'Only a current Approved decision may be released through this workflow. Historical negative decision records remain read-only.']);
         }
 
         $businessStateIntegrity = app(ApplicationBusinessStateIntegrityService::class)->inspect($application);
@@ -623,7 +679,7 @@ class ApplicationWorkflowController extends Controller
      */
     public function state(LandTransferApplication $application)
     {
-        $application->loadMissing('clearance');
+        $application->loadMissing(['clearance', 'activeComplianceNotice.requestedBy']);
         $requirements = app(ApplicationRequirementService::class)->evaluate($application);
         $nextStatus = $application->nextWorkflowStatus();
         $businessStateIntegrity = app(ApplicationBusinessStateIntegrityService::class)->inspect($application);
@@ -644,10 +700,27 @@ class ApplicationWorkflowController extends Controller
             'release_status' => $application->release_status,
             'release_status_label' => $application->releaseStatusLabel(),
             'filing_fee' => (float) config('dar_ltc.filing_fee', 2000),
-            'can_return_for_compliance' => ! $application->isFinalized()
-                && in_array($application->status, [LandTransferApplication::STATUS_PENDING_LEGAL_REVIEW, LandTransferApplication::STATUS_DRAFT, LandTransferApplication::STATUS_PENDING_REVIEW], true),
+            'can_request_compliance' => $application->canRequestCompliance()
+                && ! $application->activeComplianceNotice,
+            'can_resolve_compliance' => ! $application->isFinalized()
+                && $application->status === LandTransferApplication::STATUS_RETURNED_FOR_COMPLIANCE
+                && (bool) $application->activeComplianceNotice,
             'can_finalize_decision' => ! $application->isFinalized()
                 && $application->status === LandTransferApplication::STATUS_FOR_RELEASING,
+            'compliance_categories' => ApplicationComplianceNotice::categoryOptions(),
+            'active_compliance_notice' => $application->activeComplianceNotice ? [
+                'id' => $application->activeComplianceNotice->id,
+                'category' => $application->activeComplianceNotice->category,
+                'category_label' => $application->activeComplianceNotice->categoryLabel(),
+                'other_category' => $application->activeComplianceNotice->other_category,
+                'details' => $application->activeComplianceNotice->details,
+                'requested_items' => $application->activeComplianceNotice->requested_items,
+                'resume_status' => $application->activeComplianceNotice->resume_status,
+                'resume_status_label' => LandTransferApplication::statusLabels()[$application->activeComplianceNotice->resume_status]
+                    ?? $application->activeComplianceNotice->resume_status,
+                'requested_by_name' => $application->activeComplianceNotice->requested_by_name_snapshot,
+                'requested_at' => optional($application->activeComplianceNotice->requested_at)->toDateTimeString(),
+            ] : null,
             'can_mark_ready_for_release' => in_array($application->status, LandTransferApplication::FINAL_STATUSES, true)
                 && ! $application->isReleasedToClient()
                 && $application->release_status !== LandTransferApplication::RELEASE_READY
