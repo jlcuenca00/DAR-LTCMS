@@ -3,6 +3,7 @@
 use App\Models\User;
 use App\Services\AuditLogger;
 use App\Services\DataIntegrityScanner;
+use App\Services\LegacyAdministrativeStorageMigrator;
 use App\Services\ProductionReadinessScanner;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
@@ -73,6 +74,29 @@ Artisan::command('dar:check-production-readiness {--json : Output the complete r
 
     return $strict && ! $result['clean'] ? 1 : 0;
 })->purpose('Fail when DAR-LTCMS production security or deployment prerequisites are unsafe');
+
+Artisan::command('dar:migrate-legacy-private-storage', function (LegacyAdministrativeStorageMigrator $migrator) {
+    $result = $migrator->migrate();
+
+    $this->info('DAR-LTCMS legacy administrative storage migration');
+    $this->line('Registered paths: '.$result['registered_paths']);
+    $this->line('Migrated to private storage: '.$result['migrated']);
+    $this->line('Already private: '.$result['already_private']);
+    $this->line('Missing on both disks: '.$result['missing']);
+    $this->line('Conflicting private/legacy copies: '.$result['conflicts']);
+
+    if ($result['conflicts'] > 0) {
+        $this->error('Conflicting copies were preserved on both disks. Resolve them before locking legacy storage.');
+
+        return 1;
+    }
+
+    if ($result['missing'] > 0) {
+        $this->warn('Some registered files are missing on both disks. File references were not modified.');
+    }
+
+    return 0;
+})->purpose('Migrate registered legacy administrative files from public fallback storage to private storage');
 
 Artisan::command('dar:release-check {--json : Output the complete final-release result as JSON}', function (
     DataIntegrityScanner $dataIntegrityScanner,
