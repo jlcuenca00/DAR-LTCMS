@@ -10,7 +10,7 @@ function initializeStaffDashboardHeroContext() {
     if (intro && title && !intro.querySelector('.hero-eyebrow')) {
         const eyebrow = document.createElement('p');
         eyebrow.className = 'hero-eyebrow';
-        eyebrow.textContent = 'DAR Staff Workspace';
+        eyebrow.textContent = 'Legal Clearance Staff Workspace';
         intro.insertBefore(eyebrow, title);
     }
 
