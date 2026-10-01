@@ -392,20 +392,20 @@ class ProductionSecurityHardeningTest extends TestCase
         $this->assertStringContainsString('      name: production', $refresh);
     }
 
-    public function test_production_ssh_requires_preconfigured_known_hosts_and_strict_verification(): void
+    public function test_temporary_audit_mode_deployment_policy_is_explicit(): void
     {
         $deploy = (string) file_get_contents(base_path('.github/workflows/deploy.yml'));
         $refresh = (string) file_get_contents(base_path('.github/workflows/refresh-production-demo-data.yml'));
 
         foreach ([$deploy, $refresh] as $workflow) {
-            $this->assertStringContainsString('SSH_KNOWN_HOSTS', $workflow);
-            $this->assertStringContainsString('StrictHostKeyChecking=yes', $workflow);
-            $this->assertStringContainsString('UserKnownHostsFile=', $workflow);
-            $this->assertStringNotContainsString('StrictHostKeyChecking=no', $workflow);
-            $this->assertStringNotContainsString('ssh-keyscan', $workflow);
+            $this->assertStringContainsString('TEMPORARY AUDIT/DEFENSE MODE', $workflow);
+            $this->assertStringContainsString('post-defense hardening', $workflow);
+            $this->assertStringNotContainsString('SSH_KNOWN_HOSTS', $workflow);
+            $this->assertStringNotContainsString('StrictHostKeyChecking=yes', $workflow);
         }
 
-        $this->assertStringNotContainsString('easingthemes/ssh-deploy@', $deploy);
+        $this->assertStringContainsString('easingthemes/ssh-deploy@', $deploy);
+        $this->assertStringContainsString('ssh-keyscan', $refresh);
     }
 
     public function test_deploy_migrates_and_locks_legacy_storage_before_readiness_check(): void
