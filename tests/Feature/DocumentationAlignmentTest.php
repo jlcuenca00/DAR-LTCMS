@@ -57,7 +57,10 @@ class DocumentationAlignmentTest extends TestCase
         $baseline = $this->read('docs/FINAL_SYSTEM_BASELINE.md');
 
         $this->assertStringContainsString('DAR Negros Oriental Provincial Office', $baseline);
+        $this->assertStringContainsString('Legal Clearance Staff', $baseline);
         $this->assertStringContainsString('manually encode applications', $baseline);
+        $this->assertStringContainsString('administrative authorities/stages', $baseline);
+        $this->assertStringContainsString('decision officer/signatory', $baseline);
         $this->assertStringContainsString('Landowners', $baseline);
         $this->assertStringContainsString('limited Parcel/reference/map review access', $baseline);
         $this->assertStringContainsString('does **not** mean the platform has', $baseline);
@@ -76,7 +79,7 @@ class DocumentationAlignmentTest extends TestCase
         $reset = $this->read('docs/final-barebones-release-checklist.md');
         $entry = $this->read('docs/tester-data-entry-guide.md');
 
-        $this->assertStringContainsString('five active Staff tester accounts', $handoff);
+        $this->assertStringContainsString('five active Legal Clearance Staff tester accounts', $handoff);
         $this->assertStringContainsString('5 Staff tester accounts', $reset);
         $this->assertStringContainsString('staff.tester@dar-ltcms.local', $handoff);
         $this->assertStringContainsString('Never run `migrate:fresh`', $reset);
