@@ -46,6 +46,8 @@ jobs:
       CACHE_STORE: database
       QUEUE_CONNECTION: database
       MAIL_MAILER: log
+      E2E_BASE_URL: http://127.0.0.1:8000
+      E2E_STAFF_USERNAME: deployment.verify.staff
 
     steps:
       - name: Checkout source code
@@ -83,6 +85,59 @@ jobs:
 
       - name: Run full Laravel test suite
         run: php artisan test
+
+      - name: Prepare isolated browser-test credential
+        run: |
+          TEST_PASSWORD="$(openssl rand -hex 16)Aa1!"
+          echo "E2E_STAFF_PASSWORD=$TEST_PASSWORD" >> "$GITHUB_ENV"
+
+      - name: Create deployment browser-test Staff account
+        run: |
+          php <<'PHP'
+          <?php
+          require 'vendor/autoload.php';
+          $app = require 'bootstrap/app.php';
+          $app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
+
+          App\Models\User::query()->updateOrCreate(
+              ['username' => getenv('E2E_STAFF_USERNAME')],
+              [
+                  'name' => 'Deployment Verification Staff',
+                  'email' => 'deployment.verify.staff@example.test',
+                  'password' => getenv('E2E_STAFF_PASSWORD'),
+                  'role' => 'staff',
+                  'is_active' => true,
+                  'must_change_password' => false,
+                  'temporary_password_expires_at' => null,
+              ]
+          );
+          PHP
+
+      - name: Install Playwright browser
+        run: npx playwright install --with-deps chromium
+
+      - name: Start Laravel test server
+        run: |
+          php artisan serve --host=127.0.0.1 --port=8000 > storage/logs/deploy-verify-server.log 2>&1 &
+          for attempt in {1..30}; do
+            if curl --fail --silent http://127.0.0.1:8000/login > /dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat storage/logs/deploy-verify-server.log
+          exit 1
+
+      - name: Run responsive browser matrix
+        run: npx playwright test --config=playwright.config.mjs
+
+      - name: Validate realistic agricultural demo seed
+        env:
+          PGPASSWORD: postgres
+        run: |
+          psql -h 127.0.0.1 -U postgres -d dar_iland -v ON_ERROR_STOP=1 -f seed_mock_dumaguete_nonoverlap_agri_data.txt
+          test "$(psql -h 127.0.0.1 -U postgres -d dar_iland -Atc "SELECT COUNT(*) FROM parcels WHERE parcel_code LIKE 'NOR-AGRI-%';")" = "16"
+          test "$(psql -h 127.0.0.1 -U postgres -d dar_iland -Atc "SELECT COUNT(*) FROM land_transfer_applications WHERE application_code LIKE '2026-NOR-DEMO-%' AND status IN ('approved','not_approved');")" = "5"
 
   deploy:
     needs: verify
