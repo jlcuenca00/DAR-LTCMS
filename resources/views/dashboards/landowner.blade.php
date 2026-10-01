@@ -104,6 +104,74 @@
             .lo-hero-stat-value { display: block; font-size: 24px; line-height: 1; font-weight: 900; }
             .lo-hero-stat-label { display: block; margin-top: 7px; color: #bbf7d0; font-size: 10px; font-weight: 800; line-height: 1.3; }
 
+            .lo-compliance-alerts {
+                display: grid;
+                gap: 10px;
+            }
+
+            .lo-compliance-alert {
+                border: 1px solid #f59e0b;
+                background: linear-gradient(135deg, #fff7ed 0%, #fffbeb 100%);
+                border-radius: 14px;
+                padding: 16px 18px;
+                display: grid;
+                grid-template-columns: auto minmax(0, 1fr) auto;
+                gap: 14px;
+                align-items: start;
+                box-shadow: 0 4px 14px rgba(180, 83, 9, .08);
+            }
+
+            .lo-compliance-alert-icon {
+                width: 38px;
+                height: 38px;
+                border-radius: 11px;
+                background: #d97706;
+                color: #ffffff;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                flex: 0 0 auto;
+            }
+
+            .lo-compliance-alert-title {
+                margin: 0;
+                color: #92400e;
+                font-size: 13px;
+                font-weight: 900;
+            }
+
+            .lo-compliance-alert-copy {
+                margin: 4px 0 0;
+                color: #6b4f2a;
+                font-size: 12px;
+                line-height: 1.5;
+            }
+
+            .lo-compliance-alert-items {
+                margin-top: 8px;
+                color: #7c2d12;
+                font-size: 11px;
+                line-height: 1.45;
+                font-weight: 700;
+            }
+
+            .lo-compliance-alert-link {
+                align-self: center;
+                white-space: nowrap;
+                border: 1px solid #f59e0b;
+                border-radius: 10px;
+                background: #ffffff;
+                color: #92400e;
+                padding: 9px 12px;
+                font-size: 11px;
+                font-weight: 900;
+                text-decoration: none;
+            }
+
+            .lo-compliance-alert-link:hover {
+                background: #fffbeb;
+            }
+
             .lo-dashboard-grid {
                 display: grid;
                 grid-template-columns: minmax(0, 1.75fr) minmax(320px, .8fr);
@@ -215,6 +283,8 @@
                 .lo-hero-stat { border-right: 0; border-bottom: 1px solid rgba(255, 255, 255, .14); }
                 .lo-hero-stat:last-child { border-bottom: 0; }
                 .lo-application-row { grid-template-columns: 1fr; gap: 8px; }
+                .lo-compliance-alert { grid-template-columns: auto minmax(0, 1fr); }
+                .lo-compliance-alert-link { grid-column: 1 / -1; justify-self: stretch; text-align: center; }
             }
         </style>
     @endpush
@@ -242,6 +312,37 @@
                 </div>
             </div>
         </article>
+
+        @if ($complianceApplications->isNotEmpty())
+            <section class="lo-compliance-alerts" aria-label="Applications requiring your attention">
+                @foreach ($complianceApplications as $application)
+                    @php($notice = $application->activeComplianceNotice)
+                    @if ($notice)
+                        <article class="lo-compliance-alert">
+                            <span class="lo-compliance-alert-icon" aria-hidden="true">
+                                <i class="fa-solid fa-triangle-exclamation"></i>
+                            </span>
+
+                            <div>
+                                <p class="lo-compliance-alert-title">
+                                    Action Required — {{ $application->application_code }} · {{ $notice->categoryLabel() }}
+                                </p>
+                                <p class="lo-compliance-alert-copy">{{ $notice->details }}</p>
+                                @if (filled($notice->requested_items))
+                                    <div class="lo-compliance-alert-items">
+                                        Bring / provide: {{ $notice->requested_items }}
+                                    </div>
+                                @endif
+                            </div>
+
+                            <a href="{{ route('landowner.applications.index') }}#application-{{ $application->id }}" class="lo-compliance-alert-link">
+                                View Details
+                            </a>
+                        </article>
+                    @endif
+                @endforeach
+            </section>
+        @endif
 
         <section class="lo-dashboard-grid">
             <article class="lo-dashboard-panel">
