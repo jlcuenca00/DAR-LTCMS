@@ -356,6 +356,58 @@ class ProductionSecurityHardeningTest extends TestCase
         $this->assertSame(['127.0.0.1', '10.0.0.0/8'], $middleware->resolvedProxies());
     }
 
+    public function test_production_workflows_are_pinned_and_environment_bound(): void
+    {
+        $workflowPaths = [
+            '.github/workflows/deploy.yml',
+            '.github/workflows/refresh-production-demo-data.yml',
+            '.github/workflows/responsive-e2e.yml',
+            '.github/workflows/docs-build.yml',
+        ];
+
+        foreach ($workflowPaths as $workflowPath) {
+            $contents = (string) file_get_contents(base_path($workflowPath));
+
+            foreach (preg_split('/\R/', $contents) ?: [] as $line) {
+                if (! str_contains($line, 'uses:')) {
+                    continue;
+                }
+
+                $reference = trim((string) str($line)->after('uses:')->before(' #'));
+
+                $this->assertMatchesRegularExpression(
+                    '/^[^@]+@[0-9a-f]{40}$/',
+                    $reference,
+                    "{$workflowPath} contains a non-immutable Action reference: {$reference}"
+                );
+            }
+        }
+
+        $deploy = (string) file_get_contents(base_path('.github/workflows/deploy.yml'));
+        $refresh = (string) file_get_contents(base_path('.github/workflows/refresh-production-demo-data.yml'));
+
+        $this->assertStringContainsString('  verify:', $deploy);
+        $this->assertStringContainsString('    needs: verify', $deploy);
+        $this->assertStringContainsString('      name: production', $deploy);
+        $this->assertStringContainsString('      name: production', $refresh);
+    }
+
+    public function test_deploy_migrates_and_locks_legacy_storage_before_readiness_check(): void
+    {
+        $deploy = (string) file_get_contents(base_path('.github/workflows/deploy.yml'));
+
+        $migrateAt = strpos($deploy, 'php artisan dar:migrate-legacy-private-storage');
+        $lockAt = strpos($deploy, 'chmod -R a-w storage/app/public');
+        $readinessAt = strpos($deploy, 'php artisan dar:check-production-readiness');
+
+        $this->assertNotFalse($migrateAt);
+        $this->assertNotFalse($lockAt);
+        $this->assertNotFalse($readinessAt);
+        $this->assertLessThan($lockAt, $migrateAt);
+        $this->assertLessThan($readinessAt, $lockAt);
+        $this->assertStringNotContainsString('test -w storage/app/public', $deploy);
+    }
+
     public function test_production_readiness_scanner_passes_hardened_core_configuration(): void
     {
         File::ensureDirectoryExists(storage_path('app/private'));
