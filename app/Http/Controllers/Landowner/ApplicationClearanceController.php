@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Landowner;
 
 use App\Http\Controllers\Controller;
 use App\Models\LandTransferApplication;
+use App\Services\ApplicationClearanceIntegrityService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Gate;
 
@@ -12,7 +13,7 @@ class ApplicationClearanceController extends Controller
     public function show(LandTransferApplication $application)
     {
         Gate::authorize('viewDecisionOutput', $application);
-        $application->load(['clearance', 'documents']);
+        $application->load('clearance');
 
         if (! $application->isFinalized()) {
             return redirect()
@@ -30,6 +31,13 @@ class ApplicationClearanceController extends Controller
             return redirect()
                 ->route('landowner.applications.index')
                 ->with('error', 'Decision output record is not available for this application.');
+        }
+
+        $integrity = app(ApplicationClearanceIntegrityService::class)->inspect($application);
+        if (! $integrity['valid']) {
+            return redirect()
+                ->route('landowner.applications.index')
+                ->with('error', 'The released decision output is unavailable because its integrity check requires DAR staff review.');
         }
 
         return view('staff.clearances.show', [
@@ -43,7 +51,7 @@ class ApplicationClearanceController extends Controller
     public function pdf(LandTransferApplication $application)
     {
         Gate::authorize('viewDecisionOutput', $application);
-        $application->load(['clearance', 'documents']);
+        $application->load('clearance');
 
         if (! $application->isFinalized()) {
             return redirect()
@@ -61,6 +69,13 @@ class ApplicationClearanceController extends Controller
             return redirect()
                 ->route('landowner.applications.index')
                 ->with('error', 'Decision output record is not available for this application.');
+        }
+
+        $integrity = app(ApplicationClearanceIntegrityService::class)->inspect($application);
+        if (! $integrity['valid']) {
+            return redirect()
+                ->route('landowner.applications.index')
+                ->with('error', 'The released decision output is unavailable because its integrity check requires DAR staff review.');
         }
 
         $safeApplicationCode = str_replace(['/', '\\', ' '], '-', (string) $application->application_code);
