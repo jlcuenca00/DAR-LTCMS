@@ -12,7 +12,7 @@
 
         $statusRows = [
             'Legal Completeness Review' => (int) (($normalizedStatusCounts['pending_legal_review'] ?? 0) + ($normalizedStatusCounts['pending_review'] ?? 0) + ($normalizedStatusCounts['draft'] ?? 0)),
-            'Returned for Compliance' => (int) ($normalizedStatusCounts['returned_for_compliance'] ?? 0),
+            'Compliance Required' => (int) ($normalizedStatusCounts['returned_for_compliance'] ?? 0),
             'Awaiting Payment / Official Receipt' => (int) ($normalizedStatusCounts['awaiting_payment'] ?? 0),
             'With LTID for Verification' => (int) ($normalizedStatusCounts['endorsed_lti'] ?? 0),
             'Returned to Legal Division' => (int) ($normalizedStatusCounts['returned_to_legal'] ?? 0),
@@ -21,10 +21,10 @@
             'With PARPO II for Decision' => (int) ($normalizedStatusCounts['endorsed_parpo'] ?? 0),
             'PARPO II Decision Ready to Record' => (int) ($normalizedStatusCounts['for_releasing'] ?? 0),
             'Approved' => (int) (($normalizedStatusCounts['approved'] ?? 0) + ($normalizedStatusCounts['released'] ?? 0)),
-            'Not Approved' => (int) (($normalizedStatusCounts['not_approved'] ?? 0) + ($normalizedStatusCounts['denied'] ?? 0)),
+            'Historical Not Approved / Denied' => (int) (($normalizedStatusCounts['not_approved'] ?? 0) + ($normalizedStatusCounts['denied'] ?? 0)),
         ];
 
-        $activeApplicationCount = collect($statusRows)->except(['Approved', 'Not Approved'])->sum();
+        $activeApplicationCount = collect($statusRows)->except(['Approved', 'Historical Not Approved / Denied'])->sum();
         $approvedResults = (int) (($normalizedClearanceCounts['approved'] ?? 0) + ($normalizedClearanceCounts['released'] ?? 0));
         $deniedResults = (int) (($normalizedClearanceCounts['denied'] ?? 0) + ($normalizedClearanceCounts['not_approved'] ?? 0));
         $backParams = array_filter($filters ?? [], fn ($value) => filled($value));
@@ -172,7 +172,7 @@
                 <tr>
                     <td><span class="label">Total Applications</span><div class="summary-number">{{ number_format($totalApplications) }}</div><div class="summary-note">Matching report filters</div></td>
                     <td><span class="label">Active Applications</span><div class="summary-number">{{ number_format($activeApplicationCount) }}</div><div class="summary-note">Still in clearance processing</div></td>
-                    <td><span class="label">Recorded Results</span><div class="summary-number">{{ number_format($totalClearances) }}</div><div class="summary-note">Approved or Not Approved snapshots</div></td>
+                    <td><span class="label">Recorded Results</span><div class="summary-number">{{ number_format($totalClearances) }}</div><div class="summary-note">Approved snapshots plus preserved historical negative records</div></td>
                     <td><span class="label">Recorded Output Area</span><div class="summary-number">{{ number_format((float) $totalClearanceArea, 4) }}</div><div class="summary-note">ha in final snapshots; not ownership transferred</div></td>
                 </tr>
             </table>
@@ -201,7 +201,7 @@
                                 <span>{{ number_format((float) $releasedOutputArea, 4) }} ha in snapshots</span>
                             </div>
                             <div class="result denied">
-                                <span class="label">Not Approved</span>
+                                <span class="label">Historical Not Approved / Denied</span>
                                 <strong>{{ number_format($deniedResults) }}</strong>
                                 <span>{{ number_format((float) $deniedOutputArea, 4) }} ha in snapshots</span>
                             </div>
