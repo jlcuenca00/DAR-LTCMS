@@ -84,7 +84,7 @@ class ApplicationClearanceService
             // The LTC number belongs to the immutable PARPO II decision output,
             // not to the later administrative delivery date or the Legal Staff
             // system-recording timestamp.
-            $decisionYear = IlluminateSupportCarbon::parse($decisionDate)->format('Y');
+            $decisionYear = \Illuminate\Support\Carbon::parse($decisionDate)->format('Y');
             $pageNumber = max(1, (int) ($application->ltc_page_number ?: 1));
 
             /*
