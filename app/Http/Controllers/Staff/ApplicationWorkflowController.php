@@ -36,12 +36,7 @@ class ApplicationWorkflowController extends Controller
             default => $oldStatus,
         };
 
-        if ($currentStatus !== $oldStatus) {
-            $application->status = $currentStatus;
-            $application->save();
-        }
-
-        $nextStatus = $application->nextWorkflowStatus();
+        $nextStatus = LandTransferApplication::workflowTransitions()[$currentStatus] ?? null;
 
         if (! $nextStatus) {
             return back()->withErrors(['status' => 'No normal stage advancement is available from the current workflow status.']);
@@ -95,9 +90,19 @@ class ApplicationWorkflowController extends Controller
         if ($currentStatus === LandTransferApplication::STATUS_AWAITING_PAYMENT) {
             $validated = $request->validate([
                 'or_number' => ['required', 'string', 'max:100'],
-                'or_date' => ['required', 'date'],
+                'or_date' => ['required', 'date', 'before_or_equal:today'],
                 'amount_paid' => ['required', 'numeric', 'min:0'],
             ]);
+
+            if (
+                $application->payment_order_issued_at
+                && \Illuminate\Support\Carbon::parse($validated['or_date'])->startOfDay()
+                    ->lt($application->payment_order_issued_at->copy()->startOfDay())
+            ) {
+                throw ValidationException::withMessages([
+                    'or_date' => 'The Official Receipt date cannot be earlier than the Payment Order date.',
+                ]);
+            }
 
             $expectedFee = (float) config('dar_ltc.filing_fee', 2000);
             $amountPaid = round((float) $validated['amount_paid'], 2);
@@ -162,7 +167,9 @@ class ApplicationWorkflowController extends Controller
         // Before Legal Division records the final PARPO II decision, verify the full
         // administrative record. Form 4 remains recommendatory only.
         if ($nextStatus === LandTransferApplication::STATUS_FOR_RELEASING) {
-            [$snapshot, $readinessErrors] = $this->decisionReadiness($application);
+            $this->validateDecisionChronology($application, $validated['decision_date']);
+
+        [$snapshot, $readinessErrors] = $this->decisionReadiness($application);
 
             if (! empty($readinessErrors)) {
                 return back()->withErrors(array_merge([
@@ -373,6 +380,8 @@ class ApplicationWorkflowController extends Controller
             'decision_reason.required' => 'A reason is required before recording the final Not Approved decision.',
         ]);
 
+        $this->validateDecisionChronology($application, $validated['decision_date']);
+
         [$snapshot] = $this->buildValidationSnapshot($application);
 
         $readinessErrors = $this->workflowPrerequisiteErrors($snapshot['workflow_readiness']);
@@ -459,8 +468,8 @@ class ApplicationWorkflowController extends Controller
 
     public function markReadyForRelease(Request $request, LandTransferApplication $application)
     {
-        if (! $application->isFinalized() || $application->status === LandTransferApplication::STATUS_RELEASED) {
-            return back()->withErrors(['status' => 'Only an Approved or Not Approved decision may be marked Ready for Release.']);
+        if (! in_array($application->status, LandTransferApplication::FINAL_STATUSES, true)) {
+            return back()->withErrors(['status' => 'Only a current Approved or Not Approved decision may enter release tracking. Legacy final records remain read-only.']);
         }
 
         if (! $application->clearance()->exists()) {
@@ -498,8 +507,8 @@ class ApplicationWorkflowController extends Controller
 
     public function release(Request $request, LandTransferApplication $application)
     {
-        if (! $application->isFinalized()) {
-            return back()->withErrors(['status' => 'A final Approved or Not Approved decision is required before release to the client.']);
+        if (! in_array($application->status, LandTransferApplication::FINAL_STATUSES, true)) {
+            return back()->withErrors(['status' => 'Only a current Approved or Not Approved decision may be released through this workflow. Legacy final records remain read-only.']);
         }
 
         if (! $application->isReleaseReady()) {
@@ -592,8 +601,7 @@ class ApplicationWorkflowController extends Controller
                 && in_array($application->status, [LandTransferApplication::STATUS_PENDING_LEGAL_REVIEW, LandTransferApplication::STATUS_DRAFT, LandTransferApplication::STATUS_PENDING_REVIEW], true),
             'can_finalize_decision' => ! $application->isFinalized()
                 && $application->status === LandTransferApplication::STATUS_FOR_RELEASING,
-            'can_mark_ready_for_release' => $application->isFinalized()
-                && ! in_array($application->status, LandTransferApplication::LEGACY_FINAL_STATUSES, true)
+            'can_mark_ready_for_release' => in_array($application->status, LandTransferApplication::FINAL_STATUSES, true)
                 && ! $application->isReleasedToClient()
                 && $application->release_status !== LandTransferApplication::RELEASE_READY
                 && (bool) $application->clearance,
@@ -616,6 +624,36 @@ class ApplicationWorkflowController extends Controller
             'decision_recorded_at' => optional($application->decision_recorded_at)->toDateTimeString(),
             'requirements' => $requirements,
         ]);
+    }
+
+    private function validateDecisionChronology(LandTransferApplication $application, string $decisionDate): void
+    {
+        $decision = \Illuminate\Support\Carbon::parse($decisionDate)->startOfDay();
+
+        $milestones = [
+            'application date' => $application->date_of_application,
+            'filing date' => $application->date_filed,
+            'Payment Order date' => $application->payment_order_issued_at,
+            'Official Receipt date' => $application->or_date,
+            'LTC Form No. 4 certification date' => $application->ltc_form4_certified_at,
+            'Completed Staff Work date' => $application->csw_completed_at,
+        ];
+
+        foreach ($milestones as $label => $value) {
+            if (! $value) {
+                continue;
+            }
+
+            $milestone = $value instanceof \Carbon\CarbonInterface
+                ? $value->copy()->startOfDay()
+                : \Illuminate\Support\Carbon::parse($value)->startOfDay();
+
+            if ($decision->lt($milestone)) {
+                throw ValidationException::withMessages([
+                    'decision_date' => 'The final decision date cannot be earlier than the recorded ' . $label . '.',
+                ]);
+            }
+        }
     }
 
     private function decisionReadiness(LandTransferApplication $application): array
