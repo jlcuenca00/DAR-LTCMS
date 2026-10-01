@@ -100,20 +100,32 @@ class AuditLogController extends Controller
         }
 
         if (! empty($filters['application_code'])) {
-            $query->whereHas('application', function (Builder $applicationQuery) use ($filters) {
-                $applicationQuery->whereRaw(
-                    'LOWER(application_code) LIKE ?',
-                    ['%' . mb_strtolower($filters['application_code']) . '%']
-                );
+            $term = '%' . mb_strtolower($filters['application_code']) . '%';
+
+            $query->where(function (Builder $applicationFilter) use ($term) {
+                $applicationFilter
+                    ->whereRaw("LOWER(COALESCE(application_code_snapshot, '')) LIKE ?", [$term])
+                    ->orWhereHas('application', function (Builder $applicationQuery) use ($term) {
+                        $applicationQuery->whereRaw('LOWER(application_code) LIKE ?', [$term]);
+                    });
             });
         }
 
         if (! empty($filters['actor'])) {
-            $query->whereHas('actor', function (Builder $actorQuery) use ($filters) {
-                $actorQuery->whereRaw(
-                    "LOWER(COALESCE(name, '') || ' ' || COALESCE(username, '') || ' ' || COALESCE(email, '')) LIKE ?",
-                    ['%' . mb_strtolower($filters['actor']) . '%']
-                );
+            $term = '%' . mb_strtolower($filters['actor']) . '%';
+
+            $query->where(function (Builder $actorFilter) use ($term) {
+                $actorFilter
+                    ->whereRaw(
+                        "LOWER(COALESCE(actor_name_snapshot, '') || ' ' || COALESCE(actor_username_snapshot, '') || ' ' || COALESCE(actor_role_snapshot, '')) LIKE ?",
+                        [$term]
+                    )
+                    ->orWhereHas('actor', function (Builder $actorQuery) use ($term) {
+                        $actorQuery->whereRaw(
+                            "LOWER(COALESCE(name, '') || ' ' || COALESCE(username, '') || ' ' || COALESCE(email, '')) LIKE ?",
+                            [$term]
+                        );
+                    });
             });
         }
 

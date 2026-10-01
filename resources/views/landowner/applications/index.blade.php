@@ -451,6 +451,21 @@
                                 <p class="lo-app-section-label">Decision and Output</p>
                                 <div class="lo-decision-stack">
                                     @if (
+                                        $application->status === LandTransferApplication::STATUS_RETURNED_FOR_COMPLIANCE
+                                        && filled($application->latest_compliance_reason)
+                                    )
+                                        <div class="lo-denial-reason">
+                                            <strong>Compliance Needed</strong>
+                                            {{ $application->latest_compliance_reason }}
+                                            @if ($application->returned_for_compliance_at)
+                                                <div class="mt-1 text-xs text-slate-500">
+                                                    Recorded {{ $application->returned_for_compliance_at->timezone('Asia/Manila')->format('M d, Y · h:i A') }}
+                                                </div>
+                                            @endif
+                                        </div>
+                                    @endif
+
+                                    @if (
                                         in_array(
                                             $application->status,
                                             [LandTransferApplication::STATUS_DENIED, LandTransferApplication::STATUS_NOT_APPROVED],

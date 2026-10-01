@@ -69,6 +69,58 @@ class ApplicationTimelineTest extends TestCase
         $response->assertSee('Timeline records are based on audit logs', false);
     }
 
+    public function test_application_timeline_uses_historical_actor_snapshot_after_account_rename(): void
+    {
+        $viewer = User::factory()->create([
+            'role' => User::ROLE_STAFF,
+            'is_active' => true,
+        ]);
+
+        $actor = User::factory()->create([
+            'name' => 'Timeline Original Actor',
+            'username' => 'timeline_original',
+            'role' => User::ROLE_STAFF,
+            'is_active' => true,
+        ]);
+
+        $application = LandTransferApplication::create([
+            'application_code' => 'TIMELINE-SNAPSHOT-001',
+            'transferor_name' => 'Timeline Snapshot Transferor',
+            'transferee_name' => 'Timeline Snapshot Transferee',
+            'municipality' => 'Dumaguete City',
+            'barangay' => 'Bantayan',
+            'status' => LandTransferApplication::STATUS_PENDING_LEGAL_REVIEW,
+            'encoded_by' => $actor->id,
+        ]);
+
+        AuditLog::create([
+            'actor_user_id' => $actor->id,
+            'actor_name_snapshot' => 'Timeline Original Actor',
+            'actor_username_snapshot' => 'timeline_original',
+            'actor_role_snapshot' => User::ROLE_STAFF,
+            'application_code_snapshot' => $application->application_code,
+            'action' => 'timeline_snapshot_probe',
+            'land_transfer_application_id' => $application->id,
+            'auditable_type' => LandTransferApplication::class,
+            'auditable_id' => $application->id,
+            'metadata' => [],
+            'ip_address' => '127.0.0.1',
+            'user_agent' => 'PHPUnit',
+        ]);
+
+        $actor->forceFill([
+            'name' => 'Timeline Renamed Actor',
+            'username' => 'timeline_renamed',
+        ])->save();
+
+        $this->actingAs($viewer)
+            ->get(route('staff.applications.show', $application))
+            ->assertOk()
+            ->assertSee('Timeline Original Actor')
+            ->assertSee('@timeline_original')
+            ->assertDontSee('Timeline Renamed Actor');
+    }
+
     public function test_application_timeline_shows_empty_state_when_no_audit_logs_exist(): void
     {
         $staffUser = User::factory()->create([

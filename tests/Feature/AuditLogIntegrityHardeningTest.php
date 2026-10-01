@@ -77,6 +77,62 @@ class AuditLogIntegrityHardeningTest extends TestCase
         ]);
     }
 
+    public function test_audit_viewer_and_print_preserve_historical_actor_identity_after_account_changes(): void
+    {
+        $viewer = User::factory()->create([
+            'role' => User::ROLE_STAFF,
+            'is_active' => true,
+            'must_change_password' => false,
+        ]);
+
+        $actor = User::factory()->create([
+            'name' => 'Original Trace Actor',
+            'username' => 'original_trace_actor',
+            'role' => User::ROLE_STAFF,
+            'is_active' => true,
+            'must_change_password' => false,
+        ]);
+
+        $application = LandTransferApplication::create([
+            'application_code' => 'AUDIT-SNAPSHOT-001',
+            'transferor_name' => 'Snapshot Transferor',
+            'transferee_name' => 'Snapshot Transferee',
+            'municipality' => 'Dumaguete City',
+            'barangay' => 'Bantayan',
+            'status' => LandTransferApplication::STATUS_PENDING_LEGAL_REVIEW,
+            'encoded_by' => $actor->id,
+        ]);
+
+        $this->actingAs($actor);
+        AuditLogger::record('snapshot_identity_probe', $application, $application, [], $actor->id);
+
+        $actor->forceFill([
+            'name' => 'Renamed Current Actor',
+            'username' => 'renamed_current_actor',
+        ])->save();
+
+        $viewerResponse = $this->actingAs($viewer)
+            ->get(route('staff.audit-logs.index', ['actor' => 'Original Trace Actor']));
+
+        $viewerResponse->assertOk();
+        $viewerResponse->assertSee('Original Trace Actor');
+        $viewerResponse->assertSee('@original_trace_actor');
+        $viewerResponse->assertSee('AUDIT-SNAPSHOT-001');
+        $viewerResponse->assertDontSee('Renamed Current Actor');
+
+        $viewerResponse->assertViewHas('auditLogs', function ($logs) {
+            return $logs->total() === 1
+                && $logs->first()?->actor_name_snapshot === 'Original Trace Actor';
+        });
+
+        $this->actingAs($viewer)
+            ->get(route('staff.audit-logs.print', ['actor' => 'original_trace_actor']))
+            ->assertOk()
+            ->assertSee('Original Trace Actor')
+            ->assertSee('@original_trace_actor')
+            ->assertDontSee('Renamed Current Actor');
+    }
+
     public function test_mutating_request_without_domain_event_receives_fallback_audit_record(): void
     {
         $staff = User::factory()->create([

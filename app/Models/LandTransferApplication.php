@@ -98,6 +98,9 @@ class LandTransferApplication extends Model
         'ltc_page_number',
         'status',
         'release_status',
+        'latest_compliance_reason',
+        'returned_for_compliance_at',
+        'returned_for_compliance_by',
         'ready_for_release_at',
         'released_at',
         'released_by',
@@ -142,6 +145,7 @@ class LandTransferApplication extends Model
         'is_succession_case' => 'boolean',
         'retention_certificate_required' => 'boolean',
         'csw_completed_at' => 'datetime',
+        'returned_for_compliance_at' => 'datetime',
         'ready_for_release_at' => 'datetime',
         'released_at' => 'datetime',
         'validated_at' => 'datetime',
@@ -510,6 +514,11 @@ class LandTransferApplication extends Model
         return self::workflowTransitions()[$this->status] ?? null;
     }
 
+
+    public function returnedForComplianceBy()
+    {
+        return $this->belongsTo(User::class, 'returned_for_compliance_by');
+    }
 
     public function decisionRecordedBy()
     {

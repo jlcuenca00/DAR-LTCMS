@@ -521,7 +521,7 @@
                         type="text"
                         name="actor"
                         value="{{ $filters['actor'] ?? '' }}"
-                        placeholder="Name or email"
+                        placeholder="Historical name, username, role, or current account"
                         class="w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-green-600 focus:ring-green-600"
                     >
                 </div>
@@ -600,14 +600,27 @@
                                     </div>
                                 </td>
                                 <td>
-                                    <div class="audit-actor-name">{{ $log->actor?->name ?? 'System' }}</div>
-                                    <div class="audit-actor-detail">{{ $log->actor?->email ?? 'No user account' }}</div>
+                                    <div class="audit-actor-name">{{ $log->actor_name_snapshot ?? $log->actor?->name ?? 'System / unknown actor' }}</div>
+                                    <div class="audit-actor-detail">
+                                        @if ($log->actor_username_snapshot)
+                                            {{ '@' . $log->actor_username_snapshot }}
+                                        @elseif ($log->actor?->username)
+                                            {{ '@' . $log->actor->username }}
+                                        @else
+                                            No username snapshot
+                                        @endif
+                                        @if ($log->actor_role_snapshot)
+                                            · {{ $log->actor_role_snapshot }}
+                                        @endif
+                                    </div>
                                 </td>
                                 <td>
                                     @if ($log->application)
                                         <a href="{{ route('staff.applications.show', $log->application) }}" class="audit-application-link">
-                                            {{ $log->application->application_code }}
+                                            {{ $log->application_code_snapshot ?? $log->application->application_code }}
                                         </a>
+                                    @elseif ($log->application_code_snapshot)
+                                        <span class="audit-application-link">{{ $log->application_code_snapshot }}</span>
                                     @else
                                         <span class="text-gray-500">Not linked</span>
                                     @endif
