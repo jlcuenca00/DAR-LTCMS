@@ -84,8 +84,13 @@ class UiUxSystemTest extends TestCase
         $this->assertStringContainsString('data-decision-confirm="approve"', $review);
         $this->assertStringContainsString('data-decision-confirm="deny"', $review);
         $this->assertStringContainsString('final_decision_confirmation', $review);
-        $this->assertStringContainsString('Approve application', $review);
-        $this->assertStringContainsString('Record Final Approval', $review);
+        $this->assertStringContainsString('Record PARPO II Approved Decision', $review);
+        $this->assertStringContainsString('Record Approved Decision', $review);
+        $this->assertStringContainsString('name="decision_officer_name"', $review);
+        $this->assertStringContainsString('name="decision_date"', $review);
+        $this->assertStringContainsString('id="workflow-overview"', $review);
+        $this->assertStringContainsString('Manage Workflow', $review);
+        $this->assertStringNotContainsString('workflow-fab', $review);
         $this->assertStringNotContainsString('Release Clearance', $review);
     }
 
