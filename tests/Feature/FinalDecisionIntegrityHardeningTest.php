@@ -232,6 +232,15 @@ class FinalDecisionIntegrityHardeningTest extends TestCase
             'Clearance decision_officer_name does not match the frozen application final-decision record.',
             $inspection['issues']
         );
+
+        $this->actingAs($staff)
+            ->post(route('staff.applications.ready_for_release', $application))
+            ->assertSessionHasErrors('clearance');
+
+        $this->assertSame(
+            LandTransferApplication::RELEASE_NOT_READY,
+            $application->fresh()->release_status
+        );
     }
 
     public function test_all_final_statuses_reject_linked_parcel_additions(): void
