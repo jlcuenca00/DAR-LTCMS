@@ -160,7 +160,8 @@ class LandTransferApplication extends Model
 
     public function isReleaseReady(): bool
     {
-        return $this->isFinalized() && $this->release_status === self::RELEASE_READY;
+        return in_array($this->status, self::FINAL_STATUSES, true)
+            && $this->release_status === self::RELEASE_READY;
     }
 
     public function isReleasedToClient(): bool
