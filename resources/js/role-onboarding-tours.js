@@ -10,9 +10,9 @@ const roleTours = {
         statusUrl: '/onboarding-tours/staff_portal',
         autoPromptPath: /\/staff\/dashboard\/?$/,
         helpMount: '.staff-topbar-actions',
-        helpLabel: 'Staff Portal Tour',
-        welcomeTitle: 'Welcome to the Staff Portal',
-        welcomeCopy: 'Take a quick tour of the pages DAR Staff use to process and monitor land transfer clearance applications.',
+        helpLabel: 'Legal Clearance Staff Portal Tour',
+        welcomeTitle: 'Welcome to the Legal Clearance Staff Portal',
+        welcomeCopy: 'Take a quick tour of the pages Legal Clearance Staff use to encode, record, and monitor land transfer clearance processing.',
         steps: [
             {
                 path: '/staff/dashboard',
