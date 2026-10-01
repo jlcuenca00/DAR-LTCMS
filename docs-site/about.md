@@ -8,9 +8,11 @@ The platform serves as a **decision-support and records-management tool**. Valid
 
 ## Authorized user groups
 
-### DAR Staff
+### Legal Clearance Staff
 
-DAR Staff manually encode and manage applications and related records, review supporting documents, process the office workflow, generate clearance outputs, and produce monitoring reports.
+The internal DAR-LTCMS workspace is operated by the Legal Division personnel assigned to clearance entry, record processing, and release/exit tracking. They encode and manage applications and related records, review supporting documents, record workflow movements/results received from other DAR offices, generate clearance outputs, and produce monitoring reports.
+
+LTID, Chief Legal, PARPO II, the cashier, and other DAR offices do not require DAR-LTCMS accounts. Their real-world actions are tracked as administrative authorities/stages and are recorded by Legal Clearance Staff.
 
 ### Landowners
 
