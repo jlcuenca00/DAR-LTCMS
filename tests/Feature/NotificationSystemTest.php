@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\ApplicationClearance;
+use App\Models\ApplicationComplianceNotice;
 use App\Models\ApplicationParcel;
 use App\Models\AuditLog;
 use App\Models\LandTransferApplication;
@@ -298,7 +299,7 @@ class NotificationSystemTest extends TestCase
         ]);
     }
 
-    public function test_return_for_compliance_persists_context_and_notifies_linked_landowner(): void
+    public function test_compliance_request_and_resolution_notify_landowner_and_keep_persistent_alert_until_resolved(): void
     {
         $staffUser = User::factory()->create([
             'role' => User::ROLE_STAFF,
@@ -328,45 +329,85 @@ class NotificationSystemTest extends TestCase
             'encoded_by' => $staffUser->id,
         ]);
 
-        $reason = 'Submit the missing certified title copy and valid identification.';
+        $details = 'Submit the missing certified title copy and valid identification.';
+        $requestedItems = 'Certified title copy; valid government-issued ID';
 
         $this->actingAs($staffUser)
-            ->post(route('staff.applications.return_for_compliance', $application), [
-                'compliance_reason' => $reason,
+            ->post(route('staff.applications.compliance.request', $application), [
+                'category' => ApplicationComplianceNotice::CATEGORY_MISSING_REQUIREMENT,
+                'details' => $details,
+                'requested_items' => $requestedItems,
             ])
             ->assertSessionHas('success');
 
         $application->refresh();
 
         $this->assertSame(LandTransferApplication::STATUS_RETURNED_FOR_COMPLIANCE, $application->status);
-        $this->assertSame($reason, $application->latest_compliance_reason);
-        $this->assertSame($staffUser->id, $application->returned_for_compliance_by);
-        $this->assertNotNull($application->returned_for_compliance_at);
+        $this->assertSame($details, $application->latest_compliance_reason);
+
+        $notice = $application->complianceNotices()->latest('id')->firstOrFail();
+        $this->assertSame(ApplicationComplianceNotice::CATEGORY_MISSING_REQUIREMENT, $notice->category);
+        $this->assertSame($details, $notice->details);
+        $this->assertSame($requestedItems, $notice->requested_items);
+        $this->assertSame(LandTransferApplication::STATUS_PENDING_LEGAL_REVIEW, $notice->resume_status);
+        $this->assertSame($staffUser->name, $notice->requested_by_name_snapshot);
 
         $auditLog = AuditLog::query()
             ->where('land_transfer_application_id', $application->id)
-            ->where('action', 'application_returned_for_compliance')
+            ->where('action', 'application_compliance_requested')
             ->firstOrFail();
 
-        $this->assertSame($reason, $auditLog->metadata['compliance_reason']);
-        $this->assertSame($staffUser->id, $auditLog->actor_user_id);
+        $this->assertSame($notice->id, $auditLog->metadata['notice_id']);
+        $this->assertSame($details, $auditLog->metadata['details']);
 
         $notification = SystemNotification::query()
             ->where('user_id', $landownerUser->id)
-            ->where('type', 'landowner_returned_for_compliance')
+            ->where('type', 'landowner_compliance_required')
             ->firstOrFail();
 
-        $this->assertSame($reason, $notification->data['compliance_reason']);
+        $this->assertSame($notice->id, $notification->data['compliance_notice_id']);
+        $this->assertSame($details, $notification->data['details']);
         $this->assertSame(
-            route('landowner.applications.index'),
+            route('landowner.applications.index') . '#application-' . $application->id,
             $notification->targetUrlFor($landownerUser)
         );
 
         $this->actingAs($landownerUser)
+            ->get(route('landowner.dashboard'))
+            ->assertOk()
+            ->assertSee('Action Required')
+            ->assertSee($details)
+            ->assertSee($requestedItems);
+
+        $this->actingAs($landownerUser)
             ->get(route('landowner.applications.index'))
             ->assertOk()
-            ->assertSee('Compliance Needed')
-            ->assertSee($reason);
+            ->assertSee('Action Required')
+            ->assertSee($details)
+            ->assertSee($requestedItems);
+
+        $this->actingAs($staffUser)
+            ->post(route('staff.applications.compliance.resolve', $application), [
+                'resolution_note' => 'Required documents were presented and reviewed.',
+            ])
+            ->assertSessionHas('success');
+
+        $application->refresh();
+        $notice->refresh();
+
+        $this->assertSame(LandTransferApplication::STATUS_PENDING_LEGAL_REVIEW, $application->status);
+        $this->assertNotNull($notice->resolved_at);
+        $this->assertSame($staffUser->name, $notice->resolved_by_name_snapshot);
+
+        $this->assertDatabaseHas('system_notifications', [
+            'user_id' => $landownerUser->id,
+            'type' => 'landowner_compliance_resolved',
+        ]);
+
+        $this->actingAs($landownerUser)
+            ->get(route('landowner.dashboard'))
+            ->assertOk()
+            ->assertDontSee($details);
     }
 
     public function test_ready_for_release_notifies_linked_landowner_without_exposing_extra_case_data(): void
@@ -446,7 +487,7 @@ class NotificationSystemTest extends TestCase
         $this->assertArrayNotHasKey('transferor_name', $notification->data);
         $this->assertArrayNotHasKey('transferee_name', $notification->data);
         $this->assertSame(
-            route('landowner.applications.index'),
+            route('landowner.applications.index') . '#application-' . $application->id,
             $notification->targetUrlFor($landownerUser)
         );
     }
@@ -481,73 +522,41 @@ class NotificationSystemTest extends TestCase
         ]);
     }
 
-    public function test_final_not_approved_decision_creates_staff_and_landowner_notifications(): void
+    public function test_current_workflow_has_no_negative_final_decision_notification_path(): void
     {
         $staffUser = User::factory()->create([
             'role' => User::ROLE_STAFF,
             'is_active' => true,
         ]);
 
-        $landownerUser = User::factory()->create([
-            'role' => User::ROLE_LANDOWNER,
-            'is_active' => true,
-        ]);
-
-        $landowner = Landowner::create([
-            'user_id' => $landownerUser->id,
-            'first_name' => 'Decision',
-            'last_name' => 'Landowner',
-            'province' => 'Negros Oriental',
-        ]);
-
         $application = LandTransferApplication::create([
-            'application_code' => 'APP-NOTIF-FINAL-001',
-            'transferor_name' => 'Decision Landowner',
-            'transferee_name' => 'Decision Landowner',
-            'transferor_landowner_id' => $landowner->id,
-            'transferee_landowner_id' => $landowner->id,
+            'application_code' => 'APP-NOTIF-NO-NEGATIVE-001',
+            'transferor_name' => 'Decision Transferor',
+            'transferee_name' => 'Decision Transferee',
             'municipality' => 'Dumaguete City',
             'barangay' => 'Bantayan',
             'status' => LandTransferApplication::STATUS_FOR_RELEASING,
             'encoded_by' => $staffUser->id,
         ]);
 
-        $this->linkSubjectParcel($application, 'APP-NOTIF-FINAL-PARCEL');
-        $application->forceFill([
-            'payment_order_reference' => 'OP-APP-NOTIF-FINAL-001',
-            'payment_order_issued_at' => now(),
-            'or_number' => 'OR-APP-NOTIF-FINAL-001',
-            'or_date' => now()->toDateString(),
-            'amount_paid' => config('dar_ltc.filing_fee', 2000),
-            'ltc_form4_subject_land_findings' => ['ra6657_not_covered_not_tenanted_retained_area'],
-            'ltc_form4_recommendation_findings' => ['application_complete'],
-            'ltc_form4_recommendation_decision' => 'denial',
-            'ltc_form4_certified_at' => now()->toDateString(),
-            'ltc_form4_certifying_officer_name' => 'Authorized Review Officer',
-            'csw_reference' => 'CSW-APP-NOTIF-FINAL-001',
-            'csw_completed_at' => now(),
-            'csw_prepared_by' => $staffUser->id,
-        ])->save();
-
         $this->actingAs($staffUser)
-            ->post(route('staff.applications.not_approved', $application), [
+            ->post('/staff/applications/' . $application->id . '/not-approved', [
                 'final_decision_confirmation' => '1',
-                'decision_officer_name' => 'PARPO II Test Signatory',
-                'decision_date' => now()->toDateString(),
-                'decision_reason' => 'Invalid transfer for DAR clearance processing',
-                'decision_notes' => 'Test final decision notification.',
             ])
-            ->assertRedirect();
+            ->assertNotFound();
 
-        $this->assertDatabaseHas('system_notifications', [
-            'user_id' => $staffUser->id,
+        $this->assertDatabaseMissing('system_notifications', [
             'type' => 'application_not_approved',
         ]);
 
-        $this->assertDatabaseHas('system_notifications', [
-            'user_id' => $landownerUser->id,
-            'type' => 'landowner_final_decision',
+        $this->assertDatabaseMissing('system_notifications', [
+            'type' => 'application_denied',
         ]);
+
+        $this->assertSame(
+            LandTransferApplication::STATUS_FOR_RELEASING,
+            $application->fresh()->status
+        );
     }
 
     public function test_landowner_notification_is_deduplicated_and_payload_is_minimal(): void
@@ -749,7 +758,7 @@ class NotificationSystemTest extends TestCase
         ]);
 
         $this->assertSame(
-            route('landowner.applications.index'),
+            route('landowner.applications.index') . '#application-' . $application->id,
             $decisionNotification->targetUrlFor($landownerUser)
         );
         $this->assertSame(
