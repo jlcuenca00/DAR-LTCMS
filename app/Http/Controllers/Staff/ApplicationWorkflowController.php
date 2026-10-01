@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Staff;
 
 use App\Http\Controllers\Controller;
 use App\Models\LandTransferApplication;
+use App\Services\ApplicationBusinessStateIntegrityService;
 use App\Services\ApplicationClearanceIntegrityService;
 use App\Services\ApplicationClearanceService;
 use App\Services\ApplicationParcelIntegrityService;
@@ -11,7 +12,9 @@ use App\Services\ApplicationPartyIntegrityService;
 use App\Services\ApplicationRequirementService;
 use App\Services\AuditLogger;
 use App\Services\LandholdingAreaValidationService;
+use App\Services\LandownerConcurrencyService;
 use App\Services\NotificationService;
+use App\Services\ParcelConcurrencyService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -284,18 +287,8 @@ class ApplicationWorkflowController extends Controller
             'final_decision_confirmation.accepted' => 'Confirm the final PARPO II approval before continuing.',
         ]);
 
-        $this->validateDecisionChronology($application, $validated['decision_date']);
-
-        [$snapshot, $readinessErrors] = $this->decisionReadiness($application);
-
-        if (! empty($readinessErrors)) {
-            return back()->withErrors(array_merge([
-                'validation' => 'Resolve the following before recording PARPO II approval:',
-            ], $readinessErrors));
-        }
-
         try {
-            DB::transaction(function () use ($validated, $application, $snapshot) {
+            DB::transaction(function () use ($validated, $application) {
                 $application = LandTransferApplication::query()
                     ->lockForUpdate()
                     ->findOrFail($application->id);
@@ -306,6 +299,17 @@ class ApplicationWorkflowController extends Controller
 
                 if ($application->status !== LandTransferApplication::STATUS_FOR_RELEASING) {
                     throw new \RuntimeException('The application status changed before the final decision. Refresh and review the current stage.');
+                }
+
+                $this->lockFinalDecisionDependencies($application);
+                $this->validateDecisionChronology($application, $validated['decision_date']);
+
+                [$snapshot, $readinessErrors] = $this->decisionReadiness($application);
+
+                if (! empty($readinessErrors)) {
+                    throw ValidationException::withMessages(array_merge([
+                        'validation' => 'Resolve the following before recording PARPO II approval:',
+                    ], $readinessErrors));
                 }
 
                 $application->status = LandTransferApplication::STATUS_APPROVED;
@@ -351,6 +355,8 @@ class ApplicationWorkflowController extends Controller
                 app(NotificationService::class)->notifyStaffApplicationApproved($application);
                 app(NotificationService::class)->notifyLinkedLandownersFinalDecision($application);
             });
+        } catch (ValidationException $e) {
+            throw $e;
         } catch (\Throwable $e) {
             report($e);
 
@@ -385,24 +391,8 @@ class ApplicationWorkflowController extends Controller
             'decision_reason.required' => 'A reason is required before recording the final Not Approved decision.',
         ]);
 
-        $this->validateDecisionChronology($application, $validated['decision_date']);
-
-        [$snapshot] = $this->buildValidationSnapshot($application);
-
-        $readinessErrors = $this->workflowPrerequisiteErrors($snapshot['workflow_readiness']);
-
-        if (! (bool) data_get($snapshot, 'requirements.complete', false)) {
-            $readinessErrors['requirements'] = 'Applicable documentary requirements must remain complete before recording the final PARPO II Not Approved decision.';
-        }
-
-        if (! empty($readinessErrors)) {
-            return back()->withErrors(array_merge([
-                'validation' => 'Resolve the following workflow-integrity issues before recording the PARPO II Not Approved decision:',
-            ], $readinessErrors));
-        }
-
         try {
-            DB::transaction(function () use ($validated, $application, $snapshot) {
+            DB::transaction(function () use ($validated, $application) {
                 $application = LandTransferApplication::query()
                     ->lockForUpdate()
                     ->findOrFail($application->id);
@@ -413,6 +403,22 @@ class ApplicationWorkflowController extends Controller
 
                 if ($application->status !== LandTransferApplication::STATUS_FOR_RELEASING) {
                     throw new \RuntimeException('The application status changed before the Not Approved decision. Refresh and review the current stage.');
+                }
+
+                $this->lockFinalDecisionDependencies($application);
+                $this->validateDecisionChronology($application, $validated['decision_date']);
+
+                [$snapshot] = $this->buildValidationSnapshot($application);
+                $readinessErrors = $this->workflowPrerequisiteErrors($snapshot['workflow_readiness']);
+
+                if (! (bool) data_get($snapshot, 'requirements.complete', false)) {
+                    $readinessErrors['requirements'] = 'Applicable documentary requirements must remain complete before recording the final PARPO II Not Approved decision.';
+                }
+
+                if (! empty($readinessErrors)) {
+                    throw ValidationException::withMessages(array_merge([
+                        'validation' => 'Resolve the following workflow-integrity issues before recording the PARPO II Not Approved decision:',
+                    ], $readinessErrors));
                 }
 
                 $application->status = LandTransferApplication::STATUS_NOT_APPROVED;
@@ -462,6 +468,8 @@ class ApplicationWorkflowController extends Controller
                 app(NotificationService::class)->notifyStaffApplicationNotApproved($application);
                 app(NotificationService::class)->notifyLinkedLandownersFinalDecision($application);
             });
+        } catch (ValidationException $e) {
+            throw $e;
         } catch (\Throwable $e) {
             report($e);
 
