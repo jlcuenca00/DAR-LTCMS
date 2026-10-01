@@ -485,6 +485,13 @@ class ApplicationWorkflowController extends Controller
             return back()->withErrors(['status' => 'Only a current Approved or Not Approved decision may enter release tracking. Legacy final records remain read-only.']);
         }
 
+        $businessStateIntegrity = app(ApplicationBusinessStateIntegrityService::class)->inspect($application);
+        if (! $businessStateIntegrity['valid']) {
+            return back()->withErrors([
+                'release_integrity' => 'The application release state is internally inconsistent. Preserve the record and resolve the integrity issue before release tracking continues.',
+            ]);
+        }
+
         if (! $application->clearance()->exists()) {
             return back()->withErrors(['clearance' => 'The final LTC Form No. 5 output must exist before it can be marked Ready for Release.']);
         }
@@ -530,6 +537,13 @@ class ApplicationWorkflowController extends Controller
     {
         if (! in_array($application->status, LandTransferApplication::FINAL_STATUSES, true)) {
             return back()->withErrors(['status' => 'Only a current Approved or Not Approved decision may be released through this workflow. Legacy final records remain read-only.']);
+        }
+
+        $businessStateIntegrity = app(ApplicationBusinessStateIntegrityService::class)->inspect($application);
+        if (! $businessStateIntegrity['valid']) {
+            return back()->withErrors([
+                'release_integrity' => 'The application release state is internally inconsistent. Preserve the record and resolve the integrity issue before recording client release.',
+            ]);
         }
 
         if (! $application->isReleaseReady()) {
@@ -612,6 +626,10 @@ class ApplicationWorkflowController extends Controller
         $application->loadMissing('clearance');
         $requirements = app(ApplicationRequirementService::class)->evaluate($application);
         $nextStatus = $application->nextWorkflowStatus();
+        $businessStateIntegrity = app(ApplicationBusinessStateIntegrityService::class)->inspect($application);
+        $clearanceIntegrity = $application->clearance
+            ? app(ApplicationClearanceIntegrityService::class)->inspect($application)
+            : ['valid' => false, 'issues' => ['Final decision output does not exist.']];
 
         return response()->json([
             'application_id' => $application->id,
@@ -633,8 +651,15 @@ class ApplicationWorkflowController extends Controller
             'can_mark_ready_for_release' => in_array($application->status, LandTransferApplication::FINAL_STATUSES, true)
                 && ! $application->isReleasedToClient()
                 && $application->release_status !== LandTransferApplication::RELEASE_READY
-                && (bool) $application->clearance,
-            'can_release_output' => $application->isReleaseReady(),
+                && (bool) $application->clearance
+                && $businessStateIntegrity['valid']
+                && $clearanceIntegrity['valid'],
+            'can_release_output' => $application->isReleaseReady()
+                && $businessStateIntegrity['valid']
+                && $clearanceIntegrity['valid'],
+            'business_state_integrity_valid' => $businessStateIntegrity['valid'],
+            'business_state_integrity_issues' => $businessStateIntegrity['issues'],
+            'clearance_integrity_valid' => $clearanceIntegrity['valid'],
             'form4_editable' => $application->canEditForm4(),
             'applicant_is_juridical_entity' => (bool) $application->applicant_is_juridical_entity,
             'payment_order_reference' => $application->payment_order_reference,
@@ -653,6 +678,26 @@ class ApplicationWorkflowController extends Controller
             'decision_recorded_at' => optional($application->decision_recorded_at)->toDateTimeString(),
             'requirements' => $requirements,
         ]);
+    }
+
+    private function lockFinalDecisionDependencies(LandTransferApplication $application): void
+    {
+        app(LandownerConcurrencyService::class)->lockLandowners(
+            $application->linkedLandownerIds('transferee')->all()
+        );
+
+        $parcelIds = $application->applicationParcels()
+            ->whereNotNull('parcel_id')
+            ->orderBy('parcel_id')
+            ->pluck('parcel_id')
+            ->all();
+
+        app(ParcelConcurrencyService::class)->lockParcels($parcelIds);
+
+        // Any relation values loaded before these locks may be stale. Force the
+        // readiness services to re-read the locked shared records.
+        $application->unsetRelation('applicationParcels');
+        $application->unsetRelation('documents');
     }
 
     private function validateDecisionChronology(LandTransferApplication $application, string $decisionDate): void
