@@ -161,6 +161,8 @@ jobs:
           npm ci
           npm run build
 
+      # TEMPORARY AUDIT/DEFENSE MODE:
+      # Strict host-key pinning is intentionally deferred until post-defense hardening.
       - name: Deploy to CloudPanel
         uses: easingthemes/ssh-deploy@ece05a22752e524363164bfb2f69a5ba4f8ded0d # v5.1.0
         with:
