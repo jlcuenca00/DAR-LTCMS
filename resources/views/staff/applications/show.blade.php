@@ -2960,8 +2960,8 @@
                                 <span>
                                     <strong>Latest recorded activity:</strong>
                                     {{ ucwords(str_replace('_', ' ', $latestApplicationActivity->action)) }}
-                                    @if ($latestApplicationActivity->actor)
-                                        by {{ $latestApplicationActivity->actor->name }}
+                                    @if ($latestApplicationActivity->actor_name_snapshot || $latestApplicationActivity->actor)
+                                        by {{ $latestApplicationActivity->actor_name_snapshot ?? $latestApplicationActivity->actor?->name }}
                                     @endif
                                     · {{ $latestApplicationActivity->created_at?->timezone('Asia/Manila')->format('M d, Y h:i A') }}
                                 </span>
@@ -2969,6 +2969,24 @@
                                 <span><strong>Latest recorded activity:</strong> No workflow activity recorded yet.</span>
                             @endif
                         </div>
+
+                        @if (
+                            $application->status === \App\Models\LandTransferApplication::STATUS_RETURNED_FOR_COMPLIANCE
+                            && filled($application->latest_compliance_reason)
+                        )
+                            <div class="review-note-box">
+                                <strong>Latest compliance request:</strong>
+                                {{ $application->latest_compliance_reason }}
+                                <div class="mt-1 text-xs text-slate-500">
+                                    @if ($application->returnedForComplianceBy)
+                                        Recorded by {{ $application->returnedForComplianceBy->name }}
+                                    @endif
+                                    @if ($application->returned_for_compliance_at)
+                                        · {{ $application->returned_for_compliance_at->timezone('Asia/Manila')->format('M d, Y h:i A') }}
+                                    @endif
+                                </div>
+                            </div>
+                        @endif
 
                         <p class="workflow-overview-next">
                             <strong>{{ $isFinal ? 'Available action:' : 'Expected next recording action:' }}</strong>
@@ -3921,11 +3939,18 @@
                                         <p class="timeline-action">{{ ucwords(str_replace('_', ' ', $timelineEntry->action)) }}</p>
                                         <p class="timeline-meta">
                                             By:
-                                            @if ($timelineEntry->actor)
-                                                {{ $timelineEntry->actor->name }}
-                                                <span class="text-gray-400">({{ $timelineEntry->actor->email }})</span>
+                                            @if ($timelineEntry->actor_name_snapshot || $timelineEntry->actor)
+                                                {{ $timelineEntry->actor_name_snapshot ?? $timelineEntry->actor?->name }}
+                                                @if ($timelineEntry->actor_username_snapshot)
+                                                    <span class="text-gray-400">({{ '@' . $timelineEntry->actor_username_snapshot }})</span>
+                                                @elseif ($timelineEntry->actor?->email)
+                                                    <span class="text-gray-400">({{ $timelineEntry->actor->email }})</span>
+                                                @endif
+                                                @if ($timelineEntry->actor_role_snapshot)
+                                                    <span class="text-gray-400">· {{ $timelineEntry->actor_role_snapshot }}</span>
+                                                @endif
                                             @else
-                                                Unknown user
+                                                System / unknown actor
                                             @endif
                                         </p>
                                     </div>
