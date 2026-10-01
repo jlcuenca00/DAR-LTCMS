@@ -1,5 +1,5 @@
 @props([
-    'title' => 'Staff Workspace',
+    'title' => 'Legal Clearance Workspace',
     'subtitle' => null,
     'active' => 'dashboard',
     'eyebrow' => 'DAR Negros Oriental Provincial Office',
@@ -1130,7 +1130,7 @@
     <a class="skip-link" href="#main-content">Skip to main content</a>
     @php
         $navItems = [
-            ['active' => 'dashboard', 'route' => 'staff.dashboard', 'icon' => 'fa-gauge-high', 'label' => 'Staff Dashboard'],
+            ['active' => 'dashboard', 'route' => 'staff.dashboard', 'icon' => 'fa-gauge-high', 'label' => 'Dashboard'],
             ['active' => 'applications', 'route' => 'staff.applications.index', 'icon' => 'fa-file-lines', 'label' => 'Applications'],
             ['active' => 'landowner-records', 'route' => 'staff.records.landowners.index', 'icon' => 'fa-users', 'label' => 'Landowner Records'],
             ['active' => 'parcel-records', 'route' => 'staff.records.parcels.index', 'icon' => 'fa-map-location-dot', 'label' => 'Parcel Records'],

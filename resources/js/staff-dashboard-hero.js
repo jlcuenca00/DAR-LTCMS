@@ -10,7 +10,7 @@ function initializeStaffDashboardHeroContext() {
     if (intro && title && !intro.querySelector('.hero-eyebrow')) {
         const eyebrow = document.createElement('p');
         eyebrow.className = 'hero-eyebrow';
-        eyebrow.textContent = 'DAR Staff Workspace';
+        eyebrow.textContent = 'Legal Clearance Staff Workspace';
         intro.insertBefore(eyebrow, title);
     }
 
@@ -39,7 +39,7 @@ function initializeStaffDashboardHeroContext() {
     const shortDescriptions = {
         pending_legal_review: 'Awaiting legal review',
         active_workflow: 'In endorsement',
-        for_releasing: 'PARPO II decision pending',
+        for_releasing: 'PARPO II decision ready to record',
     };
 
     queue?.querySelectorAll('[data-dashboard-filter]').forEach((button) => {

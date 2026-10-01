@@ -8,7 +8,7 @@
     $accountInitial = strtoupper(substr($accountName, 0, 1));
     $accountUsername = $user?->username ?: 'No username';
     $accountRoleLabel = match ($user?->role) {
-        \App\Models\User::ROLE_STAFF => 'DAR Staff',
+        \App\Models\User::ROLE_STAFF => 'Legal Clearance Staff',
         \App\Models\User::ROLE_LANDOWNER => 'Landowner',
         \App\Models\User::ROLE_GEODETIC => 'Geodetic Personnel',
         default => 'Authorized User',

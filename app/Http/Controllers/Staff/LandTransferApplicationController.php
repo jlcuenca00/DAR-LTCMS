@@ -31,6 +31,7 @@ class LandTransferApplicationController extends Controller
             'transferorLandowner',
             'transfereeLandowner',
             'clearance',
+            'decisionRecordedBy',
         ]);
 
         // 1) Required documents (checklist)
@@ -60,8 +61,14 @@ class LandTransferApplicationController extends Controller
             ->forApplication($application);
         $exceedsFiveHectares = $fiveHectareValidation['exceeds_limit'];
 
-        $applicationTimeline = AuditLog::with('actor')
-            ->where('land_transfer_application_id', $application->id)
+        $timelineQuery = AuditLog::with('actor')
+            ->where('land_transfer_application_id', $application->id);
+
+        $latestApplicationActivity = (clone $timelineQuery)
+            ->latest()
+            ->first();
+
+        $applicationTimeline = $timelineQuery
             ->latest()
             ->paginate(20, ['*'], 'timeline_page')
             ->withQueryString();
@@ -193,6 +200,7 @@ class LandTransferApplicationController extends Controller
             'exceedsFiveHectares',
             'fiveHectareValidation',
             'applicationTimeline',
+            'latestApplicationActivity',
             'matchedSourceRecords',
             'matchedSourcePackages',
             'landowners',

@@ -64,8 +64,8 @@ function configureAdvanceForm(state) {
     const note = form.querySelector('.workflow-decision-note');
     const button = form.querySelector('button[type="submit"]');
 
-    if (title) title.textContent = `Advance to ${state.next_status_label}`;
-    if (button) button.lastChild.textContent = ` ${state.next_status === 'awaiting_payment' ? 'Complete Intake' : 'Advance Stage'}`;
+    if (title) title.textContent = state.workflow_action_label || `Record ${state.next_status_label}`;
+    if (button) button.lastChild.textContent = ` ${state.workflow_action_label || 'Record Workflow Update'}`;
 
     const actions = form.querySelector('.workflow-decision-actions');
     if (!actions) return;
@@ -77,7 +77,7 @@ function configureAdvanceForm(state) {
         case 'pending_legal_review':
         case 'draft':
         case 'pending_review':
-            if (copy) copy.textContent = 'Confirm documentary completeness, record the Payment Order, then move the application to the cashier/payment stage.';
+            if (copy) copy.textContent = 'Record Legal completeness review and Payment Order preparation before the application proceeds to the cashier/payment stage.';
             if (note) note.textContent = 'Incomplete applications should be Returned for Compliance instead of being denied.';
             fields.innerHTML = `
                 <input type="hidden" name="applicant_is_juridical_entity" value="0">
@@ -90,7 +90,7 @@ function configureAdvanceForm(state) {
             break;
 
         case 'awaiting_payment':
-            if (copy) copy.textContent = 'Record the Official Receipt issued after cashier payment before endorsing the application to LTID.';
+            if (copy) copy.textContent = 'Record the Official Receipt issued by the cashier, then record that the application was forwarded to LTID.';
             if (note) note.textContent = `DAR-LTCMS records the cashier result only. It does not collect payment. Required filing fee: ₱${Number(state.filing_fee || 2000).toLocaleString(undefined, {minimumFractionDigits: 2})}.`;
             fields.innerHTML = [
                 field('Official Receipt number', 'or_number', 'text', state.or_number || '', 'required'),
@@ -100,7 +100,7 @@ function configureAdvanceForm(state) {
             break;
 
         case 'endorsed_lti':
-            if (copy) copy.textContent = 'Record that LTID verification is complete and return the application with LTC Form No. 4 to the Legal Division.';
+            if (copy) copy.textContent = 'Record that LTID completed its verification and returned the application with LTC Form No. 4 to Legal Division.';
             if (note) note.textContent = 'LTC Form No. 4 remains a verification/recommendation record and is not the final PARPO II decision.';
             break;
 
@@ -110,7 +110,7 @@ function configureAdvanceForm(state) {
             break;
 
         case 'legal_evaluation':
-            if (copy) copy.textContent = 'Complete Staff Work (CSW) and clearance preparation before sending the case to Chief Legal for final review.';
+            if (copy) copy.textContent = 'Complete the Legal Division Staff Work (CSW), then record that the case was forwarded to Chief Legal for review.';
             if (note) note.textContent = 'CSW is an internal administrative work record. It does not itself approve or deny the clearance.';
             fields.innerHTML = [
                 field('CSW reference (optional; system will create one if blank)', 'csw_reference', 'text', state.csw_reference || ''),
@@ -119,12 +119,12 @@ function configureAdvanceForm(state) {
             break;
 
         case 'endorsed_chief_legal':
-            if (copy) copy.textContent = 'Forward the reviewed CSW and clearance folder to PARPO II.';
+            if (copy) copy.textContent = 'Record completion of the Chief Legal review and the forwarding of the reviewed clearance folder to PARPO II.';
             if (note) note.textContent = 'Completed Staff Work must already be recorded before this handoff.';
             break;
 
         case 'endorsed_parpo':
-            if (copy) copy.textContent = 'Place the complete folder at PARPO II Decision Pending for the final Approved or Not Approved decision.';
+            if (copy) copy.textContent = 'Record that the PARPO II review cycle is complete and the official Approved or Not Approved decision is ready to be encoded by Legal Division.';
             if (note) note.textContent = 'The system rechecks requirements, payment, Form No. 4, CSW, parcel links, and assistive hectare validation before this stage.';
             break;
 
@@ -183,10 +183,10 @@ function configureFinalDecisionCards(state) {
     const note = approveForm.querySelector('.workflow-decision-note');
     const button = approveForm.querySelector('button[type="submit"]');
 
-    if (title) title.textContent = 'Approve application';
-    if (copy) copy.textContent = 'Record PARPO II’s final Approved decision and generate the immutable GRANTED LTC Form No. 5 output.';
+    if (title) title.textContent = 'Record PARPO II Approved Decision';
+    if (copy) copy.textContent = 'Legal Clearance Staff records the official PARPO II Approved decision, signatory, and decision date, then DAR-LTCMS generates the immutable GRANTED LTC Form No. 5 output.';
     if (note) note.textContent = 'Approval is final and locks the application. It does not transfer ownership. Client release is recorded separately afterward.';
-    if (button) button.innerHTML = '<i class="fa-solid fa-check"></i> Record Final Approval';
+    if (button) button.innerHTML = '<i class="fa-solid fa-check"></i> Record Approved Decision';
 
     approveForm.addEventListener('submit', () => {
         window.setTimeout(() => {
@@ -196,17 +196,17 @@ function configureFinalDecisionCards(state) {
             const modalCopy = document.getElementById('decision-confirm-copy');
             const modalWarning = document.getElementById('decision-confirm-warning');
             const modalSubmit = document.getElementById('decision-confirm-submit');
-            if (modalTitle) modalTitle.textContent = 'Approve this application?';
-            if (modalCopy) modalCopy.textContent = 'This records PARPO II’s final Approved clearance decision and generates LTC Form No. 5.';
+            if (modalTitle) modalTitle.textContent = 'Record the PARPO II Approved decision?';
+            if (modalCopy) modalCopy.textContent = 'This records the official PARPO II Approved clearance decision received by Legal Division and generates LTC Form No. 5.';
             if (modalWarning) modalWarning.textContent = 'This finalizes and locks the application. Release to the client remains a separate administrative step.';
-            if (modalSubmit) modalSubmit.textContent = 'Record Final Approval';
+            if (modalSubmit) modalSubmit.textContent = 'Record Approved Decision';
         }, 0);
     });
 
     if (denyForm) {
         const copy = denyForm.querySelector('.workflow-action-copy');
         const note = denyForm.querySelector('.workflow-decision-note');
-        if (copy) copy.textContent = 'Record PARPO II’s final Not Approved decision and generate the immutable DENIED LTC Form No. 5 output.';
+        if (copy) copy.textContent = 'Legal Clearance Staff records the official PARPO II Not Approved decision, signatory, and decision date, then DAR-LTCMS generates the immutable DENIED LTC Form No. 5 output.';
         if (note) note.textContent = 'Use this only for the final PARPO II decision. Earlier deficiencies must use Return for Compliance.';
     }
 }
@@ -362,7 +362,7 @@ async function initCitizensCharterFlow() {
     if (modalCopy) {
         modalCopy.textContent = state.is_final
             ? 'Final decision is locked. Complete only the authorized release-tracking steps below.'
-            : 'Advance the application only after the current Citizen’s Charter stage is complete.';
+            : 'Record the administrative action only after Legal Division receives or completes the corresponding real-world workflow step.';
     }
 }
 

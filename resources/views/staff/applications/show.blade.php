@@ -2,7 +2,22 @@
     title="Application Review"
     active="applications"
 >
-    
+    <x-slot name="actions">
+        <button
+            type="button"
+            id="workflow-topbar-control"
+            class="workflow-topbar-control"
+            data-workflow-modal-open
+            hidden
+            aria-label="Manage workflow for {{ $application->application_code }}"
+        >
+            <span class="workflow-topbar-status">
+                <i class="fa-solid fa-route" aria-hidden="true"></i>
+                {{ $application->statusLabel() }}
+            </span>
+            <span class="workflow-topbar-action">Manage Workflow</span>
+        </button>
+    </x-slot>
 
     <x-slot name="styles">
         <style>
@@ -1682,7 +1697,7 @@
 
 
             .application-review-page {
-                padding-bottom: 88px;
+                padding-bottom: 0;
             }
 
             .requirement-card {
@@ -1715,48 +1730,146 @@
             .requirement-card.is-uploaded .requirement-title-icon {
                 background: #15803d;
             }
+            .workflow-overview-panel {
+                border-color: #bbf7d0;
+                background: linear-gradient(135deg, #f0fdf4 0%, #ffffff 72%);
+            }
 
-            .workflow-fab {
-                position: fixed;
-                right: 24px;
-                bottom: 22px;
-                z-index: 74;
-                min-width: 190px;
-                min-height: 48px;
+            .workflow-overview-panel .review-panel-body {
+                padding: 18px 20px;
+            }
+
+            .workflow-overview-layout {
+                display: grid;
+                grid-template-columns: minmax(0, 1fr) auto;
+                gap: 18px;
+                align-items: center;
+            }
+
+            .workflow-overview-main {
+                min-width: 0;
+                display: grid;
+                gap: 10px;
+            }
+
+            .workflow-overview-kicker {
+                margin: 0;
+                font-size: 10px;
+                font-weight: 950;
+                letter-spacing: .1em;
+                text-transform: uppercase;
+                color: #15803d;
+            }
+
+            .workflow-overview-stage {
+                margin: 0;
+                font-family: var(--heading-font);
+                font-size: 20px;
+                line-height: 1.2;
+                font-weight: 950;
+                color: #0f172a;
+            }
+
+            .workflow-overview-meta {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 7px 16px;
+                color: #64748b;
+                font-size: 12px;
+                line-height: 1.45;
+            }
+
+            .workflow-overview-meta strong {
+                color: #334155;
+            }
+
+            .workflow-overview-next {
+                margin: 0;
+                color: #334155;
+                font-size: 13px;
+                line-height: 1.5;
+            }
+
+            .workflow-overview-actions {
+                display: flex;
+                align-items: center;
+                justify-content: flex-end;
+            }
+
+            .workflow-overview-actions .staff-button {
+                min-width: 164px;
+            }
+
+            .workflow-topbar-control {
+                min-height: 40px;
+                max-width: min(430px, 42vw);
                 display: inline-flex;
                 align-items: center;
-                justify-content: center;
                 gap: 10px;
-                padding: 0 16px;
-                border: 1px solid #14532d;
+                padding: 0 12px;
+                border: 1px solid #bbd7c4;
                 border-radius: 9px;
-                background: #166534;
-                color: #ffffff;
-                box-shadow: 0 8px 20px rgba(15, 23, 42, 0.18);
-                font-size: 13px;
-                font-weight: 900;
-                letter-spacing: 0;
-                transition: background-color 140ms ease, box-shadow 140ms ease, transform 140ms ease;
+                background: #f0fdf4;
+                color: #14532d;
+                cursor: pointer;
+                font: inherit;
+                box-shadow: none;
             }
 
-            .workflow-fab > i:first-child {
-                font-size: 13px;
+            .workflow-topbar-control[hidden] {
+                display: none !important;
             }
 
-            .workflow-fab .workflow-fab-arrow {
-                margin-left: 2px;
-                font-size: 11px;
-                opacity: 0.9;
+            .workflow-topbar-status {
+                display: inline-flex;
+                align-items: center;
+                gap: 7px;
+                min-width: 0;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+                font-size: 12px;
+                font-weight: 850;
             }
 
-            .workflow-fab:hover,
-            .workflow-fab:focus-visible {
-                background: #14532d;
-                color: #ffffff;
-                box-shadow: 0 10px 24px rgba(15, 23, 42, 0.22);
-                transform: translateY(-1px);
-                outline: 3px solid rgba(21, 128, 61, 0.16);
+            .workflow-topbar-action {
+                flex: 0 0 auto;
+                padding-left: 10px;
+                border-left: 1px solid #bbd7c4;
+                font-size: 12px;
+                font-weight: 950;
+                white-space: nowrap;
+            }
+
+            .workflow-topbar-control:hover,
+            .workflow-topbar-control:focus-visible {
+                border-color: #86efac;
+                background: #dcfce7;
+                outline: 3px solid rgba(21, 128, 61, .14);
                 outline-offset: 2px;
+            }
+
+            @media (max-width: 760px) {
+                .workflow-overview-layout {
+                    grid-template-columns: 1fr;
+                }
+
+                .workflow-overview-actions,
+                .workflow-overview-actions .staff-button {
+                    width: 100%;
+                }
+
+                .workflow-topbar-control {
+                    width: 100%;
+                    max-width: none;
+                    justify-content: space-between;
+                }
+
+                .staff-topbar.has-workflow-sticky {
+                    position: sticky;
+                    top: 0;
+                    z-index: 40;
+                }
             }
 
             .requirement-group-panel.transferor-group {
@@ -2456,11 +2569,6 @@
                     width: min(296px, calc(100vw - 24px));
                 }
 
-                .workflow-fab {
-                    right: 16px;
-                    bottom: 16px;
-                }
-
                 .checklist-compact-score {
                     text-align: left;
                 }
@@ -2499,6 +2607,8 @@
         $nextWorkflowStatusLabel = $nextWorkflowStatus
             ? ($statusLabels[$nextWorkflowStatus] ?? ucwords(str_replace('_', ' ', $nextWorkflowStatus)))
             : null;
+        $workflowActionLabel = $application->workflowActionLabel();
+        $workflowAuthorityLabel = $application->workflowAuthorityLabel();
         $canAdvanceWorkflow = ! $isFinal
             && $nextWorkflowStatus
             && $nextWorkflowStatus !== 'released';
@@ -2641,12 +2751,36 @@
                                 <span class="staff-badge {{ $statusBadgeClass }}">{{ $statusLabel }}</span>
                             </div>
 
-                            @if ($application->reviewed_at || $application->decision_reason || $application->decision_notes)
+                            @if ($application->decision_recorded_at || $application->reviewed_at || $application->decision_reason || $application->decision_notes)
                                 <div class="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
-                                    @if ($application->reviewed_at)
+                                    <div class="summary-item">
+                                        <p class="summary-label">Decision Authority</p>
+                                        <p class="summary-value">{{ $application->decision_authority ?? 'PARPO II' }}</p>
+                                    </div>
+
+                                    @if ($application->decision_officer_name)
                                         <div class="summary-item">
-                                            <p class="summary-label">Reviewed At</p>
-                                            <p class="summary-value">{{ $application->reviewed_at->format('M d, Y h:i A') }}</p>
+                                            <p class="summary-label">Decision Officer / Signatory</p>
+                                            <p class="summary-value">{{ $application->decision_officer_name }}</p>
+                                        </div>
+                                    @endif
+
+                                    @if ($application->decision_date)
+                                        <div class="summary-item">
+                                            <p class="summary-label">Official Decision Date</p>
+                                            <p class="summary-value">{{ $application->decision_date->format('M d, Y') }}</p>
+                                        </div>
+                                    @endif
+
+                                    @if ($application->decision_recorded_at || $application->reviewed_at)
+                                        <div class="summary-item">
+                                            <p class="summary-label">Recorded in DAR-LTCMS</p>
+                                            <p class="summary-value">
+                                                {{ ($application->decision_recorded_at ?? $application->reviewed_at)->format('M d, Y h:i A') }}
+                                                @if ($application->decisionRecordedBy)
+                                                    <br><span class="text-xs text-slate-500">by {{ $application->decisionRecordedBy->name }} · Legal Clearance Staff</span>
+                                                @endif
+                                            </p>
                                         </div>
                                     @endif
 
@@ -2786,6 +2920,47 @@
             </div>
         </section>
 
+        <section id="workflow-overview" class="review-panel workflow-overview-panel" aria-labelledby="workflow-overview-title">
+            <div class="review-panel-body">
+                <div class="workflow-overview-layout">
+                    <div class="workflow-overview-main">
+                        <div>
+                            <p class="workflow-overview-kicker">Workflow</p>
+                            <h2 id="workflow-overview-title" class="workflow-overview-stage">{{ $statusLabel }}</h2>
+                        </div>
+
+                        <div class="workflow-overview-meta">
+                            <span><strong>Tracked authority:</strong> {{ $workflowAuthorityLabel }}</span>
+                            @if ($latestApplicationActivity)
+                                <span>
+                                    <strong>Latest recorded activity:</strong>
+                                    {{ ucwords(str_replace('_', ' ', $latestApplicationActivity->action)) }}
+                                    @if ($latestApplicationActivity->actor)
+                                        by {{ $latestApplicationActivity->actor->name }}
+                                    @endif
+                                    · {{ $latestApplicationActivity->created_at?->timezone('Asia/Manila')->format('M d, Y h:i A') }}
+                                </span>
+                            @else
+                                <span><strong>Latest recorded activity:</strong> No workflow activity recorded yet.</span>
+                            @endif
+                        </div>
+
+                        <p class="workflow-overview-next">
+                            <strong>{{ $isFinal ? 'Available action:' : 'Expected next recording action:' }}</strong>
+                            {{ $workflowActionLabel }}.
+                            DAR-LTCMS records and monitors the administrative action; it does not impersonate the external DAR authority or execute land ownership transfer.
+                        </p>
+                    </div>
+
+                    <div class="workflow-overview-actions">
+                        <button type="button" class="staff-button staff-button-primary" data-workflow-modal-open>
+                            <i class="fa-solid fa-route" aria-hidden="true"></i>
+                            Manage Workflow
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
 
         <section id="application-parcels" class="review-panel">
             <div class="review-panel-header">
@@ -3769,8 +3944,8 @@
         <div class="workflow-modal-card" role="dialog" aria-modal="true" aria-labelledby="workflow-modal-title">
             <div class="workflow-modal-header">
                 <div>
-                    <h2 id="workflow-modal-title" class="workflow-modal-title">Application Actions</h2>
-                    <p class="workflow-modal-copy">Advance, release, or deny after review.</p>
+                    <h2 id="workflow-modal-title" class="workflow-modal-title">Manage Workflow</h2>
+                    <p class="workflow-modal-copy">Record the current administrative stage or an official result received by Legal Division.</p>
                 </div>
                 <button type="button" class="staff-button staff-button-light" id="workflow-modal-close-top">
                     <i class="fa-solid fa-xmark"></i>
@@ -3781,8 +3956,8 @@
             <div class="workflow-modal-body">
                 <div class="workflow-modal-summary">
                     <div>
-                        <strong class="text-slate-900 font-heading">Current workflow status</strong>
-                        <p class="workflow-modal-copy">Current stage and available action.</p>
+                        <strong class="text-slate-900 font-heading">Current tracked stage</strong>
+                        <p class="workflow-modal-copy">DAR-LTCMS records the action; external offices do not need system accounts.</p>
                     </div>
                     <span class="workflow-status-pill">
                         <i class="fa-solid fa-circle-info"></i>
@@ -3806,9 +3981,9 @@
                                     </span>
 
                                     <div>
-                                        <p class="workflow-action-title">Advance to {{ $nextWorkflowStatusLabel }}</p>
+                                        <p class="workflow-action-title">{{ $workflowActionLabel }}</p>
                                         <p class="workflow-action-copy">
-                                            Move this application to the next DAR office workflow stage.
+                                            Record the completed administrative step and update the tracked stage. External DAR offices do not need DAR-LTCMS accounts.
                                         </p>
                                     </div>
                                 </div>
@@ -3821,7 +3996,7 @@
 
                                 <button type="submit" class="staff-button staff-button-primary">
                                     <i class="fa-solid fa-arrow-right"></i>
-                                    Advance Stage
+                                    {{ $workflowActionLabel }}
                                 </button>
                             </form>
                         @endif
@@ -3836,15 +4011,23 @@
                                     </span>
 
                                     <div>
-                                        <p class="workflow-action-title">Approve application</p>
+                                        <p class="workflow-action-title">Record PARPO II Approved Decision</p>
                                         <p class="workflow-action-copy">
-                                            Record PARPO II's final Approved clearance decision and generate the immutable LTC Form No. 5 output.
+                                            Record the official PARPO II Approved decision received by Legal Division, including the decision officer/signatory and official decision date.
                                         </p>
                                     </div>
                                 </div>
 
                                 <div class="workflow-decision-actions">
                                     <div class="workflow-form-fields">
+                                        <div>
+                                            <label class="summary-label" for="approval-decision-officer">PARPO II decision officer / signatory</label>
+                                            <input id="approval-decision-officer" type="text" name="decision_officer_name" placeholder="Name appearing on the official decision" class="review-input" required>
+                                        </div>
+                                        <div>
+                                            <label class="summary-label" for="approval-decision-date">Official decision date</label>
+                                            <input id="approval-decision-date" type="date" name="decision_date" max="{{ now()->toDateString() }}" class="review-input" required>
+                                        </div>
                                         <input type="text" name="decision_reason" placeholder="Reason / basis (optional)" class="review-input">
                                         <input type="text" name="decision_notes" placeholder="Internal notes (optional)" class="review-input">
                                     </div>
@@ -3856,7 +4039,7 @@
 
                                 <button type="submit" class="staff-button staff-button-primary">
                                     <i class="fa-solid fa-check"></i>
-                                    Record Final Approval
+                                    Record Approved Decision
                                 </button>
                             </form>
                         @endif
@@ -3871,15 +4054,23 @@
                                     </span>
 
                                     <div>
-                                        <p class="workflow-action-title">Mark application Not Approved</p>
+                                        <p class="workflow-action-title">Record PARPO II Not Approved Decision</p>
                                         <p class="workflow-action-copy">
-                                            Record the final Not Approved decision and lock the review record.
+                                            Record the official PARPO II Not Approved decision received by Legal Division and lock the review record.
                                         </p>
                                     </div>
                                 </div>
 
                                 <div class="workflow-decision-actions">
                                     <div class="workflow-form-fields">
+                                        <div>
+                                            <label class="summary-label" for="denial-decision-officer">PARPO II decision officer / signatory</label>
+                                            <input id="denial-decision-officer" type="text" name="decision_officer_name" placeholder="Name appearing on the official decision" class="review-input" required>
+                                        </div>
+                                        <div>
+                                            <label class="summary-label" for="denial-decision-date">Official decision date</label>
+                                            <input id="denial-decision-date" type="date" name="decision_date" max="{{ now()->toDateString() }}" class="review-input" required>
+                                        </div>
                                         <input type="text" name="decision_reason" placeholder="Not Approved reason / basis (required)" class="review-input" required>
                                         <input type="text" name="decision_notes" placeholder="Internal notes (optional)" class="review-input">
                                     </div>
@@ -3891,7 +4082,7 @@
 
                                 <button type="submit" class="staff-button staff-button-danger">
                                     <i class="fa-solid fa-xmark"></i>
-                                    Mark as Not Approved
+                                    Record Not Approved Decision
                                 </button>
                             </form>
                         @endif
@@ -3904,21 +4095,10 @@
             </div>
 
             <div class="workflow-modal-footer">
-                <span class="text-xs font-semibold text-slate-500">Workflow actions are timestamped and preserved in the application audit trail.</span>
+                <span class="text-xs font-semibold text-slate-500">Workflow updates are recorded by Legal Clearance Staff and preserved in the application audit trail.</span>
             </div>
         </div>
     </div>
-
-    <button
-        type="button"
-        class="staff-button workflow-fab"
-        id="workflow-modal-open"
-        aria-label="Open application actions"
-    >
-        <i class="fa-solid fa-list-check" aria-hidden="true"></i>
-        <span>Application Actions</span>
-        <i class="fa-solid fa-chevron-right workflow-fab-arrow" aria-hidden="true"></i>
-    </button>
 
         <div id="decision-confirm-modal" class="decision-modal-backdrop" aria-hidden="true">
             <div class="decision-modal-card" role="dialog" aria-modal="true" aria-labelledby="decision-confirm-title" aria-describedby="decision-confirm-copy">
@@ -4000,11 +4180,16 @@
 
 
             const workflowModal = document.getElementById('workflow-modal');
-            const workflowModalOpen = document.getElementById('workflow-modal-open');
+            const workflowModalOpeners = Array.from(document.querySelectorAll('[data-workflow-modal-open]'));
             const workflowModalCloseTop = document.getElementById('workflow-modal-close-top');
+            const workflowOverview = document.getElementById('workflow-overview');
+            const workflowTopbarControl = document.getElementById('workflow-topbar-control');
+            const staffTopbar = workflowTopbarControl?.closest('.staff-topbar');
+            let workflowModalTrigger = null;
 
-            function openWorkflowModal() {
+            function openWorkflowModal(event) {
                 if (! workflowModal) return;
+                workflowModalTrigger = event?.currentTarget ?? null;
                 workflowModal.classList.add('is-open');
                 workflowModal.setAttribute('aria-hidden', 'false');
                 document.body.style.overflow = 'hidden';
@@ -4016,10 +4201,22 @@
                 workflowModal.classList.remove('is-open');
                 workflowModal.setAttribute('aria-hidden', 'true');
                 document.body.style.overflow = '';
+                workflowModalTrigger?.focus();
             }
 
-            workflowModalOpen?.addEventListener('click', openWorkflowModal);
+            workflowModalOpeners.forEach((opener) => opener.addEventListener('click', openWorkflowModal));
             workflowModalCloseTop?.addEventListener('click', closeWorkflowModal);
+
+            if (workflowOverview && workflowTopbarControl && 'IntersectionObserver' in window) {
+                const observer = new IntersectionObserver((entries) => {
+                    const entry = entries[0];
+                    const scrolledPast = !entry.isIntersecting && entry.boundingClientRect.top < 0;
+                    workflowTopbarControl.hidden = !scrolledPast;
+                    staffTopbar?.classList.toggle('has-workflow-sticky', scrolledPast);
+                }, { threshold: 0 });
+
+                observer.observe(workflowOverview);
+            }
             workflowModal?.addEventListener('click', function (event) {
                 if (event.target === workflowModal) {
                     closeWorkflowModal();
@@ -4171,18 +4368,18 @@
                     icon: 'fa-check',
                     danger: false,
                     buttonClass: 'staff-button staff-button-primary',
-                    buttonText: 'Record Final Approval',
-                    title: 'Approve this application?',
-                    copy: 'This records PARPO II\'s final Approved clearance decision and generates LTC Form No. 5.',
+                    buttonText: 'Record Approved Decision',
+                    title: 'Record the PARPO II Approved decision?',
+                    copy: 'This records the official PARPO II Approved decision received by Legal Division and generates LTC Form No. 5.',
                     warning: 'This finalizes and locks the application. Release to the client remains a separate administrative step.'
                 },
                 deny: {
                     icon: 'fa-xmark',
                     danger: true,
                     buttonClass: 'staff-button staff-button-danger',
-                    buttonText: 'Mark as Not Approved',
-                    title: 'Mark this application Not Approved?',
-                    copy: 'This will record a final Not Approved decision for this application.',
+                    buttonText: 'Record Not Approved Decision',
+                    title: 'Record the PARPO II Not Approved decision?',
+                    copy: 'This records the official PARPO II Not Approved decision received by Legal Division.',
                     warning: 'This finalizes the application and locks further editing or document uploads for audit integrity.'
                 }
             };

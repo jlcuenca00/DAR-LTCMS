@@ -57,6 +57,10 @@ class FinalLtcForm5Test extends TestCase
 
         $this->assertSame('1803-2026-0043 (7)', $clearance->clearance_number);
         $this->assertSame(LandTransferApplication::STATUS_APPROVED, $clearance->decision_status);
+        $this->assertSame(LandTransferApplication::FINAL_DECISION_AUTHORITY, $clearance->decision_authority);
+        $this->assertSame('PARPO II Test Signatory', $clearance->decision_officer_name);
+        $this->assertSame('2026-08-22', $clearance->decision_date?->toDateString());
+        $this->assertSame($staff->id, $clearance->decision_recorded_by);
         $this->assertSame('1.5000', (string) $clearance->total_area_hectares);
         $this->assertCount(1, $clearance->parcel_snapshot);
     }
@@ -147,6 +151,9 @@ class FinalLtcForm5Test extends TestCase
         $clearance = new ApplicationClearance([
             'clearance_number' => '1803-2026-0052 (1)',
             'decision_status' => LandTransferApplication::STATUS_APPROVED,
+            'decision_authority' => LandTransferApplication::FINAL_DECISION_AUTHORITY,
+            'decision_officer_name' => 'PARPO II Test Signatory',
+            'decision_date' => '2026-09-19',
             'application_code' => $application->application_code,
             'transferor_name' => $application->transferorDisplayName(),
             'transferee_name' => $application->transfereeDisplayName(),
@@ -167,7 +174,8 @@ class FinalLtcForm5Test extends TestCase
             'pdfMode' => false,
         ])->render();
 
-        $this->assertStringContainsString('September 20, 2026', $html);
+        $this->assertStringContainsString('September 19, 2026', $html);
+        $this->assertStringNotContainsString('September 20, 2026', $html);
         $this->assertStringNotContainsString('September 30, 2026', $html);
     }
 
@@ -231,6 +239,11 @@ class FinalLtcForm5Test extends TestCase
             'encoded_by' => $staff->id,
             'reviewed_by' => $staff->id,
             'reviewed_at' => '2026-08-22 08:00:00',
+            'decision_authority' => LandTransferApplication::FINAL_DECISION_AUTHORITY,
+            'decision_officer_name' => 'PARPO II Test Signatory',
+            'decision_date' => '2026-08-22',
+            'decision_recorded_by' => $staff->id,
+            'decision_recorded_at' => '2026-08-22 08:00:00',
             'date_of_clearance_release' => '2026-08-22',
         ]);
     }

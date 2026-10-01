@@ -377,6 +377,8 @@ class NotificationSystemTest extends TestCase
         $this->actingAs($staffUser)
             ->post(route('staff.applications.not_approved', $application), [
                 'final_decision_confirmation' => '1',
+                'decision_officer_name' => 'PARPO II Test Signatory',
+                'decision_date' => now()->toDateString(),
                 'decision_reason' => 'Invalid transfer for DAR clearance processing',
                 'decision_notes' => 'Test final decision notification.',
             ])

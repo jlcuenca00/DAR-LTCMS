@@ -41,7 +41,7 @@
                                 @else
                                     Hello,
                                 @endif
-                                an authorized DAR Staff member created a DAR-LTCMS account for you.
+                                an authorized Legal Clearance Staff member created a DAR-LTCMS account for you.
                             </p>
 
                             <div style="padding:18px;border:1px solid #b7e4c7;border-radius:14px;background:#f0fdf4;">

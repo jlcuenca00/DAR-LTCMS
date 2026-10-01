@@ -111,6 +111,8 @@ class HectareValidationWorkflowTest extends TestCase
         $this->actingAs($staffUser)
             ->post(route('staff.applications.approve', $application), [
                 'final_decision_confirmation' => '1',
+                'decision_officer_name' => 'PARPO II Test Signatory',
+                'decision_date' => now()->toDateString(),
                 'decision_reason' => 'Test approval',
             ])
             ->assertSessionHasErrors('validation');
@@ -140,6 +142,8 @@ class HectareValidationWorkflowTest extends TestCase
     $this->actingAs($staffUser)
         ->post(route('staff.applications.approve', $application), [
             'final_decision_confirmation' => '1',
+                'decision_officer_name' => 'PARPO II Test Signatory',
+                'decision_date' => now()->toDateString(),
         ])
         ->assertSessionHasErrors('status');
 

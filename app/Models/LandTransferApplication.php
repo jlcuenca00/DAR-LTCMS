@@ -22,7 +22,7 @@ class LandTransferApplication extends Model
     public const STATUS_LEGAL_EVALUATION = 'legal_evaluation';
     public const STATUS_ENDORSED_CHIEF_LEGAL = 'endorsed_chief_legal';
     public const STATUS_ENDORSED_PARPO = 'endorsed_parpo';
-    public const STATUS_FOR_RELEASING = 'for_releasing'; // PARPO II decision pending
+    public const STATUS_FOR_RELEASING = 'for_releasing'; // PARPO II decision ready for Legal recording
     public const STATUS_APPROVED = 'approved';
     public const STATUS_NOT_APPROVED = 'not_approved';
 
@@ -37,6 +37,8 @@ class LandTransferApplication extends Model
     public const RELEASE_NOT_READY = 'not_ready';
     public const RELEASE_READY = 'ready_for_release';
     public const RELEASED_TO_CLIENT = 'released';
+
+    public const FINAL_DECISION_AUTHORITY = 'PARPO II';
 
     public const FINAL_STATUSES = [
         self::STATUS_APPROVED,
@@ -107,6 +109,11 @@ class LandTransferApplication extends Model
         'reviewed_at',
         'decision_reason',
         'decision_notes',
+        'decision_authority',
+        'decision_officer_name',
+        'decision_date',
+        'decision_recorded_by',
+        'decision_recorded_at',
         'validated_at',
         'validation_snapshot',
         'transferor_landowner_id',
@@ -124,6 +131,8 @@ class LandTransferApplication extends Model
         'date_of_transfer' => 'date',
         'date_of_clearance_release' => 'date',
         'reviewed_at' => 'datetime',
+        'decision_date' => 'date',
+        'decision_recorded_at' => 'datetime',
         'date_of_application' => 'date',
         'payment_order_issued_at' => 'datetime',
         'or_date' => 'date',
@@ -174,12 +183,12 @@ class LandTransferApplication extends Model
             self::STATUS_PENDING_LEGAL_REVIEW => 'Legal Completeness Review',
             self::STATUS_RETURNED_FOR_COMPLIANCE => 'Returned for Compliance',
             self::STATUS_AWAITING_PAYMENT => 'Awaiting Payment / Official Receipt',
-            self::STATUS_ENDORSED_LTI => 'Endorsed to LTID for Verification',
+            self::STATUS_ENDORSED_LTI => 'With LTID for Verification',
             self::STATUS_RETURNED_TO_LEGAL => 'Returned to Legal Division',
             self::STATUS_LEGAL_EVALUATION => 'Legal Evaluation / CSW Preparation',
-            self::STATUS_ENDORSED_CHIEF_LEGAL => 'Chief Legal Final Review',
-            self::STATUS_ENDORSED_PARPO => 'Forwarded to PARPO II',
-            self::STATUS_FOR_RELEASING => 'PARPO II Decision Pending',
+            self::STATUS_ENDORSED_CHIEF_LEGAL => 'With Chief Legal for Review',
+            self::STATUS_ENDORSED_PARPO => 'With PARPO II for Decision',
+            self::STATUS_FOR_RELEASING => 'PARPO II Decision Ready to Record',
             self::STATUS_APPROVED => 'Approved',
             self::STATUS_NOT_APPROVED => 'Not Approved',
 
@@ -197,12 +206,12 @@ class LandTransferApplication extends Model
             self::STATUS_PENDING_LEGAL_REVIEW => 'Legal Completeness Review',
             self::STATUS_RETURNED_FOR_COMPLIANCE => 'Returned for Compliance',
             self::STATUS_AWAITING_PAYMENT => 'Awaiting Payment / Official Receipt',
-            self::STATUS_ENDORSED_LTI => 'Endorsed to LTID for Verification',
+            self::STATUS_ENDORSED_LTI => 'With LTID for Verification',
             self::STATUS_RETURNED_TO_LEGAL => 'Returned to Legal Division',
             self::STATUS_LEGAL_EVALUATION => 'Legal Evaluation / CSW Preparation',
-            self::STATUS_ENDORSED_CHIEF_LEGAL => 'Chief Legal Final Review',
-            self::STATUS_ENDORSED_PARPO => 'Forwarded to PARPO II',
-            self::STATUS_FOR_RELEASING => 'PARPO II Decision Pending',
+            self::STATUS_ENDORSED_CHIEF_LEGAL => 'With Chief Legal for Review',
+            self::STATUS_ENDORSED_PARPO => 'With PARPO II for Decision',
+            self::STATUS_FOR_RELEASING => 'PARPO II Decision Ready to Record',
             self::STATUS_APPROVED => 'Approved',
             self::STATUS_NOT_APPROVED => 'Not Approved',
         ];
@@ -449,9 +458,61 @@ class LandTransferApplication extends Model
         ];
     }
 
+    public static function workflowActionLabels(): array
+    {
+        return [
+            self::STATUS_PENDING_LEGAL_REVIEW => 'Record Completeness Review and Payment Order',
+            self::STATUS_RETURNED_FOR_COMPLIANCE => 'Record Compliance and Resume Legal Review',
+            self::STATUS_AWAITING_PAYMENT => 'Record Payment and Forward to LTID',
+            self::STATUS_ENDORSED_LTI => 'Record Return from LTID',
+            self::STATUS_RETURNED_TO_LEGAL => 'Begin Legal Evaluation',
+            self::STATUS_LEGAL_EVALUATION => 'Record CSW and Forward to Chief Legal',
+            self::STATUS_ENDORSED_CHIEF_LEGAL => 'Record Chief Legal Review and Forward to PARPO II',
+            self::STATUS_ENDORSED_PARPO => 'Record Return from PARPO II for Final Decision Entry',
+            self::STATUS_FOR_RELEASING => 'Record PARPO II Final Decision',
+            self::STATUS_APPROVED => 'Manage Release Tracking',
+            self::STATUS_NOT_APPROVED => 'Manage Release Tracking',
+        ];
+    }
+
+    public function workflowActionLabel(): string
+    {
+        return self::workflowActionLabels()[$this->status] ?? 'Manage Workflow';
+    }
+
+    public static function workflowAuthorityLabels(): array
+    {
+        return [
+            self::STATUS_PENDING_LEGAL_REVIEW => 'Legal Division',
+            self::STATUS_RETURNED_FOR_COMPLIANCE => 'Legal Division',
+            self::STATUS_AWAITING_PAYMENT => 'DAR Cashier / Legal Division',
+            self::STATUS_ENDORSED_LTI => 'LTID',
+            self::STATUS_RETURNED_TO_LEGAL => 'Legal Division',
+            self::STATUS_LEGAL_EVALUATION => 'Legal Division',
+            self::STATUS_ENDORSED_CHIEF_LEGAL => 'Chief Legal',
+            self::STATUS_ENDORSED_PARPO => 'PARPO II',
+            self::STATUS_FOR_RELEASING => self::FINAL_DECISION_AUTHORITY,
+        ];
+    }
+
+    public function workflowAuthorityLabel(): string
+    {
+        if ($this->isFinalized()) {
+            return $this->decision_authority ?: self::FINAL_DECISION_AUTHORITY;
+        }
+
+        return self::workflowAuthorityLabels()[$this->status] ?? 'Legal Division';
+    }
+
     public function nextWorkflowStatus(): ?string
     {
         return self::workflowTransitions()[$this->status] ?? null;
+    }
+
+
+    public function decisionRecordedBy()
+    {
+        return $this->belongsTo(User::class, 'decision_recorded_by');
     }
 
     public function documents()

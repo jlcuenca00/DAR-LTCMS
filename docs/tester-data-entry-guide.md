@@ -4,7 +4,7 @@ This guide explains how a tester should populate the DAR-LTCMS barebones test en
 
 > Use realistic but non-sensitive test data. The barebones reset and seeded credentials are for local/staging testing only.
 
-## 1. Staff login
+## 1. Legal Clearance Staff login
 
 Use the primary tester account:
 
@@ -13,7 +13,7 @@ Email: staff.tester@dar-ltcms.local
 Password: password
 ```
 
-The barebones seeder also creates four additional Staff tester accounts for multi-actor testing.
+The barebones seeder also creates additional Legal Clearance Staff tester accounts for multi-actor/audit testing. These accounts represent Legal Division system operators, not LTID, Chief Legal, or PARPO II.
 
 ## 2. Create test user accounts
 
@@ -27,7 +27,7 @@ Create only the accounts required by the test scenario:
 
 - Landowner account for Landowner portal/privacy testing
 - Geodetic account for limited read-only parcel/reference/map testing
-- additional Staff accounts only when a multi-actor workflow is required
+- additional Legal Clearance Staff accounts only when a multi-actor recording/audit scenario is required
 
 A Landowner user must be linked to the correct Landowner record before that user can see their own records.
 
@@ -111,7 +111,7 @@ Go to:
 Staff Dashboard → Clearance Applications
 ```
 
-Staff manually encode applications. Landowners do not create applications themselves.
+Legal Clearance Staff manually encode applications. Landowners do not create applications themselves.
 
 Recommended flow:
 
@@ -150,12 +150,12 @@ For a complete positive-path test, process an application through:
 
 1. Legal Completeness Review
 2. Payment Order / Official Receipt recording
-3. Endorsed to LTID for Verification
-4. LTID Verification / Returned to Legal
+3. With LTID for Verification
+4. Returned to Legal Division
 5. Legal Evaluation / CSW Preparation
-6. Chief Legal Final Review
-7. Forwarded to PARPO II
-8. PARPO II Decision Pending
+6. With Chief Legal for Review
+7. With PARPO II for Decision
+8. PARPO II Decision Ready to Record
 9. Approved final decision
 10. Ready for Release
 11. Released to Client
@@ -186,9 +186,9 @@ For final Approved and Not Approved applications, verify the official output:
 
 ## 12. Test role-based access
 
-### Staff
+### Legal Clearance Staff
 
-Staff may encode/manage records, process applications, review/upload documents, generate outputs/reports, view audit logs, manage authorized accounts, and use the Staff Parcel Map.
+Legal Clearance Staff may encode/manage records, review/upload documents, record administrative workflow movements/results from other DAR offices, generate outputs/reports, view audit logs, manage authorized accounts, and use the Staff Parcel Map. LTID, Chief Legal, PARPO II, and cashier personnel are tracked authorities/stages and do not need DAR-LTCMS accounts.
 
 ### Landowner
 

@@ -676,14 +676,6 @@
         min-height: var(--dar-touch-target) !important;
     }
 
-    .application-review-page .workflow-fab {
-        position: static !important;
-        width: 100% !important;
-        min-width: 0 !important;
-        margin-top: 4px !important;
-        transform: none !important;
-    }
-
     .application-review-page :where(.decision-modal-backdrop, .workflow-modal-backdrop) {
         align-items: flex-start !important;
         overflow-y: auto !important;

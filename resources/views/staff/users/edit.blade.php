@@ -596,7 +596,7 @@
                 </div>
 
                 <div class="user-editor-badges">
-                    <span class="staff-badge staff-badge-slate">{{ ucwords($user->role) }}</span>
+                    <span class="staff-badge staff-badge-slate">{{ $user->role === 'staff' ? 'Legal Clearance Staff' : ucwords($user->role) }}</span>
                     <span class="staff-badge {{ $user->is_active ? 'staff-badge-green' : 'staff-badge-red' }}">
                         {{ $user->is_active ? 'Active' : 'Inactive' }}
                     </span>
@@ -694,7 +694,7 @@
                             <div class="user-field">
                                 <label class="user-label">Role</label>
                                 <select name="role" required class="user-select">
-                                    <option value="staff" {{ old('role', $user->role) === 'staff' ? 'selected' : '' }}>Staff</option>
+                                    <option value="staff" {{ old('role', $user->role) === 'staff' ? 'selected' : '' }}>Legal Clearance Staff</option>
                                     <option value="landowner" {{ old('role', $user->role) === 'landowner' ? 'selected' : '' }}>Landowner</option>
                                     <option value="geodetic" {{ old('role', $user->role) === 'geodetic' ? 'selected' : '' }}>Geodetic</option>
                                 </select>
