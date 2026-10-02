@@ -7,6 +7,7 @@ use App\Services\ApplicationPartyIntegrityService;
 use App\Services\ApplicationPartyShareIntegrityService;
 use App\Services\ApplicationWorkflowEvidenceService;
 use App\Services\DarLocationService;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class LandTransferApplicationObserver
@@ -192,10 +193,11 @@ class LandTransferApplicationObserver
             ));
 
             if ($materialDirtyFields !== []) {
-                $application->workflow_revision = max(
-                    1,
-                    (int) $application->getRawOriginal('workflow_revision')
-                ) + 1;
+                $currentRevision = (int) DB::table('land_transfer_applications')
+                    ->where('id', $application->id)
+                    ->value('workflow_revision');
+
+                $application->workflow_revision = max(1, $currentRevision) + 1;
             }
         }
     }
