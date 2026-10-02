@@ -264,20 +264,19 @@ class FinalLtcForm5Test extends TestCase
             LandTransferApplication::STATUS_APPROVED
         );
 
-        $application->forceFill([
-            'release_status' => LandTransferApplication::RELEASE_READY,
-            'ready_for_release_at' => '2026-09-29 09:00:00',
-        ])->save();
-
-        $application->forceFill([
-            'release_status' => LandTransferApplication::RELEASED_TO_CLIENT,
-            'released_at' => '2026-09-30 09:00:00',
-            'released_by' => $staff->id,
-            'release_recipient_name' => 'Authorized Recipient',
-            'release_logbook_reference' => 'LOG-FORM5-IMMUTABLE-DATE',
-            'csm_status' => 'received',
-            'date_of_clearance_release' => '2026-09-30',
-        ])->save();
+        DB::table('land_transfer_applications')
+            ->where('id', $application->id)
+            ->update([
+                'release_status' => LandTransferApplication::RELEASED_TO_CLIENT,
+                'ready_for_release_at' => '2026-09-29 09:00:00',
+                'released_at' => '2026-09-30 09:00:00',
+                'released_by' => $staff->id,
+                'release_recipient_name' => 'Authorized Recipient',
+                'release_logbook_reference' => 'LOG-FORM5-IMMUTABLE-DATE',
+                'csm_status' => 'received',
+                'date_of_clearance_release' => '2026-09-30',
+            ]);
+        $application->refresh();
         $application->load('documents');
 
         $clearance = new ApplicationClearance([
