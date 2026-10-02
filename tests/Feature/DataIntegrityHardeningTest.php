@@ -725,7 +725,7 @@ class DataIntegrityHardeningTest extends TestCase
         );
 
         foreach ([1, 2] as $index) {
-            ApplicationParcel::create([
+            DB::table('application_parcels')->insert([
                 'land_transfer_application_id' => $application->id,
                 'parcel_id' => null,
                 'parcel_code' => 'HIST-SNAPSHOT-001',
@@ -735,6 +735,8 @@ class DataIntegrityHardeningTest extends TestCase
                 'survey_plan_number' => 'PSD-HIST-SNAPSHOT-001',
                 'area_hectares' => 1.2500,
                 'area_square_meters' => 12500,
+                'created_at' => now(),
+                'updated_at' => now(),
             ]);
         }
 
