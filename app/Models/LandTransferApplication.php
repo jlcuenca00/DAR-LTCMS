@@ -191,7 +191,24 @@ class LandTransferApplication extends Model
 
     public function canEditForm4(): bool
     {
-        return ! $this->isFinalized() && in_array($this->status, [
+        if ($this->isFinalized()) {
+            return false;
+        }
+
+        if (in_array($this->status, [
+            self::STATUS_ENDORSED_LTI,
+            self::STATUS_RETURNED_TO_LEGAL,
+        ], true)) {
+            return true;
+        }
+
+        if ($this->status !== self::STATUS_RETURNED_FOR_COMPLIANCE) {
+            return false;
+        }
+
+        $resumeStatus = $this->activeComplianceNotice?->resume_status;
+
+        return in_array($resumeStatus, [
             self::STATUS_ENDORSED_LTI,
             self::STATUS_RETURNED_TO_LEGAL,
         ], true);
