@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Validation\ValidationException;
 
 class ApplicationDocument extends Model
 {
@@ -27,6 +28,32 @@ class ApplicationDocument extends Model
         'document_metadata' => 'array',
         'metadata_encoded_at' => 'datetime',
     ];
+
+    protected static function booted(): void
+    {
+        static::saving(function (ApplicationDocument $document) {
+            $application = $document->land_transfer_application_id
+                ? LandTransferApplication::query()->find($document->land_transfer_application_id)
+                : null;
+
+            if ($application && $application->isFinalized()) {
+                throw ValidationException::withMessages([
+                    'document' => 'Supporting-document records are immutable after the application is finalized.',
+                ]);
+            }
+        });
+
+        static::deleting(function (ApplicationDocument $document) {
+            $application = $document->application;
+
+            if ($application && $application->isFinalized()) {
+                throw ValidationException::withMessages([
+                    'document' => 'Supporting-document records are immutable after the application is finalized.',
+                ]);
+            }
+        });
+    }
+
 
     public function application()
     {

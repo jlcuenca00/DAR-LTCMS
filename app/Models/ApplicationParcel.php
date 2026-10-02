@@ -6,6 +6,7 @@ use App\Services\ApplicationParcelIntegrityService;
 use App\Services\ApplicationPartyShareIntegrityService;
 use App\Services\ParcelAreaIntegrityService;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Validation\ValidationException;
 
 class ApplicationParcel extends Model
 {
@@ -39,6 +40,12 @@ class ApplicationParcel extends Model
                 ? LandTransferApplication::query()->find($applicationParcel->land_transfer_application_id)
                 : null;
 
+            if ($application && $application->isFinalized()) {
+                throw ValidationException::withMessages([
+                    'application_parcel' => 'Linked parcel snapshots are immutable after the application is finalized.',
+                ]);
+            }
+
             if ($application) {
                 app(ApplicationParcelIntegrityService::class)
                     ->assertCurrentWorkflowValid($applicationParcel, $application);
@@ -51,6 +58,13 @@ class ApplicationParcel extends Model
 
         static::deleting(function (ApplicationParcel $applicationParcel) {
             $application = $applicationParcel->application;
+
+            if ($application && $application->isFinalized()) {
+                throw ValidationException::withMessages([
+                    'application_parcel' => 'Linked parcel snapshots are immutable after the application is finalized.',
+                ]);
+            }
+
             if ($application) {
                 app(ApplicationPartyShareIntegrityService::class)
                     ->removeParcelShareReferences($application, (int) $applicationParcel->id);

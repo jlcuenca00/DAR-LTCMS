@@ -144,7 +144,7 @@ class FinalDecisionLockTest extends TestCase
 
         Storage::put('application-documents/test-existing.pdf', 'test file content');
 
-        $document = ApplicationDocument::create([
+        $documentId = DB::table('application_documents')->insertGetId([
             'land_transfer_application_id' => $application->id,
             'required_document_id' => $requiredDocument->id,
             'original_filename' => 'test-existing.pdf',
@@ -152,7 +152,10 @@ class FinalDecisionLockTest extends TestCase
             'annex_reference' => 'Annex Existing',
             'remarks' => 'Existing locked document',
             'uploaded_by' => $staffUser->id,
+            'created_at' => now(),
+            'updated_at' => now(),
         ]);
+        $document = ApplicationDocument::findOrFail($documentId);
 
         $response = $this->actingAs($staffUser)->delete(
             route('staff.applications.documents.destroy', [

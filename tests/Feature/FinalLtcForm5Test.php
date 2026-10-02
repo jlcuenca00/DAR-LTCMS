@@ -42,7 +42,7 @@ class FinalLtcForm5Test extends TestCase
 
         $application = $this->makeFinalApplication($staff, 'FORM5-NEXT-001', 7);
 
-        ApplicationParcel::create([
+        DB::table('application_parcels')->insert([
             'land_transfer_application_id' => $application->id,
             'parcel_id' => null,
             'parcel_code' => 'FORM5-PARCEL-001',
@@ -53,6 +53,8 @@ class FinalLtcForm5Test extends TestCase
             'title_type' => 'TCT',
             'area_hectares' => 1.5000,
             'area_square_meters' => 15000,
+            'created_at' => now(),
+            'updated_at' => now(),
         ]);
 
         $clearance = app(ApplicationClearanceService::class)
@@ -192,13 +194,13 @@ class FinalLtcForm5Test extends TestCase
             'is_mandatory' => false,
         ]);
 
-        $document = ApplicationDocument::create([
+        $documentId = DB::table('application_documents')->insertGetId([
             'land_transfer_application_id' => $application->id,
             'required_document_id' => $requirement->id,
             'file_path' => 'applications/form5-metadata-source.pdf',
             'original_filename' => 'form5-metadata-source.pdf',
             'uploaded_by' => $staff->id,
-            'document_metadata' => [
+            'document_metadata' => json_encode([
                 'title_owner_names' => 'Original Snapshot Owner',
                 'transfer_document_title' => 'Original Snapshot Deed',
                 'notarization_date' => '2026-08-19',
@@ -207,8 +209,11 @@ class FinalLtcForm5Test extends TestCase
                 'notarial_book_number' => '3',
                 'notarial_series' => '2026',
                 'notary_public' => 'Atty. Original Snapshot',
-            ],
+            ]),
+            'created_at' => now(),
+            'updated_at' => now(),
         ]);
+        $document = ApplicationDocument::findOrFail($documentId);
 
         $clearance = app(ApplicationClearanceService::class)
             ->generateForDecision($application, $staff->id);
@@ -229,13 +234,16 @@ class FinalLtcForm5Test extends TestCase
             ]);
         $application->refresh();
 
-        $document->forceFill([
-            'document_metadata' => [
-                'title_owner_names' => 'Changed Live Owner',
-                'transfer_document_title' => 'Changed Live Deed',
-                'notary_public' => 'Atty. Changed Live',
-            ],
-        ])->save();
+        DB::table('application_documents')
+            ->where('id', $document->id)
+            ->update([
+                'document_metadata' => json_encode([
+                    'title_owner_names' => 'Changed Live Owner',
+                    'transfer_document_title' => 'Changed Live Deed',
+                    'notary_public' => 'Atty. Changed Live',
+                ]),
+            ]);
+        $document->refresh();
 
         $html = view('staff.clearances.partials.form5-content', [
             'application' => $application->fresh(),

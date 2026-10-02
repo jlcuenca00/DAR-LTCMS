@@ -4,6 +4,8 @@ namespace Tests\Feature;
 
 use App\Http\Middleware\LockApplicationMutation;
 use App\Models\ApplicationClearance;
+use App\Models\ApplicationComplianceNotice;
+use App\Models\ApplicationDocument;
 use App\Models\ApplicationParcel;
 use App\Models\Landowner;
 use App\Models\LandTransferApplication;
@@ -12,6 +14,7 @@ use App\Models\RequiredDocument;
 use App\Models\User;
 use App\Services\ApplicationClearanceIntegrityService;
 use App\Services\ApplicationClearanceService;
+use App\Services\ApplicationComplianceNoticeService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Route;
@@ -312,6 +315,237 @@ class FinalDecisionIntegrityHardeningTest extends TestCase
         }
     }
 
+    public function test_finalized_application_child_parcels_are_model_immutable_without_parent_share_bypass(): void
+    {
+        $staff = User::factory()->create(['role' => 'staff']);
+        $parcel = $this->makeParcel('FINAL-CHILD-PARCEL-001');
+        $otherParcel = $this->makeParcel('FINAL-CHILD-PARCEL-002');
+
+        $application = LandTransferApplication::create([
+            'application_code' => 'FINAL-CHILD-PARCELS-001',
+            'transferor_name' => 'Final Parcel Transferor',
+            'transferors' => [[
+                'name' => 'Final Parcel Transferor',
+                'landowner_id' => null,
+                'parcel_shares' => [],
+            ]],
+            'transferee_name' => 'Final Parcel Transferee',
+            'transferees' => [[
+                'name' => 'Final Parcel Transferee',
+                'landowner_id' => null,
+                'parcel_shares' => [],
+            ]],
+            'municipality' => 'Dumaguete City',
+            'barangay' => 'Bantayan',
+            'status' => LandTransferApplication::STATUS_PENDING_LEGAL_REVIEW,
+            'encoded_by' => $staff->id,
+        ]);
+
+        $applicationParcel = ApplicationParcel::create([
+            'land_transfer_application_id' => $application->id,
+            'parcel_id' => $parcel->id,
+            'parcel_code' => $parcel->parcel_code,
+            'title_no' => $parcel->title_no,
+            'lot_number' => $parcel->lot_number,
+            'area_hectares' => 1.0000,
+        ]);
+
+        $application->transferees = [[
+            'name' => 'Final Parcel Transferee',
+            'landowner_id' => null,
+            'parcel_shares' => [(string) $applicationParcel->id => 1.0000],
+        ]];
+        $application->save();
+
+        DB::table('land_transfer_applications')
+            ->where('id', $application->id)
+            ->update(['status' => LandTransferApplication::STATUS_APPROVED]);
+        $application->refresh();
+
+        $originalTransferees = $application->transferees;
+
+        $applicationParcel->area_hectares = 2.0000;
+        try {
+            $applicationParcel->save();
+            $this->fail('Expected finalized ApplicationParcel update to be rejected.');
+        } catch (ValidationException $e) {
+            $this->assertArrayHasKey('application_parcel', $e->errors());
+        }
+
+        try {
+            ApplicationParcel::create([
+                'land_transfer_application_id' => $application->id,
+                'parcel_id' => $otherParcel->id,
+                'parcel_code' => $otherParcel->parcel_code,
+                'title_no' => $otherParcel->title_no,
+                'lot_number' => $otherParcel->lot_number,
+                'area_hectares' => 1.0000,
+            ]);
+            $this->fail('Expected finalized ApplicationParcel creation to be rejected.');
+        } catch (ValidationException $e) {
+            $this->assertArrayHasKey('application_parcel', $e->errors());
+        }
+
+        try {
+            $applicationParcel->fresh()->delete();
+            $this->fail('Expected finalized ApplicationParcel deletion to be rejected.');
+        } catch (ValidationException $e) {
+            $this->assertArrayHasKey('application_parcel', $e->errors());
+        }
+
+        $this->assertDatabaseHas('application_parcels', ['id' => $applicationParcel->id]);
+        $this->assertSame($originalTransferees, $application->fresh()->transferees);
+    }
+
+    public function test_finalized_application_documents_are_model_immutable(): void
+    {
+        $staff = User::factory()->create(['role' => 'staff']);
+        $application = $this->makeApplication(
+            $staff,
+            LandTransferApplication::STATUS_PENDING_LEGAL_REVIEW,
+            'FINAL-CHILD-DOCUMENTS'
+        );
+
+        $required = RequiredDocument::forceCreate([
+            'name' => 'Final Child Document',
+            'applies_to' => 'transferor',
+            'is_mandatory' => true,
+            'legal_basis' => 'Regression test',
+        ]);
+        $secondRequired = RequiredDocument::forceCreate([
+            'name' => 'Final Child Document Two',
+            'applies_to' => 'transferor',
+            'is_mandatory' => false,
+            'legal_basis' => 'Regression test',
+        ]);
+
+        $document = ApplicationDocument::create([
+            'land_transfer_application_id' => $application->id,
+            'required_document_id' => $required->id,
+            'file_path' => 'application-documents/final-child.pdf',
+            'original_filename' => 'final-child.pdf',
+            'uploaded_by' => $staff->id,
+            'remarks' => 'Original evidence',
+        ]);
+
+        DB::table('land_transfer_applications')
+            ->where('id', $application->id)
+            ->update(['status' => LandTransferApplication::STATUS_APPROVED]);
+        $application->refresh();
+
+        $document->remarks = 'Tampered evidence';
+        try {
+            $document->save();
+            $this->fail('Expected finalized ApplicationDocument update to be rejected.');
+        } catch (ValidationException $e) {
+            $this->assertArrayHasKey('document', $e->errors());
+        }
+
+        try {
+            ApplicationDocument::create([
+                'land_transfer_application_id' => $application->id,
+                'required_document_id' => $secondRequired->id,
+                'file_path' => 'application-documents/final-child-two.pdf',
+                'original_filename' => 'final-child-two.pdf',
+                'uploaded_by' => $staff->id,
+            ]);
+            $this->fail('Expected finalized ApplicationDocument creation to be rejected.');
+        } catch (ValidationException $e) {
+            $this->assertArrayHasKey('document', $e->errors());
+        }
+
+        try {
+            $document->fresh()->delete();
+            $this->fail('Expected finalized ApplicationDocument deletion to be rejected.');
+        } catch (ValidationException $e) {
+            $this->assertArrayHasKey('document', $e->errors());
+        }
+
+        $this->assertSame('Original evidence', $document->fresh()->remarks);
+        $this->assertDatabaseHas('application_documents', ['id' => $document->id]);
+    }
+
+    public function test_compliance_notices_are_service_created_resolve_once_and_then_immutable(): void
+    {
+        $staff = User::factory()->create(['role' => 'staff']);
+        $application = $this->makeApplication(
+            $staff,
+            LandTransferApplication::STATUS_LEGAL_EVALUATION,
+            'COMPLIANCE-HISTORY-GUARD'
+        );
+
+        try {
+            ApplicationComplianceNotice::create([
+                'land_transfer_application_id' => $application->id,
+                'category' => ApplicationComplianceNotice::CATEGORY_CLARIFICATION,
+                'details' => 'Direct creation must fail.',
+                'resume_status' => LandTransferApplication::STATUS_LEGAL_EVALUATION,
+                'requested_by' => $staff->id,
+                'requested_by_name_snapshot' => $staff->name,
+                'requested_at' => now(),
+            ]);
+            $this->fail('Expected direct compliance notice creation to be rejected.');
+        } catch (ValidationException $e) {
+            $this->assertArrayHasKey('compliance', $e->errors());
+        }
+
+        $service = app(ApplicationComplianceNoticeService::class);
+        $notice = $service->create($application, [
+            'category' => ApplicationComplianceNotice::CATEGORY_CLARIFICATION,
+            'details' => 'Original compliance reason.',
+            'requested_items' => 'Original requested item.',
+            'resume_status' => LandTransferApplication::STATUS_LEGAL_EVALUATION,
+            'requested_by' => $staff->id,
+            'requested_by_name_snapshot' => $staff->name,
+            'requested_at' => now(),
+        ]);
+
+        $notice = $service->resolve($notice, [
+            'resolved_by' => $staff->id,
+            'resolved_by_name_snapshot' => $staff->name,
+            'resolved_at' => now(),
+            'resolution_note' => 'Resolved once.',
+        ]);
+
+        $notice->details = 'Tampered compliance reason.';
+        try {
+            $notice->save();
+            $this->fail('Expected resolved compliance notice mutation to be rejected.');
+        } catch (ValidationException $e) {
+            $this->assertArrayHasKey('compliance', $e->errors());
+        }
+
+        try {
+            $notice->fresh()->delete();
+            $this->fail('Expected persisted compliance notice deletion to be rejected.');
+        } catch (ValidationException $e) {
+            $this->assertArrayHasKey('compliance', $e->errors());
+        }
+
+        $this->assertSame('Original compliance reason.', $notice->fresh()->details);
+        $this->assertSame('Resolved once.', $notice->fresh()->resolution_note);
+
+        DB::table('land_transfer_applications')
+            ->where('id', $application->id)
+            ->update(['status' => LandTransferApplication::STATUS_APPROVED]);
+        $application->refresh();
+
+        try {
+            $service->create($application, [
+                'category' => ApplicationComplianceNotice::CATEGORY_OTHER,
+                'other_category' => 'Late compliance',
+                'details' => 'Finalized parent must block this.',
+                'resume_status' => LandTransferApplication::STATUS_LEGAL_EVALUATION,
+                'requested_by' => $staff->id,
+                'requested_by_name_snapshot' => $staff->name,
+                'requested_at' => now(),
+            ]);
+            $this->fail('Expected finalized parent to reject new compliance history.');
+        } catch (ValidationException $e) {
+            $this->assertArrayHasKey('compliance', $e->errors());
+        }
+    }
+
     public function test_clearance_integrity_checks_versioned_final_decision_identity_fields(): void
     {
         $staff = User::factory()->create(['role' => 'staff']);
@@ -428,14 +662,17 @@ class FinalDecisionIntegrityHardeningTest extends TestCase
             'encoded_by' => $staff->id,
         ]);
 
-        $applicationParcel = ApplicationParcel::create([
+        $applicationParcelId = DB::table('application_parcels')->insertGetId([
             'land_transfer_application_id' => $application->id,
             'parcel_id' => $parcel->id,
             'parcel_code' => $parcel->parcel_code,
             'title_no' => $parcel->title_no,
             'lot_number' => $parcel->lot_number,
             'area_hectares' => 1.0000,
+            'created_at' => now(),
+            'updated_at' => now(),
         ]);
+        $applicationParcel = ApplicationParcel::findOrFail($applicationParcelId);
 
         $this->actingAs($staff)
             ->delete(route('staff.applications.parcels.destroy', [$application, $applicationParcel]))
@@ -564,14 +801,17 @@ class FinalDecisionIntegrityHardeningTest extends TestCase
             'date_of_clearance_release' => now()->toDateString(),
         ]);
 
-        $applicationParcel = ApplicationParcel::create([
+        $applicationParcelId = DB::table('application_parcels')->insertGetId([
             'land_transfer_application_id' => $application->id,
             'parcel_id' => $parcel->id,
             'parcel_code' => $parcel->parcel_code,
             'title_no' => $parcel->title_no,
             'lot_number' => $parcel->lot_number,
             'area_hectares' => 1.0000,
+            'created_at' => now(),
+            'updated_at' => now(),
         ]);
+        $applicationParcel = ApplicationParcel::findOrFail($applicationParcelId);
 
         $service = app(ApplicationClearanceService::class);
         $first = $service->generateForDecision($application, $staff->id);
@@ -592,7 +832,9 @@ class FinalDecisionIntegrityHardeningTest extends TestCase
         DB::table('land_transfer_applications')
             ->where('id', $application->id)
             ->update(['municipality' => 'Bais City']);
-        $applicationParcel->update(['area_hectares' => 9.9999]);
+        DB::table('application_parcels')
+            ->where('id', $applicationParcel->id)
+            ->update(['area_hectares' => 9.9999]);
 
         $second = $service->generateForDecision($application->fresh(), $staff->id);
 
@@ -624,13 +866,15 @@ class FinalDecisionIntegrityHardeningTest extends TestCase
             'reviewed_at' => now(),
         ]);
 
-        ApplicationParcel::create([
+        DB::table('application_parcels')->insert([
             'land_transfer_application_id' => $application->id,
             'parcel_id' => $parcel->id,
             'parcel_code' => $parcel->parcel_code,
             'title_no' => $parcel->title_no,
             'lot_number' => $parcel->lot_number,
             'area_hectares' => 1.0000,
+            'created_at' => now(),
+            'updated_at' => now(),
         ]);
 
         $clearance = app(ApplicationClearanceService::class)

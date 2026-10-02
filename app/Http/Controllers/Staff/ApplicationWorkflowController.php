@@ -8,6 +8,7 @@ use App\Models\LandTransferApplication;
 use App\Services\ApplicationBusinessStateIntegrityService;
 use App\Services\ApplicationClearanceIntegrityService;
 use App\Services\ApplicationClearanceService;
+use App\Services\ApplicationComplianceNoticeService;
 use App\Services\ApplicationParcelIntegrityService;
 use App\Services\ApplicationPartyIntegrityService;
 use App\Services\ApplicationRequirementService;
@@ -324,17 +325,19 @@ class ApplicationWorkflowController extends Controller
                     ? trim((string) $validated['other_category'])
                     : null;
 
-                $notice = ApplicationComplianceNotice::create([
-                    'land_transfer_application_id' => $application->id,
-                    'category' => $validated['category'],
-                    'other_category' => $otherCategory,
-                    'details' => $details,
-                    'requested_items' => $requestedItems,
-                    'resume_status' => $resumeStatus,
-                    'requested_by' => Auth::id(),
-                    'requested_by_name_snapshot' => $requester?->name ?: 'Legal Clearance Staff',
-                    'requested_at' => $requestedAt,
-                ]);
+                $notice = app(ApplicationComplianceNoticeService::class)->create(
+                    $application,
+                    [
+                        'category' => $validated['category'],
+                        'other_category' => $otherCategory,
+                        'details' => $details,
+                        'requested_items' => $requestedItems,
+                        'resume_status' => $resumeStatus,
+                        'requested_by' => Auth::id(),
+                        'requested_by_name_snapshot' => $requester?->name ?: 'Legal Clearance Staff',
+                        'requested_at' => $requestedAt,
+                    ]
+                );
 
                 $oldStatus = $application->status;
                 $application->latest_compliance_reason = $details;
@@ -437,13 +440,17 @@ class ApplicationWorkflowController extends Controller
                 $resolver = Auth::user();
                 $oldStatus = $application->status;
 
-                $notice->resolved_by = Auth::id();
-                $notice->resolved_by_name_snapshot = $resolver?->name ?: 'Legal Clearance Staff';
-                $notice->resolved_at = $resolvedAt;
-                $notice->resolution_note = filled($validated['resolution_note'] ?? null)
-                    ? trim((string) $validated['resolution_note'])
-                    : null;
-                $notice->save();
+                app(ApplicationComplianceNoticeService::class)->resolve(
+                    $notice,
+                    [
+                        'resolved_by' => Auth::id(),
+                        'resolved_by_name_snapshot' => $resolver?->name ?: 'Legal Clearance Staff',
+                        'resolved_at' => $resolvedAt,
+                        'resolution_note' => filled($validated['resolution_note'] ?? null)
+                            ? trim((string) $validated['resolution_note'])
+                            : null,
+                    ]
+                );
 
                 $application->latest_compliance_reason = null;
                 $application->returned_for_compliance_at = null;
