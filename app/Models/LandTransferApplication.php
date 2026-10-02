@@ -173,6 +173,10 @@ class LandTransferApplication extends Model
      */
     private bool $workflowStatusMutationAuthorized = false;
 
+    private bool $workflowEvidenceMutationAuthorized = false;
+
+    private bool $releaseMutationAuthorized = false;
+
     /**
      * @internal Workflow status changes must go through
      * ApplicationWorkflowTransitionService.
@@ -191,6 +195,38 @@ class LandTransferApplication extends Model
     public function isWorkflowStatusMutationAuthorized(): bool
     {
         return $this->workflowStatusMutationAuthorized;
+    }
+
+    public function runAuthorizedWorkflowEvidenceMutation(callable $callback): mixed
+    {
+        $this->workflowEvidenceMutationAuthorized = true;
+
+        try {
+            return $callback();
+        } finally {
+            $this->workflowEvidenceMutationAuthorized = false;
+        }
+    }
+
+    public function isWorkflowEvidenceMutationAuthorized(): bool
+    {
+        return $this->workflowEvidenceMutationAuthorized;
+    }
+
+    public function runAuthorizedReleaseMutation(callable $callback): mixed
+    {
+        $this->releaseMutationAuthorized = true;
+
+        try {
+            return $callback();
+        } finally {
+            $this->releaseMutationAuthorized = false;
+        }
+    }
+
+    public function isReleaseMutationAuthorized(): bool
+    {
+        return $this->releaseMutationAuthorized;
     }
 
     public function isFinalized(): bool
