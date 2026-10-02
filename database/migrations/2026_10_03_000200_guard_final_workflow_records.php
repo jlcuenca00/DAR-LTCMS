@@ -12,7 +12,7 @@ return new class extends Migration
         }
 
         DB::unprepared(<<<'SQL'
-            CREATE FUNCTION dar_ltcms_guard_final_application() RETURNS trigger AS $$
+            CREATE OR REPLACE FUNCTION dar_ltcms_guard_final_application() RETURNS trigger AS $$
             DECLARE
                 excluded text[] := ARRAY['workflow_revision', 'updated_at'];
                 old_release text;
@@ -87,7 +87,7 @@ return new class extends Migration
             BEFORE UPDATE OR DELETE ON land_transfer_applications
             FOR EACH ROW EXECUTE FUNCTION dar_ltcms_guard_final_application();
 
-            CREATE FUNCTION dar_ltcms_guard_application_child() RETURNS trigger AS $$
+            CREATE OR REPLACE FUNCTION dar_ltcms_guard_application_child() RETURNS trigger AS $$
             DECLARE
                 parent_id bigint;
                 parent_status text;
@@ -119,7 +119,7 @@ return new class extends Migration
             END;
             $$ LANGUAGE plpgsql;
 
-            CREATE FUNCTION dar_ltcms_bump_child_workflow_revision() RETURNS trigger AS $$
+            CREATE OR REPLACE FUNCTION dar_ltcms_bump_child_workflow_revision() RETURNS trigger AS $$
             BEGIN
                 UPDATE land_transfer_applications
                 SET workflow_revision = workflow_revision + 1
