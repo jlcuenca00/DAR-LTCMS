@@ -5,6 +5,7 @@ namespace App\Observers;
 use App\Models\LandTransferApplication;
 use App\Services\ApplicationPartyIntegrityService;
 use App\Services\ApplicationPartyShareIntegrityService;
+use App\Services\ApplicationWorkflowEvidenceService;
 use App\Services\DarLocationService;
 use Illuminate\Validation\ValidationException;
 
@@ -35,13 +36,24 @@ class LandTransferApplicationObserver
         }
 
         if ($application->exists) {
+            $dirtyFields = array_keys($application->getDirty());
+            $workflowEvidenceFields = ApplicationWorkflowEvidenceService::protectedFields();
+            $dirtyWorkflowEvidence = array_values(array_intersect($dirtyFields, $workflowEvidenceFields));
+
+            if (
+                $dirtyWorkflowEvidence !== []
+                && ! $application->isWorkflowEvidenceMutationAuthorized()
+            ) {
+                throw ValidationException::withMessages([
+                    'workflow' => 'Workflow-owned evidence fields may only be changed through their authorized stage action.',
+                ]);
+            }
+
             $originalStatus = (string) $application->getRawOriginal('status');
             $originalReleaseStatus = (string) (
                 $application->getRawOriginal('release_status')
                 ?: LandTransferApplication::RELEASE_NOT_READY
             );
-            $dirtyFields = array_keys($application->getDirty());
-
             if (
                 in_array($originalStatus, LandTransferApplication::LEGACY_FINAL_STATUSES, true)
                 && ! empty($dirtyFields)
@@ -67,6 +79,14 @@ class LandTransferApplicationObserver
                 ];
 
                 $disallowedFields = array_values(array_diff($dirtyFields, $releaseFields));
+
+                $dirtyReleaseFields = array_values(array_intersect($dirtyFields, $releaseFields));
+
+                if ($dirtyReleaseFields !== [] && ! $application->isReleaseMutationAuthorized()) {
+                    throw ValidationException::withMessages([
+                        'release' => 'Release tracking changes must use the guarded release transition service.',
+                    ]);
+                }
 
                 if (! empty($disallowedFields)) {
                     throw ValidationException::withMessages([
