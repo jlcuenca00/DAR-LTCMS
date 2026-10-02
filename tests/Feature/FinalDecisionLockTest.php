@@ -19,6 +19,7 @@ use Tests\TestCase;
 class FinalDecisionLockTest extends TestCase
 {
     use RefreshDatabase;
+    use \Tests\Concerns\WritesWorkflowFixtures;
 
     public function test_approved_application_rejects_document_upload(): void
     {
@@ -84,9 +85,9 @@ class FinalDecisionLockTest extends TestCase
             'encoded_by' => $staffUser->id,
         ]);
 
-        DB::table('land_transfer_applications')
+        $this->writeWorkflowFixture(fn () => DB::table('land_transfer_applications')
             ->where('id', $application->id)
-            ->update(['status' => LandTransferApplication::STATUS_NOT_APPROVED]);
+            ->update(['status' => LandTransferApplication::STATUS_NOT_APPROVED]));
         $application->refresh();
 
         $requiredDocument = RequiredDocument::forceCreate([
@@ -144,7 +145,7 @@ class FinalDecisionLockTest extends TestCase
 
         Storage::put('application-documents/test-existing.pdf', 'test file content');
 
-        $documentId = DB::table('application_documents')->insertGetId([
+        $documentId = $this->writeWorkflowFixture(fn () => DB::table('application_documents')->insertGetId([
             'land_transfer_application_id' => $application->id,
             'required_document_id' => $requiredDocument->id,
             'original_filename' => 'test-existing.pdf',
@@ -154,7 +155,7 @@ class FinalDecisionLockTest extends TestCase
             'uploaded_by' => $staffUser->id,
             'created_at' => now(),
             'updated_at' => now(),
-        ]);
+        ]));
         $document = ApplicationDocument::findOrFail($documentId);
 
         $response = $this->actingAs($staffUser)->delete(
@@ -256,9 +257,9 @@ class FinalDecisionLockTest extends TestCase
             'encoded_by' => $staffUser->id,
         ]);
 
-        DB::table('land_transfer_applications')
+        $this->writeWorkflowFixture(fn () => DB::table('land_transfer_applications')
             ->where('id', $notApprovedApplication->id)
-            ->update(['status' => LandTransferApplication::STATUS_NOT_APPROVED]);
+            ->update(['status' => LandTransferApplication::STATUS_NOT_APPROVED]));
         $notApprovedApplication->refresh();
 
         $this->assertFalse($draftApplication->isFinalized());
@@ -319,7 +320,7 @@ class FinalDecisionLockTest extends TestCase
             'encoded_by' => $staffUser->id,
         ]);
 
-        DB::table('land_transfer_applications')
+        $this->writeWorkflowFixture(fn () => DB::table('land_transfer_applications')
             ->where('id', $application->id)
             ->update([
                 'ltc_form4_subject_land_findings' => json_encode(['ra6657_not_covered_not_tenanted_retained_area']),
@@ -335,7 +336,7 @@ class FinalDecisionLockTest extends TestCase
                 'csw_reference' => 'CSW-NO-MUTATION-001',
                 'csw_completed_at' => now(),
                 'csw_prepared_by' => $staffUser->id,
-            ]);
+            ]));
         $application->refresh();
 
         ApplicationParcel::create([
@@ -463,7 +464,7 @@ class FinalDecisionLockTest extends TestCase
             'area_hectares' => 1.0000,
         ]);
 
-        DB::table('land_transfer_applications')
+        $this->writeWorkflowFixture(fn () => DB::table('land_transfer_applications')
             ->where('id', $application->id)
             ->update([
                 'payment_order_reference' => 'OP-NO-MUTATION-DENIED-001',
@@ -479,7 +480,7 @@ class FinalDecisionLockTest extends TestCase
                 'csw_reference' => 'CSW-NO-MUTATION-DENIED-001',
                 'csw_completed_at' => now(),
                 'csw_prepared_by' => $staffUser->id,
-            ]);
+            ]));
         $application->refresh();
 
         $this->actingAs($staffUser)

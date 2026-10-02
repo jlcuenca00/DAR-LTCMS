@@ -19,6 +19,7 @@ use Tests\TestCase;
 class AuditLoggingTest extends TestCase
 {
     use RefreshDatabase;
+    use \Tests\Concerns\WritesWorkflowFixtures;
 
     public function test_application_stage_advancement_creates_audit_log(): void
     {
@@ -242,7 +243,7 @@ class AuditLoggingTest extends TestCase
             'encoded_by' => $staffUser->id,
         ]);
 
-        DB::table('land_transfer_applications')
+        $this->writeWorkflowFixture(fn () => DB::table('land_transfer_applications')
             ->where('id', $application->id)
             ->update([
                 'ltc_form4_subject_land_findings' => json_encode(['ra6657_not_covered_not_tenanted_retained_area']),
@@ -258,7 +259,7 @@ class AuditLoggingTest extends TestCase
                 'csw_reference' => 'CSW-AUDIT-APPROVAL-001',
                 'csw_completed_at' => now(),
                 'csw_prepared_by' => $staffUser->id,
-            ]);
+            ]));
         $application->refresh();
 
         ApplicationParcel::create([

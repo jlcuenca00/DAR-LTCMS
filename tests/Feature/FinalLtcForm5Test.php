@@ -16,6 +16,7 @@ use Tests\TestCase;
 class FinalLtcForm5Test extends TestCase
 {
     use RefreshDatabase;
+    use \Tests\Concerns\WritesWorkflowFixtures;
     use \Tests\Concerns\InsertsClearanceFixtures;
 
     public function test_new_clearance_uses_next_annual_ltc_sequence_and_application_page_number(): void
@@ -43,7 +44,7 @@ class FinalLtcForm5Test extends TestCase
 
         $application = $this->makeFinalApplication($staff, 'FORM5-NEXT-001', 7);
 
-        DB::table('application_parcels')->insert([
+        $this->writeWorkflowFixture(fn () => DB::table('application_parcels')->insert([
             'land_transfer_application_id' => $application->id,
             'parcel_id' => null,
             'parcel_code' => 'FORM5-PARCEL-001',
@@ -56,7 +57,7 @@ class FinalLtcForm5Test extends TestCase
             'area_square_meters' => 15000,
             'created_at' => now(),
             'updated_at' => now(),
-        ]);
+        ]));
 
         $clearance = app(ApplicationClearanceService::class)
             ->generateForDecision($application, $staff->id);
@@ -79,7 +80,7 @@ class FinalLtcForm5Test extends TestCase
 
         // Simulate out-of-band source drift. Normal model writes are frozen
         // after approval, but the rendered Form 5 must still use its snapshot.
-        DB::table('land_transfer_applications')
+        $this->writeWorkflowFixture(fn () => DB::table('land_transfer_applications')
             ->where('id', $application->id)
             ->update([
                 'or_number' => 'OR-5001',
@@ -88,7 +89,7 @@ class FinalLtcForm5Test extends TestCase
                 'transfer_instruments' => json_encode([
                     ['name' => 'Changed Live Transfer Instrument'],
                 ]),
-            ]);
+            ]));
         $application->refresh();
 
         $clearance = new ApplicationClearance([
@@ -195,7 +196,7 @@ class FinalLtcForm5Test extends TestCase
             'is_mandatory' => false,
         ]);
 
-        $documentId = DB::table('application_documents')->insertGetId([
+        $documentId = $this->writeWorkflowFixture(fn () => DB::table('application_documents')->insertGetId([
             'land_transfer_application_id' => $application->id,
             'required_document_id' => $requirement->id,
             'file_path' => 'applications/form5-metadata-source.pdf',
@@ -213,7 +214,7 @@ class FinalLtcForm5Test extends TestCase
             ]),
             'created_at' => now(),
             'updated_at' => now(),
-        ]);
+        ]));
         $document = ApplicationDocument::findOrFail($documentId);
 
         $clearance = app(ApplicationClearanceService::class)
@@ -223,7 +224,7 @@ class FinalLtcForm5Test extends TestCase
         $this->assertSame('Original Snapshot Deed', data_get($clearance->form_snapshot, 'subject_of'));
         $this->assertSame('OR-ORIGINAL', data_get($clearance->form_snapshot, 'or_number'));
 
-        DB::table('land_transfer_applications')
+        $this->writeWorkflowFixture(fn () => DB::table('land_transfer_applications')
             ->where('id', $application->id)
             ->update([
                 'or_number' => 'OR-CHANGED-LIVE',
@@ -232,10 +233,10 @@ class FinalLtcForm5Test extends TestCase
                 'transfer_instruments' => json_encode([
                     ['name' => 'Changed Live Instrument'],
                 ]),
-            ]);
+            ]));
         $application->refresh();
 
-        DB::table('application_documents')
+        $this->writeWorkflowFixture(fn () => DB::table('application_documents')
             ->where('id', $document->id)
             ->update([
                 'document_metadata' => json_encode([
@@ -243,7 +244,7 @@ class FinalLtcForm5Test extends TestCase
                     'transfer_document_title' => 'Changed Live Deed',
                     'notary_public' => 'Atty. Changed Live',
                 ]),
-            ]);
+            ]));
         $document->refresh();
 
         $html = view('staff.clearances.partials.form5-content', [
@@ -273,7 +274,7 @@ class FinalLtcForm5Test extends TestCase
             LandTransferApplication::STATUS_APPROVED
         );
 
-        DB::table('land_transfer_applications')
+        $this->writeWorkflowFixture(fn () => DB::table('land_transfer_applications')
             ->where('id', $application->id)
             ->update([
                 'release_status' => LandTransferApplication::RELEASED_TO_CLIENT,
@@ -284,7 +285,7 @@ class FinalLtcForm5Test extends TestCase
                 'release_logbook_reference' => 'LOG-FORM5-IMMUTABLE-DATE',
                 'csm_status' => 'received',
                 'date_of_clearance_release' => '2026-09-30',
-            ]);
+            ]));
         $application->refresh();
         $application->load('documents');
 
@@ -435,7 +436,7 @@ class FinalLtcForm5Test extends TestCase
             'or_date' => '2026-08-20',
             'amount_paid' => 2000,
         ]);
-        DB::table('application_parcels')->insert([
+        $this->writeWorkflowFixture(fn () => DB::table('application_parcels')->insert([
             'land_transfer_application_id' => $application->id,
             'parcel_id' => null,
             'parcel_code' => 'FROZEN-PARCEL',
@@ -443,7 +444,7 @@ class FinalLtcForm5Test extends TestCase
             'area_hectares' => 1,
             'created_at' => now(),
             'updated_at' => now(),
-        ]);
+        ]));
         $clearance = app(ApplicationClearanceService::class)->generateForDecision($application, $staff->id);
         $service = app(\App\Services\ApplicationClearanceIntegrityService::class);
         $this->assertTrue($service->inspect($application->fresh())['valid']);
@@ -524,9 +525,9 @@ class FinalLtcForm5Test extends TestCase
         $application = LandTransferApplication::create(array_merge($attributes, $overrides));
 
         if ($historicalNegative) {
-            DB::table('land_transfer_applications')
+            $this->writeWorkflowFixture(fn () => DB::table('land_transfer_applications')
                 ->where('id', $application->id)
-                ->update(['status' => $status]);
+                ->update(['status' => $status]));
             $application->refresh();
         }
 

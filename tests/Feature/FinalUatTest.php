@@ -13,6 +13,7 @@ use Tests\TestCase;
 class FinalUatTest extends TestCase
 {
     use RefreshDatabase;
+    use \Tests\Concerns\WritesWorkflowFixtures;
     use \Tests\Concerns\InsertsClearanceFixtures;
 
     public function test_landowner_application_portal_only_shows_records_linked_to_signed_in_landowner(): void
@@ -149,12 +150,12 @@ class FinalUatTest extends TestCase
             ->assertRedirect(route('landowner.applications.index'))
             ->assertSessionHas('error', 'The final decision has been recorded, but the signed output has not yet been released to the client.');
 
-        DB::table('land_transfer_applications')
+        $this->writeWorkflowFixture(fn () => DB::table('land_transfer_applications')
             ->where('id', $application->id)
             ->update([
                 'release_status' => LandTransferApplication::RELEASE_READY,
                 'ready_for_release_at' => now(),
-            ]);
+            ]));
         $application->refresh();
 
         $ready = $this->actingAs($landownerUser)
@@ -164,7 +165,7 @@ class FinalUatTest extends TestCase
         $ready->assertSee('Ready for Release');
         $ready->assertDontSee('View Decision Output');
 
-        DB::table('land_transfer_applications')
+        $this->writeWorkflowFixture(fn () => DB::table('land_transfer_applications')
             ->where('id', $application->id)
             ->update([
                 'release_status' => LandTransferApplication::RELEASED_TO_CLIENT,
@@ -172,7 +173,7 @@ class FinalUatTest extends TestCase
                 'released_by' => $staff->id,
                 'release_recipient_name' => 'UAT Authorized Recipient',
                 'date_of_clearance_release' => now()->toDateString(),
-            ]);
+            ]));
         $application->refresh();
 
         $released = $this->actingAs($landownerUser)

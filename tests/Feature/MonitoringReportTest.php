@@ -12,6 +12,7 @@ use Tests\TestCase;
 class MonitoringReportTest extends TestCase
 {
     use RefreshDatabase;
+    use \Tests\Concerns\WritesWorkflowFixtures;
     use \Tests\Concerns\InsertsClearanceFixtures;
 
     public function test_staff_report_totals_and_recorded_output_area_are_mathematically_consistent(): void
@@ -291,9 +292,9 @@ class MonitoringReportTest extends TestCase
         ]);
 
         if ($historicalNegative) {
-            DB::table('land_transfer_applications')
+            $this->writeWorkflowFixture(fn () => DB::table('land_transfer_applications')
                 ->where('id', $application->id)
-                ->update(['status' => $status]);
+                ->update(['status' => $status]));
             $application->refresh();
         }
 

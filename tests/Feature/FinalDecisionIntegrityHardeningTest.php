@@ -25,6 +25,7 @@ use Tests\TestCase;
 class FinalDecisionIntegrityHardeningTest extends TestCase
 {
     use RefreshDatabase;
+    use \Tests\Concerns\WritesWorkflowFixtures;
     use \Tests\Concerns\InsertsClearanceFixtures;
 
     public function test_application_mutation_middleware_refreshes_and_row_locks_the_route_model(): void
@@ -95,9 +96,9 @@ class FinalDecisionIntegrityHardeningTest extends TestCase
 
             // Simulate a pre-existing legacy anomaly without weakening the
             // model-level historical-record freeze.
-            DB::table('land_transfer_applications')
+            $this->writeWorkflowFixture(fn () => DB::table('land_transfer_applications')
                 ->where('id', $application->id)
-                ->update(['release_status' => LandTransferApplication::RELEASE_READY]);
+                ->update(['release_status' => LandTransferApplication::RELEASE_READY]));
             $application->refresh();
 
             $this->assertFalse($application->isReleaseReady());
@@ -361,9 +362,9 @@ class FinalDecisionIntegrityHardeningTest extends TestCase
         ]];
         $application->save();
 
-        DB::table('land_transfer_applications')
+        $this->writeWorkflowFixture(fn () => DB::table('land_transfer_applications')
             ->where('id', $application->id)
-            ->update(['status' => LandTransferApplication::STATUS_APPROVED]);
+            ->update(['status' => LandTransferApplication::STATUS_APPROVED]));
         $application->refresh();
 
         $originalTransferees = $application->transferees;
@@ -432,9 +433,9 @@ class FinalDecisionIntegrityHardeningTest extends TestCase
             'remarks' => 'Original evidence',
         ]);
 
-        DB::table('land_transfer_applications')
+        $this->writeWorkflowFixture(fn () => DB::table('land_transfer_applications')
             ->where('id', $application->id)
-            ->update(['status' => LandTransferApplication::STATUS_APPROVED]);
+            ->update(['status' => LandTransferApplication::STATUS_APPROVED]));
         $application->refresh();
 
         $document->remarks = 'Tampered evidence';
@@ -529,9 +530,9 @@ class FinalDecisionIntegrityHardeningTest extends TestCase
         $this->assertSame('Original compliance reason.', $notice->fresh()->details);
         $this->assertSame('Resolved once.', $notice->fresh()->resolution_note);
 
-        DB::table('land_transfer_applications')
+        $this->writeWorkflowFixture(fn () => DB::table('land_transfer_applications')
             ->where('id', $application->id)
-            ->update(['status' => LandTransferApplication::STATUS_APPROVED]);
+            ->update(['status' => LandTransferApplication::STATUS_APPROVED]));
         $application->refresh();
 
         try {
@@ -668,7 +669,7 @@ class FinalDecisionIntegrityHardeningTest extends TestCase
             'encoded_by' => $staff->id,
         ]);
 
-        $applicationParcelId = DB::table('application_parcels')->insertGetId([
+        $applicationParcelId = $this->writeWorkflowFixture(fn () => DB::table('application_parcels')->insertGetId([
             'land_transfer_application_id' => $application->id,
             'parcel_id' => $parcel->id,
             'parcel_code' => $parcel->parcel_code,
@@ -677,7 +678,7 @@ class FinalDecisionIntegrityHardeningTest extends TestCase
             'area_hectares' => 1.0000,
             'created_at' => now(),
             'updated_at' => now(),
-        ]);
+        ]));
         $applicationParcel = ApplicationParcel::findOrFail($applicationParcelId);
 
         $this->actingAs($staff)
@@ -761,9 +762,9 @@ class FinalDecisionIntegrityHardeningTest extends TestCase
             'encoded_by' => $staff->id,
         ]);
 
-        DB::table('land_transfer_applications')
+        $this->writeWorkflowFixture(fn () => DB::table('land_transfer_applications')
             ->where('id', $application->id)
-            ->update(['status' => LandTransferApplication::STATUS_DENIED]);
+            ->update(['status' => LandTransferApplication::STATUS_DENIED]));
         $application->refresh();
 
         $beforeCount = Landowner::count();
@@ -807,7 +808,7 @@ class FinalDecisionIntegrityHardeningTest extends TestCase
             'date_of_clearance_release' => now()->toDateString(),
         ]);
 
-        $applicationParcelId = DB::table('application_parcels')->insertGetId([
+        $applicationParcelId = $this->writeWorkflowFixture(fn () => DB::table('application_parcels')->insertGetId([
             'land_transfer_application_id' => $application->id,
             'parcel_id' => $parcel->id,
             'parcel_code' => $parcel->parcel_code,
@@ -816,7 +817,7 @@ class FinalDecisionIntegrityHardeningTest extends TestCase
             'area_hectares' => 1.0000,
             'created_at' => now(),
             'updated_at' => now(),
-        ]);
+        ]));
         $applicationParcel = ApplicationParcel::findOrFail($applicationParcelId);
 
         $service = app(ApplicationClearanceService::class);
@@ -835,12 +836,12 @@ class FinalDecisionIntegrityHardeningTest extends TestCase
 
         // Simulate out-of-band database corruption to prove an existing immutable
         // decision output is never regenerated from altered source records.
-        DB::table('land_transfer_applications')
+        $this->writeWorkflowFixture(fn () => DB::table('land_transfer_applications')
             ->where('id', $application->id)
-            ->update(['municipality' => 'Bais City']);
-        DB::table('application_parcels')
+            ->update(['municipality' => 'Bais City']));
+        $this->writeWorkflowFixture(fn () => DB::table('application_parcels')
             ->where('id', $applicationParcel->id)
-            ->update(['area_hectares' => 9.9999]);
+            ->update(['area_hectares' => 9.9999]));
 
         $second = $service->generateForDecision($application->fresh(), $staff->id);
 
@@ -872,7 +873,7 @@ class FinalDecisionIntegrityHardeningTest extends TestCase
             'reviewed_at' => now(),
         ]);
 
-        DB::table('application_parcels')->insert([
+        $this->writeWorkflowFixture(fn () => DB::table('application_parcels')->insert([
             'land_transfer_application_id' => $application->id,
             'parcel_id' => $parcel->id,
             'parcel_code' => $parcel->parcel_code,
@@ -881,7 +882,7 @@ class FinalDecisionIntegrityHardeningTest extends TestCase
             'area_hectares' => 1.0000,
             'created_at' => now(),
             'updated_at' => now(),
-        ]);
+        ]));
 
         $clearance = app(ApplicationClearanceService::class)
             ->generateForDecision($application, $staff->id);
@@ -1001,7 +1002,7 @@ class FinalDecisionIntegrityHardeningTest extends TestCase
 
         foreach ([LandTransferApplication::STATUS_PENDING_LEGAL_REVIEW, LandTransferApplication::STATUS_APPROVED] as $status) {
             // Explicit final-state fixture; normal workflow tests exercise approval.
-            DB::table('land_transfer_applications')->where('id', $source->id)->update(['status' => $status]);
+            $this->writeWorkflowFixture(fn () => DB::table('land_transfer_applications')->where('id', $source->id)->update(['status' => $status]));
             $sourceRevision = $source->fresh()->workflow_revision;
             $targetRevision = $target->fresh()->workflow_revision;
             foreach ([$child, $document] as $record) {
@@ -1051,9 +1052,9 @@ class FinalDecisionIntegrityHardeningTest extends TestCase
         ]);
 
         if ($historicalNegative) {
-            DB::table('land_transfer_applications')
+            $this->writeWorkflowFixture(fn () => DB::table('land_transfer_applications')
                 ->where('id', $application->id)
-                ->update(['status' => $status]);
+                ->update(['status' => $status]));
             $application->refresh();
         }
 

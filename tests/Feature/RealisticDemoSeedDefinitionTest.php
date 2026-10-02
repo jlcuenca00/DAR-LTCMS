@@ -21,11 +21,14 @@ class RealisticDemoSeedDefinitionTest extends TestCase
         $this->assertStringContainsString("'ready_for_release'", $sql);
         $this->assertStringContainsString("'released'", $sql);
         $this->assertStringContainsString('No ownership/registry mutation is simulated.', $sql);
-        $this->assertStringContainsString('CREATE TEMP TABLE dar_demo_application_ids', $sql);
+        $this->assertStringContainsString('SELECT pg_advisory_xact_lock(18032026, 1)', $sql);
+        $this->assertStringNotContainsString('DELETE FROM', $sql);
+        $this->assertStringNotContainsString('DISABLE TRIGGER', $sql);
+        $this->assertStringContainsString('Partial demo slot', $sql);
         $this->assertStringContainsString("'NOR-AGRI-'", $sql);
         $this->assertStringContainsString("'2026-NOR-DEMO-'", $sql);
         $this->assertMatchesRegularExpression(
-            "/r\\.municipality, r\\.barangay,\\s*CURRENT_DATE - \\(r\\.seq \\* INTERVAL '2 days'\\),\\s*NULL,\\s*r\\.status/s",
+            "/r\\.municipality, r\\.barangay,\\s*CURRENT_DATE - \\(r\\.seq \\* INTERVAL '2 days'\\),\\s*NULL,\\s*CASE WHEN v_is_final THEN 'for_releasing' ELSE r\\.status END/s",
             $sql
         );
         $this->assertStringNotContainsString("application_code LIKE '2026-DGT-%'", $sql);
