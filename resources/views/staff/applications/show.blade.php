@@ -4033,6 +4033,7 @@
                                 @csrf
                                 <input type="hidden" name="expected_status" value="{{ $application->status }}">
                                 <input type="hidden" name="expected_workflow_revision" value="{{ $application->workflow_revision }}">
+                                <input type="hidden" name="expected_workflow_dependency" value="{{ $workflowDependencyFingerprint }}">
 
                                 <div class="workflow-decision-heading">
                                     <span class="workflow-action-icon" aria-hidden="true">
@@ -4065,6 +4066,7 @@
                                 @csrf
                                 <input type="hidden" name="expected_status" value="{{ $application->status }}">
                                 <input type="hidden" name="expected_workflow_revision" value="{{ $application->workflow_revision }}">
+                                <input type="hidden" name="expected_workflow_dependency" value="{{ $workflowDependencyFingerprint }}">
 
                                 <div class="workflow-decision-heading">
                                     <span class="workflow-action-icon" aria-hidden="true">
