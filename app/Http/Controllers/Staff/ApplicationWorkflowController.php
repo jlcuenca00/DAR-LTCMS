@@ -546,6 +546,7 @@ class ApplicationWorkflowController extends Controller
                 }
 
                 $recordedAt = now();
+                $oldStatus = $application->status;
 
                 app(ApplicationWorkflowEvidenceService::class)->apply(
                     $application,
@@ -576,6 +577,8 @@ class ApplicationWorkflowController extends Controller
                     $application,
                     $application,
                     [
+                        'old_status' => $oldStatus,
+                        'new_status' => $application->status,
                         'decision_authority' => $application->decision_authority,
                         'decision_officer_name' => $application->decision_officer_name,
                         'decision_date' => optional($application->decision_date)->toDateString(),
