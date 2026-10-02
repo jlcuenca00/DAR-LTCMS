@@ -14,7 +14,7 @@ class ApplicationReleaseTransitionService
         int $expectedWorkflowRevision
     ): LandTransferApplication
     {
-        return DB::transaction(function () use ($application, $actorId) {
+        return DB::transaction(function () use ($application, $actorId, $expectedWorkflowRevision) {
             $application = LandTransferApplication::query()
                 ->lockForUpdate()
                 ->findOrFail($application->id);
