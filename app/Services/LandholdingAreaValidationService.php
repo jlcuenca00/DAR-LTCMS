@@ -10,6 +10,19 @@ class LandholdingAreaValidationService
     public const FIVE_HECTARE_LIMIT = 5.0000;
     public const NEAR_LIMIT_THRESHOLD = 4.5000;
 
+    public static function potentialIncomingExposureStatuses(): array
+    {
+        return array_values(array_unique(array_merge(
+            LandTransferApplication::ACTIVE_STATUSES,
+            [
+                LandTransferApplication::STATUS_DRAFT,
+                LandTransferApplication::STATUS_PENDING_REVIEW,
+                LandTransferApplication::STATUS_APPROVED,
+                LandTransferApplication::STATUS_RELEASED,
+            ]
+        )));
+    }
+
     public function forApplication(LandTransferApplication $application): array
     {
         $application->loadMissing('applicationParcels.parcel');
@@ -42,7 +55,7 @@ class LandholdingAreaValidationService
         $representative['exceeds_limit'] = $perLandowner->contains(fn ($row) => $row['exceeds_limit']);
         $representative['near_limit'] = $perLandowner->contains(fn ($row) => $row['near_limit']);
         $representative['per_landowner'] = $perLandowner->all();
-        $representative['scope_note'] = 'Computed separately for every linked transferee using encoded active landholding records and the transferee hectare share recorded for each linked parcel. The result is assistive only and does not make a final legal determination or execute ownership transfer.';
+        $representative['scope_note'] = 'Computed separately for every linked transferee using encoded active landholding records plus current, Approved, and Released clearance exposure. Approved or Released clearance status is not treated as proof that legal ownership transfer occurred. The result is assistive only and does not make a final legal determination or execute ownership transfer.';
 
         return $this->attachShareIntegrity($representative, $shareIntegrity);
     }
@@ -86,10 +99,7 @@ class LandholdingAreaValidationService
                     $query->where('transferee_landowner_id', $landowner->id)
                         ->orWhereJsonContains('transferees', [['landowner_id' => $landowner->id]]);
                 })
-                ->whereIn('status', array_merge(
-                    LandTransferApplication::ACTIVE_STATUSES,
-                    [LandTransferApplication::STATUS_DRAFT, LandTransferApplication::STATUS_PENDING_REVIEW]
-                ))
+                ->whereIn('status', self::potentialIncomingExposureStatuses())
                 ->when($application, fn ($query) => $query->where('id', '!=', $application->id))
                 ->get();
 
@@ -148,7 +158,7 @@ class LandholdingAreaValidationService
                 'near_limit' => 'Near 5-hectare reference limit',
                 default => 'Within 5-hectare reference limit',
             },
-            'scope_note' => 'Computed from encoded active landholding records and pending/current clearance application areas only. Succession and retention-certificate entries are staff review context, not automatic legal determinations.',
+            'scope_note' => 'Computed from encoded active landholding records plus current, Approved, and Released clearance application exposure. Approved or Released clearance status does not prove legal ownership transfer. Succession and retention-certificate entries are staff review context, not automatic legal determinations.',
         ];
     }
 
