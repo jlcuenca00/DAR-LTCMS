@@ -3779,7 +3779,7 @@
                         @elseif ($exceedsFiveHectares && $application->is_succession_case)
                             At least one projected total exceeds the 5-hectare reference limit, with succession/inheritance context noted for manual review.
                         @elseif ($exceedsFiveHectares)
-                            At least one projected total exceeds the 5-hectare reference limit. Release is blocked until the encoded records are resolved or the application is marked Denied.
+                            At least one projected total exceeds the 5-hectare reference limit. Approval and release remain blocked until the encoded records are corrected or the issue is handled through Request Compliance and resolved.
                         @else
                             All linked transferee projections are within the 5-hectare reference limit based on encoded system records.
                         @endif
