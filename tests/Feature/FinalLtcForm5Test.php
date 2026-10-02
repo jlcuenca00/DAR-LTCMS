@@ -450,25 +450,32 @@ class FinalLtcForm5Test extends TestCase
         $again = app(ApplicationClearanceService::class)->generateForDecision($application, $staff->id);
         $this->assertSame($clearance->id, $again->id);
 
+        // Database triggers already reject persisted snapshot updates. Simulate
+        // malformed loaded snapshots without disabling those production guards.
+        $inspect = function (ApplicationClearance $candidate) use ($application, $service): array {
+            $parent = $application->fresh();
+            $parent->setRelation('clearance', $candidate);
+            return $service->inspect($parent);
+        };
         foreach (['transferor_name', 'transferee_name', 'municipality', 'barangay'] as $field) {
-            DB::table('application_clearances')->where('id', $clearance->id)->update([$field => 'Tampered']);
-            $this->assertFalse($service->inspect($application->fresh())['valid'], $field);
-            DB::table('application_clearances')->where('id', $clearance->id)->update([$field => $clearance->{$field}]);
+            $candidate = clone $clearance;
+            $candidate->{$field} = 'Tampered';
+            $this->assertFalse($inspect($candidate)['valid'], $field);
         }
         foreach (['or_number', 'or_date', 'amount_paid'] as $field) {
-            $snapshot = $clearance->form_snapshot;
+            $candidate = clone $clearance;
+            $snapshot = $candidate->form_snapshot;
             $snapshot[$field] = $field === 'amount_paid' ? '1.00' : 'Tampered';
-            DB::table('application_clearances')->where('id', $clearance->id)->update(['form_snapshot' => json_encode($snapshot)]);
-            $this->assertFalse($service->inspect($application->fresh())['valid'], $field);
+            $candidate->form_snapshot = $snapshot;
+            $this->assertFalse($inspect($candidate)['valid'], $field);
         }
-        DB::table('application_clearances')->where('id', $clearance->id)->update(['form_snapshot' => json_encode($clearance->form_snapshot)]);
         foreach (['application_parcel_id', 'title_no', 'area_hectares', 'title_number'] as $field) {
-            $snapshot = $clearance->parcel_snapshot;
+            $candidate = clone $clearance;
+            $snapshot = $candidate->parcel_snapshot;
             $snapshot[0][$field] = in_array($field, ['application_parcel_id', 'area_hectares'], true) ? 999 : 'Tampered';
-            DB::table('application_clearances')->where('id', $clearance->id)->update(['parcel_snapshot' => json_encode($snapshot)]);
-            $this->assertFalse($service->inspect($application->fresh())['valid'], $field);
+            $candidate->parcel_snapshot = $snapshot;
+            $this->assertFalse($inspect($candidate)['valid'], $field);
         }
-        DB::table('application_clearances')->where('id', $clearance->id)->update(['parcel_snapshot' => json_encode($clearance->parcel_snapshot)]);
         $this->assertTrue($service->inspect($application->fresh())['valid']);
     }
 
