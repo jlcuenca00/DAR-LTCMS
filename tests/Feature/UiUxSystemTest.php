@@ -75,17 +75,24 @@ class UiUxSystemTest extends TestCase
         $this->assertStringNotContainsString("'Approved' => 'Released'", $panel);
     }
 
-    public function test_application_workflow_still_uses_existing_final_decision_routes(): void
+    public function test_application_workflow_uses_approved_only_final_decision_and_structured_compliance_actions(): void
     {
         $review = file_get_contents(resource_path('views/staff/applications/show.blade.php'));
 
         $this->assertStringContainsString("route('staff.applications.approve', \$application)", $review);
-        $this->assertStringContainsString("route('staff.applications.not_approved', \$application)", $review);
+        $this->assertStringContainsString("route('staff.applications.compliance.request', \$application)", $review);
+        $this->assertStringContainsString("route('staff.applications.compliance.resolve', \$application)", $review);
+        $this->assertStringNotContainsString("route('staff.applications.not_approved', \$application)", $review);
         $this->assertStringContainsString('data-decision-confirm="approve"', $review);
-        $this->assertStringContainsString('data-decision-confirm="deny"', $review);
+        $this->assertStringNotContainsString('data-decision-confirm="deny"', $review);
         $this->assertStringContainsString('final_decision_confirmation', $review);
         $this->assertStringContainsString('Record PARPO II Approved Decision', $review);
         $this->assertStringContainsString('Record Approved Decision', $review);
+        $this->assertStringContainsString('Request Compliance / Action Required', $review);
+        $this->assertStringContainsString('Mark Compliance Resolved', $review);
+        $this->assertStringContainsString('ApplicationComplianceNotice::categoryOptions()', $review);
+        $this->assertStringContainsString('CATEGORY_OTHER', $review);
+        $this->assertStringNotContainsString('Record PARPO II Not Approved Decision', $review);
         $this->assertStringContainsString('name="decision_officer_name"', $review);
         $this->assertStringContainsString('name="decision_date"', $review);
         $this->assertStringContainsString('id="workflow-overview"', $review);

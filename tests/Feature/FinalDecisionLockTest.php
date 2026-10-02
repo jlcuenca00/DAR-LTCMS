@@ -12,6 +12,7 @@ use App\Models\RequiredDocument;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
@@ -65,7 +66,7 @@ class FinalDecisionLockTest extends TestCase
         ]);
     }
 
-    public function test_not_approved_application_rejects_document_upload(): void
+    public function test_historical_not_approved_application_remains_locked_against_document_upload(): void
     {
         Storage::fake('local');
 
@@ -79,9 +80,14 @@ class FinalDecisionLockTest extends TestCase
             'transferee_name' => 'Locked Transferee',
             'municipality' => 'Dumaguete City',
             'barangay' => 'Bantayan',
-            'status' => 'not_approved',
+            'status' => LandTransferApplication::STATUS_PENDING_LEGAL_REVIEW,
             'encoded_by' => $staffUser->id,
         ]);
+
+        DB::table('land_transfer_applications')
+            ->where('id', $application->id)
+            ->update(['status' => LandTransferApplication::STATUS_NOT_APPROVED]);
+        $application->refresh();
 
         $requiredDocument = RequiredDocument::forceCreate([
             'name' => 'Locked Requirement',
@@ -192,8 +198,12 @@ class FinalDecisionLockTest extends TestCase
             ->assertSessionHasErrors('status');
 
         $this->actingAs($staffUser)
-            ->post(route('staff.applications.not_approved', $application))
+            ->post(route('staff.applications.compliance.request', $application))
             ->assertSessionHasErrors('status');
+
+        $this->actingAs($staffUser)
+            ->post('/staff/applications/' . $application->id . '/not-approved')
+            ->assertNotFound();
 
         $this->assertDatabaseHas('land_transfer_applications', [
             'id' => $application->id,
@@ -233,9 +243,14 @@ class FinalDecisionLockTest extends TestCase
             'transferee_name' => 'Not Approved Transferee',
             'municipality' => 'Dumaguete City',
             'barangay' => 'Bantayan',
-            'status' => 'not_approved',
+            'status' => LandTransferApplication::STATUS_PENDING_LEGAL_REVIEW,
             'encoded_by' => $staffUser->id,
         ]);
+
+        DB::table('land_transfer_applications')
+            ->where('id', $notApprovedApplication->id)
+            ->update(['status' => LandTransferApplication::STATUS_NOT_APPROVED]);
+        $notApprovedApplication->refresh();
 
         $this->assertFalse($draftApplication->isFinalized());
         $this->assertTrue($draftApplication->isEditable());
@@ -373,7 +388,7 @@ class FinalDecisionLockTest extends TestCase
         ]);
     }
 
-    public function test_denying_clearance_does_not_mutate_landholding_ownership(): void
+    public function test_removed_negative_decision_path_does_not_mutate_landholding_ownership(): void
     {
         $staffUser = User::factory()->create([
             'role' => 'staff',
@@ -447,19 +462,19 @@ class FinalDecisionLockTest extends TestCase
         ])->save();
 
         $this->actingAs($staffUser)
-            ->post(route('staff.applications.not_approved', $application), [
+            ->post('/staff/applications/' . $application->id . '/not-approved', [
                 'final_decision_confirmation' => '1',
                 'decision_officer_name' => 'PARPO II Test Signatory',
                 'decision_date' => now()->toDateString(),
-                'decision_reason' => 'Denied clearance only.',
-                'decision_notes' => 'Regression test: denial must not mutate ownership records.',
+                'decision_reason' => 'Historical negative path must remain unavailable.',
+                'decision_notes' => 'Regression test: removed negative path must not mutate ownership records.',
             ])
-            ->assertSessionHas('success');
+            ->assertNotFound();
 
         $application->refresh();
         $existingLandholding->refresh();
 
-        $this->assertSame(LandTransferApplication::STATUS_NOT_APPROVED, $application->status);
+        $this->assertSame(LandTransferApplication::STATUS_FOR_RELEASING, $application->status);
 
         $this->assertDatabaseHas('landholdings', [
             'id' => $existingLandholding->id,

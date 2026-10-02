@@ -6,6 +6,7 @@ use App\Models\ApplicationClearance;
 use App\Models\LandTransferApplication;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 class MonitoringReportTest extends TestCase
@@ -47,7 +48,7 @@ class MonitoringReportTest extends TestCase
         $response->assertSee('REPORT-NOT-APPROVED-001');
         $response->assertSee('1803-2026-0001 (1)');
         $response->assertSee('not ownership transferred');
-        $response->assertSee('do not automatically transfer land ownership');
+        $response->assertSee('No clearance decision or release record mutates parcel ownership or registry records');
 
         $this->assertSame($pending->id, $pending->fresh()->id);
     }
@@ -104,7 +105,7 @@ class MonitoringReportTest extends TestCase
         $response->assertSee('To 2026-08-31');
     }
 
-    public function test_not_approved_filter_includes_current_and_legacy_negative_decisions(): void
+    public function test_historical_negative_filter_includes_not_approved_and_denied_records(): void
     {
         $staff = $this->makeStaff();
 
@@ -262,28 +263,40 @@ class MonitoringReportTest extends TestCase
         string $status,
         string $dateOfApplication
     ): LandTransferApplication {
-        return LandTransferApplication::create([
+        $historicalNegative = in_array($status, [
+            LandTransferApplication::STATUS_NOT_APPROVED,
+            LandTransferApplication::STATUS_DENIED,
+        ], true);
+        $finalLike = in_array($status, [
+            LandTransferApplication::STATUS_RELEASED,
+            LandTransferApplication::STATUS_DENIED,
+            LandTransferApplication::STATUS_APPROVED,
+            LandTransferApplication::STATUS_NOT_APPROVED,
+        ], true);
+
+        $application = LandTransferApplication::create([
             'application_code' => $code,
             'transferor_name' => $code . ' Transferor',
             'transferee_name' => $code . ' Transferee',
             'municipality' => $municipality,
             'barangay' => $barangay,
             'date_of_application' => $dateOfApplication,
-            'status' => $status,
+            'status' => $historicalNegative
+                ? LandTransferApplication::STATUS_PENDING_LEGAL_REVIEW
+                : $status,
             'encoded_by' => $staff->id,
-            'reviewed_by' => in_array($status, [
-                LandTransferApplication::STATUS_RELEASED,
-                LandTransferApplication::STATUS_DENIED,
-                LandTransferApplication::STATUS_APPROVED,
-                LandTransferApplication::STATUS_NOT_APPROVED,
-            ], true) ? $staff->id : null,
-            'reviewed_at' => in_array($status, [
-                LandTransferApplication::STATUS_RELEASED,
-                LandTransferApplication::STATUS_DENIED,
-                LandTransferApplication::STATUS_APPROVED,
-                LandTransferApplication::STATUS_NOT_APPROVED,
-            ], true) ? now() : null,
+            'reviewed_by' => $finalLike ? $staff->id : null,
+            'reviewed_at' => $finalLike ? now() : null,
         ]);
+
+        if ($historicalNegative) {
+            DB::table('land_transfer_applications')
+                ->where('id', $application->id)
+                ->update(['status' => $status]);
+            $application->refresh();
+        }
+
+        return $application;
     }
 
     private function makeClearance(

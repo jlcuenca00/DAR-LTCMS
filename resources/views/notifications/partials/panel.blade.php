@@ -10,8 +10,11 @@
             'application_submitted', 'application_status_updated' => 'Application status updated',
             'application_approved' => 'Application approved',
             'application_released' => 'Clearance released',
-            'application_not_approved' => 'Application not approved',
+            'application_not_approved' => 'Application not approved (historical)',
             'application_denied' => 'Application not approved (legacy)',
+            'landowner_compliance_required' => 'Action required',
+            'landowner_compliance_resolved' => 'Compliance resolved',
+            'landowner_returned_for_compliance' => 'Compliance required (historical)',
             default => ucwords(str_replace('_', ' ', (string) $type)),
         };
     };

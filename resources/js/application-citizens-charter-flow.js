@@ -78,7 +78,7 @@ function configureAdvanceForm(state) {
         case 'draft':
         case 'pending_review':
             if (copy) copy.textContent = 'Record Legal completeness review and Payment Order preparation before the application proceeds to the cashier/payment stage.';
-            if (note) note.textContent = 'Incomplete applications should be Returned for Compliance instead of being denied.';
+            if (note) note.textContent = 'Use Request Compliance whenever something must be corrected, clarified, amended, or provided before processing can continue.';
             fields.innerHTML = `
                 <input type="hidden" name="applicant_is_juridical_entity" value="0">
                 <label style="display:flex;align-items:center;gap:8px;font-size:12px;font-weight:800;color:#334155;">
@@ -111,7 +111,7 @@ function configureAdvanceForm(state) {
 
         case 'legal_evaluation':
             if (copy) copy.textContent = 'Complete the Legal Division Staff Work (CSW), then record that the case was forwarded to Chief Legal for review.';
-            if (note) note.textContent = 'CSW is an internal administrative work record. It does not itself approve or deny the clearance.';
+            if (note) note.textContent = 'CSW is an internal administrative work record. It does not itself approve the clearance.';
             fields.innerHTML = [
                 field('CSW reference (optional; system will create one if blank)', 'csw_reference', 'text', state.csw_reference || ''),
                 textareaField('CSW notes (optional)', 'csw_notes', state.csw_notes || ''),
@@ -124,14 +124,10 @@ function configureAdvanceForm(state) {
             break;
 
         case 'endorsed_parpo':
-            if (copy) copy.textContent = 'Record that the PARPO II review cycle is complete and the official Approved or Not Approved decision is ready to be encoded by Legal Division.';
+            if (copy) copy.textContent = 'Record that the PARPO II review cycle is complete and the official Approved decision is ready to be encoded by Legal Division.';
             if (note) note.textContent = 'The system rechecks requirements, payment, Form No. 4, CSW, parcel links, and assistive hectare validation before this stage.';
             break;
 
-        case 'returned_for_compliance':
-            if (copy) copy.textContent = 'Resume Legal completeness review after the lacking requirements have been supplied.';
-            if (note) note.textContent = 'This application was not denied. It remains open for compliance and review.';
-            break;
     }
 
     if (fields.children.length) {
@@ -139,42 +135,30 @@ function configureAdvanceForm(state) {
     }
 }
 
-function addReturnForCompliance(state, applicationId) {
-    if (!state.can_return_for_compliance) return;
+function configureComplianceForm() {
+    const form = document.querySelector('[data-compliance-request-form]');
+    if (!form) return;
 
-    const grid = document.querySelector('.workflow-decision-grid');
-    if (!grid || grid.querySelector('[data-return-for-compliance]')) return;
+    const category = form.querySelector('[data-compliance-category]');
+    const otherField = form.querySelector('[data-compliance-other-field]');
+    const otherInput = otherField?.querySelector('input[name="other_category"]');
 
-    const form = document.createElement('form');
-    form.method = 'POST';
-    form.action = `/staff/applications/${applicationId}/return-for-compliance`;
-    form.className = 'workflow-decision-card not-approved-card';
-    form.dataset.returnForCompliance = 'true';
-    form.innerHTML = `
-        ${hiddenCsrf()}
-        <div class="workflow-decision-heading">
-            <span class="workflow-action-icon warning" aria-hidden="true"><i class="fa-solid fa-rotate-left"></i></span>
-            <div>
-                <p class="workflow-action-title">Return for Compliance</p>
-                <p class="workflow-action-copy">Return an incomplete application for lacking requirements without recording a final denial.</p>
-            </div>
-        </div>
-        <div class="workflow-decision-actions">
-            ${textareaField('Reason / lacking requirements', 'compliance_reason', '', 'required')}
-            <div class="workflow-decision-note">The record stays editable and may return to Legal completeness review after compliance.</div>
-        </div>
-        <button type="submit" class="staff-button staff-button-light"><i class="fa-solid fa-rotate-left"></i> Return for Compliance</button>
-    `;
-    grid.appendChild(form);
+    if (!category || !otherField || !otherInput) return;
+
+    const syncOtherField = () => {
+        const showOther = category.value === 'other';
+        otherField.hidden = !showOther;
+        otherInput.required = showOther;
+    };
+
+    category.addEventListener('change', syncOtherField);
+    syncOtherField();
 }
 
 function configureFinalDecisionCards(state) {
     const approveForm = document.querySelector('form[action$="/approve"]');
-    const denyForm = document.querySelector('form[action$="/not-approved"]');
 
-    if (denyForm) denyForm.hidden = !state.can_finalize_decision;
     if (approveForm) approveForm.hidden = !state.can_finalize_decision;
-
     if (!state.can_finalize_decision || !approveForm) return;
 
     approveForm.dataset.decisionConfirm = 'approve';
@@ -202,13 +186,6 @@ function configureFinalDecisionCards(state) {
             if (modalSubmit) modalSubmit.textContent = 'Record Approved Decision';
         }, 0);
     });
-
-    if (denyForm) {
-        const copy = denyForm.querySelector('.workflow-action-copy');
-        const note = denyForm.querySelector('.workflow-decision-note');
-        if (copy) copy.textContent = 'Legal Clearance Staff records the official PARPO II Not Approved decision, signatory, and decision date, then DAR-LTCMS generates the immutable DENIED LTC Form No. 5 output.';
-        if (note) note.textContent = 'Use this only for the final PARPO II decision. Earlier deficiencies must use Return for Compliance.';
-    }
 }
 
 function addReleaseTracking(state, applicationId) {
@@ -352,7 +329,7 @@ async function initCitizensCharterFlow() {
     const state = await response.json();
 
     configureAdvanceForm(state);
-    addReturnForCompliance(state, applicationId);
+    configureComplianceForm();
     configureFinalDecisionCards(state);
     addReleaseTracking(state, applicationId);
     applyRequirementState(state);
@@ -362,7 +339,7 @@ async function initCitizensCharterFlow() {
     if (modalCopy) {
         modalCopy.textContent = state.is_final
             ? 'Final decision is locked. Complete only the authorized release-tracking steps below.'
-            : 'Record the administrative action only after Legal Division receives or completes the corresponding real-world workflow step.';
+            : 'Record the administrative action only after Legal Division receives or completes the corresponding real-world step. Use Request Compliance whenever something must be corrected, clarified, amended, or provided before processing continues.';
     }
 }
 

@@ -19,7 +19,6 @@ class EnsureReleaseDataIntegrity
         }
 
         $requiresCheck = $request->routeIs('staff.applications.approve')
-            || $request->routeIs('staff.applications.not_approved')
             || ($request->routeIs('staff.applications.submit')
                 && $application->status === LandTransferApplication::STATUS_ENDORSED_PARPO);
 

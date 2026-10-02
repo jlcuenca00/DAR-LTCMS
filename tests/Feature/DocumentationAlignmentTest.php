@@ -33,7 +33,7 @@ class DocumentationAlignmentTest extends TestCase
         }
     }
 
-    public function test_current_user_and_tester_guides_use_approved_and_not_approved_final_decisions(): void
+    public function test_current_user_and_tester_guides_use_approved_only_with_compliance_required(): void
     {
         $paths = [
             'docs/barebones-tester-handoff.md',
@@ -46,10 +46,14 @@ class DocumentationAlignmentTest extends TestCase
         foreach ($paths as $path) {
             $content = $this->read($path);
 
-            $this->assertStringContainsString('Approved', $content, "{$path} must document Approved as a final decision.");
-            $this->assertStringContainsString('Not Approved', $content, "{$path} must document Not Approved as a final decision.");
+            $this->assertStringContainsString('Approved', $content, "{$path} must document Approved as the current final decision.");
+            $this->assertStringContainsString('Compliance', $content, "{$path} must document the compliance-first corrective workflow.");
             $this->assertStringContainsString('Released', $content, "{$path} must document release separately.");
         }
+
+        $baseline = $this->read('docs/FINAL_SYSTEM_BASELINE.md');
+        $this->assertStringContainsString('The only current final application decision state is:', $baseline);
+        $this->assertStringContainsString('New Not Approved / Denied decisions cannot be created by the current workflow.', $baseline);
     }
 
     public function test_final_baseline_preserves_clearance_only_scope_and_roles(): void
@@ -67,7 +71,8 @@ class DocumentationAlignmentTest extends TestCase
         $this->assertStringContainsString('transferred legal ownership', $baseline);
         $this->assertStringContainsString('registry alteration', $baseline);
         $this->assertStringContainsString('Approved', $baseline);
-        $this->assertStringContainsString('Not Approved', $baseline);
+        $this->assertStringContainsString('Compliance Required', $baseline);
+        $this->assertStringContainsString('historical', $baseline);
         $this->assertStringContainsString('Released to Client', $baseline);
         $this->assertStringContainsString('editing is locked', $baseline);
         $this->assertStringContainsString('supporting-document upload/removal is locked', $baseline);

@@ -17,7 +17,7 @@ class ApplicationClearanceController extends Controller
         $application->load('clearance');
 
         if (! $application->isFinalized()) {
-            return back()->with('error', 'Decision output is only available after a final Approved or Not Approved PARPO II decision.');
+            return back()->with('error', 'Decision output is available after a current Approved decision or for a preserved historical final-decision record.');
         }
 
         if (! $application->clearance) {
@@ -45,7 +45,7 @@ class ApplicationClearanceController extends Controller
         $application->load('clearance');
 
         if (! $application->isFinalized()) {
-            return back()->with('error', 'Decision output is only available after a final Approved or Not Approved PARPO II decision.');
+            return back()->with('error', 'Decision output is available after a current Approved decision or for a preserved historical final-decision record.');
         }
 
         if (! $application->clearance) {

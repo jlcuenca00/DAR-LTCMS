@@ -23,7 +23,7 @@ Do **not** describe it as:
 
 Recommended wording:
 
-> DAR-LTCMS is limited to the generation, processing, monitoring, and records management of Land Transfer Clearance applications within the DAR Negros Oriental Provincial Office. It does not automatically execute land ownership transfer, mutate Registry of Deeds records, or conclusively finalize legal land transfer. An Approved or Not Approved application records the final administrative clearance decision and locks the substantive application record. Release of the signed output is tracked separately. Any actual ownership transfer or registry alteration remains subject to separate legal and administrative procedures outside the system's automatic operations.
+> DAR-LTCMS is limited to the generation, processing, monitoring, and records management of Land Transfer Clearance applications within the DAR Negros Oriental Provincial Office. It does not automatically execute land ownership transfer, mutate Registry of Deeds records, or conclusively finalize legal land transfer. Approved is the only current final administrative clearance decision. Issues that prevent approval remain open through a structured Compliance Required workflow until resolved. Release of the signed output is tracked separately. Any actual ownership transfer or registry alteration remains subject to separate legal and administrative procedures outside the system's automatic operations.
 
 ## Current application workflow terminology
 
@@ -37,13 +37,15 @@ Use these current user-facing stages in thesis descriptions and diagrams:
 6. With Chief Legal for Review
 7. With PARPO II for Decision
 8. PARPO II Decision Ready to Record
-9. Approved or Not Approved — final application decision
+9. Approved — final application decision
 10. Signed Form No. 5 / Ready for Release
 11. Released to Client
 
-Use **Approved** and **Not Approved** as the final application decision states. **Ready for Release** and **Released to Client** are separate delivery statuses and must not replace or overwrite the final decision.
+At any supported open stage, **Request Compliance / Action Required** may temporarily place the application in **Compliance Required**. When resolved, the same application returns to its saved prior stage. This loop may repeat without creating a replacement application.
 
-Historical/internal values such as `released`, `not_approved`, `pending_review`, and `draft` may remain for backward compatibility but should not be presented as the current workflow in final thesis figures/screenshots.
+Use **Approved** as the only current final application decision state. **Ready for Release** and **Released to Client** are separate delivery statuses and must not replace or overwrite the final decision.
+
+Historical/internal values such as `not_approved`, `denied`, application-level `released`, `pending_review`, and `draft` may remain for backward compatibility but should not be presented as current decision options in final thesis figures/screenshots.
 
 ## Authority versus recorder rule
 
@@ -56,7 +58,7 @@ For the final decision, preserve PARPO II as the decision authority together wit
 
 ## Final decision rule
 
-Once an application is Approved or Not Approved:
+Once a current application is Approved (and for preserved historical final records):
 
 - editing is locked;
 - supporting-document changes are locked;
@@ -94,7 +96,7 @@ LTID, Chief Legal, PARPO II, cashier, and other DAR offices are **administrative
 
 ### Landowner
 
-Landowners do not create applications. They may view only their own linked Parcel/Landholding/Application/status/final-output information and must never access another Landowner's records.
+Landowners do not create applications. They may view only their own linked Parcel/Landholding/Application/status/final-output information, including Action Required compliance notices tied to their own applications, and must never access another Landowner's records. They do not upload compliance documents themselves.
 
 ### Geodetic Personnel
 
@@ -106,8 +108,8 @@ Form No. 5 is the final administrative clearance output generated from the recor
 
 Use these implementation facts when describing it:
 
-- Approved → GRANTED output
-- Denied → DENIED output
+- current Approved → GRANTED output
+- historical negative final record → preserved DENIED output only
 - annual LTC number sequence and page reference
 - linked Parcel title/Tax Declaration/lot/survey references
 - combined recorded area

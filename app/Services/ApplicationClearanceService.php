@@ -15,20 +15,8 @@ class ApplicationClearanceService
                 ->lockForUpdate()
                 ->findOrFail($application->id);
 
-            if (! $application->isFinalized()) {
-                throw new \RuntimeException('LTC Form No. 5 can only be generated after a final PARPO II clearance decision.');
-            }
-
-            $allowedDecisionStatuses = [
-                LandTransferApplication::STATUS_APPROVED,
-                LandTransferApplication::STATUS_NOT_APPROVED,
-                // Historical compatibility only.
-                LandTransferApplication::STATUS_RELEASED,
-                LandTransferApplication::STATUS_DENIED,
-            ];
-
-            if (! in_array($application->status, $allowedDecisionStatuses, true)) {
-                throw new \RuntimeException('LTC Form No. 5 can only be generated for final Approved or Not Approved decisions.');
+            if ($application->status !== LandTransferApplication::STATUS_APPROVED) {
+                throw new \RuntimeException('New LTC Form No. 5 outputs can only be generated for Approved clearance decisions. Historical negative decision records remain read-only.');
             }
 
             /*

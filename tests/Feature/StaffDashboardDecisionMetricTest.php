@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\LandTransferApplication;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 class StaffDashboardDecisionMetricTest extends TestCase
@@ -61,15 +62,21 @@ class StaffDashboardDecisionMetricTest extends TestCase
             'is_active' => true,
         ]);
 
-        LandTransferApplication::create([
+        $legacyApplication = LandTransferApplication::create([
             'application_code' => 'DASHBOARD-LEGACY-DECISION-TODAY',
             'transferor_name' => 'Legacy Transferor',
             'transferee_name' => 'Legacy Transferee',
-            'status' => LandTransferApplication::STATUS_DENIED,
+            'status' => LandTransferApplication::STATUS_PENDING_LEGAL_REVIEW,
             'decision_recorded_at' => null,
             'reviewed_at' => now(),
             'encoded_by' => $staff->id,
         ]);
+
+        // Historical fixtures bypass the current-workflow observer because
+        // negative final statuses can no longer be created by normal model writes.
+        DB::table('land_transfer_applications')
+            ->where('id', $legacyApplication->id)
+            ->update(['status' => LandTransferApplication::STATUS_DENIED]);
 
         $response = $this->actingAs($staff)->get(route('staff.dashboard'));
 

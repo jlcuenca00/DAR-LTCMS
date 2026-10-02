@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\ApplicationComplianceNotice;
 use App\Models\LandTransferApplication;
 use App\Models\Parcel;
 use App\Models\SourceRecordPackage;
@@ -23,8 +24,6 @@ class NotificationService
         'application_created',
         'application_submitted',
         'application_approved',
-        'application_not_approved',
-        'application_denied',
         'application_ready_for_release',
         'application_released',
     ];
@@ -136,25 +135,6 @@ class NotificationService
         $this->notifyStaffApplicationReleasedToClient($application);
     }
 
-    public function notifyStaffApplicationNotApproved(LandTransferApplication $application): void
-    {
-        $this->notifyActiveStaff(
-            'application_not_approved',
-            'PARPO II Not Approved decision recorded',
-            'A final Not Approved clearance decision was recorded for application ' . $application->application_code . '.',
-            $application,
-            $this->staffApplicationData($application)
-        );
-    }
-
-    /**
-     * Historical/internal compatibility wrapper.
-     */
-    public function notifyStaffApplicationDenied(LandTransferApplication $application): void
-    {
-        $this->notifyStaffApplicationNotApproved($application);
-    }
-
     public function notifyStaffApplicationReadyForRelease(LandTransferApplication $application): void
     {
         $this->notifyActiveStaff(
@@ -194,21 +174,56 @@ class NotificationService
         );
     }
 
-    public function notifyLinkedLandownersReturnedForCompliance(LandTransferApplication $application): void
-    {
+    public function notifyLinkedLandownersComplianceRequested(
+        LandTransferApplication $application,
+        ApplicationComplianceNotice $notice
+    ): void {
         $users = $this->linkedLandownerUsers($application);
-        $reason = Str::limit(trim((string) $application->latest_compliance_reason), 500);
+        $details = Str::limit(trim((string) $notice->details), 500);
+        $category = $notice->categoryLabel();
 
         $this->notifyUsers(
             $users,
-            'landowner_returned_for_compliance',
-            'Compliance required',
-            'Your clearance application ' . $application->application_code . ' was returned for compliance.'
-                . ($reason !== '' ? ' Required compliance: ' . $reason : ''),
+            'landowner_compliance_required',
+            'Action required for your clearance application',
+            'Your clearance application ' . $application->application_code
+                . ' requires attention before processing can continue. '
+                . $category . ': ' . $details,
             $application,
             array_merge($this->landownerApplicationData($application), [
-                'compliance_reason' => $reason !== '' ? $reason : null,
-                'returned_for_compliance_at' => optional($application->returned_for_compliance_at)->toDateTimeString(),
+                'compliance_notice_id' => $notice->id,
+                'category' => $notice->category,
+                'category_label' => $category,
+                'details' => $details,
+                'requested_items' => filled($notice->requested_items)
+                    ? Str::limit((string) $notice->requested_items, 500)
+                    : null,
+                'resume_status' => $notice->resume_status,
+                'requested_at' => optional($notice->requested_at)->toDateTimeString(),
+            ])
+        );
+    }
+
+    public function notifyLinkedLandownersComplianceResolved(
+        LandTransferApplication $application,
+        ApplicationComplianceNotice $notice
+    ): void {
+        $users = $this->linkedLandownerUsers($application);
+        $resumedLabel = LandTransferApplication::statusLabels()[$notice->resume_status]
+            ?? $notice->resume_status;
+
+        $this->notifyUsers(
+            $users,
+            'landowner_compliance_resolved',
+            'Compliance issue resolved',
+            'The compliance request for application ' . $application->application_code
+                . ' was marked resolved. Processing has resumed at ' . $resumedLabel . '.',
+            $application,
+            array_merge($this->landownerApplicationData($application), [
+                'compliance_notice_id' => $notice->id,
+                'resume_status' => $notice->resume_status,
+                'resume_status_label' => $resumedLabel,
+                'resolved_at' => optional($notice->resolved_at)->toDateTimeString(),
             ])
         );
     }

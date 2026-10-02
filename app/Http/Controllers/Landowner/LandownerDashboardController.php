@@ -56,7 +56,7 @@ class LandownerDashboardController extends Controller
             ],
             [
                 'status' => LandTransferApplication::STATUS_RETURNED_FOR_COMPLIANCE,
-                'label' => 'Returned for Compliance',
+                'label' => 'Compliance Required',
                 'statuses' => [LandTransferApplication::STATUS_RETURNED_FOR_COMPLIANCE],
             ],
             [
@@ -101,7 +101,7 @@ class LandownerDashboardController extends Controller
             ],
             [
                 'status' => LandTransferApplication::STATUS_NOT_APPROVED,
-                'label' => 'Not Approved',
+                'label' => 'Historical Not Approved / Denied',
                 'statuses' => [LandTransferApplication::STATUS_NOT_APPROVED, LandTransferApplication::STATUS_DENIED],
             ],
         ])->map(function (array $summary) use ($statusCounts) {
@@ -111,7 +111,18 @@ class LandownerDashboardController extends Controller
             return $summary;
         })->filter(fn ($summary) => $summary['count'] > 0)->values();
 
-        $recentApplications = (clone $applicationQuery)->latest()->limit(5)->get();
+        $complianceApplications = (clone $applicationQuery)
+            ->where('status', LandTransferApplication::STATUS_RETURNED_FOR_COMPLIANCE)
+            ->whereHas('activeComplianceNotice')
+            ->with('activeComplianceNotice')
+            ->latest('returned_for_compliance_at')
+            ->get();
+
+        $recentApplications = (clone $applicationQuery)
+            ->with('activeComplianceNotice')
+            ->latest()
+            ->limit(5)
+            ->get();
         $recentLandholdings = (clone $landholdingsQuery)->latest()->limit(5)->get();
 
         $dashboardCards = [
@@ -149,6 +160,7 @@ class LandownerDashboardController extends Controller
             'landowner',
             'dashboardCards',
             'statusSummary',
+            'complianceApplications',
             'recentApplications',
             'recentLandholdings'
         ));

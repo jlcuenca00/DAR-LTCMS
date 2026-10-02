@@ -13,6 +13,17 @@ class ApplicationBusinessStateIntegrityService
         $isLegacyFinal = in_array($application->status, LandTransferApplication::LEGACY_FINAL_STATUSES, true);
         $isFinal = $isCurrentFinal || $isLegacyFinal;
         $releaseStatus = $application->release_status ?: LandTransferApplication::RELEASE_NOT_READY;
+        $activeComplianceNoticeCount = $application->complianceNotices()
+            ->whereNull('resolved_at')
+            ->count();
+
+        if ($application->status === LandTransferApplication::STATUS_RETURNED_FOR_COMPLIANCE) {
+            if ($activeComplianceNoticeCount !== 1) {
+                $issues[] = 'Compliance Required status must have exactly one unresolved compliance notice.';
+            }
+        } elseif ($activeComplianceNoticeCount > 0) {
+            $issues[] = 'An unresolved compliance notice exists while the application is not in Compliance Required status.';
+        }
 
         if ($isCurrentFinal) {
             if (! $application->reviewed_by) {

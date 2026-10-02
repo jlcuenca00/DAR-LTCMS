@@ -34,6 +34,7 @@ class LandTransferApplicationController extends Controller
             'clearance',
             'decisionRecordedBy',
             'returnedForComplianceBy',
+            'activeComplianceNotice.requestedBy',
         ]);
 
         // 1) Required documents (checklist)

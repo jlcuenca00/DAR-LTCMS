@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\ApplicationComplianceNotice;
 use App\Models\ApplicationDocument;
 use App\Models\ApplicationParcel;
 use App\Models\Landholding;
@@ -374,51 +375,38 @@ class BetaSystemRegressionTest extends TestCase
         ]);
     }
 
-    public function test_denial_path_records_final_decision_and_preserves_landholding_records(): void
+    public function test_compliance_request_keeps_application_open_and_preserves_landholding_records(): void
     {
         $staff = $this->staffUser();
-        [$transferor, $transferee, $parcel, $landholding, $application] = $this->applicationPackage($staff, 'BETA-DENIED-001');
+        [$transferor, $transferee, $parcel, $landholding, $application] = $this->applicationPackage($staff, 'BETA-COMPLIANCE-001');
 
-        // This regression isolates the PARPO II final-denial action; earlier
-        // workflow gates are exercised by the full-flow test above.
         $application->forceFill([
             'status' => LandTransferApplication::STATUS_FOR_RELEASING,
-            'payment_order_reference' => 'OP-BETA-DENIED-001',
-            'payment_order_issued_at' => now(),
-            'or_number' => 'OR-BETA-DENIED-001',
-            'or_date' => now()->toDateString(),
-            'amount_paid' => config('dar_ltc.filing_fee', 2000),
-            'ltc_form4_subject_land_findings' => ['ra6657_not_covered_not_tenanted_retained_area'],
-            'ltc_form4_recommendation_findings' => ['application_complete'],
-            'ltc_form4_recommendation_decision' => 'denial',
-            'ltc_form4_certified_at' => now()->toDateString(),
-            'ltc_form4_certifying_officer_name' => 'Authorized Review Officer',
-            'csw_reference' => 'CSW-BETA-DENIED-001',
-            'csw_completed_at' => now(),
-            'csw_prepared_by' => $staff->id,
         ])->save();
 
         $this->actingAs($staff)
-            ->post(route('staff.applications.not_approved', $application), [
-                'final_decision_confirmation' => '1',
-                'decision_officer_name' => 'PARPO II Test Signatory',
-                'decision_date' => now()->toDateString(),
-                'decision_reason' => 'Substantive review did not support clearance approval.',
-                'decision_notes' => 'Beta denial path verified.',
+            ->post(route('staff.applications.compliance.request', $application), [
+                'category' => ApplicationComplianceNotice::CATEGORY_CLARIFICATION,
+                'details' => 'Clarify the original supporting instrument before approval is recorded.',
+                'requested_items' => 'Original supporting instrument',
             ])
             ->assertSessionHas('success');
 
         $application->refresh();
         $landholding->refresh();
 
-        $this->assertSame(LandTransferApplication::STATUS_NOT_APPROVED, $application->status);
-        $this->assertSame($staff->id, $application->reviewed_by);
-        $this->assertNotNull($application->validated_at);
-        $this->assertNotNull($application->clearance()->first());
+        $this->assertSame(
+            LandTransferApplication::STATUS_RETURNED_FOR_COMPLIANCE,
+            $application->status
+        );
+        $this->assertNull($application->clearance()->first());
+
+        $notice = $application->complianceNotices()->latest('id')->firstOrFail();
+        $this->assertSame(LandTransferApplication::STATUS_FOR_RELEASING, $notice->resume_status);
 
         $this->assertDatabaseHas('audit_logs', [
             'actor_user_id' => $staff->id,
-            'action' => 'application_not_approved',
+            'action' => 'application_compliance_requested',
             'land_transfer_application_id' => $application->id,
         ]);
 
@@ -435,12 +423,22 @@ class BetaSystemRegressionTest extends TestCase
             'source_application_id' => $application->id,
         ]);
 
-        $this->assertDatabaseHas('system_notifications', [
-            'user_id' => $staff->id,
+        $this->assertDatabaseMissing('system_notifications', [
             'type' => 'application_not_approved',
             'related_type' => LandTransferApplication::class,
             'related_id' => $application->id,
         ]);
+
+        $this->actingAs($staff)
+            ->post(route('staff.applications.compliance.resolve', $application), [
+                'resolution_note' => 'Clarification completed.',
+            ])
+            ->assertSessionHas('success');
+
+        $this->assertSame(
+            LandTransferApplication::STATUS_FOR_RELEASING,
+            $application->fresh()->status
+        );
     }
 
     public function test_final_decision_states_lock_document_upload_and_form4_review(): void
@@ -461,15 +459,26 @@ class BetaSystemRegressionTest extends TestCase
             LandTransferApplication::STATUS_APPROVED,
             LandTransferApplication::STATUS_NOT_APPROVED,
         ] as $status) {
+            $historicalNegative = $status === LandTransferApplication::STATUS_NOT_APPROVED;
+
             $application = LandTransferApplication::create([
                 'application_code' => 'BETA-FINAL-' . strtoupper($status),
                 'transferor_name' => 'Locked Transferor',
                 'transferee_name' => 'Locked Transferee',
                 'municipality' => 'Dumaguete City',
                 'barangay' => 'Bantayan',
-                'status' => $status,
+                'status' => $historicalNegative
+                    ? LandTransferApplication::STATUS_PENDING_LEGAL_REVIEW
+                    : $status,
                 'encoded_by' => $staff->id,
             ]);
+
+            if ($historicalNegative) {
+                DB::table('land_transfer_applications')
+                    ->where('id', $application->id)
+                    ->update(['status' => LandTransferApplication::STATUS_NOT_APPROVED]);
+                $application->refresh();
+            }
 
             $this->actingAs($staff)
                 ->post(route('staff.applications.documents.store', [$application, $requiredDocument]), [
@@ -545,11 +554,9 @@ class BetaSystemRegressionTest extends TestCase
             ->assertForbidden();
 
         $this->actingAs($geodetic)
-            ->post(route('staff.applications.not_approved', $application), [
-                'final_decision_confirmation' => '1',
-                'decision_officer_name' => 'PARPO II Test Signatory',
-                'decision_date' => now()->toDateString(),
-                'decision_reason' => 'Should be blocked.',
+            ->post(route('staff.applications.compliance.request', $application), [
+                'category' => ApplicationComplianceNotice::CATEGORY_CLARIFICATION,
+                'details' => 'Should be blocked for Geodetic users.',
             ])
             ->assertForbidden();
 

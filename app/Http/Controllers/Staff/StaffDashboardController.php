@@ -71,7 +71,7 @@ class StaffDashboardController extends Controller
             ],
             [
                 'label' => 'PARPO II Decision Pending',
-                'description' => 'Complete records awaiting final Approved/Not Approved action',
+                'description' => 'Complete records awaiting the final Approved decision',
                 'value' => $decisionPending,
                 'icon' => 'fa-gavel',
                 'filter' => LandTransferApplication::STATUS_FOR_RELEASING,

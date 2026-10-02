@@ -39,7 +39,7 @@ The implemented system covers:
 
 ## Critical legal/operational boundary
 
-An Approved or Not Approved application means DAR-LTCMS has recorded the final administrative clearance decision. Release of the signed output is tracked separately.
+An **Approved** application means DAR-LTCMS has recorded the current final administrative clearance decision. Issues that prevent approval remain open through the **Compliance Required** workflow. Older Not Approved / Denied records remain historical and read-only. Release of the signed output is tracked separately.
 
 It does **not** mean the platform has:
 
@@ -63,7 +63,8 @@ Legal Clearance Staff:
 - manage Landowner, Parcel, Landholding, Source/Reference, and application records;
 - upload/review supporting requirements;
 - record administrative workflow movements and results received from other DAR offices;
-- record the official PARPO II decision without impersonating the decision authority;
+- record and resolve structured Compliance Required notices while preserving the same application and its resume stage;
+- record the official PARPO II Approved decision without impersonating the decision authority;
 - generate/view reports and clearance outputs;
 - review audit logs; and
 - manage authorized system accounts.
@@ -76,6 +77,7 @@ Landowners:
 
 - do not create applications;
 - may view only their own linked Parcel/Landholding/Application information;
+- may view persistent Action Required / Compliance Required notices tied to their own applications;
 - may view their own application status/final output when authorized; and
 - must never access another Landowner's records.
 
@@ -108,25 +110,31 @@ With PARPO II for Decision
         ↓
 PARPO II Decision Ready to Record
         ↓
-Approved or Not Approved (FINAL)
+Approved (FINAL)
         ↓
 Signed Form No. 5 / Ready for Release
         ↓
 Released to Client
+
+Any supported open stage
+        ↕
+Compliance Required
+        ↳ resolves back to its saved resume stage
 ```
 
-Current final application decision states:
+The only current final application decision state is:
 
 - `Approved`
-- `Not Approved`
 
-Release is a separate administrative delivery status. A signed final output may be marked **Ready for Release** and later **Released to Client** without changing the final Approved/Not Approved decision.
+**Compliance Required** is an open corrective state, not a negative final decision. It may be used repeatedly when an issue must be corrected, clarified, amended, or supplied before processing continues.
 
-Legacy stored values `released`, `not_approved`, `pending_review`, and `draft` remain recognized only for historical compatibility.
+Release is a separate administrative delivery status. A signed Approved output may be marked **Ready for Release** and later **Released to Client** without changing the final Approved decision.
+
+Legacy stored values `not_approved`, `denied`, application-level `released`, `pending_review`, and `draft` remain recognized only for historical compatibility. New Not Approved / Denied decisions cannot be created by the current workflow.
 
 ## Final-decision freeze
 
-After Approved or Not Approved:
+After Approved (and for preserved historical final records):
 
 - editing is locked;
 - supporting-document upload/removal is locked;
@@ -163,8 +171,8 @@ Final Form No. 5 behavior includes:
 - example appearance: `1803-2026-0043 (7)`
 - all linked Parcel title/Tax Declaration/lot/survey references as applicable
 - combined recorded area
-- `GRANTED` for Approved
-- `DENIED` for Not Approved
+- `GRANTED` for current Approved decisions
+- preserved historical `DENIED` output only for older negative final records
 - signatory: recorded PARPO II decision officer/signatory preserved in the immutable final-decision metadata
 - notarial Doc No., Page No., Book No., Series when encoded
 - payment/notarial/transfer-document display values are captured into the immutable Form No. 5 snapshot at final decision; later rendering does not depend on mutable live application/document fields
@@ -193,7 +201,7 @@ The system preserves:
 
 Monitoring Reports use administrative status/output data and may filter by date, status, and municipality.
 
-Approved/Not Approved output totals, release totals, and **Recorded Output Area** are monitoring/reporting metrics only; they do not represent registry mutation or conclusively completed legal ownership transfer.
+Approved output totals, release totals, preserved historical negative-output totals, and **Recorded Output Area** are monitoring/reporting metrics only; they do not represent registry mutation or conclusively completed legal ownership transfer.
 
 ## Map baseline
 

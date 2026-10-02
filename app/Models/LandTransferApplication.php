@@ -42,10 +42,14 @@ class LandTransferApplication extends Model
 
     public const FINAL_STATUSES = [
         self::STATUS_APPROVED,
-        self::STATUS_NOT_APPROVED,
     ];
 
+    /**
+     * Historical final values remain readable but can never be created by the
+     * current compliance-first workflow.
+     */
     public const LEGACY_FINAL_STATUSES = [
+        self::STATUS_NOT_APPROVED,
         self::STATUS_RELEASED,
         self::STATUS_DENIED,
     ];
@@ -53,6 +57,17 @@ class LandTransferApplication extends Model
     public const ACTIVE_STATUSES = [
         self::STATUS_PENDING_LEGAL_REVIEW,
         self::STATUS_RETURNED_FOR_COMPLIANCE,
+        self::STATUS_AWAITING_PAYMENT,
+        self::STATUS_ENDORSED_LTI,
+        self::STATUS_RETURNED_TO_LEGAL,
+        self::STATUS_LEGAL_EVALUATION,
+        self::STATUS_ENDORSED_CHIEF_LEGAL,
+        self::STATUS_ENDORSED_PARPO,
+        self::STATUS_FOR_RELEASING,
+    ];
+
+    public const COMPLIANCE_RESUME_STATUSES = [
+        self::STATUS_PENDING_LEGAL_REVIEW,
         self::STATUS_AWAITING_PAYMENT,
         self::STATUS_ENDORSED_LTI,
         self::STATUS_RETURNED_TO_LEGAL,
@@ -186,7 +201,7 @@ class LandTransferApplication extends Model
     {
         return [
             self::STATUS_PENDING_LEGAL_REVIEW => 'Legal Completeness Review',
-            self::STATUS_RETURNED_FOR_COMPLIANCE => 'Returned for Compliance',
+            self::STATUS_RETURNED_FOR_COMPLIANCE => 'Compliance Required',
             self::STATUS_AWAITING_PAYMENT => 'Awaiting Payment / Official Receipt',
             self::STATUS_ENDORSED_LTI => 'With LTID for Verification',
             self::STATUS_RETURNED_TO_LEGAL => 'Returned to Legal Division',
@@ -195,7 +210,7 @@ class LandTransferApplication extends Model
             self::STATUS_ENDORSED_PARPO => 'With PARPO II for Decision',
             self::STATUS_FOR_RELEASING => 'PARPO II Decision Ready to Record',
             self::STATUS_APPROVED => 'Approved',
-            self::STATUS_NOT_APPROVED => 'Not Approved',
+            self::STATUS_NOT_APPROVED => 'Not Approved (Historical Record)',
 
             // Historical compatibility only.
             self::STATUS_DRAFT => 'Legal Completeness Review',
@@ -209,7 +224,7 @@ class LandTransferApplication extends Model
     {
         return [
             self::STATUS_PENDING_LEGAL_REVIEW => 'Legal Completeness Review',
-            self::STATUS_RETURNED_FOR_COMPLIANCE => 'Returned for Compliance',
+            self::STATUS_RETURNED_FOR_COMPLIANCE => 'Compliance Required',
             self::STATUS_AWAITING_PAYMENT => 'Awaiting Payment / Official Receipt',
             self::STATUS_ENDORSED_LTI => 'With LTID for Verification',
             self::STATUS_RETURNED_TO_LEGAL => 'Returned to Legal Division',
@@ -218,7 +233,6 @@ class LandTransferApplication extends Model
             self::STATUS_ENDORSED_PARPO => 'With PARPO II for Decision',
             self::STATUS_FOR_RELEASING => 'PARPO II Decision Ready to Record',
             self::STATUS_APPROVED => 'Approved',
-            self::STATUS_NOT_APPROVED => 'Not Approved',
         ];
     }
 
@@ -453,7 +467,6 @@ class LandTransferApplication extends Model
     {
         return [
             self::STATUS_PENDING_LEGAL_REVIEW => self::STATUS_AWAITING_PAYMENT,
-            self::STATUS_RETURNED_FOR_COMPLIANCE => self::STATUS_PENDING_LEGAL_REVIEW,
             self::STATUS_AWAITING_PAYMENT => self::STATUS_ENDORSED_LTI,
             self::STATUS_ENDORSED_LTI => self::STATUS_RETURNED_TO_LEGAL,
             self::STATUS_RETURNED_TO_LEGAL => self::STATUS_LEGAL_EVALUATION,
@@ -467,16 +480,15 @@ class LandTransferApplication extends Model
     {
         return [
             self::STATUS_PENDING_LEGAL_REVIEW => 'Record Completeness Review and Payment Order',
-            self::STATUS_RETURNED_FOR_COMPLIANCE => 'Record Compliance and Resume Legal Review',
+            self::STATUS_RETURNED_FOR_COMPLIANCE => 'Resolve Compliance Request',
             self::STATUS_AWAITING_PAYMENT => 'Record Payment and Forward to LTID',
             self::STATUS_ENDORSED_LTI => 'Record Return from LTID',
             self::STATUS_RETURNED_TO_LEGAL => 'Begin Legal Evaluation',
             self::STATUS_LEGAL_EVALUATION => 'Record CSW and Forward to Chief Legal',
             self::STATUS_ENDORSED_CHIEF_LEGAL => 'Record Chief Legal Review and Forward to PARPO II',
             self::STATUS_ENDORSED_PARPO => 'Record Return from PARPO II for Final Decision Entry',
-            self::STATUS_FOR_RELEASING => 'Record PARPO II Final Decision',
+            self::STATUS_FOR_RELEASING => 'Record PARPO II Approved Decision',
             self::STATUS_APPROVED => 'Manage Release Tracking',
-            self::STATUS_NOT_APPROVED => 'Manage Release Tracking',
         ];
     }
 
@@ -514,6 +526,27 @@ class LandTransferApplication extends Model
         return self::workflowTransitions()[$this->status] ?? null;
     }
 
+
+    public function complianceNotices()
+    {
+        return $this->hasMany(ApplicationComplianceNotice::class, 'land_transfer_application_id');
+    }
+
+    public function activeComplianceNotice()
+    {
+        return $this->hasOne(ApplicationComplianceNotice::class, 'land_transfer_application_id')
+            ->whereNull('resolved_at')
+            ->latestOfMany('id');
+    }
+
+    public function canRequestCompliance(): bool
+    {
+        return ! $this->isFinalized()
+            && (
+                in_array($this->status, self::COMPLIANCE_RESUME_STATUSES, true)
+                || in_array($this->status, [self::STATUS_DRAFT, self::STATUS_PENDING_REVIEW], true)
+            );
+    }
 
     public function returnedForComplianceBy()
     {

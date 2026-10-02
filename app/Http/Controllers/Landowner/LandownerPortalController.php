@@ -40,6 +40,7 @@ class LandownerPortalController extends Controller
                 'transfereeLandowner',
                 'applicationParcels.parcel',
                 'clearance',
+                'activeComplianceNotice',
             ])
             ->linkedToLandownerIds($landownerIds)
             ->orderByDesc('created_at')

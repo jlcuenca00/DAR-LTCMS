@@ -10,6 +10,7 @@ use App\Models\RequiredDocument;
 use App\Models\User;
 use App\Services\ApplicationClearanceService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 class FinalLtcForm5Test extends TestCase
@@ -313,7 +314,23 @@ class FinalLtcForm5Test extends TestCase
         ])->render();
     }
 
-    public function test_not_approved_clearance_renders_denied_not_granted(): void
+    public function test_new_form5_generation_rejects_historical_negative_status(): void
+    {
+        $staff = User::factory()->create(['role' => 'staff']);
+        $application = $this->makeFinalApplication(
+            $staff,
+            'FORM5-NO-NEW-DENIED-001',
+            1,
+            LandTransferApplication::STATUS_NOT_APPROVED
+        );
+
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('New LTC Form No. 5 outputs can only be generated for Approved clearance decisions.');
+
+        app(ApplicationClearanceService::class)->generateForDecision($application, $staff->id);
+    }
+
+    public function test_historical_not_approved_clearance_still_renders_denied_not_granted(): void
     {
         $staff = User::factory()->create(['role' => 'staff']);
         $application = $this->makeFinalApplication($staff, 'FORM5-DENIED-001', 1, LandTransferApplication::STATUS_NOT_APPROVED);
@@ -352,7 +369,12 @@ class FinalLtcForm5Test extends TestCase
         int $pageNumber,
         string $status = LandTransferApplication::STATUS_APPROVED
     ): LandTransferApplication {
-        return LandTransferApplication::create([
+        $historicalNegative = in_array($status, [
+            LandTransferApplication::STATUS_NOT_APPROVED,
+            LandTransferApplication::STATUS_DENIED,
+        ], true);
+
+        $application = LandTransferApplication::create([
             'application_code' => $code,
             'transferor_name' => 'Juan Transferor',
             'transferors' => [[
@@ -368,7 +390,9 @@ class FinalLtcForm5Test extends TestCase
             ]],
             'municipality' => 'Dumaguete City',
             'barangay' => 'Bantayan',
-            'status' => $status,
+            'status' => $historicalNegative
+                ? LandTransferApplication::STATUS_PENDING_LEGAL_REVIEW
+                : $status,
             'ltc_page_number' => $pageNumber,
             'encoded_by' => $staff->id,
             'reviewed_by' => $staff->id,
@@ -380,5 +404,14 @@ class FinalLtcForm5Test extends TestCase
             'decision_recorded_at' => '2026-08-22 08:00:00',
             'date_of_clearance_release' => '2026-08-22',
         ]);
+
+        if ($historicalNegative) {
+            DB::table('land_transfer_applications')
+                ->where('id', $application->id)
+                ->update(['status' => $status]);
+            $application->refresh();
+        }
+
+        return $application;
     }
 }
