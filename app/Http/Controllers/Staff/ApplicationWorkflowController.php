@@ -13,6 +13,7 @@ use App\Services\ApplicationParcelIntegrityService;
 use App\Services\ApplicationPartyIntegrityService;
 use App\Services\ApplicationRequirementService;
 use App\Services\ApplicationReleaseTransitionService;
+use App\Services\ApplicationWorkflowDependencyService;
 use App\Services\ApplicationWorkflowEvidenceService;
 use App\Services\ApplicationWorkflowRevisionService;
 use App\Services\ApplicationWorkflowTransitionService;
@@ -39,6 +40,7 @@ class ApplicationWorkflowController extends Controller
         $validatedStage = $request->validate([
             'expected_status' => ['required', 'string', 'max:50'],
             'expected_workflow_revision' => ['required', 'integer', 'min:1'],
+            'expected_workflow_dependency' => ['nullable', 'string', 'size:64'],
         ]);
 
         app(ApplicationWorkflowRevisionService::class)->assertExpected(
@@ -212,6 +214,19 @@ class ApplicationWorkflowController extends Controller
         // Before Legal Division records the final PARPO II decision, verify the full
         // administrative record. Form 4 remains recommendatory only.
         if ($nextStatus === LandTransferApplication::STATUS_FOR_RELEASING) {
+            if (blank($validatedStage['expected_workflow_dependency'] ?? null)) {
+                throw ValidationException::withMessages([
+                    'workflow_dependency' => 'Refresh the application before placing it for final decision review.',
+                ]);
+            }
+
+            $this->lockFinalDecisionDependencies($application);
+
+            app(ApplicationWorkflowDependencyService::class)->assertExpected(
+                $application,
+                (string) $validatedStage['expected_workflow_dependency']
+            );
+
             [$snapshot, $readinessErrors] = $this->decisionReadiness($application);
 
             if (! empty($readinessErrors)) {
@@ -221,6 +236,7 @@ class ApplicationWorkflowController extends Controller
             }
 
             $auditMetadata['decision_readiness_checked'] = true;
+            $auditMetadata['workflow_dependency_fingerprint'] = $validatedStage['expected_workflow_dependency'];
             $auditMetadata['decision_readiness'] = $snapshot['workflow_readiness'];
         }
 
@@ -532,6 +548,7 @@ class ApplicationWorkflowController extends Controller
         $validated = $request->validate([
             'expected_status' => ['required', 'string', 'max:50'],
             'expected_workflow_revision' => ['required', 'integer', 'min:1'],
+            'expected_workflow_dependency' => ['required', 'string', 'size:64'],
             'final_decision_confirmation' => ['accepted'],
             'decision_officer_name' => ['required', 'string', 'max:255'],
             'decision_date' => ['required', 'date', 'before_or_equal:today'],
@@ -567,6 +584,12 @@ class ApplicationWorkflowController extends Controller
                 }
 
                 $this->lockFinalDecisionDependencies($application);
+
+                app(ApplicationWorkflowDependencyService::class)->assertExpected(
+                    $application,
+                    (string) $validated['expected_workflow_dependency']
+                );
+
                 $this->validateDecisionChronology($application, $validated['decision_date']);
 
                 [$snapshot, $readinessErrors] = $this->decisionReadiness($application);
@@ -611,6 +634,7 @@ class ApplicationWorkflowController extends Controller
                     [
                         'old_status' => $oldStatus,
                         'new_status' => $application->status,
+                        'workflow_dependency_fingerprint' => $validated['expected_workflow_dependency'],
                         'decision_authority' => $application->decision_authority,
                         'decision_officer_name' => $application->decision_officer_name,
                         'decision_date' => optional($application->decision_date)->toDateString(),
@@ -764,6 +788,7 @@ class ApplicationWorkflowController extends Controller
             'status' => $application->status,
             'status_label' => $application->statusLabel(),
             'workflow_revision' => (int) $application->workflow_revision,
+            'workflow_dependency_fingerprint' => app(ApplicationWorkflowDependencyService::class)->fingerprint($application),
             'workflow_action_label' => $application->workflowActionLabel(),
             'workflow_authority_label' => $application->workflowAuthorityLabel(),
             'next_status' => $nextStatus,

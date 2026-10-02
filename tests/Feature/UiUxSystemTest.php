@@ -92,6 +92,7 @@ class UiUxSystemTest extends TestCase
         $this->assertStringContainsString('Mark Compliance Resolved', $review);
         $this->assertStringContainsString('name="expected_status"', $review);
         $this->assertStringContainsString('name="expected_workflow_revision"', $review);
+        $this->assertStringContainsString('name="expected_workflow_dependency"', $review);
         $this->assertStringContainsString('name="compliance_notice_id"', $review);
         $this->assertStringContainsString('ApplicationComplianceNotice::categoryOptions()', $review);
         $this->assertStringContainsString('CATEGORY_OTHER', $review);

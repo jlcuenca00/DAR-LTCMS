@@ -267,7 +267,8 @@ class DataIntegrityHardeningTest extends TestCase
         $this->actingAs($staff)
             ->post(route('staff.applications.submit', $application), [
                 'expected_status' => $application->fresh()->status,
-            'expected_workflow_revision' => $application->fresh()->workflow_revision,
+                'expected_workflow_revision' => $application->fresh()->workflow_revision,
+                'expected_workflow_dependency' => app(\App\Services\ApplicationWorkflowDependencyService::class)->fingerprint($application->fresh()),
             ])
             ->assertSessionHasErrors(['validation', 'transferee_shares']);
 
