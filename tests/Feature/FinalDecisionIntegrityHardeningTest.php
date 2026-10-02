@@ -960,7 +960,7 @@ class FinalDecisionIntegrityHardeningTest extends TestCase
     {
         $staff = User::factory()->create(['role' => 'staff']);
         $application = $this->makeApplication($staff, LandTransferApplication::STATUS_APPROVED, 'QUIET-FINAL');
-        $revision = $application->workflow_revision;
+        $revision = $application->fresh()->workflow_revision;
         $application->remarks = 'Bypass attempt';
 
         try {
