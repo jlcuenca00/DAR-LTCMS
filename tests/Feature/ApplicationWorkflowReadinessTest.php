@@ -31,7 +31,9 @@ class ApplicationWorkflowReadinessTest extends TestCase
         ]);
 
         $this->actingAs($staff)
-            ->post(route('staff.applications.submit', $application))
+            ->post(route('staff.applications.submit', $application), [
+                'expected_status' => $application->fresh()->status,
+            ])
             ->assertSessionHasErrors('validation');
 
         $this->assertSame(
@@ -86,6 +88,7 @@ class ApplicationWorkflowReadinessTest extends TestCase
 
         $this->actingAs($staff)
             ->post(route('staff.applications.submit', $futureOr), [
+                'expected_status' => $futureOr->fresh()->status,
                 'or_number' => 'OR-FUTURE',
                 'or_date' => now()->addDay()->toDateString(),
                 'amount_paid' => config('dar_ltc.filing_fee', 2000),
@@ -104,6 +107,7 @@ class ApplicationWorkflowReadinessTest extends TestCase
 
         $this->actingAs($staff)
             ->post(route('staff.applications.submit', $earlyOr), [
+                'expected_status' => $earlyOr->fresh()->status,
                 'or_number' => 'OR-EARLY',
                 'or_date' => now()->subDay()->toDateString(),
                 'amount_paid' => config('dar_ltc.filing_fee', 2000),
@@ -151,7 +155,9 @@ class ApplicationWorkflowReadinessTest extends TestCase
         $this->completePaymentAndCsw($application, $staff);
 
         $this->actingAs($staff)
-            ->post(route('staff.applications.submit', $application))
+            ->post(route('staff.applications.submit', $application), [
+                'expected_status' => $application->fresh()->status,
+            ])
             ->assertSessionHasErrors(['validation', 'parcel']);
 
         $this->assertSame(
@@ -175,7 +181,9 @@ class ApplicationWorkflowReadinessTest extends TestCase
             ->update(['status' => 'inactive']);
 
         $this->actingAs($staff)
-            ->post(route('staff.applications.submit', $application))
+            ->post(route('staff.applications.submit', $application), [
+                'expected_status' => $application->fresh()->status,
+            ])
             ->assertSessionHasErrors(['validation', 'parcel']);
 
         $this->assertSame(
@@ -197,7 +205,9 @@ class ApplicationWorkflowReadinessTest extends TestCase
             ->update(['area_hectares' => null, 'area_square_meters' => null]);
 
         $this->actingAs($staff)
-            ->post(route('staff.applications.submit', $application))
+            ->post(route('staff.applications.submit', $application), [
+                'expected_status' => $application->fresh()->status,
+            ])
             ->assertSessionHasErrors(['validation', 'parcel']);
 
         $this->assertSame(
@@ -214,7 +224,9 @@ class ApplicationWorkflowReadinessTest extends TestCase
         $this->completePaymentAndCsw($application, $staff);
 
         $this->actingAs($staff)
-            ->post(route('staff.applications.submit', $application))
+            ->post(route('staff.applications.submit', $application), [
+                'expected_status' => $application->fresh()->status,
+            ])
             ->assertSessionHasErrors(['validation', 'form4']);
 
         $this->assertSame(
@@ -284,6 +296,7 @@ class ApplicationWorkflowReadinessTest extends TestCase
 
         $this->actingAs($staff)
             ->post(route('staff.applications.compliance.request', $application), [
+                'expected_status' => $application->fresh()->status,
                 'category' => ApplicationComplianceNotice::CATEGORY_OTHER,
                 'other_category' => 'PARPO clarification requested',
                 'details' => 'Bring the original supporting instrument for clarification before approval can be recorded.',
@@ -302,6 +315,8 @@ class ApplicationWorkflowReadinessTest extends TestCase
 
         $this->actingAs($staff)
             ->post(route('staff.applications.compliance.resolve', $application), [
+                'expected_status' => $application->fresh()->status,
+                'compliance_notice_id' => $application->activeComplianceNotice()->value('id'),
                 'resolution_note' => 'Original instrument was presented and reviewed at the office.',
             ])
             ->assertSessionHas('success');
@@ -344,6 +359,7 @@ class ApplicationWorkflowReadinessTest extends TestCase
 
             $this->actingAs($staff)
                 ->post(route('staff.applications.compliance.request', $application), [
+                'expected_status' => $application->fresh()->status,
                     'category' => ApplicationComplianceNotice::CATEGORY_INCORRECT_DOCUMENT,
                     'details' => 'Correct the LTC Form No. 4 review details before processing continues.',
                     'requested_items' => 'Corrected LTC Form No. 4',
@@ -378,6 +394,8 @@ class ApplicationWorkflowReadinessTest extends TestCase
 
             $this->actingAs($staff)
                 ->post(route('staff.applications.compliance.resolve', $application), [
+                'expected_status' => $application->fresh()->status,
+                'compliance_notice_id' => $application->activeComplianceNotice()->value('id'),
                     'resolution_note' => 'Corrected LTC Form No. 4 reviewed.',
                 ])
                 ->assertSessionHas('success');
@@ -397,6 +415,7 @@ class ApplicationWorkflowReadinessTest extends TestCase
 
         $this->actingAs($staff)
             ->post(route('staff.applications.compliance.request', $application), [
+                'expected_status' => $application->fresh()->status,
                 'category' => ApplicationComplianceNotice::CATEGORY_OTHER,
                 'details' => 'A case-specific issue requires clarification.',
             ])
@@ -419,6 +438,7 @@ class ApplicationWorkflowReadinessTest extends TestCase
         // Legal completeness review issues the Payment Order.
         $this->actingAs($staff)
             ->post(route('staff.applications.submit', $application), [
+                'expected_status' => $application->fresh()->status,
                 'payment_order_reference' => 'OP-READINESS-FULL-FLOW',
             ])
             ->assertSessionHas('success');
@@ -428,6 +448,7 @@ class ApplicationWorkflowReadinessTest extends TestCase
         // Cashier payment is external; DAR-LTCMS records the resulting OR.
         $this->actingAs($staff)
             ->post(route('staff.applications.submit', $application), [
+                'expected_status' => $application->fresh()->status,
                 'or_number' => 'OR-READINESS-001',
                 'or_date' => now()->toDateString(),
                 'amount_paid' => config('dar_ltc.filing_fee', 2000),
@@ -438,14 +459,18 @@ class ApplicationWorkflowReadinessTest extends TestCase
 
         // LTID verification returns the record to Legal.
         $this->actingAs($staff)
-            ->post(route('staff.applications.submit', $application))
+            ->post(route('staff.applications.submit', $application), [
+                'expected_status' => $application->fresh()->status,
+            ])
             ->assertSessionHas('success');
         $application->refresh();
         $this->assertSame(LandTransferApplication::STATUS_RETURNED_TO_LEGAL, $application->status);
 
         // Completed Form 4 permits formal Legal evaluation.
         $this->actingAs($staff)
-            ->post(route('staff.applications.submit', $application))
+            ->post(route('staff.applications.submit', $application), [
+                'expected_status' => $application->fresh()->status,
+            ])
             ->assertSessionHas('success');
         $application->refresh();
         $this->assertSame(LandTransferApplication::STATUS_LEGAL_EVALUATION, $application->status);
@@ -453,6 +478,7 @@ class ApplicationWorkflowReadinessTest extends TestCase
         // Legal records Completed Staff Work before Chief Legal review.
         $this->actingAs($staff)
             ->post(route('staff.applications.submit', $application), [
+                'expected_status' => $application->fresh()->status,
                 'csw_reference' => 'CSW-READINESS-001',
                 'csw_notes' => 'Completed Staff Work regression coverage.',
             ])
@@ -461,13 +487,17 @@ class ApplicationWorkflowReadinessTest extends TestCase
         $this->assertSame(LandTransferApplication::STATUS_ENDORSED_CHIEF_LEGAL, $application->status);
 
         $this->actingAs($staff)
-            ->post(route('staff.applications.submit', $application))
+            ->post(route('staff.applications.submit', $application), [
+                'expected_status' => $application->fresh()->status,
+            ])
             ->assertSessionHas('success');
         $application->refresh();
         $this->assertSame(LandTransferApplication::STATUS_ENDORSED_PARPO, $application->status);
 
         $this->actingAs($staff)
-            ->post(route('staff.applications.submit', $application))
+            ->post(route('staff.applications.submit', $application), [
+                'expected_status' => $application->fresh()->status,
+            ])
             ->assertSessionHas('success');
         $application->refresh();
         $this->assertSame(LandTransferApplication::STATUS_FOR_RELEASING, $application->status);
