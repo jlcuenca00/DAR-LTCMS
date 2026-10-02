@@ -90,12 +90,32 @@ class ApplicationWorkflowDependencyService
 
             $exposureApplications = $query
                 ->get(['id', 'status', 'workflow_revision', 'updated_at'])
-                ->map(fn (LandTransferApplication $other) => [
-                    'id' => (int) $other->id,
-                    'status' => $other->status,
-                    'workflow_revision' => (int) $other->workflow_revision,
-                    'updated_at' => optional($other->updated_at)->toIso8601String(),
-                ])
+                ->map(function (LandTransferApplication $other) {
+                    $activeExposure = in_array(
+                        $other->status,
+                        array_merge(
+                            LandTransferApplication::ACTIVE_STATUSES,
+                            [
+                                LandTransferApplication::STATUS_DRAFT,
+                                LandTransferApplication::STATUS_PENDING_REVIEW,
+                            ]
+                        ),
+                        true
+                    );
+
+                    return [
+                        'id' => (int) $other->id,
+                        'status' => $other->status,
+                        // Active applications may still change their linked
+                        // parties/parcel shares, so bind to their monotonic
+                        // workflow revision. Approved/Released records are
+                        // frozen for those exposure inputs; release tracking
+                        // should not invalidate another application's review.
+                        'workflow_revision' => $activeExposure
+                            ? (int) $other->workflow_revision
+                            : null,
+                    ];
+                })
                 ->values();
         }
 
