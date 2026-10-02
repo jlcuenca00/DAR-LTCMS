@@ -16,6 +16,7 @@ use Tests\TestCase;
 class FinalLtcForm5Test extends TestCase
 {
     use RefreshDatabase;
+    use \Tests\Concerns\InsertsClearanceFixtures;
 
     public function test_new_clearance_uses_next_annual_ltc_sequence_and_application_page_number(): void
     {
@@ -23,7 +24,7 @@ class FinalLtcForm5Test extends TestCase
 
         $existingApplication = $this->makeFinalApplication($staff, 'FORM5-SEED-001', 1);
 
-        ApplicationClearance::create([
+        $this->insertClearanceFixture([
             'land_transfer_application_id' => $existingApplication->id,
             'clearance_number' => '1803-2026-0042 (1)',
             'decision_status' => LandTransferApplication::STATUS_RELEASED,
@@ -68,7 +69,7 @@ class FinalLtcForm5Test extends TestCase
         $this->assertSame($staff->id, $clearance->decision_recorded_by);
         $this->assertSame('1.5000', (string) $clearance->total_area_hectares);
         $this->assertCount(1, $clearance->parcel_snapshot);
-        $this->assertSame(1, data_get($clearance->form_snapshot, 'snapshot_version'));
+        $this->assertSame(2, data_get($clearance->form_snapshot, 'snapshot_version'));
     }
 
     public function test_form5_renders_all_parcels_combined_area_local_assets_and_clearance_decision_only(): void
@@ -397,6 +398,85 @@ class FinalLtcForm5Test extends TestCase
 
         $this->assertMatchesRegularExpression('/decision-box[^>]*>DENIED</', $html);
         $this->assertDoesNotMatchRegularExpression('/decision-box[^>]*>GRANTED</', $html);
+    }
+
+
+    public function test_direct_clearance_creation_is_rejected(): void
+    {
+        $staff = User::factory()->create(['role' => 'staff']);
+        $application = $this->makeFinalApplication($staff, 'FORM5-GUARD', 1);
+
+        foreach (['save', 'create', 'forceCreate'] as $method) {
+            try {
+                $attributes = [
+                    'land_transfer_application_id' => $application->id,
+                    'clearance_number' => 'UNAUTHORIZED',
+                ];
+                if ($method === 'save') {
+                    (new ApplicationClearance($attributes))->save();
+                } else {
+                    ApplicationClearance::{$method}($attributes);
+                }
+                $this->fail('Direct clearance creation should fail.');
+            } catch (\LogicException $e) {
+                $this->assertStringContainsString('ApplicationClearanceService', $e->getMessage());
+            }
+        }
+        $this->assertDatabaseMissing('application_clearances', [
+            'land_transfer_application_id' => $application->id,
+        ]);
+    }
+
+    public function test_version_two_integrity_detects_frozen_identity_payment_and_parcel_corruption(): void
+    {
+        $staff = User::factory()->create(['role' => 'staff']);
+        $application = $this->makeFinalApplication($staff, 'FORM5-V2-INTEGRITY', 1, overrides: [
+            'or_number' => 'OR-FROZEN',
+            'or_date' => '2026-08-20',
+            'amount_paid' => 2000,
+        ]);
+        DB::table('application_parcels')->insert([
+            'land_transfer_application_id' => $application->id,
+            'parcel_id' => null,
+            'parcel_code' => 'FROZEN-PARCEL',
+            'title_no' => 'FROZEN-TITLE',
+            'area_hectares' => 1,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        $clearance = app(ApplicationClearanceService::class)->generateForDecision($application, $staff->id);
+        $service = app(\App\Services\ApplicationClearanceIntegrityService::class);
+        $this->assertTrue($service->inspect($application->fresh())['valid']);
+        $again = app(ApplicationClearanceService::class)->generateForDecision($application, $staff->id);
+        $this->assertSame($clearance->id, $again->id);
+
+        // Database triggers already reject persisted snapshot updates. Simulate
+        // malformed loaded snapshots without disabling those production guards.
+        $inspect = function (ApplicationClearance $candidate) use ($application, $service): array {
+            $parent = $application->fresh();
+            $parent->setRelation('clearance', $candidate);
+            return $service->inspect($parent);
+        };
+        foreach (['transferor_name', 'transferee_name', 'municipality', 'barangay'] as $field) {
+            $candidate = clone $clearance;
+            $candidate->{$field} = 'Tampered';
+            $this->assertFalse($inspect($candidate)['valid'], $field);
+        }
+        foreach (['or_number', 'or_date', 'amount_paid'] as $field) {
+            $candidate = clone $clearance;
+            $snapshot = $candidate->form_snapshot;
+            $snapshot[$field] = $field === 'amount_paid' ? '1.00' : 'Tampered';
+            $candidate->form_snapshot = $snapshot;
+            $this->assertFalse($inspect($candidate)['valid'], $field);
+        }
+        foreach (['application_parcel_id', 'title_no', 'area_hectares', 'title_number'] as $field) {
+            $candidate = clone $clearance;
+            $snapshot = $candidate->parcel_snapshot;
+            $snapshot[0][$field] = in_array($field, ['application_parcel_id', 'area_hectares'], true) ? 999 : 'Tampered';
+            $candidate->parcel_snapshot = $snapshot;
+            $this->assertFalse($inspect($candidate)['valid'], $field);
+        }
+        $this->assertTrue($service->inspect($application->fresh())['valid']);
     }
 
     private function makeFinalApplication(

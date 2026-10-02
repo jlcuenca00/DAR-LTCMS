@@ -6,6 +6,20 @@ use Illuminate\Database\Eloquent\Model;
 
 class ApplicationClearance extends Model
 {
+    private bool $authorizedCreation = false;
+
+    public function runAuthorizedCreation(callable $callback): mixed
+    {
+        $previous = $this->authorizedCreation;
+        $this->authorizedCreation = true;
+
+        try {
+            return $callback();
+        } finally {
+            $this->authorizedCreation = $previous;
+        }
+    }
+
     protected $fillable = [
         'land_transfer_application_id',
         'clearance_number',
@@ -40,6 +54,12 @@ class ApplicationClearance extends Model
 
     protected static function booted(): void
     {
+        static::creating(function (self $clearance): void {
+            if (! $clearance->authorizedCreation) {
+                throw new \LogicException('New clearance snapshots must be created through ApplicationClearanceService.');
+            }
+        });
+
         static::updating(function (): void {
             throw new \LogicException('Final clearance snapshots are immutable and cannot be updated.');
         });

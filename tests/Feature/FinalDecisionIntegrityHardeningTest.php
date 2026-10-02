@@ -25,6 +25,7 @@ use Tests\TestCase;
 class FinalDecisionIntegrityHardeningTest extends TestCase
 {
     use RefreshDatabase;
+    use \Tests\Concerns\InsertsClearanceFixtures;
 
     public function test_application_mutation_middleware_refreshes_and_row_locks_the_route_model(): void
     {
@@ -571,7 +572,7 @@ class FinalDecisionIntegrityHardeningTest extends TestCase
             'decision_recorded_at' => '2026-10-01 10:00:00',
         ]);
 
-        ApplicationClearance::create([
+        $this->insertClearanceFixture([
             'land_transfer_application_id' => $application->id,
             'clearance_number' => '1803-2026-9801 (1)',
             'decision_status' => LandTransferApplication::STATUS_APPROVED,
