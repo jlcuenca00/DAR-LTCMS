@@ -20,9 +20,11 @@ Legal Clearance Staff can:
 
 ## Final decision rule
 
-Once an application reaches **Approved** or **Not Approved**, substantive editing and document uploads are locked.
+Once an application reaches **Approved**, substantive editing and document uploads are locked. Older Not Approved / Denied records are historical and remain read-only.
 
-Release-related actions remain available only to authorized users and do not alter the final decision.
+When an issue blocks processing before approval, use **Request Compliance** so the same application remains open and can resume its saved workflow stage after resolution.
+
+Release-related actions remain available only to authorized users and do not alter the final Approved decision.
 
 ## Data integrity
 
