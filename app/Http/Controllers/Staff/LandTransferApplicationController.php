@@ -702,7 +702,7 @@ private function generateApplicationCode(): string
     public function updateForm4Review(Request $request, LandTransferApplication $application)
     {
         if ($application->isFinalized()) {
-            return back()->with('error', 'LTC Form No. 4 review details are locked after release or denial.');
+            return back()->with('error', 'LTC Form No. 4 review details are locked after a final clearance decision.');
         }
 
         $validated = $request->validate([
