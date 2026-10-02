@@ -10,6 +10,7 @@ use App\Models\LandTransferApplication;
 use App\Models\Parcel;
 use App\Models\RequiredDocument;
 use App\Models\User;
+use App\Services\ApplicationWorkflowDependencyService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
@@ -34,6 +35,7 @@ class ApplicationWorkflowReadinessTest extends TestCase
             ->post(route('staff.applications.submit', $application), [
                 'expected_status' => $application->fresh()->status,
                 'expected_workflow_revision' => $application->fresh()->workflow_revision,
+                'expected_workflow_dependency' => app(ApplicationWorkflowDependencyService::class)->fingerprint($application->fresh()),
             ])
             ->assertSessionHasErrors('validation');
 
@@ -104,6 +106,7 @@ class ApplicationWorkflowReadinessTest extends TestCase
             ->post(route('staff.applications.submit', $application), [
                 'expected_status' => $renderedStatus,
                 'expected_workflow_revision' => $renderedRevision,
+                'expected_workflow_dependency' => app(ApplicationWorkflowDependencyService::class)->fingerprint($application->fresh()),
             ])
             ->assertSessionHas('success');
 
@@ -225,6 +228,7 @@ class ApplicationWorkflowReadinessTest extends TestCase
             ->post(route('staff.applications.submit', $application), [
                 'expected_status' => $renderedStatus,
                 'expected_workflow_revision' => $renderedRevision,
+                'expected_workflow_dependency' => app(ApplicationWorkflowDependencyService::class)->fingerprint($application->fresh()),
             ])
             ->assertSessionHasErrors('workflow_revision');
 
@@ -313,6 +317,7 @@ class ApplicationWorkflowReadinessTest extends TestCase
             ->post(route('staff.applications.submit', $application), [
                 'expected_status' => $renderedStatus,
                 'expected_workflow_revision' => $renderedRevision,
+                'expected_workflow_dependency' => app(ApplicationWorkflowDependencyService::class)->fingerprint($application->fresh()),
             ])
             ->assertSessionHasErrors('workflow_revision');
 
@@ -373,6 +378,7 @@ class ApplicationWorkflowReadinessTest extends TestCase
             ->post(route('staff.applications.submit', $futureOr), [
                 'expected_status' => $futureOr->fresh()->status,
                 'expected_workflow_revision' => $futureOr->fresh()->workflow_revision,
+                'expected_workflow_dependency' => app(ApplicationWorkflowDependencyService::class)->fingerprint($futureOr->fresh()),
                 'or_number' => 'OR-FUTURE',
                 'or_date' => now()->addDay()->toDateString(),
                 'amount_paid' => config('dar_ltc.filing_fee', 2000),
@@ -396,6 +402,7 @@ class ApplicationWorkflowReadinessTest extends TestCase
             ->post(route('staff.applications.submit', $earlyOr), [
                 'expected_status' => $earlyOr->fresh()->status,
                 'expected_workflow_revision' => $earlyOr->fresh()->workflow_revision,
+                'expected_workflow_dependency' => app(ApplicationWorkflowDependencyService::class)->fingerprint($earlyOr->fresh()),
                 'or_number' => 'OR-EARLY',
                 'or_date' => now()->subDay()->toDateString(),
                 'amount_paid' => config('dar_ltc.filing_fee', 2000),
@@ -424,6 +431,7 @@ class ApplicationWorkflowReadinessTest extends TestCase
             ->post(route('staff.applications.approve', $application), [
                 'expected_status' => $application->fresh()->status,
                 'expected_workflow_revision' => $application->fresh()->workflow_revision,
+                'expected_workflow_dependency' => app(ApplicationWorkflowDependencyService::class)->fingerprint($application->fresh()),
                 'final_decision_confirmation' => '1',
                 'decision_officer_name' => 'PARPO II Test Signatory',
                 'decision_date' => now()->subDay()->toDateString(),
@@ -448,6 +456,7 @@ class ApplicationWorkflowReadinessTest extends TestCase
             ->post(route('staff.applications.submit', $application), [
                 'expected_status' => $application->fresh()->status,
             'expected_workflow_revision' => $application->fresh()->workflow_revision,
+                'expected_workflow_dependency' => app(ApplicationWorkflowDependencyService::class)->fingerprint($application->fresh()),
             ])
             ->assertSessionHasErrors(['validation', 'parcel']);
 
@@ -475,6 +484,7 @@ class ApplicationWorkflowReadinessTest extends TestCase
             ->post(route('staff.applications.submit', $application), [
                 'expected_status' => $application->fresh()->status,
             'expected_workflow_revision' => $application->fresh()->workflow_revision,
+                'expected_workflow_dependency' => app(ApplicationWorkflowDependencyService::class)->fingerprint($application->fresh()),
             ])
             ->assertSessionHasErrors(['validation', 'parcel']);
 
@@ -500,6 +510,7 @@ class ApplicationWorkflowReadinessTest extends TestCase
             ->post(route('staff.applications.submit', $application), [
                 'expected_status' => $application->fresh()->status,
             'expected_workflow_revision' => $application->fresh()->workflow_revision,
+                'expected_workflow_dependency' => app(ApplicationWorkflowDependencyService::class)->fingerprint($application->fresh()),
             ])
             ->assertSessionHasErrors(['validation', 'parcel']);
 
@@ -520,6 +531,7 @@ class ApplicationWorkflowReadinessTest extends TestCase
             ->post(route('staff.applications.submit', $application), [
                 'expected_status' => $application->fresh()->status,
             'expected_workflow_revision' => $application->fresh()->workflow_revision,
+                'expected_workflow_dependency' => app(ApplicationWorkflowDependencyService::class)->fingerprint($application->fresh()),
             ])
             ->assertSessionHasErrors(['validation', 'form4']);
 
@@ -541,6 +553,7 @@ class ApplicationWorkflowReadinessTest extends TestCase
             ->post(route('staff.applications.approve', $missingParcel), [
                 'expected_status' => $missingParcel->fresh()->status,
                 'expected_workflow_revision' => $missingParcel->fresh()->workflow_revision,
+                'expected_workflow_dependency' => app(ApplicationWorkflowDependencyService::class)->fingerprint($missingParcel->fresh()),
                 'final_decision_confirmation' => '1',
                 'decision_officer_name' => 'PARPO II Test Signatory',
                 'decision_date' => now()->toDateString(),
@@ -561,6 +574,7 @@ class ApplicationWorkflowReadinessTest extends TestCase
             ->post(route('staff.applications.approve', $missingForm4), [
                 'expected_status' => $missingForm4->fresh()->status,
                 'expected_workflow_revision' => $missingForm4->fresh()->workflow_revision,
+                'expected_workflow_dependency' => app(ApplicationWorkflowDependencyService::class)->fingerprint($missingForm4->fresh()),
                 'final_decision_confirmation' => '1',
                 'decision_officer_name' => 'PARPO II Test Signatory',
                 'decision_date' => now()->toDateString(),
@@ -632,6 +646,7 @@ class ApplicationWorkflowReadinessTest extends TestCase
             ->post(route('staff.applications.approve', $application), [
                 'expected_status' => $application->fresh()->status,
                 'expected_workflow_revision' => $application->fresh()->workflow_revision,
+                'expected_workflow_dependency' => app(ApplicationWorkflowDependencyService::class)->fingerprint($application->fresh()),
                 'final_decision_confirmation' => '1',
                 'decision_officer_name' => 'PARPO II Compliance Test Signatory',
                 'decision_date' => now()->toDateString(),
@@ -745,6 +760,7 @@ class ApplicationWorkflowReadinessTest extends TestCase
             ->post(route('staff.applications.submit', $application), [
                 'expected_status' => $application->fresh()->status,
                 'expected_workflow_revision' => $application->fresh()->workflow_revision,
+                'expected_workflow_dependency' => app(ApplicationWorkflowDependencyService::class)->fingerprint($application->fresh()),
                 'payment_order_reference' => 'OP-READINESS-FULL-FLOW',
             ])
             ->assertSessionHas('success');
@@ -756,6 +772,7 @@ class ApplicationWorkflowReadinessTest extends TestCase
             ->post(route('staff.applications.submit', $application), [
                 'expected_status' => $application->fresh()->status,
                 'expected_workflow_revision' => $application->fresh()->workflow_revision,
+                'expected_workflow_dependency' => app(ApplicationWorkflowDependencyService::class)->fingerprint($application->fresh()),
                 'or_number' => 'OR-READINESS-001',
                 'or_date' => now()->toDateString(),
                 'amount_paid' => config('dar_ltc.filing_fee', 2000),
@@ -769,6 +786,7 @@ class ApplicationWorkflowReadinessTest extends TestCase
             ->post(route('staff.applications.submit', $application), [
                 'expected_status' => $application->fresh()->status,
             'expected_workflow_revision' => $application->fresh()->workflow_revision,
+                'expected_workflow_dependency' => app(ApplicationWorkflowDependencyService::class)->fingerprint($application->fresh()),
             ])
             ->assertSessionHas('success');
         $application->refresh();
@@ -779,6 +797,7 @@ class ApplicationWorkflowReadinessTest extends TestCase
             ->post(route('staff.applications.submit', $application), [
                 'expected_status' => $application->fresh()->status,
             'expected_workflow_revision' => $application->fresh()->workflow_revision,
+                'expected_workflow_dependency' => app(ApplicationWorkflowDependencyService::class)->fingerprint($application->fresh()),
             ])
             ->assertSessionHas('success');
         $application->refresh();
@@ -789,6 +808,7 @@ class ApplicationWorkflowReadinessTest extends TestCase
             ->post(route('staff.applications.submit', $application), [
                 'expected_status' => $application->fresh()->status,
                 'expected_workflow_revision' => $application->fresh()->workflow_revision,
+                'expected_workflow_dependency' => app(ApplicationWorkflowDependencyService::class)->fingerprint($application->fresh()),
                 'csw_reference' => 'CSW-READINESS-001',
                 'csw_notes' => 'Completed Staff Work regression coverage.',
             ])
@@ -800,6 +820,7 @@ class ApplicationWorkflowReadinessTest extends TestCase
             ->post(route('staff.applications.submit', $application), [
                 'expected_status' => $application->fresh()->status,
             'expected_workflow_revision' => $application->fresh()->workflow_revision,
+                'expected_workflow_dependency' => app(ApplicationWorkflowDependencyService::class)->fingerprint($application->fresh()),
             ])
             ->assertSessionHas('success');
         $application->refresh();
@@ -809,6 +830,7 @@ class ApplicationWorkflowReadinessTest extends TestCase
             ->post(route('staff.applications.submit', $application), [
                 'expected_status' => $application->fresh()->status,
             'expected_workflow_revision' => $application->fresh()->workflow_revision,
+                'expected_workflow_dependency' => app(ApplicationWorkflowDependencyService::class)->fingerprint($application->fresh()),
             ])
             ->assertSessionHas('success');
         $application->refresh();
@@ -832,6 +854,7 @@ class ApplicationWorkflowReadinessTest extends TestCase
             ->post(route('staff.applications.approve', $application), [
                 'expected_status' => $application->fresh()->status,
                 'expected_workflow_revision' => $application->fresh()->workflow_revision,
+                'expected_workflow_dependency' => app(ApplicationWorkflowDependencyService::class)->fingerprint($application->fresh()),
                 'final_decision_confirmation' => '1',
                 'decision_officer_name' => 'PARPO II Test Signatory',
                 'decision_date' => now()->toDateString(),
@@ -910,6 +933,7 @@ class ApplicationWorkflowReadinessTest extends TestCase
             ->post(route('staff.applications.approve', $application), [
                 'expected_status' => $application->fresh()->status,
                 'expected_workflow_revision' => $application->fresh()->workflow_revision,
+                'expected_workflow_dependency' => app(ApplicationWorkflowDependencyService::class)->fingerprint($application->fresh()),
                 'final_decision_confirmation' => '1',
                 'decision_officer_name' => 'PARPO II Shared Lock Signatory',
                 'decision_date' => now()->toDateString(),
@@ -934,6 +958,157 @@ class ApplicationWorkflowReadinessTest extends TestCase
         );
     }
 
+    public function test_shared_parcel_change_invalidates_pre_final_review_without_changing_application_revision(): void
+    {
+        $staff = $this->staffUser();
+        $application = $this->application(
+            $staff,
+            LandTransferApplication::STATUS_ENDORSED_PARPO,
+            'READINESS-SHARED-PARCEL-FINGERPRINT'
+        );
+        $applicationParcel = $this->linkParcel($application, 'READINESS-SHARED-PARCEL-FINGERPRINT-PARCEL');
+        $this->completeForm4($application);
+        $this->completePaymentAndCsw($application, $staff);
+
+        $application->refresh();
+        $renderedRevision = (int) $application->workflow_revision;
+        $renderedDependency = app(ApplicationWorkflowDependencyService::class)->fingerprint($application);
+
+        $masterParcel = $applicationParcel->parcel()->firstOrFail();
+        $masterParcel->area_hectares = 1.5000;
+        $masterParcel->save();
+
+        $application->refresh();
+        $this->assertSame($renderedRevision, (int) $application->workflow_revision);
+        $this->assertNotSame(
+            $renderedDependency,
+            app(ApplicationWorkflowDependencyService::class)->fingerprint($application)
+        );
+
+        $this->actingAs($staff)
+            ->post(route('staff.applications.submit', $application), [
+                'expected_status' => LandTransferApplication::STATUS_ENDORSED_PARPO,
+                'expected_workflow_revision' => $renderedRevision,
+                'expected_workflow_dependency' => $renderedDependency,
+            ])
+            ->assertSessionHasErrors('workflow_dependency');
+
+        $this->assertSame(
+            LandTransferApplication::STATUS_ENDORSED_PARPO,
+            $application->fresh()->status
+        );
+    }
+
+    public function test_shared_landholding_change_invalidates_final_approval_review_without_changing_application_revision(): void
+    {
+        $staff = $this->staffUser();
+        $application = $this->application(
+            $staff,
+            LandTransferApplication::STATUS_FOR_RELEASING,
+            'READINESS-SHARED-LANDHOLDING-FINGERPRINT'
+        );
+        $this->linkParcel($application, 'READINESS-SHARED-LANDHOLDING-FINGERPRINT-PARCEL');
+        $this->completeForm4($application);
+        $this->completePaymentAndCsw($application, $staff);
+
+        $application->refresh();
+        $renderedRevision = (int) $application->workflow_revision;
+        $renderedDependency = app(ApplicationWorkflowDependencyService::class)->fingerprint($application);
+
+        $existingParcel = Parcel::create([
+            'parcel_code' => 'READINESS-SHARED-LANDHOLDING-EXISTING',
+            'area_hectares' => 1.0000,
+            'status' => 'active',
+        ]);
+
+        Landholding::create([
+            'landowner_id' => $application->transferee_landowner_id,
+            'parcel_id' => $existingParcel->id,
+            'area_hectares' => 1.0000,
+            'status' => Landholding::STATUS_ACTIVE,
+        ]);
+
+        $application->refresh();
+        $this->assertSame($renderedRevision, (int) $application->workflow_revision);
+        $this->assertNotSame(
+            $renderedDependency,
+            app(ApplicationWorkflowDependencyService::class)->fingerprint($application)
+        );
+
+        $this->actingAs($staff)
+            ->post(route('staff.applications.approve', $application), [
+                'expected_status' => LandTransferApplication::STATUS_FOR_RELEASING,
+                'expected_workflow_revision' => $renderedRevision,
+                'expected_workflow_dependency' => $renderedDependency,
+                'final_decision_confirmation' => '1',
+                'decision_officer_name' => 'PARPO II Shared Dependency Test',
+                'decision_date' => now()->toDateString(),
+            ])
+            ->assertSessionHasErrors('workflow_dependency');
+
+        $this->assertSame(
+            LandTransferApplication::STATUS_FOR_RELEASING,
+            $application->fresh()->status
+        );
+        $this->assertDatabaseMissing('application_clearances', [
+            'land_transfer_application_id' => $application->id,
+        ]);
+    }
+
+    public function test_pre_final_readiness_locks_shared_transferee_and_parcel_dependencies(): void
+    {
+        if (DB::connection()->getDriverName() !== 'pgsql') {
+            $this->markTestSkipped('Shared row-lock SQL assertion applies to the production PostgreSQL stack.');
+        }
+
+        $staff = $this->staffUser();
+        $application = $this->application(
+            $staff,
+            LandTransferApplication::STATUS_ENDORSED_PARPO,
+            'READINESS-PRE-FINAL-SHARED-LOCKS'
+        );
+        $this->linkParcel($application, 'READINESS-PRE-FINAL-SHARED-LOCKS-PARCEL');
+        $this->completeForm4($application);
+        $this->completePaymentAndCsw($application, $staff);
+
+        $application->refresh();
+        $dependencyFingerprint = app(ApplicationWorkflowDependencyService::class)->fingerprint($application);
+
+        $queries = [];
+        DB::listen(function ($query) use (&$queries) {
+            $queries[] = strtolower($query->sql);
+        });
+
+        $this->actingAs($staff)
+            ->post(route('staff.applications.submit', $application), [
+                'expected_status' => $application->status,
+                'expected_workflow_revision' => $application->workflow_revision,
+                'expected_workflow_dependency' => $dependencyFingerprint,
+            ])
+            ->assertSessionHas('success');
+
+        $this->assertSame(
+            LandTransferApplication::STATUS_FOR_RELEASING,
+            $application->fresh()->status
+        );
+
+        $this->assertTrue(
+            collect($queries)->contains(
+                fn ($sql) => str_contains($sql, 'landowners')
+                    && str_contains($sql, 'for update')
+            ),
+            'Expected pre-final readiness to row-lock linked transferee Landowner records.'
+        );
+
+        $this->assertTrue(
+            collect($queries)->contains(
+                fn ($sql) => str_contains($sql, 'parcels')
+                    && str_contains($sql, 'for update')
+            ),
+            'Expected pre-final readiness to row-lock linked Parcel records.'
+        );
+    }
+
     public function test_release_tracking_fails_closed_when_application_business_state_is_inconsistent(): void
     {
         $staff = $this->staffUser();
@@ -950,6 +1125,7 @@ class ApplicationWorkflowReadinessTest extends TestCase
             ->post(route('staff.applications.approve', $application), [
                 'expected_status' => $application->fresh()->status,
                 'expected_workflow_revision' => $application->fresh()->workflow_revision,
+                'expected_workflow_dependency' => app(ApplicationWorkflowDependencyService::class)->fingerprint($application->fresh()),
                 'final_decision_confirmation' => '1',
                 'decision_officer_name' => 'PARPO II Release Integrity Signatory',
                 'decision_date' => now()->toDateString(),
@@ -1031,6 +1207,7 @@ class ApplicationWorkflowReadinessTest extends TestCase
             ->post(route('staff.applications.approve', $application), [
                 'expected_status' => $application->fresh()->status,
                 'expected_workflow_revision' => $application->fresh()->workflow_revision,
+                'expected_workflow_dependency' => app(ApplicationWorkflowDependencyService::class)->fingerprint($application->fresh()),
                 'final_decision_confirmation' => '1',
                 'decision_officer_name' => 'PARPO II Test Signatory',
                 'decision_date' => now()->toDateString(),
