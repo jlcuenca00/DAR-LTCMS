@@ -75,24 +75,47 @@ class LandTransferApplicationObserver
                     ?: LandTransferApplication::RELEASE_NOT_READY
                 );
 
-                $allowedReleaseTransitions = [
-                    LandTransferApplication::RELEASE_NOT_READY => [
-                        LandTransferApplication::RELEASE_NOT_READY,
-                        LandTransferApplication::RELEASE_READY,
-                    ],
-                    LandTransferApplication::RELEASE_READY => [
-                        LandTransferApplication::RELEASE_READY,
-                        LandTransferApplication::RELEASED_TO_CLIENT,
-                    ],
-                ];
+                if (
+                    $originalReleaseStatus === LandTransferApplication::RELEASE_NOT_READY
+                    && $nextReleaseStatus === LandTransferApplication::RELEASE_READY
+                ) {
+                    $readyFields = ['release_status', 'ready_for_release_at'];
+                    $invalidReadyFields = array_values(array_diff($dirtyFields, $readyFields));
 
-                if (! in_array(
-                    $nextReleaseStatus,
-                    $allowedReleaseTransitions[$originalReleaseStatus] ?? [],
-                    true
-                )) {
+                    if (! empty($invalidReadyFields) || ! $application->ready_for_release_at) {
+                        throw ValidationException::withMessages([
+                            'release' => 'Ready for Release may only record the release status and readiness timestamp.',
+                        ]);
+                    }
+                } elseif (
+                    $originalReleaseStatus === LandTransferApplication::RELEASE_READY
+                    && $nextReleaseStatus === LandTransferApplication::RELEASED_TO_CLIENT
+                ) {
+                    $releasedFields = [
+                        'release_status',
+                        'released_at',
+                        'released_by',
+                        'release_recipient_name',
+                        'release_logbook_reference',
+                        'csm_status',
+                        'date_of_clearance_release',
+                    ];
+                    $invalidReleasedFields = array_values(array_diff($dirtyFields, $releasedFields));
+
+                    if (
+                        ! empty($invalidReleasedFields)
+                        || ! $application->released_at
+                        || ! $application->released_by
+                        || blank($application->release_recipient_name)
+                        || ! $application->date_of_clearance_release
+                    ) {
+                        throw ValidationException::withMessages([
+                            'release' => 'Released to Client must be recorded from Ready for Release with the required recipient, actor, and release timestamps.',
+                        ]);
+                    }
+                } else {
                     throw ValidationException::withMessages([
-                        'release' => 'Release tracking must progress from Not Ready to Ready for Release to Released to Client without skipping or reversing stages.',
+                        'release' => 'Release tracking must progress from Not Ready to Ready for Release to Released to Client without skipping, reversing, or editing an already-recorded release stage.',
                     ]);
                 }
             }
