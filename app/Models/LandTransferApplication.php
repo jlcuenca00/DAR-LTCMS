@@ -165,6 +165,7 @@ class LandTransferApplication extends Model
         'released_at' => 'datetime',
         'validated_at' => 'datetime',
         'validation_snapshot' => 'array',
+        'workflow_revision' => 'integer',
     ];
 
     /**

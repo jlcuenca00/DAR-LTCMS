@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Services\ApplicationParcelIntegrityService;
 use App\Services\ApplicationPartyShareIntegrityService;
+use App\Services\ApplicationWorkflowRevisionService;
 use App\Services\ParcelAreaIntegrityService;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Validation\ValidationException;
@@ -56,6 +57,13 @@ class ApplicationParcel extends Model
             }
         });
 
+        static::saved(function (ApplicationParcel $applicationParcel) {
+            if ($applicationParcel->land_transfer_application_id) {
+                app(ApplicationWorkflowRevisionService::class)
+                    ->bump((int) $applicationParcel->land_transfer_application_id);
+            }
+        });
+
         static::deleting(function (ApplicationParcel $applicationParcel) {
             $application = $applicationParcel->application;
 
@@ -68,6 +76,13 @@ class ApplicationParcel extends Model
             if ($application) {
                 app(ApplicationPartyShareIntegrityService::class)
                     ->removeParcelShareReferences($application, (int) $applicationParcel->id);
+            }
+        });
+
+        static::deleted(function (ApplicationParcel $applicationParcel) {
+            if ($applicationParcel->land_transfer_application_id) {
+                app(ApplicationWorkflowRevisionService::class)
+                    ->bump((int) $applicationParcel->land_transfer_application_id);
             }
         });
     }

@@ -57,6 +57,7 @@ class AuditLogIntegrityHardeningTest extends TestCase
         $this->actingAs($staff)
             ->post(route('staff.applications.submit', $application), [
                 'expected_status' => $application->fresh()->status,
+            'expected_workflow_revision' => $application->fresh()->workflow_revision,
             ])
             ->assertSessionHas('success');
 

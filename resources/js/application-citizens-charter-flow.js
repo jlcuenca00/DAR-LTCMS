@@ -206,7 +206,7 @@ function addReleaseTracking(state, applicationId) {
         form.innerHTML = workflowCard(
             'Mark signed output Ready for Release',
             'Use this after the signed/sealed Form No. 5 has been returned to Legal and is ready for client pickup/release.',
-            `<div class="workflow-decision-note">The final ${escapeHtml(state.status_label)} decision remains locked and unchanged.</div>${hiddenCsrf()}`,
+            `<div class="workflow-decision-note">The final ${escapeHtml(state.status_label)} decision remains locked and unchanged.</div>${hiddenCsrf()}<input type="hidden" name="expected_workflow_revision" value="${escapeHtml(state.workflow_revision)}">`,
             'Mark Ready for Release'
         );
         wrapper.appendChild(form);
@@ -217,6 +217,7 @@ function addReleaseTracking(state, applicationId) {
         form.className = 'workflow-decision-card approve-card';
         form.innerHTML = `
             ${hiddenCsrf()}
+            <input type="hidden" name="expected_workflow_revision" value="${escapeHtml(state.workflow_revision)}">
             <input type="hidden" name="release_confirmation" value="1">
             <div class="workflow-decision-heading">
                 <span class="workflow-action-icon" aria-hidden="true"><i class="fa-solid fa-hand-holding-document"></i></span>

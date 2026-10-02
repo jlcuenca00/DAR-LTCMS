@@ -8,12 +8,21 @@ use Illuminate\Validation\ValidationException;
 
 class ApplicationReleaseTransitionService
 {
-    public function markReady(LandTransferApplication $application, int $actorId): LandTransferApplication
+    public function markReady(
+        LandTransferApplication $application,
+        int $actorId,
+        int $expectedWorkflowRevision
+    ): LandTransferApplication
     {
-        return DB::transaction(function () use ($application, $actorId) {
+        return DB::transaction(function () use ($application, $actorId, $expectedWorkflowRevision) {
             $application = LandTransferApplication::query()
                 ->lockForUpdate()
                 ->findOrFail($application->id);
+
+            app(ApplicationWorkflowRevisionService::class)->assertExpected(
+                $application,
+                $expectedWorkflowRevision
+            );
 
             $this->assertReleaseIntegrity($application);
 
@@ -63,12 +72,18 @@ class ApplicationReleaseTransitionService
         int $actorId,
         string $recipientName,
         ?string $logbookReference,
-        string $csmStatus
+        string $csmStatus,
+        int $expectedWorkflowRevision
     ): LandTransferApplication {
-        return DB::transaction(function () use ($application, $actorId, $recipientName, $logbookReference, $csmStatus) {
+        return DB::transaction(function () use ($application, $actorId, $recipientName, $logbookReference, $csmStatus, $expectedWorkflowRevision) {
             $application = LandTransferApplication::query()
                 ->lockForUpdate()
                 ->findOrFail($application->id);
+
+            app(ApplicationWorkflowRevisionService::class)->assertExpected(
+                $application,
+                $expectedWorkflowRevision
+            );
 
             $this->assertReleaseIntegrity($application);
 

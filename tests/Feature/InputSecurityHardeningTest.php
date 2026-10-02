@@ -248,6 +248,7 @@ class InputSecurityHardeningTest extends TestCase
             ->from(route('staff.applications.show', $application))
             ->post(route('staff.applications.submit', $application), [
                 'expected_status' => $application->fresh()->status,
+            'expected_workflow_revision' => $application->fresh()->workflow_revision,
             ])
             ->assertSessionHasErrors('form4');
 

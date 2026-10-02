@@ -252,6 +252,7 @@ class BetaSystemRegressionTest extends TestCase
         $this->actingAs($staff)
             ->post(route('staff.applications.submit', $application), [
                 'expected_status' => $application->fresh()->status,
+                'expected_workflow_revision' => $application->fresh()->workflow_revision,
                 'payment_order_reference' => 'OP-BETA-WORKFLOW-001',
             ])
             ->assertSessionHas('success');
@@ -261,6 +262,7 @@ class BetaSystemRegressionTest extends TestCase
         $this->actingAs($staff)
             ->post(route('staff.applications.submit', $application), [
                 'expected_status' => $application->fresh()->status,
+                'expected_workflow_revision' => $application->fresh()->workflow_revision,
                 'or_number' => 'OR-BETA-WORKFLOW-001',
                 'or_date' => now()->toDateString(),
                 'amount_paid' => config('dar_ltc.filing_fee', 2000),
@@ -272,6 +274,7 @@ class BetaSystemRegressionTest extends TestCase
         $this->actingAs($staff)
             ->post(route('staff.applications.submit', $application), [
                 'expected_status' => $application->fresh()->status,
+            'expected_workflow_revision' => $application->fresh()->workflow_revision,
             ])
             ->assertSessionHas('success');
         $application->refresh();
@@ -280,6 +283,7 @@ class BetaSystemRegressionTest extends TestCase
         $this->actingAs($staff)
             ->post(route('staff.applications.submit', $application), [
                 'expected_status' => $application->fresh()->status,
+            'expected_workflow_revision' => $application->fresh()->workflow_revision,
             ])
             ->assertSessionHas('success');
         $application->refresh();
@@ -288,6 +292,7 @@ class BetaSystemRegressionTest extends TestCase
         $this->actingAs($staff)
             ->post(route('staff.applications.submit', $application), [
                 'expected_status' => $application->fresh()->status,
+                'expected_workflow_revision' => $application->fresh()->workflow_revision,
                 'csw_reference' => 'CSW-BETA-WORKFLOW-001',
                 'csw_notes' => 'Beta regression completed staff work.',
             ])
@@ -298,6 +303,7 @@ class BetaSystemRegressionTest extends TestCase
         $this->actingAs($staff)
             ->post(route('staff.applications.submit', $application), [
                 'expected_status' => $application->fresh()->status,
+            'expected_workflow_revision' => $application->fresh()->workflow_revision,
             ])
             ->assertSessionHas('success');
         $application->refresh();
@@ -306,6 +312,7 @@ class BetaSystemRegressionTest extends TestCase
         $this->actingAs($staff)
             ->post(route('staff.applications.submit', $application), [
                 'expected_status' => $application->fresh()->status,
+            'expected_workflow_revision' => $application->fresh()->workflow_revision,
             ])
             ->assertSessionHas('success');
         $application->refresh();
@@ -313,6 +320,8 @@ class BetaSystemRegressionTest extends TestCase
 
         $this->actingAs($staff)
             ->post(route('staff.applications.approve', $application), [
+                'expected_status' => $application->fresh()->status,
+                'expected_workflow_revision' => $application->fresh()->workflow_revision,
                 'final_decision_confirmation' => '1',
                 'decision_officer_name' => 'PARPO II Test Signatory',
                 'decision_date' => now()->toDateString(),
@@ -352,7 +361,9 @@ class BetaSystemRegressionTest extends TestCase
         ]);
 
         $this->actingAs($staff)
-            ->post(route('staff.applications.ready_for_release', $application))
+            ->post(route('staff.applications.ready_for_release', $application), [
+                'expected_workflow_revision' => $application->fresh()->workflow_revision,
+            ])
             ->assertSessionHas('success');
 
         $application->refresh();
@@ -389,6 +400,7 @@ class BetaSystemRegressionTest extends TestCase
 
         $this->actingAs($staff)
             ->post(route('staff.applications.release', $application), [
+                'expected_workflow_revision' => $application->fresh()->workflow_revision,
                 'release_confirmation' => '1',
                 'release_recipient_name' => $transferee->full_name,
                 'release_logbook_reference' => 'LOG-BETA-WORKFLOW-001',
@@ -467,6 +479,7 @@ class BetaSystemRegressionTest extends TestCase
         $this->actingAs($staff)
             ->post(route('staff.applications.compliance.request', $application), [
                 'expected_status' => $application->fresh()->status,
+                'expected_workflow_revision' => $application->fresh()->workflow_revision,
                 'category' => ApplicationComplianceNotice::CATEGORY_CLARIFICATION,
                 'details' => 'Clarify the original supporting instrument before approval is recorded.',
                 'requested_items' => 'Original supporting instrument',
@@ -513,6 +526,7 @@ class BetaSystemRegressionTest extends TestCase
         $this->actingAs($staff)
             ->post(route('staff.applications.compliance.resolve', $application), [
                 'expected_status' => $application->fresh()->status,
+                'expected_workflow_revision' => $application->fresh()->workflow_revision,
                 'compliance_notice_id' => $application->activeComplianceNotice()->value('id'),
                 'resolution_note' => 'Clarification completed.',
             ])
@@ -639,6 +653,7 @@ class BetaSystemRegressionTest extends TestCase
         $this->actingAs($geodetic)
             ->post(route('staff.applications.compliance.request', $application), [
                 'expected_status' => $application->fresh()->status,
+                'expected_workflow_revision' => $application->fresh()->workflow_revision,
                 'category' => ApplicationComplianceNotice::CATEGORY_CLARIFICATION,
                 'details' => 'Should be blocked for Geodetic users.',
             ])

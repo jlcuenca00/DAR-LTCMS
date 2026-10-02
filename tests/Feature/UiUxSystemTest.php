@@ -91,6 +91,7 @@ class UiUxSystemTest extends TestCase
         $this->assertStringContainsString('Request Compliance / Action Required', $review);
         $this->assertStringContainsString('Mark Compliance Resolved', $review);
         $this->assertStringContainsString('name="expected_status"', $review);
+        $this->assertStringContainsString('name="expected_workflow_revision"', $review);
         $this->assertStringContainsString('name="compliance_notice_id"', $review);
         $this->assertStringContainsString('ApplicationComplianceNotice::categoryOptions()', $review);
         $this->assertStringContainsString('CATEGORY_OTHER', $review);
@@ -101,6 +102,10 @@ class UiUxSystemTest extends TestCase
         $this->assertStringContainsString('Manage Workflow', $review);
         $this->assertStringNotContainsString('workflow-fab', $review);
         $this->assertStringNotContainsString('Release Clearance', $review);
+
+        $workflowJs = file_get_contents(resource_path('js/application-citizens-charter-flow.js'));
+        $this->assertStringContainsString('state.workflow_revision', $workflowJs);
+        $this->assertStringContainsString('expected_workflow_revision', $workflowJs);
     }
 
     public function test_generated_decision_output_recognizes_current_and_legacy_final_statuses(): void

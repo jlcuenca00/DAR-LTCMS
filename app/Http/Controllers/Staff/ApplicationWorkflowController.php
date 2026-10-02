@@ -14,6 +14,7 @@ use App\Services\ApplicationPartyIntegrityService;
 use App\Services\ApplicationRequirementService;
 use App\Services\ApplicationReleaseTransitionService;
 use App\Services\ApplicationWorkflowEvidenceService;
+use App\Services\ApplicationWorkflowRevisionService;
 use App\Services\ApplicationWorkflowTransitionService;
 use App\Services\AuditLogger;
 use App\Services\LandholdingAreaValidationService;
@@ -37,7 +38,13 @@ class ApplicationWorkflowController extends Controller
     {
         $validatedStage = $request->validate([
             'expected_status' => ['required', 'string', 'max:50'],
+            'expected_workflow_revision' => ['required', 'integer', 'min:1'],
         ]);
+
+        app(ApplicationWorkflowRevisionService::class)->assertExpected(
+            $application,
+            (int) $validatedStage['expected_workflow_revision']
+        );
 
         if ($application->status !== $validatedStage['expected_status']) {
             return back()->withErrors([
@@ -259,6 +266,7 @@ class ApplicationWorkflowController extends Controller
 
         $validated = $request->validate([
             'expected_status' => ['required', 'string', 'max:50'],
+            'expected_workflow_revision' => ['required', 'integer', 'min:1'],
             'category' => ['required', Rule::in(ApplicationComplianceNotice::CATEGORIES)],
             'other_category' => [
                 'nullable',
@@ -278,6 +286,11 @@ class ApplicationWorkflowController extends Controller
                 $application = LandTransferApplication::query()
                     ->lockForUpdate()
                     ->findOrFail($application->id);
+
+                app(ApplicationWorkflowRevisionService::class)->assertExpected(
+                    $application,
+                    (int) $validated['expected_workflow_revision']
+                );
 
                 if ($application->status !== $validated['expected_status']) {
                     throw ValidationException::withMessages([
@@ -389,6 +402,7 @@ class ApplicationWorkflowController extends Controller
     {
         $validated = $request->validate([
             'expected_status' => ['required', 'string', 'max:50'],
+            'expected_workflow_revision' => ['required', 'integer', 'min:1'],
             'compliance_notice_id' => ['required', 'integer', 'min:1'],
             'resolution_note' => ['nullable', 'string', 'max:3000'],
         ]);
@@ -398,6 +412,11 @@ class ApplicationWorkflowController extends Controller
                 $application = LandTransferApplication::query()
                     ->lockForUpdate()
                     ->findOrFail($application->id);
+
+                app(ApplicationWorkflowRevisionService::class)->assertExpected(
+                    $application,
+                    (int) $validated['expected_workflow_revision']
+                );
 
                 if ($application->status !== $validated['expected_status']) {
                     throw ValidationException::withMessages([
@@ -511,6 +530,8 @@ class ApplicationWorkflowController extends Controller
         }
 
         $validated = $request->validate([
+            'expected_status' => ['required', 'string', 'max:50'],
+            'expected_workflow_revision' => ['required', 'integer', 'min:1'],
             'final_decision_confirmation' => ['accepted'],
             'decision_officer_name' => ['required', 'string', 'max:255'],
             'decision_date' => ['required', 'date', 'before_or_equal:today'],
@@ -525,6 +546,17 @@ class ApplicationWorkflowController extends Controller
                 $application = LandTransferApplication::query()
                     ->lockForUpdate()
                     ->findOrFail($application->id);
+
+                app(ApplicationWorkflowRevisionService::class)->assertExpected(
+                    $application,
+                    (int) $validated['expected_workflow_revision']
+                );
+
+                if ($application->status !== $validated['expected_status']) {
+                    throw ValidationException::withMessages([
+                        'status' => 'The workflow stage changed after this approval form was opened. Refresh and review the current stage.',
+                    ]);
+                }
 
                 if ($application->isFinalized()) {
                     throw new \RuntimeException('This application was already finalized by another request.');
@@ -614,6 +646,10 @@ class ApplicationWorkflowController extends Controller
 
     public function markReadyForRelease(Request $request, LandTransferApplication $application)
     {
+        $validated = $request->validate([
+            'expected_workflow_revision' => ['required', 'integer', 'min:1'],
+        ]);
+
         if (! in_array($application->status, LandTransferApplication::FINAL_STATUSES, true)) {
             return back()->withErrors(['status' => 'Only a current Approved decision may enter release tracking. Historical negative decision records remain read-only.']);
         }
@@ -646,7 +682,8 @@ class ApplicationWorkflowController extends Controller
 
         app(ApplicationReleaseTransitionService::class)->markReady(
             $application,
-            Auth::id()
+            Auth::id(),
+            (int) $validated['expected_workflow_revision']
         );
 
         return back()->with('success', 'Signed decision output marked Ready for Release.');
@@ -677,6 +714,7 @@ class ApplicationWorkflowController extends Controller
         }
 
         $validated = $request->validate([
+            'expected_workflow_revision' => ['required', 'integer', 'min:1'],
             'release_confirmation' => ['accepted'],
             'release_recipient_name' => ['required', 'string', 'max:255'],
             'release_logbook_reference' => ['nullable', 'string', 'max:150'],
@@ -692,7 +730,8 @@ class ApplicationWorkflowController extends Controller
                 Auth::id(),
                 $validated['release_recipient_name'],
                 $validated['release_logbook_reference'] ?? null,
-                $validated['csm_status'] ?? 'not_recorded'
+                $validated['csm_status'] ?? 'not_recorded',
+                (int) $validated['expected_workflow_revision']
             );
         } catch (ValidationException $e) {
             throw $e;
@@ -724,6 +763,7 @@ class ApplicationWorkflowController extends Controller
             'application_code' => $application->application_code,
             'status' => $application->status,
             'status_label' => $application->statusLabel(),
+            'workflow_revision' => (int) $application->workflow_revision,
             'workflow_action_label' => $application->workflowActionLabel(),
             'workflow_authority_label' => $application->workflowAuthorityLabel(),
             'next_status' => $nextStatus,

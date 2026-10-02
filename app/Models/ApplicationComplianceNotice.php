@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Services\ApplicationWorkflowRevisionService;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Validation\ValidationException;
 
@@ -113,6 +114,13 @@ class ApplicationComplianceNotice extends Model
             throw ValidationException::withMessages([
                 'compliance' => 'Persisted compliance history cannot be deleted.',
             ]);
+        });
+
+        static::saved(function (ApplicationComplianceNotice $notice) {
+            if ($notice->land_transfer_application_id) {
+                app(ApplicationWorkflowRevisionService::class)
+                    ->bump((int) $notice->land_transfer_application_id);
+            }
         });
     }
 
