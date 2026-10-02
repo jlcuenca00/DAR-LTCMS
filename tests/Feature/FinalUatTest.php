@@ -163,6 +163,8 @@ class FinalUatTest extends TestCase
             'release_status' => LandTransferApplication::RELEASED_TO_CLIENT,
             'released_at' => now(),
             'released_by' => $staff->id,
+            'release_recipient_name' => 'UAT Authorized Recipient',
+            'date_of_clearance_release' => now()->toDateString(),
         ])->save();
 
         $released = $this->actingAs($landownerUser)

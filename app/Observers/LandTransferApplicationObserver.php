@@ -24,6 +24,103 @@ class LandTransferApplicationObserver
             ]);
         }
 
+        if ($application->exists) {
+            $originalStatus = (string) $application->getRawOriginal('status');
+            $originalReleaseStatus = (string) (
+                $application->getRawOriginal('release_status')
+                ?: LandTransferApplication::RELEASE_NOT_READY
+            );
+            $dirtyFields = array_keys($application->getDirty());
+
+            if (
+                in_array($originalStatus, LandTransferApplication::LEGACY_FINAL_STATUSES, true)
+                && ! empty($dirtyFields)
+            ) {
+                throw ValidationException::withMessages([
+                    'application' => 'Historical finalized application records are immutable and cannot be edited.',
+                ]);
+            }
+
+            if (
+                in_array($originalStatus, LandTransferApplication::FINAL_STATUSES, true)
+                && ! empty($dirtyFields)
+            ) {
+                $releaseFields = [
+                    'release_status',
+                    'ready_for_release_at',
+                    'released_at',
+                    'released_by',
+                    'release_recipient_name',
+                    'release_logbook_reference',
+                    'csm_status',
+                    'date_of_clearance_release',
+                ];
+
+                $disallowedFields = array_values(array_diff($dirtyFields, $releaseFields));
+
+                if (! empty($disallowedFields)) {
+                    throw ValidationException::withMessages([
+                        'application' => 'Approved application records are frozen. Only authorized release-tracking fields may change after the final decision.',
+                    ]);
+                }
+
+                if ($originalReleaseStatus === LandTransferApplication::RELEASED_TO_CLIENT) {
+                    throw ValidationException::withMessages([
+                        'release' => 'Released application records are immutable. Release metadata can no longer be changed.',
+                    ]);
+                }
+
+                $nextReleaseStatus = (string) (
+                    $application->release_status
+                    ?: LandTransferApplication::RELEASE_NOT_READY
+                );
+
+                if (
+                    $originalReleaseStatus === LandTransferApplication::RELEASE_NOT_READY
+                    && $nextReleaseStatus === LandTransferApplication::RELEASE_READY
+                ) {
+                    $readyFields = ['release_status', 'ready_for_release_at'];
+                    $invalidReadyFields = array_values(array_diff($dirtyFields, $readyFields));
+
+                    if (! empty($invalidReadyFields) || ! $application->ready_for_release_at) {
+                        throw ValidationException::withMessages([
+                            'release' => 'Ready for Release may only record the release status and readiness timestamp.',
+                        ]);
+                    }
+                } elseif (
+                    $originalReleaseStatus === LandTransferApplication::RELEASE_READY
+                    && $nextReleaseStatus === LandTransferApplication::RELEASED_TO_CLIENT
+                ) {
+                    $releasedFields = [
+                        'release_status',
+                        'released_at',
+                        'released_by',
+                        'release_recipient_name',
+                        'release_logbook_reference',
+                        'csm_status',
+                        'date_of_clearance_release',
+                    ];
+                    $invalidReleasedFields = array_values(array_diff($dirtyFields, $releasedFields));
+
+                    if (
+                        ! empty($invalidReleasedFields)
+                        || ! $application->released_at
+                        || ! $application->released_by
+                        || blank($application->release_recipient_name)
+                        || ! $application->date_of_clearance_release
+                    ) {
+                        throw ValidationException::withMessages([
+                            'release' => 'Released to Client must be recorded from Ready for Release with the required recipient, actor, and release timestamps.',
+                        ]);
+                    }
+                } else {
+                    throw ValidationException::withMessages([
+                        'release' => 'Release tracking must progress from Not Ready to Ready for Release to Released to Client without skipping, reversing, or editing an already-recorded release stage.',
+                    ]);
+                }
+            }
+        }
+
         if (! $application->exists || $application->isDirty(['municipality', 'barangay'])) {
             $normalized = app(DarLocationService::class)->normalize(
                 $application->municipality,

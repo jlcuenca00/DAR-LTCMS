@@ -89,11 +89,14 @@ class FinalDecisionIntegrityHardeningTest extends TestCase
                 'LEGACY-RELEASE-' . $index
             );
 
-            $application->forceFill([
-                'release_status' => LandTransferApplication::RELEASE_READY,
-            ])->save();
+            // Simulate a pre-existing legacy anomaly without weakening the
+            // model-level historical-record freeze.
+            DB::table('land_transfer_applications')
+                ->where('id', $application->id)
+                ->update(['release_status' => LandTransferApplication::RELEASE_READY]);
+            $application->refresh();
 
-            $this->assertFalse($application->fresh()->isReleaseReady());
+            $this->assertFalse($application->isReleaseReady());
 
             $this->actingAs($staff)
                 ->post(route('staff.applications.ready_for_release', $application))
@@ -148,16 +151,119 @@ class FinalDecisionIntegrityHardeningTest extends TestCase
         ]);
     }
 
-    public function test_clearance_integrity_checks_versioned_final_decision_identity_fields(): void
+    public function test_approved_application_model_freezes_core_fields_and_release_tracking_is_forward_only(): void
     {
         $staff = User::factory()->create(['role' => 'staff']);
         $application = $this->makeApplication(
             $staff,
             LandTransferApplication::STATUS_APPROVED,
-            'DECISION-IDENTITY-001'
+            'MODEL-FREEZE-APPROVED'
+        );
+
+        $tampered = $application->fresh();
+        $tampered->remarks = 'This core field must not change after approval.';
+
+        try {
+            $tampered->save();
+            $this->fail('Expected approved application core-field mutation to be rejected.');
+        } catch (ValidationException $e) {
+            $this->assertArrayHasKey('application', $e->errors());
+        }
+
+        $this->assertNull($application->fresh()->remarks);
+
+        $skipReleaseStage = $application->fresh();
+        $skipReleaseStage->forceFill([
+            'release_status' => LandTransferApplication::RELEASED_TO_CLIENT,
+            'ready_for_release_at' => now(),
+            'released_at' => now(),
+            'released_by' => $staff->id,
+            'release_recipient_name' => 'Skipped Recipient',
+            'date_of_clearance_release' => now()->toDateString(),
+        ]);
+
+        try {
+            $skipReleaseStage->save();
+            $this->fail('Expected direct Not Ready to Released transition to be rejected.');
+        } catch (ValidationException $e) {
+            $this->assertArrayHasKey('release', $e->errors());
+        }
+
+        $application = $application->fresh();
+        $this->assertSame(
+            LandTransferApplication::RELEASE_NOT_READY,
+            $application->release_status ?: LandTransferApplication::RELEASE_NOT_READY
         );
 
         $application->forceFill([
+            'release_status' => LandTransferApplication::RELEASE_READY,
+            'ready_for_release_at' => now(),
+        ])->save();
+
+        $application = $application->fresh();
+        $this->assertSame(LandTransferApplication::RELEASE_READY, $application->release_status);
+
+        $application->forceFill([
+            'release_status' => LandTransferApplication::RELEASED_TO_CLIENT,
+            'released_at' => now(),
+            'released_by' => $staff->id,
+            'release_recipient_name' => 'Authorized Recipient',
+            'release_logbook_reference' => 'LOG-MODEL-FREEZE-001',
+            'csm_status' => 'received',
+            'date_of_clearance_release' => now()->toDateString(),
+        ])->save();
+
+        $application = $application->fresh();
+        $this->assertSame(LandTransferApplication::RELEASED_TO_CLIENT, $application->release_status);
+        $this->assertSame('Authorized Recipient', $application->release_recipient_name);
+
+        $application->release_recipient_name = 'Tampered Recipient';
+
+        try {
+            $application->save();
+            $this->fail('Expected released application metadata mutation to be rejected.');
+        } catch (ValidationException $e) {
+            $this->assertArrayHasKey('release', $e->errors());
+        }
+
+        $this->assertSame('Authorized Recipient', $application->fresh()->release_recipient_name);
+    }
+
+    public function test_historical_final_application_records_reject_direct_model_edits(): void
+    {
+        $staff = User::factory()->create(['role' => 'staff']);
+
+        foreach (LandTransferApplication::LEGACY_FINAL_STATUSES as $index => $status) {
+            $application = $this->makeApplication(
+                $staff,
+                $status,
+                'MODEL-FREEZE-HISTORICAL-' . $index
+            );
+
+            $application->remarks = 'Historical record tamper attempt.';
+
+            try {
+                $application->save();
+                $this->fail("Expected historical final status {$status} to reject model edits.");
+            } catch (ValidationException $e) {
+                $this->assertArrayHasKey('application', $e->errors());
+            }
+
+            $this->assertNull($application->fresh()->remarks);
+        }
+    }
+
+    public function test_clearance_integrity_checks_versioned_final_decision_identity_fields(): void
+    {
+        $staff = User::factory()->create(['role' => 'staff']);
+        $application = LandTransferApplication::create([
+            'application_code' => 'INTEGRITY-DECISION-IDENTITY-001',
+            'transferor_name' => 'Integrity Transferor',
+            'transferee_name' => 'Integrity Transferee',
+            'municipality' => 'Dumaguete City',
+            'barangay' => 'Bantayan',
+            'status' => LandTransferApplication::STATUS_APPROVED,
+            'encoded_by' => $staff->id,
             'reviewed_by' => $staff->id,
             'reviewed_at' => '2026-10-01 10:00:00',
             'validated_at' => '2026-10-01 10:00:00',
@@ -167,7 +273,7 @@ class FinalDecisionIntegrityHardeningTest extends TestCase
             'decision_date' => '2026-10-01',
             'decision_recorded_by' => $staff->id,
             'decision_recorded_at' => '2026-10-01 10:00:00',
-        ])->save();
+        ]);
 
         ApplicationClearance::create([
             'land_transfer_application_id' => $application->id,
@@ -416,21 +522,17 @@ class FinalDecisionIntegrityHardeningTest extends TestCase
             'clearance_number' => $first->clearance_number,
             'transferor_name' => $first->transferor_name,
             'transferee_name' => $first->transferee_name,
+            'municipality' => $first->municipality,
             'total_area_hectares' => (string) $first->total_area_hectares,
             'parcel_snapshot' => $first->parcel_snapshot,
             'generated_at' => $first->getRawOriginal('generated_at'),
         ];
 
-        // Deliberately alter source records directly to prove regeneration cannot
-        // rewrite the preserved final output snapshot.
-        $application->forceFill([
-            'transferor_name' => 'Changed Source Transferor',
-            'transferors' => [[
-                'name' => 'Changed Source Transferor',
-                'landowner_id' => null,
-                'parcel_shares' => [],
-            ]],
-        ])->save();
+        // Simulate out-of-band database corruption to prove an existing immutable
+        // decision output is never regenerated from altered source records.
+        DB::table('land_transfer_applications')
+            ->where('id', $application->id)
+            ->update(['municipality' => 'Bais City']);
         $applicationParcel->update(['area_hectares' => 9.9999]);
 
         $second = $service->generateForDecision($application->fresh(), $staff->id);
@@ -439,6 +541,7 @@ class FinalDecisionIntegrityHardeningTest extends TestCase
         $this->assertSame($originalSnapshot['clearance_number'], $second->clearance_number);
         $this->assertSame($originalSnapshot['transferor_name'], $second->transferor_name);
         $this->assertSame($originalSnapshot['transferee_name'], $second->transferee_name);
+        $this->assertSame($originalSnapshot['municipality'], $second->municipality);
         $this->assertSame($originalSnapshot['total_area_hectares'], (string) $second->total_area_hectares);
         $this->assertSame($originalSnapshot['parcel_snapshot'], $second->parcel_snapshot);
         $this->assertSame($originalSnapshot['generated_at'], $second->getRawOriginal('generated_at'));

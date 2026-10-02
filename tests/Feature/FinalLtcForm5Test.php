@@ -73,12 +73,20 @@ class FinalLtcForm5Test extends TestCase
     {
         $staff = User::factory()->create(['role' => 'staff']);
         $application = $this->makeFinalApplication($staff, 'FORM5-MULTI-001', 3);
-        $application->forceFill([
-            'or_number' => 'OR-5001',
-            'or_date' => '2026-08-20',
-            'amount_paid' => config('dar_ltc.filing_fee', 2000),
-            'transfer_instruments' => [['name' => 'Changed Live Transfer Instrument']],
-        ])->save();
+
+        // Simulate out-of-band source drift. Normal model writes are frozen
+        // after approval, but the rendered Form 5 must still use its snapshot.
+        DB::table('land_transfer_applications')
+            ->where('id', $application->id)
+            ->update([
+                'or_number' => 'OR-5001',
+                'or_date' => '2026-08-20',
+                'amount_paid' => config('dar_ltc.filing_fee', 2000),
+                'transfer_instruments' => json_encode([
+                    ['name' => 'Changed Live Transfer Instrument'],
+                ]),
+            ]);
+        $application->refresh();
 
         $clearance = new ApplicationClearance([
             'land_transfer_application_id' => $application->id,
@@ -165,13 +173,18 @@ class FinalLtcForm5Test extends TestCase
     public function test_generated_form5_snapshot_preserves_document_and_payment_values_after_live_records_change(): void
     {
         $staff = User::factory()->create(['role' => 'staff']);
-        $application = $this->makeFinalApplication($staff, 'FORM5-FULL-SNAPSHOT-001', 2);
-        $application->forceFill([
-            'or_number' => 'OR-ORIGINAL',
-            'or_date' => '2026-08-20',
-            'amount_paid' => 2000,
-            'transfer_instruments' => [['name' => 'Deed of Absolute Sale']],
-        ])->save();
+        $application = $this->makeFinalApplication(
+            $staff,
+            'FORM5-FULL-SNAPSHOT-001',
+            2,
+            LandTransferApplication::STATUS_APPROVED,
+            [
+                'or_number' => 'OR-ORIGINAL',
+                'or_date' => '2026-08-20',
+                'amount_paid' => 2000,
+                'transfer_instruments' => [['name' => 'Deed of Absolute Sale']],
+            ]
+        );
 
         $requirement = RequiredDocument::forceCreate([
             'name' => 'Form 5 Metadata Source',
@@ -204,12 +217,17 @@ class FinalLtcForm5Test extends TestCase
         $this->assertSame('Original Snapshot Deed', data_get($clearance->form_snapshot, 'subject_of'));
         $this->assertSame('OR-ORIGINAL', data_get($clearance->form_snapshot, 'or_number'));
 
-        $application->forceFill([
-            'or_number' => 'OR-CHANGED-LIVE',
-            'or_date' => '2026-08-21',
-            'amount_paid' => 9999,
-            'transfer_instruments' => [['name' => 'Changed Live Instrument']],
-        ])->save();
+        DB::table('land_transfer_applications')
+            ->where('id', $application->id)
+            ->update([
+                'or_number' => 'OR-CHANGED-LIVE',
+                'or_date' => '2026-08-21',
+                'amount_paid' => 9999,
+                'transfer_instruments' => json_encode([
+                    ['name' => 'Changed Live Instrument'],
+                ]),
+            ]);
+        $application->refresh();
 
         $document->forceFill([
             'document_metadata' => [
@@ -247,6 +265,17 @@ class FinalLtcForm5Test extends TestCase
         );
 
         $application->forceFill([
+            'release_status' => LandTransferApplication::RELEASE_READY,
+            'ready_for_release_at' => '2026-09-29 09:00:00',
+        ])->save();
+
+        $application->forceFill([
+            'release_status' => LandTransferApplication::RELEASED_TO_CLIENT,
+            'released_at' => '2026-09-30 09:00:00',
+            'released_by' => $staff->id,
+            'release_recipient_name' => 'Authorized Recipient',
+            'release_logbook_reference' => 'LOG-FORM5-IMMUTABLE-DATE',
+            'csm_status' => 'received',
             'date_of_clearance_release' => '2026-09-30',
         ])->save();
         $application->load('documents');
@@ -367,14 +396,15 @@ class FinalLtcForm5Test extends TestCase
         User $staff,
         string $code,
         int $pageNumber,
-        string $status = LandTransferApplication::STATUS_APPROVED
+        string $status = LandTransferApplication::STATUS_APPROVED,
+        array $overrides = []
     ): LandTransferApplication {
         $historicalNegative = in_array($status, [
             LandTransferApplication::STATUS_NOT_APPROVED,
             LandTransferApplication::STATUS_DENIED,
         ], true);
 
-        $application = LandTransferApplication::create([
+        $attributes = [
             'application_code' => $code,
             'transferor_name' => 'Juan Transferor',
             'transferors' => [[
@@ -402,8 +432,9 @@ class FinalLtcForm5Test extends TestCase
             'decision_date' => '2026-08-22',
             'decision_recorded_by' => $staff->id,
             'decision_recorded_at' => '2026-08-22 08:00:00',
-            'date_of_clearance_release' => '2026-08-22',
-        ]);
+        ];
+
+        $application = LandTransferApplication::create(array_merge($attributes, $overrides));
 
         if ($historicalNegative) {
             DB::table('land_transfer_applications')
