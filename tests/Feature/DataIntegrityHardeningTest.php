@@ -257,13 +257,13 @@ class DataIntegrityHardeningTest extends TestCase
             'area_hectares' => 4.0000,
         ]);
 
-        LandTransferApplication::withoutEvents(function () use ($application, $transferees, $applicationParcel) {
-            $application->transferees = [
+        // Explicit out-of-band corruption fixture; runtime quiet writes are blocked.
+        DB::table('land_transfer_applications')->where('id', $application->id)->update([
+            'transferees' => json_encode([
                 $this->partyRow($transferees[0], [$applicationParcel->id => 0.5000]),
                 $this->partyRow($transferees[1], [$applicationParcel->id => 0.5000]),
-            ];
-            $application->save();
-        });
+            ]),
+        ]);
 
         $this->actingAs($staff)
             ->post(route('staff.applications.submit', $application), [
@@ -654,10 +654,10 @@ class DataIntegrityHardeningTest extends TestCase
             'area_hectares' => 1.0000,
         ]);
 
-        LandTransferApplication::withoutEvents(function () use ($application) {
-            $application->transferor_name = 'Drifted summary';
-            $application->save();
-        });
+        // Explicit pre-existing database drift fixture.
+        DB::table('land_transfer_applications')->where('id', $application->id)->update([
+            'transferor_name' => 'Drifted summary',
+        ]);
 
         DB::table('application_parcels')
             ->where('id', $applicationParcel->id)

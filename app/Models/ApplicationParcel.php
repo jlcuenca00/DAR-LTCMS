@@ -11,6 +11,8 @@ use Illuminate\Validation\ValidationException;
 
 class ApplicationParcel extends Model
 {
+    use \App\Models\Concerns\RequiresModelEvents;
+
     protected $table = 'application_parcels';
 
     protected $fillable = [
@@ -35,6 +37,12 @@ class ApplicationParcel extends Model
     protected static function booted(): void
     {
         static::saving(function (ApplicationParcel $applicationParcel) {
+            if ($applicationParcel->exists && $applicationParcel->isDirty('land_transfer_application_id')) {
+                throw ValidationException::withMessages([
+                    'application' => 'Persisted application child records cannot be reassigned to another application.',
+                ]);
+            }
+
             app(ParcelAreaIntegrityService::class)->assertApplicationParcelArea($applicationParcel);
 
             $application = $applicationParcel->land_transfer_application_id

@@ -8,6 +8,8 @@ use Illuminate\Support\Collection;
 
 class LandTransferApplication extends Model
 {
+    use \App\Models\Concerns\RequiresModelEvents;
+
     /**
      * DAR A.O. No. 4, s. 2021 administrative workflow statuses.
      *

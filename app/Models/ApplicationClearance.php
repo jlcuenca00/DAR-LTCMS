@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class ApplicationClearance extends Model
 {
+    use \App\Models\Concerns\RequiresModelEvents;
+
     private bool $authorizedCreation = false;
 
     public function runAuthorizedCreation(callable $callback): mixed

@@ -8,6 +8,8 @@ use Illuminate\Validation\ValidationException;
 
 class ApplicationComplianceNotice extends Model
 {
+    use \App\Models\Concerns\RequiresModelEvents;
+
     public const CATEGORY_MISSING_REQUIREMENT = 'missing_requirement';
     public const CATEGORY_INCORRECT_DOCUMENT = 'incorrect_incomplete_document';
     public const CATEGORY_ADDITIONAL_INFORMATION = 'additional_information';
