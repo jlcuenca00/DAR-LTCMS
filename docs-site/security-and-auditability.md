@@ -12,7 +12,7 @@ Users receive only the functions required for their authorized role.
 
 ## Final decision protection
 
-Applications in **Approved** or **Denied** status are treated as final. Substantive changes and document uploads are locked.
+Current **Approved** applications are final and protected against substantive changes and document uploads. Older Not Approved / Denied records are historical finalized records and remain read-only. Approved core application data is also guarded at the model level; only the authorized forward release lifecycle may be recorded afterward.
 
 ## Audit trails
 

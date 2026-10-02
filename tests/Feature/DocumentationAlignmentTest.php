@@ -56,6 +56,36 @@ class DocumentationAlignmentTest extends TestCase
         $this->assertStringContainsString('New Not Approved / Denied decisions cannot be created by the current workflow.', $baseline);
     }
 
+    public function test_public_docs_describe_approved_as_the_only_current_final_decision(): void
+    {
+        $paths = [
+            'README.md',
+            'docs-site/faq.md',
+            'docs-site/guides/dar-staff.md',
+            'docs-site/clearance-workflow.md',
+            'docs-site/security-and-auditability.md',
+            'ISO_IEC_25010_2023_SYSTEM_READINESS.md',
+        ];
+
+        foreach ($paths as $path) {
+            $content = $this->read($path);
+
+            $this->assertStringContainsString('Approved', $content, "{$path} must document the current Approved decision.");
+            $this->assertStringNotContainsString('Approved/Not Approved final decisions', $content, "{$path} still describes two current final decisions.");
+            $this->assertStringNotContainsString('Approved or Not Approved (FINAL)', $content, "{$path} still shows the obsolete two-decision workflow.");
+            $this->assertStringNotContainsString('application becomes either **Approved** or **Not Approved**', $content, "{$path} still presents Not Approved as a current outcome.");
+        }
+
+        $readme = $this->read('README.md');
+        $this->assertStringContainsString('**Approved** is the only current final application decision state.', $readme);
+        $this->assertStringContainsString('Historical database values', $readme);
+
+        $workflow = $this->read('docs-site/clearance-workflow.md');
+        $this->assertStringContainsString('Approved is the only current final application decision', $workflow);
+        $this->assertStringContainsString('Request Compliance', $workflow);
+        $this->assertStringContainsString('Historical Not Approved / Denied records remain read-only', $workflow);
+    }
+
     public function test_final_baseline_preserves_clearance_only_scope_and_roles(): void
     {
         $baseline = $this->read('docs/FINAL_SYSTEM_BASELINE.md');

@@ -27,7 +27,7 @@ DAR-LTCMS supports:
 - monitoring and report generation
 - LTC form and clearance output generation
 
-The platform is an administrative processing and decision-support system. An **Approved** or **Not Approved** application records the final administrative clearance decision. Release of the signed result is tracked separately. Neither approval nor release automatically transfers land ownership, mutates Registry of Deeds records, or conclusively executes a legal land transfer. Any actual ownership transfer or registry alteration remains subject to separate legal and administrative procedures outside DAR-LTCMS automatic operations.
+The platform is an administrative processing and decision-support system. **Approved** is the only current final administrative clearance decision recorded by DAR-LTCMS. Issues that prevent approval remain open through **Compliance Required / Request Compliance** and resume at the saved workflow stage after resolution. Older Not Approved / Denied records remain historical and read-only. Release of the signed result is tracked separately. Neither approval nor release automatically transfers land ownership, mutates Registry of Deeds records, or conclusively executes a legal land transfer. Any actual ownership transfer or registry alteration remains subject to separate legal and administrative procedures outside DAR-LTCMS automatic operations.
 
 ## User Roles
 
@@ -83,18 +83,20 @@ With PARPO II for Decision
         ↓
 PARPO II Decision Ready to Record
         ↓
-Approved or Not Approved (FINAL)
+Approved (FINAL)
         ↓
 Signed Form No. 5 / Ready for Release
         ↓
 Released to Client
 ```
 
-**Approved** and **Not Approved** are the current final application decision states. Once either decision is recorded, substantive editing and supporting-document changes are locked by the UI and backend.
+**Approved** is the only current final application decision state. Once Approved is recorded, substantive editing and supporting-document changes are locked by the UI, backend, and model-level integrity guard.
 
-Client release is tracked separately through the release status. Recording a release never changes the final Approved/Not Approved decision and never transfers ownership or mutates registry records.
+**Request Compliance** may be used from any active workflow stage when an issue blocks processing. It keeps the same application open and resumes the saved stage after the compliance notice is resolved.
 
-Historical database values such as `released`, `not_approved`, `pending_review`, and `draft` remain readable only for backward compatibility.
+Client release is tracked separately through the release status. Recording a release never changes the final Approved decision and never transfers ownership or mutates registry records.
+
+Historical database values such as `released`, `not_approved`, `denied`, `pending_review`, and `draft` remain readable only for backward compatibility and cannot be created as current negative decisions.
 
 ## Core Modules
 
@@ -124,7 +126,7 @@ DAR-LTCMS supports LTC-related forms used in the application workflow, including
 - **LTC Form No. 4** – review checklist
 - **LTC Form No. 5** – final Land Transfer Clearance certification/output
 
-For LTC Form No. 5, the current implementation preserves annual LTC numbering/page references, linked Parcel details, GRANTED/DENIED output, the recorded PARPO II decision officer/signatory from the immutable final-decision metadata, notarial details, and 8.5 x 13 inch print/PDF behavior.
+For LTC Form No. 5, the current implementation preserves annual LTC numbering/page references, linked Parcel details, GRANTED output for current Approved decisions, preserved DENIED rendering only for historical negative records, the recorded PARPO II decision officer/signatory from immutable final-decision metadata, notarial details, and 8.5 x 13 inch print/PDF behavior.
 
 Final outputs remain administrative clearance records only and do not automatically alter ownership or registry records.
 

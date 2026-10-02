@@ -8,13 +8,13 @@ No. Approval records the administrative clearance decision. It does not automati
 
 No. Applications are manually encoded and processed by authorized DAR Staff.
 
-## Why can I not edit an Approved or Not Approved application?
+## Why can I not edit an Approved or historical finalized application?
 
-Approved and Not Approved are final decision states. DAR-LTCMS locks substantive changes to preserve the integrity and traceability of the final record.
+Approved is the only current final decision state. DAR-LTCMS locks substantive changes after approval to preserve integrity and traceability. Older Not Approved / Denied records remain historical and read-only.
 
 ## Is release the same as approval?
 
-No. Approval or denial is the final application decision. Release is a separate record showing whether the signed clearance output has been delivered to the client.
+No. Approved is the only current final application decision. Release is a separate record showing whether the signed clearance output has been delivered to the client. Issues that block approval remain open through Compliance Required rather than becoming a new negative final decision.
 
 ## Can landowners see other landowners' parcels?
 
