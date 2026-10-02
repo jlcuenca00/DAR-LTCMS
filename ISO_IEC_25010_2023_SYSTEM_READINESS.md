@@ -4,7 +4,7 @@ This document maps implemented DAR-LTCMS controls to the nine product-quality ch
 
 ## 1. Functional Suitability
 
-**Implemented controls:** Staff-encoded applications, role-specific portals, Landowner/Parcel/Landholding records, supporting-document review, multi-party linking, DAR office workflow tracking, Approved/Not Approved final decisions, separate release tracking, LTC Form No. 5 output, Monitoring Reports, notifications, and Audit Logs.
+**Implemented controls:** Staff-encoded applications, role-specific portals, Landowner/Parcel/Landholding records, supporting-document review, multi-party linking, DAR office workflow tracking, an Approved-only current final decision with Compliance Required for blocking issues, separate release tracking, LTC Form No. 5 output, Monitoring Reports, notifications, and Audit Logs.
 
 **Scope boundary:** these functions support clearance processing and records management only. An Approved clearance or a recorded client release does not automatically transfer land ownership or alter registry records.
 
@@ -28,7 +28,7 @@ Final usability evaluation should use Staff, Landowner, and Geodetic scenarios t
 
 ## 5. Reliability
 
-Database transactions protect important multi-record actions. Approved/Not Approved applications are locked against further editing and supporting-document mutation. Clearance generation preserves final output data. The `/up` health endpoint is available.
+Database transactions protect important multi-record actions. Approved applications are locked against further core editing and supporting-document mutation, including model-level final-record protection. Historical Not Approved / Denied records remain read-only compatibility records. Clearance generation preserves final output data. The `/up` health endpoint is available.
 
 Production release preparation now includes database/private-file backups, exact deployed-commit recording, a read-only release check, smoke testing, and controlled rollback guidance.
 
