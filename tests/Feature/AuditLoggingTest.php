@@ -55,6 +55,7 @@ class AuditLoggingTest extends TestCase
         $this->actingAs($staffUser)
             ->post(route('staff.applications.submit', $application), [
                 'expected_status' => $application->fresh()->status,
+                'expected_workflow_revision' => $application->fresh()->workflow_revision,
                 'payment_order_reference' => 'OP-AUDIT-ADVANCE-001',
             ])
             ->assertSessionHas('success');
