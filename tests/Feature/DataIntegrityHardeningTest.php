@@ -267,6 +267,7 @@ class DataIntegrityHardeningTest extends TestCase
         $this->actingAs($staff)
             ->post(route('staff.applications.submit', $application), [
                 'expected_status' => $application->fresh()->status,
+            'expected_workflow_revision' => $application->fresh()->workflow_revision,
             ])
             ->assertSessionHasErrors(['validation', 'transferee_shares']);
 
