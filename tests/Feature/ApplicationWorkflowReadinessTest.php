@@ -33,6 +33,7 @@ class ApplicationWorkflowReadinessTest extends TestCase
         $this->actingAs($staff)
             ->post(route('staff.applications.submit', $application), [
                 'expected_status' => $application->fresh()->status,
+            'expected_workflow_revision' => $application->fresh()->workflow_revision,
             ])
             ->assertSessionHasErrors('validation');
 
@@ -225,6 +226,7 @@ class ApplicationWorkflowReadinessTest extends TestCase
         $this->actingAs($staff)
             ->post(route('staff.applications.submit', $futureOr), [
                 'expected_status' => $futureOr->fresh()->status,
+                'expected_workflow_revision' => $futureOr->fresh()->workflow_revision,
                 'or_number' => 'OR-FUTURE',
                 'or_date' => now()->addDay()->toDateString(),
                 'amount_paid' => config('dar_ltc.filing_fee', 2000),
@@ -247,6 +249,7 @@ class ApplicationWorkflowReadinessTest extends TestCase
         $this->actingAs($staff)
             ->post(route('staff.applications.submit', $earlyOr), [
                 'expected_status' => $earlyOr->fresh()->status,
+                'expected_workflow_revision' => $earlyOr->fresh()->workflow_revision,
                 'or_number' => 'OR-EARLY',
                 'or_date' => now()->subDay()->toDateString(),
                 'amount_paid' => config('dar_ltc.filing_fee', 2000),
@@ -273,6 +276,8 @@ class ApplicationWorkflowReadinessTest extends TestCase
 
         $this->actingAs($staff)
             ->post(route('staff.applications.approve', $application), [
+                'expected_status' => $application->fresh()->status,
+                'expected_workflow_revision' => $application->fresh()->workflow_revision,
                 'final_decision_confirmation' => '1',
                 'decision_officer_name' => 'PARPO II Test Signatory',
                 'decision_date' => now()->subDay()->toDateString(),
@@ -296,6 +301,7 @@ class ApplicationWorkflowReadinessTest extends TestCase
         $this->actingAs($staff)
             ->post(route('staff.applications.submit', $application), [
                 'expected_status' => $application->fresh()->status,
+            'expected_workflow_revision' => $application->fresh()->workflow_revision,
             ])
             ->assertSessionHasErrors(['validation', 'parcel']);
 
@@ -322,6 +328,7 @@ class ApplicationWorkflowReadinessTest extends TestCase
         $this->actingAs($staff)
             ->post(route('staff.applications.submit', $application), [
                 'expected_status' => $application->fresh()->status,
+            'expected_workflow_revision' => $application->fresh()->workflow_revision,
             ])
             ->assertSessionHasErrors(['validation', 'parcel']);
 
@@ -346,6 +353,7 @@ class ApplicationWorkflowReadinessTest extends TestCase
         $this->actingAs($staff)
             ->post(route('staff.applications.submit', $application), [
                 'expected_status' => $application->fresh()->status,
+            'expected_workflow_revision' => $application->fresh()->workflow_revision,
             ])
             ->assertSessionHasErrors(['validation', 'parcel']);
 
@@ -365,6 +373,7 @@ class ApplicationWorkflowReadinessTest extends TestCase
         $this->actingAs($staff)
             ->post(route('staff.applications.submit', $application), [
                 'expected_status' => $application->fresh()->status,
+            'expected_workflow_revision' => $application->fresh()->workflow_revision,
             ])
             ->assertSessionHasErrors(['validation', 'form4']);
 
@@ -384,6 +393,8 @@ class ApplicationWorkflowReadinessTest extends TestCase
 
         $this->actingAs($staff)
             ->post(route('staff.applications.approve', $missingParcel), [
+                'expected_status' => $missingParcel->fresh()->status,
+                'expected_workflow_revision' => $missingParcel->fresh()->workflow_revision,
                 'final_decision_confirmation' => '1',
                 'decision_officer_name' => 'PARPO II Test Signatory',
                 'decision_date' => now()->toDateString(),
@@ -402,6 +413,8 @@ class ApplicationWorkflowReadinessTest extends TestCase
 
         $this->actingAs($staff)
             ->post(route('staff.applications.approve', $missingForm4), [
+                'expected_status' => $missingForm4->fresh()->status,
+                'expected_workflow_revision' => $missingForm4->fresh()->workflow_revision,
                 'final_decision_confirmation' => '1',
                 'decision_officer_name' => 'PARPO II Test Signatory',
                 'decision_date' => now()->toDateString(),
@@ -436,6 +449,7 @@ class ApplicationWorkflowReadinessTest extends TestCase
         $this->actingAs($staff)
             ->post(route('staff.applications.compliance.request', $application), [
                 'expected_status' => $application->fresh()->status,
+                'expected_workflow_revision' => $application->fresh()->workflow_revision,
                 'category' => ApplicationComplianceNotice::CATEGORY_OTHER,
                 'other_category' => 'PARPO clarification requested',
                 'details' => 'Bring the original supporting instrument for clarification before approval can be recorded.',
@@ -455,6 +469,7 @@ class ApplicationWorkflowReadinessTest extends TestCase
         $this->actingAs($staff)
             ->post(route('staff.applications.compliance.resolve', $application), [
                 'expected_status' => $application->fresh()->status,
+                'expected_workflow_revision' => $application->fresh()->workflow_revision,
                 'compliance_notice_id' => $application->activeComplianceNotice()->value('id'),
                 'resolution_note' => 'Original instrument was presented and reviewed at the office.',
             ])
@@ -469,6 +484,8 @@ class ApplicationWorkflowReadinessTest extends TestCase
 
         $this->actingAs($staff)
             ->post(route('staff.applications.approve', $application), [
+                'expected_status' => $application->fresh()->status,
+                'expected_workflow_revision' => $application->fresh()->workflow_revision,
                 'final_decision_confirmation' => '1',
                 'decision_officer_name' => 'PARPO II Compliance Test Signatory',
                 'decision_date' => now()->toDateString(),
@@ -499,6 +516,7 @@ class ApplicationWorkflowReadinessTest extends TestCase
             $this->actingAs($staff)
                 ->post(route('staff.applications.compliance.request', $application), [
                 'expected_status' => $application->fresh()->status,
+                    'expected_workflow_revision' => $application->fresh()->workflow_revision,
                     'category' => ApplicationComplianceNotice::CATEGORY_INCORRECT_DOCUMENT,
                     'details' => 'Correct the LTC Form No. 4 review details before processing continues.',
                     'requested_items' => 'Corrected LTC Form No. 4',
@@ -534,6 +552,7 @@ class ApplicationWorkflowReadinessTest extends TestCase
             $this->actingAs($staff)
                 ->post(route('staff.applications.compliance.resolve', $application), [
                 'expected_status' => $application->fresh()->status,
+                'expected_workflow_revision' => $application->fresh()->workflow_revision,
                 'compliance_notice_id' => $application->activeComplianceNotice()->value('id'),
                     'resolution_note' => 'Corrected LTC Form No. 4 reviewed.',
                 ])
@@ -555,6 +574,7 @@ class ApplicationWorkflowReadinessTest extends TestCase
         $this->actingAs($staff)
             ->post(route('staff.applications.compliance.request', $application), [
                 'expected_status' => $application->fresh()->status,
+                'expected_workflow_revision' => $application->fresh()->workflow_revision,
                 'category' => ApplicationComplianceNotice::CATEGORY_OTHER,
                 'details' => 'A case-specific issue requires clarification.',
             ])
@@ -578,6 +598,7 @@ class ApplicationWorkflowReadinessTest extends TestCase
         $this->actingAs($staff)
             ->post(route('staff.applications.submit', $application), [
                 'expected_status' => $application->fresh()->status,
+                'expected_workflow_revision' => $application->fresh()->workflow_revision,
                 'payment_order_reference' => 'OP-READINESS-FULL-FLOW',
             ])
             ->assertSessionHas('success');
@@ -588,6 +609,7 @@ class ApplicationWorkflowReadinessTest extends TestCase
         $this->actingAs($staff)
             ->post(route('staff.applications.submit', $application), [
                 'expected_status' => $application->fresh()->status,
+                'expected_workflow_revision' => $application->fresh()->workflow_revision,
                 'or_number' => 'OR-READINESS-001',
                 'or_date' => now()->toDateString(),
                 'amount_paid' => config('dar_ltc.filing_fee', 2000),
@@ -600,6 +622,7 @@ class ApplicationWorkflowReadinessTest extends TestCase
         $this->actingAs($staff)
             ->post(route('staff.applications.submit', $application), [
                 'expected_status' => $application->fresh()->status,
+            'expected_workflow_revision' => $application->fresh()->workflow_revision,
             ])
             ->assertSessionHas('success');
         $application->refresh();
@@ -609,6 +632,7 @@ class ApplicationWorkflowReadinessTest extends TestCase
         $this->actingAs($staff)
             ->post(route('staff.applications.submit', $application), [
                 'expected_status' => $application->fresh()->status,
+            'expected_workflow_revision' => $application->fresh()->workflow_revision,
             ])
             ->assertSessionHas('success');
         $application->refresh();
@@ -618,6 +642,7 @@ class ApplicationWorkflowReadinessTest extends TestCase
         $this->actingAs($staff)
             ->post(route('staff.applications.submit', $application), [
                 'expected_status' => $application->fresh()->status,
+                'expected_workflow_revision' => $application->fresh()->workflow_revision,
                 'csw_reference' => 'CSW-READINESS-001',
                 'csw_notes' => 'Completed Staff Work regression coverage.',
             ])
@@ -628,6 +653,7 @@ class ApplicationWorkflowReadinessTest extends TestCase
         $this->actingAs($staff)
             ->post(route('staff.applications.submit', $application), [
                 'expected_status' => $application->fresh()->status,
+            'expected_workflow_revision' => $application->fresh()->workflow_revision,
             ])
             ->assertSessionHas('success');
         $application->refresh();
@@ -636,6 +662,7 @@ class ApplicationWorkflowReadinessTest extends TestCase
         $this->actingAs($staff)
             ->post(route('staff.applications.submit', $application), [
                 'expected_status' => $application->fresh()->status,
+            'expected_workflow_revision' => $application->fresh()->workflow_revision,
             ])
             ->assertSessionHas('success');
         $application->refresh();
@@ -657,6 +684,8 @@ class ApplicationWorkflowReadinessTest extends TestCase
         // PARPO II approval is the final application decision and freezes edits.
         $this->actingAs($staff)
             ->post(route('staff.applications.approve', $application), [
+                'expected_status' => $application->fresh()->status,
+                'expected_workflow_revision' => $application->fresh()->workflow_revision,
                 'final_decision_confirmation' => '1',
                 'decision_officer_name' => 'PARPO II Test Signatory',
                 'decision_date' => now()->toDateString(),
@@ -675,7 +704,9 @@ class ApplicationWorkflowReadinessTest extends TestCase
         // Delivery is a separate administrative event; it must not change the
         // Approved final decision or mutate ownership records.
         $this->actingAs($staff)
-            ->post(route('staff.applications.ready_for_release', $application))
+            ->post(route('staff.applications.ready_for_release', $application), [
+                'expected_workflow_revision' => $application->fresh()->workflow_revision,
+            ])
             ->assertSessionHas('success');
 
         $application->refresh();
@@ -684,7 +715,9 @@ class ApplicationWorkflowReadinessTest extends TestCase
         $readyAt = $application->ready_for_release_at;
 
         $this->actingAs($staff)
-            ->post(route('staff.applications.ready_for_release', $application))
+            ->post(route('staff.applications.ready_for_release', $application), [
+                'expected_workflow_revision' => $application->fresh()->workflow_revision,
+            ])
             ->assertSessionHasErrors('release');
 
         $application->refresh();
@@ -692,6 +725,7 @@ class ApplicationWorkflowReadinessTest extends TestCase
 
         $this->actingAs($staff)
             ->post(route('staff.applications.release', $application), [
+                'expected_workflow_revision' => $application->fresh()->workflow_revision,
                 'release_confirmation' => '1',
                 'release_recipient_name' => 'Authorized Recipient',
                 'release_logbook_reference' => 'LOG-READINESS-001',
@@ -728,6 +762,8 @@ class ApplicationWorkflowReadinessTest extends TestCase
 
         $this->actingAs($staff)
             ->post(route('staff.applications.approve', $application), [
+                'expected_status' => $application->fresh()->status,
+                'expected_workflow_revision' => $application->fresh()->workflow_revision,
                 'final_decision_confirmation' => '1',
                 'decision_officer_name' => 'PARPO II Shared Lock Signatory',
                 'decision_date' => now()->toDateString(),
@@ -766,6 +802,8 @@ class ApplicationWorkflowReadinessTest extends TestCase
 
         $this->actingAs($staff)
             ->post(route('staff.applications.approve', $application), [
+                'expected_status' => $application->fresh()->status,
+                'expected_workflow_revision' => $application->fresh()->workflow_revision,
                 'final_decision_confirmation' => '1',
                 'decision_officer_name' => 'PARPO II Release Integrity Signatory',
                 'decision_date' => now()->toDateString(),
@@ -786,7 +824,9 @@ class ApplicationWorkflowReadinessTest extends TestCase
             ]);
 
         $this->actingAs($staff)
-            ->post(route('staff.applications.ready_for_release', $application))
+            ->post(route('staff.applications.ready_for_release', $application), [
+                'expected_workflow_revision' => $application->fresh()->workflow_revision,
+            ])
             ->assertSessionHasErrors('release_integrity');
 
         $this->assertSame(
@@ -799,7 +839,9 @@ class ApplicationWorkflowReadinessTest extends TestCase
             ->update(['ready_for_release_at' => null]);
 
         $this->actingAs($staff)
-            ->post(route('staff.applications.ready_for_release', $application))
+            ->post(route('staff.applications.ready_for_release', $application), [
+                'expected_workflow_revision' => $application->fresh()->workflow_revision,
+            ])
             ->assertSessionHas('success');
 
         DB::table('land_transfer_applications')
@@ -819,6 +861,7 @@ class ApplicationWorkflowReadinessTest extends TestCase
 
         $this->actingAs($staff)
             ->post(route('staff.applications.release', $application), [
+                'expected_workflow_revision' => $application->fresh()->workflow_revision,
                 'release_confirmation' => '1',
                 'release_recipient_name' => 'Authorized Recipient',
             ])
@@ -840,6 +883,8 @@ class ApplicationWorkflowReadinessTest extends TestCase
 
         $this->actingAs($staff)
             ->post(route('staff.applications.approve', $application), [
+                'expected_status' => $application->fresh()->status,
+                'expected_workflow_revision' => $application->fresh()->workflow_revision,
                 'final_decision_confirmation' => '1',
                 'decision_officer_name' => 'PARPO II Test Signatory',
                 'decision_date' => now()->toDateString(),
