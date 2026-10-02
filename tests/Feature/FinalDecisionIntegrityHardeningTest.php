@@ -662,14 +662,17 @@ class FinalDecisionIntegrityHardeningTest extends TestCase
             'encoded_by' => $staff->id,
         ]);
 
-        $applicationParcel = ApplicationParcel::create([
+        $applicationParcelId = DB::table('application_parcels')->insertGetId([
             'land_transfer_application_id' => $application->id,
             'parcel_id' => $parcel->id,
             'parcel_code' => $parcel->parcel_code,
             'title_no' => $parcel->title_no,
             'lot_number' => $parcel->lot_number,
             'area_hectares' => 1.0000,
+            'created_at' => now(),
+            'updated_at' => now(),
         ]);
+        $applicationParcel = ApplicationParcel::findOrFail($applicationParcelId);
 
         $this->actingAs($staff)
             ->delete(route('staff.applications.parcels.destroy', [$application, $applicationParcel]))
@@ -798,14 +801,17 @@ class FinalDecisionIntegrityHardeningTest extends TestCase
             'date_of_clearance_release' => now()->toDateString(),
         ]);
 
-        $applicationParcel = ApplicationParcel::create([
+        $applicationParcelId = DB::table('application_parcels')->insertGetId([
             'land_transfer_application_id' => $application->id,
             'parcel_id' => $parcel->id,
             'parcel_code' => $parcel->parcel_code,
             'title_no' => $parcel->title_no,
             'lot_number' => $parcel->lot_number,
             'area_hectares' => 1.0000,
+            'created_at' => now(),
+            'updated_at' => now(),
         ]);
+        $applicationParcel = ApplicationParcel::findOrFail($applicationParcelId);
 
         $service = app(ApplicationClearanceService::class);
         $first = $service->generateForDecision($application, $staff->id);
@@ -826,7 +832,9 @@ class FinalDecisionIntegrityHardeningTest extends TestCase
         DB::table('land_transfer_applications')
             ->where('id', $application->id)
             ->update(['municipality' => 'Bais City']);
-        $applicationParcel->update(['area_hectares' => 9.9999]);
+        DB::table('application_parcels')
+            ->where('id', $applicationParcel->id)
+            ->update(['area_hectares' => 9.9999]);
 
         $second = $service->generateForDecision($application->fresh(), $staff->id);
 
@@ -858,13 +866,15 @@ class FinalDecisionIntegrityHardeningTest extends TestCase
             'reviewed_at' => now(),
         ]);
 
-        ApplicationParcel::create([
+        DB::table('application_parcels')->insert([
             'land_transfer_application_id' => $application->id,
             'parcel_id' => $parcel->id,
             'parcel_code' => $parcel->parcel_code,
             'title_no' => $parcel->title_no,
             'lot_number' => $parcel->lot_number,
             'area_hectares' => 1.0000,
+            'created_at' => now(),
+            'updated_at' => now(),
         ]);
 
         $clearance = app(ApplicationClearanceService::class)
