@@ -18,7 +18,7 @@ class ExampleTest extends TestCase
             ->assertSee('Transferee — person receiving the land')
             ->assertSee('When needed:')
             ->assertSee('Legal Completeness Review')
-            ->assertSee('Approved or Not Approved')
+            ->assertSee('Approved is the only current final application decision in DAR-LTCMS.')
             ->assertSee('Landowners do not create applications in the system.')
             ->assertSee('DAR Negros Oriental Legal Assistance Division')
             ->assertSee('522-7144')
