@@ -328,6 +328,64 @@ class ApplicationWorkflowReadinessTest extends TestCase
         );
     }
 
+    public function test_form4_remains_editable_during_compliance_when_resume_stage_is_form4_review(): void
+    {
+        $staff = $this->staffUser();
+
+        foreach ([
+            LandTransferApplication::STATUS_ENDORSED_LTI,
+            LandTransferApplication::STATUS_RETURNED_TO_LEGAL,
+        ] as $index => $resumeStatus) {
+            $application = $this->application(
+                $staff,
+                $resumeStatus,
+                'READINESS-COMPLIANCE-FORM4-' . $index
+            );
+
+            $this->actingAs($staff)
+                ->post(route('staff.applications.compliance.request', $application), [
+                    'category' => ApplicationComplianceNotice::CATEGORY_INCORRECT_DOCUMENT,
+                    'details' => 'Correct the LTC Form No. 4 review details before processing continues.',
+                    'requested_items' => 'Corrected LTC Form No. 4',
+                ])
+                ->assertSessionHas('success');
+
+            $application->refresh();
+
+            $this->assertSame(
+                LandTransferApplication::STATUS_RETURNED_FOR_COMPLIANCE,
+                $application->status
+            );
+            $this->assertTrue($application->canEditForm4());
+
+            $this->actingAs($staff)
+                ->patch(route('staff.applications.form4.update', $application), [
+                    'ltc_form4_subject_land_findings' => ['ra6657_not_covered_not_tenanted_retained_area'],
+                    'ltc_form4_recommendation_findings' => ['application_complete'],
+                    'ltc_form4_recommendation_decision' => 'approval',
+                    'ltc_form4_certified_at' => now()->toDateString(),
+                    'ltc_form4_certifying_officer_name' => 'Compliance Review Officer',
+                ])
+                ->assertSessionHas('success');
+
+            $application->refresh();
+
+            $this->assertSame(
+                LandTransferApplication::STATUS_RETURNED_FOR_COMPLIANCE,
+                $application->status
+            );
+            $this->assertSame('approval', $application->ltc_form4_recommendation_decision);
+
+            $this->actingAs($staff)
+                ->post(route('staff.applications.compliance.resolve', $application), [
+                    'resolution_note' => 'Corrected LTC Form No. 4 reviewed.',
+                ])
+                ->assertSessionHas('success');
+
+            $this->assertSame($resumeStatus, $application->fresh()->status);
+        }
+    }
+
     public function test_other_compliance_category_requires_custom_text(): void
     {
         $staff = $this->staffUser();
