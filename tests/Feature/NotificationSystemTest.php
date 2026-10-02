@@ -21,6 +21,7 @@ use Tests\TestCase;
 class NotificationSystemTest extends TestCase
 {
     use RefreshDatabase;
+    use \Tests\Concerns\InsertsClearanceFixtures;
 
     public function test_user_can_view_own_notifications(): void
     {
@@ -485,7 +486,7 @@ class NotificationSystemTest extends TestCase
             'decision_recorded_at' => now(),
         ]);
 
-        ApplicationClearance::create([
+        $this->insertClearanceFixture([
             'land_transfer_application_id' => $application->id,
             'clearance_number' => '1803-2026-NOTIF-READY (1)',
             'decision_status' => LandTransferApplication::STATUS_APPROVED,

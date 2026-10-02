@@ -46,6 +46,7 @@ class ApplicationClearanceService
                     ?? (filled($parcelArea) ? bcmul($parcelArea, '10000', 2) : null);
 
                 $parcelSnapshot[] = [
+                    'application_parcel_id' => (int) $applicationParcel->id,
                     'parcel_id' => $applicationParcel->parcel_id,
                     'parcel_code' => $applicationParcel->parcel_code ?? $linkedParcel?->parcel_code,
                     'parcel_number' => $applicationParcel->parcel_code ?? $linkedParcel?->parcel_code,
@@ -103,7 +104,7 @@ class ApplicationClearanceService
                 $sequence++;
             } while (ApplicationClearance::where('clearance_number', $clearanceNumber)->exists());
 
-            $clearance = ApplicationClearance::create([
+            $clearance = new ApplicationClearance([
                 'land_transfer_application_id' => $application->id,
                 'clearance_number' => $clearanceNumber,
                 'decision_status' => $application->status,
@@ -128,6 +129,8 @@ class ApplicationClearanceService
                 'generated_by' => $userId,
                 'generated_at' => now(),
             ]);
+
+            $clearance->runAuthorizedCreation(fn () => $clearance->save());
 
             AuditLogger::record(
                 'clearance_generated',
@@ -179,7 +182,7 @@ class ApplicationClearanceService
         };
 
         return [
-            'snapshot_version' => 1,
+            'snapshot_version' => 2,
             'owner_name' => $metaFirst(['title_owner_names', 'document_owner_names'])
                 ?: $application->transferorDisplayName(),
             'subject_of' => $metaFirst(['transfer_document_title'])

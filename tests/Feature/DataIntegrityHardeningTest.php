@@ -25,6 +25,7 @@ use Tests\TestCase;
 class DataIntegrityHardeningTest extends TestCase
 {
     use RefreshDatabase;
+    use \Tests\Concerns\InsertsClearanceFixtures;
 
     public function test_parcel_hectares_are_canonical_and_square_meters_are_derived(): void
     {
@@ -689,7 +690,7 @@ class DataIntegrityHardeningTest extends TestCase
             ]);
         $application->refresh();
 
-        ApplicationClearance::create([
+        $this->insertClearanceFixture([
             'land_transfer_application_id' => $application->id,
             'clearance_number' => '1803-2026-9901 (1)',
             'decision_status' => LandTransferApplication::STATUS_DENIED,

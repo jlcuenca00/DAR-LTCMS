@@ -13,6 +13,7 @@ use Tests\TestCase;
 class FinalUatTest extends TestCase
 {
     use RefreshDatabase;
+    use \Tests\Concerns\InsertsClearanceFixtures;
 
     public function test_landowner_application_portal_only_shows_records_linked_to_signed_in_landowner(): void
     {
@@ -116,7 +117,7 @@ class FinalUatTest extends TestCase
             'decision_date' => now()->toDateString(),
         ]);
 
-        ApplicationClearance::create([
+        $this->insertClearanceFixture([
             'land_transfer_application_id' => $application->id,
             'clearance_number' => '1803-2026-UAT (1)',
             'decision_status' => LandTransferApplication::STATUS_APPROVED,
