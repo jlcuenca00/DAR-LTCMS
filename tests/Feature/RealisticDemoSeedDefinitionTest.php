@@ -17,7 +17,7 @@ class RealisticDemoSeedDefinitionTest extends TestCase
         $this->assertStringContainsString("'private_agricultural'", $sql);
         $this->assertStringContainsString("'transferor'", $sql);
         $this->assertStringContainsString("'approved'", $sql);
-        $this->assertStringContainsString("'not_approved'", $sql);
+        $this->assertStringNotContainsString("'not_approved'", $sql);
         $this->assertStringContainsString("'ready_for_release'", $sql);
         $this->assertStringContainsString("'released'", $sql);
         $this->assertStringContainsString('No ownership/registry mutation is simulated.', $sql);
@@ -64,7 +64,6 @@ class RealisticDemoSeedDefinitionTest extends TestCase
             'endorsed_parpo',
             'for_releasing',
             'approved',
-            'not_approved',
         ];
 
         $allowedReleaseStatuses = ['not_ready', 'ready_for_release', 'released'];
@@ -134,7 +133,6 @@ class RealisticDemoSeedDefinitionTest extends TestCase
             'endorsed_parpo',
             'for_releasing',
             'approved',
-            'not_approved',
         ] as $status) {
             $this->assertTrue(
                 $rows->contains(fn (array $row): bool => $row['status'] === $status),
@@ -154,10 +152,21 @@ class RealisticDemoSeedDefinitionTest extends TestCase
             fn (array $row): bool => $row['status'] === 'approved'
                 && $row['release_status'] === 'released'
         ));
-        $this->assertTrue($rows->contains(
-            fn (array $row): bool => $row['status'] === 'not_approved'
-                && $row['release_status'] === 'released'
-        ));
+        $this->assertSame(5, $rows->where('status', 'approved')->count());
+        $this->assertFalse(
+            $rows->contains(fn (array $row): bool => $row['status'] === 'not_approved'),
+            'Production demo data must not create historical negative decisions.'
+        );
+    }
+
+    public function test_production_demo_refresh_validates_approved_only_final_records(): void
+    {
+        $script = $this->read('.github/scripts/refresh-production-demo-data.php');
+
+        $this->assertStringContainsString("->where('status', 'approved')", $script);
+        $this->assertStringContainsString('Expected 5 final Approved demo applications', $script);
+        $this->assertStringNotContainsString("'not_approved'", $script);
+        $this->assertStringNotContainsString('Approved/Not Approved', $script);
     }
 
     public function test_legacy_mock_seed_entry_points_delegate_to_the_canonical_dataset(): void
