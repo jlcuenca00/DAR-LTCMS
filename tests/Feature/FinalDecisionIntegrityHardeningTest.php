@@ -102,11 +102,14 @@ class FinalDecisionIntegrityHardeningTest extends TestCase
             $this->assertFalse($application->isReleaseReady());
 
             $this->actingAs($staff)
-                ->post(route('staff.applications.ready_for_release', $application))
+                ->post(route('staff.applications.ready_for_release', $application), [
+                'expected_workflow_revision' => $application->fresh()->workflow_revision,
+            ])
                 ->assertSessionHasErrors('status');
 
             $this->actingAs($staff)
                 ->post(route('staff.applications.release', $application), [
+                    'expected_workflow_revision' => $application->fresh()->workflow_revision,
                     'release_confirmation' => '1',
                     'release_recipient_name' => 'Legacy Recipient',
                 ])
@@ -601,7 +604,9 @@ class FinalDecisionIntegrityHardeningTest extends TestCase
         );
 
         $this->actingAs($staff)
-            ->post(route('staff.applications.ready_for_release', $application))
+            ->post(route('staff.applications.ready_for_release', $application), [
+                'expected_workflow_revision' => $application->fresh()->workflow_revision,
+            ])
             ->assertSessionHasErrors('clearance');
 
         $this->assertSame(
