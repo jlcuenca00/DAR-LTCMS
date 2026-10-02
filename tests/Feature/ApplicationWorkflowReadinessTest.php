@@ -291,6 +291,37 @@ class ApplicationWorkflowReadinessTest extends TestCase
         ]);
     }
 
+    public function test_child_record_change_invalidates_old_workflow_form_without_status_change(): void
+    {
+        $staff = $this->staffUser();
+        $application = $this->application(
+            $staff,
+            LandTransferApplication::STATUS_ENDORSED_LTI,
+            'READINESS-CHILD-REVISION'
+        );
+
+        $renderedStatus = $application->fresh()->status;
+        $renderedRevision = (int) $application->fresh()->workflow_revision;
+
+        $this->linkParcel($application, 'READINESS-CHILD-REVISION-PARCEL');
+
+        $application->refresh();
+        $this->assertSame($renderedStatus, $application->status);
+        $this->assertGreaterThan($renderedRevision, (int) $application->workflow_revision);
+
+        $this->actingAs($staff)
+            ->post(route('staff.applications.submit', $application), [
+                'expected_status' => $renderedStatus,
+                'expected_workflow_revision' => $renderedRevision,
+            ])
+            ->assertSessionHasErrors('workflow_revision');
+
+        $this->assertSame(
+            LandTransferApplication::STATUS_ENDORSED_LTI,
+            $application->fresh()->status
+        );
+    }
+
     public function test_active_workflow_dates_cannot_be_future_dated(): void
     {
         $staff = $this->staffUser();
