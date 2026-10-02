@@ -273,6 +273,8 @@ class AuditLoggingTest extends TestCase
         $this->actingAs($staffUser)->post(
             route('staff.applications.approve', $application),
             [
+                'expected_status' => $application->fresh()->status,
+                'expected_workflow_revision' => $application->fresh()->workflow_revision,
                 'final_decision_confirmation' => '1',
                 'decision_officer_name' => 'PARPO II Test Signatory',
                 'decision_date' => now()->toDateString(),
