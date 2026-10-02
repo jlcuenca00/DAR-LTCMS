@@ -112,7 +112,7 @@ jobs:
         run: npm run build
 
       - name: Run full Laravel test suite
-        run: php artisan test
+        run: timeout 180s php artisan test --stop-on-failure
 
       - name: Create browser test Staff account
         run: |
