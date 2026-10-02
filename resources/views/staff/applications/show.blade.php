@@ -4031,6 +4031,7 @@
                         @if ($canAdvanceWorkflow)
                             <form method="POST" action="{{ route('staff.applications.submit', $application) }}" class="workflow-decision-card approve-card">
                                 @csrf
+                                <input type="hidden" name="expected_status" value="{{ $application->status }}">
 
                                 <div class="workflow-decision-heading">
                                     <span class="workflow-action-icon" aria-hidden="true">
@@ -4104,6 +4105,7 @@
                         @if ($canRequestCompliance)
                             <form method="POST" action="{{ route('staff.applications.compliance.request', $application) }}" class="workflow-decision-card compliance-card" data-compliance-request-form>
                                 @csrf
+                                <input type="hidden" name="expected_status" value="{{ $application->status }}">
 
                                 <div class="workflow-decision-heading">
                                     <span class="workflow-action-icon warning" aria-hidden="true">
@@ -4159,6 +4161,8 @@
                         @if ($canResolveCompliance && $activeComplianceNotice)
                             <form method="POST" action="{{ route('staff.applications.compliance.resolve', $application) }}" class="workflow-decision-card approve-card">
                                 @csrf
+                                <input type="hidden" name="expected_status" value="{{ $application->status }}">
+                                <input type="hidden" name="compliance_notice_id" value="{{ $activeComplianceNotice->id }}">
 
                                 <div class="workflow-decision-heading">
                                     <span class="workflow-action-icon" aria-hidden="true">
