@@ -109,7 +109,8 @@ class ApplicationPartyShareIntegrityService
         }
 
         if ($changed) {
-            $application->saveQuietly();
+            // Do not suppress the parent application's integrity/final-state observer.
+            $application->save();
         }
     }
 }
