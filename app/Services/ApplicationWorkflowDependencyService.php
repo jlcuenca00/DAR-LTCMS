@@ -78,7 +78,7 @@ class ApplicationWorkflowDependencyService
 
         if ($transfereeIds->isNotEmpty()) {
             $query = LandTransferApplication::query()
-                ->whereKeyNot($application->id)
+                ->where('id', '!=', $application->id)
                 ->whereIn('status', LandholdingAreaValidationService::potentialIncomingExposureStatuses())
                 ->where(function ($query) use ($transfereeIds) {
                     foreach ($transfereeIds as $landownerId) {
