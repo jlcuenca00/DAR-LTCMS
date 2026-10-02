@@ -429,12 +429,12 @@ class NotificationSystemTest extends TestCase
         $this->actingAs($landownerUser)
             ->get(route('landowner.dashboard'))
             ->assertOk()
-            ->assertDontSee($details);
+            ->assertDontSee('Action Required — ' . $application->application_code);
 
         $this->actingAs($landownerUser)
             ->get(route('landowner.applications.index'))
             ->assertOk()
-            ->assertDontSee($details);
+            ->assertDontSee('Action Required — ' . $application->application_code);
     }
 
     public function test_ready_for_release_notifies_linked_landowner_without_exposing_extra_case_data(): void
