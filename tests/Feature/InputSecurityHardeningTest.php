@@ -246,7 +246,9 @@ class InputSecurityHardeningTest extends TestCase
 
         $this->actingAs($staff)
             ->from(route('staff.applications.show', $application))
-            ->post(route('staff.applications.submit', $application))
+            ->post(route('staff.applications.submit', $application), [
+                'expected_status' => $application->fresh()->status,
+            ])
             ->assertSessionHasErrors('form4');
 
         $this->assertSame(
