@@ -392,7 +392,7 @@ class FinalDecisionIntegrityHardeningTest extends TestCase
             ]],
             'municipality' => 'Dumaguete City',
             'barangay' => 'Bantayan',
-            'status' => LandTransferApplication::STATUS_RELEASED,
+            'status' => LandTransferApplication::STATUS_APPROVED,
             'encoded_by' => $staff->id,
             'reviewed_by' => $staff->id,
             'reviewed_at' => now(),
