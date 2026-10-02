@@ -6,6 +6,7 @@ use App\Models\ApplicationComplianceNotice;
 use App\Models\ApplicationParcel;
 use App\Models\AuditLog;
 use App\Models\Landowner;
+use App\Models\Landholding;
 use App\Models\LandTransferApplication;
 use App\Models\Parcel;
 use App\Models\RequiredDocument;
