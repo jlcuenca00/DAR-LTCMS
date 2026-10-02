@@ -169,7 +169,7 @@ class GeodeticReadOnlyTest extends TestCase
         $response->assertForbidden();
     }
 
-    public function test_geodetic_user_cannot_submit_approve_or_mark_not_approved(): void
+    public function test_geodetic_user_cannot_submit_approve_or_request_compliance(): void
     {
         $staffUser = User::factory()->create([
             'role' => 'staff',
@@ -198,7 +198,10 @@ class GeodeticReadOnlyTest extends TestCase
             ->assertForbidden();
 
         $this->actingAs($geodeticUser)
-            ->post(route('staff.applications.not_approved', $application))
+            ->post(route('staff.applications.compliance.request', $application), [
+                'category' => 'clarification_needed',
+                'details' => 'Geodetic users must not request workflow compliance.',
+            ])
             ->assertForbidden();
 
         $this->assertDatabaseHas('land_transfer_applications', [
