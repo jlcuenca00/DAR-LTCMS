@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\ApplicationComplianceNotice;
 use App\Models\ApplicationDocument;
 use App\Models\ApplicationParcel;
+use App\Models\AuditLog;
 use App\Models\Landholding;
 use App\Models\Landowner;
 use App\Models\LandTransferApplication;
@@ -334,6 +335,16 @@ class BetaSystemRegressionTest extends TestCase
             'land_transfer_application_id' => $application->id,
         ]);
 
+        $approvalLog = AuditLog::where('action', 'application_approved')
+            ->where('land_transfer_application_id', $application->id)
+            ->latest('id')
+            ->firstOrFail();
+
+        $this->assertSame(LandTransferApplication::STATUS_FOR_RELEASING, $approvalLog->metadata['old_status']);
+        $this->assertSame(LandTransferApplication::STATUS_APPROVED, $approvalLog->metadata['new_status']);
+        $this->assertSame($staff->id, $approvalLog->actor_user_id);
+        $this->assertSame(User::ROLE_STAFF, $approvalLog->actor_role_snapshot);
+
         $this->assertDatabaseHas('audit_logs', [
             'actor_user_id' => $staff->id,
             'action' => 'clearance_generated',
@@ -343,6 +354,38 @@ class BetaSystemRegressionTest extends TestCase
         $this->actingAs($staff)
             ->post(route('staff.applications.ready_for_release', $application))
             ->assertSessionHas('success');
+
+        $application->refresh();
+        $this->assertSame(LandTransferApplication::RELEASE_READY, $application->release_status);
+
+        $readyLog = AuditLog::where('action', 'application_ready_for_release')
+            ->where('land_transfer_application_id', $application->id)
+            ->latest('id')
+            ->firstOrFail();
+
+        $this->assertSame(LandTransferApplication::RELEASE_NOT_READY, $readyLog->metadata['old_release_status']);
+        $this->assertSame(LandTransferApplication::RELEASE_READY, $readyLog->metadata['new_release_status']);
+        $this->assertSame($staff->id, $readyLog->actor_user_id);
+        $this->assertSame(User::ROLE_STAFF, $readyLog->actor_role_snapshot);
+
+        $this->assertDatabaseHas('system_notifications', [
+            'user_id' => $staff->id,
+            'type' => 'application_ready_for_release',
+            'related_type' => LandTransferApplication::class,
+            'related_id' => $application->id,
+        ]);
+        $this->assertDatabaseHas('system_notifications', [
+            'user_id' => $transferor->user_id,
+            'type' => 'landowner_ready_for_release',
+            'related_type' => LandTransferApplication::class,
+            'related_id' => $application->id,
+        ]);
+        $this->assertDatabaseHas('system_notifications', [
+            'user_id' => $transferee->user_id,
+            'type' => 'landowner_ready_for_release',
+            'related_type' => LandTransferApplication::class,
+            'related_id' => $application->id,
+        ]);
 
         $this->actingAs($staff)
             ->post(route('staff.applications.release', $application), [
@@ -363,6 +406,29 @@ class BetaSystemRegressionTest extends TestCase
             'actor_user_id' => $staff->id,
             'action' => 'application_released_to_client',
             'land_transfer_application_id' => $application->id,
+        ]);
+
+        $releaseLog = AuditLog::where('action', 'application_released_to_client')
+            ->where('land_transfer_application_id', $application->id)
+            ->latest('id')
+            ->firstOrFail();
+
+        $this->assertSame(LandTransferApplication::RELEASE_READY, $releaseLog->metadata['old_release_status']);
+        $this->assertSame(LandTransferApplication::RELEASED_TO_CLIENT, $releaseLog->metadata['new_release_status']);
+        $this->assertSame($staff->id, $releaseLog->actor_user_id);
+        $this->assertSame(User::ROLE_STAFF, $releaseLog->actor_role_snapshot);
+
+        $this->assertDatabaseHas('system_notifications', [
+            'user_id' => $transferor->user_id,
+            'type' => 'landowner_clearance_released',
+            'related_type' => LandTransferApplication::class,
+            'related_id' => $application->id,
+        ]);
+        $this->assertDatabaseHas('system_notifications', [
+            'user_id' => $transferee->user_id,
+            'type' => 'landowner_clearance_released',
+            'related_type' => LandTransferApplication::class,
+            'related_id' => $application->id,
         ]);
 
         $this->assertDatabaseHas('landholdings', [
