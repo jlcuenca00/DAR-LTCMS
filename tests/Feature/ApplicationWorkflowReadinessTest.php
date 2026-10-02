@@ -236,10 +236,13 @@ class ApplicationWorkflowReadinessTest extends TestCase
             LandTransferApplication::STATUS_AWAITING_PAYMENT,
             'READINESS-EARLY-OR'
         );
-        $earlyOr->forceFill([
-            'payment_order_reference' => 'OP-READINESS-EARLY-OR',
-            'payment_order_issued_at' => now(),
-        ])->save();
+        DB::table('land_transfer_applications')
+            ->where('id', $earlyOr->id)
+            ->update([
+                'payment_order_reference' => 'OP-READINESS-EARLY-OR',
+                'payment_order_issued_at' => now(),
+            ]);
+        $earlyOr->refresh();
 
         $this->actingAs($staff)
             ->post(route('staff.applications.submit', $earlyOr), [
