@@ -387,7 +387,6 @@ class ApplicationWorkflowController extends Controller
                         'notice_id' => $notice->id,
                         'old_status' => $oldStatus,
                         'new_status' => $application->status,
-                        'workflow_dependency_fingerprint' => $validated['expected_workflow_dependency'],
                         'resume_status' => $notice->resume_status,
                         'category' => $notice->category,
                         'category_label' => $notice->categoryLabel(),
@@ -635,6 +634,7 @@ class ApplicationWorkflowController extends Controller
                     [
                         'old_status' => $oldStatus,
                         'new_status' => $application->status,
+                        'workflow_dependency_fingerprint' => $validated['expected_workflow_dependency'],
                         'decision_authority' => $application->decision_authority,
                         'decision_officer_name' => $application->decision_officer_name,
                         'decision_date' => optional($application->decision_date)->toDateString(),
