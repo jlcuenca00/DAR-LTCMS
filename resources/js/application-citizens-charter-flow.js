@@ -297,7 +297,7 @@ function lockForm4OutsideReviewStage(state) {
 
     section.querySelectorAll('input, textarea, select, button[type="submit"]').forEach((control) => {
         control.disabled = true;
-        control.title = 'LTC Form No. 4 is editable only during LTID verification or returned-to-Legal review.';
+        control.title = 'LTC Form No. 4 is editable only during LTID verification, returned-to-Legal review, or matching compliance correction.';
     });
 
     const body = section.querySelector('.review-panel-body') || section;
@@ -306,7 +306,7 @@ function lockForm4OutsideReviewStage(state) {
         note.dataset.form4StageLock = 'true';
         note.className = 'review-note-box';
         note.style.marginBottom = '12px';
-        note.textContent = 'Form No. 4 is read-only at this stage. It may be edited only during LTID verification or the returned-to-Legal review stage.';
+        note.textContent = 'Form No. 4 is read-only at this stage. It may be edited during LTID verification, returned-to-Legal review, or while resolving compliance that resumes to one of those stages.';
         body.prepend(note);
     }
 }
