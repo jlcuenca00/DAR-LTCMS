@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Services\ApplicationWorkflowRevisionService;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Validation\ValidationException;
 
@@ -50,6 +51,20 @@ class ApplicationDocument extends Model
                 throw ValidationException::withMessages([
                     'document' => 'Supporting-document records are immutable after the application is finalized.',
                 ]);
+            }
+        });
+
+        static::saved(function (ApplicationDocument $document) {
+            if ($document->land_transfer_application_id) {
+                app(ApplicationWorkflowRevisionService::class)
+                    ->bump((int) $document->land_transfer_application_id);
+            }
+        });
+
+        static::deleted(function (ApplicationDocument $document) {
+            if ($document->land_transfer_application_id) {
+                app(ApplicationWorkflowRevisionService::class)
+                    ->bump((int) $document->land_transfer_application_id);
             }
         });
     }
