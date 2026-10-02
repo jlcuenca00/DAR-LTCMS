@@ -14,6 +14,7 @@ use App\Models\LegacyRecord;
 use App\Models\SourceRecordPackage;
 use App\Models\Parcel;
 use App\Services\AuditLogger;
+use App\Services\ApplicationWorkflowDependencyService;
 use App\Services\LandholdingAreaValidationService;
 use App\Services\LandownerConcurrencyService;
 use App\Services\NotificationService;
@@ -63,6 +64,8 @@ class LandTransferApplicationController extends Controller
         $fiveHectareValidation = app(LandholdingAreaValidationService::class)
             ->forApplication($application);
         $exceedsFiveHectares = $fiveHectareValidation['exceeds_limit'];
+        $workflowDependencyFingerprint = app(ApplicationWorkflowDependencyService::class)
+            ->fingerprint($application);
 
         $timelineQuery = AuditLog::with('actor')
             ->where('land_transfer_application_id', $application->id);
@@ -202,6 +205,7 @@ class LandTransferApplicationController extends Controller
             'uploaded',
             'exceedsFiveHectares',
             'fiveHectareValidation',
+            'workflowDependencyFingerprint',
             'applicationTimeline',
             'latestApplicationActivity',
             'matchedSourceRecords',
