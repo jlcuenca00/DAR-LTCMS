@@ -5,8 +5,8 @@ The workflow follows the administrative clearance process used by the DAR Negros
 1. **Application encoded and reviewed for completeness**  
    Legal Clearance Staff encode the application, link the subject parcel, and review the documentary requirements.
 
-2. **Returned for compliance when incomplete**  
-   Missing or deficient requirements are returned for compliance. This is not a final denial.
+2. **Returned for compliance when incomplete or blocked**  
+   Missing, deficient, or other blocking issues are handled through Request Compliance. This is an open corrective state, not a final decision, and the application resumes its saved stage after resolution.
 
 3. **Payment order and Official Receipt recording**  
    Once documentary intake is complete, the payment order is prepared. Payment is handled through the appropriate cashier process, and the Official Receipt is recorded in DAR-LTCMS.
@@ -26,14 +26,14 @@ The workflow follows the administrative clearance process used by the DAR Negros
 8. **With PARPO II for decision**  
    Legal Clearance Staff record the forwarding of the reviewed folder to PARPO II.
 
-9. **PARPO II final decision recorded by Legal**  
-   After the official PARPO II decision is received, Legal Clearance Staff record the decision authority, officer/signatory, official decision date, and final result. The application becomes either **Approved** or **Not Approved**. These are final decision states in the system.
+9. **PARPO II Approved decision recorded by Legal**  
+   After official PARPO II approval is received, Legal Clearance Staff record the decision authority, officer/signatory, official decision date, and the final **Approved** result. Approved is the only current final application decision in DAR-LTCMS. Issues that prevent approval remain open through the compliance workflow rather than being recorded as a new negative final decision.
 
 10. **Clearance output preparation and release tracking**  
     The signed clearance result can be marked ready for release and later recorded as released to the client.
 
 !!! note
-    Release tracking is separate from the final application decision. An application can remain **Approved** or **Not Approved** while its release status records whether the signed document has been delivered.
+    Release tracking is separate from the final application decision. An application remains **Approved** while its release status records whether the signed document is pending return to Legal, ready for release, or released to the client. Historical Not Approved / Denied records remain read-only compatibility records.
 
 !!! note "System operator versus administrative authority"
     The authenticated Legal Clearance Staff user is the **recorder** of the workflow event. A tracked office such as LTID, Chief Legal, or PARPO II remains the real-world administrative authority and is not represented as the logged-in system actor.
