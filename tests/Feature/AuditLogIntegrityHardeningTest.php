@@ -55,7 +55,9 @@ class AuditLogIntegrityHardeningTest extends TestCase
         ]);
 
         $this->actingAs($staff)
-            ->post(route('staff.applications.submit', $application))
+            ->post(route('staff.applications.submit', $application), [
+                'expected_status' => $application->fresh()->status,
+            ])
             ->assertSessionHas('success');
 
         $log = AuditLog::query()

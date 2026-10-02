@@ -250,6 +250,7 @@ class BetaSystemRegressionTest extends TestCase
 
         $this->actingAs($staff)
             ->post(route('staff.applications.submit', $application), [
+                'expected_status' => $application->fresh()->status,
                 'payment_order_reference' => 'OP-BETA-WORKFLOW-001',
             ])
             ->assertSessionHas('success');
@@ -258,6 +259,7 @@ class BetaSystemRegressionTest extends TestCase
 
         $this->actingAs($staff)
             ->post(route('staff.applications.submit', $application), [
+                'expected_status' => $application->fresh()->status,
                 'or_number' => 'OR-BETA-WORKFLOW-001',
                 'or_date' => now()->toDateString(),
                 'amount_paid' => config('dar_ltc.filing_fee', 2000),
@@ -267,19 +269,24 @@ class BetaSystemRegressionTest extends TestCase
         $this->assertSame(LandTransferApplication::STATUS_ENDORSED_LTI, $application->status);
 
         $this->actingAs($staff)
-            ->post(route('staff.applications.submit', $application))
+            ->post(route('staff.applications.submit', $application), [
+                'expected_status' => $application->fresh()->status,
+            ])
             ->assertSessionHas('success');
         $application->refresh();
         $this->assertSame(LandTransferApplication::STATUS_RETURNED_TO_LEGAL, $application->status);
 
         $this->actingAs($staff)
-            ->post(route('staff.applications.submit', $application))
+            ->post(route('staff.applications.submit', $application), [
+                'expected_status' => $application->fresh()->status,
+            ])
             ->assertSessionHas('success');
         $application->refresh();
         $this->assertSame(LandTransferApplication::STATUS_LEGAL_EVALUATION, $application->status);
 
         $this->actingAs($staff)
             ->post(route('staff.applications.submit', $application), [
+                'expected_status' => $application->fresh()->status,
                 'csw_reference' => 'CSW-BETA-WORKFLOW-001',
                 'csw_notes' => 'Beta regression completed staff work.',
             ])
@@ -288,13 +295,17 @@ class BetaSystemRegressionTest extends TestCase
         $this->assertSame(LandTransferApplication::STATUS_ENDORSED_CHIEF_LEGAL, $application->status);
 
         $this->actingAs($staff)
-            ->post(route('staff.applications.submit', $application))
+            ->post(route('staff.applications.submit', $application), [
+                'expected_status' => $application->fresh()->status,
+            ])
             ->assertSessionHas('success');
         $application->refresh();
         $this->assertSame(LandTransferApplication::STATUS_ENDORSED_PARPO, $application->status);
 
         $this->actingAs($staff)
-            ->post(route('staff.applications.submit', $application))
+            ->post(route('staff.applications.submit', $application), [
+                'expected_status' => $application->fresh()->status,
+            ])
             ->assertSessionHas('success');
         $application->refresh();
         $this->assertSame(LandTransferApplication::STATUS_FOR_RELEASING, $application->status);
@@ -380,12 +391,16 @@ class BetaSystemRegressionTest extends TestCase
         $staff = $this->staffUser();
         [$transferor, $transferee, $parcel, $landholding, $application] = $this->applicationPackage($staff, 'BETA-COMPLIANCE-001');
 
-        $application->forceFill([
-            'status' => LandTransferApplication::STATUS_FOR_RELEASING,
-        ])->save();
+        // Fixture-only stage setup: direct workflow status mutation is now
+        // rejected by the model guard, so bypass model events explicitly.
+        DB::table('land_transfer_applications')
+            ->where('id', $application->id)
+            ->update(['status' => LandTransferApplication::STATUS_FOR_RELEASING]);
+        $application->refresh();
 
         $this->actingAs($staff)
             ->post(route('staff.applications.compliance.request', $application), [
+                'expected_status' => $application->fresh()->status,
                 'category' => ApplicationComplianceNotice::CATEGORY_CLARIFICATION,
                 'details' => 'Clarify the original supporting instrument before approval is recorded.',
                 'requested_items' => 'Original supporting instrument',
@@ -431,6 +446,8 @@ class BetaSystemRegressionTest extends TestCase
 
         $this->actingAs($staff)
             ->post(route('staff.applications.compliance.resolve', $application), [
+                'expected_status' => $application->fresh()->status,
+                'compliance_notice_id' => $application->activeComplianceNotice()->value('id'),
                 'resolution_note' => 'Clarification completed.',
             ])
             ->assertSessionHas('success');
@@ -555,6 +572,7 @@ class BetaSystemRegressionTest extends TestCase
 
         $this->actingAs($geodetic)
             ->post(route('staff.applications.compliance.request', $application), [
+                'expected_status' => $application->fresh()->status,
                 'category' => ApplicationComplianceNotice::CATEGORY_CLARIFICATION,
                 'details' => 'Should be blocked for Geodetic users.',
             ])

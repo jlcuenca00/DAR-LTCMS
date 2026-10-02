@@ -190,7 +190,9 @@ class GeodeticReadOnlyTest extends TestCase
         ]);
 
         $this->actingAs($geodeticUser)
-            ->post(route('staff.applications.submit', $application))
+            ->post(route('staff.applications.submit', $application), [
+                'expected_status' => $application->fresh()->status,
+            ])
             ->assertForbidden();
 
         $this->actingAs($geodeticUser)
@@ -199,6 +201,7 @@ class GeodeticReadOnlyTest extends TestCase
 
         $this->actingAs($geodeticUser)
             ->post(route('staff.applications.compliance.request', $application), [
+                'expected_status' => $application->fresh()->status,
                 'category' => 'clarification_needed',
                 'details' => 'Geodetic users must not request workflow compliance.',
             ])

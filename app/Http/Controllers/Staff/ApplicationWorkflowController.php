@@ -11,6 +11,7 @@ use App\Services\ApplicationClearanceService;
 use App\Services\ApplicationParcelIntegrityService;
 use App\Services\ApplicationPartyIntegrityService;
 use App\Services\ApplicationRequirementService;
+use App\Services\ApplicationWorkflowTransitionService;
 use App\Services\AuditLogger;
 use App\Services\LandholdingAreaValidationService;
 use App\Services\LandownerConcurrencyService;
@@ -31,6 +32,16 @@ class ApplicationWorkflowController extends Controller
      */
     public function submit(Request $request, LandTransferApplication $application)
     {
+        $validatedStage = $request->validate([
+            'expected_status' => ['required', 'string', 'max:50'],
+        ]);
+
+        if ($application->status !== $validatedStage['expected_status']) {
+            return back()->withErrors([
+                'status' => 'The workflow stage changed after this page was opened. Refresh the application before recording another action.',
+            ]);
+        }
+
         if ($application->isFinalized()) {
             return back()->withErrors(['status' => 'This application already has a final PARPO II decision and cannot be advanced.']);
         }
@@ -185,8 +196,11 @@ class ApplicationWorkflowController extends Controller
             $auditMetadata['decision_readiness'] = $snapshot['workflow_readiness'];
         }
 
-        $application->status = $nextStatus;
-        $application->save();
+        app(ApplicationWorkflowTransitionService::class)->transition(
+            $application,
+            $nextStatus,
+            ApplicationWorkflowTransitionService::CONTEXT_ADVANCE
+        );
 
         AuditLogger::record(
             'application_status_advanced',
@@ -223,6 +237,7 @@ class ApplicationWorkflowController extends Controller
         }
 
         $validated = $request->validate([
+            'expected_status' => ['required', 'string', 'max:50'],
             'category' => ['required', Rule::in(ApplicationComplianceNotice::CATEGORIES)],
             'other_category' => [
                 'nullable',
@@ -242,6 +257,12 @@ class ApplicationWorkflowController extends Controller
                 $application = LandTransferApplication::query()
                     ->lockForUpdate()
                     ->findOrFail($application->id);
+
+                if ($application->status !== $validated['expected_status']) {
+                    throw ValidationException::withMessages([
+                        'status' => 'The workflow stage changed after this compliance form was opened. Refresh the application before requesting compliance.',
+                    ]);
+                }
 
                 if ($application->isFinalized()) {
                     throw ValidationException::withMessages([
@@ -296,11 +317,15 @@ class ApplicationWorkflowController extends Controller
                 ]);
 
                 $oldStatus = $application->status;
-                $application->status = LandTransferApplication::STATUS_RETURNED_FOR_COMPLIANCE;
                 $application->latest_compliance_reason = $details;
                 $application->returned_for_compliance_at = $requestedAt;
                 $application->returned_for_compliance_by = Auth::id();
-                $application->save();
+
+                app(ApplicationWorkflowTransitionService::class)->transition(
+                    $application,
+                    LandTransferApplication::STATUS_RETURNED_FOR_COMPLIANCE,
+                    ApplicationWorkflowTransitionService::CONTEXT_COMPLIANCE_REQUEST
+                );
 
                 AuditLogger::record(
                     'application_compliance_requested',
@@ -340,6 +365,8 @@ class ApplicationWorkflowController extends Controller
     public function resolveCompliance(Request $request, LandTransferApplication $application)
     {
         $validated = $request->validate([
+            'expected_status' => ['required', 'string', 'max:50'],
+            'compliance_notice_id' => ['required', 'integer', 'min:1'],
             'resolution_note' => ['nullable', 'string', 'max:3000'],
         ]);
 
@@ -348,6 +375,12 @@ class ApplicationWorkflowController extends Controller
                 $application = LandTransferApplication::query()
                     ->lockForUpdate()
                     ->findOrFail($application->id);
+
+                if ($application->status !== $validated['expected_status']) {
+                    throw ValidationException::withMessages([
+                        'status' => 'The workflow stage changed after this compliance-resolution form was opened. Refresh the application before continuing.',
+                    ]);
+                }
 
                 if ($application->isFinalized()) {
                     throw ValidationException::withMessages([
@@ -362,15 +395,15 @@ class ApplicationWorkflowController extends Controller
                 }
 
                 $notice = ApplicationComplianceNotice::query()
+                    ->whereKey($validated['compliance_notice_id'])
                     ->where('land_transfer_application_id', $application->id)
                     ->whereNull('resolved_at')
-                    ->latest('id')
                     ->lockForUpdate()
                     ->first();
 
                 if (! $notice) {
                     throw ValidationException::withMessages([
-                        'compliance' => 'No active compliance request was found. Preserve the record and review its audit history before continuing.',
+                        'compliance' => 'That compliance request is no longer the active unresolved notice. Refresh the application before resolving compliance.',
                     ]);
                 }
 
@@ -392,11 +425,15 @@ class ApplicationWorkflowController extends Controller
                     : null;
                 $notice->save();
 
-                $application->status = $notice->resume_status;
                 $application->latest_compliance_reason = null;
                 $application->returned_for_compliance_at = null;
                 $application->returned_for_compliance_by = null;
-                $application->save();
+
+                app(ApplicationWorkflowTransitionService::class)->transition(
+                    $application,
+                    $notice->resume_status,
+                    ApplicationWorkflowTransitionService::CONTEXT_COMPLIANCE_RESUME
+                );
 
                 AuditLogger::record(
                     'application_compliance_resolved',
@@ -481,7 +518,6 @@ class ApplicationWorkflowController extends Controller
                     ], $readinessErrors));
                 }
 
-                $application->status = LandTransferApplication::STATUS_APPROVED;
                 $application->release_status = LandTransferApplication::RELEASE_NOT_READY;
                 $recordedAt = now();
                 $application->reviewed_by = Auth::id(); // Legacy compatibility: recorder, not the PARPO II decision-maker.
@@ -495,7 +531,12 @@ class ApplicationWorkflowController extends Controller
                 $application->validation_snapshot = $snapshot;
                 $application->decision_reason = $validated['decision_reason'] ?? null;
                 $application->decision_notes = $validated['decision_notes'] ?? null;
-                $application->save();
+
+                app(ApplicationWorkflowTransitionService::class)->transition(
+                    $application,
+                    LandTransferApplication::STATUS_APPROVED,
+                    ApplicationWorkflowTransitionService::CONTEXT_FINAL_APPROVAL
+                );
 
                 AuditLogger::record(
                     'application_approved',

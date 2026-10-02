@@ -265,7 +265,9 @@ class DataIntegrityHardeningTest extends TestCase
         });
 
         $this->actingAs($staff)
-            ->post(route('staff.applications.submit', $application))
+            ->post(route('staff.applications.submit', $application), [
+                'expected_status' => $application->fresh()->status,
+            ])
             ->assertSessionHasErrors(['validation', 'transferee_shares']);
 
         $this->assertSame(

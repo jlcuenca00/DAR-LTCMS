@@ -280,7 +280,9 @@ class NotificationSystemTest extends TestCase
         $this->linkSubjectParcel($application, 'APP-NOTIF-ADVANCE-PARCEL');
 
         $this->actingAs($staffUser)
-            ->post(route('staff.applications.submit', $application))
+            ->post(route('staff.applications.submit', $application), [
+                'expected_status' => $application->fresh()->status,
+            ])
             ->assertRedirect();
 
         $this->assertDatabaseMissing('system_notifications', [
@@ -334,6 +336,7 @@ class NotificationSystemTest extends TestCase
 
         $this->actingAs($staffUser)
             ->post(route('staff.applications.compliance.request', $application), [
+                'expected_status' => $application->fresh()->status,
                 'category' => ApplicationComplianceNotice::CATEGORY_MISSING_REQUIREMENT,
                 'details' => $details,
                 'requested_items' => $requestedItems,
@@ -410,6 +413,8 @@ class NotificationSystemTest extends TestCase
 
         $this->actingAs($staffUser)
             ->post(route('staff.applications.compliance.resolve', $application), [
+                'expected_status' => $application->fresh()->status,
+                'compliance_notice_id' => $application->activeComplianceNotice()->value('id'),
                 'resolution_note' => 'Required documents were presented and reviewed.',
             ])
             ->assertSessionHas('success');
@@ -539,7 +544,9 @@ class NotificationSystemTest extends TestCase
         $this->linkSubjectParcel($application, 'APP-NOTIF-SUBMIT-PARCEL');
 
         $this->actingAs($staffUser)
-            ->post(route('staff.applications.submit', $application))
+            ->post(route('staff.applications.submit', $application), [
+                'expected_status' => $application->fresh()->status,
+            ])
             ->assertRedirect();
 
         $this->assertDatabaseHas('system_notifications', [

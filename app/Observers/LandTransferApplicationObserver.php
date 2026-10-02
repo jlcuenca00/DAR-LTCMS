@@ -24,6 +24,16 @@ class LandTransferApplicationObserver
             ]);
         }
 
+        if (
+            $application->exists
+            && $application->isDirty('status')
+            && ! $application->isWorkflowStatusMutationAuthorized()
+        ) {
+            throw ValidationException::withMessages([
+                'status' => 'Application workflow status changes must use the guarded workflow transition service.',
+            ]);
+        }
+
         if ($application->exists) {
             $originalStatus = (string) $application->getRawOriginal('status');
             $originalReleaseStatus = (string) (

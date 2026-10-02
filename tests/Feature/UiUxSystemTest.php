@@ -90,6 +90,8 @@ class UiUxSystemTest extends TestCase
         $this->assertStringContainsString('Record Approved Decision', $review);
         $this->assertStringContainsString('Request Compliance / Action Required', $review);
         $this->assertStringContainsString('Mark Compliance Resolved', $review);
+        $this->assertStringContainsString('name="expected_status"', $review);
+        $this->assertStringContainsString('name="compliance_notice_id"', $review);
         $this->assertStringContainsString('ApplicationComplianceNotice::categoryOptions()', $review);
         $this->assertStringContainsString('CATEGORY_OTHER', $review);
         $this->assertStringNotContainsString('Record PARPO II Not Approved Decision', $review);
