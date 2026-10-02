@@ -11,6 +11,8 @@ use App\Services\ApplicationClearanceService;
 use App\Services\ApplicationParcelIntegrityService;
 use App\Services\ApplicationPartyIntegrityService;
 use App\Services\ApplicationRequirementService;
+use App\Services\ApplicationReleaseTransitionService;
+use App\Services\ApplicationWorkflowEvidenceService;
 use App\Services\ApplicationWorkflowTransitionService;
 use App\Services\AuditLogger;
 use App\Services\LandholdingAreaValidationService;
@@ -73,8 +75,11 @@ class ApplicationWorkflowController extends Controller
         // Legal intake / completeness review -> payment-order stage.
         if ($currentStatus === LandTransferApplication::STATUS_PENDING_LEGAL_REVIEW) {
             if ($request->has('applicant_is_juridical_entity')) {
-                $application->applicant_is_juridical_entity = $request->boolean('applicant_is_juridical_entity');
-                $application->save();
+                app(ApplicationWorkflowEvidenceService::class)->apply(
+                    $application,
+                    ApplicationWorkflowEvidenceService::CONTEXT_INTAKE,
+                    ['applicant_is_juridical_entity' => $request->boolean('applicant_is_juridical_entity')]
+                );
             }
 
             $requirements = app(ApplicationRequirementService::class)->evaluate($application->fresh());
@@ -89,10 +94,15 @@ class ApplicationWorkflowController extends Controller
                 'payment_order_reference' => ['nullable', 'string', 'max:150'],
             ]);
 
-            $application->payment_order_reference = $validated['payment_order_reference']
-                ?? ('OP-' . $application->application_code);
-            $application->payment_order_issued_at = now();
-            $application->save();
+            app(ApplicationWorkflowEvidenceService::class)->apply(
+                $application,
+                ApplicationWorkflowEvidenceService::CONTEXT_INTAKE,
+                [
+                    'payment_order_reference' => $validated['payment_order_reference']
+                        ?? ('OP-' . $application->application_code),
+                    'payment_order_issued_at' => now(),
+                ]
+            );
 
             $auditMetadata['requirements_checked'] = true;
             $auditMetadata['payment_order_reference'] = $application->payment_order_reference;
@@ -130,10 +140,15 @@ class ApplicationWorkflowController extends Controller
                 ]);
             }
 
-            $application->or_number = $validated['or_number'];
-            $application->or_date = $validated['or_date'];
-            $application->amount_paid = $amountPaid;
-            $application->save();
+            app(ApplicationWorkflowEvidenceService::class)->apply(
+                $application,
+                ApplicationWorkflowEvidenceService::CONTEXT_PAYMENT,
+                [
+                    'or_number' => $validated['or_number'],
+                    'or_date' => $validated['or_date'],
+                    'amount_paid' => $amountPaid,
+                ]
+            );
 
             $auditMetadata['payment_recorded'] = true;
             $auditMetadata['or_number'] = $application->or_number;
@@ -163,12 +178,17 @@ class ApplicationWorkflowController extends Controller
                 'csw_notes' => ['nullable', 'string', 'max:4000'],
             ]);
 
-            $application->csw_reference = $validated['csw_reference']
-                ?? ('CSW-' . $application->application_code);
-            $application->csw_completed_at = now();
-            $application->csw_prepared_by = Auth::id();
-            $application->csw_notes = $validated['csw_notes'] ?? null;
-            $application->save();
+            app(ApplicationWorkflowEvidenceService::class)->apply(
+                $application,
+                ApplicationWorkflowEvidenceService::CONTEXT_CSW,
+                [
+                    'csw_reference' => $validated['csw_reference']
+                        ?? ('CSW-' . $application->application_code),
+                    'csw_completed_at' => now(),
+                    'csw_prepared_by' => Auth::id(),
+                    'csw_notes' => $validated['csw_notes'] ?? null,
+                ]
+            );
 
             $auditMetadata['csw_completed'] = true;
             $auditMetadata['csw_reference'] = $application->csw_reference;
@@ -518,19 +538,25 @@ class ApplicationWorkflowController extends Controller
                     ], $readinessErrors));
                 }
 
-                $application->release_status = LandTransferApplication::RELEASE_NOT_READY;
                 $recordedAt = now();
-                $application->reviewed_by = Auth::id(); // Legacy compatibility: recorder, not the PARPO II decision-maker.
-                $application->reviewed_at = $recordedAt;
-                $application->decision_authority = LandTransferApplication::FINAL_DECISION_AUTHORITY;
-                $application->decision_officer_name = $validated['decision_officer_name'];
-                $application->decision_date = $validated['decision_date'];
-                $application->decision_recorded_by = Auth::id();
-                $application->decision_recorded_at = $recordedAt;
-                $application->validated_at = $recordedAt;
-                $application->validation_snapshot = $snapshot;
-                $application->decision_reason = $validated['decision_reason'] ?? null;
-                $application->decision_notes = $validated['decision_notes'] ?? null;
+
+                app(ApplicationWorkflowEvidenceService::class)->apply(
+                    $application,
+                    ApplicationWorkflowEvidenceService::CONTEXT_FINAL_DECISION,
+                    [
+                        'reviewed_by' => Auth::id(), // Legacy compatibility: recorder, not the PARPO II decision-maker.
+                        'reviewed_at' => $recordedAt,
+                        'decision_authority' => LandTransferApplication::FINAL_DECISION_AUTHORITY,
+                        'decision_officer_name' => $validated['decision_officer_name'],
+                        'decision_date' => $validated['decision_date'],
+                        'decision_recorded_by' => Auth::id(),
+                        'decision_recorded_at' => $recordedAt,
+                        'validated_at' => $recordedAt,
+                        'validation_snapshot' => $snapshot,
+                        'decision_reason' => $validated['decision_reason'] ?? null,
+                        'decision_notes' => $validated['decision_notes'] ?? null,
+                    ]
+                );
 
                 app(ApplicationWorkflowTransitionService::class)->transition(
                     $application,
@@ -608,24 +634,10 @@ class ApplicationWorkflowController extends Controller
             return back()->withErrors(['release' => 'This decision output is already marked Ready for Release.']);
         }
 
-        $application->release_status = LandTransferApplication::RELEASE_READY;
-        $application->ready_for_release_at = $application->ready_for_release_at ?: now();
-        $application->save();
-
-        AuditLogger::record(
-            'application_ready_for_release',
+        app(ApplicationReleaseTransitionService::class)->markReady(
             $application,
-            $application,
-            [
-                'release_status' => $application->release_status,
-                'ready_for_release_at' => optional($application->ready_for_release_at)->toDateTimeString(),
-                'scope_note' => 'Administrative delivery readiness only. The final decision remains immutable.',
-            ],
             Auth::id()
         );
-
-        app(NotificationService::class)->notifyStaffApplicationReadyForRelease($application);
-        app(NotificationService::class)->notifyLinkedLandownersReadyForRelease($application);
 
         return back()->with('success', 'Signed decision output marked Ready for Release.');
     }
@@ -665,46 +677,15 @@ class ApplicationWorkflowController extends Controller
         ]);
 
         try {
-            DB::transaction(function () use ($validated, $application) {
-                $application = LandTransferApplication::query()
-                    ->lockForUpdate()
-                    ->findOrFail($application->id);
-
-                if (! in_array($application->status, LandTransferApplication::FINAL_STATUSES, true)
-                    || $application->release_status !== LandTransferApplication::RELEASE_READY) {
-                    throw new \RuntimeException('The release state changed. Refresh the page before recording release.');
-                }
-
-                $application->release_status = LandTransferApplication::RELEASED_TO_CLIENT;
-                $application->released_at = now();
-                $application->released_by = Auth::id();
-                $application->release_recipient_name = $validated['release_recipient_name'];
-                $application->release_logbook_reference = $validated['release_logbook_reference'] ?? null;
-                $application->csm_status = $validated['csm_status'] ?? 'not_recorded';
-                $application->date_of_clearance_release = now()->toDateString();
-                $application->save();
-
-                AuditLogger::record(
-                    'application_released_to_client',
-                    $application,
-                    $application,
-                    [
-                        'final_decision_status' => $application->status,
-                        'release_status' => $application->release_status,
-                        'released_at' => optional($application->released_at)->toDateTimeString(),
-                        'release_recipient_name' => $application->release_recipient_name,
-                        'release_logbook_reference' => $application->release_logbook_reference,
-                        'csm_status' => $application->csm_status,
-                        'ownership_transfer_performed' => false,
-                        'registry_mutation_performed' => false,
-                        'scope_note' => 'Administrative release of the signed clearance decision only. No ownership transfer or registry mutation was performed.',
-                    ],
-                    Auth::id()
-                );
-
-                app(NotificationService::class)->notifyStaffApplicationReleasedToClient($application);
-                app(NotificationService::class)->notifyLinkedLandownersReleasedToClient($application);
-            });
+            app(ApplicationReleaseTransitionService::class)->recordRelease(
+                $application,
+                Auth::id(),
+                $validated['release_recipient_name'],
+                $validated['release_logbook_reference'] ?? null,
+                $validated['csm_status'] ?? 'not_recorded'
+            );
+        } catch (ValidationException $e) {
+            throw $e;
         } catch (\Throwable $e) {
             report($e);
 
