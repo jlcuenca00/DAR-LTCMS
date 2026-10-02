@@ -322,6 +322,7 @@ class BetaSystemRegressionTest extends TestCase
             ->post(route('staff.applications.approve', $application), [
                 'expected_status' => $application->fresh()->status,
                 'expected_workflow_revision' => $application->fresh()->workflow_revision,
+                'expected_workflow_dependency' => app(\App\Services\ApplicationWorkflowDependencyService::class)->fingerprint($application->fresh()),
                 'final_decision_confirmation' => '1',
                 'decision_officer_name' => 'PARPO II Test Signatory',
                 'decision_date' => now()->toDateString(),
