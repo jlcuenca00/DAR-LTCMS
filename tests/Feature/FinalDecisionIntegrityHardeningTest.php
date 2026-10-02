@@ -151,6 +151,52 @@ class FinalDecisionIntegrityHardeningTest extends TestCase
         ]);
     }
 
+    public function test_direct_model_status_changes_cannot_bypass_the_guarded_workflow_service(): void
+    {
+        $staff = User::factory()->create(['role' => 'staff']);
+
+        $advanceCandidate = $this->makeApplication(
+            $staff,
+            LandTransferApplication::STATUS_PENDING_LEGAL_REVIEW,
+            'DIRECT-STATUS-ADVANCE-BLOCKED'
+        );
+        $advanceCandidate->status = LandTransferApplication::STATUS_AWAITING_PAYMENT;
+
+        try {
+            $advanceCandidate->save();
+            $this->fail('Expected direct workflow advancement to be rejected.');
+        } catch (ValidationException $e) {
+            $this->assertArrayHasKey('status', $e->errors());
+        }
+
+        $this->assertSame(
+            LandTransferApplication::STATUS_PENDING_LEGAL_REVIEW,
+            $advanceCandidate->fresh()->status
+        );
+
+        $approvalCandidate = $this->makeApplication(
+            $staff,
+            LandTransferApplication::STATUS_FOR_RELEASING,
+            'DIRECT-STATUS-APPROVAL-BLOCKED'
+        );
+        $approvalCandidate->status = LandTransferApplication::STATUS_APPROVED;
+
+        try {
+            $approvalCandidate->save();
+            $this->fail('Expected direct Approved status mutation to be rejected.');
+        } catch (ValidationException $e) {
+            $this->assertArrayHasKey('status', $e->errors());
+        }
+
+        $this->assertSame(
+            LandTransferApplication::STATUS_FOR_RELEASING,
+            $approvalCandidate->fresh()->status
+        );
+        $this->assertDatabaseMissing('application_clearances', [
+            'land_transfer_application_id' => $approvalCandidate->id,
+        ]);
+    }
+
     public function test_approved_application_model_freezes_core_fields_and_release_tracking_is_forward_only(): void
     {
         $staff = User::factory()->create(['role' => 'staff']);
