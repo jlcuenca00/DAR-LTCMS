@@ -905,6 +905,121 @@ class FinalDecisionIntegrityHardeningTest extends TestCase
         $this->assertDatabaseHas('application_clearances', ['id' => $clearance->id]);
     }
 
+
+    public function test_protected_models_reject_quiet_and_globally_suppressed_writes(): void
+    {
+        foreach ([
+            LandTransferApplication::class,
+            ApplicationParcel::class,
+            ApplicationDocument::class,
+            ApplicationComplianceNotice::class,
+            ApplicationClearance::class,
+        ] as $class) {
+            foreach (['saveQuietly', 'deleteQuietly', 'incrementQuietly', 'decrementQuietly'] as $method) {
+                $model = new $class;
+                try {
+                    if (str_contains($method, 'crement')) {
+                        $model->{$method}('id');
+                    } else {
+                        $model->{$method}();
+                    }
+                    $this->fail("Expected {$class}::{$method} to reject suppressed events.");
+                } catch (\LogicException $e) {
+                    $this->assertStringContainsString('event-suppressed writes', $e->getMessage());
+                }
+            }
+            foreach (['save', 'delete', 'increment', 'decrement'] as $method) {
+                try {
+                    // Eloquent's dispatcher is shared even when suppression was
+                    // initiated through an unrelated model.
+                    User::withoutEvents(function () use ($class, $method) {
+                        $model = new $class;
+                        str_contains($method, 'crement') ? $model->{$method}('id') : $model->{$method}();
+                    });
+                    $this->fail("Expected globally suppressed {$class}::{$method} to fail.");
+                } catch (\LogicException $e) {
+                    $this->assertStringContainsString('event-suppressed writes', $e->getMessage());
+                }
+            }
+            $dispatcher = $class::getEventDispatcher();
+            try {
+                $class::unsetEventDispatcher();
+                try {
+                    (new $class)->save();
+                    $this->fail('Expected a missing dispatcher to reject the write.');
+                } catch (\LogicException $e) {
+                    $this->assertStringContainsString('require model events', $e->getMessage());
+                }
+            } finally {
+                $class::setEventDispatcher($dispatcher);
+            }
+        }
+    }
+
+    public function test_quiet_save_cannot_change_final_application_or_its_revision(): void
+    {
+        $staff = User::factory()->create(['role' => 'staff']);
+        $application = $this->makeApplication($staff, LandTransferApplication::STATUS_APPROVED, 'QUIET-FINAL');
+        $revision = $application->workflow_revision;
+        $application->remarks = 'Bypass attempt';
+
+        try {
+            $application->saveQuietly();
+            $this->fail('Expected quiet finalized mutation to fail.');
+        } catch (\LogicException $e) {
+            $this->assertStringContainsString('event-suppressed writes', $e->getMessage());
+        }
+
+        $this->assertNull($application->fresh()->remarks);
+        $this->assertSame($revision, $application->fresh()->workflow_revision);
+    }
+
+    public function test_persisted_parcel_and_document_links_cannot_be_reassigned(): void
+    {
+        $staff = User::factory()->create(['role' => 'staff']);
+        $source = $this->makeApplication($staff, LandTransferApplication::STATUS_PENDING_LEGAL_REVIEW, 'REPARENT-SOURCE');
+        $target = $this->makeApplication($staff, LandTransferApplication::STATUS_PENDING_LEGAL_REVIEW, 'REPARENT-TARGET');
+        $parcel = $this->makeParcel('REPARENT-PARCEL');
+        $child = ApplicationParcel::create([
+            'land_transfer_application_id' => $source->id,
+            'parcel_id' => $parcel->id,
+            'parcel_code' => $parcel->parcel_code,
+            'area_hectares' => 1,
+        ]);
+        $requirement = RequiredDocument::create([
+            'name' => 'Reparent Fixture',
+            'applies_to' => 'transferor',
+            'is_mandatory' => false,
+        ]);
+        $document = ApplicationDocument::create([
+            'land_transfer_application_id' => $source->id,
+            'required_document_id' => $requirement->id,
+            'file_path' => 'fixtures/reparent.pdf',
+            'original_filename' => 'reparent.pdf',
+            'uploaded_by' => $staff->id,
+        ]);
+
+        foreach ([LandTransferApplication::STATUS_PENDING_LEGAL_REVIEW, LandTransferApplication::STATUS_APPROVED] as $status) {
+            // Explicit final-state fixture; normal workflow tests exercise approval.
+            DB::table('land_transfer_applications')->where('id', $source->id)->update(['status' => $status]);
+            $sourceRevision = $source->fresh()->workflow_revision;
+            $targetRevision = $target->fresh()->workflow_revision;
+            foreach ([$child, $document] as $record) {
+                $candidate = $record->fresh();
+                $candidate->land_transfer_application_id = $target->id;
+                try {
+                    $candidate->save();
+                    $this->fail('Expected parent reassignment to fail.');
+                } catch (ValidationException $e) {
+                    $this->assertArrayHasKey('application', $e->errors());
+                }
+                $this->assertSame($source->id, $record->fresh()->land_transfer_application_id);
+            }
+            $this->assertSame($sourceRevision, $source->fresh()->workflow_revision);
+            $this->assertSame($targetRevision, $target->fresh()->workflow_revision);
+        }
+    }
+
     private function finalStatuses(): array
     {
         return [

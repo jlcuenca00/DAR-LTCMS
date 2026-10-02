@@ -8,6 +8,8 @@ use Illuminate\Validation\ValidationException;
 
 class ApplicationDocument extends Model
 {
+    use \App\Models\Concerns\RequiresModelEvents;
+
     protected $fillable = [
         'land_transfer_application_id',
         'required_document_id',
@@ -33,6 +35,12 @@ class ApplicationDocument extends Model
     protected static function booted(): void
     {
         static::saving(function (ApplicationDocument $document) {
+            if ($document->exists && $document->isDirty('land_transfer_application_id')) {
+                throw ValidationException::withMessages([
+                    'application' => 'Persisted application child records cannot be reassigned to another application.',
+                ]);
+            }
+
             $application = $document->land_transfer_application_id
                 ? LandTransferApplication::query()->find($document->land_transfer_application_id)
                 : null;
