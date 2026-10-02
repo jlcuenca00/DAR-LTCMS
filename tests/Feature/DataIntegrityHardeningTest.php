@@ -675,10 +675,15 @@ class DataIntegrityHardeningTest extends TestCase
             LandTransferApplication::STATUS_APPROVED
         );
 
-        $application->forceFill([
-            'release_status' => LandTransferApplication::RELEASED_TO_CLIENT,
-            'released_at' => now(),
-        ])->save();
+        // Simulate a pre-existing corrupt row without weakening the current
+        // model-level release-state guard.
+        DB::table('land_transfer_applications')
+            ->where('id', $application->id)
+            ->update([
+                'release_status' => LandTransferApplication::RELEASED_TO_CLIENT,
+                'released_at' => now(),
+            ]);
+        $application->refresh();
 
         ApplicationClearance::create([
             'land_transfer_application_id' => $application->id,
