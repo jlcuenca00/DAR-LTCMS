@@ -48,7 +48,7 @@ class MonitoringReportTest extends TestCase
         $response->assertSee('REPORT-NOT-APPROVED-001');
         $response->assertSee('1803-2026-0001 (1)');
         $response->assertSee('not ownership transferred');
-        $response->assertSee('do not automatically transfer land ownership');
+        $response->assertSee('No clearance decision or release record mutates parcel ownership or registry records');
 
         $this->assertSame($pending->id, $pending->fresh()->id);
     }
