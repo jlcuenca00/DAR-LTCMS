@@ -29,6 +29,8 @@ class ApplicationReleaseTransitionService
                 ]);
             }
 
+            $oldReleaseStatus = $application->release_status ?: LandTransferApplication::RELEASE_NOT_READY;
+
             $application->runAuthorizedReleaseMutation(function () use ($application) {
                 $application->release_status = LandTransferApplication::RELEASE_READY;
                 $application->ready_for_release_at = $application->ready_for_release_at ?: now();
@@ -40,6 +42,8 @@ class ApplicationReleaseTransitionService
                 $application,
                 $application,
                 [
+                    'old_release_status' => $oldReleaseStatus,
+                    'new_release_status' => $application->release_status,
                     'release_status' => $application->release_status,
                     'ready_for_release_at' => optional($application->ready_for_release_at)->toDateTimeString(),
                     'scope_note' => 'Administrative delivery readiness only. The final decision remains immutable.',
@@ -74,6 +78,8 @@ class ApplicationReleaseTransitionService
                 ]);
             }
 
+            $oldReleaseStatus = $application->release_status;
+
             $application->runAuthorizedReleaseMutation(function () use ($application, $actorId, $recipientName, $logbookReference, $csmStatus) {
                 $application->release_status = LandTransferApplication::RELEASED_TO_CLIENT;
                 $application->released_at = now();
@@ -91,6 +97,8 @@ class ApplicationReleaseTransitionService
                 $application,
                 [
                     'final_decision_status' => $application->status,
+                    'old_release_status' => $oldReleaseStatus,
+                    'new_release_status' => $application->release_status,
                     'release_status' => $application->release_status,
                     'released_at' => optional($application->released_at)->toDateTimeString(),
                     'release_recipient_name' => $application->release_recipient_name,
