@@ -167,6 +167,32 @@ class LandTransferApplication extends Model
         'validation_snapshot' => 'array',
     ];
 
+    /**
+     * Transient in-memory authorization used only by the workflow transition
+     * service. It is never persisted and cannot be mass-assigned.
+     */
+    private bool $workflowStatusMutationAuthorized = false;
+
+    /**
+     * @internal Workflow status changes must go through
+     * ApplicationWorkflowTransitionService.
+     */
+    public function runAuthorizedWorkflowStatusMutation(callable $callback): mixed
+    {
+        $this->workflowStatusMutationAuthorized = true;
+
+        try {
+            return $callback();
+        } finally {
+            $this->workflowStatusMutationAuthorized = false;
+        }
+    }
+
+    public function isWorkflowStatusMutationAuthorized(): bool
+    {
+        return $this->workflowStatusMutationAuthorized;
+    }
+
     public function isFinalized(): bool
     {
         return in_array($this->status, array_merge(self::FINAL_STATUSES, self::LEGACY_FINAL_STATUSES), true);
