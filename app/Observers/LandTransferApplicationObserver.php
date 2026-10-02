@@ -13,6 +13,12 @@ class LandTransferApplicationObserver
 {
     public function saving(LandTransferApplication $application): void
     {
+        if ($application->exists && $application->isDirty('workflow_revision')) {
+            throw ValidationException::withMessages([
+                'workflow_revision' => 'The workflow revision is system-managed and cannot be changed directly.',
+            ]);
+        }
+
         if (
             $application->isDirty('status')
             && in_array($application->status, [
@@ -177,6 +183,20 @@ class LandTransferApplicationObserver
 
         if ($application->exists && $application->isDirty('transferees')) {
             app(ApplicationPartyShareIntegrityService::class)->assertValid($application);
+        }
+
+        if ($application->exists) {
+            $materialDirtyFields = array_values(array_diff(
+                array_keys($application->getDirty()),
+                ['workflow_revision', 'updated_at']
+            ));
+
+            if ($materialDirtyFields !== []) {
+                $application->workflow_revision = max(
+                    1,
+                    (int) $application->getRawOriginal('workflow_revision')
+                ) + 1;
+            }
         }
     }
 }
