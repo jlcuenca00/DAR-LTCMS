@@ -386,6 +386,28 @@ class NotificationSystemTest extends TestCase
             ->assertSee($details)
             ->assertSee($requestedItems);
 
+        // Reading the one-time notification must not dismiss the persistent
+        // compliance warning. The active notice remains the source of truth.
+        $this->actingAs($landownerUser)
+            ->patch(route('notifications.read', $notification))
+            ->assertRedirect();
+
+        $this->assertNotNull($notification->fresh()->read_at);
+
+        $this->actingAs($landownerUser)
+            ->get(route('landowner.dashboard'))
+            ->assertOk()
+            ->assertSee('Action Required')
+            ->assertSee($details)
+            ->assertSee($requestedItems);
+
+        $this->actingAs($landownerUser)
+            ->get(route('landowner.applications.index'))
+            ->assertOk()
+            ->assertSee('Action Required')
+            ->assertSee($details)
+            ->assertSee($requestedItems);
+
         $this->actingAs($staffUser)
             ->post(route('staff.applications.compliance.resolve', $application), [
                 'resolution_note' => 'Required documents were presented and reviewed.',
@@ -406,6 +428,11 @@ class NotificationSystemTest extends TestCase
 
         $this->actingAs($landownerUser)
             ->get(route('landowner.dashboard'))
+            ->assertOk()
+            ->assertDontSee($details);
+
+        $this->actingAs($landownerUser)
+            ->get(route('landowner.applications.index'))
             ->assertOk()
             ->assertDontSee($details);
     }
