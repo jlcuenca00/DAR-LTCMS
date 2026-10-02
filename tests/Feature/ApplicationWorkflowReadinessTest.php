@@ -33,7 +33,7 @@ class ApplicationWorkflowReadinessTest extends TestCase
         $this->actingAs($staff)
             ->post(route('staff.applications.submit', $application), [
                 'expected_status' => $application->fresh()->status,
-            'expected_workflow_revision' => $application->fresh()->workflow_revision,
+                'expected_workflow_revision' => $application->fresh()->workflow_revision,
             ])
             ->assertSessionHasErrors('validation');
 
@@ -60,8 +60,10 @@ class ApplicationWorkflowReadinessTest extends TestCase
         $application->refresh();
 
         $renderedStatus = LandTransferApplication::STATUS_AWAITING_PAYMENT;
+        $renderedRevision = (int) $application->fresh()->workflow_revision;
         $payload = [
             'expected_status' => $renderedStatus,
+            'expected_workflow_revision' => $renderedRevision,
             'or_number' => 'OR-READINESS-STALE-ADVANCE',
             'or_date' => now()->toDateString(),
             'amount_paid' => config('dar_ltc.filing_fee', 2000),
@@ -78,7 +80,7 @@ class ApplicationWorkflowReadinessTest extends TestCase
 
         $this->actingAs($staff)
             ->post(route('staff.applications.submit', $application), $payload)
-            ->assertSessionHasErrors('status');
+            ->assertSessionHasErrors('workflow_revision');
 
         $this->assertSame(
             LandTransferApplication::STATUS_ENDORSED_LTI,
@@ -96,10 +98,12 @@ class ApplicationWorkflowReadinessTest extends TestCase
         );
 
         $renderedStatus = LandTransferApplication::STATUS_ENDORSED_LTI;
+        $renderedRevision = (int) $application->fresh()->workflow_revision;
 
         $this->actingAs($staff)
             ->post(route('staff.applications.submit', $application), [
                 'expected_status' => $renderedStatus,
+                'expected_workflow_revision' => $renderedRevision,
             ])
             ->assertSessionHas('success');
 
@@ -111,10 +115,11 @@ class ApplicationWorkflowReadinessTest extends TestCase
         $this->actingAs($staff)
             ->post(route('staff.applications.compliance.request', $application), [
                 'expected_status' => $renderedStatus,
+                'expected_workflow_revision' => $renderedRevision,
                 'category' => ApplicationComplianceNotice::CATEGORY_CLARIFICATION,
                 'details' => 'This request came from a stale page and must not attach to the newer stage.',
             ])
-            ->assertSessionHasErrors('status');
+            ->assertSessionHasErrors('workflow_revision');
 
         $this->assertSame(
             LandTransferApplication::STATUS_RETURNED_TO_LEGAL,
@@ -135,6 +140,7 @@ class ApplicationWorkflowReadinessTest extends TestCase
         $this->actingAs($staff)
             ->post(route('staff.applications.compliance.request', $application), [
                 'expected_status' => LandTransferApplication::STATUS_LEGAL_EVALUATION,
+                'expected_workflow_revision' => $application->fresh()->workflow_revision,
                 'category' => ApplicationComplianceNotice::CATEGORY_CLARIFICATION,
                 'details' => 'First compliance request.',
             ])
@@ -145,6 +151,7 @@ class ApplicationWorkflowReadinessTest extends TestCase
         $this->actingAs($staff)
             ->post(route('staff.applications.compliance.resolve', $application), [
                 'expected_status' => LandTransferApplication::STATUS_RETURNED_FOR_COMPLIANCE,
+                'expected_workflow_revision' => $application->fresh()->workflow_revision,
                 'compliance_notice_id' => $firstNotice->id,
                 'resolution_note' => 'First request resolved.',
             ])
@@ -153,6 +160,7 @@ class ApplicationWorkflowReadinessTest extends TestCase
         $this->actingAs($staff)
             ->post(route('staff.applications.compliance.request', $application), [
                 'expected_status' => LandTransferApplication::STATUS_LEGAL_EVALUATION,
+                'expected_workflow_revision' => $application->fresh()->workflow_revision,
                 'category' => ApplicationComplianceNotice::CATEGORY_ADDITIONAL_INFORMATION,
                 'details' => 'Second compliance request.',
             ])
@@ -164,6 +172,7 @@ class ApplicationWorkflowReadinessTest extends TestCase
         $this->actingAs($staff)
             ->post(route('staff.applications.compliance.resolve', $application), [
                 'expected_status' => LandTransferApplication::STATUS_RETURNED_FOR_COMPLIANCE,
+                'expected_workflow_revision' => $application->fresh()->workflow_revision,
                 'compliance_notice_id' => $firstNotice->id,
                 'resolution_note' => 'Stale resolution attempt.',
             ])
@@ -174,6 +183,112 @@ class ApplicationWorkflowReadinessTest extends TestCase
             $application->fresh()->status
         );
         $this->assertNull($secondNotice->fresh()->resolved_at);
+    }
+
+    public function test_aba_compliance_cycle_invalidates_old_advance_form_even_when_status_returns_to_same_value(): void
+    {
+        $staff = $this->staffUser();
+        $application = $this->application(
+            $staff,
+            LandTransferApplication::STATUS_ENDORSED_LTI,
+            'READINESS-ABA-ADVANCE'
+        );
+
+        $renderedStatus = $application->fresh()->status;
+        $renderedRevision = (int) $application->fresh()->workflow_revision;
+
+        $this->actingAs($staff)
+            ->post(route('staff.applications.compliance.request', $application), [
+                'expected_status' => $renderedStatus,
+                'expected_workflow_revision' => $renderedRevision,
+                'category' => ApplicationComplianceNotice::CATEGORY_CLARIFICATION,
+                'details' => 'Resolve a clarification and return to the same LTID stage.',
+            ])
+            ->assertSessionHas('success');
+
+        $noticeId = $application->activeComplianceNotice()->value('id');
+
+        $this->actingAs($staff)
+            ->post(route('staff.applications.compliance.resolve', $application), [
+                'expected_status' => LandTransferApplication::STATUS_RETURNED_FOR_COMPLIANCE,
+                'expected_workflow_revision' => $application->fresh()->workflow_revision,
+                'compliance_notice_id' => $noticeId,
+                'resolution_note' => 'Clarification resolved.',
+            ])
+            ->assertSessionHas('success');
+
+        $application->refresh();
+        $this->assertSame($renderedStatus, $application->status);
+        $this->assertGreaterThan($renderedRevision, (int) $application->workflow_revision);
+
+        $this->actingAs($staff)
+            ->post(route('staff.applications.submit', $application), [
+                'expected_status' => $renderedStatus,
+                'expected_workflow_revision' => $renderedRevision,
+            ])
+            ->assertSessionHasErrors('workflow_revision');
+
+        $this->assertSame(
+            LandTransferApplication::STATUS_ENDORSED_LTI,
+            $application->fresh()->status
+        );
+    }
+
+    public function test_aba_compliance_cycle_invalidates_old_final_approval_form(): void
+    {
+        $staff = $this->staffUser();
+        $application = $this->application(
+            $staff,
+            LandTransferApplication::STATUS_FOR_RELEASING,
+            'READINESS-ABA-APPROVAL'
+        );
+        $this->linkParcel($application, 'READINESS-ABA-APPROVAL-PARCEL');
+        $this->completeForm4($application);
+        $this->completePaymentAndCsw($application, $staff);
+        $application->refresh();
+
+        $renderedStatus = $application->status;
+        $renderedRevision = (int) $application->workflow_revision;
+
+        $this->actingAs($staff)
+            ->post(route('staff.applications.compliance.request', $application), [
+                'expected_status' => $renderedStatus,
+                'expected_workflow_revision' => $renderedRevision,
+                'category' => ApplicationComplianceNotice::CATEGORY_CLARIFICATION,
+                'details' => 'Final review clarification before the decision is recorded.',
+            ])
+            ->assertSessionHas('success');
+
+        $this->actingAs($staff)
+            ->post(route('staff.applications.compliance.resolve', $application), [
+                'expected_status' => LandTransferApplication::STATUS_RETURNED_FOR_COMPLIANCE,
+                'expected_workflow_revision' => $application->fresh()->workflow_revision,
+                'compliance_notice_id' => $application->activeComplianceNotice()->value('id'),
+                'resolution_note' => 'Final review clarification resolved.',
+            ])
+            ->assertSessionHas('success');
+
+        $application->refresh();
+        $this->assertSame($renderedStatus, $application->status);
+        $this->assertGreaterThan($renderedRevision, (int) $application->workflow_revision);
+
+        $this->actingAs($staff)
+            ->post(route('staff.applications.approve', $application), [
+                'expected_status' => $renderedStatus,
+                'expected_workflow_revision' => $renderedRevision,
+                'final_decision_confirmation' => '1',
+                'decision_officer_name' => 'PARPO II Stale Review Test',
+                'decision_date' => now()->toDateString(),
+            ])
+            ->assertSessionHasErrors('workflow_revision');
+
+        $this->assertSame(
+            LandTransferApplication::STATUS_FOR_RELEASING,
+            $application->fresh()->status
+        );
+        $this->assertDatabaseMissing('application_clearances', [
+            'land_transfer_application_id' => $application->id,
+        ]);
     }
 
     public function test_active_workflow_dates_cannot_be_future_dated(): void
