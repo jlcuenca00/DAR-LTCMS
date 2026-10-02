@@ -12,6 +12,7 @@ use App\Models\RequiredDocument;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
@@ -240,21 +241,24 @@ class AuditLoggingTest extends TestCase
             'encoded_by' => $staffUser->id,
         ]);
 
-        $application->forceFill([
-            'ltc_form4_subject_land_findings' => ['ra6657_not_covered_not_tenanted_retained_area'],
-            'ltc_form4_recommendation_findings' => ['application_complete'],
-            'ltc_form4_recommendation_decision' => 'approval',
-            'ltc_form4_certified_at' => now()->toDateString(),
-            'ltc_form4_certifying_officer_name' => 'Authorized Review Officer',
-            'payment_order_reference' => 'OP-AUDIT-APPROVAL-001',
-            'payment_order_issued_at' => now(),
-            'or_number' => 'OR-AUDIT-APPROVAL-001',
-            'or_date' => now()->toDateString(),
-            'amount_paid' => config('dar_ltc.filing_fee', 2000),
-            'csw_reference' => 'CSW-AUDIT-APPROVAL-001',
-            'csw_completed_at' => now(),
-            'csw_prepared_by' => $staffUser->id,
-        ])->save();
+        DB::table('land_transfer_applications')
+            ->where('id', $application->id)
+            ->update([
+                'ltc_form4_subject_land_findings' => json_encode(['ra6657_not_covered_not_tenanted_retained_area']),
+                'ltc_form4_recommendation_findings' => json_encode(['application_complete']),
+                'ltc_form4_recommendation_decision' => 'approval',
+                'ltc_form4_certified_at' => now()->toDateString(),
+                'ltc_form4_certifying_officer_name' => 'Authorized Review Officer',
+                'payment_order_reference' => 'OP-AUDIT-APPROVAL-001',
+                'payment_order_issued_at' => now(),
+                'or_number' => 'OR-AUDIT-APPROVAL-001',
+                'or_date' => now()->toDateString(),
+                'amount_paid' => config('dar_ltc.filing_fee', 2000),
+                'csw_reference' => 'CSW-AUDIT-APPROVAL-001',
+                'csw_completed_at' => now(),
+                'csw_prepared_by' => $staffUser->id,
+            ]);
+        $application->refresh();
 
         ApplicationParcel::create([
             'land_transfer_application_id' => $application->id,

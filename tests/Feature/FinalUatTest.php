@@ -7,6 +7,7 @@ use App\Models\Landowner;
 use App\Models\LandTransferApplication;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 class FinalUatTest extends TestCase
@@ -147,10 +148,13 @@ class FinalUatTest extends TestCase
             ->assertRedirect(route('landowner.applications.index'))
             ->assertSessionHas('error', 'The final decision has been recorded, but the signed output has not yet been released to the client.');
 
-        $application->forceFill([
-            'release_status' => LandTransferApplication::RELEASE_READY,
-            'ready_for_release_at' => now(),
-        ])->save();
+        DB::table('land_transfer_applications')
+            ->where('id', $application->id)
+            ->update([
+                'release_status' => LandTransferApplication::RELEASE_READY,
+                'ready_for_release_at' => now(),
+            ]);
+        $application->refresh();
 
         $ready = $this->actingAs($landownerUser)
             ->get(route('landowner.applications.index'));
@@ -159,13 +163,16 @@ class FinalUatTest extends TestCase
         $ready->assertSee('Ready for Release');
         $ready->assertDontSee('View Decision Output');
 
-        $application->forceFill([
-            'release_status' => LandTransferApplication::RELEASED_TO_CLIENT,
-            'released_at' => now(),
-            'released_by' => $staff->id,
-            'release_recipient_name' => 'UAT Authorized Recipient',
-            'date_of_clearance_release' => now()->toDateString(),
-        ])->save();
+        DB::table('land_transfer_applications')
+            ->where('id', $application->id)
+            ->update([
+                'release_status' => LandTransferApplication::RELEASED_TO_CLIENT,
+                'released_at' => now(),
+                'released_by' => $staff->id,
+                'release_recipient_name' => 'UAT Authorized Recipient',
+                'date_of_clearance_release' => now()->toDateString(),
+            ]);
+        $application->refresh();
 
         $released = $this->actingAs($landownerUser)
             ->get(route('landowner.applications.index'));

@@ -50,10 +50,13 @@ class ApplicationWorkflowReadinessTest extends TestCase
             LandTransferApplication::STATUS_AWAITING_PAYMENT,
             'READINESS-STALE-ADVANCE'
         );
-        $application->forceFill([
-            'payment_order_reference' => 'OP-READINESS-STALE-ADVANCE',
-            'payment_order_issued_at' => now(),
-        ])->save();
+        DB::table('land_transfer_applications')
+            ->where('id', $application->id)
+            ->update([
+                'payment_order_reference' => 'OP-READINESS-STALE-ADVANCE',
+                'payment_order_issued_at' => now(),
+            ]);
+        $application->refresh();
 
         $renderedStatus = LandTransferApplication::STATUS_AWAITING_PAYMENT;
         $payload = [
@@ -211,10 +214,13 @@ class ApplicationWorkflowReadinessTest extends TestCase
             LandTransferApplication::STATUS_AWAITING_PAYMENT,
             'READINESS-FUTURE-OR'
         );
-        $futureOr->forceFill([
-            'payment_order_reference' => 'OP-READINESS-FUTURE-OR',
-            'payment_order_issued_at' => now(),
-        ])->save();
+        DB::table('land_transfer_applications')
+            ->where('id', $futureOr->id)
+            ->update([
+                'payment_order_reference' => 'OP-READINESS-FUTURE-OR',
+                'payment_order_issued_at' => now(),
+            ]);
+        $futureOr->refresh();
 
         $this->actingAs($staff)
             ->post(route('staff.applications.submit', $futureOr), [
@@ -230,10 +236,13 @@ class ApplicationWorkflowReadinessTest extends TestCase
             LandTransferApplication::STATUS_AWAITING_PAYMENT,
             'READINESS-EARLY-OR'
         );
-        $earlyOr->forceFill([
-            'payment_order_reference' => 'OP-READINESS-EARLY-OR',
-            'payment_order_issued_at' => now(),
-        ])->save();
+        DB::table('land_transfer_applications')
+            ->where('id', $earlyOr->id)
+            ->update([
+                'payment_order_reference' => 'OP-READINESS-EARLY-OR',
+                'payment_order_issued_at' => now(),
+            ]);
+        $earlyOr->refresh();
 
         $this->actingAs($staff)
             ->post(route('staff.applications.submit', $earlyOr), [
@@ -937,15 +946,18 @@ class ApplicationWorkflowReadinessTest extends TestCase
 
     private function completePaymentAndCsw(LandTransferApplication $application, User $staff): void
     {
-        $application->forceFill([
-            'payment_order_reference' => 'OP-' . $application->application_code,
-            'payment_order_issued_at' => now(),
-            'or_number' => 'OR-' . $application->id,
-            'or_date' => now()->toDateString(),
-            'amount_paid' => config('dar_ltc.filing_fee', 2000),
-            'csw_reference' => 'CSW-' . $application->application_code,
-            'csw_completed_at' => now(),
-            'csw_prepared_by' => $staff->id,
-        ])->save();
+        DB::table('land_transfer_applications')
+            ->where('id', $application->id)
+            ->update([
+                'payment_order_reference' => 'OP-' . $application->application_code,
+                'payment_order_issued_at' => now(),
+                'or_number' => 'OR-' . $application->id,
+                'or_date' => now()->toDateString(),
+                'amount_paid' => config('dar_ltc.filing_fee', 2000),
+                'csw_reference' => 'CSW-' . $application->application_code,
+                'csw_completed_at' => now(),
+                'csw_prepared_by' => $staff->id,
+            ]);
+        $application->refresh();
     }
 }

@@ -40,10 +40,13 @@ class StaffDashboardDecisionMetricTest extends TestCase
         ]);
 
         // Simulate a later administrative release-state update occurring today.
-        $olderDecision->forceFill([
-            'release_status' => LandTransferApplication::RELEASE_READY,
-            'ready_for_release_at' => now(),
-        ])->save();
+        DB::table('land_transfer_applications')
+            ->where('id', $olderDecision->id)
+            ->update([
+                'release_status' => LandTransferApplication::RELEASE_READY,
+                'ready_for_release_at' => now(),
+            ]);
+        $olderDecision->refresh();
 
         $response = $this->actingAs($staff)->get(route('staff.dashboard'));
 

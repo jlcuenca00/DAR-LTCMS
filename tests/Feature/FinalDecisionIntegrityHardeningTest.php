@@ -197,7 +197,7 @@ class FinalDecisionIntegrityHardeningTest extends TestCase
         ]);
     }
 
-    public function test_approved_application_model_freezes_core_fields_and_release_tracking_is_forward_only(): void
+    public function test_approved_application_model_freezes_core_fields_and_requires_guarded_release_service(): void
     {
         $staff = User::factory()->create(['role' => 'staff']);
         $application = $this->makeApplication(
@@ -218,8 +218,21 @@ class FinalDecisionIntegrityHardeningTest extends TestCase
 
         $this->assertNull($application->fresh()->remarks);
 
-        $skipReleaseStage = $application->fresh();
-        $skipReleaseStage->forceFill([
+        $directReady = $application->fresh();
+        $directReady->forceFill([
+            'release_status' => LandTransferApplication::RELEASE_READY,
+            'ready_for_release_at' => now(),
+        ]);
+
+        try {
+            $directReady->save();
+            $this->fail('Expected direct Ready for Release mutation to be rejected.');
+        } catch (ValidationException $e) {
+            $this->assertArrayHasKey('release', $e->errors());
+        }
+
+        $directReleased = $application->fresh();
+        $directReleased->forceFill([
             'release_status' => LandTransferApplication::RELEASED_TO_CLIENT,
             'ready_for_release_at' => now(),
             'released_at' => now(),
@@ -229,8 +242,8 @@ class FinalDecisionIntegrityHardeningTest extends TestCase
         ]);
 
         try {
-            $skipReleaseStage->save();
-            $this->fail('Expected direct Not Ready to Released transition to be rejected.');
+            $directReleased->save();
+            $this->fail('Expected direct Released to Client mutation to be rejected.');
         } catch (ValidationException $e) {
             $this->assertArrayHasKey('release', $e->errors());
         }
@@ -240,39 +253,39 @@ class FinalDecisionIntegrityHardeningTest extends TestCase
             LandTransferApplication::RELEASE_NOT_READY,
             $application->release_status ?: LandTransferApplication::RELEASE_NOT_READY
         );
+    }
 
-        $application->forceFill([
-            'release_status' => LandTransferApplication::RELEASE_READY,
-            'ready_for_release_at' => now(),
-        ])->save();
+    public function test_workflow_owned_evidence_fields_reject_direct_model_mutation(): void
+    {
+        $staff = User::factory()->create(['role' => 'staff']);
 
-        $application = $application->fresh();
-        $this->assertSame(LandTransferApplication::RELEASE_READY, $application->release_status);
-
-        $application->forceFill([
-            'release_status' => LandTransferApplication::RELEASED_TO_CLIENT,
-            'released_at' => now(),
-            'released_by' => $staff->id,
-            'release_recipient_name' => 'Authorized Recipient',
-            'release_logbook_reference' => 'LOG-MODEL-FREEZE-001',
-            'csm_status' => 'received',
-            'date_of_clearance_release' => now()->toDateString(),
-        ])->save();
-
-        $application = $application->fresh();
-        $this->assertSame(LandTransferApplication::RELEASED_TO_CLIENT, $application->release_status);
-        $this->assertSame('Authorized Recipient', $application->release_recipient_name);
-
-        $application->release_recipient_name = 'Tampered Recipient';
+        $payment = $this->makeApplication(
+            $staff,
+            LandTransferApplication::STATUS_AWAITING_PAYMENT,
+            'DIRECT-EVIDENCE-PAYMENT-BLOCKED'
+        );
+        $payment->or_number = 'OR-BYPASS-001';
 
         try {
-            $application->save();
-            $this->fail('Expected released application metadata mutation to be rejected.');
+            $payment->save();
+            $this->fail('Expected direct payment evidence mutation to be rejected.');
         } catch (ValidationException $e) {
-            $this->assertArrayHasKey('release', $e->errors());
+            $this->assertArrayHasKey('workflow', $e->errors());
         }
 
-        $this->assertSame('Authorized Recipient', $application->fresh()->release_recipient_name);
+        $decision = $this->makeApplication(
+            $staff,
+            LandTransferApplication::STATUS_FOR_RELEASING,
+            'DIRECT-EVIDENCE-DECISION-BLOCKED'
+        );
+        $decision->decision_officer_name = 'Bypass Officer';
+
+        try {
+            $decision->save();
+            $this->fail('Expected direct final-decision evidence mutation to be rejected.');
+        } catch (ValidationException $e) {
+            $this->assertArrayHasKey('workflow', $e->errors());
+        }
     }
 
     public function test_historical_final_application_records_reject_direct_model_edits(): void
