@@ -190,7 +190,9 @@ class FinalDecisionLockTest extends TestCase
         ]);
 
         $this->actingAs($staffUser)
-            ->post(route('staff.applications.submit', $application))
+            ->post(route('staff.applications.submit', $application), [
+                'expected_status' => $application->fresh()->status,
+            ])
             ->assertSessionHasErrors('status');
 
         $this->actingAs($staffUser)
@@ -198,7 +200,9 @@ class FinalDecisionLockTest extends TestCase
             ->assertSessionHasErrors('status');
 
         $this->actingAs($staffUser)
-            ->post(route('staff.applications.compliance.request', $application))
+            ->post(route('staff.applications.compliance.request', $application), [
+                'expected_status' => $application->fresh()->status,
+            ])
             ->assertSessionHasErrors('status');
 
         $this->actingAs($staffUser)
