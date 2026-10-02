@@ -391,9 +391,12 @@ class BetaSystemRegressionTest extends TestCase
         $staff = $this->staffUser();
         [$transferor, $transferee, $parcel, $landholding, $application] = $this->applicationPackage($staff, 'BETA-COMPLIANCE-001');
 
-        $application->forceFill([
-            'status' => LandTransferApplication::STATUS_FOR_RELEASING,
-        ])->save();
+        // Fixture-only stage setup: direct workflow status mutation is now
+        // rejected by the model guard, so bypass model events explicitly.
+        DB::table('land_transfer_applications')
+            ->where('id', $application->id)
+            ->update(['status' => LandTransferApplication::STATUS_FOR_RELEASING]);
+        $application->refresh();
 
         $this->actingAs($staff)
             ->post(route('staff.applications.compliance.request', $application), [
