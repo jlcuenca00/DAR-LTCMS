@@ -282,6 +282,7 @@ class NotificationSystemTest extends TestCase
         $this->actingAs($staffUser)
             ->post(route('staff.applications.submit', $application), [
                 'expected_status' => $application->fresh()->status,
+            'expected_workflow_revision' => $application->fresh()->workflow_revision,
             ])
             ->assertRedirect();
 
@@ -337,6 +338,7 @@ class NotificationSystemTest extends TestCase
         $this->actingAs($staffUser)
             ->post(route('staff.applications.compliance.request', $application), [
                 'expected_status' => $application->fresh()->status,
+                'expected_workflow_revision' => $application->fresh()->workflow_revision,
                 'category' => ApplicationComplianceNotice::CATEGORY_MISSING_REQUIREMENT,
                 'details' => $details,
                 'requested_items' => $requestedItems,
@@ -414,6 +416,7 @@ class NotificationSystemTest extends TestCase
         $this->actingAs($staffUser)
             ->post(route('staff.applications.compliance.resolve', $application), [
                 'expected_status' => $application->fresh()->status,
+                'expected_workflow_revision' => $application->fresh()->workflow_revision,
                 'compliance_notice_id' => $application->activeComplianceNotice()->value('id'),
                 'resolution_note' => 'Required documents were presented and reviewed.',
             ])
@@ -503,7 +506,9 @@ class NotificationSystemTest extends TestCase
         ]);
 
         $this->actingAs($staffUser)
-            ->post(route('staff.applications.ready_for_release', $application))
+            ->post(route('staff.applications.ready_for_release', $application), [
+                'expected_workflow_revision' => $application->fresh()->workflow_revision,
+            ])
             ->assertSessionHas('success');
 
         $application->refresh();
@@ -546,6 +551,7 @@ class NotificationSystemTest extends TestCase
         $this->actingAs($staffUser)
             ->post(route('staff.applications.submit', $application), [
                 'expected_status' => $application->fresh()->status,
+            'expected_workflow_revision' => $application->fresh()->workflow_revision,
             ])
             ->assertRedirect();
 
