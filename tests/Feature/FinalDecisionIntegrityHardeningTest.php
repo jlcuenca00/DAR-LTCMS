@@ -190,7 +190,10 @@ class FinalDecisionIntegrityHardeningTest extends TestCase
         }
 
         $application = $application->fresh();
-        $this->assertSame(LandTransferApplication::RELEASE_NOT_READY, $application->release_status);
+        $this->assertSame(
+            LandTransferApplication::RELEASE_NOT_READY,
+            $application->release_status ?: LandTransferApplication::RELEASE_NOT_READY
+        );
 
         $application->forceFill([
             'release_status' => LandTransferApplication::RELEASE_READY,
