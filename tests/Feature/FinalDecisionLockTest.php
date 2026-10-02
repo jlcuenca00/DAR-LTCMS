@@ -388,7 +388,7 @@ class FinalDecisionLockTest extends TestCase
         ]);
     }
 
-    public function test_denying_clearance_does_not_mutate_landholding_ownership(): void
+    public function test_removed_negative_decision_path_does_not_mutate_landholding_ownership(): void
     {
         $staffUser = User::factory()->create([
             'role' => 'staff',
@@ -462,19 +462,19 @@ class FinalDecisionLockTest extends TestCase
         ])->save();
 
         $this->actingAs($staffUser)
-            ->post(route('staff.applications.not_approved', $application), [
+            ->post('/staff/applications/' . $application->id . '/not-approved', [
                 'final_decision_confirmation' => '1',
                 'decision_officer_name' => 'PARPO II Test Signatory',
                 'decision_date' => now()->toDateString(),
-                'decision_reason' => 'Denied clearance only.',
-                'decision_notes' => 'Regression test: denial must not mutate ownership records.',
+                'decision_reason' => 'Historical negative path must remain unavailable.',
+                'decision_notes' => 'Regression test: removed negative path must not mutate ownership records.',
             ])
-            ->assertSessionHas('success');
+            ->assertNotFound();
 
         $application->refresh();
         $existingLandholding->refresh();
 
-        $this->assertSame(LandTransferApplication::STATUS_NOT_APPROVED, $application->status);
+        $this->assertSame(LandTransferApplication::STATUS_FOR_RELEASING, $application->status);
 
         $this->assertDatabaseHas('landholdings', [
             'id' => $existingLandholding->id,
