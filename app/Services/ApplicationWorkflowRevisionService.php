@@ -19,6 +19,11 @@ class ApplicationWorkflowRevisionService
 
     public function bump(LandTransferApplication|int $application): void
     {
+        // PostgreSQL child triggers bump revisions for model and bulk writes.
+        if (DB::connection()->getDriverName() === 'pgsql') {
+            return;
+        }
+
         $applicationId = $application instanceof LandTransferApplication
             ? (int) $application->getKey()
             : (int) $application;

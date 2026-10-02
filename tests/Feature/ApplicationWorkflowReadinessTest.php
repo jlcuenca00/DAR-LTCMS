@@ -19,6 +19,7 @@ use Tests\TestCase;
 class ApplicationWorkflowReadinessTest extends TestCase
 {
     use RefreshDatabase;
+    use \Tests\Concerns\WritesWorkflowFixtures;
 
     public function test_failed_legacy_draft_advancement_does_not_normalize_the_status(): void
     {
@@ -54,12 +55,12 @@ class ApplicationWorkflowReadinessTest extends TestCase
             LandTransferApplication::STATUS_AWAITING_PAYMENT,
             'READINESS-STALE-ADVANCE'
         );
-        DB::table('land_transfer_applications')
+        $this->writeWorkflowFixture(fn () => DB::table('land_transfer_applications')
             ->where('id', $application->id)
             ->update([
                 'payment_order_reference' => 'OP-READINESS-STALE-ADVANCE',
                 'payment_order_issued_at' => now(),
-            ]);
+            ]));
         $application->refresh();
 
         $renderedStatus = LandTransferApplication::STATUS_AWAITING_PAYMENT;
@@ -369,12 +370,12 @@ class ApplicationWorkflowReadinessTest extends TestCase
             LandTransferApplication::STATUS_AWAITING_PAYMENT,
             'READINESS-FUTURE-OR'
         );
-        DB::table('land_transfer_applications')
+        $this->writeWorkflowFixture(fn () => DB::table('land_transfer_applications')
             ->where('id', $futureOr->id)
             ->update([
                 'payment_order_reference' => 'OP-READINESS-FUTURE-OR',
                 'payment_order_issued_at' => now(),
-            ]);
+            ]));
         $futureOr->refresh();
 
         $this->actingAs($staff)
@@ -393,12 +394,12 @@ class ApplicationWorkflowReadinessTest extends TestCase
             LandTransferApplication::STATUS_AWAITING_PAYMENT,
             'READINESS-EARLY-OR'
         );
-        DB::table('land_transfer_applications')
+        $this->writeWorkflowFixture(fn () => DB::table('land_transfer_applications')
             ->where('id', $earlyOr->id)
             ->update([
                 'payment_order_reference' => 'OP-READINESS-EARLY-OR',
                 'payment_order_issued_at' => now(),
-            ]);
+            ]));
         $earlyOr->refresh();
 
         $this->actingAs($staff)
@@ -505,9 +506,9 @@ class ApplicationWorkflowReadinessTest extends TestCase
         $this->completeForm4($application);
         $this->completePaymentAndCsw($application, $staff);
 
-        DB::table('application_parcels')
+        $this->writeWorkflowFixture(fn () => DB::table('application_parcels')
             ->where('id', $applicationParcel->id)
-            ->update(['area_hectares' => null, 'area_square_meters' => null]);
+            ->update(['area_hectares' => null, 'area_square_meters' => null]));
 
         $this->actingAs($staff)
             ->post(route('staff.applications.submit', $application), [
@@ -1136,9 +1137,9 @@ class ApplicationWorkflowReadinessTest extends TestCase
             ])
             ->assertSessionHas('success');
 
-        DB::table('land_transfer_applications')
+        $this->writeWorkflowFixture(fn () => DB::table('land_transfer_applications')
             ->where('id', $application->id)
-            ->update(['ready_for_release_at' => now()]);
+            ->update(['ready_for_release_at' => now()]));
 
         $this->actingAs($staff)
             ->get(route('staff.applications.workflow_state', $application))
@@ -1159,9 +1160,9 @@ class ApplicationWorkflowReadinessTest extends TestCase
             $application->fresh()->release_status
         );
 
-        DB::table('land_transfer_applications')
+        $this->writeWorkflowFixture(fn () => DB::table('land_transfer_applications')
             ->where('id', $application->id)
-            ->update(['ready_for_release_at' => null]);
+            ->update(['ready_for_release_at' => null]));
 
         $this->actingAs($staff)
             ->post(route('staff.applications.ready_for_release', $application), [
@@ -1169,12 +1170,12 @@ class ApplicationWorkflowReadinessTest extends TestCase
             ])
             ->assertSessionHas('success');
 
-        DB::table('land_transfer_applications')
+        $this->writeWorkflowFixture(fn () => DB::table('land_transfer_applications')
             ->where('id', $application->id)
             ->update([
                 'released_at' => now(),
                 'release_recipient_name' => 'Premature Recipient',
-            ]);
+            ]));
 
         $this->actingAs($staff)
             ->get(route('staff.applications.workflow_state', $application))
@@ -1317,7 +1318,7 @@ class ApplicationWorkflowReadinessTest extends TestCase
 
     private function completePaymentAndCsw(LandTransferApplication $application, User $staff): void
     {
-        DB::table('land_transfer_applications')
+        $this->writeWorkflowFixture(fn () => DB::table('land_transfer_applications')
             ->where('id', $application->id)
             ->update([
                 'payment_order_reference' => 'OP-' . $application->application_code,
@@ -1328,7 +1329,7 @@ class ApplicationWorkflowReadinessTest extends TestCase
                 'csw_reference' => 'CSW-' . $application->application_code,
                 'csw_completed_at' => now(),
                 'csw_prepared_by' => $staff->id,
-            ]);
+            ]));
         $application->refresh();
     }
 }

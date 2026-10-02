@@ -17,6 +17,7 @@ use Tests\TestCase;
 class HectareValidationWorkflowTest extends TestCase
 {
     use RefreshDatabase;
+    use \Tests\Concerns\WritesWorkflowFixtures;
 
     public function test_first_time_transferee_record_can_be_created_without_creating_landholding(): void
     {
@@ -172,9 +173,9 @@ class HectareValidationWorkflowTest extends TestCase
                 'parcel_code' => $parcel->parcel_code,
             ]);
 
-            DB::table('land_transfer_applications')
+            $this->writeWorkflowFixture(fn () => DB::table('land_transfer_applications')
                 ->where('id', $application->id)
-                ->update(['status' => $finalStatus]);
+                ->update(['status' => $finalStatus]));
         }
 
         $currentParcel = Parcel::create([

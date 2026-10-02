@@ -25,6 +25,7 @@ use Tests\TestCase;
 class DataIntegrityHardeningTest extends TestCase
 {
     use RefreshDatabase;
+    use \Tests\Concerns\WritesWorkflowFixtures;
     use \Tests\Concerns\InsertsClearanceFixtures;
 
     public function test_parcel_hectares_are_canonical_and_square_meters_are_derived(): void
@@ -258,12 +259,12 @@ class DataIntegrityHardeningTest extends TestCase
         ]);
 
         // Explicit out-of-band corruption fixture; runtime quiet writes are blocked.
-        DB::table('land_transfer_applications')->where('id', $application->id)->update([
+        $this->writeWorkflowFixture(fn () => DB::table('land_transfer_applications')->where('id', $application->id)->update([
             'transferees' => json_encode([
                 $this->partyRow($transferees[0], [$applicationParcel->id => 0.5000]),
                 $this->partyRow($transferees[1], [$applicationParcel->id => 0.5000]),
             ]),
-        ]);
+        ]));
 
         $this->actingAs($staff)
             ->post(route('staff.applications.submit', $application), [
@@ -655,13 +656,13 @@ class DataIntegrityHardeningTest extends TestCase
         ]);
 
         // Explicit pre-existing database drift fixture.
-        DB::table('land_transfer_applications')->where('id', $application->id)->update([
+        $this->writeWorkflowFixture(fn () => DB::table('land_transfer_applications')->where('id', $application->id)->update([
             'transferor_name' => 'Drifted summary',
-        ]);
+        ]));
 
-        DB::table('application_parcels')
+        $this->writeWorkflowFixture(fn () => DB::table('application_parcels')
             ->where('id', $applicationParcel->id)
-            ->update(['area_hectares' => null]);
+            ->update(['area_hectares' => null]));
 
         $result = app(DataIntegrityScanner::class)->scan();
         $codes = collect($result['issues'])->pluck('code');
@@ -682,12 +683,12 @@ class DataIntegrityHardeningTest extends TestCase
 
         // Simulate a pre-existing corrupt row without weakening the current
         // model-level release-state guard.
-        DB::table('land_transfer_applications')
+        $this->writeWorkflowFixture(fn () => DB::table('land_transfer_applications')
             ->where('id', $application->id)
             ->update([
                 'release_status' => LandTransferApplication::RELEASED_TO_CLIENT,
                 'released_at' => now(),
-            ]);
+            ]));
         $application->refresh();
 
         $this->insertClearanceFixture([
@@ -728,7 +729,7 @@ class DataIntegrityHardeningTest extends TestCase
         );
 
         foreach ([1, 2] as $index) {
-            DB::table('application_parcels')->insert([
+            $this->writeWorkflowFixture(fn () => DB::table('application_parcels')->insert([
                 'land_transfer_application_id' => $application->id,
                 'parcel_id' => null,
                 'parcel_code' => 'HIST-SNAPSHOT-001',
@@ -740,7 +741,7 @@ class DataIntegrityHardeningTest extends TestCase
                 'area_square_meters' => 12500,
                 'created_at' => now(),
                 'updated_at' => now(),
-            ]);
+            ]));
         }
 
         $result = app(DataIntegrityScanner::class)->scan();

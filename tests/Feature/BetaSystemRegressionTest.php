@@ -22,6 +22,7 @@ use Tests\TestCase;
 class BetaSystemRegressionTest extends TestCase
 {
     use RefreshDatabase;
+    use \Tests\Concerns\WritesWorkflowFixtures;
 
     public function test_staff_can_encode_records_and_create_an_application_from_existing_parcel(): void
     {
@@ -473,9 +474,9 @@ class BetaSystemRegressionTest extends TestCase
 
         // Fixture-only stage setup: direct workflow status mutation is now
         // rejected by the model guard, so bypass model events explicitly.
-        DB::table('land_transfer_applications')
+        $this->writeWorkflowFixture(fn () => DB::table('land_transfer_applications')
             ->where('id', $application->id)
-            ->update(['status' => LandTransferApplication::STATUS_FOR_RELEASING]);
+            ->update(['status' => LandTransferApplication::STATUS_FOR_RELEASING]));
         $application->refresh();
 
         $this->actingAs($staff)
@@ -573,9 +574,9 @@ class BetaSystemRegressionTest extends TestCase
             ]);
 
             if ($historicalNegative) {
-                DB::table('land_transfer_applications')
+                $this->writeWorkflowFixture(fn () => DB::table('land_transfer_applications')
                     ->where('id', $application->id)
-                    ->update(['status' => LandTransferApplication::STATUS_NOT_APPROVED]);
+                    ->update(['status' => LandTransferApplication::STATUS_NOT_APPROVED]));
                 $application->refresh();
             }
 

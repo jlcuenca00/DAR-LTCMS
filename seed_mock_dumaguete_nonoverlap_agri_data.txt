@@ -15,84 +15,9 @@ BEGIN;
 --   Historical negative decisions are intentionally excluded from production demo data.
 --   No ownership/registry mutation is simulated.
 --
--- Safe rerun rule: only records using the current NOR-AGRI / NOR-DEMO identifiers,
--- previous DGT-AGRI / DGT-DEMO demo identifiers, and the reserved 09996 demo
--- contact range are removed.
-
--- Capture only known DAR-LTCMS demo rows before any linked rows are removed.
--- This deliberately avoids blanket deletion of non-demo DGT/NOR application codes.
-CREATE TEMP TABLE dar_demo_application_ids (id bigint PRIMARY KEY) ON COMMIT DROP;
-INSERT INTO dar_demo_application_ids (id)
-SELECT id
-FROM land_transfer_applications
-WHERE application_code LIKE '2026-DGT-DEMO-%'
-   OR application_code LIKE '2026-NOR-DEMO-%'
-UNION
-SELECT DISTINCT ap.land_transfer_application_id
-FROM application_parcels ap
-JOIN parcels p ON p.id = ap.parcel_id
-WHERE p.parcel_code LIKE 'DGT-AGRI-%'
-   OR p.parcel_code LIKE 'NOR-AGRI-%';
-
-CREATE TEMP TABLE dar_demo_landowner_ids (id bigint PRIMARY KEY) ON COMMIT DROP;
-INSERT INTO dar_demo_landowner_ids (id)
-SELECT DISTINCT lh.landowner_id
-FROM landholdings lh
-JOIN parcels p ON p.id = lh.parcel_id
-WHERE p.parcel_code LIKE 'DGT-AGRI-%'
-   OR p.parcel_code LIKE 'NOR-AGRI-%'
-UNION
-SELECT id
-FROM landowners
-WHERE contact_number LIKE '09996%'
-   OR contact_number LIKE '09997%'
-   OR contact_number LIKE '09999%';
-
-DO $$
-BEGIN
-    IF to_regclass('public.application_clearances') IS NOT NULL THEN
-        DELETE FROM application_clearances
-        WHERE land_transfer_application_id IN (SELECT id FROM dar_demo_application_ids);
-    END IF;
-
-    IF to_regclass('public.application_parcels') IS NOT NULL THEN
-        DELETE FROM application_parcels
-        WHERE land_transfer_application_id IN (SELECT id FROM dar_demo_application_ids);
-    END IF;
-END $$;
-
-DELETE FROM land_transfer_applications
-WHERE id IN (SELECT id FROM dar_demo_application_ids);
-
-DELETE FROM legacy_records
-WHERE (parcel_code LIKE 'DGT-AGRI-%' OR parcel_code LIKE 'NOR-AGRI-%')
-   OR source_book IN (
-        'Dumaguete Mock Agri Map 2026',
-        'Dumaguete Agri Map Cluster 2026',
-        'Dumaguete Realistic Agri Parcels 2026',
-        'DAR-LTCMS Provincial Agricultural Demo 2026'
-   );
-
-DELETE FROM source_record_packages
-WHERE (parcel_code LIKE 'DGT-AGRI-%' OR parcel_code LIKE 'NOR-AGRI-%')
-   OR source_book IN (
-        'Dumaguete Mock Agri Map 2026',
-        'Dumaguete Agri Map Cluster 2026',
-        'Dumaguete Realistic Agri Parcels 2026',
-        'DAR-LTCMS Provincial Agricultural Demo 2026'
-   );
-
-DELETE FROM landholdings
-WHERE parcel_id IN (
-    SELECT id FROM parcels
-    WHERE parcel_code LIKE 'DGT-AGRI-%' OR parcel_code LIKE 'NOR-AGRI-%'
-);
-
-DELETE FROM parcels
-WHERE parcel_code LIKE 'DGT-AGRI-%' OR parcel_code LIKE 'NOR-AGRI-%';
-
-DELETE FROM landowners
-WHERE id IN (SELECT id FROM dar_demo_landowner_ids);
+-- Preserve existing demo records and their immutable history on rerun.
+-- Serialize concurrent seed runs. Existing legacy demo identifiers remain untouched.
+SELECT pg_advisory_xact_lock(18032026, 1);
 
 DO $$
 DECLARE
@@ -159,6 +84,18 @@ BEGIN
     LOOP
         v_parcel_code := 'NOR-AGRI-' || lpad(r.seq::text, 3, '0');
         v_application_code := '2026-NOR-DEMO-' || lpad(r.seq::text, 4, '0');
+        IF EXISTS (SELECT 1 FROM land_transfer_applications WHERE application_code = v_application_code)
+            AND EXISTS (SELECT 1 FROM parcels WHERE parcel_code = v_parcel_code) THEN
+            CONTINUE;
+        END IF;
+        IF EXISTS (SELECT 1 FROM land_transfer_applications WHERE application_code = v_application_code)
+            OR EXISTS (SELECT 1 FROM parcels WHERE parcel_code = v_parcel_code)
+            OR EXISTS (SELECT 1 FROM landowners WHERE contact_number IN (
+                '099961' || lpad(r.seq::text, 4, '0'), '099962' || lpad(r.seq::text, 4, '0')
+            ))
+            OR EXISTS (SELECT 1 FROM source_record_packages WHERE package_code = 'SRC-NOR-DEMO-2026-' || lpad(r.seq::text, 3, '0')) THEN
+            RAISE EXCEPTION 'Partial demo slot % exists. Preserve its records and reconcile manually before seeding.', r.seq;
+        END IF;
         v_title_no := CASE WHEN r.title_type = 'untitled' THEN NULL ELSE 'T-2026-NOR-' || lpad(r.seq::text, 4, '0') END;
         v_tax_decl_no := 'TD-2026-NOR-' || lpad(r.seq::text, 4, '0');
         v_lot_no := 'Lot ' || (500 + r.seq)::text || '-' || chr(64 + ((r.seq - 1) % 5) + 1);
@@ -304,7 +241,7 @@ BEGIN
             r.municipality, r.barangay,
             CURRENT_DATE - (r.seq * INTERVAL '2 days'),
             NULL,
-            r.status, r.release_status,
+            CASE WHEN v_is_final THEN 'for_releasing' ELSE r.status END, r.release_status,
             CASE
                 WHEN r.status = 'returned_for_compliance' THEN 'Demo application returned for documentary compliance.'
                 WHEN r.status = 'awaiting_payment' THEN 'Demo application with documentary intake completed; awaiting Official Receipt recording.'
@@ -368,6 +305,7 @@ BEGIN
         ) RETURNING id INTO v_application_parcel_id;
 
         IF v_is_final THEN
+            UPDATE land_transfer_applications SET status = 'approved' WHERE id = v_application_id;
             INSERT INTO application_clearances (
                 land_transfer_application_id, clearance_number, decision_status,
                 application_code, transferor_name, transferee_name,

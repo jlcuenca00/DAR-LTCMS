@@ -23,8 +23,8 @@ if ($sql === false || $sql === '') {
     throw new RuntimeException('The uploaded demo refresh SQL file is missing or empty.');
 }
 
-if (! str_contains($sql, 'CREATE TEMP TABLE dar_demo_application_ids')) {
-    throw new RuntimeException('The demo refresh SQL is missing the safe demo-record targeting guard.');
+if (! str_contains($sql, 'SELECT pg_advisory_xact_lock(18032026, 1)') || preg_match('/\b(?:DELETE\s+FROM|TRUNCATE|DISABLE\s+TRIGGER)\b/i', $sql)) {
+    throw new RuntimeException('The demo refresh SQL is missing the preserving seed guard or contains destructive statements.');
 }
 
 if (

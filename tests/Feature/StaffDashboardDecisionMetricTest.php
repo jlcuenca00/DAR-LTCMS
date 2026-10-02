@@ -11,6 +11,7 @@ use Tests\TestCase;
 class StaffDashboardDecisionMetricTest extends TestCase
 {
     use RefreshDatabase;
+    use \Tests\Concerns\WritesWorkflowFixtures;
 
     public function test_final_decisions_today_uses_decision_time_not_later_release_updates(): void
     {
@@ -40,12 +41,12 @@ class StaffDashboardDecisionMetricTest extends TestCase
         ]);
 
         // Simulate a later administrative release-state update occurring today.
-        DB::table('land_transfer_applications')
+        $this->writeWorkflowFixture(fn () => DB::table('land_transfer_applications')
             ->where('id', $olderDecision->id)
             ->update([
                 'release_status' => LandTransferApplication::RELEASE_READY,
                 'ready_for_release_at' => now(),
-            ]);
+            ]));
         $olderDecision->refresh();
 
         $response = $this->actingAs($staff)->get(route('staff.dashboard'));
@@ -77,9 +78,9 @@ class StaffDashboardDecisionMetricTest extends TestCase
 
         // Historical fixtures bypass the current-workflow observer because
         // negative final statuses can no longer be created by normal model writes.
-        DB::table('land_transfer_applications')
+        $this->writeWorkflowFixture(fn () => DB::table('land_transfer_applications')
             ->where('id', $legacyApplication->id)
-            ->update(['status' => LandTransferApplication::STATUS_DENIED]);
+            ->update(['status' => LandTransferApplication::STATUS_DENIED]));
 
         $response = $this->actingAs($staff)->get(route('staff.dashboard'));
 

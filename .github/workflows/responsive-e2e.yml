@@ -163,6 +163,10 @@ jobs:
           PGPASSWORD: postgres
         run: |
           psql -h 127.0.0.1 -U postgres -d dar_iland -v ON_ERROR_STOP=1 -f seed_mock_dumaguete_nonoverlap_agri_data.txt
+          psql -h 127.0.0.1 -U postgres -d dar_iland -Atc "SELECT md5(jsonb_agg(to_jsonb(a) ORDER BY a.id)::text) FROM land_transfer_applications a WHERE application_code LIKE '2026-NOR-DEMO-%';" > /tmp/demo-before.txt
+          psql -h 127.0.0.1 -U postgres -d dar_iland -v ON_ERROR_STOP=1 -f seed_mock_dumaguete_nonoverlap_agri_data.txt
+          psql -h 127.0.0.1 -U postgres -d dar_iland -Atc "SELECT md5(jsonb_agg(to_jsonb(a) ORDER BY a.id)::text) FROM land_transfer_applications a WHERE application_code LIKE '2026-NOR-DEMO-%';" > /tmp/demo-after.txt
+          cmp /tmp/demo-before.txt /tmp/demo-after.txt
           test "$(psql -h 127.0.0.1 -U postgres -d dar_iland -Atc "SELECT COUNT(*) FROM parcels WHERE parcel_code LIKE 'NOR-AGRI-%';")" = "16"
           test "$(psql -h 127.0.0.1 -U postgres -d dar_iland -Atc "SELECT COUNT(*) FROM land_transfer_applications WHERE application_code LIKE '2026-NOR-DEMO-%' AND status IN ('approved','not_approved');")" = "5"
           test "$(psql -h 127.0.0.1 -U postgres -d dar_iland -Atc "SELECT COUNT(*) FROM land_transfer_applications WHERE application_code LIKE '2026-NOR-DEMO-%' AND amount_paid IS NOT NULL AND amount_paid <> 2000.00;")" = "0"
