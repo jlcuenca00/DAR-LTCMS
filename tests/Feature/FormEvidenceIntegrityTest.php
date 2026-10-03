@@ -179,6 +179,7 @@ class FormEvidenceIntegrityTest extends TestCase
             $this->assertArrayHasKey('decision_date', $exception->errors());
         }
         app(ClearanceDocumentSourceService::class)->assertChronology($application->fresh(), '2026-08-19');
+        $deed->update(['document_metadata' => ['notarization_date' => '', 'date_issued' => '2026-08-19']]);
         $application = $this->finalizeFixture($application, $staff, '2026-08-18');
         try {
             app(ApplicationClearanceService::class)->generateForDecision($application, $staff->id);

@@ -47,7 +47,9 @@ class ClearanceDocumentSourceService
     {
         $source = $this->resolve($application)['transfer'];
         $metadata = (array) $source?->document_metadata;
-        $issued = $metadata['notarization_date'] ?? $metadata['date_issued'] ?? null;
+        $issued = filled($metadata['notarization_date'] ?? null)
+            ? $metadata['notarization_date']
+            : ($metadata['date_issued'] ?? null);
         if (blank($issued)) {
             return;
         }
