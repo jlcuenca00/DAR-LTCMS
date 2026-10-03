@@ -26,7 +26,7 @@ class ClearanceDocumentSourceService
             'transfer' => $documents->filter(function (ApplicationDocument $document) {
                 $name = mb_strtolower((string) $document->requiredDocument?->name);
                 return filled(data_get($document->document_metadata, 'transfer_document_title'))
-                    || str_contains($name, 'deed')
+                    || preg_match('/\\bdeed\\b/', $name) === 1
                     || str_contains($name, 'document to be registered')
                     || str_contains($name, 'transfer instrument')
                     || str_contains($name, 'conveyance');
