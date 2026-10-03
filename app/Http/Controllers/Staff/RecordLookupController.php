@@ -50,7 +50,7 @@ class RecordLookupController extends Controller
                 );
 
                 if (ctype_digit($search)) {
-                    $matching->orWhereKey((int) $search);
+                    $matching->orWhere('id', (int) $search);
                 }
             });
         }
@@ -103,7 +103,7 @@ class RecordLookupController extends Controller
             ->where(function ($eligible) use ($currentUserId) {
                 $eligible->whereDoesntHave('landowner');
                 if ($currentUserId) {
-                    $eligible->orWhereKey($currentUserId);
+                    $eligible->orWhere('users.id', $currentUserId);
                 }
             });
         $search = trim((string) ($filters['q'] ?? ''));
@@ -112,7 +112,7 @@ class RecordLookupController extends Controller
             $query->where(function ($matching) use ($needle, $search) {
                 $matching->whereRaw("LOWER(COALESCE(name, '') || ' ' || COALESCE(email, '') || ' ' || COALESCE(username, '')) LIKE ?", [$needle]);
                 if (ctype_digit($search)) {
-                    $matching->orWhereKey((int) $search);
+                    $matching->orWhere('id', (int) $search);
                 }
             });
         }
@@ -146,7 +146,7 @@ class RecordLookupController extends Controller
                 );
 
                 if (ctype_digit($search)) {
-                    $matching->orWhereKey((int) $search);
+                    $matching->orWhere('id', (int) $search);
                 }
             });
         }

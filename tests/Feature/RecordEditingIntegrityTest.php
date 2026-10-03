@@ -190,8 +190,12 @@ class RecordEditingIntegrityTest extends TestCase
         $this->actingAs($staff)->getJson($url)->assertOk()->assertJsonCount(20, 'results');
         $this->getJson($url . '?q=Unique%20Search%20Target')->assertJsonCount(1, 'results')->assertJsonPath('results.0.id', $target->id);
         $this->getJson($url . '?q=Already%20Linked')->assertJsonCount(0, 'results');
-        $this->getJson($url . '?q=Already%20Linked&landowner_id=' . $owner->id)->assertJsonPath('results.0.id', $linked->id);
+        $this->assertDatabaseHas('landowners', ['id' => $owner->id, 'user_id' => $linked->id]);
+        $this->assertDatabaseHas('users', ['id' => $linked->id, 'name' => 'Already Linked']);
+        $this->getJson($url . '?q=Already%20Linked&landowner_id=' . $owner->id)->assertOk()->assertJsonCount(1, 'results')->assertJsonPath('results.0.id', $linked->id);
         $this->getJson($url . '?q=Staff%20Search%20Unique')->assertJsonCount(0, 'results');
+        $this->getJson($url . '?q=' . $target->id)->assertOk()->assertJsonFragment(['id' => $target->id]);
+        $this->get(route('staff.records.landowners.edit', $owner))->assertOk()->assertViewHas('selectedUser', fn ($user) => $user->id === $linked->id);
         $this->actingAs($target)->getJson($url)->assertForbidden();
         $geodetic = User::factory()->create(['role' => User::ROLE_GEODETIC]);
         $this->actingAs($geodetic)->getJson($url)->assertForbidden();

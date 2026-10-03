@@ -182,7 +182,7 @@ class LandownerRecordController extends Controller
             ->where(function ($query) use ($landowner) {
                 $query->whereDoesntHave('landowner');
                 if ($landowner?->user_id) {
-                    $query->orWhereKey($landowner->user_id);
+                    $query->orWhere('users.id', $landowner->user_id);
                 }
             })->find($userId);
     }
