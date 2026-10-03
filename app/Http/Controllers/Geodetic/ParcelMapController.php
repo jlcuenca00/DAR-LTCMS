@@ -250,7 +250,7 @@ class ParcelMapController extends Controller
 
             $previousGeometry = $current->geometry_geojson;
 
-            if ($previousGeometry === $geometry) {
+            if (app(ParcelGeometryService::class)->geometriesEqual($previousGeometry, $geometry)) {
                 $session->delete();
 
                 return [

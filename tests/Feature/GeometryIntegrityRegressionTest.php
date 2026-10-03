@@ -74,6 +74,17 @@ class GeometryIntegrityRegressionTest extends TestCase
             ->assertJsonCount(2, 'geometry.coordinates')->assertJsonPath('geometry.reference.notes', 'Preserve this');
     }
 
+    public function test_numeric_representation_and_object_key_order_do_not_create_a_false_geometry_edit(): void
+    {
+        $geometry = $this->polygon();
+        $same = ['coordinates' => array_map(
+            fn ($ring) => array_map(fn ($point) => array_map('floatval', $point), $ring), $geometry['coordinates']
+        ), 'type' => 'Polygon'];
+        $service = app(ParcelGeometryService::class);
+        $this->assertTrue($service->geometriesEqual($geometry, $same));
+        $this->assertFalse($service->geometriesEqual($geometry + ['reference' => '001'], $same + ['reference' => '1']));
+    }
+
     public function test_audit_failure_rolls_back_geometry_revision_and_session_deletion(): void
     {
         [$parcel, $session] = $this->openEditor();

@@ -504,7 +504,15 @@
                     let mapCoordinates = sourceCoordinates;
                     let geometry = { type: 'Polygon', coordinates: [] };
                     if (target.value.trim()) {
-                        try { geometry = JSON.parse(target.value); }
+                        try {
+                            geometry = JSON.parse(target.value);
+                            if (geometry?.type !== 'Polygon' || geometry.coordinates?.length !== 1
+                                || !Array.isArray(geometry.coordinates[0])
+                                || geometry.coordinates[0].some(point => !Array.isArray(point) || point.length !== 2)) {
+                                setMessage('The point helper cannot replace multiple rings or extra coordinate dimensions.', true);
+                                return false;
+                            }
+                        }
                         catch {
                             setMessage('The existing geometry must be reviewed before applying coordinate changes.', true);
                             return false;

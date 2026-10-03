@@ -111,6 +111,22 @@ class ParcelGeometryService
         }
     }
 
+    public function geometriesEqual(?array $left, array $right): bool
+    {
+        $normalize = function (mixed $value) use (&$normalize): mixed {
+            if (! is_array($value)) {
+                return $value;
+            }
+            if (! array_is_list($value)) {
+                ksort($value);
+            }
+
+            return array_map($normalize, $value);
+        };
+
+        return json_encode($normalize($left), JSON_THROW_ON_ERROR) === json_encode($normalize($right), JSON_THROW_ON_ERROR);
+    }
+
     public function recordRevision(
         Parcel $parcel,
         ?array $previousGeometry,
