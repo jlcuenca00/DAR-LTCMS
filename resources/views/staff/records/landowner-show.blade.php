@@ -972,6 +972,7 @@
                                             </div>
                                             <form method="POST" action="{{ route('staff.records.landowners.landholdings.update', [$landowner, $holding]) }}" class="landholding-edit-form" enctype="multipart/form-data" data-landholding-form data-autosave-key="landholding-edit-{{ $holding->id }}" data-autosave-label="landholding edit">
                                                 @csrf
+                                                <input type="hidden" name="expected_record_revision" value="{{ $holding->record_revision }}">
                                                 @method('PATCH')
 
                                             <div class="landholding-edit-field span-6">

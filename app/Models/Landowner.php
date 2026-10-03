@@ -2,12 +2,15 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\TracksRecordRevision;
+
 use App\Models\Concerns\NormalizesDarLocation;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Validation\ValidationException;
 
 class Landowner extends Model
 {
+    use TracksRecordRevision;
     use NormalizesDarLocation;
 
     public const STATUS_SINGLE = 'single';
@@ -31,6 +34,8 @@ class Landowner extends Model
         'province',
         'user_id',
     ];
+
+    protected $casts = ['record_revision' => 'integer'];
 
     protected static function booted(): void
     {

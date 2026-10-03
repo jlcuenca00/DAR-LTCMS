@@ -67,6 +67,9 @@ class LandownerRecordController extends Controller
 
     public function update(Request $request, Landowner $landowner)
     {
+        $expectedRevision = (int) $request->validate([
+            'expected_record_revision' => ['required', 'integer', 'min:1'],
+        ])['expected_record_revision'];
         $validated = $request->validate([
             'first_name' => ['required', 'string', 'max:255'],
             'middle_name' => ['nullable', 'string', 'max:255'],
@@ -90,11 +93,13 @@ class LandownerRecordController extends Controller
             $validated['spouse_name'] = null;
         }
 
-        $landowner = DB::transaction(function () use ($landowner, $validated) {
+        $landowner = DB::transaction(function () use ($landowner, $validated, $expectedRevision) {
             $lockedLandowner = Landowner::query()
                 ->whereKey($landowner->id)
                 ->lockForUpdate()
                 ->firstOrFail();
+
+            app(\App\Services\RecordEditRevisionService::class)->assertExpected($lockedLandowner, $expectedRevision);
 
             $oldValues = $lockedLandowner->only(array_keys($validated));
             $lockedLandowner->update($validated);

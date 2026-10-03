@@ -302,6 +302,7 @@ class RecordSearchController extends Controller
             'remarks' => ['nullable', 'string', 'max:5000'],
             'geometry_geojson' => ['nullable', 'string', 'max:200000'],
             'geometry_version' => ['required', 'integer', 'min:0'],
+            'expected_record_revision' => ['required', 'integer', 'min:1'],
             'reference_photo' => ['nullable', 'image', 'max:5120'],
         ]);
 
@@ -309,14 +310,15 @@ class RecordSearchController extends Controller
         $data = $this->normalizeParcelRegistrationData($data);
         $data['geometry_geojson'] = app(ParcelGeometryService::class)->decodePolygon($data['geometry_geojson'] ?? null);
         $submittedGeometryVersion = (int) $data['geometry_version'];
-        unset($data['geometry_version']);
+        $expectedRevision = (int) $data['expected_record_revision'];
+        unset($data['geometry_version'], $data['expected_record_revision']);
 
         // Keep the existing internal classification value. Staff no longer edits this as a clearance workflow field.
         $data['agricultural_status'] = $parcel->agricultural_status ?: Parcel::DEFAULT_AGRICULTURAL_STATUS;
 
         unset($data['reference_photo']);
 
-        $oldReferencePhotoPath = $parcel->reference_photo_path;
+        $oldReferencePhotoPath = null;
         $newReferencePhotoPath = null;
 
         if ($request->hasFile('reference_photo')) {
@@ -325,8 +327,10 @@ class RecordSearchController extends Controller
         }
 
         try {
-            $savedParcel = DB::transaction(function () use ($parcel, $data, $request, $submittedGeometryVersion) {
+            $savedParcel = DB::transaction(function () use ($parcel, $data, $request, $submittedGeometryVersion, $expectedRevision, &$oldReferencePhotoPath) {
                 $lockedParcel = app(ParcelConcurrencyService::class)->lockParcel((int) $parcel->id);
+                app(\App\Services\RecordEditRevisionService::class)->assertExpected($lockedParcel, $expectedRevision);
+                $oldReferencePhotoPath = $lockedParcel->reference_photo_path;
                 $previousGeometry = $lockedParcel->geometry_geojson;
                 $previousVersion = (int) $lockedParcel->geometry_version;
 

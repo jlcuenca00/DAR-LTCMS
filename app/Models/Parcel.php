@@ -2,12 +2,15 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\TracksRecordRevision;
+
 use App\Models\Concerns\NormalizesDarLocation;
 use App\Services\ParcelAreaIntegrityService;
 use Illuminate\Database\Eloquent\Model;
 
 class Parcel extends Model
 {
+    use TracksRecordRevision;
     use NormalizesDarLocation;
 
     public const DEFAULT_AGRICULTURAL_STATUS = 'private_agricultural';
@@ -79,6 +82,7 @@ class Parcel extends Model
     ];
 
     protected $casts = [
+        'record_revision' => 'integer',
         'geometry_geojson' => 'array',
         'geometry_version' => 'integer',
         'area_hectares' => 'decimal:4',

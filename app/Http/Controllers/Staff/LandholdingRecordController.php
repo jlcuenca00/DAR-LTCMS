@@ -62,12 +62,14 @@ class LandholdingRecordController extends Controller
         abort_unless((int) $landholding->landowner_id === (int) $landowner->id, 404);
 
         $validated = $this->validatedData($request);
-        $oldReferencePhotoPath = $landholding->reference_photo_path;
+        $expectedRevision = (int) $request->validate([
+            'expected_record_revision' => ['required', 'integer', 'min:1'],
+        ])['expected_record_revision'];
         $validated = $this->storeReferencePhoto($request, $validated, 'reference-photos/landholdings');
         $newReferencePhotoPath = $validated['reference_photo_path'] ?? null;
 
         try {
-            DB::transaction(function () use ($landholding, $validated, $landowner) {
+            $oldReferencePhotoPath = DB::transaction(function () use ($landholding, $validated, $landowner, $expectedRevision) {
                 app(LandownerConcurrencyService::class)->lockLandowner((int) $landowner->id);
                 app(ParcelConcurrencyService::class)->lockParcels([
                     $landholding->parcel_id,
@@ -78,6 +80,9 @@ class LandholdingRecordController extends Controller
                     ->whereKey($landholding->id)
                     ->lockForUpdate()
                     ->firstOrFail();
+
+                app(\App\Services\RecordEditRevisionService::class)->assertExpected($lockedLandholding, $expectedRevision);
+                $oldReferencePhotoPath = $lockedLandholding->reference_photo_path;
 
                 $oldValues = $lockedLandholding->only(array_keys($validated));
                 $lockedLandholding->update($validated);
@@ -93,6 +98,7 @@ class LandholdingRecordController extends Controller
                         'scope_note' => 'Administrative landholding record update only. This does not automatically transfer land ownership or mutate registry records.',
                     ]
                 );
+                return $oldReferencePhotoPath;
             });
         } catch (Throwable $e) {
             if ($newReferencePhotoPath) {
@@ -128,8 +134,9 @@ class LandholdingRecordController extends Controller
             'parcel_id' => ['required', 'exists:parcels,id'],
             'area_hectares' => ['required', 'numeric', 'min:0.0001', 'max:999999.9999'],
             'status' => ['required', Rule::in(Landholding::STATUSES)],
-            'date_acquired' => ['nullable', 'date'],
-            'date_transferred' => ['nullable', 'date'],
+            'date_acquired' => ['nullable', 'date', 'before_or_equal:today'],
+            'date_transferred' => ['nullable', 'date', 'before_or_equal:today',
+                Rule::when($request->filled('date_acquired'), ['after_or_equal:date_acquired'])],
             'source_application_id' => ['nullable', 'exists:land_transfer_applications,id'],
             'source_reference_number' => ['nullable', 'string', 'max:255'],
             'remarks' => ['nullable', 'string', 'max:2000'],

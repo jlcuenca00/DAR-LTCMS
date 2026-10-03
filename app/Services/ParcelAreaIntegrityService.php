@@ -43,7 +43,8 @@ class ParcelAreaIntegrityService
             ->where('status', Landholding::STATUS_ACTIVE)
             ->sum('area_hectares'), 4);
 
-        if ($activeArea > self::HECTARE_TOLERANCE) {
+        if (Landholding::query()->where('parcel_id', $parcel->getKey())
+            ->where('status', Landholding::STATUS_ACTIVE)->exists()) {
             if ($parcel->isDirty('area_hectares')) {
                 $parcelArea = $parcel->getAttribute('area_hectares');
 

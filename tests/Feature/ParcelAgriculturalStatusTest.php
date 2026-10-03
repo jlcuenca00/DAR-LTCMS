@@ -33,6 +33,7 @@ class ParcelAgriculturalStatusTest extends TestCase
 
         $response = $this->actingAs($staffUser)
             ->patch(route('staff.records.parcels.update', $parcel), [
+                'expected_record_revision' => (int) $parcel->fresh()->record_revision,
                 'parcel_code' => 'AGR-SCOPE-001',
                 'title_no' => 'TCT-AGR-001',
                 'tax_decl_no' => 'TD-AGR-001',
