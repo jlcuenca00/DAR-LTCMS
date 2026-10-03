@@ -24,16 +24,24 @@ class ApplicationLandownerLinkController extends Controller
                 ->with('error', 'Finalized applications are locked. Landowner record links can no longer be changed.');
         }
 
+        $reviewed = $request->validate([
+            'expected_workflow_revision' => ['required', 'integer', 'min:1'],
+            'expected_party_dependency' => ['nullable', 'string', 'size:64', Rule::requiredIf(fn () => $request->boolean('sync_current_landholdings'))],
+        ]);
+        app(\App\Services\ApplicationWorkflowRevisionService::class)->assertExpected($application, (int) $reviewed['expected_workflow_revision']);
+
         $existingTransferors = $application->partyRows('transferor');
         $existingTransferees = $application->partyRows('transferee');
 
         $validated = $request->validate([
             'transferors' => ['required', 'array', 'size:' . count($existingTransferors)],
+            'transferors.*' => ['array:name,landowner_id,parcel_shares'],
             'transferors.*.name' => ['required', 'string', 'max:255'],
             'transferors.*.landowner_id' => ['nullable', 'distinct', 'exists:landowners,id'],
             'transferors.*.parcel_shares' => ['nullable', 'array'],
             'transferors.*.parcel_shares.*' => ['nullable', 'numeric', 'min:0', 'max:999999.9999'],
             'transferees' => ['required', 'array', 'size:' . count($existingTransferees)],
+            'transferees.*' => ['array:name,landowner_id,parcel_shares'],
             'transferees.*.name' => ['required', 'string', 'max:255'],
             'transferees.*.landowner_id' => ['nullable', 'distinct', 'exists:landowners,id'],
             'transferees.*.parcel_shares' => ['nullable', 'array'],
@@ -43,6 +51,19 @@ class ApplicationLandownerLinkController extends Controller
         ]);
 
         $application->loadMissing('applicationParcels.parcel');
+
+        $validParcelIds = $application->applicationParcels->pluck('id')->map(fn ($id) => (string) $id)->all();
+        foreach (['transferors', 'transferees'] as $party) {
+            foreach ($validated[$party] as $index => $row) {
+                foreach (array_keys($row['parcel_shares'] ?? []) as $parcelId) {
+                    if (! in_array((string) $parcelId, $validParcelIds, true)) {
+                        throw ValidationException::withMessages([
+                            "{$party}.{$index}.parcel_shares" => 'Shares must reference a currently linked application parcel.',
+                        ]);
+                    }
+                }
+            }
+        }
 
         $transferors = $this->normalizeRows($validated['transferors'], $existingTransferors);
         $transferees = $this->normalizeRows($validated['transferees'], $existingTransferees);
@@ -83,7 +104,7 @@ class ApplicationLandownerLinkController extends Controller
             'transferees' => $application->partyRows('transferee'),
         ];
 
-        DB::transaction(function () use ($application, $transferors, $transferees, $splitEqually, $syncLandholdings, $oldLinks) {
+        DB::transaction(function () use ($application, $transferors, $transferees, $splitEqually, $syncLandholdings, $oldLinks, $reviewed) {
             $landownerIds = collect(array_merge(
                 $oldLinks['transferors'],
                 $oldLinks['transferees'],
@@ -91,7 +112,10 @@ class ApplicationLandownerLinkController extends Controller
                 $transferees
             ))->pluck('landowner_id')->filter()->all();
 
-            app(LandownerConcurrencyService::class)->lockLandowners($landownerIds);
+            $holdingOwnerIds = Landholding::query()->whereIn('parcel_id',
+                $application->applicationParcels()->whereNotNull('parcel_id')->pluck('parcel_id')
+            )->pluck('landowner_id')->all();
+            app(LandownerConcurrencyService::class)->lockLandowners(array_merge($landownerIds, $holdingOwnerIds));
 
             $parcelIds = $application->applicationParcels()
                 ->whereNotNull('parcel_id')
@@ -101,6 +125,9 @@ class ApplicationLandownerLinkController extends Controller
 
             app(ParcelConcurrencyService::class)->lockParcels($parcelIds);
             $application->load('applicationParcels.parcel');
+            if ($syncLandholdings) {
+                app(\App\Services\ApplicationPartyLinkReviewService::class)->assertExpected($application, (string) $reviewed['expected_party_dependency']);
+            }
 
             if ($splitEqually) {
                 $transferors = $this->applyEqualShares($transferors, $application, 'transferor');
@@ -157,9 +184,12 @@ class ApplicationLandownerLinkController extends Controller
         }
 
         $validated = $request->validate([
+            'expected_workflow_revision' => ['required', 'integer', 'min:1'],
             'party' => ['required', Rule::in(['transferor', 'transferee'])],
             'index' => ['nullable', 'integer', 'min:0'],
         ]);
+
+        app(\App\Services\ApplicationWorkflowRevisionService::class)->assertExpected($application, (int) $validated['expected_workflow_revision']);
 
         $party = $validated['party'];
         $index = (int) ($validated['index'] ?? 0);
@@ -281,16 +311,9 @@ class ApplicationLandownerLinkController extends Controller
             $shareableArea = $party === 'transferor'
                 ? (float) ($applicationParcel->parcel?->area_hectares ?? $applicationParcel->area_hectares ?? 0)
                 : (float) ($applicationParcel->area_hectares ?? $applicationParcel->parcel?->area_hectares ?? 0);
-            $baseShare = floor(($shareableArea / $ownerCount) * 10000) / 10000;
-            $allocated = 0.0;
-
+            $shares = app(\App\Services\EqualAreaAllocationService::class)->allocate($shareableArea, $ownerCount);
             foreach ($rows as $index => &$row) {
-                $share = $index === array_key_last($rows)
-                    ? round($shareableArea - $allocated, 4)
-                    : round($baseShare, 4);
-
-                $row['parcel_shares'][(string) $applicationParcel->id] = $share;
-                $allocated += $share;
+                $row['parcel_shares'][(string) $applicationParcel->id] = $shares[$index];
             }
             unset($row);
         }

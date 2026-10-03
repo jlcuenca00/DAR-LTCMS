@@ -38,6 +38,8 @@ class HectareValidationWorkflowTest extends TestCase
 
         $this->actingAs($staffUser)
             ->post(route('staff.applications.landowner-records.create', $application), [
+                'expected_workflow_revision' => (int) $application->fresh()->workflow_revision,
+                'expected_party_dependency' => app(\App\Services\ApplicationPartyLinkReviewService::class)->fingerprint($application->fresh()),
                 'party' => 'transferee',
             ])
             ->assertRedirect();

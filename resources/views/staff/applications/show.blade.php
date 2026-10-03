@@ -3119,6 +3119,8 @@
             <div class="review-panel-body">
                 <form method="POST" action="{{ route('staff.applications.landowner-links.update', $application) }}">
                     @csrf
+                    <input type="hidden" name="expected_workflow_revision" value="{{ old('expected_workflow_revision', $application->workflow_revision) }}">
+                    <input type="hidden" name="expected_party_dependency" value="{{ old('expected_party_dependency', $partyLinkDependencyFingerprint) }}">
                     @method('PATCH')
 
                     @foreach ([
@@ -3269,6 +3271,7 @@
                                       action="{{ route('staff.applications.landowner-records.create', $application) }}"
                                       class="hidden">
                                     @csrf
+                    <input type="hidden" name="expected_workflow_revision" value="{{ $application->workflow_revision }}">
                                     <input type="hidden" name="party" value="{{ $partySingular }}">
                                     <input type="hidden" name="index" value="{{ $partyIndex }}">
                                 </form>
