@@ -138,8 +138,8 @@
 
             <div class="lo-detail-summary" aria-label="Parcel summary">
                 <div class="lo-detail-summary-item">
-                    <span class="lo-detail-summary-value">{{ number_format((float) $landholdings->sum('area_hectares'), 4) }} ha</span>
-                    <span class="lo-detail-summary-label">Linked area</span>
+                    <span class="lo-detail-summary-value">{{ number_format((float) $landholdings->where('status', 'active')->sum('area_hectares'), 4) }} ha</span>
+                    <span class="lo-detail-summary-label">Current active linked area</span>
                 </div>
                 <div class="lo-detail-summary-item">
                     <span class="lo-detail-summary-value">{{ $landholdings->count() }}</span>
@@ -195,7 +195,7 @@
         <article class="lo-detail-panel">
             <header class="lo-detail-panel-header">
                 <h2 class="lo-detail-panel-title">My Linked Landholding Records</h2>
-                <p class="lo-detail-panel-copy">Administrative landholding references connected to this parcel and your account.</p>
+                <p class="lo-detail-panel-copy">Administrative landholding references connected to this parcel and your account. Historical/non-active records remain available below and are excluded from the current active linked area.</p>
             </header>
 
             <div class="lo-detail-table-wrap">

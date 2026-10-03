@@ -18,84 +18,13 @@ class ParcelMapController extends Controller
 {
     private const EDIT_SESSION_TTL_SECONDS = 120;
 
-    public function index()
+    public function index(\App\Services\ParcelMapDataService $maps)
     {
-        $parcelFeatures = Parcel::query()
-            ->select([
-                'id',
-                'parcel_code',
-                'title_no',
-                'tax_decl_no',
-                'municipality',
-                'barangay',
-                'area_hectares',
-                'status',
-                'geometry_geojson',
-                'is_flagged',
-                'flag_reason',
-            ])
-            ->with([
-                'landholdings:id,parcel_id,landowner_id,status',
-                'landholdings.landowner:id,first_name,middle_name,last_name,suffix',
-            ])
-            ->where('status', 'active')
-            ->whereNotNull('geometry_geojson')
-            ->orderBy('municipality')
-            ->orderBy('barangay')
-            ->orderBy('parcel_code')
-            ->get()
-            ->map(function (Parcel $parcel) {
-                $geometry = $parcel->geometry_geojson;
+        $mapConfig = $maps->config(\Illuminate\Support\Facades\Auth::user());
 
-                if (! is_array($geometry)) {
-                    return null;
-                }
-
-                if (empty($geometry['type']) || empty($geometry['coordinates'])) {
-                    return null;
-                }
-
-                $landownerNames = $parcel->landholdings
-                    ->map(fn ($landholding) => $landholding->landowner?->full_name)
-                    ->filter()
-                    ->unique()
-                    ->values()
-                    ->implode(', ');
-
-                return [
-                    'type' => 'Feature',
-                    'properties' => [
-                        'id' => $parcel->id,
-                        'details_url' => route('geodetic.parcels.show', $parcel),
-                        'parcel_code' => $parcel->parcel_code,
-                        'title_no' => $parcel->title_no ?: 'N/A',
-                        'tax_decl_no' => $parcel->tax_decl_no ?: 'N/A',
-                        'landowner' => $landownerNames ?: 'No linked landowner record',
-                        'municipality' => $parcel->municipality ?: 'N/A',
-                        'barangay' => $parcel->barangay ?: 'N/A',
-                        'area_hectares' => $parcel->area_hectares ?: 'N/A',
-                        'status' => $parcel->is_flagged ? 'flagged' : 'active',
-                        'is_flagged' => (bool) $parcel->is_flagged,
-                        'flag_reason' => $parcel->is_flagged ? $parcel->flag_reason_label : null,
-                    ],
-                    'geometry' => $geometry,
-                ];
-            })
-            ->filter()
-            ->values();
-
-        $parcelGeoJson = [
-            'type' => 'FeatureCollection',
-            'features' => $parcelFeatures,
-        ];
-
-        return view('geodetic.maps.parcel-map', compact('parcelGeoJson'));
+        return view('geodetic.maps.parcel-map', compact('mapConfig'));
     }
 
-    /**
-     * Dashboard work queue for parcels that still need map geometry.
-     * This is derived from the parcel record itself; no duplicate workflow status is stored.
-     */
     public function awaitingGeometry()
     {
         $query = Parcel::query()

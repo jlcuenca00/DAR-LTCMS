@@ -1,5 +1,5 @@
 @php
-    $mappedParcelCount = count($parcelGeoJson['features'] ?? []);
+    $mappedParcelCount = $mapConfig['total'];
 @endphp
 
 <x-landowner-shell title="My Parcel Map" active="parcel-map">
@@ -65,9 +65,11 @@
                 <span class="lo-map-count"><i class="fa-solid fa-map-location-dot" aria-hidden="true"></i>{{ $mappedParcelCount }} mapped</span>
                 <div class="lo-search-wrap">
                     <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
-                    <input id="parcel-search" type="search" class="lo-search-input" placeholder="Search linked parcels" autocomplete="off">
+                    <input id="parcel-search" type="search" aria-label="Search mapped parcel records" maxlength="100" class="lo-search-input" placeholder="Search linked parcels" autocomplete="off">
                 </div>
                 <div id="parcel-search-results" class="lo-search-results" aria-live="polite"></div>
+                    <p id="parcel-search-status" role="status" aria-live="polite"></p>
+                    <div id="parcel-search-pages"></div>
             </article>
 
             <article class="lo-map-card">
@@ -79,141 +81,10 @@
                 </div>
             </article>
         </aside>
-        <section class="lo-map-panel"><div id="parcel-map"><div class="lo-map-fallback">Loading parcel map…</div></div></section>
+        <section class="lo-map-panel"><p id="parcel-map-status" role="status" aria-live="polite"></p><div id="parcel-map" data-parcel-map-viewer aria-label="Parcel map"><div class="lo-map-fallback">Loading parcel map…</div></div></section>
     </section>
 
     @push('scripts')
-        <script>
-            document.addEventListener('DOMContentLoaded', function () {
-                const container = document.getElementById('parcel-map');
-                const search = document.getElementById('parcel-search');
-                const results = document.getElementById('parcel-search-results');
-                if (!container) return;
-
-                const data = @json($parcelGeoJson);
-                const center = [9.3068, 123.3054];
-                const layers = {};
-
-                const esc = value => String(value ?? '')
-                    .replace(/&/g, '&amp;')
-                    .replace(/</g, '&lt;')
-                    .replace(/>/g, '&gt;')
-                    .replace(/"/g, '&quot;')
-                    .replace(/'/g, '&#039;');
-
-                const searchText = feature => {
-                    const p = feature.properties || {};
-                    return [p.parcel_code, p.title_no, p.tax_decl_no, p.barangay, p.municipality]
-                        .join(' ')
-                        .toLowerCase();
-                };
-
-                function renderSearchResults(query = '', focusParcel = null) {
-                    if (!results) return;
-
-                    const normalized = query.trim().toLowerCase();
-                    const matches = (data.features || [])
-                        .filter(feature => !normalized || searchText(feature).includes(normalized))
-                        .slice(0, 8);
-
-                    results.innerHTML = '';
-
-                    if (!matches.length) {
-                        results.innerHTML = '<div class="lo-search-empty">No linked parcel matches the search.</div>';
-                        return;
-                    }
-
-                    matches.forEach(feature => {
-                        const p = feature.properties || {};
-                        const button = document.createElement('button');
-                        button.type = 'button';
-                        button.className = 'lo-search-result';
-                        button.innerHTML = `<span class="lo-search-code">${esc(p.parcel_code)}</span><span class="lo-search-meta">${esc(p.barangay)}, ${esc(p.municipality)} · ${esc(p.area_hectares)} ha</span>`;
-                        button.addEventListener('click', () => {
-                            if (focusParcel) {
-                                focusParcel(feature);
-                            } else if (feature.properties?.details_url) {
-                                window.location.href = feature.properties.details_url;
-                            }
-                        });
-                        results.appendChild(button);
-                    });
-                }
-
-                search?.addEventListener('input', event => renderSearchResults(event.target.value, window.__landownerFocusParcel));
-                renderSearchResults();
-
-                if (typeof window.L === 'undefined') {
-                    container.innerHTML = '<div class="lo-map-fallback"><div><strong>Map resources could not be initialized.</strong><span>Your linked parcel list remains available.</span></div></div>';
-                    return;
-                }
-
-                const L = window.L;
-                container.innerHTML = '';
-                const map = L.map('parcel-map', { zoomControl: false, scrollWheelZoom: true }).setView(center, 12);
-                L.control.zoom({ position: 'topright' }).addTo(map);
-                L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-                    subdomains: 'abcd',
-                    maxZoom: 20,
-                    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-                }).addTo(map);
-
-                const color = '#15803d';
-                const tooltip = p => `<div class="parcel-tooltip-card"><div class="parcel-tooltip-title">${esc(p.parcel_code)}</div><div class="parcel-tooltip-row"><span class="parcel-tooltip-label">Location:</span> ${esc(p.barangay)}, ${esc(p.municipality)}</div><div class="parcel-tooltip-row"><span class="parcel-tooltip-label">Area:</span> ${esc(p.area_hectares)} hectares</div><div class="parcel-tooltip-row"><span class="parcel-tooltip-label">Title:</span> ${esc(p.title_no)}</div><div class="parcel-tooltip-row"><span class="parcel-tooltip-label">Tax declaration:</span> ${esc(p.tax_decl_no)}</div><div class="parcel-tooltip-row"><span class="parcel-tooltip-label">Select:</span> open parcel details</div></div>`;
-                let parcelLayer = null;
-
-                const onEach = (feature, layer) => {
-                    layers[String(feature.properties.id)] = layer;
-                    layer.bindTooltip(tooltip(feature.properties), { sticky: true, direction: 'top', opacity: 1, className: 'parcel-tooltip' });
-                    layer.on({
-                        mouseover: event => {
-                            event.target.setStyle({ color, weight: 5, fillColor: color, fillOpacity: .62 });
-                            event.target.bringToFront();
-                            event.target.openTooltip();
-                        },
-                        mouseout: event => {
-                            if (parcelLayer) parcelLayer.resetStyle(event.target);
-                            event.target.closeTooltip();
-                        },
-                        click: () => {
-                            if (feature.properties.details_url) window.location.href = feature.properties.details_url;
-                        }
-                    });
-                };
-
-                if (data.features && data.features.length) {
-                    parcelLayer = L.geoJSON(data, {
-                        style: { color, weight: 2, opacity: .95, fillColor: color, fillOpacity: .34 },
-                        pointToLayer: (feature, latlng) => L.circleMarker(latlng, { radius: 7, color, weight: 2, fillColor: color, fillOpacity: .56 }),
-                        onEachFeature: onEach
-                    }).addTo(map);
-
-                    setTimeout(() => {
-                        map.invalidateSize();
-                        map.fitBounds(parcelLayer.getBounds(), { padding: [40, 40] });
-                    }, 120);
-                } else {
-                    L.popup().setLatLng(center).setContent('<strong>No mapped parcels are linked to your account.</strong>').openOn(map);
-                }
-
-                const focusParcel = feature => {
-                    const layer = layers[String(feature.properties.id)];
-                    if (!layer) return;
-                    if (typeof layer.getBounds === 'function') {
-                        map.fitBounds(layer.getBounds(), { padding: [70, 70], maxZoom: 17 });
-                    } else if (typeof layer.getLatLng === 'function') {
-                        map.setView(layer.getLatLng(), 17);
-                    }
-                    layer.openTooltip();
-                };
-
-                window.__landownerFocusParcel = focusParcel;
-                search?.addEventListener('input', event => renderSearchResults(event.target.value, focusParcel));
-                document.getElementById('reset-map-view')?.addEventListener('click', () => parcelLayer
-                    ? map.fitBounds(parcelLayer.getBounds(), { padding: [40, 40] })
-                    : map.setView(center, 12));
-                renderSearchResults(search?.value || '', focusParcel);
-            });
-        </script>
+        <script type="application/json" data-parcel-map-config>@json($mapConfig)</script>
     @endpush
 </x-landowner-shell>

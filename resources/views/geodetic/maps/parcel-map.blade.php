@@ -1,5 +1,5 @@
 @php
-    $mappedParcelCount = count($parcelGeoJson['features'] ?? []);
+    $mappedParcelCount = $mapConfig['total'];
 @endphp
 
 <x-geodetic-shell title="Parcel Map Viewer" active="parcel-map">
@@ -163,9 +163,11 @@
 
                 <div class="geo-search-wrap">
                     <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
-                    <input id="parcel-search" type="search" class="geo-search-input" placeholder="Search parcel references" autocomplete="off">
+                    <input id="parcel-search" type="search" aria-label="Search mapped parcel records" maxlength="100" class="geo-search-input" placeholder="Search parcel references" autocomplete="off">
                 </div>
                 <div id="parcel-search-results" class="geo-search-results" aria-live="polite"></div>
+                    <p id="parcel-search-status" role="status" aria-live="polite"></p>
+                    <div id="parcel-search-pages"></div>
             </article>
 
             <article class="geo-map-card">
@@ -186,162 +188,10 @@
             </article>
         </aside>
 
-        <section class="geo-map-panel"><div id="parcel-map"><div class="geo-map-fallback">Loading parcel map…</div></div></section>
+        <section class="geo-map-panel"><p id="parcel-map-status" role="status" aria-live="polite"></p><div id="parcel-map" data-parcel-map-viewer aria-label="Parcel map"><div class="geo-map-fallback">Loading parcel map…</div></div></section>
     </section>
 
     @push('scripts')
-        <script>
-            document.addEventListener('DOMContentLoaded', function () {
-                const mapContainer = document.getElementById('parcel-map');
-                const parcelGeoJson = @json($parcelGeoJson);
-                const searchInput = document.getElementById('parcel-search');
-                const searchResults = document.getElementById('parcel-search-results');
-                const parcelLayersById = {};
-
-                if (!mapContainer || !searchResults) return;
-
-                function escapeHtml(value) {
-                    return String(value ?? '').replace(/[&<>'"]/g, function (character) {
-                        return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#039;', '"': '&quot;' })[character];
-                    });
-                }
-
-                function searchText(feature) {
-                    const p = feature.properties || {};
-                    return [p.parcel_code, p.title_no, p.tax_decl_no, p.landowner, p.barangay, p.municipality].join(' ').toLowerCase();
-                }
-
-                let focusFeature = null;
-
-                function renderResults(query = '') {
-                    const normalized = query.trim().toLowerCase();
-                    const matches = (parcelGeoJson.features || []).filter(feature => !normalized || searchText(feature).includes(normalized)).slice(0, 9);
-                    searchResults.innerHTML = '';
-
-                    if (!matches.length) {
-                        searchResults.innerHTML = '<div class="geo-search-empty">No parcel reference matches the search.</div>';
-                        return;
-                    }
-
-                    matches.forEach(function (feature) {
-                        const p = feature.properties || {};
-                        const button = document.createElement('button');
-                        button.type = 'button';
-                        button.className = 'geo-search-result';
-                        button.innerHTML = `<span class="geo-search-code">${escapeHtml(p.parcel_code)}</span><span class="geo-search-meta">${escapeHtml(p.landowner)} · ${escapeHtml(p.barangay)}, ${escapeHtml(p.municipality)}</span>`;
-                        button.addEventListener('click', function () {
-                            if (focusFeature) {
-                                focusFeature(feature);
-                            } else if (feature.properties?.details_url) {
-                                window.location.href = feature.properties.details_url;
-                            }
-                        });
-                        searchResults.appendChild(button);
-                    });
-                }
-
-                searchInput?.addEventListener('input', function () { renderResults(searchInput.value); });
-                renderResults();
-
-                if (typeof window.L === 'undefined') {
-                    mapContainer.innerHTML = '<div class="geo-map-fallback"><div><strong>Map resources could not be initialized.</strong><span>Parcel records remain available in the list and detail views.</span></div></div>';
-                    return;
-                }
-
-                const L = window.L;
-                const negrosOrientalCenter = [9.3068, 123.3054];
-                mapContainer.innerHTML = '';
-                const map = L.map('parcel-map', { zoomControl: false, scrollWheelZoom: true }).setView(negrosOrientalCenter, 10);
-                L.control.zoom({ position: 'topright' }).addTo(map);
-
-                L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-                    subdomains: 'abcd',
-                    maxZoom: 20,
-                    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-                }).addTo(map);
-
-                function parcelColor(status) {
-                    return status === 'flagged' ? '#dc2626' : '#15803d';
-                }
-
-                function parcelStyle(feature) {
-                    const color = parcelColor(feature.properties.status);
-                    return { color, weight: 2, opacity: .95, fillColor: color, fillOpacity: .34 };
-                }
-
-                function hoverStyle(feature) {
-                    const color = parcelColor(feature.properties.status);
-                    return { color, weight: 5, opacity: 1, fillColor: color, fillOpacity: .62 };
-                }
-
-                function tooltipContent(properties) {
-                    const flagRow = properties.is_flagged
-                        ? `<div class="parcel-tooltip-row is-flagged"><span class="parcel-tooltip-label">Review flag:</span> ${escapeHtml(properties.flag_reason || 'Requires verification')}</div>`
-                        : '';
-
-                    return `<div class="parcel-tooltip-card"><div class="parcel-tooltip-title">${escapeHtml(properties.parcel_code)}</div><div class="parcel-tooltip-row"><span class="parcel-tooltip-label">Landowner:</span> ${escapeHtml(properties.landowner)}</div><div class="parcel-tooltip-row"><span class="parcel-tooltip-label">Location:</span> ${escapeHtml(properties.barangay)}, ${escapeHtml(properties.municipality)}</div><div class="parcel-tooltip-row"><span class="parcel-tooltip-label">Area:</span> ${escapeHtml(properties.area_hectares)} hectares</div><div class="parcel-tooltip-row"><span class="parcel-tooltip-label">Title:</span> ${escapeHtml(properties.title_no)}</div><div class="parcel-tooltip-row"><span class="parcel-tooltip-label">Tax declaration:</span> ${escapeHtml(properties.tax_decl_no)}</div>${flagRow}<div class="parcel-tooltip-row"><span class="parcel-tooltip-label">Select:</span> open technical details</div></div>`;
-                }
-
-                let parcelLayer = null;
-
-                function onEachParcel(feature, layer) {
-                    parcelLayersById[String(feature.properties.id)] = layer;
-                    layer.bindTooltip(tooltipContent(feature.properties), { sticky: true, direction: 'top', opacity: 1, className: 'parcel-tooltip' });
-                    layer.on({
-                        mouseover: function (event) {
-                            event.target.setStyle(hoverStyle(feature));
-                            event.target.bringToFront();
-                            event.target.openTooltip();
-                        },
-                        mouseout: function (event) {
-                            if (parcelLayer) parcelLayer.resetStyle(event.target);
-                            event.target.closeTooltip();
-                        },
-                        click: function () {
-                            if (feature.properties.details_url) window.location.href = feature.properties.details_url;
-                        }
-                    });
-                }
-
-                if ((parcelGeoJson.features || []).length > 0) {
-                    parcelLayer = L.geoJSON(parcelGeoJson, {
-                        style: parcelStyle,
-                        pointToLayer: function (feature, latlng) {
-                            const color = parcelColor(feature.properties.status);
-                            return L.circleMarker(latlng, { radius: 7, color, weight: 2, opacity: 1, fillColor: color, fillOpacity: .56 });
-                        },
-                        onEachFeature: onEachParcel
-                    }).addTo(map);
-
-                    setTimeout(function () {
-                        map.invalidateSize();
-                        map.fitBounds(parcelLayer.getBounds(), { padding: [40, 40], animate: true, duration: .75 });
-                    }, 120);
-                } else {
-                    L.popup().setLatLng(negrosOrientalCenter).setContent('<strong>No mapped parcel references are currently available.</strong>').openOn(map);
-                }
-
-                focusFeature = function (feature) {
-                    const layer = parcelLayersById[String(feature.properties.id)];
-                    if (!layer) return;
-                    if (typeof layer.getBounds === 'function') {
-                        map.fitBounds(layer.getBounds(), { padding: [70, 70], maxZoom: 17, animate: true, duration: .55 });
-                    } else if (typeof layer.getLatLng === 'function') {
-                        map.setView(layer.getLatLng(), 17, { animate: true });
-                    }
-                    layer.openTooltip();
-                };
-
-                renderResults(searchInput?.value || '');
-
-                document.getElementById('reset-map-view')?.addEventListener('click', function () {
-                    if (parcelLayer) {
-                        map.fitBounds(parcelLayer.getBounds(), { padding: [40, 40], animate: true, duration: .65 });
-                    } else {
-                        map.setView(negrosOrientalCenter, 10);
-                    }
-                });
-            });
-        </script>
+        <script type="application/json" data-parcel-map-config>@json($mapConfig)</script>
     @endpush
 </x-geodetic-shell>

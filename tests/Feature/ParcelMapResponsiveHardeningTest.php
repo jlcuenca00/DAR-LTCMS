@@ -19,7 +19,8 @@ class ParcelMapResponsiveHardeningTest extends TestCase
         $this->assertStringContainsString("import 'leaflet/dist/leaflet.css';", $bootstrap);
 
         foreach ($views as $view) {
-            $this->assertStringContainsString('typeof window.L', $view);
+            $this->assertStringContainsString('data-parcel-map-config', $view);
+            $this->assertStringContainsString('typeof window.L', file_get_contents(resource_path('js/parcel-map-viewer.js')));
             $this->assertStringNotContainsString('unpkg.com/leaflet@1.9.4', $view);
             $this->assertStringNotContainsString('cdn.jsdelivr.net/npm/leaflet@1.9.4', $view);
         }

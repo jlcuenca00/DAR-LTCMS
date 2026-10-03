@@ -6,6 +6,7 @@ use App\Models\Concerns\TracksRecordRevision;
 
 use App\Models\Concerns\NormalizesDarLocation;
 use App\Services\ParcelAreaIntegrityService;
+use App\Services\ParcelMapBounds;
 use Illuminate\Database\Eloquent\Model;
 
 class Parcel extends Model
@@ -105,6 +106,10 @@ class Parcel extends Model
             // silently overwrite one another. Any geometry change, including a
             // Staff-side correction, advances the version.
             if ($parcel->isDirty('geometry_geojson')) {
+                $bounds = ParcelMapBounds::fromGeometry($parcel->geometry_geojson);
+                foreach (ParcelMapBounds::COLUMNS as $column) {
+                    $parcel->setAttribute($column, $bounds[$column] ?? null);
+                }
                 $parcel->geometry_version = ((int) ($parcel->getOriginal('geometry_version') ?? 0)) + 1;
             }
         });
