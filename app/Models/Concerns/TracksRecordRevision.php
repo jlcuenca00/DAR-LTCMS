@@ -9,7 +9,11 @@ trait TracksRecordRevision
     protected static function bootTracksRecordRevision(): void
     {
         static::saving(function ($model) {
-            if (DB::connection()->getDriverName() === 'pgsql' || ! $model->exists) {
+            if (! $model->exists) {
+                $model->record_revision = 1;
+                return;
+            }
+            if (DB::connection()->getDriverName() === 'pgsql') {
                 return;
             }
 

@@ -673,12 +673,7 @@
             ? json_encode($geometryData, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)
             : null;
 
-        $landholdings = $parcel->landholdings ?? collect();
-        $activeLandholdings = $landholdings->where('status', 'active');
-        $activeArea = $activeLandholdings->sum(fn ($item) => (float) $item->area_hectares);
-        $sourcePackages = $parcel->sourceRecordPackages ?? collect();
-        $legacyRecords = $parcel->legacyRecords ?? collect();
-        $attachedSourceCount = $sourcePackages->count() + $legacyRecords->count();
+        $attachedSourceCount = $sourcePackages->total() + $legacyRecords->total();
     @endphp
 
     @if (session('error'))
@@ -725,8 +720,8 @@
 
                     <div class="parcel-summary-card">
                         <p class="parcel-meta-label">Landholding Records</p>
-                        <p class="parcel-summary-value">{{ $landholdings->count() }} linked</p>
-                        <p class="parcel-summary-help">{{ $activeLandholdings->count() }} active record(s)</p>
+                        <p class="parcel-summary-value">{{ $landholdings->total() }} linked</p>
+                        <p class="parcel-summary-help">{{ $activeHoldingCount }} active record(s)</p>
                     </div>
 
                     <div class="parcel-summary-card">
@@ -876,7 +871,7 @@
             </aside>
         </div>
 
-        <section class="staff-panel staff-panel-pad">
+        <section id="parcel-holdings" class="staff-panel staff-panel-pad">
             <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-3 mb-4">
                 <div>
                     <h3 class="staff-panel-title">Linked Landholding Records</h3>
@@ -885,8 +880,8 @@
                     </p>
                 </div>
 
-                <span class="staff-badge {{ $activeLandholdings->count() > 0 ? 'staff-badge-green' : 'staff-badge-slate' }}">
-                    {{ $activeLandholdings->count() }} active
+                <span class="staff-badge {{ $activeHoldingCount > 0 ? 'staff-badge-green' : 'staff-badge-slate' }}">
+                    {{ $activeHoldingCount }} active
                 </span>
             </div>
 
@@ -958,11 +953,14 @@
                             </div>
                         </article>
                     @endforeach
-                </div>
+                    {{ $landholdings->links() }}
+
+
+</div>
             @endif
         </section>
 
-        <section class="staff-panel staff-panel-pad">
+        <section id="parcel-sources" class="staff-panel staff-panel-pad">
             <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-3 mb-4">
                 <div>
                     <h3 class="staff-panel-title">Attached Source Records</h3>
@@ -972,11 +970,11 @@
                 </div>
 
                 <span class="staff-badge staff-badge-slate">
-                    {{ $sourcePackages->count() }} package(s) · {{ $legacyRecords->count() }} individual record(s)
+                    {{ $sourcePackages->total() }} package(s) · {{ $legacyRecords->total() }} individual record(s)
                 </span>
             </div>
 
-            @if ($sourcePackages->count() === 0 && $legacyRecords->count() === 0)
+            @if ($sourcePackages->total() === 0 && $legacyRecords->total() === 0)
                 <div class="parcel-empty-state">
                     No source records are currently attached to this parcel.
                 </div>
@@ -984,16 +982,16 @@
                 <div class="parcel-source-summary">
                     <div class="parcel-source-count-card">
                         <p class="parcel-meta-label">Source Packages</p>
-                        <strong>{{ $sourcePackages->count() }}</strong>
+                        <strong>{{ $sourcePackages->total() }}</strong>
                     </div>
                     <div class="parcel-source-count-card">
                         <p class="parcel-meta-label">Individual Source Records</p>
-                        <strong>{{ $legacyRecords->count() }}</strong>
+                        <strong>{{ $legacyRecords->total() }}</strong>
                     </div>
                 </div>
             @endif
 
-            @if ($sourcePackages->count() > 0)
+            @if ($sourcePackages->total() > 0)
                 <div class="mt-5">
                     <h4 class="staff-panel-title text-base">Source Packages</h4>
                     <div class="parcel-source-card-grid">
@@ -1036,7 +1034,7 @@
 
                                 <div class="parcel-source-card-row">
                                     <span>Records</span>
-                                    <div>{{ $package->records->count() }} created record(s)</div>
+                                    <div>{{ $package->records_count }} created record(s)</div>
                                 </div>
 
                                 <div class="parcel-source-card-actions">
@@ -1046,11 +1044,14 @@
                                 </div>
                             </article>
                         @endforeach
-                    </div>
+                    {{ $sourcePackages->links() }}
+
+
+</div>
                 </div>
             @endif
 
-            @if ($legacyRecords->count() > 0)
+            @if ($legacyRecords->total() > 0)
                 <div class="mt-5">
                     <h4 class="staff-panel-title text-base">Individual Source Records</h4>
                     <div class="parcel-source-card-grid">
@@ -1111,7 +1112,10 @@
                                 </div>
                             </article>
                         @endforeach
-                    </div>
+                    {{ $legacyRecords->links() }}
+
+
+</div>
                 </div>
             @endif
         </section>

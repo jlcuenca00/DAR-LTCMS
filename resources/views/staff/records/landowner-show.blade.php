@@ -661,8 +661,6 @@
         @endif
 
         @php
-            $activeHoldings = $landowner->landholdings->where('status', 'active');
-            $inactiveHoldings = $landowner->landholdings->where('status', '!=', 'active');
             $statusBadge = match ($hectareSummary['status']) {
                 'over_limit' => 'staff-badge-red',
                 'near_limit' => 'staff-badge-amber',
@@ -772,7 +770,7 @@
                             Encode and review parcel-linked landholding records used for hectare monitoring, reference tracking, and staff review.
                         </p>
                     </div>
-                    <span class="staff-badge staff-badge-green">{{ $activeHoldings->count() }} active</span>
+                    <span class="staff-badge staff-badge-green">{{ $activeHoldingCount }} active</span>
                 </div>
 
                 <div class="landholding-mini-summary">
@@ -782,11 +780,11 @@
                     </div>
                     <div class="landholding-mini-card">
                         <p class="landholding-mini-label">Active Records</p>
-                        <p class="landholding-mini-value">{{ $activeHoldings->count() }}</p>
+                        <p class="landholding-mini-value">{{ $activeHoldingCount }}</p>
                     </div>
                     <div class="landholding-mini-card">
                         <p class="landholding-mini-label">Other Records</p>
-                        <p class="landholding-mini-value">{{ $inactiveHoldings->count() }}</p>
+                        <p class="landholding-mini-value">{{ $otherHoldingCount }}</p>
                     </div>
                 </div>
             </div>
@@ -893,11 +891,11 @@
             </div>
 
             <div class="staff-panel-pad bg-white">
-                @if ($landowner->landholdings->isEmpty())
+                @if ($landholdings->isEmpty())
                     <div class="landholding-empty">No landholding records encoded yet.</div>
                 @else
                     <div class="landholding-card-list">
-                        @foreach ($landowner->landholdings->sortByDesc('created_at') as $holding)
+                        @foreach ($landholdings as $holding)
                             <article id="landholding-{{ $holding->id }}" class="landholding-record-card">
                                 <div class="landholding-record-head">
                                     <div>
@@ -1015,7 +1013,8 @@
                                                     @foreach (\App\Models\Landholding::STATUSES as $status)
                                                         <option value="{{ $status }}" @selected($holding->status === $status)>{{ ucwords(str_replace('_', ' ', $status)) }}</option>
                                                     @endforeach
-                                                </select>
+
+</select>
                                             </div>
 
                                             <div class="landholding-edit-field span-3">
@@ -1055,6 +1054,8 @@
                                 </div>
                             </article>
                         @endforeach
+                    {{ $landholdings->links() }}
+
                     </div>
                 @endif
             </div>
@@ -1062,7 +1063,7 @@
 
         <section class="landowner-related-grid">
             <div class="staff-panel staff-panel-pad">
-                <h2 class="staff-panel-title">Related Applications</h2>
+                <h2 id="related-applications" class="staff-panel-title">Related Applications</h2>
                 <p class="staff-panel-subtitle">Applications where this record appears as transferor or transferee.</p>
 
                 <div class="related-card-list">
@@ -1074,29 +1075,37 @@
                     @empty
                         <p class="rounded-lg border border-gray-200 bg-gray-50 p-4 text-sm text-gray-500">No related applications found.</p>
                     @endforelse
+                    {{ $relatedApplications->links() }}
+
                 </div>
             </div>
 
             <div class="staff-panel staff-panel-pad">
-                <h2 class="staff-panel-title">Linked Source Records</h2>
+                <h2 id="linked-sources" class="staff-panel-title">Linked Source Records</h2>
                 <p class="staff-panel-subtitle">Staff-confirmed source/provenance links for traceability and review.</p>
 
                 <div class="related-card-list">
-                    @foreach ($landowner->sourceRecordPackages as $package)
+                    @foreach ($sourcePackages as $package)
                         <a href="{{ route('staff.source-record-packages.show', $package) }}" class="related-item">
                             <p class="related-item-title">{{ $package->package_code }}</p>
                             <p class="related-item-meta">Source package</p>
                         </a>
                     @endforeach
+                    {{ $sourcePackages->links() }}
 
-                    @foreach ($landowner->sourceRecords as $record)
+
+
+                    @foreach ($sourceRecords as $record)
                         <a href="{{ route('staff.legacy-records.show', $record) }}" class="related-item">
                             <p class="related-item-title">{{ $record->title_number ?? $record->control_number ?? ('Source Record #' . $record->id) }}</p>
                             <p class="related-item-meta">{{ ucwords(str_replace('_', ' ', $record->record_type)) }}</p>
                         </a>
                     @endforeach
+                    {{ $sourceRecords->links() }}
 
-                    @if ($landowner->sourceRecordPackages->isEmpty() && $landowner->sourceRecords->isEmpty())
+
+
+                    @if ($sourcePackages->isEmpty() && $sourceRecords->isEmpty())
                         <p class="rounded-lg border border-gray-200 bg-gray-50 p-4 text-sm text-gray-500">No linked source records found.</p>
                     @endif
                 </div>

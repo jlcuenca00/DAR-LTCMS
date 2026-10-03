@@ -139,6 +139,51 @@ class RecordEditingIntegrityTest extends TestCase
         $this->assertSame([$path], Storage::disk('local')->allFiles('reference-photos/landholdings'));
     }
 
+    public function test_detail_pages_paginate_records_and_keep_full_summary_totals(): void
+    {
+        [$staff, $owner, $parcel] = $this->records();
+        for ($i = 0; $i < 15; $i++) {
+            $anotherParcel = Parcel::create(['parcel_code' => 'PAGE-' . $i, 'area_hectares' => 1, 'status' => 'active']);
+            Landholding::create(['landowner_id' => $owner->id, 'parcel_id' => $anotherParcel->id,
+                'area_hectares' => 0.0001, 'status' => 'active']);
+            $anotherOwner = Landowner::create(['first_name' => 'Page', 'last_name' => 'Owner-' . $i]);
+            Landholding::create(['landowner_id' => $anotherOwner->id, 'parcel_id' => $parcel->id,
+                'area_hectares' => 0.0001, 'status' => 'active']);
+        }
+        foreach ([
+            route('staff.records.landowners.show', $owner),
+            route('staff.records.parcels.show', $parcel),
+        ] as $url) {
+            $this->actingAs($staff)->get($url)->assertOk()
+                ->assertViewHas('landholdings', fn ($page) => $page->total() === 16 && $page->count() === 15)
+                ->assertViewHas('activeHoldingCount', 16)
+                ->assertSee('0.0016 ha');
+            $this->get($url . '?holdings_page=2')->assertOk()
+                ->assertViewHas('landholdings', fn ($page) => $page->total() === 16 && $page->count() === 1)
+                ->assertViewHas('activeHoldingCount', 16);
+        }
+    }
+
+    public function test_account_lookup_is_bounded_searchable_and_excludes_ineligible_users(): void
+    {
+        [$staff, $owner] = $this->records();
+        User::factory()->count(21)->create(['role' => User::ROLE_LANDOWNER]);
+        $target = User::factory()->create(['role' => User::ROLE_LANDOWNER, 'name' => 'Unique Search Target']);
+        $linked = User::factory()->create(['role' => User::ROLE_LANDOWNER, 'name' => 'Already Linked']);
+        $owner->update(['user_id' => $linked->id]);
+
+        $staff->update(['name' => 'Staff Search Unique']);
+        $url = route('staff.lookups.landowner-users');
+        $this->actingAs($staff)->getJson($url)->assertOk()->assertJsonCount(20, 'results');
+        $this->getJson($url . '?q=Unique%20Search%20Target')->assertJsonCount(1, 'results')->assertJsonPath('results.0.id', $target->id);
+        $this->getJson($url . '?q=Already%20Linked')->assertJsonCount(0, 'results');
+        $this->getJson($url . '?q=Already%20Linked&landowner_id=' . $owner->id)->assertJsonPath('results.0.id', $linked->id);
+        $this->getJson($url . '?q=Staff%20Search%20Unique')->assertJsonCount(0, 'results');
+        $this->actingAs($target)->getJson($url)->assertForbidden();
+        $geodetic = User::factory()->create(['role' => User::ROLE_GEODETIC]);
+        $this->actingAs($geodetic)->getJson($url)->assertForbidden();
+    }
+
     private function records(): array
     {
         $staff = User::factory()->create(['role' => User::ROLE_STAFF, 'is_active' => true]);

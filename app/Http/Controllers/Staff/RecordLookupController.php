@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Staff;
 use App\Http\Controllers\Controller;
 use App\Models\Landowner;
 use App\Models\Parcel;
+use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -86,6 +87,38 @@ class RecordLookupController extends Controller
             })
             ->values();
 
+        return response()->json(['results' => $results]);
+    }
+
+    public function landownerUsers(Request $request): JsonResponse
+    {
+        $filters = $request->validate([
+            'q' => ['nullable', 'string', 'max:100'],
+            'landowner_id' => ['nullable', 'integer', 'exists:landowners,id'],
+        ]);
+        $currentUserId = isset($filters['landowner_id'])
+            ? Landowner::query()->whereKey($filters['landowner_id'])->value('user_id')
+            : null;
+        $query = User::query()->where('role', User::ROLE_LANDOWNER)
+            ->where(function ($eligible) use ($currentUserId) {
+                $eligible->whereDoesntHave('landowner');
+                if ($currentUserId) {
+                    $eligible->orWhereKey($currentUserId);
+                }
+            });
+        $search = trim((string) ($filters['q'] ?? ''));
+        if ($search !== '') {
+            $needle = '%' . mb_strtolower($search) . '%';
+            $query->where(function ($matching) use ($needle, $search) {
+                $matching->whereRaw("LOWER(COALESCE(name, '') || ' ' || COALESCE(email, '') || ' ' || COALESCE(username, '')) LIKE ?", [$needle]);
+                if (ctype_digit($search)) {
+                    $matching->orWhereKey((int) $search);
+                }
+            });
+        }
+        $results = $query->orderBy('name')->orderBy('id')->limit(self::RESULT_LIMIT)
+            ->get(['id', 'name', 'email'])
+            ->map(fn (User $user) => ['id' => $user->id, 'text' => $user->name . ' — ' . ($user->email ?: 'ID ' . $user->id)]);
         return response()->json(['results' => $results]);
     }
 

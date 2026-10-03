@@ -112,8 +112,10 @@ class LandholdingRecordController extends Controller
             app(ProtectedAdministrativeStorage::class)->delete($oldReferencePhotoPath);
         }
 
+        $holdingPage = intdiv($landowner->landholdings()->where('id', '>', $landholding->id)->count(), 15) + 1;
+
         return redirect()
-            ->to(route('staff.records.landowners.show', $landowner) . '#landholding-' . $landholding->id)
+            ->to(route('staff.records.landowners.show', [$landowner, 'holdings_page' => $holdingPage]) . '#landholding-' . $landholding->id)
             ->with('success', 'Landholding record updated. Current hectares were recalculated from active landholding records.');
     }
 

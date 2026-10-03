@@ -263,14 +263,18 @@ class RecordSearchController extends Controller
 
     public function showParcel(Parcel $parcel)
     {
-        $parcel->load([
-            'landholdings.landowner',
-            'landholdings.sourceApplication',
-            'legacyRecords.package',
-            'sourceRecordPackages.records',
-        ]);
+        $landholdings = $parcel->landholdings()->with(['landowner', 'sourceApplication'])
+            ->orderByDesc('id')->paginate(15, ['*'], 'holdings_page')->withQueryString()->fragment('parcel-holdings');
+        $activeHoldingCount = $parcel->landholdings()->where('status', Landholding::STATUS_ACTIVE)->count();
+        $activeArea = $parcel->landholdings()->where('status', Landholding::STATUS_ACTIVE)->sum('area_hectares');
+        $sourcePackages = $parcel->sourceRecordPackages()->withCount('records')->orderByDesc('id')
+            ->paginate(15, ['*'], 'packages_page')->withQueryString()->fragment('parcel-sources');
+        $legacyRecords = $parcel->legacyRecords()->with('package')->orderByDesc('id')
+            ->paginate(15, ['*'], 'sources_page')->withQueryString()->fragment('parcel-sources');
 
-        return view('staff.records.parcel-show', compact('parcel'));
+        return view('staff.records.parcel-show', compact(
+            'parcel', 'landholdings', 'activeHoldingCount', 'activeArea', 'sourcePackages', 'legacyRecords'
+        ));
     }
 
     public function editParcel(Parcel $parcel)

@@ -61,12 +61,16 @@
             </div>
             <div>
                 <label class="mb-1 block text-xs font-black uppercase tracking-wider text-gray-600">Linked landowner user account</label>
-                <select name="user_id" class="w-full rounded-lg border-gray-300 text-sm focus:border-green-600 focus:ring-green-600">
-                    <option value="">No linked account</option>
-                    @foreach ($landownerUsers as $user)
-                        <option value="{{ $user->id }}" @selected((int) old('user_id') === (int) $user->id)>{{ $user->name }} — {{ $user->email }}</option>
-                    @endforeach
-                </select>
+                <div data-remote-record-select data-lookup-url="{{ route('staff.lookups.landowner-users') }}" class="space-y-2">
+                    <input type="search" aria-label="Search Landowner accounts" placeholder="Search name, email, username, or account ID" autocomplete="off" class="w-full rounded-lg border-gray-300 text-sm" data-remote-record-search>
+                    <select name="user_id" class="w-full rounded-lg border-gray-300 text-sm" data-remote-record-control data-placeholder="No linked account">
+                        <option value="">No linked account</option>
+                        @if ($selectedUser)
+                            <option value="{{ $selectedUser->id }}" selected>{{ $selectedUser->name }} — {{ $selectedUser->email }}</option>
+                        @endif
+                    </select>
+                    <p class="text-xs text-gray-500" data-remote-record-status>Search to find an eligible account.</p>
+                </div>
             </div>
             <div class="md:col-span-2">
                 <label class="mb-1 block text-xs font-black uppercase tracking-wider text-gray-600">Address</label>
