@@ -433,7 +433,8 @@
                         @forelse ($users as $user)
                             @php
                                 $profilePhotoExists = filled($user->profile_photo_path)
-                                    && \Illuminate\Support\Facades\Storage::disk('public')->exists($user->profile_photo_path);
+                                    && (\Illuminate\Support\Facades\Storage::disk('local')->exists($user->profile_photo_path)
+                                        || \Illuminate\Support\Facades\Storage::disk('public')->exists($user->profile_photo_path));
                                 $roleIcon = match ($user->role) {
                                     'staff' => 'fa-user-shield',
                                     'geodetic' => 'fa-draw-polygon',
