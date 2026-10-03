@@ -6,6 +6,7 @@ use App\Http\Controllers\Staff\ParcelMapController;
 use App\Models\Landholding;
 use App\Models\Landowner;
 use App\Models\Parcel;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
@@ -30,6 +31,8 @@ class PerformanceHardeningTest extends TestCase
             'landholdings_owner_created_idx',
             'landholdings_parcel_status_idx',
             'parcels_active_mapped_location_idx',
+            'parcels_map_viewport_gist',
+            'parcels_map_bounds_index',
             'parcels_unmapped_created_idx',
             'clearances_generated_at_idx',
             'ltc_apps_search_trgm_idx',
@@ -97,19 +100,21 @@ class PerformanceHardeningTest extends TestCase
             ]);
         }
 
+        $this->actingAs(User::factory()->create(['role' => 'staff']));
         DB::flushQueryLog();
         DB::enableQueryLog();
 
-        $view = app(ParcelMapController::class)->index();
+        $view = app()->call([app(ParcelMapController::class), 'index']);
         $queryCount = count(DB::getQueryLog());
 
         DB::disableQueryLog();
 
-        $geoJson = $view->getData()['parcelGeoJson'];
+        $mapConfig = $view->getData()['mapConfig'];
 
-        $this->assertCount(6, $geoJson['features']);
+        $this->assertCount(6, $mapConfig['initial_search']['items']);
+        $this->assertSame(6, $mapConfig['total']);
         $this->assertLessThanOrEqual(
-            8,
+            10,
             $queryCount,
             'Staff parcel map should use bounded eager-load queries instead of per-parcel lookups.'
         );

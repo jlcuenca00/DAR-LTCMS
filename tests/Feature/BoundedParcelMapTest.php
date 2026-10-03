@@ -65,23 +65,24 @@ class BoundedParcelMapTest extends TestCase
         $other = Landowner::create(['first_name' => 'OtherPrivate', 'last_name' => 'Owner', 'province' => 'Negros Oriental']);
         $parcel = $this->parcel('OWN-HISTORICAL-MAP');
         $unlinked = $this->parcel('OTHER-PRIVATE-MAP');
-        Landholding::create(['parcel_id' => $parcel->id, 'landowner_id' => $owner->id, 'status' => 'active', 'area_hectares' => 2]);
-        Landholding::create(['parcel_id' => $parcel->id, 'landowner_id' => $owner->id, 'status' => 'historical', 'area_hectares' => 7]);
+        $ownHolding = Landholding::create(['parcel_id' => $parcel->id, 'landowner_id' => $owner->id, 'status' => 'historical', 'area_hectares' => 7]);
         Landholding::create(['parcel_id' => $parcel->id, 'landowner_id' => $other->id, 'status' => 'active', 'area_hectares' => 3]);
 
         $this->actingAs($user)->getJson($this->viewport('landowner'))->assertOk()
-            ->assertJsonCount(1, 'features')->assertJsonPath('features.0.properties.active_linked_area_hectares', '2.0000')
+            ->assertJsonCount(1, 'features')->assertJsonPath('features.0.properties.active_linked_area_hectares', '0.0000')
             ->assertJsonPath('features.0.properties.area_hectares', '10.0000')
             ->assertJsonPath('features.0.properties.historical_holding_count', 1)->assertDontSee('OtherPrivate');
         $this->getJson(route('landowner.parcel-map.search', ['q' => 'OTHER-PRIVATE']))->assertJsonPath('total', 0);
         $this->getJson(route('landowner.parcel-map.feature', $unlinked->id))->assertNotFound();
         $this->get(route('landowner.parcels.show', $parcel))->assertOk()
-            ->assertSee('Current active linked area')->assertSee('2.0000 ha')->assertSee('7.0000 ha');
-        Landholding::where('parcel_id', $parcel->id)->where('landowner_id', $owner->id)->where('status', 'active')
-            ->firstOrFail()->update(['status' => 'historical']);
+            ->assertSee('Current active linked area')->assertSee('0.0000 ha')->assertSee('7.0000 ha');
         $this->getJson(route('landowner.parcel-map.feature', $parcel->id))->assertOk()
             ->assertJsonPath('properties.active_linked_area_hectares', '0.0000')
             ->assertJsonPath('properties.reference_scope', 'Historical/non-active landholding reference');
+        $ownHolding->update(['status' => 'active', 'area_hectares' => 2]);
+        $this->getJson(route('landowner.parcel-map.feature', $parcel->id))->assertOk()
+            ->assertJsonPath('properties.active_linked_area_hectares', '2.0000')
+            ->assertJsonPath('properties.reference_scope', 'Active landholding reference');
     }
 
     public function test_endpoint_role_and_parameter_validation_is_enforced(): void
@@ -100,6 +101,36 @@ class BoundedParcelMapTest extends TestCase
         $this->getJson(route('geodetic.parcel-map.search', ['q' => '_%_']))->assertOk()->assertJsonPath('total', 1);
         $this->actingAs(User::factory()->create(['role' => 'landowner']))
             ->getJson($this->viewport('landowner'))->assertOk()->assertJsonPath('total', 0);
+    }
+
+    public function test_geodetic_owner_reference_is_qualified_and_full_name_search_finds_it(): void
+    {
+        $geodetic = User::factory()->create(['role' => 'geodetic']);
+        $owner = Landowner::create(['first_name' => 'Current', 'last_name' => 'Owner', 'province' => 'Negros Oriental']);
+        $former = Landowner::create(['first_name' => 'Former', 'last_name' => 'Owner', 'province' => 'Negros Oriental']);
+        $parcel = $this->parcel('QUALIFIED-REFERENCE');
+        Landholding::create(['parcel_id' => $parcel->id, 'landowner_id' => $owner->id, 'status' => 'active', 'area_hectares' => 2]);
+        Landholding::create(['parcel_id' => $parcel->id, 'landowner_id' => $former->id, 'status' => 'historical', 'area_hectares' => 7]);
+        $this->actingAs($geodetic)->getJson(route('geodetic.parcel-map.feature', $parcel->id))
+            ->assertOk()->assertJsonPath('properties.reference_scope', 'Active landholding reference')
+            ->assertJsonPath('properties.landowner', 'Current Owner')->assertJsonPath('properties.active_linked_area_hectares', '2.0000');
+        $this->getJson(route('geodetic.parcel-map.search', ['q' => 'Current Owner']))->assertOk()->assertJsonPath('total', 1);
+        $this->getJson(route('geodetic.parcel-map.search', ['q' => 'Former Owner']))->assertOk()->assertJsonPath('total', 1);
+    }
+
+    public function test_total_viewport_payload_budget_is_enforced_independently_of_feature_count(): void
+    {
+        $staff = User::factory()->create(['role' => 'staff']);
+        for ($i = 0; $i < 8; $i++) {
+            $parcel = $this->parcel('PAYLOAD-BUDGET-'.$i);
+            $geometry = $parcel->geometry_geojson;
+            $geometry['metadata'] = str_repeat('x', 190000);
+            $parcel->update(['geometry_geojson' => $geometry]);
+        }
+        $response = $this->actingAs($staff)->getJson($this->viewport('staff'))->assertOk()
+            ->assertJsonPath('total', 8)->assertJsonPath('limited', true);
+        $this->assertLessThanOrEqual(1000000, strlen(json_encode($response->json('features'))));
+        $this->assertLessThan(8, $response->json('returned'));
     }
 
     public function test_geometry_budget_and_invalid_legacy_rows_do_not_break_viewport(): void

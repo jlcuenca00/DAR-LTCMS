@@ -14,17 +14,24 @@ class ParcelMapDataService
     public const GEOMETRY_BYTE_LIMIT = 200000;
     public const RESPONSE_BYTE_LIMIT = 1000000;
 
-    public function scoped(User $user): Builder
+    private function visible(User $user): Builder
     {
         $query = Parcel::query()->where('status', 'active')->whereNotNull('geometry_geojson');
-        foreach (ParcelMapBounds::COLUMNS as $column) {
-            $query->whereNotNull($column);
-        }
         if ($user->role === 'landowner') {
             $ownerId = $user->landowner?->id;
             $query->whereHas('landholdings', fn ($q) => $q->where('landowner_id', $ownerId ?? 0));
         } else {
             abort_unless(in_array($user->role, ['staff', 'geodetic'], true), 403);
+        }
+
+        return $query;
+    }
+
+    public function scoped(User $user): Builder
+    {
+        $query = $this->visible($user);
+        foreach (ParcelMapBounds::COLUMNS as $column) {
+            $query->whereNotNull($column);
         }
 
         return $query;
@@ -59,6 +66,7 @@ class ParcelMapDataService
             'landholdings.landowner:id,first_name,middle_name,last_name,suffix',
         ];
         if ($user->role !== 'landowner') {
+            $query->withCount(['legacyRecords', 'sourceRecordPackages']);
             $relations = array_merge($relations, [
             'legacyRecords' => fn ($q) => $q->select('id', 'parcel_id', 'landowner_id')->orderBy('id')->limit(4),
             'legacyRecords.landowner:id,first_name,middle_name,last_name,suffix',
@@ -81,6 +89,7 @@ class ParcelMapDataService
         return [
             'role' => $role,
             'total' => (int) $extent->total,
+            'unavailable_total' => $this->visible($user)->count() - (int) $extent->total,
             'bounds' => $extent->total ? [(float) $extent->west, (float) $extent->south, (float) $extent->east, (float) $extent->north] : null,
             'features_url' => route($role.'.parcel-map.features'),
             'search_url' => route($role.'.parcel-map.search'),
@@ -99,13 +108,20 @@ class ParcelMapDataService
                     $q->orWhereRaw("LOWER(".$column.") LIKE LOWER(?) ESCAPE '!'", [$like]);
                 }
                 if ($user->role !== 'landowner') {
-                    $q->orWhereHas('landholdings.landowner', function ($owner) use ($like) {
-                        $owner->where(function ($names) use ($like) {
-                            foreach (['first_name', 'middle_name', 'last_name', 'suffix'] as $column) {
-                                $names->orWhereRaw("LOWER(".$column.") LIKE LOWER(?) ESCAPE '!'", [$like]);
-                            }
+                    foreach (['landholdings.landowner', 'legacyRecords.landowner', 'sourceRecordPackages.landowner'] as $relation) {
+                        $q->orWhereHas($relation, function ($owner) use ($like) {
+                            $owner->where(function ($names) use ($like) {
+                                foreach (['first_name', 'middle_name', 'last_name', 'suffix'] as $column) {
+                                    $names->orWhereRaw("LOWER(".$column.") LIKE LOWER(?) ESCAPE '!'", [$like]);
+                                }
+                                $names->orWhereRaw(
+                                    "LOWER(TRIM(COALESCE(first_name, '') || ' ' ||
+                                        COALESCE(NULLIF(middle_name, '') || ' ', '') || COALESCE(last_name, '') ||
+                                        COALESCE(' ' || NULLIF(suffix, ''), ''))) LIKE LOWER(?) ESCAPE '!'", [$like]
+                                );
+                            });
                         });
-                    });
+                    }
                 }
             });
         }
@@ -193,6 +209,9 @@ class ParcelMapDataService
             $names = $parcel->legacyRecords->merge($parcel->sourceRecordPackages)
                 ->map(fn ($record) => $record->landowner?->full_name)->filter()->unique()->implode(', ');
             $label = $names !== '' ? 'Source-linked reference' : 'No linked landowner record';
+            if ($parcel->legacy_records_count + $parcel->source_record_packages_count > $parcel->legacyRecords->count() + $parcel->sourceRecordPackages->count()) {
+                $names .= ' (additional source records)';
+            }
         }
         $count = $parcel->active_holding_count ?: $parcel->historical_holding_count;
         if ($count > $preview->count()) {

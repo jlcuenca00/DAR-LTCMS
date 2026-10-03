@@ -134,7 +134,8 @@ function initializeParcelMapViewer() {
             if (viewportRequest !== request) return;
             mapStatus.textContent = data.returned + ' of ' + data.total + ' parcels in this view.' +
                 (data.limited ? ' Display is limited. Zoom in or use search to locate any mapped parcel.' : '') +
-                (data.skipped ? ' ' + data.skipped + ' geometry records exceeded display limits or require review.' : '');
+                (data.skipped ? ' ' + data.skipped + ' geometry records exceeded display limits or require review.' : '') +
+                (config.unavailable_total ? ' ' + config.unavailable_total + ' geometry records have unavailable display bounds; open parcel references for review.' : '');
             draw(data.features);
         } catch (error) {
             if (error.name !== 'AbortError') mapStatus.textContent = 'Map data could not be loaded. The parcel list remains available. Move the map or refresh to retry.';
