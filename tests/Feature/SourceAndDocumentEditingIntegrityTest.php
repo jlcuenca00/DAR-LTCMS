@@ -123,6 +123,7 @@ class SourceAndDocumentEditingIntegrityTest extends TestCase
             'source_record_package_id' => $package->id,
             'record_type' => LegacyRecord::TYPE_TITLE,
             'title_number' => 'SOURCE-TITLE-1',
+            'source_book' => 'Audit source', 'transcribed_by' => 'Staff', 'transcription_date' => now()->toDateString(),
             'origin' => 'encoded',
             'source_record_scope' => 'reference_only',
         ]);
@@ -146,6 +147,7 @@ class SourceAndDocumentEditingIntegrityTest extends TestCase
         $staff = User::factory()->create(['role' => 'staff']);
         $record = LegacyRecord::create([
             'record_type' => LegacyRecord::TYPE_TITLE, 'title_number' => 'INDIVIDUAL-TITLE',
+            'source_book' => 'Audit source', 'transcribed_by' => 'Staff', 'transcription_date' => now()->toDateString(),
             'origin' => 'encoded', 'source_record_scope' => 'reference_only',
         ]);
         $revision = $record->fresh()->record_revision;
