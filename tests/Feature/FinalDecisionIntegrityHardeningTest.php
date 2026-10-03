@@ -689,6 +689,8 @@ class FinalDecisionIntegrityHardeningTest extends TestCase
 
         $this->actingAs($staff)
             ->patch(route('staff.applications.landowner-links.update', $application), [
+                'expected_workflow_revision' => (int) $application->fresh()->workflow_revision,
+                'expected_party_dependency' => app(\App\Services\ApplicationPartyLinkReviewService::class)->fingerprint($application->fresh()),
                 'transferors' => [[
                     'name' => $transferor->full_name,
                     'landowner_id' => $otherTransferor->id,
@@ -771,6 +773,8 @@ class FinalDecisionIntegrityHardeningTest extends TestCase
 
         $this->actingAs($staff)
             ->post(route('staff.applications.landowner-records.create', $application), [
+                'expected_workflow_revision' => (int) $application->fresh()->workflow_revision,
+                'expected_party_dependency' => app(\App\Services\ApplicationPartyLinkReviewService::class)->fingerprint($application->fresh()),
                 'party' => 'transferor',
                 'index' => 0,
             ])

@@ -198,6 +198,8 @@ class LandTransferApplicationController extends Controller
             ->get()
             ->keyBy('id');
 
+        $partyLinkDependencyFingerprint = app(\App\Services\ApplicationPartyLinkReviewService::class)->fingerprint($application);
+
         return view('staff.applications.show', compact(
             'application',
             'transferorRequirements',
@@ -206,6 +208,7 @@ class LandTransferApplicationController extends Controller
             'exceedsFiveHectares',
             'fiveHectareValidation',
             'workflowDependencyFingerprint',
+            'partyLinkDependencyFingerprint',
             'applicationTimeline',
             'latestApplicationActivity',
             'matchedSourceRecords',
@@ -333,9 +336,11 @@ public function store(Request $request)
         'transferor_landowner_id' => ['nullable', 'exists:landowners,id'],
         'transferee_landowner_id' => ['nullable', 'exists:landowners,id'],
         'transferors' => ['nullable', 'array'],
+        'transferors.*' => ['array:name,landowner_id'],
         'transferors.*.landowner_id' => ['nullable', 'distinct', 'exists:landowners,id'],
         'transferors.*.name' => ['nullable', 'string', 'max:255'],
         'transferees' => ['nullable', 'array'],
+        'transferees.*' => ['array:name,landowner_id'],
         'transferees.*.landowner_id' => ['nullable', 'distinct', 'exists:landowners,id'],
         'transferees.*.name' => ['nullable', 'string', 'max:255'],
 
@@ -603,20 +608,10 @@ private function normalizePartyRows(array $rows, ?string $legacyName = null, $le
         $name = trim((string) ($row['name'] ?? ''));
         if ($name === '') return null;
 
-        $parcelShares = collect((array) ($row['parcel_shares'] ?? []))
-            ->mapWithKeys(function ($value, $key) {
-                if ($value === null || $value === '') {
-                    return [];
-                }
-
-                return [(string) $key => round((float) $value, 4)];
-            })
-            ->all();
-
         return [
             'landowner_id' => filled($row['landowner_id'] ?? null) ? (int) $row['landowner_id'] : null,
             'name' => $name,
-            'parcel_shares' => $parcelShares,
+            'parcel_shares' => [],
         ];
     })->filter()->values()->all();
 
@@ -627,7 +622,6 @@ private function normalizePartyRows(array $rows, ?string $legacyName = null, $le
             'parcel_shares' => [],
         ];
     }
-
     return $normalized;
 }
 

@@ -509,7 +509,11 @@ class LandTransferApplication extends Model
 
         $linkedCount = max(1, $rows->filter(fn ($item) => filled($item['landowner_id'] ?? null))->count());
 
-        return round($fallbackArea / $linkedCount, 4);
+        $linkedRows = $rows->filter(fn ($item) => filled($item['landowner_id'] ?? null))->values();
+        $index = $linkedRows->search(fn ($item) => (int) $item['landowner_id'] === $landownerId);
+        $shares = app(\App\Services\EqualAreaAllocationService::class)->allocate($fallbackArea, $linkedCount);
+
+        return $index === false ? 0.0 : $shares[$index];
     }
 
     public function scopeLinkedToLandownerIds(Builder $query, iterable $landownerIds): Builder

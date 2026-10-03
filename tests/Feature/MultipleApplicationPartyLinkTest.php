@@ -42,6 +42,8 @@ class MultipleApplicationPartyLinkTest extends TestCase
 
         $this->actingAs($staff)
             ->post(route('staff.applications.landowner-records.create', $application), [
+                'expected_workflow_revision' => (int) $application->fresh()->workflow_revision,
+                'expected_party_dependency' => app(\App\Services\ApplicationPartyLinkReviewService::class)->fingerprint($application->fresh()),
                 'party' => 'transferor',
                 'index' => 0,
             ])
@@ -49,6 +51,8 @@ class MultipleApplicationPartyLinkTest extends TestCase
 
         $this->actingAs($staff)
             ->post(route('staff.applications.landowner-records.create', $application), [
+                'expected_workflow_revision' => (int) $application->fresh()->workflow_revision,
+                'expected_party_dependency' => app(\App\Services\ApplicationPartyLinkReviewService::class)->fingerprint($application->fresh()),
                 'party' => 'transferor',
                 'index' => 1,
             ])
@@ -133,6 +137,8 @@ class MultipleApplicationPartyLinkTest extends TestCase
 
         $this->actingAs($staff)
             ->patch(route('staff.applications.landowner-links.update', $application), [
+                'expected_workflow_revision' => (int) $application->fresh()->workflow_revision,
+                'expected_party_dependency' => app(\App\Services\ApplicationPartyLinkReviewService::class)->fingerprint($application->fresh()),
                 'transferors' => [
                     ['name' => 'Juan Cruz', 'landowner_id' => $ownerA->id],
                     ['name' => 'Maria Cruz', 'landowner_id' => $ownerB->id],
@@ -247,14 +253,20 @@ class MultipleApplicationPartyLinkTest extends TestCase
         ];
 
         $this->actingAs($staff)
-            ->patch(route('staff.applications.landowner-links.update', $application), $payload)
+            ->patch(route('staff.applications.landowner-links.update', $application), array_merge($payload, [
+                'expected_workflow_revision' => (int) $application->fresh()->workflow_revision,
+                'expected_party_dependency' => app(\App\Services\ApplicationPartyLinkReviewService::class)->fingerprint($application->fresh()),
+            ]))
             ->assertRedirect();
 
         $payload['transferors'][0]['parcel_shares'][(string) $applicationParcel->id] = 4.0000;
         $payload['transferors'][1]['parcel_shares'][(string) $applicationParcel->id] = 0;
 
         $this->actingAs($staff)
-            ->patch(route('staff.applications.landowner-links.update', $application), $payload)
+            ->patch(route('staff.applications.landowner-links.update', $application), array_merge($payload, [
+                'expected_workflow_revision' => (int) $application->fresh()->workflow_revision,
+                'expected_party_dependency' => app(\App\Services\ApplicationPartyLinkReviewService::class)->fingerprint($application->fresh()),
+            ]))
             ->assertRedirect()
             ->assertSessionHas('success');
 
@@ -337,6 +349,8 @@ class MultipleApplicationPartyLinkTest extends TestCase
 
         $this->actingAs($staff)
             ->patch(route('staff.applications.landowner-links.update', $application), [
+                'expected_workflow_revision' => (int) $application->fresh()->workflow_revision,
+                'expected_party_dependency' => app(\App\Services\ApplicationPartyLinkReviewService::class)->fingerprint($application->fresh()),
                 'transferors' => [
                     [
                         'name' => $owner->full_name,
@@ -419,6 +433,8 @@ class MultipleApplicationPartyLinkTest extends TestCase
 
         $this->actingAs($staff)
             ->patch(route('staff.applications.landowner-links.update', $application), [
+                'expected_workflow_revision' => (int) $application->fresh()->workflow_revision,
+                'expected_party_dependency' => app(\App\Services\ApplicationPartyLinkReviewService::class)->fingerprint($application->fresh()),
                 'transferors' => [
                     [
                         'name' => $owner->full_name,
@@ -617,6 +633,8 @@ class MultipleApplicationPartyLinkTest extends TestCase
 
         $this->actingAs($staff)
             ->patch(route('staff.applications.landowner-links.update', $application), [
+                'expected_workflow_revision' => (int) $application->fresh()->workflow_revision,
+                'expected_party_dependency' => app(\App\Services\ApplicationPartyLinkReviewService::class)->fingerprint($application->fresh()),
                 'transferors' => [
                     ['name' => 'Locked Owner', 'landowner_id' => null],
                 ],
