@@ -2629,40 +2629,17 @@
             'endorsed_chief_legal', 'endorsed_parpo', 'for_releasing' => 'staff-badge-amber',
             default => 'staff-badge-slate',
         };
+        $requirementStates = collect(app(\App\Services\ApplicationRequirementService::class)->evaluate($application)['requirements'])->keyBy('id');
         $allRequirements = $transferorRequirements->concat($transfereeRequirements);
-        $blockingRequirements = $allRequirements->filter(fn ($requirement) => method_exists($requirement, 'blocksAcceptance') ? $requirement->blocksAcceptance() : (bool) $requirement->is_mandatory);
-        $blockingRequirementIds = $blockingRequirements->pluck('id')->map(fn ($id) => (int) $id)->all();
+        $blockingRequirements = $allRequirements->filter(fn ($requirement) => (bool) data_get($requirementStates->get($requirement->id), 'blocking', false));
         $blockingTotal = $blockingRequirements->count();
-        $blockingUploadedCount = $uploaded->keys()
-            ->map(fn ($id) => (int) $id)
-            ->filter(fn ($id) => in_array($id, $blockingRequirementIds, true))
-            ->count();
+        $blockingUploadedDocuments = $blockingRequirements->filter(fn ($requirement) => (bool) data_get($requirementStates->get($requirement->id), 'complete', false))->values();
+        $blockingMissingDocuments = $blockingRequirements->diff($blockingUploadedDocuments)->values();
+        $blockingUploadedCount = $blockingUploadedDocuments->count();
         $totalReq = $allRequirements->count();
-        $uploadedCount = $uploaded->count();
-
-        $blockingUploadedDocuments = $blockingRequirements
-            ->filter(function ($requirement) use ($uploaded) {
-                $document = $uploaded->get($requirement->id);
-
-                return $document && filled($document->file_path);
-            })
-            ->values();
-
-        $blockingMissingDocuments = $blockingRequirements
-            ->reject(function ($requirement) use ($uploaded) {
-                $document = $uploaded->get($requirement->id);
-
-                return $document && filled($document->file_path);
-            })
-            ->values();
-
-        $metadataOnlyCount = $uploaded
-            ->filter(fn ($document) => blank($document->file_path))
-            ->count();
-
-        $blockingProgressPercent = $blockingTotal > 0
-            ? min(100, round(($blockingUploadedDocuments->count() / max(1, $blockingTotal)) * 100))
-            : 100;
+        $uploadedCount = $requirementStates->where('present', true)->count();
+        $metadataOnlyCount = $uploaded->filter(fn ($document) => blank($document->file_path) && (bool) data_get($requirementStates->get($document->required_document_id), 'present', false))->count();
+        $blockingProgressPercent = $blockingTotal > 0 ? round(($blockingUploadedCount / $blockingTotal) * 100) : 100;
 
         $requirementGroups = [
             [
@@ -2680,12 +2657,10 @@
         ];
 
 
-        $requirementNavItems = $allRequirements->map(function ($requirement) use ($uploaded) {
+        $requirementNavItems = $allRequirements->map(function ($requirement) use ($uploaded, $requirementStates) {
             $document = $uploaded->get($requirement->id);
-            $isUploaded = $document && filled($document->file_path);
-            $blocksAcceptance = method_exists($requirement, 'blocksAcceptance')
-                ? $requirement->blocksAcceptance()
-                : (bool) $requirement->is_mandatory;
+            $isUploaded = (bool) data_get($requirementStates->get($requirement->id), 'present', false);
+            $blocksAcceptance = (bool) data_get($requirementStates->get($requirement->id), 'blocking', false);
 
             return [
                 'id' => $requirement->id,
@@ -3297,10 +3272,8 @@
                         @foreach ($navGroup['requirements'] as $navReq)
                             @php
                                 $navDoc = $uploaded->get($navReq->id);
-                                $navIsUploaded = $navDoc && (filled($navDoc->file_path) || ! empty($navDoc->document_metadata));
-                                $navBlocksAcceptance = method_exists($navReq, 'blocksAcceptance')
-                                    ? $navReq->blocksAcceptance()
-                                    : (bool) $navReq->is_mandatory;
+                                $navIsUploaded = (bool) data_get($requirementStates->get($navReq->id), 'present', false);
+                                $navBlocksAcceptance = (bool) data_get($requirementStates->get($navReq->id), 'blocking', false);
                             @endphp
 
                             <span class="requirement-rail-collapsed-line {{ $navIsUploaded ? 'is-uploaded' : ($navBlocksAcceptance ? 'is-missing-blocking' : 'is-reference') }}"></span>
@@ -3320,7 +3293,7 @@
                     </div>
 
                     <div class="requirement-rail-legend" aria-label="Requirement status legend">
-                        <span class="requirement-legend-item"><span class="requirement-legend-mark uploaded" aria-hidden="true">✓</span>Uploaded</span>
+                        <span class="requirement-legend-item"><span class="requirement-legend-mark uploaded" aria-hidden="true">✓</span>Evidence saved</span>
                         <span class="requirement-legend-item"><span class="requirement-legend-mark required" aria-hidden="true">!</span>Required</span>
                         <span class="requirement-legend-item"><span class="requirement-legend-mark reference" aria-hidden="true">○</span>Reference</span>
                     </div>
@@ -3342,11 +3315,9 @@
                                 @foreach ($navGroup['requirements'] as $navReq)
                                     @php
                                         $navDoc = $uploaded->get($navReq->id);
-                                        $navIsUploaded = $navDoc && (filled($navDoc->file_path) || ! empty($navDoc->document_metadata));
-                                        $navBlocksAcceptance = method_exists($navReq, 'blocksAcceptance')
-                                            ? $navReq->blocksAcceptance()
-                                            : (bool) $navReq->is_mandatory;
-                                        $navStatus = $navIsUploaded ? 'Encoded' : ($navBlocksAcceptance ? 'Missing' : 'Reference');
+                                        $navIsUploaded = (bool) data_get($requirementStates->get($navReq->id), 'present', false);
+                                        $navBlocksAcceptance = (bool) data_get($requirementStates->get($navReq->id), 'blocking', false);
+                                        $navStatus = ! data_get($requirementStates->get($navReq->id), 'applicable', true) ? 'Not applicable' : ($navIsUploaded ? (data_get($requirementStates->get($navReq->id), 'freshness_valid', true) ? 'Encoded' : 'Check date') : ($navBlocksAcceptance ? 'Missing' : 'Reference'));
                                         $navDisplayName = trim(preg_replace('/\s*\((?:if|when|where|as applicable)[^)]+\)/i', '', $navReq->name));
                                     @endphp
 
@@ -3388,7 +3359,8 @@
                     @foreach ($group['requirements'] as $req)
                         @php
                             $doc = $uploaded->get($req->id);
-                            $isUploaded = $doc && (filled($doc->file_path) || ! empty($doc->document_metadata));
+                            $isUploaded = (bool) data_get($requirementStates->get($req->id), 'present', false);
+                            $documentSaved = $doc !== null;
                             $editPanelId = 'document-edit-panel-' . $req->id;
                             $documentExists = $isUploaded && $doc->file_path && \Illuminate\Support\Facades\Storage::exists($doc->file_path);
                             $documentMime = $documentExists ? (\Illuminate\Support\Facades\Storage::mimeType($doc->file_path) ?: null) : null;
@@ -3403,9 +3375,7 @@
                             $classificationBadgeClass = method_exists($req, 'classificationBadgeClass')
                                 ? $req->classificationBadgeClass()
                                 : ($req->is_mandatory ? 'staff-badge-red' : 'staff-badge-amber');
-                            $blocksAcceptance = method_exists($req, 'blocksAcceptance')
-                                ? $req->blocksAcceptance()
-                                : (bool) $req->is_mandatory;
+                            $blocksAcceptance = (bool) data_get($requirementStates->get($req->id), 'blocking', false);
                             $reqDisplayName = trim(preg_replace('/\s*\((?:if|when|where|as applicable)[^)]+\)/i', '', $req->name));
                         @endphp
 
@@ -3433,14 +3403,17 @@
                                         </div>
                                     </div>
 
-                                    @if ($isUploaded)
-                                        <span class="staff-badge staff-badge-green">Details saved</span>
+                                    @if ($documentSaved)
+                                        <span class="staff-badge {{ $isUploaded ? 'staff-badge-green' : 'staff-badge-amber' }}">{{ $isUploaded ? 'Details saved' : 'Notes only — evidence missing' }}</span>
+                                        @if (! data_get($requirementStates->get($req->id), 'freshness_valid', true))
+                                            <p class="text-sm text-red-700">{{ data_get($requirementStates->get($req->id), 'freshness_message') }}</p>
+                                        @endif
                                     @else
                                         <span class="staff-badge {{ $blocksAcceptance ? 'staff-badge-red' : 'staff-badge-slate' }}">{{ $blocksAcceptance ? 'Details not yet encoded' : 'Optional / supporting only' }}</span>
                                     @endif
                                 </div>
 
-                                @if ($isUploaded)
+                                @if ($documentSaved)
                                     <div class="document-status-panel uploaded">
                                         <p class="document-status-title">
                                             <i class="fa-solid fa-file-circle-check text-green-700"></i>
@@ -3613,8 +3586,9 @@
                                                       action="{{ route('staff.applications.documents.destroy', ['application' => $application->id, 'requiredDocument' => $req->id]) }}"
                                                       class="document-remove-form"
                                                       data-preserve-scroll
-                                                      onsubmit="return confirm('Remove this uploaded document? This cannot be undone.');">
+                                                      onsubmit="return confirm('Remove this requirement record? This cannot be undone.');">
                                                     @csrf
+                    <input type="hidden" name="expected_workflow_revision" value="{{ old('expected_workflow_revision', $application->workflow_revision) }}">
                                                     @method('DELETE')
                                                     <button type="submit" class="staff-button staff-button-danger">
                                                         <i class="fa-solid fa-trash"></i>
@@ -3639,6 +3613,7 @@
                                                       class="document-form-section"
                                                       data-preserve-scroll>
                                                     @csrf
+                    <input type="hidden" name="expected_workflow_revision" value="{{ old('expected_workflow_revision', $application->workflow_revision) }}">
 
                                                     <div class="file-input-wrap">
                                                         <label class="block mb-2">Replacement file (optional)</label>
@@ -3680,6 +3655,7 @@
                                           class="document-upload-panel"
                                           data-preserve-scroll>
                                         @csrf
+                    <input type="hidden" name="expected_workflow_revision" value="{{ old('expected_workflow_revision', $application->workflow_revision) }}">
 
                                         <div class="document-indexing-header">
                                             <div>

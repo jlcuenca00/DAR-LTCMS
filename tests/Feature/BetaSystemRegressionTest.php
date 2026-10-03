@@ -581,7 +581,7 @@ class BetaSystemRegressionTest extends TestCase
             }
 
             $this->actingAs($staff)
-                ->post(route('staff.applications.documents.store', [$application, $requiredDocument]), [
+                ->post(route('staff.applications.documents.store', [$application, $requiredDocument]), [ 'expected_workflow_revision' => $application->fresh()->workflow_revision, 
                     'file' => UploadedFile::fake()->create('locked.pdf', 100, 'application/pdf'),
                     'annex_reference' => 'Annex Lock',
                     'remarks' => 'Should stay locked.',

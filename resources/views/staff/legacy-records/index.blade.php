@@ -237,7 +237,7 @@
                         <h2 class="source-view-title">Source Packages</h2>
                         <p class="source-view-subtitle">Open a package to review its attached file, generated records, and parcel or landowner links.</p>
                     </div>
-                    <span class="source-view-count">{{ $sourcePackages->count() }} package(s)</span>
+                    <span class="source-view-count">{{ $sourcePackages->total() }} package(s)</span>
                 </div>
 
                 @if ($sourcePackages->isEmpty())
@@ -281,6 +281,7 @@
                     </div>
                 @endif
             </section>
+                <div class="p-5">{{ $sourcePackages->links() }}</div>
         @else
             <section class="source-view-card">
                 <div class="source-view-header">

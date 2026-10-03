@@ -80,6 +80,9 @@ class ApplicationDocumentController extends Controller
                 ->with('error', 'This application is already finalized. Document uploads and metadata encoding are locked.');
         }
 
+        $revision = $request->validate(['expected_workflow_revision' => ['required', 'integer', 'min:1']]);
+        app(\App\Services\ApplicationWorkflowRevisionService::class)->assertExpected($application, (int) $revision['expected_workflow_revision']);
+
         $existingDocument = ApplicationDocument::where('land_transfer_application_id', $application->id)
             ->where('required_document_id', $requiredDocument->id)
             ->first();
@@ -215,13 +218,16 @@ class ApplicationDocumentController extends Controller
                 : 'Requirement details saved successfully. No file upload was required.');
     }
 
-    public function destroy(LandTransferApplication $application, RequiredDocument $requiredDocument)
+    public function destroy(Request $request, LandTransferApplication $application, RequiredDocument $requiredDocument)
     {
         if ($application->isFinalized()) {
             return redirect()
                 ->route('staff.applications.show', ['application' => $application->id])
                 ->with('error', 'This application is finalized. Documents cannot be removed.');
         }
+
+        $revision = $request->validate(['expected_workflow_revision' => ['required', 'integer', 'min:1']]);
+        app(\App\Services\ApplicationWorkflowRevisionService::class)->assertExpected($application, (int) $revision['expected_workflow_revision']);
 
         $document = ApplicationDocument::where('land_transfer_application_id', $application->id)
             ->where('required_document_id', $requiredDocument->id)

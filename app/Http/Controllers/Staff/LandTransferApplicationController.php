@@ -158,7 +158,7 @@ class LandTransferApplicationController extends Controller
                 ->get();
 
             $matchedSourcePackages = SourceRecordPackage::query()
-                ->with(['parcel', 'records'])
+                ->with('parcel')
                 ->where(function ($query) use (
                     $parcelIds,
                     $parcelCodes,

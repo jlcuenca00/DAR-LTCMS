@@ -1066,6 +1066,7 @@
 
                             <form method="POST" action="{{ route('staff.source-record-packages.update', $package) }}" class="source-detail-form source-form-panel-clean mt-4">
                                 @csrf
+                    <input type="hidden" name="expected_record_revision" value="{{ old('expected_record_revision', $package->record_revision) }}">
                                 @method('PATCH')
 
                                 <div class="source-form-grid three">
@@ -1285,6 +1286,7 @@
 
                                     <form method="POST" action="{{ route('staff.source-record-packages.link-landowner', $package) }}" class="source-detail-form">
                                         @csrf
+                    <input type="hidden" name="expected_record_revision" value="{{ old('expected_record_revision', $package->record_revision) }}">
                                         <div class="source-form-field">
                                             <label>Existing Landowner Record</label>
                                             <div data-remote-record-select data-lookup-url="{{ route('staff.lookups.landowners') }}" class="space-y-2">
@@ -1328,6 +1330,7 @@
 
                                         <form method="POST" action="{{ route('staff.source-record-packages.create-landowner', $package) }}" class="source-detail-form source-form-panel-clean">
                                             @csrf
+                    <input type="hidden" name="expected_record_revision" value="{{ old('expected_record_revision', $package->record_revision) }}">
                                             <div class="source-form-grid">
                                                 <div class="source-form-field">
                                                     <label>First Name *</label>
@@ -1472,6 +1475,7 @@
 
                                 <form method="POST" action="{{ route('staff.source-record-packages.link-parcel', $package) }}" class="source-detail-form">
                                     @csrf
+                    <input type="hidden" name="expected_record_revision" value="{{ old('expected_record_revision', $package->record_revision) }}">
                                     <div class="source-form-field">
                                         <label>Existing Parcel</label>
                                         <div data-remote-record-select data-lookup-url="{{ route('staff.lookups.parcels') }}" class="space-y-2">
@@ -1522,6 +1526,7 @@
 
                                     <form method="POST" action="{{ route('staff.source-record-packages.create-parcel', $package) }}" class="source-detail-form source-form-panel-clean">
                                         @csrf
+                    <input type="hidden" name="expected_record_revision" value="{{ old('expected_record_revision', $package->record_revision) }}">
                                         <div class="source-form-grid">
                                             <div class="source-form-field">
                                                 <label>Parcel Code *</label>
@@ -1680,6 +1685,7 @@
 
                                             <form method="POST" action="{{ route('staff.source-record-packages.source-file.destroy', $package) }}" onsubmit="return confirm('Remove the attached source file from this package?');">
                                                 @csrf
+                    <input type="hidden" name="expected_record_revision" value="{{ old('expected_record_revision', $package->record_revision) }}">
                                                 @method('DELETE')
                                                 <button type="submit" class="staff-button staff-button-danger w-full justify-center">
                                                     <i class="fa-solid fa-trash"></i>
@@ -1690,6 +1696,7 @@
 
                                         <form method="POST" action="{{ route('staff.source-record-packages.source-file.store', $package) }}" enctype="multipart/form-data" class="source-detail-form">
                                             @csrf
+                    <input type="hidden" name="expected_record_revision" value="{{ old('expected_record_revision', $package->record_revision) }}">
                                             <div class="source-file-upload-box">
                                                 <label class="block text-xs font-black uppercase tracking-wide">Replace source file</label>
                                                 <input type="file" name="source_file" required accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png">
@@ -1712,6 +1719,7 @@
 
                                 <form method="POST" action="{{ route('staff.source-record-packages.source-file.store', $package) }}" enctype="multipart/form-data" class="source-detail-form">
                                     @csrf
+                    <input type="hidden" name="expected_record_revision" value="{{ old('expected_record_revision', $package->record_revision) }}">
                                     <div class="source-file-upload-box">
                                         <label class="block text-xs font-black uppercase tracking-wide">Upload source file</label>
                                         <input type="file" name="source_file" required accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png">

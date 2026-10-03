@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class SourceRecordPackage extends Model
 {
+    use \App\Models\Concerns\TracksRecordRevision;
+
     use NormalizesDarLocation;
 
     public const STATUS_ENCODED = 'encoded';

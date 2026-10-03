@@ -51,7 +51,7 @@ class FinalDecisionLockTest extends TestCase
                 'application' => $application,
                 'requiredDocument' => $requiredDocument,
             ]),
-            [
+            [ 'expected_workflow_revision' => $application->fresh()->workflow_revision, 
                 'file' => UploadedFile::fake()->create('locked.pdf', 100, 'application/pdf'),
                 'annex_reference' => 'Annex Test',
                 'remarks' => 'Should not upload',
@@ -102,7 +102,7 @@ class FinalDecisionLockTest extends TestCase
                 'application' => $application,
                 'requiredDocument' => $requiredDocument,
             ]),
-            [
+            [ 'expected_workflow_revision' => $application->fresh()->workflow_revision, 
                 'file' => UploadedFile::fake()->create('locked.pdf', 100, 'application/pdf'),
                 'annex_reference' => 'Annex Test',
                 'remarks' => 'Should not upload',
@@ -162,7 +162,7 @@ class FinalDecisionLockTest extends TestCase
             route('staff.applications.documents.destroy', [
                 'application' => $application,
                 'requiredDocument' => $requiredDocument,
-            ])
+            ]), ['expected_workflow_revision' => $application->fresh()->workflow_revision]
         );
 
         $response->assertRedirect(route('staff.applications.show', $application));
