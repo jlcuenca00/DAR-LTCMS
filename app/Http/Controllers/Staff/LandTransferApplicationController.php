@@ -608,13 +608,6 @@ private function normalizePartyRows(array $rows, ?string $legacyName = null, $le
         $name = trim((string) ($row['name'] ?? ''));
         if ($name === '') return null;
 
-        return [];
-                }
-
-                return [(string) $key => round((float) $value, 4)];
-            })
-            ->all();
-
         return [
             'landowner_id' => filled($row['landowner_id'] ?? null) ? (int) $row['landowner_id'] : null,
             'name' => $name,
@@ -629,7 +622,6 @@ private function normalizePartyRows(array $rows, ?string $legacyName = null, $le
             'parcel_shares' => [],
         ];
     }
-
     return $normalized;
 }
 
