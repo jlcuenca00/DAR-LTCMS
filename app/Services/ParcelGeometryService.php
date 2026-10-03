@@ -44,29 +44,36 @@ class ParcelGeometryService
 
         $rings = $geometry['coordinates'] ?? null;
 
-        if (! is_array($rings) || $rings === []) {
+        if (! is_array($rings) || ! array_is_list($rings) || $rings === []) {
             $this->invalidPolygon($field);
         }
 
         foreach ($rings as $ring) {
-            if (! is_array($ring) || count($ring) < 4) {
+            if (! is_array($ring) || ! array_is_list($ring) || count($ring) < 4) {
                 $this->invalidPolygon($field);
             }
 
+            $distinct = [];
+            $dimension = is_array($ring[0] ?? null) ? count($ring[0]) : 0;
             foreach ($ring as $position) {
-                if (! is_array($position)
-                    || ! array_key_exists(0, $position)
-                    || ! array_key_exists(1, $position)) {
+                if (! is_array($position) || ! array_is_list($position)
+                    || ! in_array(count($position), [2, 3], true) || count($position) !== $dimension) {
                     $this->invalidPolygon($field);
                 }
 
                 $longitude = $position[0];
                 $latitude = $position[1];
 
-                if (! is_numeric($longitude) || ! is_numeric($latitude)) {
+                if ((! is_int($longitude) && ! is_float($longitude)) || (! is_int($latitude) && ! is_float($latitude))) {
                     $this->invalidPolygon($field);
                 }
 
+                foreach ($position as $ordinate) {
+                    if ((! is_int($ordinate) && ! is_float($ordinate)) || ! is_finite((float) $ordinate)) {
+                        $this->invalidPolygon($field);
+                    }
+                }
+                $distinct[json_encode([(float) $longitude, (float) $latitude])] = true;
                 $longitude = (float) $longitude;
                 $latitude = (float) $latitude;
 
@@ -83,10 +90,22 @@ class ParcelGeometryService
             $first = $ring[0];
             $last = $ring[count($ring) - 1];
 
-            if ((float) $first[0] !== (float) $last[0]
-                || (float) $first[1] !== (float) $last[1]) {
+            if (array_map('floatval', $first) !== array_map('floatval', $last)) {
                 throw ValidationException::withMessages([
                     $field => 'Each GeoJSON Polygon ring must be closed by repeating its first coordinate as the last coordinate.',
+                ]);
+            }
+
+            // Translation avoids cancellation from large geographic coordinates.
+            // This is a structural check, not a survey/topology certification.
+            $twiceArea = 0.0;
+            for ($i = 0; $i < count($ring) - 1; $i++) {
+                $twiceArea += ((float) $ring[$i][0] - (float) $first[0]) * ((float) $ring[$i + 1][1] - (float) $first[1])
+                    - ((float) $ring[$i + 1][0] - (float) $first[0]) * ((float) $ring[$i][1] - (float) $first[1]);
+            }
+            if (count($distinct) < 3 || abs($twiceArea) <= 1.0e-14) {
+                throw ValidationException::withMessages([
+                    $field => 'Each polygon ring needs at least three distinct vertices and a non-zero area.',
                 ]);
             }
         }
@@ -129,7 +148,7 @@ class ParcelGeometryService
     private function invalidPolygon(string $field): never
     {
         throw ValidationException::withMessages([
-            $field => 'The GeoJSON Polygon must contain closed coordinate rings with at least four valid longitude/latitude positions.',
+            $field => 'The GeoJSON Polygon must contain closed coordinate rings with at least four valid numeric longitude/latitude positions in coordinate lists.',
         ]);
     }
 }

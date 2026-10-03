@@ -304,6 +304,8 @@
                 let lastSnapshot = null;
                 let pendingCapture = null;
                 let restoring = false;
+                let appliedRows = null;
+                let helperReadOnly = false;
 
                 const setMessage = function (text, isError = false) {
                     if (! message) return;
@@ -343,7 +345,8 @@
                                 row.querySelector('[data-geojson-y]')?.value ?? ''
                             ];
                         }),
-                        target: target.value
+                        target: target.value,
+                        appliedRows
                     };
                 };
 
@@ -403,6 +406,7 @@
                     }
                     renumberRows();
                     target.value = state.target || '';
+                    appliedRows = state.appliedRows;
                     lastSnapshot = snapshot();
                     restoring = false;
                     updateHistoryButtons();
@@ -446,14 +450,18 @@
                 const readRows = function () {
                     const coordinates = [];
 
-                    pointsWrap.querySelectorAll('.geojson-point-row').forEach(function (row) {
-                        const x = row.querySelector('[data-geojson-x]')?.value;
-                        const y = row.querySelector('[data-geojson-y]')?.value;
-
-                        if (x !== '' && y !== '') {
+                    let incomplete = false;
+                    pointsWrap.querySelectorAll('.geojson-point-row').forEach(function (row, index) {
+                        const x = row.querySelector('[data-geojson-x]')?.value ?? '';
+                        const y = row.querySelector('[data-geojson-y]')?.value ?? '';
+                        if ((x === '') !== (y === '')) {
+                            incomplete = true;
+                            setMessage('Complete both coordinates for Point ' + (index + 1) + ' before applying or saving.', true);
+                        } else if (x !== '' && y !== '') {
                             coordinates.push([Number(x), Number(y)]);
                         }
                     });
+                    if (incomplete) return null;
 
                     return coordinates;
                 };
@@ -472,7 +480,14 @@
 
                 const buildFromRows = function () {
                     flushCapture();
+                    const currentRows = snapshot().rows;
+                    if (helperReadOnly) {
+                        setMessage('This geometry has multiple rings, extra dimensions, or an unsupported shape. The point helper is read-only to preserve it.', true);
+                        return false;
+                    }
+                    if (target.value.trim() && JSON.stringify(currentRows) === JSON.stringify(appliedRows)) return true;
                     const sourceCoordinates = readRows();
+                    if (sourceCoordinates === null) return false;
 
                     if (sourceCoordinates.length < 3) {
                         setMessage('Add at least 3 complete coordinate points before building a polygon.', true);
@@ -487,7 +502,14 @@
                     }
 
                     let mapCoordinates = sourceCoordinates;
-                    const geometry = { type: 'Polygon', coordinates: [] };
+                    let geometry = { type: 'Polygon', coordinates: [] };
+                    if (target.value.trim()) {
+                        try { geometry = JSON.parse(target.value); }
+                        catch {
+                            setMessage('The existing geometry must be reviewed before applying coordinate changes.', true);
+                            return false;
+                        }
+                    }
 
                     if (isPrs92Zone4) {
                         const projection = window.DarLtcmsProjection;
@@ -519,6 +541,7 @@
                         }
 
                         geometry.dar_source = {
+                            ...(geometry.dar_source || {}),
                             crs: 'EPSG:3124',
                             name: 'PRS92 / Philippines zone 4',
                             projection: 'PTM Zone IV',
@@ -528,7 +551,24 @@
                         };
                     }
 
-                    geometry.coordinates = [closeRing(mapCoordinates)];
+                    const ring = closeRing(mapCoordinates);
+                    const distinct = new Set(mapCoordinates.map(point => JSON.stringify(point)));
+                    const origin = ring[0];
+                    let twiceArea = 0;
+                    for (let i = 0; i < ring.length - 1; i++) {
+                        twiceArea += (ring[i][0] - origin[0]) * (ring[i + 1][1] - origin[1])
+                            - (ring[i + 1][0] - origin[0]) * (ring[i][1] - origin[1]);
+                    }
+                    if (distinct.size < 3 || Math.abs(twiceArea) <= 1e-14) {
+                        setMessage('Use at least three distinct points forming a non-zero area.', true);
+                        return false;
+                    }
+                    geometry.coordinates = [ring];
+                    if (Object.hasOwn(geometry, 'bbox')) {
+                        geometry.bbox = [Math.min(...mapCoordinates.map(p => p[0])), Math.min(...mapCoordinates.map(p => p[1])),
+                            Math.max(...mapCoordinates.map(p => p[0])), Math.max(...mapCoordinates.map(p => p[1]))];
+                    }
+                    appliedRows = currentRows;
                     target.value = JSON.stringify(geometry, null, 2);
                     lastSnapshot = snapshot();
                     updateHistoryButtons();
@@ -565,6 +605,16 @@
 
                     try {
                         const parsed = JSON.parse(target.value);
+                        helperReadOnly = parsed?.type !== 'Polygon' || !Array.isArray(parsed.coordinates)
+                            || parsed.coordinates.length !== 1 || !Array.isArray(parsed.coordinates[0])
+                            || parsed.coordinates[0].some(point => !Array.isArray(point) || point.length !== 2);
+                        if (helperReadOnly) {
+                            pointsWrap.querySelectorAll('input').forEach(input => { input.readOnly = true; });
+                            editor.querySelector('[data-geojson-build]').disabled = true;
+                            editor.querySelector('[data-geojson-add-point]').disabled = true;
+                            setMessage('This geometry has multiple rings, extra dimensions, or an unsupported shape. The point helper is read-only; stored geometry stays unchanged.', true);
+                            return;
+                        }
                         let coordinates = [];
 
                         if (isPrs92Zone4) {
@@ -634,11 +684,8 @@
                 form?.addEventListener('submit', function (event) {
                     flushCapture();
 
-                    const completedRows = Array.from(pointsWrap.querySelectorAll('.geojson-point-row')).filter(function (row) {
-                        return row.querySelector('[data-geojson-x]')?.value !== '' && row.querySelector('[data-geojson-y]')?.value !== '';
-                    });
-
-                    if (completedRows.length >= 3) {
+                    const rowsChanged = JSON.stringify(snapshot().rows) !== JSON.stringify(appliedRows);
+                    if (rowsChanged) {
                         if (!buildFromRows()) event.preventDefault();
                         return;
                     }
@@ -650,6 +697,7 @@
                 });
 
                 loadExistingCoordinates();
+                appliedRows = snapshot().rows;
                 lastSnapshot = snapshot();
                 updateHistoryButtons();
             });
