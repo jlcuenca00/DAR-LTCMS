@@ -50,6 +50,7 @@ test('adding an unused blank row does not convert unchanged legacy geometry', as
 
 test('partial coordinate edits block submit without dropping a row or changing saved geometry', async ({ page }) => {
     await initialize(page, original);
+    await page.locator('[data-geojson-add-point]').click();
     await page.locator('[data-geojson-x]').nth(3).fill('123.5');
     const result = await submit(page);
     expect(result.blocked).toBe(true);
