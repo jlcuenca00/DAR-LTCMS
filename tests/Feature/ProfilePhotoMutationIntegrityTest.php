@@ -4,7 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\AuditLog;
 use App\Models\User;
-use Illuminate\Foundation\Testing\DatabaseMigrations;
+use Illuminate\Foundation\Testing\RefreshDatabaseState;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
@@ -14,7 +14,17 @@ use Tests\TestCase;
 
 class ProfilePhotoMutationIntegrityTest extends TestCase
 {
-    use DatabaseMigrations;
+    protected function setUp(): void
+    {
+        parent::setUp();
+        // These tests need real commits, so use an isolated fresh schema rather
+        // than RefreshDatabase's outer transaction or full down migrations.
+        $this->artisan('migrate:fresh')->assertExitCode(0);
+        RefreshDatabaseState::$migrated = true;
+        $this->beforeApplicationDestroyed(function () {
+            RefreshDatabaseState::$migrated = false;
+        });
+    }
 
     private function userWithPhoto(): User
     {
