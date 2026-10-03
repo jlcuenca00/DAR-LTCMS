@@ -350,6 +350,11 @@
                     };
                 };
 
+                const sameCoordinateRows = function (left, right) {
+                    const entered = rows => (rows || []).filter(row => row[0] !== '' || row[1] !== '');
+                    return JSON.stringify(entered(left)) === JSON.stringify(entered(right));
+                };
+
                 const sameSnapshot = function (left, right) {
                     return JSON.stringify(left) === JSON.stringify(right);
                 };
@@ -485,7 +490,7 @@
                         setMessage('This geometry has multiple rings, extra dimensions, or an unsupported shape. The point helper is read-only to preserve it.', true);
                         return false;
                     }
-                    if (target.value.trim() && JSON.stringify(currentRows) === JSON.stringify(appliedRows)) return true;
+                    if (target.value.trim() && sameCoordinateRows(currentRows, appliedRows)) return true;
                     const sourceCoordinates = readRows();
                     if (sourceCoordinates === null) return false;
 
@@ -692,7 +697,7 @@
                 form?.addEventListener('submit', function (event) {
                     flushCapture();
 
-                    const rowsChanged = JSON.stringify(snapshot().rows) !== JSON.stringify(appliedRows);
+                    const rowsChanged = !sameCoordinateRows(snapshot().rows, appliedRows);
                     if (rowsChanged) {
                         if (!buildFromRows()) event.preventDefault();
                         return;

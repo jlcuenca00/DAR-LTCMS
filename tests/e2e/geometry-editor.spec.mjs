@@ -40,6 +40,14 @@ test('unchanged legacy projected references keep the exact geometry and metadata
     expect(result.geometry).toEqual(original);
 });
 
+test('adding an unused blank row does not convert unchanged legacy geometry', async ({ page }) => {
+    await initialize(page, original, 'prs92-zone4', [[100, 100], [200, 100], [200, 200]]);
+    await page.locator('[data-geojson-add-point]').click();
+    const result = await submit(page);
+    expect(result.blocked).toBe(false);
+    expect(result.geometry).toEqual(original);
+});
+
 test('partial coordinate edits block submit without dropping a row or changing saved geometry', async ({ page }) => {
     await initialize(page, original);
     await page.locator('[data-geojson-x]').nth(3).fill('123.5');
