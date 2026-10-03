@@ -25,7 +25,7 @@ class ApplicationPartyEditingIntegrityTest extends TestCase
         $newOwner = Landowner::create(['first_name' => 'New', 'last_name' => 'Owner']);
         $application->update(['transferors' => [['name' => 'Owner', 'landowner_id' => $newOwner->id]]]);
         $this->actingAs($staff)->patch(route('staff.applications.landowner-links.update', $application), $payload)
-            ->assertSessionHasErrors('expected_workflow_revision');
+            ->assertSessionHasErrors('workflow_revision');
         $this->assertSame($newOwner->id, $application->fresh()->partyRows('transferor')[0]['landowner_id']);
     }
 
@@ -37,7 +37,7 @@ class ApplicationPartyEditingIntegrityTest extends TestCase
         $application->update(['remarks' => 'New reviewed data']);
         $this->actingAs($staff)->post(route('staff.applications.landowner-records.create', $application), [
             'party' => 'transferee', 'index' => 0, 'expected_workflow_revision' => $revision,
-        ])->assertSessionHasErrors('expected_workflow_revision');
+        ])->assertSessionHasErrors('workflow_revision');
         $this->assertSame($count, Landowner::count());
         $this->assertNull($application->fresh()->partyRows('transferee')[0]['landowner_id']);
     }
