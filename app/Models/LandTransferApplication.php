@@ -141,6 +141,8 @@ class LandTransferApplication extends Model
     ];
 
     protected $casts = [
+        'ltc_title_document_id' => 'integer',
+        'ltc_transfer_document_id' => 'integer',
         'ltc_form4_subject_land_findings' => 'array',
         'ltc_form4_recommendation_findings' => 'array',
         'ltc_form4_certified_at' => 'date',

@@ -209,6 +209,7 @@ class InputSecurityHardeningTest extends TestCase
         $this->actingAs($staff)
             ->from(route('staff.applications.show', $application))
             ->patch(route('staff.applications.form4.update', $application), [
+                    'expected_workflow_revision' => $application->fresh()->workflow_revision,
                 'ltc_form4_subject_land_findings' => ['not_a_real_subject_finding'],
                 'ltc_form4_recommendation_findings' => ['application_complete'],
                 'ltc_form4_recommendation_decision' => 'approval',

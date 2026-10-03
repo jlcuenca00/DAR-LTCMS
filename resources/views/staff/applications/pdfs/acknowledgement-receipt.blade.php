@@ -23,7 +23,8 @@
             })
             ->values();
 
-        $acknowledgementComplete = $acknowledgementMissingRequirements->isEmpty();
+        $acknowledgementComplete = (bool) ($requirementEvaluation['complete'] ?? $acknowledgementMissingRequirements->isEmpty());
+        $acknowledgementErrors = (array) ($requirementEvaluation['errors'] ?? []);
         $acknowledgementIssuedAt = $application->date_of_application ?? $application->created_at ?? now();
 
         $acknowledgementApplicantNames = collect([
@@ -92,10 +93,10 @@
             @php
                 $doc = $uploaded->get($requirement->id);
                 $evaluation = $evaluationRows->get((int) $requirement->id);
-                $requirementComplete = $evaluation ? (bool) ($evaluation['complete'] ?? false) : ! is_null($doc);
+                $requirementPresent = $evaluation ? (bool) ($evaluation['present'] ?? false) : ! is_null($doc);
             @endphp
             <tr>
-                <td class="check">{{ $checkbox($requirementComplete) }}</td>
+                <td class="check">{{ $checkbox($requirementPresent) }}</td>
                 <td>
                     {{ $requirement->name }}
                     @if ($evaluation && ! ($evaluation['freshness_valid'] ?? true) && ! empty($evaluation['freshness_message']))
@@ -113,10 +114,10 @@
             @php
                 $doc = $uploaded->get($requirement->id);
                 $evaluation = $evaluationRows->get((int) $requirement->id);
-                $requirementComplete = $evaluation ? (bool) ($evaluation['complete'] ?? false) : ! is_null($doc);
+                $requirementPresent = $evaluation ? (bool) ($evaluation['present'] ?? false) : ! is_null($doc);
             @endphp
             <tr>
-                <td class="check">{{ $checkbox($requirementComplete) }}</td>
+                <td class="check">{{ $checkbox($requirementPresent) }}</td>
                 <td>
                     {{ $requirement->name }}
                     @if ($evaluation && ! ($evaluation['freshness_valid'] ?? true) && ! empty($evaluation['freshness_message']))
@@ -139,14 +140,16 @@
 
     <div class="finding">
         {{ $checkbox(! $acknowledgementComplete) }} Incomplete / requires compliance:
-        @if ($acknowledgementMissingRequirements->isNotEmpty())
+        @if ($acknowledgementErrors !== [])
+            <ul class="missing-list">
+                @foreach ($acknowledgementErrors as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        @elseif ($acknowledgementMissingRequirements->isNotEmpty())
             <ul class="missing-list">
                 @foreach ($acknowledgementMissingRequirements as $missingRequirement)
-                    @php $row = $evaluationRows->get((int) $missingRequirement->id); @endphp
-                    <li>
-                        {{ $missingRequirement->name }}
-                        @if ($row && ! empty($row['freshness_message'])) — {{ $row['freshness_message'] }} @endif
-                    </li>
+                    <li>{{ $missingRequirement->name }}</li>
                 @endforeach
             </ul>
         @else

@@ -14,7 +14,10 @@
         $checkbox = fn (bool $checked) => $checked ? '✓' : '';
 
         $recommendationDecision = $application->ltc_form4_recommendation_decision;
-        $certifiedAt = $application->ltc_form4_certified_at ?? now();
+        $certifiedAt = $application->ltc_form4_certified_at;
+        $form4Draft = ! $certifiedAt || blank($application->ltc_form4_certifying_officer_name)
+            || blank($application->ltc_form4_recommendation_decision)
+            || ($subjectLandFindings->isEmpty() && $recommendationFindings->isEmpty() && blank($application->ltc_form4_other_findings));
 
         $applicantName = $application->applicant_name
             ?: collect([$application->transferor_name, $application->transferee_name])->filter()->implode(' / ');
@@ -191,6 +194,9 @@
     </div>
 
     <h1>Certification / Attestation and Recommendation</h1>
+    @if ($form4Draft)
+        <p style="text-align:center; font-weight:bold;">DRAFT — Incomplete certification details</p>
+    @endif
     <div class="subtitle">Land Transfer Clearance Application Review</div>
 
     <table class="meta">

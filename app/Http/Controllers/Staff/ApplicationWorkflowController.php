@@ -846,6 +846,7 @@ class ApplicationWorkflowController extends Controller
             'decision_officer_name' => $application->decision_officer_name,
             'decision_date' => optional($application->decision_date)->toDateString(),
             'decision_recorded_at' => optional($application->decision_recorded_at)->toDateTimeString(),
+            'workflow_readiness' => $this->workflowReadinessSnapshot($application),
             'requirements' => $requirements,
         ]);
     }
@@ -872,6 +873,7 @@ class ApplicationWorkflowController extends Controller
 
     private function validateDecisionChronology(LandTransferApplication $application, string $decisionDate): void
     {
+        app(\App\Services\ClearanceDocumentSourceService::class)->assertChronology($application, $decisionDate);
         $decision = \Illuminate\Support\Carbon::parse($decisionDate)->startOfDay();
 
         $milestones = [
@@ -981,6 +983,10 @@ class ApplicationWorkflowController extends Controller
             $errors['payment'] = 'The Payment Order and Official Receipt details must be complete and match the configured filing fee.';
         }
 
+        foreach (($workflow['clearance_source_errors'] ?? []) as $field => $messages) {
+            $errors[$field] = implode(' ', (array) $messages);
+        }
+
         if (! ($workflow['form4_complete'] ?? false)) {
             $missing = implode(', ', $workflow['form4_missing_items'] ?? []);
             $errors['form4'] = 'Complete LTC Form No. 4 before PARPO II decision.'
@@ -1009,7 +1015,13 @@ class ApplicationWorkflowController extends Controller
             || $recommendationFindings->isNotEmpty()
             || filled($application->ltc_form4_other_findings);
 
-        $form4MissingItems = [];
+        $sourceErrors = [];
+        try {
+            app(\App\Services\ClearanceDocumentSourceService::class)->resolve($application);
+        } catch (ValidationException $exception) {
+            $sourceErrors = $exception->errors();
+        }
+        $form4MissingItems = $sourceErrors !== [] ? ['clearance evidence source selection'] : [];
 
         if (! filled($application->ltc_form4_recommendation_decision)) {
             $form4MissingItems[] = 'recommendation decision';
@@ -1044,6 +1056,7 @@ class ApplicationWorkflowController extends Controller
             'parcel_integrity_issues' => $parcelIntegrity['issues'],
             'payment_complete' => $paymentComplete,
             'expected_filing_fee' => $expectedFee,
+            'clearance_source_errors' => $sourceErrors,
             'form4_complete' => empty($form4MissingItems),
             'form4_missing_items' => $form4MissingItems,
             'form4_recommendation_decision' => $application->ltc_form4_recommendation_decision,
