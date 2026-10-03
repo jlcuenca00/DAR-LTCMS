@@ -38,7 +38,7 @@ class UserAccountReviewService
         Landowner::query()->where(function ($query) use ($user, $selectedId) {
             $query->where('user_id', $user->id);
             if ($selectedId !== null) {
-                $query->orWhereKey($selectedId);
+                $query->orWhere('id', $selectedId);
             }
         })->orderBy('id')->lockForUpdate()->get();
     }
