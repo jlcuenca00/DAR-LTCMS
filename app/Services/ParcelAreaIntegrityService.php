@@ -48,9 +48,9 @@ class ParcelAreaIntegrityService
             if ($parcel->isDirty('area_hectares')) {
                 $parcelArea = $parcel->getAttribute('area_hectares');
 
-                if ($parcelArea === null || $parcelArea === '') {
+                if ($parcelArea === null || $parcelArea === '' || (float) $parcelArea <= 0) {
                     throw ValidationException::withMessages([
-                        'area_hectares' => 'The Parcel area cannot be cleared while active Landholding records are linked to it.',
+                        'area_hectares' => 'The Parcel area must remain greater than zero while active Landholding records are linked to it.',
                     ]);
                 }
 
