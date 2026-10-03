@@ -281,7 +281,7 @@ class InputSecurityHardeningTest extends TestCase
 
         $this->actingAs($staff)
             ->from(route('staff.applications.show', $application))
-            ->post(route('staff.applications.documents.store', [$application, $requiredDocument]), [
+            ->post(route('staff.applications.documents.store', [$application, $requiredDocument]), [ 'expected_workflow_revision' => $application->fresh()->workflow_revision, 
                 'document_metadata' => [
                     'title_number' => 'TCT-SAFE-001',
                     'unexpected_privileged_key' => 'must-not-persist',

@@ -8,6 +8,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class LegacyRecord extends Model
 {
+    use \App\Models\Concerns\TracksRecordRevision;
+
     use NormalizesDarLocation;
 
     public const TYPE_TITLE = 'title';

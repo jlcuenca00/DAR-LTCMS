@@ -110,7 +110,7 @@ class AuditLoggingTest extends TestCase
                 'application' => $application,
                 'requiredDocument' => $requiredDocument,
             ]),
-            [
+            [ 'expected_workflow_revision' => $application->fresh()->workflow_revision, 
                 'file' => UploadedFile::fake()->create('audit-upload.pdf', 100, 'application/pdf'),
                 'annex_reference' => 'Audit Annex',
                 'remarks' => 'Audit upload test',
@@ -179,7 +179,7 @@ class AuditLoggingTest extends TestCase
             route('staff.applications.documents.destroy', [
                 'application' => $application,
                 'requiredDocument' => $requiredDocument,
-            ])
+            ]), ['expected_workflow_revision' => $application->fresh()->workflow_revision]
         )->assertSessionHas('success');
 
         $this->assertDatabaseMissing('application_documents', [

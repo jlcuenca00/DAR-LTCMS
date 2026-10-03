@@ -33,7 +33,7 @@ class DocumentUploadSecurityTest extends TestCase
         ]);
 
         $this->actingAs($staff)
-            ->post(route('staff.applications.documents.store', [$application, $requiredDocument]), [
+            ->post(route('staff.applications.documents.store', [$application, $requiredDocument]), [ 'expected_workflow_revision' => $application->fresh()->workflow_revision, 
                 'file' => UploadedFile::fake()->create('payload.php', 10, 'application/x-php'),
             ])
             ->assertSessionHasErrors('file');

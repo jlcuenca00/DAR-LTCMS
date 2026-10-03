@@ -47,7 +47,7 @@ class DocumentMetadataIndexingTest extends TestCase
                 'application' => $application,
                 'requiredDocument' => $requiredDocument,
             ]),
-            [
+            [ 'expected_workflow_revision' => $application->fresh()->workflow_revision, 
                 'file' => UploadedFile::fake()->create('sample-title.pdf', 100, 'application/pdf'),
                 'annex_reference' => 'Annex A',
                 'remarks' => 'Uploaded with metadata indexing.',
@@ -127,7 +127,7 @@ class DocumentMetadataIndexingTest extends TestCase
 
         $this->actingAs($staffUser)->post(
             route('staff.applications.documents.store', [$application, $requiredDocument]),
-            [
+            [ 'expected_workflow_revision' => $application->fresh()->workflow_revision, 
                 'annex_reference' => 'Annex M',
                 'document_metadata' => [
                     'title_number' => 'T-META-001',
@@ -171,7 +171,7 @@ class DocumentMetadataIndexingTest extends TestCase
 
         $this->actingAs($staffUser)->post(
             route('staff.applications.documents.store', [$application, $requiredDocument]),
-            ['remarks' => 'Administrative follow-up note only.']
+            [ 'expected_workflow_revision' => $application->fresh()->workflow_revision, 'remarks' => 'Administrative follow-up note only.']
         )->assertSessionHas('success');
 
         $this->assertDatabaseHas('application_documents', [
@@ -207,7 +207,7 @@ class DocumentMetadataIndexingTest extends TestCase
 
         $this->actingAs($staffUser)->post(
             route('staff.applications.documents.store', [$application, $requiredDocument]),
-            ['annex_reference' => 'Annex P-1']
+            [ 'expected_workflow_revision' => $application->fresh()->workflow_revision, 'annex_reference' => 'Annex P-1']
         )->assertSessionHas('success');
 
         $evaluation = app(ApplicationRequirementService::class)->evaluate($application->fresh());
@@ -247,7 +247,7 @@ class DocumentMetadataIndexingTest extends TestCase
                 'application' => $application,
                 'requiredDocument' => $requiredDocument,
             ]),
-            [
+            [ 'expected_workflow_revision' => $application->fresh()->workflow_revision, 
                 'file' => UploadedFile::fake()->create('tax-declaration.pdf', 100, 'application/pdf'),
                 'document_metadata' => [
                     'tax_declaration_number' => 'TD-99999',

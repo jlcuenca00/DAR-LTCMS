@@ -16,6 +16,10 @@ class ApplicationMutationFileLifecycle
     /** @var array<int, string> */
     private array $deleteAfterCommitPaths = [];
 
+    public function __construct(private bool $protectedStorage = false)
+    {
+    }
+
     public static function fromRequest(Request $request): ?self
     {
         $lifecycle = $request->attributes->get(self::REQUEST_ATTRIBUTE);
@@ -60,6 +64,10 @@ class ApplicationMutationFileLifecycle
     private function deleteQuietly(string $path): void
     {
         try {
+            if ($this->protectedStorage) {
+                app(ProtectedAdministrativeStorage::class)->delete($path);
+                return;
+            }
             if (Storage::exists($path)) {
                 Storage::delete($path);
             }

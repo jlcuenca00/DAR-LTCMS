@@ -352,6 +352,7 @@ class DataIntegrityHardeningTest extends TestCase
 
         $this->actingAs($staff)
             ->post(route('staff.source-record-packages.link-parcel', $package), [
+                'expected_record_revision' => $package->fresh()->record_revision,
                 'parcel_id' => $parcel->id,
             ])
             ->assertSessionHasErrors('parcel_code');
@@ -406,6 +407,7 @@ class DataIntegrityHardeningTest extends TestCase
 
         $this->actingAs($staff)
             ->post(route('staff.source-record-packages.create-parcel', $package), [
+                'expected_record_revision' => $package->fresh()->record_revision,
                 'parcel_code' => $newParcelCode,
                 'title_no' => null,
                 'municipality' => 'Dumaguete City',

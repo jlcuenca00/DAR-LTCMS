@@ -52,8 +52,8 @@ class LegacyRecordController extends Controller
                 );
             })
             ->latest()
-            ->limit($archiveView === 'packages' ? 60 : 6)
-            ->get();
+            ->paginate($archiveView === 'packages' ? 15 : 6, ['*'], 'packages_page')
+            ->withQueryString();
 
         $records = LegacyRecord::query()
             ->with('parcel')

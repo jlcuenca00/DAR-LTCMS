@@ -726,7 +726,7 @@ class FinalDecisionIntegrityHardeningTest extends TestCase
         ]);
 
         $this->actingAs($staff)
-            ->post(route('staff.applications.documents.store', [$application, $requiredDocument]), [
+            ->post(route('staff.applications.documents.store', [$application, $requiredDocument]), [ 'expected_workflow_revision' => $application->fresh()->workflow_revision, 
                 'annex_reference' => 'Should not save',
                 'document_metadata' => [
                     'title_number' => 'SHOULD-NOT-SAVE',

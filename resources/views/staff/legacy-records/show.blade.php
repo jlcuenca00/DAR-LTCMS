@@ -443,8 +443,10 @@
                         <p class="mt-1 text-sm leading-relaxed text-gray-600">
                             Use this when the correct person already exists in Landowner Records.
                         </p>
-                        <form method="POST" action="{{ route('staff.legacy-records.link-landowner', $record) }}" class="source-form-stack mt-4">
+                        @if (! $record->source_record_package_id)
+<form method="POST" action="{{ route('staff.legacy-records.link-landowner', $record) }}" class="source-form-stack mt-4">
                             @csrf
+                    <input type="hidden" name="expected_record_revision" value="{{ old('expected_record_revision', $record->record_revision) }}">
                             <div>
                                 <label class="staff-form-label">EXISTING LANDOWNER RECORD</label>
                                 <div data-remote-record-select data-lookup-url="{{ route('staff.lookups.landowners') }}" class="space-y-2">
@@ -473,6 +475,9 @@
                                 {{ $record->landowner ? 'Update Landowner Link' : 'Link Existing Landowner' }}
                             </button>
                         </form>
+@else
+<p class="text-sm">Manage links in <a href="{{ route('staff.source-record-packages.show', $record->source_record_package_id) }}">the source package</a>.</p>
+@endif
                     </div>
 
                     @unless ($record->landowner)
@@ -486,8 +491,10 @@
                                     <i class="fa-solid fa-user-plus mr-1"></i>
                                     Open creation form
                                 </summary>
-                                <form method="POST" action="{{ route('staff.legacy-records.create-landowner', $record) }}" class="mt-4 source-form-stack">
+                                @if (! $record->source_record_package_id)
+<form method="POST" action="{{ route('staff.legacy-records.create-landowner', $record) }}" class="mt-4 source-form-stack">
                                     @csrf
+                    <input type="hidden" name="expected_record_revision" value="{{ old('expected_record_revision', $record->record_revision) }}">
                                     <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
                                         <div>
                                             <label class="staff-form-label">FIRST NAME *</label>
@@ -536,6 +543,9 @@
                                         Create and Link Landowner
                                     </button>
                                 </form>
+@else
+<p class="text-sm">Manage links in <a href="{{ route('staff.source-record-packages.show', $record->source_record_package_id) }}">the source package</a>.</p>
+@endif
                             </details>
                         </div>
                     @endunless
@@ -557,8 +567,10 @@
                     <div class="source-action-card">
                         <h3 class="font-black text-gray-950">Link Existing Parcel</h3>
                         <p class="mt-1 text-sm leading-relaxed text-gray-600">Use this if the parcel already exists in the main Parcel Records module.</p>
-                        <form method="POST" action="{{ route('staff.legacy-records.link-parcel', $record) }}" class="source-form-stack mt-4">
+                        @if (! $record->source_record_package_id)
+<form method="POST" action="{{ route('staff.legacy-records.link-parcel', $record) }}" class="source-form-stack mt-4">
                             @csrf
+                    <input type="hidden" name="expected_record_revision" value="{{ old('expected_record_revision', $record->record_revision) }}">
                             <div>
                                 <label class="staff-form-label">EXISTING PARCEL</label>
                                 <div data-remote-record-select data-lookup-url="{{ route('staff.lookups.parcels') }}" class="space-y-2">
@@ -588,6 +600,9 @@
                                 Link Source Record
                             </button>
                         </form>
+@else
+<p class="text-sm">Manage links in <a href="{{ route('staff.source-record-packages.show', $record->source_record_package_id) }}">the source package</a>.</p>
+@endif
                     </div>
 
                     <div class="source-action-card">
@@ -598,8 +613,10 @@
                                 <i class="fa-solid fa-map-location-dot mr-1"></i>
                                 Open parcel creation form
                             </summary>
-                            <form method="POST" action="{{ route('staff.legacy-records.create-parcel', $record) }}" class="mt-4 source-form-stack">
+                            @if (! $record->source_record_package_id)
+<form method="POST" action="{{ route('staff.legacy-records.create-parcel', $record) }}" class="mt-4 source-form-stack">
                                 @csrf
+                    <input type="hidden" name="expected_record_revision" value="{{ old('expected_record_revision', $record->record_revision) }}">
                                 <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
                                     <div>
                                         <label class="staff-form-label">PARCEL CODE *</label>
@@ -674,6 +691,9 @@
                                     Create Parcel Record
                                 </button>
                             </form>
+@else
+<p class="text-sm">Manage links in <a href="{{ route('staff.source-record-packages.show', $record->source_record_package_id) }}">the source package</a>.</p>
+@endif
                         </details>
                     </div>
                 </div>

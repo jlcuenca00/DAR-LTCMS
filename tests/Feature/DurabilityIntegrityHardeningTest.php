@@ -86,7 +86,7 @@ class DurabilityIntegrityHardeningTest extends TestCase
             $this->withoutExceptionHandling();
 
             $this->actingAs($staff)
-                ->post(route('staff.applications.documents.store', [$application, $requiredDocument]), [
+                ->post(route('staff.applications.documents.store', [$application, $requiredDocument]), [ 'expected_workflow_revision' => $application->fresh()->workflow_revision, 
                     'file' => UploadedFile::fake()->create('replacement.pdf', 20, 'application/pdf'),
                     'remarks' => 'Replacement that must roll back.',
                 ]);

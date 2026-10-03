@@ -156,6 +156,15 @@ class SourceRecordPackageController extends Controller
     {
         $inputService = app(SourceRecordPackageInputService::class);
         $data = $request->validate($inputService->updateRules());
+        $types = $sourceRecordPackage->records->pluck('record_type');
+        if ($types->isNotEmpty()) {
+            $inputService->assertIncludedSections(array_merge($data, [
+            'include_title' => $types->contains(LegacyRecord::TYPE_TITLE),
+            'include_landholding' => $types->contains(LegacyRecord::TYPE_LANDHOLDING),
+            'include_parcel_source' => $types->contains(LegacyRecord::TYPE_PARCEL_SOURCE),
+            'include_historical_clearance' => $types->contains(LegacyRecord::TYPE_HISTORICAL_CLEARANCE),
+            ]));
+        }
 
         if (! empty($data['source_geometry_geojson'])) {
             $data['source_geometry_geojson'] = $inputService->decodeGeoJson($data['source_geometry_geojson']);
@@ -168,6 +177,7 @@ class SourceRecordPackageController extends Controller
 
             foreach ($sourceRecordPackage->records as $record) {
                 $record->update([
+                    'landowner_id' => $sourceRecordPackage->landowner_id,
                     'source_record_scope' => $sourceRecordPackage->source_record_scope,
                     'parcel_id' => $sourceRecordPackage->parcel_id,
                     'parcel_code' => $sourceRecordPackage->parcel_code,
@@ -380,7 +390,7 @@ class SourceRecordPackageController extends Controller
         }
 
         if ($oldSourceFilePath && $oldSourceFilePath !== $newSourceFilePath) {
-            app(ProtectedAdministrativeStorage::class)->delete($oldSourceFilePath);
+            \App\Services\ApplicationMutationFileLifecycle::fromRequest(request())?->deleteAfterCommit($oldSourceFilePath);
         }
 
         app(NotificationService::class)->notifyGeodeticSourcePackageAvailable($sourceRecordPackage->refresh());
@@ -412,7 +422,7 @@ class SourceRecordPackageController extends Controller
         });
 
         if ($oldSourceFilePath) {
-            app(ProtectedAdministrativeStorage::class)->delete($oldSourceFilePath);
+            \App\Services\ApplicationMutationFileLifecycle::fromRequest(request())?->deleteAfterCommit($oldSourceFilePath);
         }
 
         return back()->with('success', 'Source file removed from source package.');
@@ -553,6 +563,7 @@ class SourceRecordPackageController extends Controller
             'source-record-packages',
             ProtectedAdministrativeStorage::PRIVATE_DISK
         );
+        \App\Services\ApplicationMutationFileLifecycle::fromRequest($request)?->trackCreated($path);
         $mimeType = Storage::disk(ProtectedAdministrativeStorage::PRIVATE_DISK)->mimeType($path)
             ?: $file->getMimeType()
             ?: 'application/octet-stream';

@@ -114,6 +114,7 @@ class ProductionSecurityHardeningTest extends TestCase
 
         $this->actingAs($staff)
             ->post(route('staff.source-record-packages.source-file.store', $package), [
+                'expected_record_revision' => $package->fresh()->record_revision,
                 'source_file' => UploadedFile::fake()->create(
                     'replacement-reference.pdf',
                     20,
@@ -132,7 +133,7 @@ class ProductionSecurityHardeningTest extends TestCase
         Storage::disk('local')->assertExists($newPath);
 
         $this->actingAs($staff)
-            ->delete(route('staff.source-record-packages.source-file.destroy', $package))
+            ->delete(route('staff.source-record-packages.source-file.destroy', $package), ['expected_record_revision' => $package->fresh()->record_revision])
             ->assertRedirect();
 
         $package->refresh();
@@ -168,6 +169,7 @@ class ProductionSecurityHardeningTest extends TestCase
 
         $this->actingAs($staff)
             ->post(route('staff.source-record-packages.source-file.store', $package), [
+                'expected_record_revision' => $package->fresh()->record_revision,
                 'source_file' => UploadedFile::fake()->createWithContent('reference.png', $png),
             ])
             ->assertRedirect();
