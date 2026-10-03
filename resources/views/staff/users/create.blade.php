@@ -684,6 +684,7 @@
 
                     <section class="user-card user-side-panel user-availability-card">
                         <div class="user-availability-control">
+                            <input type="hidden" name="is_active" value="0">
                             <input id="is_active" type="checkbox" name="is_active" value="1" {{ old('is_active', true) ? 'checked' : '' }} class="user-native-checkbox">
                             <label for="is_active" class="user-availability-text cursor-pointer">
                                 <span class="user-card-title">Active Account</span>

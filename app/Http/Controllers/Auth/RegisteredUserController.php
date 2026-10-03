@@ -9,6 +9,7 @@ use App\Notifications\LandownerRegistrationReceived;
 use App\Services\AuditLogger;
 use App\Services\GoogleIdentity;
 use Illuminate\Auth\Events\Registered;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -31,6 +32,10 @@ class RegisteredUserController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
+        if (is_string($request->input('username'))) {
+            $request->merge(['username' => mb_strtolower(trim($request->input('username')))]);
+        }
+
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'username' => ['required', 'string', 'alpha_dash:ascii', 'max:100', 'unique:users,username'],
@@ -43,18 +48,25 @@ class RegisteredUserController extends Controller
             ? mb_strtolower(trim($validated['email']))
             : null;
 
-        $user = User::create([
-            'name' => trim($validated['name']),
-            'username' => mb_strtolower(trim($validated['username'])),
-            'email' => $email,
-            'password' => Hash::make($validated['password']),
-            'role' => User::ROLE_LANDOWNER,
-            'auth_provider' => 'local',
-            'registration_status' => User::REGISTRATION_PENDING,
-            'is_active' => true,
-            'must_change_password' => false,
-            'password_changed_at' => now(),
-        ]);
+        try {
+            $user = User::create([
+                'name' => trim($validated['name']),
+                'username' => mb_strtolower(trim($validated['username'])),
+                'email' => $email,
+                'password' => Hash::make($validated['password']),
+                'role' => User::ROLE_LANDOWNER,
+                'auth_provider' => 'local',
+                'registration_status' => User::REGISTRATION_PENDING,
+                'is_active' => true,
+                'must_change_password' => false,
+                'password_changed_at' => now(),
+            ]);
+        } catch (UniqueConstraintViolationException $exception) {
+            $field = User::query()->where('username', $validated['username'])->exists() ? 'username' : 'email';
+            throw ValidationException::withMessages([
+                $field => 'This '.$field.' is already registered. Use another value or sign in to your existing account.',
+            ]);
+        }
 
         event(new Registered($user));
 

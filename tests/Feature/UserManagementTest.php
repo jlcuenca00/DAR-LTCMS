@@ -200,6 +200,7 @@ class UserManagementTest extends TestCase
 
         $this->actingAs($staff)
             ->put(route('staff.users.update', $staff), [
+                'expected_account_revision' => app(\App\Services\UserAccountReviewService::class)->revision($staff->fresh()),
                 'name' => $staff->name,
                 'username' => $staff->username,
                 'email' => $staff->email,
@@ -211,6 +212,7 @@ class UserManagementTest extends TestCase
 
         $this->actingAs($staff)
             ->put(route('staff.users.update', $staff), [
+                'expected_account_revision' => app(\App\Services\UserAccountReviewService::class)->revision($staff->fresh()),
                 'name' => $staff->name,
                 'username' => $staff->username,
                 'email' => $staff->email,
@@ -255,6 +257,7 @@ class UserManagementTest extends TestCase
 
         $this->actingAs($staff)
             ->put(route('staff.users.update', $target), [
+                'expected_account_revision' => app(\App\Services\UserAccountReviewService::class)->revision($target->fresh()),
                 'name' => 'Updated Target User',
                 'username' => 'updated_target',
                 'email' => $target->email,

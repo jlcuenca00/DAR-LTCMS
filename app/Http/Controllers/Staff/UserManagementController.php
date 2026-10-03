@@ -8,12 +8,14 @@ use App\Models\User;
 use App\Notifications\AccountCreatedNotification;
 use App\Notifications\EmailAddedVerificationNotification;
 use App\Services\AuditLogger;
+use App\Services\UserAccountReviewService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Throwable;
 
 class UserManagementController extends Controller
@@ -94,23 +96,16 @@ class UserManagementController extends Controller
                 ]);
         }
 
-        if (! empty($validated['landowner_id'])) {
-            $landowner = Landowner::find($validated['landowner_id']);
-
-            if ($landowner?->user_id) {
-                return back()
-                    ->withInput()
-                    ->withErrors([
-                        'landowner_id' => 'This landowner record is already linked to another user account.',
-                    ]);
-            }
-        }
-
         $email = $this->normalizeEmail($validated['email'] ?? null);
         $initialPassword = $this->generateTemporaryPassword();
         $temporaryPasswordExpiresAt = $this->temporaryPasswordExpiresAt();
 
         $user = DB::transaction(function () use ($validated, $email, $initialPassword, $temporaryPasswordExpiresAt) {
+            $selectedId = $validated['role'] === User::ROLE_LANDOWNER && ! empty($validated['landowner_id'])
+                ? (int) $validated['landowner_id'] : null;
+            $review = app(UserAccountReviewService::class);
+            $review->assertAvailable($selectedId);
+
             $user = User::create([
                 'name' => $validated['name'],
                 'username' => $validated['username'],
@@ -124,12 +119,7 @@ class UserManagementController extends Controller
                 'temporary_password_expires_at' => $temporaryPasswordExpiresAt,
             ]);
 
-            if ($validated['role'] === User::ROLE_LANDOWNER && ! empty($validated['landowner_id'])) {
-                Landowner::whereKey($validated['landowner_id'])
-                    ->update([
-                        'user_id' => $user->id,
-                    ]);
-            }
+            $review->sync($user, $selectedId);
 
             AuditLogger::record(
                 'user_created',
@@ -149,7 +139,7 @@ class UserManagementController extends Controller
             );
 
             return $user;
-        });
+        }, 3);
 
         $emailDelivery = 'not_available';
 
@@ -220,7 +210,7 @@ class UserManagementController extends Controller
             'user',
             'selectedLandowner',
             'linkedLandownerId'
-        ));
+        ) + ['accountRevision' => app(UserAccountReviewService::class)->revision($user)]);
     }
 
     public function update(Request $request, User $user)
@@ -228,6 +218,7 @@ class UserManagementController extends Controller
         $currentUser = Auth::user();
 
         $validated = $request->validate([
+            'expected_account_revision' => ['required', 'string', 'size:64'],
             'name' => ['required', 'string', 'max:255'],
             'username' => [
                 'required',
@@ -248,51 +239,38 @@ class UserManagementController extends Controller
             'registration_status' => ['nullable', 'string', Rule::in(User::REGISTRATION_STATUSES)],
         ]);
 
-        if ($user->id === $currentUser?->id && $validated['role'] !== $user->role) {
-            return back()
-                ->withInput()
-                ->withErrors([
+        $email = $this->normalizeEmail($validated['email'] ?? null);
+        [$previousEmail, $emailChanged] = DB::transaction(function () use ($validated, $user, $email, $currentUser) {
+            $user = User::query()->whereKey($user->id)->lockForUpdate()->firstOrFail();
+            $review = app(UserAccountReviewService::class);
+            $selectedId = $validated['role'] === User::ROLE_LANDOWNER && ! empty($validated['landowner_id'])
+                ? (int) $validated['landowner_id'] : null;
+            $review->lockLandowners($user, $selectedId);
+            $review->assertExpected($user, $validated['expected_account_revision']);
+            if ($user->id === $currentUser?->id && $validated['role'] !== $user->role) {
+                throw ValidationException::withMessages([
                     'role' => 'You cannot change your own role.',
                 ]);
-        }
+            }
 
-        $requestedIsActive = (bool) ($validated['is_active'] ?? false);
+            $requestedIsActive = (bool) ($validated['is_active'] ?? false);
 
-        if ($user->id === $currentUser?->id && ! $requestedIsActive) {
-            return back()
-                ->withInput()
-                ->withErrors([
+            if ($user->id === $currentUser?->id && ! $requestedIsActive) {
+                throw ValidationException::withMessages([
                     'is_active' => 'You cannot deactivate your own account.',
                 ]);
-        }
+            }
 
-        if ($validated['role'] === User::ROLE_LANDOWNER && ($validated['registration_status'] ?? $user->registration_status) === User::REGISTRATION_APPROVED && empty($validated['landowner_id'])) {
-            return back()
-                ->withInput()
-                ->withErrors([
+            if ($validated['role'] === User::ROLE_LANDOWNER && ($validated['registration_status'] ?? $user->registration_status) === User::REGISTRATION_APPROVED && empty($validated['landowner_id'])) {
+                throw ValidationException::withMessages([
                     'landowner_id' => 'A landowner account must be linked to a landowner record.',
                 ]);
-        }
-
-        if (! empty($validated['landowner_id'])) {
-            $landowner = Landowner::find($validated['landowner_id']);
-
-            if ($landowner?->user_id && (int) $landowner->user_id !== (int) $user->id) {
-                return back()
-                    ->withInput()
-                    ->withErrors([
-                        'landowner_id' => 'This landowner record is already linked to another user account.',
-                    ]);
             }
-        }
 
-        $email = $this->normalizeEmail($validated['email'] ?? null);
-        $previousEmail = $this->normalizeEmail($user->email);
-        $emailChanged = mb_strtolower((string) $previousEmail) !== mb_strtolower((string) $email);
-        $verificationRequired = $emailChanged && filled($email);
-        $emailChangeReason = blank($previousEmail) ? 'email_added' : 'email_changed';
+            $review->assertAvailable($selectedId, $user);
+            $previousEmail = $this->normalizeEmail($user->email);
+            $emailChanged = mb_strtolower((string) $previousEmail) !== mb_strtolower((string) $email);
 
-        DB::transaction(function () use ($validated, $user, $requestedIsActive, $email, $emailChanged, $currentUser) {
             $oldValues = [
                 'name' => $user->name,
                 'email' => $user->email,
@@ -322,17 +300,7 @@ class UserManagementController extends Controller
 
             $user->save();
 
-            Landowner::where('user_id', $user->id)
-                ->update([
-                    'user_id' => null,
-                ]);
-
-            if ($user->role === User::ROLE_LANDOWNER && ! empty($validated['landowner_id'])) {
-                Landowner::whereKey($validated['landowner_id'])
-                    ->update([
-                        'user_id' => $user->id,
-                    ]);
-            }
+            $review->sync($user, $selectedId);
 
             $user->refresh();
 
@@ -355,7 +323,11 @@ class UserManagementController extends Controller
                     'email_verification_reset' => $emailChanged,
                 ]
             );
-        });
+            return [$previousEmail, $emailChanged];
+        }, 3);
+        $user->refresh();
+        $verificationRequired = $emailChanged && filled($email);
+        $emailChangeReason = blank($previousEmail) ? 'email_added' : 'email_changed';
 
         $verificationDelivery = 'not_required';
 
@@ -422,7 +394,12 @@ class UserManagementController extends Controller
         $temporaryPassword = $this->generateTemporaryPassword();
         $temporaryPasswordExpiresAt = $this->temporaryPasswordExpiresAt();
 
-        DB::transaction(function () use ($user, $temporaryPassword, $temporaryPasswordExpiresAt, $request) {
+        $reset = DB::transaction(function () use ($user, $temporaryPassword, $temporaryPasswordExpiresAt, $request) {
+            $user = User::query()->whereKey($user->id)->lockForUpdate()->firstOrFail();
+            if ($this->hasVerifiedRecoveryEmail($user)) {
+                return false;
+            }
+
             $user->forceFill([
                 'password' => $temporaryPassword,
                 'must_change_password' => true,
@@ -445,7 +422,12 @@ class UserManagementController extends Controller
                 ],
                 $request->user()->id
             );
-        });
+            return true;
+        }, 3);
+        if (! $reset) {
+            return back()->with('error', 'This account now has a verified recovery email. Ask the user to use Forgot Password.');
+        }
+        $user->refresh();
 
         $statusMessage = $user->is_active
             ? 'A temporary password was generated. It is shown only once below.'

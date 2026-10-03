@@ -172,6 +172,7 @@ class AccountCreationEmailTest extends TestCase
 
         $response = $this->actingAs($staff)
             ->put(route('staff.users.update', $target), [
+                'expected_account_revision' => app(\App\Services\UserAccountReviewService::class)->revision($target->fresh()),
                 'name' => $target->name,
                 'username' => $target->username,
                 'email' => 'new.email@example.com',

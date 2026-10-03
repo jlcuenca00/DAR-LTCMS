@@ -584,6 +584,7 @@
         <form method="POST" action="{{ route('staff.users.update', $user) }}" class="space-y-5">
             @csrf
             @method('PUT')
+            <input type="hidden" name="expected_account_revision" value="{{ old('expected_account_revision', $accountRevision) }}">
 
             <section class="user-editor-summary">
                 <div class="user-editor-identity">
@@ -759,6 +760,7 @@
 
                     <section class="user-card user-side-panel user-availability-card">
                         <div class="user-availability-control">
+                            <input type="hidden" name="is_active" value="0">
                             <input id="is_active" type="checkbox" name="is_active" value="1" {{ old('is_active', $user->is_active) ? 'checked' : '' }} class="user-native-checkbox">
                             <label for="is_active" class="user-availability-text cursor-pointer">
                                 <span class="user-card-title">Active Account</span>

@@ -9,6 +9,7 @@ use App\Services\AuditLogger;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Facades\Storage;
@@ -59,7 +60,22 @@ class ProfileController extends Controller
 
     public function update(ProfileUpdateRequest $request): RedirectResponse
     {
-        $user = $request->user();
+        $createdPaths = [];
+        try {
+            return DB::transaction(function () use ($request, &$createdPaths) {
+                return $this->updateLocked($request, $createdPaths);
+            });
+        } catch (Throwable $exception) {
+            foreach ($createdPaths as $path) {
+                $this->deleteProfilePhotoQuietly($path);
+            }
+            throw $exception;
+        }
+    }
+
+    private function updateLocked(ProfileUpdateRequest $request, array &$createdPaths): RedirectResponse
+    {
+        $user = User::query()->whereKey($request->user()->id)->lockForUpdate()->firstOrFail();
         $validated = $request->validated();
         $oldPhotoPath = $user->profile_photo_path;
         $oldProfile = [
@@ -114,7 +130,6 @@ class ProfileController extends Controller
         $photoChanged = false;
 
         if ($request->boolean('remove_profile_photo') && $user->profile_photo_path) {
-            $this->deleteProfilePhoto($user->profile_photo_path);
             $user->profile_photo_path = null;
             $photoChanged = true;
         }
@@ -122,17 +137,16 @@ class ProfileController extends Controller
         if ($request->hasFile('profile_photo')) {
             $newPhotoPath = $request->file('profile_photo')->store('profile-photos', self::PROFILE_PHOTO_DISK);
 
-            if ($user->profile_photo_path && $user->profile_photo_path !== $newPhotoPath) {
-                $this->deleteProfilePhoto($user->profile_photo_path);
-            } elseif ($oldPhotoPath && $oldPhotoPath !== $newPhotoPath) {
-                $this->deleteProfilePhoto($oldPhotoPath);
-            }
+            $createdPaths[] = $newPhotoPath;
 
             $user->profile_photo_path = $newPhotoPath;
             $photoChanged = true;
         }
 
         $user->save();
+        if ($oldPhotoPath && $oldPhotoPath !== $user->profile_photo_path) {
+            DB::afterCommit(fn () => $this->deleteProfilePhotoQuietly($oldPhotoPath));
+        }
 
         AuditLogger::record(
             'profile_updated',
@@ -244,6 +258,15 @@ class ProfileController extends Controller
         $public->delete($path);
 
         return true;
+    }
+
+    private function deleteProfilePhotoQuietly(?string $path): void
+    {
+        try {
+            $this->deleteProfilePhoto($path);
+        } catch (Throwable $exception) {
+            report($exception);
+        }
     }
 
     private function deleteProfilePhoto(?string $path): void
