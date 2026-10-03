@@ -7,102 +7,11 @@ use App\Models\Parcel;
 
 class ParcelMapController extends Controller
 {
-    public function index()
+    public function index(\App\Services\ParcelMapDataService $maps)
     {
-        $parcelFeatures = Parcel::query()
-            ->select([
-                'id',
-                'parcel_code',
-                'title_no',
-                'tax_decl_no',
-                'municipality',
-                'barangay',
-                'area_hectares',
-                'status',
-                'geometry_geojson',
-                'is_flagged',
-                'flag_reason',
-            ])
-            ->with([
-                'landholdings:id,parcel_id,landowner_id,status',
-                'landholdings.landowner:id,first_name,middle_name,last_name,suffix',
-                'legacyRecords:id,parcel_id,landowner_id',
-                'legacyRecords.landowner:id,first_name,middle_name,last_name,suffix',
-                'sourceRecordPackages:id,parcel_id,landowner_id',
-                'sourceRecordPackages.landowner:id,first_name,middle_name,last_name,suffix',
-            ])
-            ->where('status', 'active')
-            ->whereNotNull('geometry_geojson')
-            ->orderBy('municipality')
-            ->orderBy('barangay')
-            ->orderBy('parcel_code')
-            ->get()
-            ->map(function (Parcel $parcel) {
-                $geometry = $parcel->geometry_geojson;
+        $mapConfig = $maps->config(\Illuminate\Support\Facades\Auth::user());
 
-                if (! is_array($geometry)) {
-                    return null;
-                }
-
-                if (empty($geometry['type']) || empty($geometry['coordinates'])) {
-                    return null;
-                }
-
-                $activeLandholdingOwners = $parcel->landholdings
-                    ->filter(fn ($landholding) => strtolower((string) $landholding->status) === 'active')
-                    ->map(fn ($landholding) => $landholding->landowner?->full_name)
-                    ->filter()
-                    ->unique()
-                    ->values();
-
-                $anyLandholdingOwners = $parcel->landholdings
-                    ->map(fn ($landholding) => $landholding->landowner?->full_name)
-                    ->filter()
-                    ->unique()
-                    ->values();
-
-                $sourceLinkedOwners = collect()
-                    ->merge($parcel->legacyRecords->map(fn ($record) => $record->landowner?->full_name))
-                    ->merge($parcel->sourceRecordPackages->map(fn ($package) => $package->landowner?->full_name))
-                    ->filter()
-                    ->unique()
-                    ->values();
-
-                $landownerNames = $activeLandholdingOwners->isNotEmpty()
-                    ? $activeLandholdingOwners->implode(', ')
-                    : ($anyLandholdingOwners->isNotEmpty()
-                        ? $anyLandholdingOwners->implode(', ').' (non-active landholding)'
-                        : ($sourceLinkedOwners->isNotEmpty()
-                            ? $sourceLinkedOwners->implode(', ').' (source-linked)'
-                            : 'No linked landowner record'));
-
-                return [
-                    'type' => 'Feature',
-                    'properties' => [
-                        'id' => $parcel->id,
-                        'details_url' => route('staff.records.parcels.show', $parcel),
-                        'parcel_code' => $parcel->parcel_code,
-                        'title_no' => $parcel->title_no ?: 'N/A',
-                        'tax_decl_no' => $parcel->tax_decl_no ?: 'N/A',
-                        'landowner' => $landownerNames,
-                        'municipality' => $parcel->municipality ?: 'N/A',
-                        'barangay' => $parcel->barangay ?: 'N/A',
-                        'area_hectares' => $parcel->area_hectares ?: 'N/A',
-                        'status' => $parcel->is_flagged ? 'flagged' : 'active',
-                        'is_flagged' => (bool) $parcel->is_flagged,
-                        'flag_reason' => $parcel->is_flagged ? $parcel->flag_reason_label : null,
-                    ],
-                    'geometry' => $geometry,
-                ];
-            })
-            ->filter()
-            ->values();
-
-        $parcelGeoJson = [
-            'type' => 'FeatureCollection',
-            'features' => $parcelFeatures,
-        ];
-
-        return view('staff.maps.parcel-map', compact('parcelGeoJson'));
+        return view('staff.maps.parcel-map', compact('mapConfig'));
     }
+
 }

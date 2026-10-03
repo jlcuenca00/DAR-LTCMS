@@ -10,84 +10,11 @@ use Illuminate\Support\Facades\Gate;
 
 class ParcelMapController extends Controller
 {
-    public function index()
+    public function index(\App\Services\ParcelMapDataService $maps)
     {
-        $landowner = Auth::user()->landowner;
+        $mapConfig = $maps->config(\Illuminate\Support\Facades\Auth::user());
 
-        $landholdings = collect();
-
-        if ($landowner) {
-            $landholdings = Landholding::query()
-                ->select([
-                    'id',
-                    'landowner_id',
-                    'parcel_id',
-                    'area_hectares',
-                    'created_at',
-                ])
-                ->with(['parcel' => function ($query) {
-                    $query->select([
-                        'id',
-                        'parcel_code',
-                        'title_no',
-                        'tax_decl_no',
-                        'municipality',
-                        'barangay',
-                        'area_hectares',
-                        'status',
-                        'geometry_geojson',
-                    ]);
-                }])
-                ->where('landowner_id', $landowner->id)
-                ->whereHas('parcel', function ($query) {
-                    $query->where('status', 'active')
-                        ->whereNotNull('geometry_geojson');
-                })
-                ->orderByDesc('created_at')
-                ->get();
-        }
-
-        $parcelFeatures = $landholdings
-            ->filter(fn (Landholding $landholding) => $landholding->parcel !== null)
-            ->unique('parcel_id')
-            ->map(function (Landholding $landholding) use ($landowner) {
-                $parcel = $landholding->parcel;
-                $geometry = $parcel->geometry_geojson;
-
-                if (! is_array($geometry)) {
-                    return null;
-                }
-
-                if (empty($geometry['type']) || empty($geometry['coordinates'])) {
-                    return null;
-                }
-
-                return [
-                    'type' => 'Feature',
-                    'properties' => [
-                        'id' => $parcel->id,
-                        'details_url' => route('landowner.parcels.show', $parcel),
-                        'parcel_code' => $parcel->parcel_code,
-                        'title_no' => $parcel->title_no ?: 'N/A',
-                        'tax_decl_no' => $parcel->tax_decl_no ?: 'N/A',
-                        'landowner' => $landowner?->full_name ?: 'Your landowner account',
-                        'municipality' => $parcel->municipality ?: 'N/A',
-                        'barangay' => $parcel->barangay ?: 'N/A',
-                        'area_hectares' => $landholding->area_hectares ?: $parcel->area_hectares ?: 'N/A',
-                        'status' => 'active',
-                    ],
-                    'geometry' => $geometry,
-                ];
-            })
-            ->filter()
-            ->values();
-
-        $parcelGeoJson = [
-            'type' => 'FeatureCollection',
-            'features' => $parcelFeatures,
-        ];
-
-        return view('landowner.maps.parcel-map', compact('parcelGeoJson'));
+        return view('landowner.maps.parcel-map', compact('mapConfig'));
     }
 
     public function show(Parcel $parcel)

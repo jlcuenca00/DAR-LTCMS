@@ -20,6 +20,7 @@ use App\Http\Controllers\Staff\LandTransferApplicationController;
 use App\Http\Controllers\Staff\LegacyRecordController;
 use App\Http\Controllers\Staff\MonitoringReportController;
 use App\Http\Controllers\Staff\ParcelMapController;
+use App\Http\Controllers\ParcelMapDataController;
 use App\Http\Controllers\Staff\ParcelReviewFlagController;
 use App\Http\Controllers\Staff\RecordSearchController;
 use App\Http\Controllers\Staff\RecordLookupController;
@@ -136,6 +137,9 @@ Route::middleware(['auth', 'role:staff'])
 
         Route::get('/parcel-map', [ParcelMapController::class, 'index'])
             ->name('parcel-map.index');
+        Route::get('/parcel-map/features', [ParcelMapDataController::class, 'features'])->name('parcel-map.features');
+        Route::get('/parcel-map/search', [ParcelMapDataController::class, 'search'])->name('parcel-map.search');
+        Route::get('/parcel-map/feature/{parcel}', [ParcelMapDataController::class, 'feature'])->whereNumber('parcel')->name('parcel-map.feature');
 
         Route::get('/legacy-records', [LegacyRecordController::class, 'index'])
             ->name('legacy-records.index');
@@ -241,6 +245,9 @@ Route::middleware(['auth', 'role:landowner'])
     ->group(function () {
         Route::get('/parcel-map', [LandownerParcelMapController::class, 'index'])
             ->name('parcel-map.index');
+        Route::get('/parcel-map/features', [ParcelMapDataController::class, 'features'])->name('parcel-map.features');
+        Route::get('/parcel-map/search', [ParcelMapDataController::class, 'search'])->name('parcel-map.search');
+        Route::get('/parcel-map/feature/{parcel}', [ParcelMapDataController::class, 'feature'])->whereNumber('parcel')->name('parcel-map.feature');
         Route::get('/parcels', [LandownerPortalController::class, 'parcels'])
             ->name('parcels.index');
         Route::get('/parcels/{parcel}', [LandownerParcelMapController::class, 'show'])
@@ -261,6 +268,9 @@ Route::middleware(['auth', 'role:geodetic'])
             ->name('parcels.index');
         Route::get('/parcel-map', [GeodeticParcelMapController::class, 'index'])
             ->name('parcel-map.index');
+        Route::get('/parcel-map/features', [ParcelMapDataController::class, 'features'])->name('parcel-map.features');
+        Route::get('/parcel-map/search', [ParcelMapDataController::class, 'search'])->name('parcel-map.search');
+        Route::get('/parcel-map/feature/{parcel}', [ParcelMapDataController::class, 'feature'])->whereNumber('parcel')->name('parcel-map.feature');
         Route::get('/parcels/awaiting-geometry', [GeodeticParcelMapController::class, 'awaitingGeometry'])
             ->name('parcels.awaiting-geometry');
         Route::get('/parcels/{parcel}/geometry/edit', [GeodeticParcelMapController::class, 'editGeometry'])
