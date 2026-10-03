@@ -15,10 +15,17 @@ class UserAccountReviewIntegrityTest extends TestCase
 {
     use RefreshDatabase;
 
+    private function account(array $attributes = []): User
+    {
+        return User::factory()->create(array_replace([
+            'username' => 'review_'.\Illuminate\Support\Str::lower(\Illuminate\Support\Str::random(12)),
+        ], $attributes));
+    }
+
     private function staff(): User
     {
         Notification::fake();
-        return User::factory()->create(['role' => User::ROLE_STAFF, 'is_active' => true]);
+        return $this->account(['role' => User::ROLE_STAFF, 'is_active' => true]);
     }
 
     private function payload(User $user, array $overrides = []): array
@@ -45,7 +52,7 @@ class UserAccountReviewIntegrityTest extends TestCase
     public function test_missing_and_stale_account_reviews_cannot_restore_revoked_access(): void
     {
         $staff = $this->staff();
-        $target = User::factory()->create(['role' => User::ROLE_GEODETIC]);
+        $target = $this->account(['role' => User::ROLE_GEODETIC]);
         $payload = $this->payload($target);
         $target->update(['is_active' => false, 'registration_status' => User::REGISTRATION_DECLINED]);
         $this->actingAs($staff)->put(route('staff.users.update', $target), $payload)
@@ -60,7 +67,7 @@ class UserAccountReviewIntegrityTest extends TestCase
 
     public function test_review_token_tracks_credentials_and_email_verification_but_ignores_activity(): void
     {
-        $user = User::factory()->create();
+        $user = $this->account();
         $review = app(UserAccountReviewService::class);
         $token = $review->revision($user);
         $user->update(['last_login_at' => now(), 'onboarding_state' => ['example' => 'done']]);
@@ -75,7 +82,7 @@ class UserAccountReviewIntegrityTest extends TestCase
     public function test_a_landowner_link_changed_elsewhere_invalidates_an_account_review(): void
     {
         $staff = $this->staff();
-        $target = User::factory()->create(['role' => User::ROLE_LANDOWNER]);
+        $target = $this->account(['role' => User::ROLE_LANDOWNER]);
         $first = $this->landowner($target);
         $second = $this->landowner();
         $payload = $this->payload($target);
@@ -92,8 +99,8 @@ class UserAccountReviewIntegrityTest extends TestCase
     public function test_current_review_can_relink_an_account_and_cannot_claim_an_occupied_record(): void
     {
         $staff = $this->staff();
-        $target = User::factory()->create(['role' => User::ROLE_LANDOWNER]);
-        $other = User::factory()->create(['role' => User::ROLE_LANDOWNER]);
+        $target = $this->account(['role' => User::ROLE_LANDOWNER]);
+        $other = $this->account(['role' => User::ROLE_LANDOWNER]);
         $first = $this->landowner($target);
         $second = $this->landowner();
         $occupied = $this->landowner($other);
@@ -113,7 +120,7 @@ class UserAccountReviewIntegrityTest extends TestCase
     public function test_account_creation_cannot_displace_an_existing_link_or_leave_an_orphan_account(): void
     {
         $staff = $this->staff();
-        $other = User::factory()->create(['role' => User::ROLE_LANDOWNER]);
+        $other = $this->account(['role' => User::ROLE_LANDOWNER]);
         $occupied = $this->landowner($other);
         $count = User::count();
         $this->actingAs($staff)->post(route('staff.users.store'), [
@@ -127,7 +134,7 @@ class UserAccountReviewIntegrityTest extends TestCase
     public function test_validation_preserves_unchecked_activation_and_stale_review_token(): void
     {
         $staff = $this->staff();
-        $target = User::factory()->create(['role' => User::ROLE_GEODETIC, 'is_active' => true]);
+        $target = $this->account(['role' => User::ROLE_GEODETIC, 'is_active' => true]);
         $payload = $this->payload($target, ['name' => '', 'is_active' => '0']);
         $this->actingAs($staff)->from(route('staff.users.edit', $target))
             ->put(route('staff.users.update', $target), $payload)->assertSessionHasErrors('name');
@@ -142,9 +149,9 @@ class UserAccountReviewIntegrityTest extends TestCase
         Storage::fake('local');
         Storage::fake('public');
         $staff = $this->staff();
-        $private = User::factory()->create(['profile_photo_path' => 'profile-photos/private.png']);
-        $legacy = User::factory()->create(['profile_photo_path' => 'profile-photos/legacy.png']);
-        $missing = User::factory()->create(['profile_photo_path' => 'profile-photos/missing.png']);
+        $private = $this->account(['profile_photo_path' => 'profile-photos/private.png']);
+        $legacy = $this->account(['profile_photo_path' => 'profile-photos/legacy.png']);
+        $missing = $this->account(['profile_photo_path' => 'profile-photos/missing.png']);
         Storage::disk('local')->put($private->profile_photo_path, 'image');
         Storage::disk('public')->put($legacy->profile_photo_path, 'image');
         $this->actingAs($staff)->get(route('staff.users.index'))->assertOk()
@@ -156,7 +163,7 @@ class UserAccountReviewIntegrityTest extends TestCase
     public function test_registration_validates_the_normalized_username_before_persisting_it(): void
     {
         Notification::fake();
-        User::factory()->create(['username' => 'existing_owner']);
+        $this->account(['username' => 'existing_owner']);
         $count = User::count();
         $this->post(route('register'), [
             'name' => 'Duplicate Owner', 'username' => 'EXISTING_OWNER',
