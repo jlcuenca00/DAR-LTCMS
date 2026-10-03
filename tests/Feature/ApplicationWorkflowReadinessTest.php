@@ -352,6 +352,7 @@ class ApplicationWorkflowReadinessTest extends TestCase
 
         $this->actingAs($staff)
             ->patch(route('staff.applications.form4.update', $application), [
+                    'expected_workflow_revision' => $application->fresh()->workflow_revision,
                 'ltc_form4_subject_land_findings' => ['ra6657_not_covered_not_tenanted_retained_area'],
                 'ltc_form4_recommendation_findings' => ['application_complete'],
                 'ltc_form4_recommendation_decision' => 'approval',
@@ -698,6 +699,7 @@ class ApplicationWorkflowReadinessTest extends TestCase
 
             $this->actingAs($staff)
                 ->patch(route('staff.applications.form4.update', $application), [
+                    'expected_workflow_revision' => $application->fresh()->workflow_revision,
                     'ltc_form4_subject_land_findings' => ['ra6657_not_covered_not_tenanted_retained_area'],
                     'ltc_form4_recommendation_findings' => ['application_complete'],
                     'ltc_form4_recommendation_decision' => 'approval',

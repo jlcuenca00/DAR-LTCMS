@@ -2,13 +2,13 @@
     $acknowledgementBlockingRequirements = $blockingRequirements ?? $transferorRequirements->concat($transfereeRequirements)
         ->filter(fn ($requirement) => method_exists($requirement, 'blocksAcceptance') ? $requirement->blocksAcceptance() : (bool) $requirement->is_mandatory);
 
+    $acknowledgementEvaluation = $requirementEvaluation ?? app(\App\Services\ApplicationRequirementService::class)->evaluate($application);
+    $acknowledgementRows = collect($acknowledgementEvaluation['requirements'])->keyBy('id');
     $acknowledgementEncodedCount = $acknowledgementBlockingRequirements
-        ->filter(fn ($requirement) => $uploaded->has($requirement->id))
+        ->filter(fn ($requirement) => (bool) data_get($acknowledgementRows->get($requirement->id), 'complete', false))
         ->count();
-
     $acknowledgementBlockingTotal = $acknowledgementBlockingRequirements->count();
-    $acknowledgementComplete = $acknowledgementBlockingTotal === 0
-        || $acknowledgementEncodedCount >= $acknowledgementBlockingTotal;
+    $acknowledgementComplete = (bool) $acknowledgementEvaluation['complete'];
 @endphp
 
 <style>
@@ -66,8 +66,11 @@
 
         <div class="ltc-form3-output-actions">
             <span class="ltc-form3-output-status">
-                {{ $acknowledgementEncodedCount }} / {{ $acknowledgementBlockingTotal }} required encoded
+                {{ $acknowledgementEncodedCount }} / {{ $acknowledgementBlockingTotal }} required complete
             </span>
+            @if (! $acknowledgementComplete)
+                <span class="text-sm">Intake review requires compliance.</span>
+            @endif
 
             <a href="{{ route('staff.applications.acknowledgement.pdf', $application) }}"
                class="staff-button staff-button-primary"

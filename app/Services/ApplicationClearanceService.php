@@ -33,6 +33,8 @@ class ApplicationClearanceService
                 return $existingClearance;
             }
 
+            app(ClearanceDocumentSourceService::class)->assertChronology($application, $application->decision_date?->toDateString() ?? now()->toDateString());
+
             $totalArea = '0.0000';
             $parcelSnapshot = [];
 
@@ -158,41 +160,35 @@ class ApplicationClearanceService
 
     private function buildFormSnapshot(LandTransferApplication $application): array
     {
-        $metadataItems = collect($application->documents)
-            ->sortBy('id')
-            ->map(fn ($document) => $document->document_metadata ?? [])
-            ->filter(fn ($metadata) => is_array($metadata) && ! empty($metadata));
-
-        $metaFirst = function (array $keys) use ($metadataItems): ?string {
-            foreach ($metadataItems as $metadata) {
-                foreach ($keys as $key) {
-                    $value = data_get($metadata, $key);
-
-                    if (! filled($value)) {
-                        continue;
-                    }
-
+        $sources = app(ClearanceDocumentSourceService::class)->resolve($application);
+        $titleMetadata = (array) $sources['title']?->document_metadata;
+        $transferMetadata = (array) $sources['transfer']?->document_metadata;
+        $first = function (array $metadata, array $keys): ?string {
+            foreach ($keys as $key) {
+                $value = data_get($metadata, $key);
+                if (filled($value)) {
                     return is_array($value)
                         ? implode('; ', array_filter($value, fn ($item) => filled($item)))
                         : trim((string) $value);
                 }
             }
-
             return null;
         };
 
         return [
-            'snapshot_version' => 2,
-            'owner_name' => $metaFirst(['title_owner_names', 'document_owner_names'])
+            'snapshot_version' => 3,
+            'title_document_id' => $sources['title']?->id,
+            'transfer_document_id' => $sources['transfer']?->id,
+            'owner_name' => $first($titleMetadata, ['title_owner_names', 'document_owner_names'])
                 ?: $application->transferorDisplayName(),
-            'subject_of' => $metaFirst(['transfer_document_title'])
+            'subject_of' => $first($transferMetadata, ['transfer_document_title'])
                 ?: $application->transferInstrumentDisplay(),
-            'subject_date' => $metaFirst(['notarization_date', 'date_issued']),
-            'notarial_document_number' => $metaFirst(['notarial_document_number']),
-            'notarial_page_number' => $metaFirst(['notarial_page_number']),
-            'notarial_book_number' => $metaFirst(['notarial_book_number']),
-            'notarial_series' => $metaFirst(['notarial_series']),
-            'notary_public' => $metaFirst(['notary_public']),
+            'subject_date' => $first($transferMetadata, ['notarization_date', 'date_issued']),
+            'notarial_document_number' => $first($transferMetadata, ['notarial_document_number']),
+            'notarial_page_number' => $first($transferMetadata, ['notarial_page_number']),
+            'notarial_book_number' => $first($transferMetadata, ['notarial_book_number']),
+            'notarial_series' => $first($transferMetadata, ['notarial_series']),
+            'notary_public' => $first($transferMetadata, ['notary_public']),
             'or_number' => filled($application->or_number) ? (string) $application->or_number : null,
             'or_date' => $application->or_date?->toDateString(),
             'amount_paid' => $application->amount_paid !== null

@@ -703,7 +703,12 @@ private function generateApplicationCode(): string
             return back()->with('error', 'LTC Form No. 4 review details are locked after a final clearance decision.');
         }
 
+        $revision = $request->validate(['expected_workflow_revision' => ['required', 'integer', 'min:1']]);
+        app(\App\Services\ApplicationWorkflowRevisionService::class)->assertExpected($application, (int) $revision['expected_workflow_revision']);
+
         $validated = $request->validate([
+            'ltc_title_document_id' => ['nullable', 'integer', 'min:1'],
+            'ltc_transfer_document_id' => ['nullable', 'integer', 'min:1'],
             'ltc_form4_subject_land_findings' => ['nullable', 'array', 'max:'.count(LandTransferApplication::form4SubjectLandOptions())],
             'ltc_form4_subject_land_findings.*' => [
                 'required',
@@ -724,7 +729,23 @@ private function generateApplicationCode(): string
             'ltc_form4_certifying_officer_name' => ['nullable', 'string', 'max:255'],
         ]);
 
+        $sourceReview = clone $application;
+        $sourceReview->forceFill([
+            'ltc_title_document_id' => $validated['ltc_title_document_id'] ?? null,
+            'ltc_transfer_document_id' => $validated['ltc_transfer_document_id'] ?? null,
+        ]);
+        // Allow partial findings while sources are still ambiguous, but validate any explicit selection.
+        $sourceCandidates = app(\App\Services\ClearanceDocumentSourceService::class)->candidates($sourceReview);
+        foreach (['title', 'transfer'] as $role) {
+            $field = 'ltc_'.$role.'_document_id';
+            if (filled($sourceReview->{$field}) && ! $sourceCandidates[$role]->contains('id', (int) $sourceReview->{$field})) {
+                throw \Illuminate\Validation\ValidationException::withMessages([$field => 'Select an eligible source from this application.']);
+            }
+        }
+
         $application->forceFill([
+            'ltc_title_document_id' => $sourceReview->ltc_title_document_id,
+            'ltc_transfer_document_id' => $sourceReview->ltc_transfer_document_id,
             'ltc_form4_subject_land_findings' => array_values($validated['ltc_form4_subject_land_findings'] ?? []),
             'ltc_form4_recommendation_findings' => array_values($validated['ltc_form4_recommendation_findings'] ?? []),
             'ltc_form4_recommendation_decision' => $validated['ltc_form4_recommendation_decision'] ?? null,
@@ -738,6 +759,8 @@ private function generateApplicationCode(): string
             $application,
             $application,
             [
+                'title_document_id' => $application->ltc_title_document_id,
+                'transfer_document_id' => $application->ltc_transfer_document_id,
                 'recommendation_decision' => $application->ltc_form4_recommendation_decision,
                 'subject_land_findings_count' => count((array) $application->ltc_form4_subject_land_findings),
                 'recommendation_findings_count' => count((array) $application->ltc_form4_recommendation_findings),

@@ -709,6 +709,7 @@ class FinalDecisionIntegrityHardeningTest extends TestCase
 
         $this->actingAs($staff)
             ->patch(route('staff.applications.form4.update', $application), [
+                    'expected_workflow_revision' => $application->fresh()->workflow_revision,
                 'ltc_form4_other_findings' => 'This must never be written after final decision.',
                 'ltc_form4_recommendation_decision' => 'approval',
             ])

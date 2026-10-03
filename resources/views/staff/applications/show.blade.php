@@ -2629,7 +2629,8 @@
             'endorsed_chief_legal', 'endorsed_parpo', 'for_releasing' => 'staff-badge-amber',
             default => 'staff-badge-slate',
         };
-        $requirementStates = collect(app(\App\Services\ApplicationRequirementService::class)->evaluate($application)['requirements'])->keyBy('id');
+        $requirementEvaluation = app(\App\Services\ApplicationRequirementService::class)->evaluate($application);
+        $requirementStates = collect($requirementEvaluation['requirements'])->keyBy('id');
         $allRequirements = $transferorRequirements->concat($transfereeRequirements);
         $blockingRequirements = $allRequirements->filter(fn ($requirement) => (bool) data_get($requirementStates->get($requirement->id), 'blocking', false));
         $blockingTotal = $blockingRequirements->count();

@@ -11,9 +11,9 @@
     $form4BlockingRequirements = $blockingRequirements ?? $transferorRequirements->concat($transfereeRequirements)
         ->filter(fn ($requirement) => method_exists($requirement, 'blocksAcceptance') ? $requirement->blocksAcceptance() : (bool) $requirement->is_mandatory);
 
-    $form4RequirementsReady = $form4BlockingRequirements
-        ->filter(fn ($requirement) => ! $uploaded->has($requirement->id))
-        ->isEmpty();
+    $form4Evaluation = $requirementEvaluation ?? app(\App\Services\ApplicationRequirementService::class)->evaluate($application);
+    $form4RequirementsReady = (bool) $form4Evaluation['complete'];
+    $clearanceSourceCandidates = app(\App\Services\ClearanceDocumentSourceService::class)->candidates($application);
 
     $form4HasData = $subjectLandFindings->isNotEmpty()
         || $recommendationFindings->isNotEmpty()
@@ -275,8 +275,27 @@
 
         <form method="POST" action="{{ route('staff.applications.form4.update', $application) }}" class="ltc-form4-workspace">
             @csrf
+            <input type="hidden" name="expected_workflow_revision" value="{{ old('expected_workflow_revision', $application->workflow_revision) }}">
             @method('PATCH')
 
+            <div class="ltc-form4-card">
+                <h3 class="ltc-form4-card-title">Clearance output evidence sources</h3>
+                <p class="text-sm mb-3">Use the reviewed title/ownership and transfer document for LTC Form No. 5. A single eligible source is used automatically. Select a source when several are recorded.</p>
+                <div class="ltc-form4-field-grid">
+                    @foreach (['title' => 'Title / ownership evidence', 'transfer' => 'Transfer document / deed'] as $sourceRole => $sourceLabel)
+                        @php $sourceField = 'ltc_'.$sourceRole.'_document_id'; @endphp
+                        <div>
+                            <label class="ltc-form4-label" for="{{ $sourceField }}">{{ $sourceLabel }}</label>
+                            <select id="{{ $sourceField }}" name="{{ $sourceField }}" class="ltc-form4-input" {{ $isFinal ? 'disabled' : '' }}>
+                                <option value="">Automatic when a single source is recorded</option>
+                                @foreach ($clearanceSourceCandidates[$sourceRole] as $sourceDocument)
+                                    <option value="{{ $sourceDocument->id }}" @selected((string) old($sourceField, $application->{$sourceField}) === (string) $sourceDocument->id)>{{ $sourceDocument->requiredDocument?->name }}{{ $sourceDocument->annex_reference ? ' — '.$sourceDocument->annex_reference : '' }} (record #{{ $sourceDocument->id }})</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
             <div class="ltc-form4-card">
                 <h3 class="ltc-form4-card-title">I. Facts / Information of the Subject Land</h3>
 

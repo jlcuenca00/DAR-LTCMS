@@ -70,7 +70,7 @@ class FinalLtcForm5Test extends TestCase
         $this->assertSame($staff->id, $clearance->decision_recorded_by);
         $this->assertSame('1.5000', (string) $clearance->total_area_hectares);
         $this->assertCount(1, $clearance->parcel_snapshot);
-        $this->assertSame(2, data_get($clearance->form_snapshot, 'snapshot_version'));
+        $this->assertSame(3, data_get($clearance->form_snapshot, 'snapshot_version'));
     }
 
     public function test_form5_renders_all_parcels_combined_area_local_assets_and_clearance_decision_only(): void
