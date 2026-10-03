@@ -17,7 +17,7 @@
 
     <form method="POST" action="{{ route('staff.records.landowners.update', $landowner) }}" class="staff-panel overflow-hidden">
         @csrf
-        <input type="hidden" name="expected_record_revision" value="{{ $landowner->record_revision }}">
+        <input type="hidden" name="expected_record_revision" value="{{ old('expected_record_revision', $landowner->record_revision) }}">
         @method('PATCH')
 
         <div class="staff-panel-pad border-b border-gray-200">

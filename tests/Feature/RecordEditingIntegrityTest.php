@@ -90,6 +90,19 @@ class RecordEditingIntegrityTest extends TestCase
         $this->patch(route('staff.records.landowners.landholdings.update', [$owner, $holding]), $this->holdingPayload($parcel, $holding->fresh()))->assertSessionHasNoErrors();
     }
 
+    public function test_validation_redirect_does_not_rebind_stale_old_input_to_a_new_revision(): void
+    {
+        [$staff, $owner] = $this->records();
+        $revision = $owner->record_revision;
+        $owner->update(['first_name' => 'New']);
+        $this->actingAs($staff)->from(route('staff.records.landowners.edit', $owner))
+            ->patch(route('staff.records.landowners.update', $owner), [
+                'first_name' => 'Old', 'last_name' => 'Owner', 'expected_record_revision' => $revision,
+            ])->assertSessionHasErrors('expected_record_revision');
+        $this->get(route('staff.records.landowners.edit', $owner))->assertOk()
+            ->assertSee('name="expected_record_revision" value="' . $revision . '"', false);
+    }
+
     public function test_missing_revision_is_rejected_instead_of_bypassing_stale_edit_protection(): void
     {
         [$staff, $owner, $parcel, $holding] = $this->records();

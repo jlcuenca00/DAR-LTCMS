@@ -257,7 +257,7 @@
 
         <form method="POST" enctype="multipart/form-data" action="{{ route('staff.records.parcels.update', $parcel) }}" class="parcel-edit-layout">
             @csrf
-        <input type="hidden" name="expected_record_revision" value="{{ $parcel->record_revision }}">
+        <input type="hidden" name="expected_record_revision" value="{{ old('expected_record_revision', $parcel->record_revision) }}">
             @method('PATCH')
             <input type="hidden" name="geometry_version" value="{{ old('geometry_version', $parcel->geometry_version) }}">
 
