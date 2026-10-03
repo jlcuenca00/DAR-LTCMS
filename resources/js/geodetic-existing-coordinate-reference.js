@@ -75,7 +75,8 @@ function prefillLegacyGeodeticCoordinates() {
     // The shared coordinate editor loads those directly, so do not replace them.
     if (geometry?.dar_source?.crs === 'EPSG:3124') return;
 
-    if (geometry?.type !== 'Polygon') return;
+    if (geometry?.type !== 'Polygon' || geometry.coordinates?.length !== 1 || !Array.isArray(geometry.coordinates[0])
+        || geometry.coordinates[0].some(point => !Array.isArray(point) || point.length !== 2)) return;
 
     const geographicPoints = normalizePolygonRing(geometry?.coordinates?.[0]);
     if (geographicPoints.length < 3) return;
@@ -114,7 +115,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const message = editor?.querySelector('[data-geojson-message]');
 
     if (message) {
-        message.textContent = 'Current parcel boundary values loaded for reference. They were derived from the existing mapped geometry and will be stored as PRS92 source coordinates when you save.';
+        message.textContent = 'Current parcel boundary values loaded for reference. They were derived from the existing mapped geometry and stay unchanged until you edit or explicitly apply coordinate changes.';
         message.classList.remove('is-error');
     }
 }, { once: true });

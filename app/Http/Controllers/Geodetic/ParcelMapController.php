@@ -250,7 +250,7 @@ class ParcelMapController extends Controller
 
             $previousGeometry = $current->geometry_geojson;
 
-            if ($previousGeometry === $geometry) {
+            if (app(ParcelGeometryService::class)->geometriesEqual($previousGeometry, $geometry)) {
                 $session->delete();
 
                 return [
@@ -278,6 +278,29 @@ class ParcelMapController extends Controller
                 $actor,
                 'geodetic_edit'
             );
+
+            AuditLogger::record(
+                'geodetic_parcel_geometry_updated',
+                null,
+                $current,
+                [
+                    'parcel_id' => $current->id,
+                    'parcel_code' => $current->parcel_code,
+                    'geometry_type' => $geometry['type'] ?? null,
+                    'had_geometry_before' => $hadGeometryBefore,
+                    'has_geometry_after' => true,
+                    'previous_geometry_version' => $previousVersion,
+                    'new_geometry_version' => $newVersion,
+                    'revision_id' => $revision->id,
+                    'editable_scope' => 'geometry_geojson only',
+                    'concurrency_policy' => 'optimistic version check with active editor presence',
+                    'actor_user_id' => $actor?->id,
+                    'actor_name' => $actor?->name,
+                    'actor_role' => $actor?->role,
+                    'scope_note' => 'Map geometry is a technical reference and does not establish ownership or legal parcel boundaries.',
+                ]
+            );
+    
 
             $session->delete();
 
@@ -318,33 +341,18 @@ class ParcelMapController extends Controller
         /** @var Parcel $savedParcel */
         $savedParcel = $result['parcel'];
 
-        AuditLogger::record(
-            'geodetic_parcel_geometry_updated',
-            null,
-            $savedParcel,
-            [
-                'parcel_id' => $savedParcel->id,
-                'parcel_code' => $savedParcel->parcel_code,
-                'geometry_type' => $geometry['type'] ?? null,
-                'had_geometry_before' => $result['had_geometry_before'],
-                'has_geometry_after' => true,
-                'previous_geometry_version' => $result['previous_version'],
-                'new_geometry_version' => $result['new_version'],
-                'revision_id' => $result['revision_id'],
-                'editable_scope' => 'geometry_geojson only',
-                'concurrency_policy' => 'optimistic version check with active editor presence',
-                'actor_user_id' => $actor?->id,
-                'actor_name' => $actor?->name,
-                'actor_role' => $actor?->role,
-                'scope_note' => 'Map geometry is a technical reference and does not establish ownership or legal parcel boundaries.',
-            ]
-        );
 
-        app(NotificationService::class)->notifyGeodeticParcelGeometryUpdated($savedParcel, $actor);
+        $notificationWarning = '';
+        try {
+            app(NotificationService::class)->notifyGeodeticParcelGeometryUpdated($savedParcel, $actor);
+        } catch (\Throwable $exception) {
+            report($exception);
+            $notificationWarning = ' Notifications could not be delivered; the geometry and audit record were saved.';
+        }
 
         return redirect()
             ->route('geodetic.parcels.show', $savedParcel)
-            ->with('success', 'Parcel geometry saved successfully as version '.$result['new_version'].'.');
+            ->with('success', 'Parcel geometry saved successfully as version '.$result['new_version'].'.'.$notificationWarning);
     }
 
     private function activeEditorsFor(Parcel $parcel, int $excludeUserId)
