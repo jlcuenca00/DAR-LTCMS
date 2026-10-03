@@ -278,6 +278,7 @@ class RecordSearchPagesTest extends TestCase
 
         $this->actingAs($staffUser)
             ->patch(route('staff.records.parcels.update', $parcel), [
+                'expected_record_revision' => (int) $parcel->fresh()->record_revision,
                 'parcel_code' => $parcel->parcel_code,
                 'province' => 'Negros Oriental',
                 'municipality' => 'Dumaguete City',
@@ -302,6 +303,7 @@ class RecordSearchPagesTest extends TestCase
 
         $this->actingAs($staffUser)
             ->patch(route('staff.records.parcels.update', $parcel), [
+                'expected_record_revision' => (int) $parcel->fresh()->record_revision,
                 'parcel_code' => $parcel->parcel_code,
                 'province' => 'Negros Oriental',
                 'municipality' => 'Dumaguete City',
@@ -372,6 +374,7 @@ class RecordSearchPagesTest extends TestCase
         $this->actingAs($staffUser)
             ->from(route('staff.records.parcels.edit', $parcel))
             ->patch(route('staff.records.parcels.update', $parcel), [
+                'expected_record_revision' => (int) $parcel->fresh()->record_revision,
                 'parcel_code' => $parcel->parcel_code,
                 'province' => 'Negros Oriental',
                 'municipality' => 'Dumaguete City',
@@ -452,6 +455,7 @@ class RecordSearchPagesTest extends TestCase
 
         $this->actingAs($staffUser)
             ->patch(route('staff.records.parcels.update', $parcel), [
+                'expected_record_revision' => (int) $parcel->fresh()->record_revision,
                 'parcel_code' => $parcel->parcel_code,
                 'province' => 'Negros Oriental',
                 'municipality' => 'Dumaguete City',

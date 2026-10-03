@@ -2,12 +2,15 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\TracksRecordRevision;
+
 use App\Services\ParcelAreaIntegrityService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 
 class Landholding extends Model
 {
+    use TracksRecordRevision;
     public const STATUS_ACTIVE = 'active';
     public const STATUS_INACTIVE = 'inactive';
     public const STATUS_HISTORICAL = 'historical';
@@ -34,6 +37,7 @@ class Landholding extends Model
     ];
 
     protected $casts = [
+        'record_revision' => 'integer',
         'area_hectares' => 'decimal:4',
         'date_acquired' => 'date',
         'date_transferred' => 'date',

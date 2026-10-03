@@ -141,6 +141,7 @@ class LandholdingManagementTest extends TestCase
 
         $this->actingAs($staffUser)
             ->patch(route('staff.records.landowners.landholdings.update', [$landowner, $landholding]), [
+                'expected_record_revision' => (int) $landholding->fresh()->record_revision,
                 'parcel_id' => $parcel->id,
                 'area_hectares' => 1.5000,
                 'status' => Landholding::STATUS_ACTIVE,

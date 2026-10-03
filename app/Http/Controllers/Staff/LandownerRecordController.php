@@ -17,13 +17,15 @@ class LandownerRecordController extends Controller
 {
     public function show(Landowner $landowner, LandholdingAreaValidationService $hectareValidator)
     {
-        $landowner->load([
-            'user',
-            'landholdings.parcel',
-            'landholdings.sourceApplication',
-            'sourceRecords',
-            'sourceRecordPackages',
-        ]);
+        $landowner->load('user');
+        $landholdings = $landowner->landholdings()->with(['parcel', 'sourceApplication'])
+            ->orderByDesc('id')->paginate(15, ['*'], 'holdings_page')->withQueryString()->fragment('landholdings');
+        $activeHoldingCount = $landowner->activeLandholdings()->count();
+        $otherHoldingCount = $landowner->landholdings()->where('status', '!=', 'active')->count();
+        $sourcePackages = $landowner->sourceRecordPackages()->orderByDesc('id')
+            ->paginate(15, ['*'], 'packages_page')->withQueryString()->fragment('linked-sources');
+        $sourceRecords = $landowner->sourceRecords()->orderByDesc('id')
+            ->paginate(15, ['*'], 'sources_page')->withQueryString()->fragment('linked-sources');
 
         $selectedParcelId = request()->session()->getOldInput('parcel_id');
         $selectedParcel = $selectedParcelId
@@ -34,14 +36,15 @@ class LandownerRecordController extends Controller
 
         $relatedApplications = LandTransferApplication::query()
             ->linkedToLandownerIds([$landowner->id])
-            ->latest()
-            ->get();
+            ->orderByDesc('id')
+            ->paginate(15, ['*'], 'applications_page')->withQueryString()->fragment('related-applications');
 
         return view('staff.records.landowner-show', compact(
             'landowner',
             'selectedParcel',
             'hectareSummary',
-            'relatedApplications'
+            'relatedApplications',
+            'landholdings', 'activeHoldingCount', 'otherHoldingCount', 'sourcePackages', 'sourceRecords'
         ));
     }
 
@@ -49,24 +52,20 @@ class LandownerRecordController extends Controller
     {
         $landowner->load('user');
 
-        $landownerUsers = User::query()
-            ->where('role', 'landowner')
-            ->where(function ($query) use ($landowner) {
-                $query->whereDoesntHave('landowner')
-                    ->orWhere('id', $landowner->user_id);
-            })
-            ->orderBy('name')
-            ->get();
+        $selectedUser = $this->selectedUser(request()->old('user_id', $landowner->user_id), $landowner);
 
         return view('staff.records.landowner-edit', [
             'landowner' => $landowner,
-            'landownerUsers' => $landownerUsers,
+            'selectedUser' => $selectedUser,
             'registeredOwnerStatusOptions' => Landowner::registeredOwnerStatusOptions(),
         ]);
     }
 
     public function update(Request $request, Landowner $landowner)
     {
+        $expectedRevision = (int) $request->validate([
+            'expected_record_revision' => ['required', 'integer', 'min:1'],
+        ])['expected_record_revision'];
         $validated = $request->validate([
             'first_name' => ['required', 'string', 'max:255'],
             'middle_name' => ['nullable', 'string', 'max:255'],
@@ -90,11 +89,13 @@ class LandownerRecordController extends Controller
             $validated['spouse_name'] = null;
         }
 
-        $landowner = DB::transaction(function () use ($landowner, $validated) {
+        $landowner = DB::transaction(function () use ($landowner, $validated, $expectedRevision) {
             $lockedLandowner = Landowner::query()
                 ->whereKey($landowner->id)
                 ->lockForUpdate()
                 ->firstOrFail();
+
+            app(\App\Services\RecordEditRevisionService::class)->assertExpected($lockedLandowner, $expectedRevision);
 
             $oldValues = $lockedLandowner->only(array_keys($validated));
             $lockedLandowner->update($validated);
@@ -119,14 +120,10 @@ class LandownerRecordController extends Controller
     }
     public function create()
     {
-        $landownerUsers = User::query()
-            ->where('role', 'landowner')
-            ->whereDoesntHave('landowner')
-            ->orderBy('name')
-            ->get();
+        $selectedUser = $this->selectedUser(request()->old('user_id'));
 
         return view('staff.records.landowner-create', [
-            'landownerUsers' => $landownerUsers,
+            'selectedUser' => $selectedUser,
             'registeredOwnerStatusOptions' => Landowner::registeredOwnerStatusOptions(),
         ]);
     }
@@ -176,4 +173,18 @@ class LandownerRecordController extends Controller
             ->route('staff.records.landowners.show', $landowner)
             ->with('success', 'Landowner record created successfully. Add landholding records separately when needed.');
     }
+    private function selectedUser($userId, ?Landowner $landowner = null): ?User
+    {
+        if (! $userId) {
+            return null;
+        }
+        return User::query()->where('role', User::ROLE_LANDOWNER)
+            ->where(function ($query) use ($landowner) {
+                $query->whereDoesntHave('landowner');
+                if ($landowner?->user_id) {
+                    $query->orWhere('users.id', $landowner->user_id);
+                }
+            })->find($userId);
+    }
+
 }

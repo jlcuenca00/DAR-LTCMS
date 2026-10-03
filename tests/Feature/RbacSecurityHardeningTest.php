@@ -79,6 +79,7 @@ class RbacSecurityHardeningTest extends TestCase
 
             $this->actingAs($attacker)
                 ->patch(route('staff.records.parcels.update', $parcel), [
+                'expected_record_revision' => (int) $parcel->fresh()->record_revision,
                     'parcel_code' => 'TAMPERED-' . $role,
                     'title_no' => 'T-TAMPERED-999',
                     'municipality' => 'Dumaguete City',

@@ -80,6 +80,8 @@ Route::middleware(['auth', 'role:staff'])
 
         Route::get('/lookups/landowners', [RecordLookupController::class, 'landowners'])
             ->name('lookups.landowners');
+        Route::get('/lookups/landowner-users', [RecordLookupController::class, 'landownerUsers'])
+            ->name('lookups.landowner-users');
         Route::get('/lookups/parcels', [RecordLookupController::class, 'parcels'])
             ->name('lookups.parcels');
 
