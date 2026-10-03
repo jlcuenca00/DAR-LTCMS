@@ -20,10 +20,10 @@ class RecordEditingIntegrityTest extends TestCase
     public function test_smallest_active_holding_blocks_archiving_and_clearing_parcel_area(): void
     {
         [, , $parcel] = $this->records();
-        foreach (['status' => 'inactive', 'area_hectares' => null] as $field => $value) {
+        foreach ([['status', 'inactive'], ['area_hectares', null], ['area_hectares', 0]] as [$field, $value]) {
             try {
                 $parcel->fresh()->update($field === 'area_hectares'
-                    ? ['area_hectares' => null, 'area_square_meters' => null]
+                    ? ['area_hectares' => $value, 'area_square_meters' => $value]
                     : [$field => $value]);
                 $this->fail('The smallest active allocation must remain protected.');
             } catch (ValidationException $e) {
