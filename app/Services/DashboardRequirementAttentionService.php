@@ -52,7 +52,7 @@ class DashboardRequirementAttentionService
                     $counts[$key]++;
                     $previews[$key][] = [
                         'id' => (int) $application->id,
-                        'updated_at' => $application->updated_at?->getTimestamp() ?? PHP_INT_MIN,
+                        'updated_at' => $application->updated_at?->getTimestamp() ?? PHP_INT_MAX,
                     ];
                 }
 
