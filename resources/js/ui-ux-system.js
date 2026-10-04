@@ -358,10 +358,12 @@ function addSubmitState() {
             const submit = event.submitter?.form === form ? event.submitter
                 : Array.from(form.elements).find(control => control.matches('button[type="submit"]') && control.form === form);
             if (!(submit instanceof HTMLButtonElement)) return;
-            queueMicrotask(() => {
+            // Native events can run microtasks between listeners. Wait for all
+            // confirmation and validation handlers before accepting submission.
+            window.setTimeout(() => {
                 if (event.defaultPrevented) return;
                 beginSubmission(form, submit);
-            });
+            }, 0);
         });
     });
 }
