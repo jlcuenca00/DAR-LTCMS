@@ -264,6 +264,8 @@ Route::middleware(['auth', 'role:geodetic'])
     ->prefix('geodetic')
     ->name('geodetic.')
     ->group(function () {
+        Route::get('/parcel-directory', \App\Http\Controllers\Geodetic\ParcelDirectoryController::class)
+            ->name('parcels.directory');
         Route::get('/parcels', [GeodeticPortalController::class, 'parcels'])
             ->name('parcels.index');
         Route::get('/parcel-map', [GeodeticParcelMapController::class, 'index'])

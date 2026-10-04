@@ -214,7 +214,7 @@
                         <h2 class="geo-dashboard-panel-title">Recently Updated Parcel Records</h2>
                         <p class="geo-dashboard-panel-copy">Latest parcel references available for technical and map review. Select any row to review its details.</p>
                     </div>
-                    <a href="{{ route('geodetic.parcels.index') }}" class="geo-dashboard-link">View all →</a>
+                    <a href="{{ route('geodetic.parcels.directory') }}" class="geo-dashboard-link">View all →</a>
                 </header>
 
                 @if ($recentParcels->isEmpty())

@@ -175,7 +175,7 @@
                 <p class="geo-map-subtitle">Return to the provincial parcel extent or open the reference list.</p>
                 <div class="geo-map-tools">
                     <button type="button" id="reset-map-view" class="geo-map-button primary"><i class="fa-solid fa-expand" aria-hidden="true"></i>Reset View</button>
-                    <a href="{{ route('geodetic.parcels.index') }}" class="geo-map-button"><i class="fa-solid fa-list" aria-hidden="true"></i>Parcel References</a>
+                    <a href="{{ route('geodetic.parcels.directory') }}" class="geo-map-button"><i class="fa-solid fa-list" aria-hidden="true"></i>Parcel References</a>
                 </div>
             </article>
 

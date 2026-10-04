@@ -25,15 +25,17 @@ class ParcelMapController extends Controller
         return view('geodetic.maps.parcel-map', compact('mapConfig'));
     }
 
-    public function awaitingGeometry()
+    public function awaitingGeometry(Request $request)
     {
+        $data = $request->validate(['page' => ['nullable', 'integer', 'min:1']]);
+
         $query = Parcel::query()
             ->whereNull('geometry_geojson')
             ->where('status', '!=', 'inactive');
 
         $count = (clone $query)->count();
 
-        $parcels = $query
+        $page = $query
             ->select([
                 'id',
                 'parcel_code',
@@ -45,9 +47,10 @@ class ParcelMapController extends Controller
                 'created_at',
             ])
             ->oldest('created_at')
-            ->limit(8)
-            ->get()
-            ->map(fn (Parcel $parcel) => [
+            ->orderBy('id')
+            ->paginate(8, ['*'], 'page', $data['page'] ?? 1);
+
+        $parcels = $page->getCollection()->map(fn (Parcel $parcel) => [
                 'id' => $parcel->id,
                 'parcel_code' => $parcel->parcel_code,
                 'title_no' => $parcel->title_no ?: 'No title reference',
@@ -64,6 +67,10 @@ class ParcelMapController extends Controller
         return response()->json([
             'count' => $count,
             'parcels' => $parcels,
+            'page' => $page->currentPage(),
+            'last_page' => $page->lastPage(),
+            'next_page_url' => $page->nextPageUrl(),
+            'directory_url' => route('geodetic.parcels.directory', ['geometry' => 'unmapped', 'status' => 'active']),
         ]);
     }
 
