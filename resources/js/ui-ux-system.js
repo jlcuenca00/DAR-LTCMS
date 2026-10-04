@@ -116,6 +116,12 @@ function selectToRadio(select, config = {}) {
         options.appendChild(optionLabel);
     });
 
+    select.addEventListener('change', () => {
+        options.querySelectorAll('input[type="radio"]').forEach(radio => {
+            radio.checked = radio.value === select.value;
+        });
+    });
+
     fieldset.appendChild(options);
     select.dataset.uiRadioEnhanced = 'true';
     select.classList.add('ui-native-select-fallback');
@@ -286,36 +292,53 @@ function enhanceLogin() {
     if (help) help.textContent = 'Forgot password?';
 }
 
+function resetSubmitStates() {
+    document.querySelectorAll('form[data-ui-submitting]').forEach(form => {
+        delete form.dataset.uiSubmitting;
+    });
+    document.querySelectorAll('button[data-ui-busy="true"]').forEach(button => {
+        if (button.dataset.uiOriginalText !== undefined) button.innerHTML = button.dataset.uiOriginalText;
+        delete button.dataset.uiBusy;
+        delete button.dataset.uiOriginalText;
+        button.removeAttribute('aria-busy');
+        button.removeAttribute('aria-disabled');
+    });
+}
+
+window.addEventListener('pageshow', event => {
+    if (event.persisted) resetSubmitStates();
+});
+
 function addSubmitState() {
     const forms = document.querySelectorAll([
-        '.application-create-page form',
-        '.parcel-create-layout',
-        '.user-editor-wrap form',
-        '.profile-form',
+        '.application-create-page form', '.parcel-create-layout',
+        '.user-editor-wrap form', '.profile-form',
     ].join(','));
 
-    forms.forEach((form) => {
+    forms.forEach(form => {
         if (form.dataset.uiSubmitState === 'true') return;
         form.dataset.uiSubmitState = 'true';
 
-        form.addEventListener('submit', () => {
+        form.addEventListener('submit', event => {
+            if (form.dataset.uiSubmitting === 'true') {
+                event.preventDefault();
+                return;
+            }
             if (!form.checkValidity()) return;
-            const submit = form.querySelector('button[type="submit"]');
-            if (!submit || submit.dataset.uiBusy === 'true') return;
-
-            submit.dataset.uiBusy = 'true';
-            submit.setAttribute('aria-busy', 'true');
-            submit.setAttribute('aria-disabled', 'true');
-            submit.dataset.uiOriginalText = submit.innerHTML;
-
-            const label = /create|add/i.test(submit.textContent) ? 'Creating…'
-                : /upload/i.test(submit.textContent) ? 'Uploading…'
-                : /change password/i.test(submit.textContent) ? 'Updating…'
-                : 'Saving…';
-
-            submit.innerHTML = `<span aria-hidden="true">⏳</span><span>${label}</span>`;
-            submit.addEventListener('click', (event) => {
-                if (submit.dataset.uiBusy === 'true') event.preventDefault();
+            const submit = event.submitter?.form === form ? event.submitter
+                : Array.from(form.elements).find(control => control.matches('button[type="submit"]') && control.form === form);
+            if (!(submit instanceof HTMLButtonElement)) return;
+            queueMicrotask(() => {
+                if (event.defaultPrevented) return;
+                form.dataset.uiSubmitting = 'true';
+                submit.dataset.uiBusy = 'true';
+                submit.setAttribute('aria-busy', 'true');
+                submit.setAttribute('aria-disabled', 'true');
+                submit.dataset.uiOriginalText = submit.innerHTML;
+                const label = /create|add/i.test(submit.textContent) ? 'Creating…'
+                    : /upload/i.test(submit.textContent) ? 'Uploading…'
+                    : /change password/i.test(submit.textContent) ? 'Updating…' : 'Saving…';
+                submit.innerHTML = '<span aria-hidden="true">⏳</span><span>' + label + '</span>';
             });
         });
     });

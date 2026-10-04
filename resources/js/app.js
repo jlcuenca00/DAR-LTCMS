@@ -1,6 +1,7 @@
 import './bootstrap';
 import './responsive-tables';
 import './remote-record-select';
+import './form-drafts';
 import '../css/responsive.css';
 import '../css/responsive-no-scroll.css';
 import '../css/responsive-table-cards.css';
