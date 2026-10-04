@@ -116,7 +116,10 @@ class LandownerDashboardController extends Controller
             ->whereHas('activeComplianceNotice')
             ->with('activeComplianceNotice')
             ->latest('returned_for_compliance_at')
-            ->get();
+            ->orderByDesc('id')
+            ->paginate(5, ['*'], 'compliance_page')
+            ->withQueryString()
+            ->fragment('compliance-alerts');
 
         $recentApplications = (clone $applicationQuery)
             ->with('activeComplianceNotice')

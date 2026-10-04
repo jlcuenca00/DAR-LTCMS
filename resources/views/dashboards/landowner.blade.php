@@ -314,7 +314,10 @@
         </article>
 
         @if ($complianceApplications->isNotEmpty())
-            <section class="lo-compliance-alerts" aria-label="Applications requiring your attention">
+            <section id="compliance-alerts" class="lo-compliance-alerts" aria-label="Applications requiring your attention">
+                <p class="lo-dashboard-panel-copy" role="status">
+                    Showing {{ $complianceApplications->firstItem() }}–{{ $complianceApplications->lastItem() }} of {{ $complianceApplications->total() }} applications requiring your attention.
+                </p>
                 @foreach ($complianceApplications as $application)
                     @php($notice = $application->activeComplianceNotice)
                     @if ($notice)
@@ -335,12 +338,15 @@
                                 @endif
                             </div>
 
-                            <a href="{{ route('landowner.applications.index') }}#application-{{ $application->id }}" class="lo-compliance-alert-link">
+                            <a href="{{ route('landowner.applications.index', ['application' => $application->id]) }}#application-{{ $application->id }}" class="lo-compliance-alert-link">
                                 View Details
                             </a>
                         </article>
                     @endif
                 @endforeach
+                @if ($complianceApplications->hasPages())
+                    <nav aria-label="Compliance alert pages">{{ $complianceApplications->links() }}</nav>
+                @endif
             </section>
         @endif
 
