@@ -197,7 +197,6 @@ function initDarLtcmsProfileCropper() {
                 requestAnimationFrame(() => {
                     if (modal.hasAttribute('hidden')) return;
                     resetCrop();
-                    saveButton.focus();
                 });
             }
 
@@ -475,4 +474,3 @@ if (document.readyState === 'loading') {
 } else {
     initDarLtcmsResponsivePublicNavigation();
 }
-
