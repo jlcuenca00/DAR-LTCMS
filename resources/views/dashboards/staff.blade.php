@@ -493,7 +493,7 @@
         </style>
     </x-slot>
 
-    <div class="staff-dashboard">
+    <div class="staff-dashboard" data-dashboard-attention="{{ $attentionFilter }}">
         <section class="dashboard-hero" aria-label="Clearance operations">
             <div>
                 <h2 class="hero-title">Welcome, {{ auth()->user()->name }}.</h2>
@@ -649,57 +649,4 @@
         </section>
     </div>
 
-    <x-slot name="scripts">
-        <script>
-            document.addEventListener('DOMContentLoaded', function () {
-                const filterButtons = Array.from(document.querySelectorAll('[data-dashboard-filter]'));
-                const applicationRows = Array.from(document.querySelectorAll('[data-dashboard-status]'));
-                const emptyRow = document.querySelector('[data-dashboard-filter-empty]');
-
-                if (!filterButtons.length || !applicationRows.length) {
-                    return;
-                }
-
-                const activeWorkflowStatuses = ['endorsed_lti', 'endorsed_chief_legal', 'endorsed_parpo'];
-                const pendingLegalStatuses = ['pending_legal_review', 'pending_review', 'draft'];
-
-                filterButtons.forEach(function (button) {
-                    button.addEventListener('click', function () {
-                        const selectedFilter = button.dataset.dashboardFilter;
-                        const wasActive = button.getAttribute('aria-pressed') === 'true';
-                        let visibleCount = 0;
-
-                        filterButtons.forEach(function (candidate) {
-                            candidate.classList.remove('is-active');
-                            candidate.setAttribute('aria-pressed', 'false');
-                        });
-
-                        if (!wasActive) {
-                            button.classList.add('is-active');
-                            button.setAttribute('aria-pressed', 'true');
-                        }
-
-                        applicationRows.forEach(function (row) {
-                            const status = row.dataset.dashboardStatus;
-                            const isVisible = wasActive
-                                || (selectedFilter === 'active_workflow'
-                                    ? activeWorkflowStatuses.includes(status)
-                                    : (selectedFilter === 'pending_legal_review'
-                                        ? pendingLegalStatuses.includes(status)
-                                        : status === selectedFilter));
-
-                            row.hidden = !isVisible;
-                            if (isVisible) {
-                                visibleCount += 1;
-                            }
-                        });
-
-                        if (emptyRow) {
-                            emptyRow.hidden = visibleCount !== 0;
-                        }
-                    });
-                });
-            });
-        </script>
-    </x-slot>
 </x-staff-shell>

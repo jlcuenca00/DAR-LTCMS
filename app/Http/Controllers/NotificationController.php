@@ -42,6 +42,27 @@ class NotificationController extends Controller
         return back()->with('success', 'Notification marked as read.');
     }
 
+    public function markVisibleAsRead(Request $request)
+    {
+        $validated = $request->validate([
+            'notification_ids' => ['required', 'array', 'min:1', 'max:5'],
+            'notification_ids.*' => ['required', 'integer', 'min:1', 'distinct'],
+        ]);
+
+        // Always scope through the recipient; supplied IDs cannot change another user's state.
+        $readIds = $request->user()->systemNotifications()
+            ->whereIn('id', $validated['notification_ids'])->pluck('id')->all();
+
+        $request->user()->systemNotifications()
+            ->whereIn('id', $readIds)->whereNull('read_at')->update(['read_at' => now()]);
+
+        return response()->json([
+            'ok' => true,
+            'read_ids' => $readIds,
+            'unread_count' => $request->user()->systemNotifications()->whereNull('read_at')->count(),
+        ]);
+    }
+
     public function markAllAsRead(Request $request)
     {
         $request->user()

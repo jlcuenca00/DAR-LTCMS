@@ -21,6 +21,7 @@ class EnsureMutationAudited
     private const EXCLUDED_ROUTES = [
         'notifications.read',
         'notifications.read-all',
+        'notifications.read-visible',
     ];
 
     public function handle(Request $request, Closure $next): Response

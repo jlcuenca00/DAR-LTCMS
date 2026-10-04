@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Landholding;
 use App\Models\Landowner;
 use App\Models\LandTransferApplication;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class LandownerPortalController extends Controller
@@ -31,8 +32,10 @@ class LandownerPortalController extends Controller
      *
      * A landowner may be either transferor or transferee.
      */
-    public function applications()
+    public function applications(Request $request)
     {
+        $validated = $request->validate(['application' => ['nullable', 'integer', 'min:1']]);
+        $focusedApplicationId = $validated['application'] ?? null;
         $landownerIds = Landowner::where('user_id', Auth::id())->pluck('id');
 
         $applications = LandTransferApplication::with([
@@ -43,10 +46,11 @@ class LandownerPortalController extends Controller
                 'activeComplianceNotice',
             ])
             ->linkedToLandownerIds($landownerIds)
+            ->when($focusedApplicationId, fn ($query) => $query->whereKey($focusedApplicationId))
             ->orderByDesc('created_at')
             ->paginate(15)
             ->withQueryString();
 
-        return view('landowner.applications.index', compact('applications'));
+        return view('landowner.applications.index', compact('applications', 'focusedApplicationId'));
     }
 }

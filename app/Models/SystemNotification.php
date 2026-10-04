@@ -61,7 +61,7 @@ class SystemNotification extends Model
                 }
 
                 if (Route::has('landowner.applications.index')) {
-                    return route('landowner.applications.index') . '#application-' . $this->related_id;
+                    return route('landowner.applications.index', ['application' => $this->related_id]) . '#application-' . $this->related_id;
                 }
             }
         }
@@ -71,8 +71,10 @@ class SystemNotification extends Model
                 return route('staff.source-record-packages.show', $this->related_id);
             }
 
-            if ($viewer->role === User::ROLE_GEODETIC && Route::has('geodetic.parcels.index')) {
-                return route('geodetic.parcels.index');
+            if ($viewer->role === User::ROLE_GEODETIC && Route::has('geodetic.parcels.directory')) {
+                return route('geodetic.parcels.directory', array_filter([
+                    'q' => $this->data['parcel_code'] ?? null,
+                ]));
             }
         }
 

@@ -395,8 +395,15 @@
             </div>
         </article>
 
+        @if ($focusedApplicationId)
+            <p class="lo-app-copy">
+                Showing the application from your notification.
+                <a href="{{ route('landowner.applications.index') }}">View all applications</a>
+            </p>
+        @endif
+
         @if ($applications->isEmpty())
-            <div class="lo-app-empty">No clearance applications are currently linked to your landowner account.</div>
+            <div class="lo-app-empty">{{ $focusedApplicationId ? 'The selected application is not available for your account.' : 'No clearance applications are currently linked to your landowner account.' }}</div>
         @else
             <div class="lo-app-list">
                 @foreach ($applications as $application)

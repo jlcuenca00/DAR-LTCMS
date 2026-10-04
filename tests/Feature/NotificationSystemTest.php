@@ -374,7 +374,7 @@ class NotificationSystemTest extends TestCase
         $this->assertSame($notice->id, $notification->data['compliance_notice_id']);
         $this->assertSame($details, $notification->data['details']);
         $this->assertSame(
-            route('landowner.applications.index') . '#application-' . $application->id,
+            route('landowner.applications.index', ['application' => $application->id]) . '#application-' . $application->id,
             $notification->targetUrlFor($landownerUser)
         );
 
@@ -525,7 +525,7 @@ class NotificationSystemTest extends TestCase
         $this->assertArrayNotHasKey('transferor_name', $notification->data);
         $this->assertArrayNotHasKey('transferee_name', $notification->data);
         $this->assertSame(
-            route('landowner.applications.index') . '#application-' . $application->id,
+            route('landowner.applications.index', ['application' => $application->id]) . '#application-' . $application->id,
             $notification->targetUrlFor($landownerUser)
         );
     }
@@ -799,7 +799,7 @@ class NotificationSystemTest extends TestCase
         ]);
 
         $this->assertSame(
-            route('landowner.applications.index') . '#application-' . $application->id,
+            route('landowner.applications.index', ['application' => $application->id]) . '#application-' . $application->id,
             $decisionNotification->targetUrlFor($landownerUser)
         );
         $this->assertSame(

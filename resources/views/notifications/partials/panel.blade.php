@@ -35,10 +35,13 @@
         @endif
     </div>
 
+    <p data-notification-read-status role="status" aria-live="polite" hidden></p>
+
     <div class="notification-dropdown-list">
         @forelse ($notifications as $notification)
             <a href="{{ route('notifications.open', $notification) }}"
                class="notification-dropdown-item {{ $notification->read_at ? '' : 'is-unread' }}"
+               data-notification-id="{{ $notification->id }}"
                role="menuitem">
                 <div class="notification-dropdown-dot" aria-hidden="true"></div>
                 <div class="notification-dropdown-copy">
