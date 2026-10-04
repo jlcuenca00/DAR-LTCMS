@@ -153,3 +153,14 @@ test('source package reload preserves mode, included sections and scope', async 
     await expect(page.locator('[data-source-package-mode]')).toHaveValue('title');
     await expect(page.locator('[name="title_number"]')).toHaveValue('Draft title');
 });
+
+test('older drafts preserve remote record IDs without stored option metadata', async ({ page }) => {
+    await page.goto('/login');
+    await page.setContent('<form data-autosave-key="legacy-fixture"><select name="parcel_id" data-remote-record-control><option value="">No link</option></select></form>');
+    await page.evaluate(() => localStorage.setItem('dar_ltcms_form_draft:legacy-fixture', JSON.stringify({
+        path: location.pathname, data: { parcel_id: '12345' },
+    })));
+    await page.addScriptTag({ content: '(() => {' + drafts + '})();' });
+    await expect(page.locator('select')).toHaveValue('12345');
+    await expect(page.locator('option:checked')).toHaveText('Record #12345');
+});
