@@ -151,7 +151,8 @@ function initFormDrafts() {
     });
 }
 
-if (document.readyState === 'loading') {
+// Deferred modules execute while the document is interactive, before inline DOMContentLoaded handlers.
+if (document.readyState !== 'complete') {
     document.addEventListener('DOMContentLoaded', initFormDrafts, { once: true });
 } else initFormDrafts();
 
