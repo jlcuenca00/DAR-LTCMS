@@ -2693,7 +2693,7 @@
     @endphp
 
     <div class="application-review-page">
-        <p id="decision-submit-status" data-ui-submit-status role="status" aria-live="polite" hidden></p>
+        <p id="decision-submit-status" class="review-note-box" data-ui-submit-status role="status" aria-live="polite" tabindex="-1" hidden></p>
         @if (session('success'))
             <div class="review-alert review-alert-success">
                 {{ session('success') }}
@@ -4570,6 +4570,8 @@
                 decisionModal.setAttribute('aria-hidden', 'true');
                 document.body.style.overflow = '';
                 window.DarDialogFocus?.close(decisionModal, { restoreFocus: false });
+                status?.focus();
+                status?.scrollIntoView({ block: 'nearest' });
                 form.submit();
             });
         });

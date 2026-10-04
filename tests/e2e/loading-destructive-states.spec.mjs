@@ -88,7 +88,7 @@ test('removal feedback respects cancellation and validity, prevents repeats and 
 test('final approval cancellation stays editable and confirmation submits once with visible feedback', async ({ page }) => {
     await page.goto('/login');
     await page.setContent('<div class="application-review-page">' +
-        '<p id="decision-submit-status" data-ui-submit-status role="status" hidden></p>' +
+        '<p id="decision-submit-status" data-ui-submit-status role="status" tabindex="-1" hidden></p>' +
         '<button id="opener" data-workflow-modal-open>Manage workflow</button><a id="background" href="#">Background</a>' +
         '<div id="workflow-modal" aria-hidden="true"><div role="dialog"><button id="workflow-modal-close-top">Close</button>' +
         '<form id="approval" data-submit-feedback data-decision-confirm="approve">' +
@@ -111,6 +111,7 @@ test('final approval cancellation stays editable and confirmation submits once w
     await page.locator('#approve').click();
     await page.locator('#decision-confirm-submit').click();
     await expect(page.locator('#decision-submit-status')).toBeVisible();
+    await expect(page.locator('#decision-submit-status')).toBeFocused();
     await expect(page.locator('#decision-submit-status')).toContainText('Recording the Approved decision');
     await page.locator('#decision-confirm-submit').evaluate(button => { button.click(); button.click(); });
     expect(await page.evaluate(() => window.__submissions)).toEqual([{
