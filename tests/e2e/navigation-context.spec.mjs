@@ -8,7 +8,7 @@ const polishCss = readFileSync('resources/css/mobile-portal-polish.css', 'utf8')
 
 test('Staff compact navigation contains Dashboard and follows its destination', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
-    await page.setContent(`<div class="staff-shell">
+    await page.setContent(`<meta name="viewport" content="width=device-width, initial-scale=1"><div class="staff-shell">
         <aside class="staff-sidebar"><div class="staff-brand"><span class="staff-brand-mark">DAR</span></div>
         ${[
             ['Dashboard', '/staff/dashboard'], ['Applications', '/staff/applications'],
@@ -18,7 +18,7 @@ test('Staff compact navigation contains Dashboard and follows its destination', 
         ].map(([label, url], i) => `<a class="staff-side-link ${i === 0 ? 'active' : ''}" href="https://fixture.test${url}">${label}</a>`).join('')}
         </aside><main><header class="staff-topbar"><div class="staff-topbar-actions"></div></header></main>
         </div>`);
-    await page.addScriptTag({ content: navigation });
+    await page.addScriptTag({ content: '(() => {' + navigation + '})();' });
     const nav = page.getByRole('navigation', { name: 'Staff portal navigation', exact: true });
     await expect(nav.locator(':scope > a')).toHaveCount(4);
     const dashboard = nav.getByRole('link', { name: 'Dashboard', exact: true });
@@ -34,7 +34,7 @@ test('Staff compact navigation contains Dashboard and follows its destination', 
 
 test('Geodetic phone scope describes geometry access and survives desktop resize', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
-    await page.setContent(`<div class="geo-shell">
+    await page.setContent(`<meta name="viewport" content="width=device-width, initial-scale=1"><div class="geo-shell">
         <aside class="geo-sidebar"><div class="geo-brand"><span class="geo-brand-mark">DAR</span></div>
         <a class="geo-nav-link" href="https://fixture.test/geodetic/dashboard">Dashboard</a>
         <a class="geo-nav-link" href="https://fixture.test/geodetic/parcel-map">Parcel Map</a>
@@ -42,8 +42,8 @@ test('Geodetic phone scope describes geometry access and survives desktop resize
         </aside><main><header class="geo-topbar"><div class="geo-topbar-right">
         <span class="geo-access-chip">Limited Access</span></div></header></main></div>`);
     await page.addStyleTag({ content: polishCss });
-    await page.addScriptTag({ content: navigation });
-    await page.addScriptTag({ content: polish });
+    await page.addScriptTag({ content: '(() => {' + navigation + '})();' });
+    await page.addScriptTag({ content: '(() => {' + polish + '})();' });
     const chip = page.locator('.geo-access-chip');
     await expect(page.locator('.dar-mobile-portal-actions .geo-access-chip')).toHaveCount(1);
     await expect(chip).toHaveAttribute('data-mobile-access-label', 'Geometry');
