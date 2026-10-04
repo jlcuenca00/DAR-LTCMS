@@ -44,6 +44,8 @@ test('parcel viewer keeps one tooltip and cleans overlays before redraws', async
     await page.addScriptTag({ content: viewer });
     await page.evaluate(() => initializeParcelMapViewer());
     await expect(page.locator('#parcel-map .leaflet-overlay-pane path')).toHaveCount(2);
+    // resetView also schedules a debounced moveend reload. Finish it before opening overlays.
+    await expect.poll(() => page.evaluate(() => window.viewportLoads)).toBeGreaterThan(1);
     await page.evaluate(() => {
         const parcelLayers = [];
         window.fixtureMap.eachLayer(layer => { if (layer.getTooltip?.()) parcelLayers.push(layer); });

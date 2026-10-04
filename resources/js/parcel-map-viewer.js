@@ -209,6 +209,9 @@ function initializeParcelMapViewer() {
         activeTooltip = tooltip;
     });
     map.on('tooltipclose', ({ tooltip }) => {
+        // Leaflet otherwise retains a closed overlay for its 200ms fade-out.
+        // Remove this parcel overlay immediately so redraws cannot leave ghosts.
+        tooltip.getElement()?.remove();
         if (activeTooltip === tooltip) activeTooltip = null;
     });
     window.L.control.zoom({ position: 'topright' }).addTo(map);
