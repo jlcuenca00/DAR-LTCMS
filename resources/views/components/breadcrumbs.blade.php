@@ -38,7 +38,7 @@
         $add('Dashboard', 'geodetic.dashboard');
 
         $groups = [
-            'geodetic.parcels.' => ['Parcel Records', 'geodetic.parcels.index'],
+            'geodetic.parcels.' => ['Parcel Records', 'geodetic.parcels.directory'],
             'geodetic.parcel-map.' => ['Parcel Map', 'geodetic.parcel-map.index'],
         ];
     } else {

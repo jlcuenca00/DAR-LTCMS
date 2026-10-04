@@ -712,7 +712,7 @@
                         Parcel Map
                     </a>
 
-                    <a href="{{ route('geodetic.parcels.index') }}" class="geo-nav-link {{ $active === 'parcels' ? 'active' : '' }}">
+                    <a href="{{ route('geodetic.parcels.directory') }}" class="geo-nav-link {{ $active === 'parcels' ? 'active' : '' }}">
                         <i class="fa-solid fa-draw-polygon"></i>
                         Parcel References
                     </a>
