@@ -3243,7 +3243,7 @@
                     @foreach (['transferor' => $transferorRows, 'transferee' => $transfereeRows] as $partySingular => $partyRows)
                         @foreach ($partyRows as $partyIndex => $partyRow)
                             @if (! data_get($partyRow, 'landowner_id'))
-                                <form id="create-{{ $partySingular }}-{{ $partyIndex }}"
+                                <form data-submit-feedback id="create-{{ $partySingular }}-{{ $partyIndex }}"
                                       method="POST"
                                       action="{{ route('staff.applications.landowner-records.create', $application) }}"
                                       class="hidden">
