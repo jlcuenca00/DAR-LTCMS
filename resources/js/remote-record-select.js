@@ -29,6 +29,7 @@ function initRemoteRecordSelect(container) {
     let debounceTimer = null;
     let activeRequest = null;
     let hasLoaded = false;
+    let requestGeneration = 0;
 
     const setStatus = (message) => {
         if (status) status.textContent = message;
@@ -102,7 +103,9 @@ function initRemoteRecordSelect(container) {
             activeRequest.abort();
         }
 
-        activeRequest = new AbortController();
+        const request = new AbortController();
+        activeRequest = request;
+        const generation = ++requestGeneration;
         setStatus('Searching records…');
 
         try {
@@ -119,7 +122,7 @@ function initRemoteRecordSelect(container) {
                     Accept: 'application/json',
                     'X-Requested-With': 'XMLHttpRequest',
                 },
-                signal: activeRequest.signal,
+                signal: request.signal,
             });
 
             if (!response.ok) {
@@ -127,22 +130,33 @@ function initRemoteRecordSelect(container) {
             }
 
             const payload = await response.json();
-            renderResults(Array.isArray(payload.results) ? payload.results : []);
+            if (generation !== requestGeneration) return;
+            if (!Array.isArray(payload?.results) || !payload.results.every(result =>
+                result && Number.isSafeInteger(result.id) && result.id > 0 && typeof result.text === 'string'
+            )) {
+                throw new Error('Invalid lookup response.');
+            }
+            renderResults(payload.results);
             hasLoaded = true;
         } catch (error) {
-            if (error.name !== 'AbortError') {
+            if (generation === requestGeneration && error.name !== 'AbortError') {
                 setStatus('Unable to load records. Try searching again.');
             }
         }
     };
 
     searchInput.addEventListener('input', () => {
+        requestGeneration += 1;
+        activeRequest?.abort();
+        hasLoaded = false;
+        setStatus('Searching records…');
         window.clearTimeout(debounceTimer);
         debounceTimer = window.setTimeout(load, 250);
     });
 
     searchInput.addEventListener('focus', () => {
         if (!hasLoaded) {
+            window.clearTimeout(debounceTimer);
             load();
         }
     });

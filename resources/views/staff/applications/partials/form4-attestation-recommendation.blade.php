@@ -273,7 +273,7 @@
             </a>
         </div>
 
-        <form method="POST" action="{{ route('staff.applications.form4.update', $application) }}" class="ltc-form4-workspace">
+        <form data-submit-feedback method="POST" action="{{ route('staff.applications.form4.update', $application) }}" class="ltc-form4-workspace">
             @csrf
             <input type="hidden" name="expected_workflow_revision" value="{{ old('expected_workflow_revision', $application->workflow_revision) }}">
             @method('PATCH')

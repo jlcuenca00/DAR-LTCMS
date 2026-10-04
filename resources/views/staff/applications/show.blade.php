@@ -2693,6 +2693,7 @@
     @endphp
 
     <div class="application-review-page">
+        <p id="decision-submit-status" class="review-note-box" data-ui-submit-status role="status" aria-live="polite" tabindex="-1" hidden></p>
         @if (session('success'))
             <div class="review-alert review-alert-success">
                 {{ session('success') }}
@@ -3023,7 +3024,7 @@
                                 </div>
 
                                 @unless ($isFinal)
-                                    <form method="POST" action="{{ route('staff.applications.parcels.destroy', [$application, $linkedParcel]) }}" onsubmit="return confirm('Remove this linked parcel reference from the application review?');">
+                                    <form data-submit-feedback method="POST" action="{{ route('staff.applications.parcels.destroy', [$application, $linkedParcel]) }}" data-remove-confirmation="{{ 'Remove parcel reference “'.($linkedParcel->parcel_code ?? $linkedParcel->parcel?->parcel_code ?? 'Parcel reference').'” from application '.$application->application_code.'? This removes its application link and associated party shares. The main parcel record remains preserved.' }}" onsubmit="return confirm(this.dataset.removeConfirmation);">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit" class="staff-button staff-button-light">
@@ -3038,7 +3039,7 @@
                 @endif
 
                 @unless ($isFinal)
-                    <form method="POST" action="{{ route('staff.applications.parcels.store', $application) }}" class="application-parcel-form" data-application-parcel-form>
+                    <form data-submit-feedback method="POST" action="{{ route('staff.applications.parcels.store', $application) }}" class="application-parcel-form" data-application-parcel-form>
                         @csrf
 
                         <div>
@@ -3093,7 +3094,7 @@
             </div>
 
             <div class="review-panel-body">
-                <form method="POST" action="{{ route('staff.applications.landowner-links.update', $application) }}">
+                <form data-submit-feedback method="POST" action="{{ route('staff.applications.landowner-links.update', $application) }}">
                     @csrf
                     <input type="hidden" name="expected_workflow_revision" value="{{ old('expected_workflow_revision', $application->workflow_revision) }}">
                     <input type="hidden" name="expected_party_dependency" value="{{ old('expected_party_dependency', $partyLinkDependencyFingerprint) }}">
@@ -3242,7 +3243,7 @@
                     @foreach (['transferor' => $transferorRows, 'transferee' => $transfereeRows] as $partySingular => $partyRows)
                         @foreach ($partyRows as $partyIndex => $partyRow)
                             @if (! data_get($partyRow, 'landowner_id'))
-                                <form id="create-{{ $partySingular }}-{{ $partyIndex }}"
+                                <form data-submit-feedback id="create-{{ $partySingular }}-{{ $partyIndex }}"
                                       method="POST"
                                       action="{{ route('staff.applications.landowner-records.create', $application) }}"
                                       class="hidden">
@@ -3583,11 +3584,12 @@
                                                     Edit
                                                 </button>
 
-                                                <form method="POST"
+                                                <form data-submit-feedback method="POST"
                                                       action="{{ route('staff.applications.documents.destroy', ['application' => $application->id, 'requiredDocument' => $req->id]) }}"
                                                       class="document-remove-form"
                                                       data-preserve-scroll
-                                                      onsubmit="return confirm('Remove this requirement record? This cannot be undone.');">
+                                                      data-remove-confirmation="{{ 'Remove requirement “'.$reqDisplayName.'”'.($doc?->original_filename ? ' ('.$doc->original_filename.')' : '').' from application '.$application->application_code.'? Its saved requirement details and uploaded file will be deleted. The source reference records and audit history remain preserved. This cannot be undone.' }}"
+                                                      onsubmit="return confirm(this.dataset.removeConfirmation);">
                                                     @csrf
                     <input type="hidden" name="expected_workflow_revision" value="{{ old('expected_workflow_revision', $application->workflow_revision) }}">
                                                     @method('DELETE')
@@ -3608,7 +3610,7 @@
                                                     </div>
                                                 </div>
 
-                                                <form method="POST"
+                                                <form data-submit-feedback method="POST"
                                                       action="{{ route('staff.applications.documents.store', ['application' => $application->id, 'requiredDocument' => $req->id]) }}"
                                                       enctype="multipart/form-data"
                                                       class="document-form-section"
@@ -3650,7 +3652,7 @@
                                         @endif
                                     </div>
                                 @else
-                                    <form method="POST"
+                                    <form data-submit-feedback method="POST"
                                           action="{{ route('staff.applications.documents.store', ['application' => $application->id, 'requiredDocument' => $req->id]) }}"
                                           enctype="multipart/form-data"
                                           class="document-upload-panel"
@@ -4009,7 +4011,7 @@
                 @elseif ($canAdvanceWorkflow || $canApprove || $canRequestCompliance || $canResolveCompliance)
                     <div class="workflow-decision-grid {{ collect([$canAdvanceWorkflow, $canApprove, $canRequestCompliance, $canResolveCompliance])->filter()->count() === 1 ? 'is-single' : '' }}">
                         @if ($canAdvanceWorkflow)
-                            <form method="POST" action="{{ route('staff.applications.submit', $application) }}" class="workflow-decision-card approve-card">
+                            <form data-submit-feedback method="POST" action="{{ route('staff.applications.submit', $application) }}" class="workflow-decision-card approve-card">
                                 @csrf
                                 <input type="hidden" name="expected_status" value="{{ $application->status }}">
                                 <input type="hidden" name="expected_workflow_revision" value="{{ $application->workflow_revision }}">
@@ -4042,7 +4044,7 @@
                         @endif
 
                         @if ($canApprove)
-                            <form method="POST" action="{{ route('staff.applications.approve', $application) }}" class="workflow-decision-card approve-card" data-decision-confirm="approve">
+                            <form data-submit-feedback method="POST" action="{{ route('staff.applications.approve', $application) }}" class="workflow-decision-card approve-card" data-decision-confirm="approve">
                                 @csrf
                                 <input type="hidden" name="expected_status" value="{{ $application->status }}">
                                 <input type="hidden" name="expected_workflow_revision" value="{{ $application->workflow_revision }}">
@@ -4088,7 +4090,7 @@
                         @endif
 
                         @if ($canRequestCompliance)
-                            <form method="POST" action="{{ route('staff.applications.compliance.request', $application) }}" class="workflow-decision-card compliance-card" data-compliance-request-form>
+                            <form data-submit-feedback method="POST" action="{{ route('staff.applications.compliance.request', $application) }}" class="workflow-decision-card compliance-card" data-compliance-request-form>
                                 @csrf
                                 <input type="hidden" name="expected_status" value="{{ $application->status }}">
                                 <input type="hidden" name="expected_workflow_revision" value="{{ $application->workflow_revision }}">
@@ -4145,7 +4147,7 @@
                         @endif
 
                         @if ($canResolveCompliance && $activeComplianceNotice)
-                            <form method="POST" action="{{ route('staff.applications.compliance.resolve', $application) }}" class="workflow-decision-card approve-card">
+                            <form data-submit-feedback method="POST" action="{{ route('staff.applications.compliance.resolve', $application) }}" class="workflow-decision-card approve-card">
                                 @csrf
                                 <input type="hidden" name="expected_status" value="{{ $application->status }}">
                                 <input type="hidden" name="expected_workflow_revision" value="{{ $application->workflow_revision }}">
@@ -4545,6 +4547,14 @@
                 }
 
                 const form = pendingDecisionForm;
+                if (form.dataset.uiSubmitting === 'true' || !form.reportValidity()) return;
+                if (window.DarSubmitState) window.DarSubmitState.begin(form, decisionModalSubmit);
+                else form.dataset.uiSubmitting = 'true';
+                const status = document.getElementById('decision-submit-status');
+                if (status) {
+                    status.textContent = 'Recording the Approved decision… Please wait for confirmation.';
+                    status.hidden = false;
+                }
                 let confirmationInput = form.querySelector('input[name="final_decision_confirmation"]');
 
                 if (! confirmationInput) {
@@ -4560,6 +4570,8 @@
                 decisionModal.setAttribute('aria-hidden', 'true');
                 document.body.style.overflow = '';
                 window.DarDialogFocus?.close(decisionModal, { restoreFocus: false });
+                status?.focus();
+                status?.scrollIntoView({ block: 'nearest' });
                 form.submit();
             });
         });
