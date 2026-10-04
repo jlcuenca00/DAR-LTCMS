@@ -99,6 +99,14 @@ test('lookup labels name the select and dynamic search inputs have separate acce
     await expect(page.getByRole('searchbox', { name:'Search Transferor Landowner Record' })).toHaveCount(2);
     const ids = await page.locator('select').evaluateAll(nodes => nodes.map(node => node.id));
     expect(new Set(ids).size).toBe(2);
+    await page.locator('.application-create-page').evaluate(node => node.insertAdjacentHTML('beforeend',
+        '<div class="user-field"><label for="native-record">Linked Landowner Record</label>' +
+        '<div data-remote-record-select data-lookup-url="/lookup"><input type="search" data-remote-record-search>' +
+        '<select id="native-record" data-remote-record-control><option>None</option></select>' +
+        '<p data-remote-record-status>Search records.</p></div></div>'));
+    await install(page, read('resources/js/remote-record-select.js'));
+    await expect(page.getByRole('searchbox', { name:'Search Linked Landowner Record' })).toHaveCount(1);
+    await expect(page.locator('[data-remote-record-status]')).toHaveAttribute('role', 'status');
 });
 
 test('clearing client errors preserves server errors and existing help descriptions', async ({ page }) => {
