@@ -96,12 +96,13 @@ function restoreDraft(form, draft) {
         } else {
             if (field.matches('[data-remote-record-control]') && value) {
                 const saved = draft.records?.[field.name];
-                if (saved && String(saved.value) === String(value)
-                    && !Array.from(field.options).some(option => option.value === String(value))) {
+                if (!Array.from(field.options).some(option => option.value === String(value))) {
+                    const record = saved && String(saved.value) === String(value) ? saved : null;
                     const option = document.createElement('option');
                     option.value = String(value);
-                    option.textContent = String(saved.text || 'Record #' + value);
-                    Object.entries(saved.meta || {}).forEach(([key, entry]) => {
+                    // Older drafts contain the ID only. Preserve it until a lookup supplies its current label.
+                    option.textContent = String(record?.text || 'Record #' + value);
+                    Object.entries(record?.meta || {}).forEach(([key, entry]) => {
                         if (/^[a-zA-Z][a-zA-Z0-9]*$/.test(key)) option.dataset[key] = String(entry);
                     });
                     field.appendChild(option);
