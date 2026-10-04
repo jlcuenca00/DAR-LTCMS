@@ -18,7 +18,7 @@ test('Geodetic directory discovers unlinked parcels and preserves search filters
     await expect(page.getByRole('status')).toContainText('25 matching parcel records');
     await expect(page.locator('.geo-directory-table tbody tr')).toHaveCount(20);
     await expect(page.locator('.geo-directory-table')).toContainText('0 reference records');
-    await page.locator('a[rel="next"]').click();
+    await page.locator('a[rel="next"]:visible').click();
     await expect(page.locator('.geo-directory-table tbody tr')).toHaveCount(5);
     await expect(page.locator('.geo-directory-table')).toContainText('E2E-DIR-025');
     await expect(page.getByLabel('Geometry', { exact: true })).toHaveValue('unmapped');

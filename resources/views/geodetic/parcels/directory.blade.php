@@ -4,7 +4,7 @@
         .geo-directory-panel { padding: 20px; background: #fff; border: 1px solid var(--geo-line); border-radius: 12px; min-width: 0; }
         .geo-directory-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
         .geo-directory-filters { display: grid; grid-template-columns: minmax(200px, 2fr) 1fr 1fr auto; align-items: end; gap: 12px; }
-        .geo-directory-filters label { display: grid; gap: 6px; font-size: 13px; font-weight: 700; }
+        .geo-directory-field { display: grid; gap: 6px; font-size: 13px; font-weight: 700; }
         .geo-directory-filters input, .geo-directory-filters select { width: 100%; min-height: 44px; padding: 8px; border: 1px solid #cbd5d1; border-radius: 8px; font: inherit; background: #fff; color: #111827; }
         .geo-directory-table-wrap { overflow-x: auto; }
         .geo-directory-table { width: 100%; border-collapse: collapse; font-size: 13px; }
@@ -35,23 +35,23 @@
         </article>
         <article class="geo-directory-panel">
             <form method="GET" action="{{ route('geodetic.parcels.directory') }}" class="geo-directory-filters">
-                <label for="directory-q">Search references, landowner or location
+                <div class="geo-directory-field"><label for="directory-q">Search references, landowner or location</label>
                     <input id="directory-q" type="search" name="q" maxlength="100" value="{{ $filters['q'] }}">
-                </label>
-                <label for="directory-geometry">Geometry
+                </div>
+                <div class="geo-directory-field"><label for="directory-geometry">Geometry</label>
                     <select id="directory-geometry" name="geometry">
                         @foreach (['all' => 'All geometry states', 'mapped' => 'Display bounds available', 'unmapped' => 'No geometry', 'unavailable' => 'Display bounds unavailable'] as $value => $label)
                             <option value="{{ $value }}" @selected($filters['geometry'] === $value)>{{ $label }}</option>
                         @endforeach
                     </select>
-                </label>
-                <label for="directory-status">Record status
+                </div>
+                <div class="geo-directory-field"><label for="directory-status">Record status</label>
                     <select id="directory-status" name="status">
                         @foreach (['active' => 'Active', 'inactive' => 'Archived', 'all' => 'All records'] as $value => $label)
                             <option value="{{ $value }}" @selected($filters['status'] === $value)>{{ $label }}</option>
                         @endforeach
                     </select>
-                </label>
+                </div>
                 <button class="geo-button geo-button-primary" type="submit">Search</button>
             </form>
             @if ($errors->any())
