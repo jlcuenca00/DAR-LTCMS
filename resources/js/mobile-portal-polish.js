@@ -25,7 +25,7 @@ const portalConfigs = [
         actions: '.geo-topbar-right',
         chip: '.geo-access-chip',
         help: '[data-onboarding-help="geodetic_portal"]',
-        compactLabel: 'Read Only',
+        compactLabel: 'Geometry',
     },
 ];
 
