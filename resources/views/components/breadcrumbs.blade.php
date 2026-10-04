@@ -4,14 +4,26 @@
     $routeName = request()->route()?->getName();
     $items = [];
 
-    $add = function (string $label, ?string $route = null) use (&$items) {
+    $add = function (string $label, ?string $route = null, array $parameters = []) use (&$items) {
         $items[] = [
             'label' => $label,
-            'url' => $route && \Illuminate\Support\Facades\Route::has($route) ? route($route) : null,
+            'url' => $route && \Illuminate\Support\Facades\Route::has($route) ? route($route, $parameters) : null,
         ];
     };
 
-    if (str_starts_with((string) $routeName, 'staff.')) {
+    $isSharedPage = $routeName === 'profile.edit' || str_starts_with((string) $routeName, 'notifications.');
+    if ($isSharedPage) {
+        $dashboardRoute = match (auth()->user()?->role) {
+            'staff' => 'staff.dashboard',
+            'landowner' => 'landowner.dashboard',
+            'geodetic' => 'geodetic.dashboard',
+            default => null,
+        };
+        if ($dashboardRoute) {
+            $add('Dashboard', $dashboardRoute);
+        }
+        $groups = [];
+    } elseif (str_starts_with((string) $routeName, 'staff.')) {
         $add('Dashboard', 'staff.dashboard');
 
         $groups = [
@@ -20,8 +32,8 @@
             'staff.records.parcels.' => ['Parcels', 'staff.records.parcels.index'],
             'staff.users.' => ['Users', 'staff.users.index'],
             'staff.legacy-records.' => ['Source Records', 'staff.legacy-records.index'],
-            'staff.source-record-packages.' => ['Source Records', 'staff.legacy-records.index'],
-            'staff.source-record-package-imports.' => ['Source Records', 'staff.legacy-records.index'],
+            'staff.source-record-packages.' => ['Source Packages', 'staff.legacy-records.index', ['view' => 'packages']],
+            'staff.source-record-package-imports.' => ['Source Packages', 'staff.legacy-records.index', ['view' => 'packages']],
             'staff.reports.monitoring.' => ['Monitoring Reports', 'staff.reports.monitoring.index'],
             'staff.audit-logs.' => ['Audit Logs', 'staff.audit-logs.index'],
             'staff.parcel-map.' => ['Parcel Map', 'staff.parcel-map.index'],
@@ -45,9 +57,10 @@
         $groups = [];
     }
 
-    foreach ($groups as $prefix => [$label, $route]) {
+    foreach ($groups as $prefix => $group) {
+        [$label, $route] = $group;
         if (str_starts_with((string) $routeName, $prefix)) {
-            $add($label, $route);
+            $add($label, $route, $group[2] ?? []);
             break;
         }
     }
@@ -55,7 +68,7 @@
     $normalizedTitle = trim((string) $title);
     $lastLabel = $items[count($items) - 1]['label'] ?? null;
 
-    if ($normalizedTitle !== '' && $normalizedTitle !== $lastLabel && ! str_ends_with((string) $routeName, '.index') && ! str_ends_with((string) $routeName, '.dashboard')) {
+    if ($normalizedTitle !== '' && $normalizedTitle !== $lastLabel && ($isSharedPage || (! str_ends_with((string) $routeName, '.index') && ! str_ends_with((string) $routeName, '.dashboard')))) {
         $add($normalizedTitle);
     } elseif (! empty($items)) {
         $items[count($items) - 1]['url'] = null;

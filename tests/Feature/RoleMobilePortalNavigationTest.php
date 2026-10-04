@@ -85,7 +85,7 @@ class RoleMobilePortalNavigationTest extends TestCase
         $this->assertStringContainsString('height: var(--dar-mobile-control-size) !important;', $css);
         $this->assertStringContainsString('min-height: var(--dar-mobile-control-size) !important;', $css);
         $this->assertStringContainsString("compactLabel: 'Own Only'", $polish);
-        $this->assertStringContainsString("compactLabel: 'Read Only'", $polish);
+        $this->assertStringContainsString("compactLabel: 'Geometry'", $polish);
     }
 
     public function test_compact_header_controls_share_one_visual_size_and_surface(): void
