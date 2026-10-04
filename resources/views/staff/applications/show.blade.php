@@ -4301,15 +4301,17 @@
                 workflowModal.classList.add('is-open');
                 workflowModal.setAttribute('aria-hidden', 'false');
                 document.body.style.overflow = 'hidden';
-                workflowModalCloseTop?.focus();
+                window.DarDialogFocus?.open(workflowModal, {
+                    initialFocus: workflowModalCloseTop, returnFocus: workflowModalTrigger, fallbacks: workflowModalOpeners
+                });
             }
 
-            function closeWorkflowModal() {
+            function closeWorkflowModal(restoreFocus = true) {
                 if (! workflowModal) return;
                 workflowModal.classList.remove('is-open');
                 workflowModal.setAttribute('aria-hidden', 'true');
                 document.body.style.overflow = '';
-                workflowModalTrigger?.focus();
+                window.DarDialogFocus?.close(workflowModal, { restoreFocus: restoreFocus !== false });
             }
 
             workflowModalOpeners.forEach((opener) => opener.addEventListener('click', openWorkflowModal));
@@ -4498,7 +4500,9 @@
                 decisionModal.classList.add('is-open');
                 decisionModal.setAttribute('aria-hidden', 'false');
                 document.body.style.overflow = 'hidden';
-                decisionModalSubmit.focus();
+                window.DarDialogFocus?.open(decisionModal, {
+                    initialFocus: decisionModalSubmit, returnFocus: workflowModalTrigger, fallbacks: workflowModalOpeners
+                });
             }
 
             function closeDecisionModal() {
@@ -4506,12 +4510,13 @@
                 decisionModal.setAttribute('aria-hidden', 'true');
                 document.body.style.overflow = '';
                 pendingDecisionForm = null;
+                window.DarDialogFocus?.close(decisionModal);
             }
 
             document.querySelectorAll('form[data-decision-confirm]').forEach(function (form) {
                 form.addEventListener('submit', function (event) {
                     event.preventDefault();
-                    closeWorkflowModal();
+                    closeWorkflowModal(false);
                     openDecisionModal(form, form.getAttribute('data-decision-confirm'));
                 });
             });
@@ -4554,9 +4559,11 @@
                 decisionModal.classList.remove('is-open');
                 decisionModal.setAttribute('aria-hidden', 'true');
                 document.body.style.overflow = '';
+                window.DarDialogFocus?.close(decisionModal, { restoreFocus: false });
                 form.submit();
             });
         });
     </script>
 </x-staff-shell>
+
 

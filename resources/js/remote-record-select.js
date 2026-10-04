@@ -13,6 +13,10 @@ function initRemoteRecordSelect(container) {
     }
 
     container.dataset.remoteRecordSelectReady = 'true';
+    if (status) {
+        status.setAttribute('role', 'status');
+        status.setAttribute('aria-live', 'polite');
+    }
 
     const placeholder = select.dataset.placeholder
         || select.querySelector('option[value=""]')?.textContent
@@ -168,3 +172,4 @@ observer.observe(document.documentElement, {
     childList: true,
     subtree: true,
 });
+

@@ -42,7 +42,7 @@ function clearClientError(event) {
     if (!(control instanceof HTMLInputElement || control instanceof HTMLSelectElement || control instanceof HTMLTextAreaElement)) return;
     if (!control.validity.valid) return;
 
-    control.removeAttribute('aria-invalid');
+    if (!control.hasAttribute('data-ui-server-invalid')) control.removeAttribute('aria-invalid');
     const error = control.parentElement?.querySelector(':scope > .ui-field-error[data-ui-client-error]');
     if (!error) return;
 
@@ -282,3 +282,4 @@ if (document.readyState === 'loading') {
 } else {
     initUiUxLastMile();
 }
+

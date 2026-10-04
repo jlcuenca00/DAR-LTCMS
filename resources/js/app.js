@@ -1,4 +1,5 @@
 import './bootstrap';
+import './dialog-focus';
 import './responsive-tables';
 import './remote-record-select';
 import './form-drafts';
@@ -167,6 +168,7 @@ function initDarLtcmsProfileCropper() {
 
         const closeModal = (clearSelection = false) => {
             modal.setAttribute('hidden', '');
+            window.DarDialogFocus.close(modal);
             document.body.classList.remove('profile-crop-open');
 
             if (clearSelection) {
@@ -184,6 +186,7 @@ function initDarLtcmsProfileCropper() {
             sourceUrl = URL.createObjectURL(file);
             modal.removeAttribute('hidden');
             document.body.classList.add('profile-crop-open');
+            window.DarDialogFocus.open(modal, { initialFocus: saveButton, returnFocus: chooseButton });
 
             const image = new Image();
 
@@ -192,6 +195,7 @@ function initDarLtcmsProfileCropper() {
                 cropImage.src = sourceUrl;
 
                 requestAnimationFrame(() => {
+                    if (modal.hasAttribute('hidden')) return;
                     resetCrop();
                     saveButton.focus();
                 });
@@ -471,3 +475,4 @@ if (document.readyState === 'loading') {
 } else {
     initDarLtcmsResponsivePublicNavigation();
 }
+

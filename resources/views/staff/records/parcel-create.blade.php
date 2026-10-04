@@ -197,78 +197,78 @@
                     <div class="parcel-create-grid">
                         <div class="parcel-create-field">
                             <label for="parcel_code">Parcel Code</label>
-                            <input id="parcel_code" type="text" name="parcel_code" value="{{ old('parcel_code') }}" required class="parcel-create-input" placeholder="PARCEL-BANGA-001">
-                            @error('parcel_code')<p class="parcel-create-error">{{ $message }}</p>@enderror
+                            <input id="parcel_code" type="text" name="parcel_code" value="{{ old('parcel_code') }}" required class="parcel-create-input" placeholder="PARCEL-BANGA-001" @error('parcel_code', 'default') aria-invalid="true" aria-describedby="parcel_code-server-error" data-ui-server-invalid @enderror>
+                            @error('parcel_code')<p id="parcel_code-server-error" class="parcel-create-error">{{ $message }}</p>@enderror
                         </div>
 
                         <div class="parcel-create-field">
                             <label for="status">Status</label>
-                            <select id="status" name="status" required class="parcel-create-input">
+                            <select id="status" name="status" required class="parcel-create-input" @error('status', 'default') aria-invalid="true" aria-describedby="status-server-error" data-ui-server-invalid @enderror>
                                 @foreach ($parcelStatuses as $value => $label)
                                     <option value="{{ $value }}" @selected(old('status', 'active') === $value)>{{ $label }}</option>
                                 @endforeach
                             </select>
-                            @error('status')<p class="parcel-create-error">{{ $message }}</p>@enderror
+                            @error('status')<p id="status-server-error" class="parcel-create-error">{{ $message }}</p>@enderror
                         </div>
 
                         <div class="parcel-create-field">
                             <label for="title_no">Title Number</label>
-                            <input id="title_no" type="text" name="title_no" value="{{ old('title_no') }}" class="parcel-create-input" placeholder="T-2026-0001">
-                            @error('title_no')<p class="parcel-create-error">{{ $message }}</p>@enderror
+                            <input id="title_no" type="text" name="title_no" value="{{ old('title_no') }}" class="parcel-create-input" placeholder="T-2026-0001" @error('title_no', 'default') aria-invalid="true" aria-describedby="title_no-server-error" data-ui-server-invalid @enderror>
+                            @error('title_no')<p id="title_no-server-error" class="parcel-create-error">{{ $message }}</p>@enderror
                         </div>
 
                         <div class="parcel-create-field">
                             <label for="lot_number">Lot Number</label>
-                            <input id="lot_number" type="text" name="lot_number" value="{{ old('lot_number') }}" class="parcel-create-input" placeholder="Lot 1234">
-                            @error('lot_number')<p class="parcel-create-error">{{ $message }}</p>@enderror
+                            <input id="lot_number" type="text" name="lot_number" value="{{ old('lot_number') }}" class="parcel-create-input" placeholder="Lot 1234" @error('lot_number', 'default') aria-invalid="true" aria-describedby="lot_number-server-error" data-ui-server-invalid @enderror>
+                            @error('lot_number')<p id="lot_number-server-error" class="parcel-create-error">{{ $message }}</p>@enderror
                         </div>
 
                         <div class="parcel-create-field">
                             <label for="survey_plan_number">Survey Plan Number</label>
-                            <input id="survey_plan_number" type="text" name="survey_plan_number" value="{{ old('survey_plan_number') }}" class="parcel-create-input" placeholder="PSD-07-000000">
-                            @error('survey_plan_number')<p class="parcel-create-error">{{ $message }}</p>@enderror
+                            <input id="survey_plan_number" type="text" name="survey_plan_number" value="{{ old('survey_plan_number') }}" class="parcel-create-input" placeholder="PSD-07-000000" @error('survey_plan_number', 'default') aria-invalid="true" aria-describedby="survey_plan_number-server-error" data-ui-server-invalid @enderror>
+                            @error('survey_plan_number')<p id="survey_plan_number-server-error" class="parcel-create-error">{{ $message }}</p>@enderror
                         </div>
 
                         <div class="parcel-create-field">
                             <label for="title_type">Title / Reference Type</label>
-                            <select id="title_type" name="title_type" class="parcel-create-input">
+                            <select id="title_type" name="title_type" class="parcel-create-input" @error('title_type', 'default') aria-invalid="true" aria-describedby="title_type-server-error" data-ui-server-invalid @enderror>
                                 <option value="">Select title/reference type</option>
                                 @foreach ($titleTypes as $value => $label)
                                     <option value="{{ $value }}" @selected(old('title_type') === $value)>{{ $label }}</option>
                                 @endforeach
                             </select>
-                            @error('title_type')<p class="parcel-create-error">{{ $message }}</p>@enderror
+                            @error('title_type')<p id="title_type-server-error" class="parcel-create-error">{{ $message }}</p>@enderror
                         </div>
 
                         <div class="parcel-create-field">
                             <label for="rod_office">Register of Deeds Office</label>
-                            <select id="rod_office" name="rod_office" class="parcel-create-input">
+                            <select id="rod_office" name="rod_office" class="parcel-create-input" @error('rod_office', 'default') aria-invalid="true" aria-describedby="rod_office-server-error" data-ui-server-invalid @enderror>
                                 <option value="">Select ROD office</option>
                                 @foreach ($rodOffices as $value => $label)
                                     <option value="{{ $value }}" @selected(old('rod_office') === $value)>{{ $label }}</option>
                                 @endforeach
                             </select>
-                            @error('rod_office')<p class="parcel-create-error">{{ $message }}</p>@enderror
+                            @error('rod_office')<p id="rod_office-server-error" class="parcel-create-error">{{ $message }}</p>@enderror
                         </div>
 
                         <div class="parcel-create-field">
                             <label for="tax_decl_no">Tax Declaration Number</label>
-                            <input id="tax_decl_no" type="text" name="tax_decl_no" value="{{ old('tax_decl_no') }}" class="parcel-create-input" placeholder="TD-2026-0001">
-                            @error('tax_decl_no')<p class="parcel-create-error">{{ $message }}</p>@enderror
+                            <input id="tax_decl_no" type="text" name="tax_decl_no" value="{{ old('tax_decl_no') }}" class="parcel-create-input" placeholder="TD-2026-0001" @error('tax_decl_no', 'default') aria-invalid="true" aria-describedby="tax_decl_no-server-error" data-ui-server-invalid @enderror>
+                            @error('tax_decl_no')<p id="tax_decl_no-server-error" class="parcel-create-error">{{ $message }}</p>@enderror
                         </div>
 
                         <div class="parcel-create-field">
                             <label for="area_square_meters">Total Area / Square Meters</label>
-                            <input id="area_square_meters" type="number" step="0.01" min="0" name="area_square_meters" value="{{ old('area_square_meters') }}" class="parcel-create-input" placeholder="24000.00">
+                            <input id="area_square_meters" type="number" step="0.01" min="0" name="area_square_meters" value="{{ old('area_square_meters') }}" class="parcel-create-input" placeholder="24000.00" @error('area_square_meters', 'default') aria-invalid="true" aria-describedby="area_square_meters-server-error" data-ui-server-invalid @enderror>
                             <p class="parcel-create-helper">Land registration commonly records area in square meters. Hectares may be computed for 5-hectare monitoring.</p>
-                            @error('area_square_meters')<p class="parcel-create-error">{{ $message }}</p>@enderror
+                            @error('area_square_meters')<p id="area_square_meters-server-error" class="parcel-create-error">{{ $message }}</p>@enderror
                         </div>
 
                         <div class="parcel-create-field">
                             <label for="area_hectares">Area / Hectares</label>
-                            <input id="area_hectares" type="number" step="0.0001" min="0" name="area_hectares" value="{{ old('area_hectares') }}" class="parcel-create-input" placeholder="2.4000">
+                            <input id="area_hectares" type="number" step="0.0001" min="0" name="area_hectares" value="{{ old('area_hectares') }}" class="parcel-create-input" placeholder="2.4000" @error('area_hectares', 'default') aria-invalid="true" aria-describedby="area_hectares-server-error" data-ui-server-invalid @enderror>
                             <p class="parcel-create-helper">Optional. Leave blank if square meters are encoded; the system computes it.</p>
-                            @error('area_hectares')<p class="parcel-create-error">{{ $message }}</p>@enderror
+                            @error('area_hectares')<p id="area_hectares-server-error" class="parcel-create-error">{{ $message }}</p>@enderror
                         </div>
                     </div>
                 </div>
@@ -284,20 +284,20 @@
                     <div class="parcel-create-grid is-location">
                         <div class="parcel-create-field">
                             <label for="province">Province</label>
-                            <input id="province" type="text" name="province" value="{{ old('province', 'Negros Oriental') }}" class="parcel-create-input">
-                            @error('province')<p class="parcel-create-error">{{ $message }}</p>@enderror
+                            <input id="province" type="text" name="province" value="{{ old('province', 'Negros Oriental') }}" class="parcel-create-input" @error('province', 'default') aria-invalid="true" aria-describedby="province-server-error" data-ui-server-invalid @enderror>
+                            @error('province')<p id="province-server-error" class="parcel-create-error">{{ $message }}</p>@enderror
                         </div>
 
                         <div class="parcel-create-field">
                             <label for="municipality">Municipality</label>
-                            <input id="municipality" type="text" name="municipality" value="{{ old('municipality') }}" class="parcel-create-input" placeholder="Bayawan City">
-                            @error('municipality')<p class="parcel-create-error">{{ $message }}</p>@enderror
+                            <input id="municipality" type="text" name="municipality" value="{{ old('municipality') }}" class="parcel-create-input" placeholder="Bayawan City" @error('municipality', 'default') aria-invalid="true" aria-describedby="municipality-server-error" data-ui-server-invalid @enderror>
+                            @error('municipality')<p id="municipality-server-error" class="parcel-create-error">{{ $message }}</p>@enderror
                         </div>
 
                         <div class="parcel-create-field">
                             <label for="barangay">Barangay</label>
-                            <input id="barangay" type="text" name="barangay" value="{{ old('barangay') }}" class="parcel-create-input" placeholder="Banga">
-                            @error('barangay')<p class="parcel-create-error">{{ $message }}</p>@enderror
+                            <input id="barangay" type="text" name="barangay" value="{{ old('barangay') }}" class="parcel-create-input" placeholder="Banga" @error('barangay', 'default') aria-invalid="true" aria-describedby="barangay-server-error" data-ui-server-invalid @enderror>
+                            @error('barangay')<p id="barangay-server-error" class="parcel-create-error">{{ $message }}</p>@enderror
                         </div>
                     </div>
                 </div>
@@ -332,13 +332,13 @@
 
             <section class="parcel-create-card">
                 <div class="parcel-create-card-header">
-                    <h2 class="parcel-create-title">Remarks</h2>
+                    <h2 id="parcel-remarks-label" class="parcel-create-title">Remarks</h2>
                     <p class="parcel-create-subtitle">Optional staff notes for administrative reference.</p>
                 </div>
 
                 <div class="parcel-create-body">
-                    <textarea name="remarks" rows="4" class="parcel-create-input">{{ old('remarks') }}</textarea>
-                    @error('remarks')<p class="parcel-create-error">{{ $message }}</p>@enderror
+                    <textarea id="field-default-remarks" name="remarks" rows="4" aria-labelledby="parcel-remarks-label" class="parcel-create-input" @error('remarks', 'default') aria-invalid="true" aria-describedby="field-default-remarks-server-error" data-ui-server-invalid @enderror>{{ old('remarks') }}</textarea>
+                    @error('remarks')<p id="field-default-remarks-server-error" class="parcel-create-error">{{ $message }}</p>@enderror
                 </div>
             </section>
         </main>

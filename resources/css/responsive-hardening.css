@@ -58,9 +58,10 @@
         max-width: 100%;
     }
 
-    :where(.staff-shell, .lo-shell, .geo-shell) :where(button, summary, a, input, select, textarea):focus-visible,
-    :where(.login-page, .auth-page, .page > .card) :where(button, summary, a, input, select, textarea):focus-visible {
-        outline: 3px solid rgba(21, 128, 61, .42) !important;
+    :root :is(.staff-shell, .lo-shell, .geo-shell) :where(button, summary, a, input, select, textarea):focus-visible,
+    :root :is(.login-page, .auth-page, .page > .card, .workflow-modal-backdrop, .decision-modal-backdrop, .profile-crop-modal) :where(button, summary, a, input, select, textarea):focus-visible {
+        outline: 3px solid #166534 !important;
+        box-shadow: 0 0 0 2px #fff !important;
         outline-offset: 2px !important;
     }
 
