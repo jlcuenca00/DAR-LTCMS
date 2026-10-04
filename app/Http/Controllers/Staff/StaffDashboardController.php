@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Staff;
 use App\Http\Controllers\Controller;
 use App\Models\ApplicationClearance;
 use App\Models\LandTransferApplication;
-use App\Services\ApplicationRequirementService;
+use App\Services\DashboardRequirementAttentionService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -166,37 +166,9 @@ class StaffDashboardController extends Controller
             ],
         ];
 
-        /*
-         * Requirement attention must use the same conditional/freshness rules as
-         * the actual intake gate. A simple global document-ID count would falsely
-         * flag municipal-vs-city, titled-vs-untitled, SPA, and juridical-entity
-         * conditions. Evaluate in chunks with eager-loaded relations instead.
-         */
-        $requirementService = app(ApplicationRequirementService::class);
-        $requirementsCompleteIds = [];
-        $incompleteRequirementIds = [];
-
-        LandTransferApplication::query()
-            ->whereIn('status', $activeStatuses)
-            ->with(['documents.requiredDocument', 'applicationParcels.parcel'])
-            ->chunkById(100, function ($applications) use (
-                $requirementService,
-                &$requirementsCompleteIds,
-                &$incompleteRequirementIds
-            ) {
-                foreach ($applications as $application) {
-                    $evaluation = $requirementService->evaluate($application);
-
-                    if ($evaluation['complete']) {
-                        $requirementsCompleteIds[] = (int) $application->id;
-                    } else {
-                        $incompleteRequirementIds[] = (int) $application->id;
-                    }
-                }
-            });
-
-        $requirementsCompleteCount = count($requirementsCompleteIds);
-        $incompleteRequirementsCount = count($incompleteRequirementIds);
+        $requirementAttention = app(DashboardRequirementAttentionService::class)->summarize($activeStatuses);
+        $requirementsCompleteCount = $requirementAttention['counts']['requirements_complete'];
+        $incompleteRequirementsCount = $requirementAttention['counts']['missing_requirements'];
 
         $staleActiveCount = LandTransferApplication::query()
             ->whereIn('status', $activeStatuses)
@@ -248,24 +220,15 @@ class StaffDashboardController extends Controller
             $attentionQuery = LandTransferApplication::query()
                 ->whereIn('status', $activeStatuses);
 
-            if ($attentionFilter === 'missing_requirements') {
-                if ($incompleteRequirementIds === []) {
-                    $attentionQuery->whereRaw('1 = 0');
-                } else {
-                    $attentionQuery->whereIn('id', $incompleteRequirementIds);
-                }
-            } elseif ($attentionFilter === 'requirements_complete') {
-                if ($requirementsCompleteIds === []) {
-                    $attentionQuery->whereRaw('1 = 0');
-                } else {
-                    $attentionQuery->whereIn('id', $requirementsCompleteIds);
-                }
+            if (in_array($attentionFilter, ['missing_requirements', 'requirements_complete'], true)) {
+                $attentionQuery->whereIn('id', $requirementAttention['preview_ids'][$attentionFilter]);
             } elseif ($attentionFilter === 'stale') {
                 $attentionQuery->where('updated_at', '<', now()->subDays(7));
             }
 
             $actionApplications = $attentionQuery
                 ->oldest('updated_at')
+                ->orderBy('id')
                 ->limit(12)
                 ->get();
 
