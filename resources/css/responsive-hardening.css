@@ -127,7 +127,7 @@
     }
 
     /* Maps remain two-dimensional, but their surrounding page must reflow. */
-    :where(.staff-shell, .lo-shell, .geo-shell) :where(.leaflet-container, #map, #parcel-map, [id$="-map"], [id*="parcel-map"]) {
+    :where(.staff-shell, .lo-shell, .geo-shell) :where(.leaflet-container, #map, #parcel-map, [id$="-map"], [data-parcel-map-viewer]) {
         width: 100% !important;
         max-width: 100% !important;
     }
@@ -844,7 +844,7 @@
         min-height: var(--dar-touch-target) !important;
     }
 
-    :where(.staff-shell, .lo-shell, .geo-shell) :where(.leaflet-container, #map, #parcel-map, [id$="-map"], [id*="parcel-map"]) {
+    :where(.staff-shell, .lo-shell, .geo-shell) :where(.leaflet-container, #map, #parcel-map, [id$="-map"], [data-parcel-map-viewer]) {
         min-height: 340px !important;
         height: min(58dvh, 540px) !important;
     }
