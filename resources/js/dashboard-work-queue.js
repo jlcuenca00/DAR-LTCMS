@@ -32,6 +32,9 @@ function initializeDashboardWorkQueue() {
         return group ? group.has(status) : status === filter;
     };
 
+    const hasAttention = Boolean(dashboard.dataset.dashboardAttention);
+    const previewLimit = hasAttention ? 12 : 6;
+
     const applyFilter = (filter) => {
         let visibleCount = 0;
 
@@ -43,7 +46,7 @@ function initializeDashboardWorkQueue() {
 
         applicationRows.forEach((row) => {
             const matches = matchesFilter(row.dataset.dashboardStatus, filter);
-            const visible = matches && visibleCount < 6;
+            const visible = matches && visibleCount < previewLimit;
             row.hidden = !visible;
             if (visible) visibleCount += 1;
         });
@@ -52,16 +55,12 @@ function initializeDashboardWorkQueue() {
     };
 
     filterButtons.forEach((button) => {
-        button.addEventListener('click', (event) => {
-            // The dashboard Blade contains a compatibility click handler from the
-            // pre-AO4 workflow. Capture first so this canonical grouping remains
-            // the single behavior seen by staff.
-            event.stopImmediatePropagation();
+        button.addEventListener('click', () => {
             applyFilter(button.dataset.dashboardFilter || 'active_workflow');
-        }, { capture: true });
+        });
     });
 
-    applyFilter('active_workflow');
+    applyFilter(hasAttention ? 'all' : 'active_workflow');
 }
 
 if (document.readyState === 'loading') {

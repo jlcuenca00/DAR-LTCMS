@@ -1,6 +1,6 @@
 <details class="notification-dropdown"
     data-notification-dropdown
-    data-read-all-url="{{ route('notifications.read-all') }}"
+    data-read-visible-url="{{ route('notifications.read-visible') }}"
     data-csrf-token="{{ csrf_token() }}">
     <summary class="notification-bell-link" aria-label="Open recent notifications">
         <i class="fa-solid fa-bell"></i>

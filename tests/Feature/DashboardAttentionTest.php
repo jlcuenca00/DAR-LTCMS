@@ -86,6 +86,9 @@ class DashboardAttentionTest extends TestCase
 
         $this->actingAs($staff);
 
+        $this->get(route('staff.dashboard', ['attention' => 'missing_requirements']))
+            ->assertOk()->assertSee('data-dashboard-attention="missing_requirements"', false);
+
         $missing = $this->dashboardData('missing_requirements');
         $this->assertSame('Incomplete Requirements', $missing['attentionFocusLabel']);
         $this->assertEqualsCanonicalizing(
