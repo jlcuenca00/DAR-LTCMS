@@ -10,8 +10,9 @@
         z-index: 4000 !important;
         box-sizing: border-box !important;
         width: 100vw !important;
+        height: 100vh !important;
         height: 100dvh !important;
-        min-height: 100vh !important;
+        min-height: 0 !important;
         margin: 0 !important;
         padding:
             max(16px, env(safe-area-inset-top))
@@ -28,13 +29,43 @@
 
     html body > .workflow-modal-backdrop > .workflow-modal-card,
     html body > .decision-modal-backdrop > .decision-modal-card {
-        max-height: calc(100dvh - max(32px, env(safe-area-inset-top) + env(safe-area-inset-bottom))) !important;
+        max-height: calc(100dvh - max(16px, env(safe-area-inset-top)) - max(16px, env(safe-area-inset-bottom))) !important;
+    }
+
+    /* The card is portaled outside the page. Keep its content scrollable even
+       when a short viewport bounds the final confirmation dialog. */
+    html body > .decision-modal-backdrop > .decision-modal-card {
+        overflow-y: auto !important;
+        overscroll-behavior: contain;
     }
 
     @media (max-width: 760px) {
         html body > .workflow-modal-backdrop,
         html body > .decision-modal-backdrop {
             align-items: flex-start !important;
+        }
+
+        html body > :is(.workflow-modal-backdrop, .decision-modal-backdrop)
+            :is(input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]):not([type="range"]), select, textarea) {
+            width: 100% !important;
+            min-width: 0 !important;
+            min-height: 44px !important;
+            font-size: 16px !important;
+        }
+
+        html body > :is(.workflow-modal-backdrop, .decision-modal-backdrop) :is(button, .staff-button) {
+            min-height: 44px !important;
+        }
+
+        html body > .decision-modal-backdrop .decision-modal-actions {
+            padding: 14px 16px max(16px, env(safe-area-inset-bottom)) !important;
+        }
+    }
+
+    @media (pointer: coarse) {
+        html body > :is(.workflow-modal-backdrop, .decision-modal-backdrop)
+            :is(button, .staff-button, input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]):not([type="range"]), select, textarea) {
+            min-height: 48px !important;
         }
     }
 }

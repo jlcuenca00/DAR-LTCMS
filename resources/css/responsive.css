@@ -62,7 +62,7 @@ button {
 .staff-content-inner .leaflet-container,
 .staff-content-inner #map,
 .staff-content-inner [id$="-map"],
-.staff-content-inner [id*="parcel-map"] {
+.staff-content-inner [data-parcel-map-viewer] {
     max-width: 100%;
 }
 
@@ -441,7 +441,7 @@ button {
     .staff-content-inner .leaflet-container,
     .staff-content-inner #map,
     .staff-content-inner [id$="-map"],
-    .staff-content-inner [id*="parcel-map"] {
+    .staff-content-inner [data-parcel-map-viewer] {
         min-height: 360px !important;
         height: min(62dvh, 520px) !important;
     }
