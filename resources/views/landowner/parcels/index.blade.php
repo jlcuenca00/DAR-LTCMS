@@ -122,7 +122,7 @@
         <article class="lo-parcel-panel">
             <header class="lo-parcel-panel-header">
                 <h2 class="lo-parcel-panel-title">Parcel and Landholding References</h2>
-                <p class="lo-parcel-panel-copy">Essential reference numbers, location, linked area, and map availability. Select any row to open its details.</p>
+                <p class="lo-parcel-panel-copy">Essential reference numbers, location, linked area, and geometry reference state. Select any row to open its details.</p>
             </header>
 
             @if ($landholdings->isEmpty())
@@ -182,7 +182,7 @@
                                     <td>
                                         <div class="lo-state-stack">
                                             <span class="lo-state-badge {{ $holding->status === 'active' ? 'is-active' : '' }}">{{ $holding->status ? ucwords(str_replace('_', ' ', $holding->status)) : 'Unspecified' }}</span>
-                                            <span class="lo-state-badge {{ $parcel?->geometry_geojson ? 'is-mapped' : '' }}">{{ $parcel?->geometry_geojson ? 'Mapped' : 'No Geometry' }}</span>
+                                            <span class="lo-state-badge {{ $parcel?->geometry_geojson ? 'is-mapped' : '' }}">{{ $parcel?->geometryReferenceLabel() ?? 'No parcel reference' }}</span>
                                         </div>
                                     </td>
                                 </tr>
@@ -201,3 +201,4 @@
 
     <x-record-row-navigation />
 </x-landowner-shell>
+

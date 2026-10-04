@@ -307,8 +307,8 @@
                     <span class="lo-hero-stat-label">Applications</span>
                 </div>
                 <div class="lo-hero-stat">
-                    <span class="lo-hero-stat-value">{{ $cardValue('Mapped Parcels') }}</span>
-                    <span class="lo-hero-stat-label">Mapped parcels</span>
+                    <span class="lo-hero-stat-value">{{ $cardValue('Parcels with Geometry') }}</span>
+                    <span class="lo-hero-stat-label">Parcels with geometry</span>
                 </div>
             </div>
         </article>
@@ -407,7 +407,7 @@
                                         @else
                                             <span class="lo-parcel-code">Unlinked parcel</span>
                                         @endif
-                                        <div class="lo-parcel-meta">{{ $parcel?->barangay ?? 'N/A' }}, {{ $parcel?->municipality ?? 'N/A' }} · {{ $parcel?->geometry_geojson ? 'Mapped' : 'No geometry' }}</div>
+                                        <div class="lo-parcel-meta">{{ $parcel?->barangay ?? 'N/A' }}, {{ $parcel?->municipality ?? 'N/A' }} · {{ $parcel?->geometryReferenceLabel() ?? 'No parcel reference' }}</div>
                                     </div>
                                     <div class="lo-parcel-area">{{ number_format((float) $holding->area_hectares, 4) }} ha</div>
                                 </div>
@@ -439,3 +439,4 @@
         </section>
     </section>
 </x-landowner-shell>
+

@@ -131,7 +131,7 @@
                 <p class="lo-detail-location">{{ $parcel->barangay ?? 'N/A' }}, {{ $parcel->municipality ?? 'N/A' }}, {{ $parcel->province ?? 'Negros Oriental' }}</p>
                 <div class="lo-detail-badges">
                     <span class="lo-detail-badge {{ $parcel->status === 'active' ? 'is-green' : '' }}">{{ $parcel->status ? ucwords(str_replace('_', ' ', $parcel->status)) : 'Reference Record' }}</span>
-                    <span class="lo-detail-badge {{ $parcel->geometry_geojson ? 'is-blue' : '' }}">{{ $parcel->geometry_geojson ? 'Mapped Geometry' : 'No Geometry' }}</span>
+                    <span class="lo-detail-badge {{ $parcel->geometry_geojson ? 'is-blue' : '' }}">{{ $parcel->geometryReferenceLabel() }}</span>
                     <span class="lo-detail-badge">Viewing Only</span>
                 </div>
             </div>
@@ -146,8 +146,8 @@
                     <span class="lo-detail-summary-label">Landholdings</span>
                 </div>
                 <div class="lo-detail-summary-item">
-                    <span class="lo-detail-summary-value">{{ $parcel->geometry_geojson ? 'Yes' : 'No' }}</span>
-                    <span class="lo-detail-summary-label">Map available</span>
+                    <span class="lo-detail-summary-value">{{ $parcel->geometryReferenceLabel() }}</span>
+                    <span class="lo-detail-summary-label">Geometry reference</span>
                 </div>
             </div>
         </article>
@@ -181,8 +181,8 @@
                 <div class="lo-map-callout">
                     <div class="lo-map-state">
                         <p class="lo-map-state-label">Geometry Status</p>
-                        <p class="lo-map-state-value">{{ $parcel->geometry_geojson ? 'Available' : 'Not yet encoded' }}</p>
-                        <p class="lo-map-state-copy">Opening the map shows only parcels linked to your landowner account.</p>
+                        <p class="lo-map-state-value">{{ $parcel->geometryReferenceLabel() }}</p>
+                        <p class="lo-map-state-copy">The map shows active parcels linked to your landowner account when their geometry can be displayed. Archived records and geometry needing review remain available here.</p>
                     </div>
                     <a href="{{ route('landowner.parcel-map.index') }}" class="lo-button lo-button-primary">
                         <i class="fa-solid fa-map-location-dot"></i>
@@ -230,3 +230,4 @@
         </article>
     </section>
 </x-landowner-shell>
+

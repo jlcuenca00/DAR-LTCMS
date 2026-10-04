@@ -42,7 +42,7 @@ test('map search pages independently of viewport limits and keeps record links o
     await page.getByRole('button', { name: 'Next parcel search page' }).click();
     await expect(page.locator('#parcel-search-results')).toContainText('SECOND-SEARCH-PAGE');
     await expect(page.locator('#parcel-search-status')).toContainText('Page 2 of 2');
-    await page.locator('#parcel-search-results a').click();
+    await page.getByRole('button', { name:'Show SECOND-SEARCH-PAGE on map', exact:true }).click();
     await expect(page.locator('#parcel-map .leaflet-overlay-pane path')).toHaveCount(1);
     await page.locator('#parcel-map .leaflet-overlay-pane path').hover({ force: true });
     await expect(page.locator('.parcel-tooltip')).toHaveCount(1);
@@ -54,3 +54,4 @@ test('map search pages independently of viewport limits and keeps record links o
     await expect(page.locator('#parcel-map-status')).toContainText('The parcel list remains available.');
     await expect(page.locator('#parcel-search-results a')).toHaveAttribute('href', '/staff/records/parcels/9002');
 });
+
