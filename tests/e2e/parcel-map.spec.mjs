@@ -45,6 +45,7 @@ test('map search pages independently of viewport limits and keeps record links o
     await page.locator('#parcel-search-results a').click();
     await expect(page.locator('#parcel-map .leaflet-overlay-pane path')).toHaveCount(1);
     await page.locator('#parcel-map .leaflet-overlay-pane path').hover({ force: true });
+    await expect(page.locator('.parcel-tooltip')).toHaveCount(1);
     await expect(page.locator('.parcel-tooltip')).toContainText('Parcel area');
     await expect(page.locator('.parcel-tooltip')).toContainText('Current active linked area');
 

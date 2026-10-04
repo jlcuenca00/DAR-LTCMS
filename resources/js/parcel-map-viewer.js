@@ -16,6 +16,7 @@ function initializeParcelMapViewer() {
     const esc = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[char]));
     let map = null;
     let parcelLayer = null;
+    let activeTooltip = null;
     let selectedFeature = null;
     let viewportRequest = null;
     let searchRequest = null;
@@ -98,7 +99,16 @@ function initializeParcelMapViewer() {
     }
 
     function draw(features) {
-        if (parcelLayer) map.removeLayer(parcelLayer);
+        // Close the overlay before replacing its source layers, including while
+        // a pointer remains over a parcel during an asynchronous viewport redraw.
+        if (activeTooltip) {
+            map.closeTooltip(activeTooltip);
+            activeTooltip = null;
+        }
+        if (parcelLayer) {
+            parcelLayer.eachLayer(layer => layer.closeTooltip());
+            map.removeLayer(parcelLayer);
+        }
         parcelLayer = window.L.geoJSON([], {
             style: feature => {
                 const color = feature.properties.is_flagged ? '#dc2626' : '#22c55e';
@@ -192,6 +202,18 @@ function initializeParcelMapViewer() {
     }
     container.replaceChildren();
     map = window.L.map(container, { zoomControl: false, minZoom: 7, maxZoom: 20 }).setView([9.3068, 123.3054], 12);
+    // Track actual overlays on this map rather than relying on a global
+    // Leaflet prototype patch (the page and bundle may load separate instances).
+    map.on('tooltipopen', ({ tooltip }) => {
+        if (activeTooltip && activeTooltip !== tooltip) map.closeTooltip(activeTooltip);
+        activeTooltip = tooltip;
+    });
+    map.on('tooltipclose', ({ tooltip }) => {
+        // Leaflet otherwise retains a closed overlay for its 200ms fade-out.
+        // Remove this parcel overlay immediately so redraws cannot leave ghosts.
+        tooltip.getElement()?.remove();
+        if (activeTooltip === tooltip) activeTooltip = null;
+    });
     window.L.control.zoom({ position: 'topright' }).addTo(map);
     window.L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
         subdomains: 'abcd', maxZoom: 20,
