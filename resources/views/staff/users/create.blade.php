@@ -593,27 +593,27 @@
                         </div>
                         <div class="user-card-body user-form-grid">
                             <div class="user-field">
-                                <label class="user-label">Name</label>
-                                <input type="text" name="name" value="{{ old('name') }}" required class="user-input">
+                                <label for="field-default-name" class="user-label">Name</label>
+                                <input id="field-default-name" type="text" name="name" value="{{ old('name') }}" required class="user-input" @error('name', 'default') aria-invalid="true" aria-describedby="field-default-name-server-error" data-ui-server-invalid @enderror>
                                 @error('name')
-                                    <p class="user-error">{{ $message }}</p>
+                                    <p id="field-default-name-server-error" class="user-error">{{ $message }}</p>
                                 @enderror
                             </div>
 
                             <div class="user-field">
-                                <label class="user-label">Username</label>
-                                <input type="text" name="username" value="{{ old('username') }}" required class="user-input" placeholder="Example: dar_staff01">
+                                <label for="field-default-username" class="user-label">Username</label>
+                                <input id="field-default-username" type="text" name="username" value="{{ old('username') }}" required class="user-input" placeholder="Example: dar_staff01" @error('username', 'default') aria-invalid="true" aria-describedby="field-default-username-server-error" data-ui-server-invalid @enderror>
                                 @error('username')
-                                    <p class="user-error">{{ $message }}</p>
+                                    <p id="field-default-username-server-error" class="user-error">{{ $message }}</p>
                                 @enderror
                             </div>
 
                             <div class="user-field user-field-full">
-                                <label class="user-label">Email Address <span class="normal-case tracking-normal font-medium text-slate-500">(Optional)</span></label>
-                                <input type="email" name="email" value="{{ old('email') }}" class="user-input" autocomplete="email" placeholder="Example: user@example.com">
+                                <label for="field-default-email" class="user-label">Email Address <span class="normal-case tracking-normal font-medium text-slate-500">(Optional)</span></label>
+                                <input id="field-default-email" type="email" name="email" value="{{ old('email') }}" class="user-input" autocomplete="email" placeholder="Example: user@example.com" @error('email', 'default') aria-invalid="true" aria-describedby="field-default-email-server-error" data-ui-server-invalid @enderror>
                                 <p class="mt-2 text-xs leading-5 text-slate-500">If provided, the username and system-generated temporary password will be sent to this address.</p>
                                 @error('email')
-                                    <p class="user-error">{{ $message }}</p>
+                                    <p id="field-default-email-server-error" class="user-error">{{ $message }}</p>
                                 @enderror
                             </div>
                         </div>
@@ -631,15 +631,15 @@
                         </div>
                         <div class="user-card-body space-y-3">
                             <div class="user-field">
-                                <label class="user-label">Role</label>
-                                <select name="role" required class="user-select">
+                                <label for="field-default-role" class="user-label">Role</label>
+                                <select id="field-default-role" name="role" required class="user-select" @error('role', 'default') aria-invalid="true" aria-describedby="field-default-role-server-error" data-ui-server-invalid @enderror>
                                     <option value="">Select role</option>
                                     <option value="staff" {{ old('role') === 'staff' ? 'selected' : '' }}>Legal Clearance Staff</option>
                                     <option value="landowner" {{ old('role') === 'landowner' ? 'selected' : '' }}>Landowner</option>
                                     <option value="geodetic" {{ old('role') === 'geodetic' ? 'selected' : '' }}>Geodetic</option>
                                 </select>
                                 @error('role')
-                                    <p class="user-error">{{ $message }}</p>
+                                    <p id="field-default-role-server-error" class="user-error">{{ $message }}</p>
                                 @enderror
                             </div>
 
@@ -653,17 +653,17 @@
                                 </summary>
                                 <div class="user-disclosure-panel">
                                     <div class="user-field">
-                                        <label class="user-label">Linked Landowner Record</label>
+                                        <label for="field-default-landowner_id" class="user-label">Linked Landowner Record</label>
                                         <div data-remote-record-select data-lookup-url="{{ route('staff.lookups.landowners', ['scope' => 'user-link']) }}" class="space-y-2">
                                             <input type="search"
                                                    class="user-input"
                                                    placeholder="Search landowner name or record ID"
                                                    autocomplete="off"
                                                    data-remote-record-search>
-                                            <select name="landowner_id"
+                                            <select id="field-default-landowner_id" name="landowner_id"
                                                     class="user-select"
                                                     data-remote-record-control
-                                                    data-placeholder="No linked landowner record">
+                                                    data-placeholder="No linked landowner record" @error('landowner_id', 'default') aria-invalid="true" aria-describedby="field-default-landowner_id-server-error" data-ui-server-invalid @enderror>
                                                 <option value="">No linked landowner record</option>
                                                 @if ($selectedLandowner)
                                                     <option value="{{ $selectedLandowner->id }}" selected>
@@ -674,7 +674,7 @@
                                             <p class="user-card-copy" data-remote-record-status>Search loads a bounded set of eligible landowner records.</p>
                                         </div>
                                         @error('landowner_id')
-                                            <p class="user-error">{{ $message }}</p>
+                                            <p id="field-default-landowner_id-server-error" class="user-error">{{ $message }}</p>
                                         @enderror
                                     </div>
                                 </div>
@@ -711,3 +711,4 @@
         </form>
     </div>
 </x-staff-shell>
+

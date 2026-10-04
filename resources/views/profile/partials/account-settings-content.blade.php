@@ -71,7 +71,7 @@
                                             accept="image/jpeg,image/png,image/webp"
                                             class="profile-photo-hidden-input"
                                             data-profile-photo-input
-                                        >
+                                         @error('profile_photo', 'default') aria-invalid="true" aria-describedby="profile_photo-server-error" data-ui-server-invalid @enderror>
 
                                         <p class="profile-photo-help">
                                             JPEG, PNG, or WebP. After choosing a file, crop and resize it before saving your profile.
@@ -91,7 +91,7 @@
                                         @endif
 
                                         @error('profile_photo')
-                                            <div class="profile-error">{{ $message }}</div>
+                                            <div id="profile_photo-server-error" class="profile-error">{{ $message }}</div>
                                         @enderror
                                     </div>
 
@@ -150,9 +150,9 @@
 
                             <div class="profile-field">
                                 <label class="profile-label" for="name">Name</label>
-                                <input id="name" name="name" type="text" class="profile-input" value="{{ old('name', $user->name) }}" required autofocus autocomplete="name">
+                                <input id="name" name="name" type="text" class="profile-input" value="{{ old('name', $user->name) }}" required autofocus autocomplete="name" @error('name', 'default') aria-invalid="true" aria-describedby="name-server-error" data-ui-server-invalid @enderror>
                                 @error('name')
-                                    <div class="profile-error">{{ $message }}</div>
+                                    <div id="name-server-error" class="profile-error">{{ $message }}</div>
                                 @enderror
                             </div>
 
@@ -164,9 +164,9 @@
 
                             <div class="profile-field full">
                                 <label class="profile-label" for="email">Email Address (Optional)</label>
-                                <input id="email" name="email" type="email" class="profile-input" value="{{ old('email', $user->email) }}" autocomplete="email">
+                                <input id="email" name="email" type="email" class="profile-input" value="{{ old('email', $user->email) }}" autocomplete="email" @error('email', 'default') aria-invalid="true" aria-describedby="email-server-error" data-ui-server-invalid @enderror>
                                 @error('email')
-                                    <div class="profile-error">{{ $message }}</div>
+                                    <div id="email-server-error" class="profile-error">{{ $message }}</div>
                                 @enderror
 
                                 @if ($user->email && $user->email_verified_at === null)
@@ -183,12 +183,12 @@
                                        type="password"
                                        class="profile-input"
                                        autocomplete="current-password"
-                                       placeholder="Required only when changing the email address">
+                                       placeholder="Required only when changing the email address" @error('current_password', 'default') aria-invalid="true" aria-describedby="profile_current_password-server-error" data-ui-server-invalid @enderror>
                                 <div class="mt-1 text-xs text-gray-500">
                                     Name and profile-photo changes do not require this. Google-only users without a local password should contact authorized DAR staff to change their account email.
                                 </div>
                                 @error('current_password')
-                                    <div class="profile-error">{{ $message }}</div>
+                                    <div id="profile_current_password-server-error" class="profile-error">{{ $message }}</div>
                                 @enderror
                             </div>
                         </div>
@@ -225,25 +225,25 @@
                         <div class="profile-form-grid">
                             <div class="profile-field full">
                                 <label class="profile-label" for="update_password_current_password">Current Password</label>
-                                <input id="update_password_current_password" name="current_password" type="password" class="profile-input" autocomplete="current-password">
+                                <input id="update_password_current_password" name="current_password" type="password" class="profile-input" autocomplete="current-password" @error('current_password', 'updatePassword') aria-invalid="true" aria-describedby="update_password_current_password-server-error" data-ui-server-invalid @enderror>
                                 @error('current_password', 'updatePassword')
-                                    <div class="profile-error">{{ $message }}</div>
+                                    <div id="update_password_current_password-server-error" class="profile-error">{{ $message }}</div>
                                 @enderror
                             </div>
 
                             <div class="profile-field">
                                 <label class="profile-label" for="update_password_password">New Password</label>
-                                <input id="update_password_password" name="password" type="password" class="profile-input" autocomplete="new-password">
+                                <input id="update_password_password" name="password" type="password" class="profile-input" autocomplete="new-password" @error('password', 'updatePassword') aria-invalid="true" aria-describedby="update_password_password-server-error" data-ui-server-invalid @enderror>
                                 @error('password', 'updatePassword')
-                                    <div class="profile-error">{{ $message }}</div>
+                                    <div id="update_password_password-server-error" class="profile-error">{{ $message }}</div>
                                 @enderror
                             </div>
 
                             <div class="profile-field">
                                 <label class="profile-label" for="update_password_password_confirmation">Confirm Password</label>
-                                <input id="update_password_password_confirmation" name="password_confirmation" type="password" class="profile-input" autocomplete="new-password">
+                                <input id="update_password_password_confirmation" name="password_confirmation" type="password" class="profile-input" autocomplete="new-password" @error('password_confirmation', 'updatePassword') aria-invalid="true" aria-describedby="update_password_password_confirmation-server-error" data-ui-server-invalid @enderror>
                                 @error('password_confirmation', 'updatePassword')
-                                    <div class="profile-error">{{ $message }}</div>
+                                    <div id="update_password_password_confirmation-server-error" class="profile-error">{{ $message }}</div>
                                 @enderror
                             </div>
 
@@ -297,3 +297,4 @@
         </aside>
     </div>
 </div>
+

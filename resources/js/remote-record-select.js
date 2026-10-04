@@ -13,6 +13,14 @@ function initRemoteRecordSelect(container) {
     }
 
     container.dataset.remoteRecordSelectReady = 'true';
+    if (!searchInput.hasAttribute('aria-label') && !searchInput.hasAttribute('aria-labelledby') && !searchInput.labels?.length) {
+        const label = select.labels?.[0] || container.parentElement?.querySelector('label');
+        searchInput.setAttribute('aria-label', `Search ${label?.textContent.trim() || 'records'}`);
+    }
+    if (status) {
+        status.setAttribute('role', 'status');
+        status.setAttribute('aria-live', 'polite');
+    }
 
     const placeholder = select.dataset.placeholder
         || select.querySelector('option[value=""]')?.textContent

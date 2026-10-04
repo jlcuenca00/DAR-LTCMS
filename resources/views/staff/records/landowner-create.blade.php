@@ -25,68 +25,80 @@
 
         <div class="staff-panel-pad grid grid-cols-1 gap-4 md:grid-cols-2">
             <div>
-                <label class="mb-1 block text-xs font-black uppercase tracking-wider text-gray-600">First name</label>
-                <input type="text" name="first_name" value="{{ old('first_name') }}" class="w-full rounded-lg border-gray-300 text-sm focus:border-green-600 focus:ring-green-600" required>
+                <label for="landowner-first_name" class="mb-1 block text-xs font-black uppercase tracking-wider text-gray-600">First name</label>
+                <input id="landowner-first_name" type="text" name="first_name" value="{{ old('first_name') }}" class="w-full rounded-lg border-gray-300 text-sm focus:border-green-600 focus:ring-green-600" required @error('first_name', 'default') aria-invalid="true" aria-describedby="landowner-first_name-server-error" data-ui-server-invalid @enderror>
+                @error('first_name')<p id="landowner-first_name-server-error" class="text-sm text-red-600">{{ $message }}</p>@enderror
             </div>
             <div>
-                <label class="mb-1 block text-xs font-black uppercase tracking-wider text-gray-600">Middle name</label>
-                <input type="text" name="middle_name" value="{{ old('middle_name') }}" class="w-full rounded-lg border-gray-300 text-sm focus:border-green-600 focus:ring-green-600">
+                <label for="landowner-middle_name" class="mb-1 block text-xs font-black uppercase tracking-wider text-gray-600">Middle name</label>
+                <input id="landowner-middle_name" type="text" name="middle_name" value="{{ old('middle_name') }}" class="w-full rounded-lg border-gray-300 text-sm focus:border-green-600 focus:ring-green-600" @error('middle_name', 'default') aria-invalid="true" aria-describedby="landowner-middle_name-server-error" data-ui-server-invalid @enderror>
+                @error('middle_name')<p id="landowner-middle_name-server-error" class="text-sm text-red-600">{{ $message }}</p>@enderror
             </div>
             <div>
-                <label class="mb-1 block text-xs font-black uppercase tracking-wider text-gray-600">Last name</label>
-                <input type="text" name="last_name" value="{{ old('last_name') }}" class="w-full rounded-lg border-gray-300 text-sm focus:border-green-600 focus:ring-green-600" required>
+                <label for="landowner-last_name" class="mb-1 block text-xs font-black uppercase tracking-wider text-gray-600">Last name</label>
+                <input id="landowner-last_name" type="text" name="last_name" value="{{ old('last_name') }}" class="w-full rounded-lg border-gray-300 text-sm focus:border-green-600 focus:ring-green-600" required @error('last_name', 'default') aria-invalid="true" aria-describedby="landowner-last_name-server-error" data-ui-server-invalid @enderror>
+                @error('last_name')<p id="landowner-last_name-server-error" class="text-sm text-red-600">{{ $message }}</p>@enderror
             </div>
             <div>
-                <label class="mb-1 block text-xs font-black uppercase tracking-wider text-gray-600">Suffix</label>
-                <input type="text" name="suffix" value="{{ old('suffix') }}" class="w-full rounded-lg border-gray-300 text-sm focus:border-green-600 focus:ring-green-600">
+                <label for="landowner-suffix" class="mb-1 block text-xs font-black uppercase tracking-wider text-gray-600">Suffix</label>
+                <input id="landowner-suffix" type="text" name="suffix" value="{{ old('suffix') }}" class="w-full rounded-lg border-gray-300 text-sm focus:border-green-600 focus:ring-green-600" @error('suffix', 'default') aria-invalid="true" aria-describedby="landowner-suffix-server-error" data-ui-server-invalid @enderror>
+                @error('suffix')<p id="landowner-suffix-server-error" class="text-sm text-red-600">{{ $message }}</p>@enderror
             </div>
             <div>
-                <label class="mb-1 block text-xs font-black uppercase tracking-wider text-gray-600">Registered owner status</label>
-                <select name="registered_owner_status" class="w-full rounded-lg border-gray-300 text-sm focus:border-green-600 focus:ring-green-600">
+                <label for="landowner-registered_owner_status" class="mb-1 block text-xs font-black uppercase tracking-wider text-gray-600">Registered owner status</label>
+                <select id="landowner-registered_owner_status" name="registered_owner_status" class="w-full rounded-lg border-gray-300 text-sm focus:border-green-600 focus:ring-green-600" @error('registered_owner_status', 'default') aria-invalid="true" aria-describedby="landowner-registered_owner_status-server-error" data-ui-server-invalid @enderror>
                     <option value="">Not specified</option>
                     @foreach ($registeredOwnerStatusOptions as $value => $label)
                         <option value="{{ $value }}" @selected(old('registered_owner_status') === $value)>{{ $label }}</option>
                     @endforeach
                 </select>
+                @error('registered_owner_status')<p id="landowner-registered_owner_status-server-error" class="text-sm text-red-600">{{ $message }}</p>@enderror
                 <p class="mt-1 text-xs text-gray-500">Used to match the registered owner as shown on the title.</p>
             </div>
             <div>
-                <label class="mb-1 block text-xs font-black uppercase tracking-wider text-gray-600">Name of spouse <span class="normal-case text-gray-400">if married</span></label>
-                <input type="text" name="spouse_name" value="{{ old('spouse_name') }}" class="w-full rounded-lg border-gray-300 text-sm focus:border-green-600 focus:ring-green-600" placeholder="Required only when status is Married">
+                <label for="landowner-spouse_name" class="mb-1 block text-xs font-black uppercase tracking-wider text-gray-600">Name of spouse <span class="normal-case text-gray-400">if married</span></label>
+                <input id="landowner-spouse_name" type="text" name="spouse_name" value="{{ old('spouse_name') }}" class="w-full rounded-lg border-gray-300 text-sm focus:border-green-600 focus:ring-green-600" placeholder="Required only when status is Married" @error('spouse_name', 'default') aria-invalid="true" aria-describedby="landowner-spouse_name-server-error" data-ui-server-invalid @enderror>
+                @error('spouse_name')<p id="landowner-spouse_name-server-error" class="text-sm text-red-600">{{ $message }}</p>@enderror
                 <p class="mt-1 text-xs text-gray-500">Leave blank when the registered owner is not married or when not applicable.</p>
             </div>
             <div>
-                <label class="mb-1 block text-xs font-black uppercase tracking-wider text-gray-600">Contact number</label>
-                <input type="text" name="contact_number" value="{{ old('contact_number') }}" class="w-full rounded-lg border-gray-300 text-sm focus:border-green-600 focus:ring-green-600">
+                <label for="landowner-contact_number" class="mb-1 block text-xs font-black uppercase tracking-wider text-gray-600">Contact number</label>
+                <input id="landowner-contact_number" type="text" name="contact_number" value="{{ old('contact_number') }}" class="w-full rounded-lg border-gray-300 text-sm focus:border-green-600 focus:ring-green-600" @error('contact_number', 'default') aria-invalid="true" aria-describedby="landowner-contact_number-server-error" data-ui-server-invalid @enderror>
+                @error('contact_number')<p id="landowner-contact_number-server-error" class="text-sm text-red-600">{{ $message }}</p>@enderror
             </div>
             <div>
-                <label class="mb-1 block text-xs font-black uppercase tracking-wider text-gray-600">Linked landowner user account</label>
+                <label for="landowner-user_id" class="mb-1 block text-xs font-black uppercase tracking-wider text-gray-600">Linked landowner user account</label>
                 <div data-remote-record-select data-lookup-url="{{ route('staff.lookups.landowner-users') }}" class="space-y-2">
                     <input type="search" aria-label="Search Landowner accounts" placeholder="Search name, email, username, or account ID" autocomplete="off" class="w-full rounded-lg border-gray-300 text-sm" data-remote-record-search>
-                    <select name="user_id" class="w-full rounded-lg border-gray-300 text-sm" data-remote-record-control data-placeholder="No linked account">
+                    <select id="landowner-user_id" name="user_id" class="w-full rounded-lg border-gray-300 text-sm" data-remote-record-control data-placeholder="No linked account" @error('user_id', 'default') aria-invalid="true" aria-describedby="landowner-user_id-server-error" data-ui-server-invalid @enderror>
                         <option value="">No linked account</option>
                         @if ($selectedUser)
                             <option value="{{ $selectedUser->id }}" selected>{{ $selectedUser->name }} — {{ $selectedUser->email }}</option>
                         @endif
                     </select>
+                @error('user_id')<p id="landowner-user_id-server-error" class="text-sm text-red-600">{{ $message }}</p>@enderror
                     <p class="text-xs text-gray-500" data-remote-record-status>Search to find an eligible account.</p>
                 </div>
             </div>
             <div class="md:col-span-2">
-                <label class="mb-1 block text-xs font-black uppercase tracking-wider text-gray-600">Address</label>
-                <input type="text" name="address_line" value="{{ old('address_line') }}" class="w-full rounded-lg border-gray-300 text-sm focus:border-green-600 focus:ring-green-600">
+                <label for="landowner-address_line" class="mb-1 block text-xs font-black uppercase tracking-wider text-gray-600">Address</label>
+                <input id="landowner-address_line" type="text" name="address_line" value="{{ old('address_line') }}" class="w-full rounded-lg border-gray-300 text-sm focus:border-green-600 focus:ring-green-600" @error('address_line', 'default') aria-invalid="true" aria-describedby="landowner-address_line-server-error" data-ui-server-invalid @enderror>
+                @error('address_line')<p id="landowner-address_line-server-error" class="text-sm text-red-600">{{ $message }}</p>@enderror
             </div>
             <div>
-                <label class="mb-1 block text-xs font-black uppercase tracking-wider text-gray-600">Municipality</label>
-                <input type="text" name="municipality" value="{{ old('municipality') }}" class="w-full rounded-lg border-gray-300 text-sm focus:border-green-600 focus:ring-green-600">
+                <label for="landowner-municipality" class="mb-1 block text-xs font-black uppercase tracking-wider text-gray-600">Municipality</label>
+                <input id="landowner-municipality" type="text" name="municipality" value="{{ old('municipality') }}" class="w-full rounded-lg border-gray-300 text-sm focus:border-green-600 focus:ring-green-600" @error('municipality', 'default') aria-invalid="true" aria-describedby="landowner-municipality-server-error" data-ui-server-invalid @enderror>
+                @error('municipality')<p id="landowner-municipality-server-error" class="text-sm text-red-600">{{ $message }}</p>@enderror
             </div>
             <div>
-                <label class="mb-1 block text-xs font-black uppercase tracking-wider text-gray-600">Barangay</label>
-                <input type="text" name="barangay" value="{{ old('barangay') }}" class="w-full rounded-lg border-gray-300 text-sm focus:border-green-600 focus:ring-green-600">
+                <label for="landowner-barangay" class="mb-1 block text-xs font-black uppercase tracking-wider text-gray-600">Barangay</label>
+                <input id="landowner-barangay" type="text" name="barangay" value="{{ old('barangay') }}" class="w-full rounded-lg border-gray-300 text-sm focus:border-green-600 focus:ring-green-600" @error('barangay', 'default') aria-invalid="true" aria-describedby="landowner-barangay-server-error" data-ui-server-invalid @enderror>
+                @error('barangay')<p id="landowner-barangay-server-error" class="text-sm text-red-600">{{ $message }}</p>@enderror
             </div>
             <div>
-                <label class="mb-1 block text-xs font-black uppercase tracking-wider text-gray-600">Province</label>
-                <input type="text" name="province" value="{{ old('province', 'Negros Oriental') }}" class="w-full rounded-lg border-gray-300 text-sm focus:border-green-600 focus:ring-green-600">
+                <label for="landowner-province" class="mb-1 block text-xs font-black uppercase tracking-wider text-gray-600">Province</label>
+                <input id="landowner-province" type="text" name="province" value="{{ old('province', 'Negros Oriental') }}" class="w-full rounded-lg border-gray-300 text-sm focus:border-green-600 focus:ring-green-600" @error('province', 'default') aria-invalid="true" aria-describedby="landowner-province-server-error" data-ui-server-invalid @enderror>
+                @error('province')<p id="landowner-province-server-error" class="text-sm text-red-600">{{ $message }}</p>@enderror
             </div>
         </div>
 

@@ -275,78 +275,78 @@
                         <div class="parcel-edit-grid">
                             <div class="parcel-edit-field">
                                 <label for="parcel_code">Parcel Code</label>
-                                <input id="parcel_code" type="text" name="parcel_code" value="{{ old('parcel_code', $parcel->parcel_code) }}" required class="parcel-edit-input">
-                                @error('parcel_code')<p class="parcel-edit-error">{{ $message }}</p>@enderror
+                                <input id="parcel_code" type="text" name="parcel_code" value="{{ old('parcel_code', $parcel->parcel_code) }}" required class="parcel-edit-input" @error('parcel_code', 'default') aria-invalid="true" aria-describedby="parcel_code-server-error" data-ui-server-invalid @enderror>
+                                @error('parcel_code')<p id="parcel_code-server-error" class="parcel-edit-error">{{ $message }}</p>@enderror
                             </div>
 
                             <div class="parcel-edit-field">
                                 <label for="status">Status</label>
-                                <select id="status" name="status" required class="parcel-edit-input">
+                                <select id="status" name="status" required class="parcel-edit-input" @error('status', 'default') aria-invalid="true" aria-describedby="status-server-error" data-ui-server-invalid @enderror>
                                     @foreach ($parcelStatuses as $value => $label)
                                         <option value="{{ $value }}" @selected(old('status', $parcel->status) === $value)>{{ $label }}</option>
                                     @endforeach
                                 </select>
-                                @error('status')<p class="parcel-edit-error">{{ $message }}</p>@enderror
+                                @error('status')<p id="status-server-error" class="parcel-edit-error">{{ $message }}</p>@enderror
                             </div>
 
                             <div class="parcel-edit-field">
                                 <label for="title_no">Title Number</label>
-                                <input id="title_no" type="text" name="title_no" value="{{ old('title_no', $parcel->title_no) }}" class="parcel-edit-input">
-                                @error('title_no')<p class="parcel-edit-error">{{ $message }}</p>@enderror
+                                <input id="title_no" type="text" name="title_no" value="{{ old('title_no', $parcel->title_no) }}" class="parcel-edit-input" @error('title_no', 'default') aria-invalid="true" aria-describedby="title_no-server-error" data-ui-server-invalid @enderror>
+                                @error('title_no')<p id="title_no-server-error" class="parcel-edit-error">{{ $message }}</p>@enderror
                             </div>
 
                             <div class="parcel-edit-field">
                                 <label for="lot_number">Lot Number</label>
-                                <input id="lot_number" type="text" name="lot_number" value="{{ old('lot_number', $parcel->lot_number) }}" class="parcel-edit-input">
-                                @error('lot_number')<p class="parcel-edit-error">{{ $message }}</p>@enderror
+                                <input id="lot_number" type="text" name="lot_number" value="{{ old('lot_number', $parcel->lot_number) }}" class="parcel-edit-input" @error('lot_number', 'default') aria-invalid="true" aria-describedby="lot_number-server-error" data-ui-server-invalid @enderror>
+                                @error('lot_number')<p id="lot_number-server-error" class="parcel-edit-error">{{ $message }}</p>@enderror
                             </div>
 
                             <div class="parcel-edit-field">
                                 <label for="survey_plan_number">Survey Plan Number</label>
-                                <input id="survey_plan_number" type="text" name="survey_plan_number" value="{{ old('survey_plan_number', $parcel->survey_plan_number) }}" class="parcel-edit-input">
-                                @error('survey_plan_number')<p class="parcel-edit-error">{{ $message }}</p>@enderror
+                                <input id="survey_plan_number" type="text" name="survey_plan_number" value="{{ old('survey_plan_number', $parcel->survey_plan_number) }}" class="parcel-edit-input" @error('survey_plan_number', 'default') aria-invalid="true" aria-describedby="survey_plan_number-server-error" data-ui-server-invalid @enderror>
+                                @error('survey_plan_number')<p id="survey_plan_number-server-error" class="parcel-edit-error">{{ $message }}</p>@enderror
                             </div>
 
                             <div class="parcel-edit-field">
                                 <label for="title_type">Title / Reference Type</label>
-                                <select id="title_type" name="title_type" class="parcel-edit-input">
+                                <select id="title_type" name="title_type" class="parcel-edit-input" @error('title_type', 'default') aria-invalid="true" aria-describedby="title_type-server-error" data-ui-server-invalid @enderror>
                                     <option value="">Select title/reference type</option>
                                     @foreach ($titleTypes as $value => $label)
                                         <option value="{{ $value }}" @selected(old('title_type', $parcel->title_type) === $value)>{{ $label }}</option>
                                     @endforeach
                                 </select>
-                                @error('title_type')<p class="parcel-edit-error">{{ $message }}</p>@enderror
+                                @error('title_type')<p id="title_type-server-error" class="parcel-edit-error">{{ $message }}</p>@enderror
                             </div>
 
                             <div class="parcel-edit-field">
                                 <label for="rod_office">Register of Deeds Office</label>
-                                <select id="rod_office" name="rod_office" class="parcel-edit-input">
+                                <select id="rod_office" name="rod_office" class="parcel-edit-input" @error('rod_office', 'default') aria-invalid="true" aria-describedby="rod_office-server-error" data-ui-server-invalid @enderror>
                                     <option value="">Select ROD office</option>
                                     @foreach ($rodOffices as $value => $label)
                                         <option value="{{ $value }}" @selected(old('rod_office', $parcel->rod_office) === $value)>{{ $label }}</option>
                                     @endforeach
                                 </select>
-                                @error('rod_office')<p class="parcel-edit-error">{{ $message }}</p>@enderror
+                                @error('rod_office')<p id="rod_office-server-error" class="parcel-edit-error">{{ $message }}</p>@enderror
                             </div>
 
                             <div class="parcel-edit-field">
                                 <label for="tax_decl_no">Tax Declaration Number</label>
-                                <input id="tax_decl_no" type="text" name="tax_decl_no" value="{{ old('tax_decl_no', $parcel->tax_decl_no) }}" class="parcel-edit-input">
-                                @error('tax_decl_no')<p class="parcel-edit-error">{{ $message }}</p>@enderror
+                                <input id="tax_decl_no" type="text" name="tax_decl_no" value="{{ old('tax_decl_no', $parcel->tax_decl_no) }}" class="parcel-edit-input" @error('tax_decl_no', 'default') aria-invalid="true" aria-describedby="tax_decl_no-server-error" data-ui-server-invalid @enderror>
+                                @error('tax_decl_no')<p id="tax_decl_no-server-error" class="parcel-edit-error">{{ $message }}</p>@enderror
                             </div>
 
                             <div class="parcel-edit-field">
                                 <label for="area_square_meters">Total Area / Square Meters</label>
-                                <input id="area_square_meters" type="number" step="0.01" min="0" name="area_square_meters" value="{{ old('area_square_meters', $parcel->area_square_meters) }}" class="parcel-edit-input">
+                                <input id="area_square_meters" type="number" step="0.01" min="0" name="area_square_meters" value="{{ old('area_square_meters', $parcel->area_square_meters) }}" class="parcel-edit-input" @error('area_square_meters', 'default') aria-invalid="true" aria-describedby="area_square_meters-server-error" data-ui-server-invalid @enderror>
                                 <p class="parcel-edit-helper">Land registration commonly records area in square meters. Hectares may be computed for monitoring.</p>
-                                @error('area_square_meters')<p class="parcel-edit-error">{{ $message }}</p>@enderror
+                                @error('area_square_meters')<p id="area_square_meters-server-error" class="parcel-edit-error">{{ $message }}</p>@enderror
                             </div>
 
                             <div class="parcel-edit-field">
                                 <label for="area_hectares">Area / Hectares</label>
-                                <input id="area_hectares" type="number" step="0.0001" min="0" name="area_hectares" value="{{ old('area_hectares', $parcel->area_hectares) }}" class="parcel-edit-input">
+                                <input id="area_hectares" type="number" step="0.0001" min="0" name="area_hectares" value="{{ old('area_hectares', $parcel->area_hectares) }}" class="parcel-edit-input" @error('area_hectares', 'default') aria-invalid="true" aria-describedby="area_hectares-server-error" data-ui-server-invalid @enderror>
                                 <p class="parcel-edit-helper">Optional reference. Leave blank if square meters are encoded; the system computes it.</p>
-                                @error('area_hectares')<p class="parcel-edit-error">{{ $message }}</p>@enderror
+                                @error('area_hectares')<p id="area_hectares-server-error" class="parcel-edit-error">{{ $message }}</p>@enderror
                             </div>
 </div>
                     </div>
@@ -364,20 +364,20 @@
                         <div class="parcel-edit-grid is-location">
                             <div class="parcel-edit-field">
                                 <label for="province">Province</label>
-                                <input id="province" type="text" name="province" value="{{ old('province', $parcel->province ?? 'Negros Oriental') }}" class="parcel-edit-input">
-                                @error('province')<p class="parcel-edit-error">{{ $message }}</p>@enderror
+                                <input id="province" type="text" name="province" value="{{ old('province', $parcel->province ?? 'Negros Oriental') }}" class="parcel-edit-input" @error('province', 'default') aria-invalid="true" aria-describedby="province-server-error" data-ui-server-invalid @enderror>
+                                @error('province')<p id="province-server-error" class="parcel-edit-error">{{ $message }}</p>@enderror
                             </div>
 
                             <div class="parcel-edit-field">
                                 <label for="municipality">Municipality</label>
-                                <input id="municipality" type="text" name="municipality" value="{{ old('municipality', $parcel->municipality) }}" class="parcel-edit-input">
-                                @error('municipality')<p class="parcel-edit-error">{{ $message }}</p>@enderror
+                                <input id="municipality" type="text" name="municipality" value="{{ old('municipality', $parcel->municipality) }}" class="parcel-edit-input" @error('municipality', 'default') aria-invalid="true" aria-describedby="municipality-server-error" data-ui-server-invalid @enderror>
+                                @error('municipality')<p id="municipality-server-error" class="parcel-edit-error">{{ $message }}</p>@enderror
                             </div>
 
                             <div class="parcel-edit-field">
                                 <label for="barangay">Barangay</label>
-                                <input id="barangay" type="text" name="barangay" value="{{ old('barangay', $parcel->barangay) }}" class="parcel-edit-input">
-                                @error('barangay')<p class="parcel-edit-error">{{ $message }}</p>@enderror
+                                <input id="barangay" type="text" name="barangay" value="{{ old('barangay', $parcel->barangay) }}" class="parcel-edit-input" @error('barangay', 'default') aria-invalid="true" aria-describedby="barangay-server-error" data-ui-server-invalid @enderror>
+                                @error('barangay')<p id="barangay-server-error" class="parcel-edit-error">{{ $message }}</p>@enderror
                             </div>
                         </div>
                     </div>
@@ -423,8 +423,8 @@
 
                         <div class="parcel-edit-field">
                             <label for="remarks">Remarks</label>
-                            <textarea id="remarks" name="remarks" rows="4" class="parcel-edit-input">{{ old('remarks', $parcel->remarks) }}</textarea>
-                            @error('remarks')<p class="parcel-edit-error">{{ $message }}</p>@enderror
+                            <textarea id="remarks" name="remarks" rows="4" class="parcel-edit-input" @error('remarks', 'default') aria-invalid="true" aria-describedby="remarks-server-error" data-ui-server-invalid @enderror>{{ old('remarks', $parcel->remarks) }}</textarea>
+                            @error('remarks')<p id="remarks-server-error" class="parcel-edit-error">{{ $message }}</p>@enderror
                         </div>
                     </div>
                 </section>
@@ -465,3 +465,4 @@
         </form>
     </div>
 </x-staff-shell>
+

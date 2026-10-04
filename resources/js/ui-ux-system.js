@@ -17,16 +17,22 @@ function ensureLabelAssociations(root = document) {
         const container = label.closest('.field-group, .user-field, .parcel-create-field, .profile-field, .staff-filter-field, .form-group');
         if (!container) return;
 
-        const control = container.querySelector('input:not([type="hidden"]), select, textarea');
+        const control = container.querySelector('[data-remote-record-control]')
+            || container.querySelector('input:not([type="hidden"]), select, textarea');
         if (!control) return;
 
         if (!control.id) {
             generated += 1;
             const base = safeId(control.name || label.textContent) || 'field';
+            while (document.getElementById(`ui-${base}-${generated}`)) generated += 1;
             control.id = `ui-${base}-${generated}`;
         }
 
         label.htmlFor = control.id;
+        const search = container.querySelector('[data-remote-record-search]');
+        if (search && !search.hasAttribute('aria-label')) {
+            search.setAttribute('aria-label', `Search ${label.textContent.trim()}`);
+        }
     });
 }
 
@@ -410,3 +416,4 @@ if (document.readyState === 'loading') {
 }
 
 export { initUiUxSystem };
+
