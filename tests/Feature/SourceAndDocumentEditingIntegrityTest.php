@@ -22,6 +22,49 @@ class SourceAndDocumentEditingIntegrityTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_review_removal_prompts_identify_targets_and_escape_names(): void
+    {
+        [$staff, $application, $requirement] = $this->documentContext();
+        $requirement->update(['name' => 'Evidence "<script>alert(1)</script>"']);
+        ApplicationDocument::create([
+            'land_transfer_application_id' => $application->id,
+            'required_document_id' => $requirement->id,
+            'annex_reference' => 'Saved details',
+            'original_filename' => 'owner "<img src=x onerror=alert(1)>".pdf',
+        ]);
+        $response = $this->actingAs($staff)->get(route('staff.applications.show', $application));
+        $response->assertOk()
+            ->assertSee('data-remove-confirmation="'.e('Remove requirement “'.$requirement->name.'” (owner "<img src=x onerror=alert(1)>".pdf) from application SOURCE-DOC-AUDIT?'), false)
+            ->assertSee('data-remove-confirmation="Remove parcel reference “DOC-SUBJECT” from application SOURCE-DOC-AUDIT?', false)
+            ->assertSee('The main parcel record remains preserved.')
+            ->assertSee('The source reference records and audit history remain preserved.')
+            ->assertSee('data-submit-feedback', false)
+            ->assertSee('id="decision-submit-status"', false)
+            ->assertDontSee('<script>alert(1)</script>', false)
+            ->assertDontSee('<img src=x onerror=alert(1)>', false);
+    }
+
+    public function test_source_file_removal_prompt_identifies_file_and_preserved_records(): void
+    {
+        Storage::fake('local');
+        $staff = User::factory()->create(['role' => 'staff']);
+        $package = $this->package($staff);
+        $filename = 'Source "<img src=x onerror=alert(1)>".pdf';
+        Storage::put('source-record-packages/scan.pdf', 'scan');
+        $package->update([
+            'source_file_path' => 'source-record-packages/scan.pdf',
+            'source_file_original_filename' => $filename,
+            'source_file_mime_type' => 'application/pdf',
+        ]);
+        $this->actingAs($staff)->get(route('staff.source-record-packages.show', $package))
+            ->assertOk()
+            ->assertSee('data-remove-confirmation="'.e('Delete source file “'.$filename.'” from package SOURCE-AUDIT-PACKAGE?'), false)
+            ->assertSee('The package, source records, linked parcel and landowner records remain preserved.')
+            ->assertSee('This cannot be undone.')
+            ->assertSee('data-submit-feedback', false)
+            ->assertDontSee('<img src=x onerror=alert(1)>', false);
+    }
+
     public function test_stale_document_save_and_delete_preserve_newer_evidence_and_file(): void
     {
         Storage::fake('local');

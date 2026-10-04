@@ -1064,7 +1064,7 @@
                                 Edit encoded package values, technical reference, and notes
                             </summary>
 
-                            <form method="POST" action="{{ route('staff.source-record-packages.update', $package) }}" class="source-detail-form source-form-panel-clean mt-4">
+                            <form data-submit-feedback method="POST" action="{{ route('staff.source-record-packages.update', $package) }}" class="source-detail-form source-form-panel-clean mt-4">
                                 @csrf
                     <input type="hidden" name="expected_record_revision" value="{{ old('expected_record_revision', $package->record_revision) }}">
                                 @method('PATCH')
@@ -1284,7 +1284,7 @@
                                         <p class="source-link-step-copy">Use this when the person already exists in Landowner Records.</p>
                                     </div>
 
-                                    <form method="POST" action="{{ route('staff.source-record-packages.link-landowner', $package) }}" class="source-detail-form">
+                                    <form data-submit-feedback method="POST" action="{{ route('staff.source-record-packages.link-landowner', $package) }}" class="source-detail-form">
                                         @csrf
                     <input type="hidden" name="expected_record_revision" value="{{ old('expected_record_revision', $package->record_revision) }}">
                                         <div class="source-form-field">
@@ -1328,7 +1328,7 @@
                                             <span><i class="fa-solid fa-user-plus mr-2"></i> Open creation form</span>
                                         </summary>
 
-                                        <form method="POST" action="{{ route('staff.source-record-packages.create-landowner', $package) }}" class="source-detail-form source-form-panel-clean">
+                                        <form data-submit-feedback method="POST" action="{{ route('staff.source-record-packages.create-landowner', $package) }}" class="source-detail-form source-form-panel-clean">
                                             @csrf
                     <input type="hidden" name="expected_record_revision" value="{{ old('expected_record_revision', $package->record_revision) }}">
                                             <div class="source-form-grid">
@@ -1473,7 +1473,7 @@
                                     <p class="source-link-step-copy">Use this if the parcel already exists in the main Parcel Records module.</p>
                                 </div>
 
-                                <form method="POST" action="{{ route('staff.source-record-packages.link-parcel', $package) }}" class="source-detail-form">
+                                <form data-submit-feedback method="POST" action="{{ route('staff.source-record-packages.link-parcel', $package) }}" class="source-detail-form">
                                     @csrf
                     <input type="hidden" name="expected_record_revision" value="{{ old('expected_record_revision', $package->record_revision) }}">
                                     <div class="source-form-field">
@@ -1524,7 +1524,7 @@
                                         <span><i class="fa-solid fa-map-location-dot mr-2"></i> Open parcel creation form</span>
                                     </summary>
 
-                                    <form method="POST" action="{{ route('staff.source-record-packages.create-parcel', $package) }}" class="source-detail-form source-form-panel-clean">
+                                    <form data-submit-feedback method="POST" action="{{ route('staff.source-record-packages.create-parcel', $package) }}" class="source-detail-form source-form-panel-clean">
                                         @csrf
                     <input type="hidden" name="expected_record_revision" value="{{ old('expected_record_revision', $package->record_revision) }}">
                                         <div class="source-form-grid">
@@ -1683,7 +1683,7 @@
                                                 Open Source File
                                             </a>
 
-                                            <form method="POST" action="{{ route('staff.source-record-packages.source-file.destroy', $package) }}" onsubmit="return confirm('Remove the attached source file from this package?');">
+                                            <form data-submit-feedback method="POST" action="{{ route('staff.source-record-packages.source-file.destroy', $package) }}" data-remove-confirmation="{{ 'Delete source file “'.($package->source_file_original_filename ?: 'Attached source file').'” from package '.$package->package_code.'? The attached file will be deleted. The package, source records, linked parcel and landowner records remain preserved. This cannot be undone.' }}" onsubmit="return confirm(this.dataset.removeConfirmation);">
                                                 @csrf
                     <input type="hidden" name="expected_record_revision" value="{{ old('expected_record_revision', $package->record_revision) }}">
                                                 @method('DELETE')
@@ -1694,7 +1694,7 @@
                                             </form>
                                         </div>
 
-                                        <form method="POST" action="{{ route('staff.source-record-packages.source-file.store', $package) }}" enctype="multipart/form-data" class="source-detail-form">
+                                        <form data-submit-feedback method="POST" action="{{ route('staff.source-record-packages.source-file.store', $package) }}" enctype="multipart/form-data" class="source-detail-form">
                                             @csrf
                     <input type="hidden" name="expected_record_revision" value="{{ old('expected_record_revision', $package->record_revision) }}">
                                             <div class="source-file-upload-box">
@@ -1717,7 +1717,7 @@
                                     </div>
                                 </div>
 
-                                <form method="POST" action="{{ route('staff.source-record-packages.source-file.store', $package) }}" enctype="multipart/form-data" class="source-detail-form">
+                                <form data-submit-feedback method="POST" action="{{ route('staff.source-record-packages.source-file.store', $package) }}" enctype="multipart/form-data" class="source-detail-form">
                                     @csrf
                     <input type="hidden" name="expected_record_revision" value="{{ old('expected_record_revision', $package->record_revision) }}">
                                     <div class="source-file-upload-box">

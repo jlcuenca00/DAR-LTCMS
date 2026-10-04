@@ -718,7 +718,7 @@
     @endphp
 
     <div class="source-package-page">
-        <form method="POST" action="{{ route('staff.source-record-packages.store') }}" enctype="multipart/form-data" class="staff-panel source-form-panel" data-source-validation-form data-autosave-key="source-package-create" data-autosave-label="source package encoding">
+        <form data-submit-feedback method="POST" action="{{ route('staff.source-record-packages.store') }}" enctype="multipart/form-data" class="staff-panel source-form-panel" data-source-validation-form data-autosave-key="source-package-create" data-autosave-label="source package encoding">
             @csrf
 
             <input type="hidden" name="source_package_mode" value="{{ $oldMode }}" data-source-package-mode>

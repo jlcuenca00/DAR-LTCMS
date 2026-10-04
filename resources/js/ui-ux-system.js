@@ -309,7 +309,30 @@ function resetSubmitStates() {
         button.removeAttribute('aria-busy');
         button.removeAttribute('aria-disabled');
     });
+    document.querySelectorAll('[data-ui-submit-status]').forEach(status => {
+        status.textContent = '';
+        status.hidden = true;
+    });
 }
+
+function beginSubmission(form, submit) {
+    if (form.dataset.uiSubmitting === 'true') return false;
+    form.dataset.uiSubmitting = 'true';
+    if (submit instanceof HTMLButtonElement) {
+        submit.dataset.uiBusy = 'true';
+        submit.setAttribute('aria-busy', 'true');
+        submit.setAttribute('aria-disabled', 'true');
+        submit.dataset.uiOriginalText = submit.innerHTML;
+        const label = /remove|delete/i.test(submit.textContent) ? 'Removing…'
+            : /upload|attach.*file/i.test(submit.textContent) ? 'Uploading…'
+            : /create|add/i.test(submit.textContent) ? 'Creating…'
+            : /change password/i.test(submit.textContent) ? 'Updating…' : 'Saving…';
+        submit.innerHTML = '<span aria-hidden="true">⏳</span><span>' + label + '</span>';
+    }
+    return true;
+}
+
+window.DarSubmitState = { begin: beginSubmission };
 
 window.addEventListener('pageshow', event => {
     if (event.persisted) resetSubmitStates();
@@ -319,6 +342,7 @@ function addSubmitState() {
     const forms = document.querySelectorAll([
         '.application-create-page form', '.parcel-create-layout',
         '.user-editor-wrap form', '.profile-form',
+        'form[data-submit-feedback]',
     ].join(','));
 
     forms.forEach(form => {
@@ -336,15 +360,7 @@ function addSubmitState() {
             if (!(submit instanceof HTMLButtonElement)) return;
             queueMicrotask(() => {
                 if (event.defaultPrevented) return;
-                form.dataset.uiSubmitting = 'true';
-                submit.dataset.uiBusy = 'true';
-                submit.setAttribute('aria-busy', 'true');
-                submit.setAttribute('aria-disabled', 'true');
-                submit.dataset.uiOriginalText = submit.innerHTML;
-                const label = /create|add/i.test(submit.textContent) ? 'Creating…'
-                    : /upload/i.test(submit.textContent) ? 'Uploading…'
-                    : /change password/i.test(submit.textContent) ? 'Updating…' : 'Saving…';
-                submit.innerHTML = '<span aria-hidden="true">⏳</span><span>' + label + '</span>';
+                beginSubmission(form, submit);
             });
         });
     });
