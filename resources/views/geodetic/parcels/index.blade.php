@@ -108,7 +108,7 @@
             <div>
                 <p class="geo-record-kicker">Technical Reference View</p>
                 <h2 class="geo-record-title">Parcel and Landholding Records</h2>
-                <p class="geo-record-copy">Review encoded parcel references, linked landowners, hectare values, and geometry availability. Ownership and application records remain read-only; parcel geometry may be updated only through the controlled Geodetic geometry workflow.</p>
+                <p class="geo-record-copy">Review encoded parcel references, linked landowners, hectare values, and geometry reference state. Ownership and application records remain read-only; parcel geometry may be updated only through the controlled Geodetic geometry workflow.</p>
             </div>
 
             <div class="geo-record-actions">
@@ -187,7 +187,7 @@
                                     <td>
                                         <div class="geo-state-stack">
                                             <span class="geo-state-badge {{ $holding->status === 'active' ? 'is-active' : '' }}">{{ $holding->status ? ucwords(str_replace('_', ' ', $holding->status)) : 'Unspecified' }}</span>
-                                            <span class="geo-state-badge {{ $parcel?->geometry_geojson ? 'is-mapped' : '' }}">{{ $parcel?->geometry_geojson ? 'Mapped' : 'No Geometry' }}</span>
+                                            <span class="geo-state-badge {{ $parcel?->geometry_geojson ? 'is-mapped' : '' }}">{{ $parcel?->geometryReferenceLabel() ?? 'No parcel reference' }}</span>
                                         </div>
                                     </td>
                                 </tr>
@@ -206,3 +206,4 @@
 
     <x-record-row-navigation />
 </x-geodetic-shell>
+

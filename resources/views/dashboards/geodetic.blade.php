@@ -1,7 +1,7 @@
 @php
     $cardValue = fn (string $label) => (int) (collect($dashboardCards)->firstWhere('label', $label)['value'] ?? 0);
     $totalParcels = $cardValue('Parcel References');
-    $mappedParcels = $cardValue('Mapped Parcels');
+    $mappedParcels = $cardValue('Parcels with Geometry');
     $coveragePercent = $totalParcels > 0 ? min(100, round(($mappedParcels / $totalParcels) * 100)) : 0;
 @endphp
 
@@ -193,7 +193,7 @@
                     </div>
                     <div class="geo-hero-stat">
                         <span class="geo-hero-stat-value">{{ $mappedParcels }}</span>
-                        <span class="geo-hero-stat-label">Mapped parcels</span>
+                        <span class="geo-hero-stat-label">Parcels with geometry</span>
                     </div>
                     <div class="geo-hero-stat">
                         <span class="geo-hero-stat-value">{{ $cardValue('Landholding References') }}</span>
@@ -201,7 +201,7 @@
                     </div>
                 </div>
                 <div class="geo-coverage">
-                    <div class="geo-coverage-top"><span>Map geometry coverage</span><strong>{{ $coveragePercent }}%</strong></div>
+                    <div class="geo-coverage-top"><span>Stored geometry coverage</span><strong>{{ $coveragePercent }}%</strong></div>
                     <div class="geo-coverage-track"><div class="geo-coverage-fill" style="width: {{ $coveragePercent }}%;"></div></div>
                 </div>
             </div>
@@ -232,7 +232,7 @@
                                     {{ $parcel->barangay ?? 'N/A' }}, {{ $parcel->municipality ?? 'N/A' }}
                                     <div class="geo-recent-sub">{{ $parcel->title_no ?? 'No title reference' }} · {{ $parcel->tax_decl_no ?? 'No tax declaration' }}</div>
                                 </div>
-                                <span class="geo-state-badge {{ $parcel->geometry_geojson ? 'is-mapped' : '' }}">{{ $parcel->geometry_geojson ? 'Mapped' : 'No Geometry' }}</span>
+                                <span class="geo-state-badge {{ $parcel->geometry_geojson ? 'is-mapped' : '' }}">{{ $parcel->geometryReferenceLabel() }}</span>
                                 <div class="geo-recent-area">{{ $parcel->area_hectares ? number_format((float) $parcel->area_hectares, 4).' ha' : 'N/A' }}</div>
                             </div>
                         @endforeach
@@ -271,3 +271,4 @@
 
     <x-record-row-navigation />
 </x-geodetic-shell>
+

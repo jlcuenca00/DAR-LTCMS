@@ -36,22 +36,33 @@ function initializeParcelMapViewer() {
         pages.replaceChildren();
         searchStatus.textContent = data.total ? 'Page ' + data.page + ' of ' + data.last_page + ' · ' + data.total + ' matching parcels' : 'No mapped parcels match this search.';
         for (const record of data.items) {
-            const link = document.createElement('a');
-            link.href = record.details_url;
-            link.className = buttonClass;
+            const item = document.createElement('div');
+            item.className = buttonClass;
             const code = document.createElement('span');
             code.className = codeClass;
             code.textContent = record.parcel_code || 'Parcel record';
             const meta = document.createElement('span');
             meta.className = metaClass;
             meta.textContent = record.barangay + ', ' + record.municipality + ' · Parcel area: ' + (record.area_hectares ?? 'N/A') + ' ha';
-            link.append(code, meta);
-            link.addEventListener('click', event => {
-                if (!map || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
-                event.preventDefault();
-                focusParcel(record);
-            });
-            results.appendChild(link);
+            const actions = document.createElement('div');
+            actions.className = 'parcel-search-actions';
+            actions.style.cssText = 'display:flex;flex-wrap:wrap;gap:8px;margin-top:6px';
+            const show = document.createElement('button');
+            show.type = 'button';
+            show.textContent = 'Show on map';
+            show.setAttribute('aria-label', 'Show ' + (record.parcel_code || 'parcel') + ' on map');
+            show.dataset.mapFocus = 'true';
+            show.hidden = !map;
+            show.style.cssText = 'min-height:48px;padding:8px';
+            show.addEventListener('click', () => focusParcel(record));
+            const link = document.createElement('a');
+            link.href = record.details_url;
+            link.textContent = 'Open record';
+            link.setAttribute('aria-label', 'Open ' + (record.parcel_code || 'parcel') + ' record');
+            link.style.cssText = 'display:inline-flex;align-items:center;min-height:48px;padding:8px';
+            actions.append(show, link);
+            item.append(code, meta, actions);
+            results.appendChild(item);
         }
         for (const [label, page, disabled] of [
             ['Previous', data.page - 1, data.page <= 1],
@@ -202,6 +213,7 @@ function initializeParcelMapViewer() {
     }
     container.replaceChildren();
     map = window.L.map(container, { zoomControl: false, minZoom: 7, maxZoom: 20 }).setView([9.3068, 123.3054], 12);
+    results.querySelectorAll('[data-map-focus]').forEach(button => { button.hidden = false; });
     // Track actual overlays on this map rather than relying on a global
     // Leaflet prototype patch (the page and bundle may load separate instances).
     map.on('tooltipopen', ({ tooltip }) => {

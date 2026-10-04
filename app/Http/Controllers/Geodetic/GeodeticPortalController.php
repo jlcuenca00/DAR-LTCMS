@@ -22,7 +22,7 @@ class GeodeticPortalController extends Controller
                 'created_at',
             ])
             ->with([
-                'parcel:id,parcel_code,title_no,tax_decl_no,survey_plan_number,municipality,barangay,province,agricultural_status,status,geometry_geojson',
+                'parcel:id,parcel_code,title_no,tax_decl_no,survey_plan_number,municipality,barangay,province,agricultural_status,status,geometry_geojson,map_min_longitude,map_min_latitude,map_max_longitude,map_max_latitude',
                 'landowner:id,first_name,middle_name,last_name,suffix',
             ])
             ->orderByDesc('created_at')
@@ -32,3 +32,4 @@ class GeodeticPortalController extends Controller
         return view('geodetic.parcels.index', compact('landholdings'));
     }
 }
+

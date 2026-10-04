@@ -26,9 +26,9 @@ class GeodeticDashboardController extends Controller
                 'tone' => 'green',
             ],
             [
-                'label' => 'Mapped Parcels',
+                'label' => 'Parcels with Geometry',
                 'value' => $mappedParcels,
-                'description' => 'Parcel records with stored map geometry.',
+                'description' => 'Stored geometry, including archived and review-needed references.',
                 'icon' => 'fa-draw-polygon',
                 'tone' => 'blue',
             ],
@@ -64,6 +64,8 @@ class GeodeticDashboardController extends Controller
                 'barangay',
                 'area_hectares',
                 'geometry_geojson',
+                'status',
+                ...\App\Services\ParcelMapBounds::COLUMNS,
                 'created_at',
             ])
             ->latest()
@@ -77,3 +79,4 @@ class GeodeticDashboardController extends Controller
         ));
     }
 }
+

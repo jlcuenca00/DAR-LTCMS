@@ -120,6 +120,24 @@ class Parcel extends Model
         return self::STATUSES;
     }
 
+    /** Stored reference state; this does not promise that a viewport will draw it. */
+    public function geometryReferenceLabel(): string
+    {
+        if ($this->status === 'inactive') {
+            return 'Archived reference';
+        }
+        if ($this->geometry_geojson === null) {
+            return 'No geometry';
+        }
+        foreach (ParcelMapBounds::COLUMNS as $column) {
+            if ($this->getAttribute($column) === null) {
+                return 'Geometry needs review';
+            }
+        }
+
+        return 'Geometry stored';
+    }
+
     public static function reviewFlagReasonOptions(): array
     {
         return array_filter(

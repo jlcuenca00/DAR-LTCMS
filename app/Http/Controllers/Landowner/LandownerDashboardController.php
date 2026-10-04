@@ -23,7 +23,7 @@ class LandownerDashboardController extends Controller
         $landholdingsQuery = Landholding::query()
             ->select(['id', 'landowner_id', 'parcel_id', 'area_hectares', 'status', 'created_at'])
             ->with(['parcel' => function ($query) {
-                $query->select(['id', 'parcel_code', 'municipality', 'barangay', 'geometry_geojson']);
+                $query->select(['id', 'parcel_code', 'municipality', 'barangay', 'geometry_geojson', 'status', ...\App\Services\ParcelMapBounds::COLUMNS]);
             }])
             ->whereIn('landowner_id', $landownerIds);
 
@@ -151,9 +151,9 @@ class LandownerDashboardController extends Controller
                 'tone' => 'amber',
             ],
             [
-                'label' => 'Mapped Parcels',
+                'label' => 'Parcels with Geometry',
                 'value' => $mappedParcelCount,
-                'description' => 'Linked parcels with available map geometry',
+                'description' => 'Linked parcels with stored geometry; archived and review-needed references may be included',
                 'icon' => 'fa-map',
                 'tone' => 'blue',
             ],
@@ -169,3 +169,4 @@ class LandownerDashboardController extends Controller
         ));
     }
 }
+

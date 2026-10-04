@@ -142,6 +142,12 @@
     </style>
 
     <section class="geo-detail-page">
+        @if (session('success'))
+            <div class="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800" role="status">{{ session('success') }}</div>
+        @endif
+        @if (session('error'))
+            <div class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800" role="alert">{{ session('error') }}</div>
+        @endif
         <article class="geo-detail-hero">
             <div>
                 <p class="geo-detail-kicker">Main Parcel Reference</p>
@@ -149,7 +155,7 @@
                 <p class="geo-detail-location">{{ $parcel->barangay ?? 'N/A' }}, {{ $parcel->municipality ?? 'N/A' }}, {{ $parcel->province ?? 'Negros Oriental' }}</p>
                 <div class="geo-detail-badges">
                     <span class="geo-detail-badge {{ $parcel->status === 'active' ? 'is-green' : '' }}">{{ $parcel->status ? ucwords(str_replace('_', ' ', $parcel->status)) : 'Reference Record' }}</span>
-                    <span class="geo-detail-badge {{ $parcel->geometry_geojson ? 'is-blue' : '' }}">{{ $parcel->geometry_geojson ? 'Mapped Geometry' : 'No Geometry' }}</span>
+                    <span class="geo-detail-badge {{ $parcel->geometry_geojson ? 'is-blue' : '' }}">{{ $parcel->geometryReferenceLabel() }}</span>
                     <span class="geo-detail-badge">Read-Only Review</span>
                 </div>
             </div>
@@ -205,15 +211,25 @@
                 <div class="geo-detail-panel-body">
                     <div class="geo-geometry-stack">
                         <div class="geo-geometry-summary">
-                            <p class="geo-geometry-label">Map Availability</p>
-                            <p class="geo-geometry-value">{{ $parcel->geometry_geojson ? 'Available' : 'Not encoded' }}</p>
-                            <p class="geo-geometry-copy">Geometry supports reference visualization only and does not establish legal boundaries or ownership.</p>
+                            <p class="geo-geometry-label">Geometry Reference</p>
+                            <p class="geo-geometry-value">{{ $parcel->geometryReferenceLabel() }}</p>
+                            <p class="geo-geometry-copy">Stored geometry is a technical reference and does not establish legal boundaries or ownership. Archived records and geometry needing review may not appear on the map.</p>
                         </div>
 
                         <a href="{{ route('geodetic.parcel-map.index') }}" class="geo-button geo-button-primary">
                             <i class="fa-solid fa-map-location-dot"></i>
                             Open Parcel Map
                         </a>
+
+                        @can('updateGeometry', $parcel)
+                            @if ($parcel->status === 'active')
+                                <a href="{{ route('geodetic.parcels.geometry.edit', $parcel) }}" class="geo-button">
+                                    {{ $parcel->geometry_geojson === null ? 'Add Geometry' : 'Review Geometry' }}
+                                </a>
+                            @else
+                                <p class="geo-geometry-copy">Archived parcel geometry is read-only.</p>
+                            @endif
+                        @endcan
 
                         <details class="geo-raw-data">
                             <summary><span><i class="fa-solid fa-code"></i> Raw GeoJSON</span><span>{{ $parcel->geometry_geojson['type'] ?? 'None' }}</span></summary>
@@ -271,3 +287,4 @@
         </article>
     </section>
 </x-geodetic-shell>
+
