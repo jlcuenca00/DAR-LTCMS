@@ -520,6 +520,7 @@ async function runTour(key, definition, version, initialIndex) {
         positionTour(layer, activeTarget, activeStep);
         await nextFrame();
 
+        if (closed) return;
         if (initial) layer.classList.add('is-ready');
         layer.classList.remove('is-moving');
         moving = false;
