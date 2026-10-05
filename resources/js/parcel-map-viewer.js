@@ -38,6 +38,7 @@ function initializeParcelMapViewer() {
         for (const record of data.items) {
             const item = document.createElement('div');
             item.className = buttonClass;
+            item.dataset.parcelSearchRow = '';
             const code = document.createElement('span');
             code.className = codeClass;
             code.textContent = record.parcel_code || 'Parcel record';
@@ -51,23 +52,27 @@ function initializeParcelMapViewer() {
             const areaValue = document.createElement('strong');
             areaValue.textContent = record.area_hectares == null ? 'Not recorded' : String(record.area_hectares) + ' ha';
             area.append(areaLabel, areaValue);
-            const actions = document.createElement('div');
-            actions.className = 'parcel-search-actions';
             const show = document.createElement('button');
             show.type = 'button';
-            show.textContent = 'Show on map';
+            show.innerHTML = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2"/><path d="M12 2v3m0 14v3M2 12h3m14 0h3"/></svg>';
             show.setAttribute('aria-label', 'Show ' + (record.parcel_code || 'parcel') + ' on map');
+            show.title = 'Show on map';
             show.dataset.mapFocus = 'true';
             show.hidden = !map;
-            show.className = 'parcel-search-action parcel-search-action-focus';
+            show.className = 'parcel-search-map-target';
             show.addEventListener('click', () => focusParcel(record));
             const link = document.createElement('a');
             link.href = record.details_url;
-            link.textContent = 'Open record';
             link.setAttribute('aria-label', 'Open ' + (record.parcel_code || 'parcel') + ' record');
-            link.className = 'parcel-search-action parcel-search-action-link';
-            actions.append(show, link);
-            item.append(code, meta, area, actions);
+            link.title = 'Open record';
+            link.className = 'parcel-search-record';
+            const arrow = document.createElement('span');
+            arrow.className = 'parcel-search-record-arrow';
+            arrow.textContent = '↗';
+            arrow.setAttribute('aria-hidden', 'true');
+            code.appendChild(arrow);
+            link.append(code, meta, area);
+            item.append(link, show);
             results.appendChild(item);
         }
         for (const [label, page, disabled] of [

@@ -107,7 +107,7 @@
             <div class="map-panel-header">
                 <div>
                     <h3 class="map-panel-title">Mapped Parcel Records</h3>
-                    <p class="map-panel-subtitle">Use Show on map to focus a boundary or Open record to view parcel details.</p>
+                    <p class="map-panel-subtitle">Select a parcel record to open its details, or use its target button to show the boundary on the map.</p>
                 </div>
                 <div class="map-header-actions">
                     <div class="map-count"><i class="fa-solid fa-draw-polygon" aria-hidden="true"></i>{{ number_format($mappedParcelCount) }} mapped parcel{{ $mappedParcelCount === 1 ? '' : 's' }}</div>

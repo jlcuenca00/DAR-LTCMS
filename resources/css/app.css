@@ -639,33 +639,62 @@ body.profile-crop-open {
 }
 
 /* Shared parcel viewer controls across Staff, Geodetic and Landowner maps. */
-.parcel-search-actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    margin-top: 10px;
+#parcel-search-results {
+    display: block;
+    margin-top: 12px;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    background: #fff;
 }
+#parcel-search-results:empty { border: 0; }
+#parcel-search-results [data-parcel-search-row] {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 48px;
+    align-items: center;
+    gap: 8px;
+    min-height: 90px;
+    padding: 8px 10px;
+    border: 0;
+    border-bottom: 1px solid #e8eeea;
+    border-radius: 0;
+    background: #fff;
+    cursor: default;
+}
+#parcel-search-results [data-parcel-search-row]:last-child { border-bottom: 0; }
+#parcel-search-results [data-parcel-search-row]:hover { outline: none; background: #f8fbf9; }
+.parcel-search-record {
+    display: grid;
+    align-content: center;
+    min-width: 0;
+    min-height: 64px;
+    color: inherit;
+    text-decoration: none;
+    border-radius: 5px;
+}
+#parcel-search-results [data-parcel-search-row]:has(> .parcel-search-map-target[hidden]) { grid-template-columns: minmax(0, 1fr); }
+.parcel-search-record-arrow { margin-left: 6px; color: #94a3b8; font-size: 12px; font-weight: 400; }
+.parcel-search-record:hover .parcel-search-record-arrow { color: #166534; }
 
 .parcel-search-area {
     display: flex;
     flex-wrap: wrap;
     align-items: baseline;
     gap: 4px 10px;
-    margin-top: 8px;
+    margin-top: 5px;
     color: #64748b;
     font-size: 12px;
     line-height: 1.5;
 }
 .parcel-search-area strong { color: #334155; font-weight: 700; white-space: nowrap; }
 
-.parcel-search-actions .parcel-search-action,
+.parcel-search-map-target,
 #parcel-search-pages .parcel-search-page-button {
     display: inline-flex;
     align-items: center;
     justify-content: center;
     min-height: 48px;
     padding: 8px 12px;
-    border: 1px solid #cbd5e1;
+    border: 1px solid transparent;
     border-radius: 8px;
     background: #fff;
     color: #334155;
@@ -676,23 +705,27 @@ body.profile-crop-open {
     cursor: pointer;
 }
 
-.parcel-search-actions .parcel-search-action-focus {
-    border-color: #166534;
-    background: #166534;
-    color: #fff;
+.parcel-search-map-target {
+    width: 48px;
+    height: 48px;
+    padding: 0;
+    border-color: #d7e6dc;
+    background: #f0f7f2;
+    color: #166534;
 }
 
-.parcel-search-actions .parcel-search-action:hover,
+.parcel-search-map-target:hover,
 #parcel-search-pages .parcel-search-page-button:not(:disabled):hover {
-    border-color: #166534;
-    box-shadow: 0 0 0 1px #166534;
+    border-color: #c0d8c8;
+    background: #e8f3ec;
+    color: #14532d;
 }
 
-.parcel-search-actions .parcel-search-action[hidden] { display: none; }
-#parcel-search-pages { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.parcel-search-map-target[hidden] { display: none; }
+#parcel-search-pages { display: flex; justify-content: space-between; gap: 8px; margin-top: 4px; }
 #parcel-search-pages:empty { display: none; }
 #parcel-search-pages .parcel-search-page-button:disabled { opacity: .5; cursor: default; }
-#parcel-search-status { margin: 10px 0 0; color: #64748b; font-size: 12px; line-height: 1.5; }
+#parcel-search-status { margin: 12px 0 0; padding-top: 10px; border-top: 1px solid #e8eeea; color: #64748b; font-size: 11px; line-height: 1.5; }
 #parcel-map-status { margin: 0; padding: 12px 20px 0; color: #475569; font-size: 12px; line-height: 1.5; }
 #parcel-map-status:empty { display: none; }
 

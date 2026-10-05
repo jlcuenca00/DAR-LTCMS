@@ -24,6 +24,7 @@ async function fixture(page, role, withLeaflet = true) {
             initial_search:{ items:[record], total:1, page:1, last_page:1 },
         }) + '</script></div>');
     await page.addStyleTag({ content:controlsCss });
+    await page.locator('#parcel-search-results').evaluate(node => { node.style.width = '280px'; });
     if (withLeaflet) {
         await page.addStyleTag({ content:leafletCss });
         await page.addScriptTag({ content:leaflet });
@@ -53,11 +54,16 @@ for (const role of ['staff','geodetic','landowner']) {
         const open = page.getByRole('link', { name:'Open ' + record.parcel_code + ' record', exact:true });
         await expect(show).toBeVisible();
         await expect(open).toHaveAttribute('href', record.details_url);
+        await expect(open).toContainText(record.parcel_code);
+        await expect(show).toHaveAttribute('title', 'Show on map');
+        await expect(show.locator('svg')).toHaveCount(1);
         const result = page.locator('#parcel-search-results > div').first();
         await expect(result.locator('.parcel-search-area')).toHaveText('Parcel area1 ha');
         await expect(result.locator('.parcel-search-area strong')).toHaveText('1 ha');
         await expect(result.locator('[class$="-meta"]')).toHaveText('Calindagan, Dumaguete City');
         expect(await show.evaluate(node => node.getBoundingClientRect().height)).toBeGreaterThanOrEqual(48);
+        expect(await show.evaluate(node => node.getBoundingClientRect().width)).toBe(48);
+        expect(await result.evaluate(node => node.getBoundingClientRect().height)).toBeLessThan(130);
         expect(await show.evaluate(node => getComputedStyle(node).borderTopStyle)).toBe('solid');
         const pagination = page.locator('#parcel-search-pages');
         expect(await pagination.evaluate(node => parseFloat(getComputedStyle(node).gap))).toBeGreaterThan(0);
