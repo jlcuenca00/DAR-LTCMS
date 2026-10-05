@@ -11,7 +11,7 @@ permissions:
 
 concurrency:
   group: darltcms-production
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   verify:
@@ -202,10 +202,34 @@ jobs:
             /*_audit.txt,
             /seed_mock_*.txt
 
+          # Enter maintenance with the existing application before rsync starts.
+          SCRIPT_BEFORE: |
+            set -euo pipefail
+            cd /home/darltcms/htdocs/darltcms.me
+            test -f .env
+            test -f vendor/autoload.php
+            if [ -f storage/framework/down ]; then
+              echo "Application is already in maintenance. Resolve the existing maintenance state before deploying."
+              exit 1
+            fi
+            php artisan down --retry=60 --render="errors::503"
+            test -f storage/framework/down
+          SCRIPT_BEFORE_REQUIRED: true
+
           SCRIPT_AFTER: |
-            set -e
+            set -euo pipefail
 
             cd /home/darltcms/htdocs/darltcms.me
+
+            fail_closed() {
+              deployment_status=$?
+              if [ "$deployment_status" -ne 0 ]; then
+                echo "Deployment failed. Maintenance is retained; inspect this run before recovery."
+                php artisan down --retry=60 --render="errors::503" || true
+              fi
+              exit "$deployment_status"
+            }
+            trap fail_closed EXIT
 
             test -f .env || {
               echo "Production .env is missing."
@@ -296,10 +320,6 @@ jobs:
             php artisan about
             php artisan migrate:status
 
-            # Production intentionally excludes .git. Persist the exact deployed
-            # source revision so backups can retain application-version traceability.
-            printf '%s\n' '${{ github.sha }}' > .release-commit
-            chmod 644 .release-commit
-            echo "Recorded deployed commit: $(cat .release-commit)"
+            bash scripts/finalize_production_deployment.sh "$PWD" '${{ github.sha }}'
 
           SCRIPT_AFTER_REQUIRED: true

@@ -3,6 +3,7 @@
 use App\Models\User;
 use App\Services\AuditLogger;
 use App\Services\DataIntegrityScanner;
+use App\Services\DeploymentHttpSmokeChecker;
 use App\Services\LegacyAdministrativeStorageMigrator;
 use App\Services\ProductionReadinessScanner;
 use Illuminate\Foundation\Inspiring;
@@ -292,3 +293,16 @@ Artisan::command('dar:disable-demo-access {--allow-production : Explicitly allow
 
     return 0;
 })->purpose('Disable the presentation accounts without deleting system records');
+
+Artisan::command('dar:check-deployment-http', function (DeploymentHttpSmokeChecker $checker) {
+    try {
+        $result = $checker->check((string) config('app.url'));
+        $this->info('Live deployment HTTP checks passed: health, login, and '.$result['assets_checked'].' built assets.');
+
+        return 0;
+    } catch (\Throwable $error) {
+        $this->error('Live deployment HTTP checks failed: '.$error->getMessage());
+
+        return 1;
+    }
+})->purpose('Verify live HTTPS health, login, and the login page built assets after deployment');
