@@ -42,5 +42,9 @@ docker exec -i "$POSTGRES_CONTAINER" pg_restore -U postgres --dbname="$restore_d
 
 export DB_DATABASE="$restore_db"
 php .github/scripts/database-recovery-fixture.php fingerprint > "$recovery_tmp/after.json"
-cmp "$recovery_tmp/before.json" "$recovery_tmp/after.json"
+if ! cmp "$recovery_tmp/before.json" "$recovery_tmp/after.json"; then
+    # Synthetic fingerprints/catalog definitions only; no record values or secrets.
+    diff -u "$recovery_tmp/before.json" "$recovery_tmp/after.json" || true
+    exit 1
+fi
 echo "Database recovery verified: full rollback/remigration, restored records, constraints, and audit protection."
