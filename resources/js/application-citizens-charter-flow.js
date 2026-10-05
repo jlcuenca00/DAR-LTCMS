@@ -65,7 +65,7 @@ function configureAdvanceForm(state) {
     const button = form.querySelector('button[type="submit"]');
 
     if (title) title.textContent = state.workflow_action_label || `Record ${state.next_status_label}`;
-    if (button) button.lastChild.textContent = ` ${state.workflow_action_label || 'Record Workflow Update'}`;
+    if (button) button.lastChild.textContent = ' Record Workflow Update';
 
     const actions = form.querySelector('.workflow-decision-actions');
     if (!actions) return;

@@ -646,6 +646,18 @@ body.profile-crop-open {
     margin-top: 10px;
 }
 
+.parcel-search-area {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 4px 10px;
+    margin-top: 8px;
+    color: #64748b;
+    font-size: 12px;
+    line-height: 1.5;
+}
+.parcel-search-area strong { color: #334155; font-weight: 700; white-space: nowrap; }
+
 .parcel-search-actions .parcel-search-action,
 #parcel-search-pages .parcel-search-page-button {
     display: inline-flex;
