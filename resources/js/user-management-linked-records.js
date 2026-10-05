@@ -58,12 +58,8 @@ function initUserManagementLinkedRecords() {
             row.title = `Manage ${userName}`;
         }
 
-        actionCell.remove();
     });
 
-    if (actionHeader) {
-        actionHeader.remove();
-    }
 
     const visibleColumnCount = table.querySelectorAll('thead th').length;
     table.querySelectorAll('tbody td[colspan]').forEach((cell) => {
