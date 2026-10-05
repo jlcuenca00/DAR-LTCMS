@@ -121,11 +121,21 @@ function initializeParcelMapViewer() {
     function highlightParcel(feature) {
         // Separate non-interactive pane keeps selection visible through viewport
         // redraws and leaves the actual parcel's click/tooltip behavior intact.
-        const next = window.L.geoJSON(feature, {
+        const halo = window.L.geoJSON(feature, {
             pane: 'parcel-focus', interactive: false,
-            style: { color: feature.properties.is_flagged ? '#dc2626' : '#15803d', weight: 4.5,
+            style: { color: '#fff', weight: 10, opacity: .9, fillOpacity: 0, className: 'parcel-map-focus-halo' },
+        });
+        const outline = window.L.geoJSON(feature, {
+            pane: 'parcel-focus', interactive: false,
+            style: { color: '#2563eb', weight: 4,
                 opacity: 1, fillOpacity: 0, className: 'parcel-map-focus-outline' },
         });
+        const label = window.L.marker(outline.getBounds().getCenter(), {
+            pane: 'parcel-focus', interactive: false, keyboard: false,
+            icon: window.L.divIcon({ className: 'parcel-map-focus-label', iconSize: null,
+                html: '<span>' + esc(feature.properties.parcel_code || 'Selected parcel') + '</span>' }),
+        });
+        const next = window.L.featureGroup([halo, outline, label]);
         if (focusHighlight) map.removeLayer(focusHighlight);
         focusHighlight = next.addTo(map);
         selectedFeature = feature;

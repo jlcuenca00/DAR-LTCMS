@@ -23,7 +23,7 @@ async function fixture(page, role, withLeaflet = true, nearby = false) {
             search_url:'https://fixture.test/search', focus_url:'https://fixture.test/feature/__ID__',
             initial_search:{ items:nearby ? [record, { ...record, id:2, parcel_code:role.toUpperCase() + '-NEARBY' }] : [record], total:nearby ? 2 : 1, page:1, last_page:1 },
         }) + '</script></div>');
-    await page.addStyleTag({ content:controlsCss });
+    await page.addStyleTag({ content:controlsCss + '\n.staff-shell svg { max-width:100% !important; }' });
     await page.locator('#parcel-search-results').evaluate(node => { node.style.width = '280px'; });
     if (withLeaflet) {
         await page.addStyleTag({ content:leafletCss });
@@ -62,10 +62,13 @@ for (const role of ['staff','geodetic','landowner']) {
         const outline = page.locator('.parcel-map-focus-outline');
         await first.click();
         await expect(outline).toHaveCount(1);
-        await expect(outline).toHaveAttribute('stroke', '#15803d');
+        await expect(page.locator('.parcel-map-focus-halo')).toHaveCount(1);
+        await expect(page.locator('.parcel-map-focus-label')).toHaveText(record.parcel_code);
+        await expect(outline).toHaveAttribute('stroke', '#2563eb');
         await expect(first).toHaveAttribute('aria-pressed', 'true');
         await expect(page.locator('[data-map-selected]')).toHaveCount(1);
         expect(await outline.evaluate(node => getComputedStyle(node).pointerEvents)).toBe('none');
+        expect(await outline.evaluate(node => getComputedStyle(node.ownerSVGElement).maxWidth)).toBe('none');
         expect(await outline.evaluate(node => getComputedStyle(node).filter)).toContain('drop-shadow');
         // A fresh viewport response must preserve the one selected boundary.
         const loads = await page.evaluate(() => window.viewportLoads);
@@ -77,9 +80,11 @@ for (const role of ['staff','geodetic','landowner']) {
         await expect(second).toHaveAttribute('aria-pressed', 'true');
         await expect(first).toHaveAttribute('aria-pressed', 'false');
         await expect(outline).toHaveCount(1);
-        await expect(outline).toHaveAttribute('stroke', '#dc2626');
+        await expect(outline).toHaveAttribute('stroke', '#2563eb');
         await page.getByRole('button', { name:'Reset View', exact:true }).click();
         await expect(outline).toHaveCount(0);
+        await expect(page.locator('.parcel-map-focus-label')).toHaveCount(0);
+        await expect(page.locator('.parcel-map-focus-halo')).toHaveCount(0);
         await expect(page.locator('[data-map-selected]')).toHaveCount(0);
         await expect(second).toHaveAttribute('aria-pressed', 'false');
     });
