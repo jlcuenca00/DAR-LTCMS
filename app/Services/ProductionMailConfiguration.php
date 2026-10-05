@@ -71,7 +71,7 @@ class ProductionMailConfiguration
                 || ! in_array($config['scheme'] ?? null, [null, '', 'smtp', 'smtps'], true)) {
                 $issues['mail_configuration_invalid'] = 'SMTP requires a host, valid port, and smtp/smtps scheme (or automatic scheme selection).';
             }
-            if (! is_numeric($config['timeout'] ?? null) || (float) $config['timeout'] <= 0 || (float) $config['timeout'] > 30) {
+            if (! is_numeric($config['timeout'] ?? null) || (float) $config['timeout'] < 1 || (float) $config['timeout'] > 30) {
                 $issues['mail_timeout_unsafe'] = 'SMTP must use an explicit timeout between 1 and 30 seconds.';
             }
         }
