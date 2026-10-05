@@ -32,6 +32,19 @@ function removeActionColumn(table) {
     const actionIndex = headerCells.findIndex((cell) => cell.textContent.trim().toLowerCase() === 'action');
     if (actionIndex < 0) return;
 
+    // Remove redundant actions only when the same destination has another
+    // native link in that row. Row handlers cannot replace browser link actions.
+    const removesDestination = Array.from(table.querySelectorAll('tbody tr')).some(row => {
+        const cell = row.children[actionIndex];
+        if (!cell) return false;
+        return Array.from(cell.querySelectorAll('a[href]')).some(link =>
+            !Array.from(row.querySelectorAll('a[href]')).some(other =>
+                !cell.contains(other) && other.href === link.href
+            )
+        );
+    });
+    if (removesDestination) return;
+
     table.querySelectorAll('tr').forEach((row) => {
         const cells = Array.from(row.children);
         const cell = cells[actionIndex];
@@ -76,7 +89,6 @@ function enhanceSourceRecords() {
         if (!openButton?.href) return;
         const href = openButton.href;
         const code = row.querySelector('.source-package-code')?.textContent?.trim() || 'source package';
-        openButton.remove();
         makeRowNavigable(row, href, `Open source package ${code}`);
     });
 }

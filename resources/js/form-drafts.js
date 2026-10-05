@@ -138,13 +138,14 @@ function initFormDrafts() {
         form.addEventListener('input', schedule);
         form.addEventListener('change', schedule);
         form.addEventListener('submit', event => {
-            // Wait for all synchronous validation/confirmation listeners.
-            queueMicrotask(() => {
+            // Native events can run microtasks between listeners. Wait until
+            // all validation and confirmation handlers finish before cleanup.
+            window.setTimeout(() => {
                 if (event.defaultPrevented) return;
                 clearTimeout(timer);
                 submitting = true;
                 try { localStorage.removeItem(key); } catch { /* Storage is optional. */ }
-            });
+            }, 0);
         });
         window.addEventListener('pageshow', event => {
             if (event.persisted) submitting = false;

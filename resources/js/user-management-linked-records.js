@@ -57,13 +57,7 @@ function initUserManagementLinkedRecords() {
             row.setAttribute('aria-label', `Manage ${userName}`);
             row.title = `Manage ${userName}`;
         }
-
-        actionCell.remove();
     });
-
-    if (actionHeader) {
-        actionHeader.remove();
-    }
 
     const visibleColumnCount = table.querySelectorAll('thead th').length;
     table.querySelectorAll('tbody td[colspan]').forEach((cell) => {

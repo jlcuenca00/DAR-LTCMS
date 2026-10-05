@@ -10,10 +10,14 @@ function createElement(tag, className, attributes = {}) {
     return element;
 }
 
-function dismissConfirmation(layer) {
-    if (!layer) return;
+function dismissConfirmation(layer, { restoreFocus = true } = {}) {
+    if (!layer || layer.dataset.closing === 'true') return;
+    layer.dataset.closing = 'true';
     layer.classList.remove('is-visible');
-    window.setTimeout(() => layer.remove(), 180);
+    window.setTimeout(() => {
+        window.DarDialogFocus?.close(layer, { restoreFocus });
+        layer.remove();
+    }, 180);
 }
 
 function openReplayConfirmation(helpButton) {
@@ -61,13 +65,14 @@ function openReplayConfirmation(helpButton) {
     document.addEventListener('keydown', escapeHandler, true);
 
     start.addEventListener('click', () => {
+        if (layer.dataset.closing === 'true') return;
         if (escapeHandler) document.removeEventListener('keydown', escapeHandler, true);
-        dismissConfirmation(layer);
+        dismissConfirmation(layer, { restoreFocus: false });
         helpButton.dataset.onboardingReplayConfirmed = 'true';
         window.setTimeout(() => helpButton.click(), 180);
     });
 
-    start.focus();
+    window.DarDialogFocus?.open(layer, { initialFocus: start, returnFocus: helpButton });
 }
 
 document.addEventListener('click', (event) => {

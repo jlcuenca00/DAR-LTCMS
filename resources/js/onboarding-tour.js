@@ -202,9 +202,10 @@ function buildWelcome(definition) {
     return layer;
 }
 
-async function dismissWelcome(layer) {
+async function dismissWelcome(layer, { restoreFocus = true } = {}) {
     layer.classList.remove('is-visible');
     await wait(180);
+    window.DarDialogFocus?.close(layer, { restoreFocus });
     layer.remove();
 }
 
@@ -437,6 +438,17 @@ async function runTour(key, definition, version, initialIndex) {
         window.requestAnimationFrame(() => positionTour(layer, activeTarget, activeStep));
     };
 
+    const releaseLayer = (restoreFocus = true) => {
+        window.DarDialogFocus?.close(layer, { restoreFocus });
+        layer.remove();
+        document.body.classList.remove('onboarding-tour-active');
+        window.removeEventListener('resize', refreshPosition);
+        window.removeEventListener('scroll', refreshPosition);
+        document.removeEventListener('keydown', escapeHandler, true);
+
+        if (activeTour?.close === closeTour) activeTour = null;
+    };
+
     const closeTour = async (status = null) => {
         if (closed) return;
 
@@ -449,13 +461,7 @@ async function runTour(key, definition, version, initialIndex) {
 
         layer.classList.add('is-leaving');
         await wait(160);
-        layer.remove();
-        document.body.classList.remove('onboarding-tour-active');
-        window.removeEventListener('resize', refreshPosition);
-        window.removeEventListener('scroll', refreshPosition);
-        document.removeEventListener('keydown', escapeHandler, true);
-
-        if (activeTour?.close === closeTour) activeTour = null;
+        releaseLayer();
     };
 
     const showStep = async (requestedIndex, initial = false) => {
@@ -470,6 +476,9 @@ async function runTour(key, definition, version, initialIndex) {
             closeTourOpenedNotifications();
             layer.classList.add('is-leaving');
             await wait(120);
+            if (closed) return;
+            closed = true;
+            releaseLayer(false);
             window.location.assign(step.path);
             return;
         }
@@ -478,6 +487,7 @@ async function runTour(key, definition, version, initialIndex) {
         layer.classList.add('is-moving');
 
         const preparedTarget = await prepareStep(step);
+        if (closed) return;
         index = nextIndex;
         activeStep = step;
         activeTarget = preparedTarget || resolveTarget(step);
@@ -506,9 +516,11 @@ async function runTour(key, definition, version, initialIndex) {
             await wait(initial ? 40 : 100);
         }
 
+        if (closed) return;
         positionTour(layer, activeTarget, activeStep);
         await nextFrame();
 
+        if (closed) return;
         if (initial) layer.classList.add('is-ready');
         layer.classList.remove('is-moving');
         moving = false;
@@ -546,6 +558,9 @@ async function runTour(key, definition, version, initialIndex) {
     document.addEventListener('keydown', escapeHandler, true);
 
     activeTour = { close: closeTour };
+    window.DarDialogFocus?.open(layer, {
+        initialFocus: next, returnFocus: document.querySelector('[data-onboarding-help="' + key + '"]'),
+    });
     await showStep(index, true);
 }
 
@@ -593,18 +608,30 @@ async function initTour(key, definition) {
     const start = welcome.querySelector('[data-onboarding-welcome-start]');
     const skip = welcome.querySelector('[data-onboarding-welcome-skip]');
 
-    start.addEventListener('click', async () => {
-        await dismissWelcome(welcome);
-        await beginTour(key, definition, version, 0);
-    });
+    let welcomeClosing = false;
+    const closeWelcome = async (restoreFocus = true) => {
+        if (welcomeClosing) return false;
+        welcomeClosing = true;
+        await dismissWelcome(welcome, { restoreFocus });
+        return true;
+    };
 
+    welcome.addEventListener('keydown', event => {
+        if (event.key !== 'Escape') return;
+        event.preventDefault();
+        event.stopPropagation();
+        void closeWelcome();
+    });
+    start.addEventListener('click', async () => {
+        if (await closeWelcome(false)) await beginTour(key, definition, version, 0);
+    });
     skip.addEventListener('click', async () => {
+        if (welcomeClosing) return;
         clearProgress(key);
         persistStatus(definition, version, 'skipped');
-        await dismissWelcome(welcome);
+        await closeWelcome();
     });
-
-    start.focus();
+    window.DarDialogFocus?.open(welcome, { initialFocus: start, returnFocus: helpButton });
 }
 
 async function initOnboardingTours() {
@@ -618,3 +645,4 @@ if (document.readyState === 'loading') {
 } else {
     void initOnboardingTours();
 }
+
