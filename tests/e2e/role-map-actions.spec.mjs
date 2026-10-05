@@ -6,7 +6,7 @@ const leaflet = readFileSync('node_modules/leaflet/dist/leaflet.js', 'utf8');
 const leafletCss = readFileSync('node_modules/leaflet/dist/leaflet.css', 'utf8');
 const controlsCss = readFileSync('resources/css/app.css', 'utf8');
 
-async function fixture(page, role, withLeaflet = true) {
+async function fixture(page, role, withLeaflet = true, nearby = false) {
     await page.route('https://*.basemaps.cartocdn.com/**', route => route.abort());
     await page.route('https://fixture.test/**', route => route.fulfill({ contentType:'text/html', body:'<h1>Parcel record</h1>' }));
     const record = {
@@ -16,12 +16,12 @@ async function fixture(page, role, withLeaflet = true) {
     };
     await page.setContent('<div class="' + (role === 'landowner' ? 'lo' : role === 'geodetic' ? 'geo' : 'staff') + '-shell">' +
         '<div id="parcel-map" data-parcel-map-viewer style="width:300px;height:300px"></div>' +
-        '<div id="parcel-search-results"></div><div id="parcel-search-pages"></div>' +
+        '<button id="reset-map-view">Reset View</button><div id="parcel-search-results"></div><div id="parcel-search-pages"></div>' +
         '<p id="parcel-search-status" role="status"></p><p id="parcel-map-status" role="status"></p>' +
         '<script type="application/json" data-parcel-map-config>' + JSON.stringify({
             role, bounds:record.bounds, features_url:'https://fixture.test/features',
             search_url:'https://fixture.test/search', focus_url:'https://fixture.test/feature/__ID__',
-            initial_search:{ items:[record], total:1, page:1, last_page:1 },
+            initial_search:{ items:nearby ? [record, { ...record, id:2, parcel_code:role.toUpperCase() + '-NEARBY' }] : [record], total:nearby ? 2 : 1, page:1, last_page:1 },
         }) + '</script></div>');
     await page.addStyleTag({ content:controlsCss });
     await page.locator('#parcel-search-results').evaluate(node => { node.style.width = '280px'; });
@@ -29,25 +29,61 @@ async function fixture(page, role, withLeaflet = true) {
         await page.addStyleTag({ content:leafletCss });
         await page.addScriptTag({ content:leaflet });
     }
-    await page.evaluate(record => {
+    await page.evaluate(({record, nearby}) => {
         window.focusLoads = 0;
+        window.viewportLoads = 0;
+        const feature = id => ({ type:'Feature', properties:{ ...record, id, is_flagged:id === 2 }, geometry:{
+            type:'Polygon', coordinates:[[[123.3 + id * .0001,9.3],[123.31 + id * .0001,9.3],[123.31 + id * .0001,9.31],[123.3 + id * .0001,9.31],[123.3 + id * .0001,9.3]]],
+        } });
         window.fetch = async url => {
             if (String(url).includes('/feature/')) {
                 window.focusLoads++;
-                return { ok:true, json:async () => ({ type:'Feature', properties:record, geometry:{
-                    type:'Polygon', coordinates:[[[123.3,9.3],[123.31,9.3],[123.31,9.31],[123.3,9.31],[123.3,9.3]]],
-                } }) };
+                return { ok:true, json:async () => feature(String(url).endsWith('/2') ? 2 : 1) };
+            }
+            if (nearby) {
+                window.viewportLoads++;
+                return { ok:true, json:async () => ({ returned:2, total:2, features:[feature(1),feature(2)] }) };
             }
             // Partial map API failure must leave native record navigation usable.
             return { ok:false, status:503 };
         };
-    }, record);
+    }, {record, nearby});
     await page.addScriptTag({ content:viewer });
     await page.evaluate(() => initializeParcelMapViewer());
     return record;
 }
 
 for (const role of ['staff','geodetic','landowner']) {
+    test(role + ' focused parcel remains distinct beside nearby geometry and resets cleanly', async ({ page }) => {
+        const record = await fixture(page, role, true, true);
+        await expect(page.locator('.leaflet-overlay-pane path')).toHaveCount(2);
+        const first = page.getByRole('button', { name:'Show ' + record.parcel_code + ' on map', exact:true });
+        const second = page.getByRole('button', { name:'Show ' + role.toUpperCase() + '-NEARBY on map', exact:true });
+        const outline = page.locator('.parcel-map-focus-outline');
+        await first.click();
+        await expect(outline).toHaveCount(1);
+        await expect(outline).toHaveAttribute('stroke', '#15803d');
+        await expect(first).toHaveAttribute('aria-pressed', 'true');
+        await expect(page.locator('[data-map-selected]')).toHaveCount(1);
+        expect(await outline.evaluate(node => getComputedStyle(node).pointerEvents)).toBe('none');
+        expect(await outline.evaluate(node => getComputedStyle(node).filter)).toContain('drop-shadow');
+        // A fresh viewport response must preserve the one selected boundary.
+        const loads = await page.evaluate(() => window.viewportLoads);
+        await first.click();
+        await expect.poll(() => page.evaluate(() => window.viewportLoads)).toBeGreaterThan(loads);
+        await expect(outline).toHaveCount(1);
+        await expect(page.locator('.leaflet-overlay-pane path')).toHaveCount(2);
+        await second.click();
+        await expect(second).toHaveAttribute('aria-pressed', 'true');
+        await expect(first).toHaveAttribute('aria-pressed', 'false');
+        await expect(outline).toHaveCount(1);
+        await expect(outline).toHaveAttribute('stroke', '#dc2626');
+        await page.getByRole('button', { name:'Reset View', exact:true }).click();
+        await expect(outline).toHaveCount(0);
+        await expect(page.locator('[data-map-selected]')).toHaveCount(0);
+        await expect(second).toHaveAttribute('aria-pressed', 'false');
+    });
+
     test(role + ' map offers independent focus and keyboard record navigation during API failure', async ({ page }) => {
         const record = await fixture(page, role);
         const show = page.getByRole('button', { name:'Show ' + record.parcel_code + ' on map', exact:true });
@@ -70,6 +106,8 @@ for (const role of ['staff','geodetic','landowner']) {
         await expect(pagination.getByRole('button', { name:'Previous parcel search page' })).toBeDisabled();
         await show.click();
         await expect.poll(() => page.evaluate(() => window.focusLoads)).toBe(1);
+        await expect(show).toHaveAttribute('aria-pressed', 'true');
+        await expect(page.locator('.parcel-map-focus-outline')).toHaveCount(1);
         await expect(page.locator('#parcel-map-status')).toContainText('The parcel list remains available.');
         expect(page.url()).toBe('about:blank');
         await open.focus();

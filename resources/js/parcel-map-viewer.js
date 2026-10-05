@@ -18,6 +18,7 @@ function initializeParcelMapViewer() {
     let parcelLayer = null;
     let activeTooltip = null;
     let selectedFeature = null;
+    let focusHighlight = null;
     let viewportRequest = null;
     let searchRequest = null;
     let focusRequest = null;
@@ -58,6 +59,7 @@ function initializeParcelMapViewer() {
             show.setAttribute('aria-label', 'Show ' + (record.parcel_code || 'parcel') + ' on map');
             show.title = 'Show on map';
             show.dataset.mapFocus = 'true';
+            show.dataset.parcelId = String(record.id);
             show.hidden = !map;
             show.className = 'parcel-search-map-target';
             show.addEventListener('click', () => focusParcel(record));
@@ -75,6 +77,7 @@ function initializeParcelMapViewer() {
             item.append(link, show);
             results.appendChild(item);
         }
+        syncFocusControls();
         for (const [label, page, disabled] of [
             ['Previous', data.page - 1, data.page <= 1],
             ['Next', data.page + 1, data.page >= data.last_page],
@@ -105,6 +108,28 @@ function initializeParcelMapViewer() {
         } catch (error) {
             if (error.name !== 'AbortError') searchStatus.textContent = 'Search could not be loaded. The parcel list remains available. Try the search again.';
         }
+    }
+
+    function syncFocusControls() {
+        results.querySelectorAll('[data-map-focus]').forEach(button => {
+            const selected = Boolean(selectedFeature && String(selectedFeature.properties.id) === button.dataset.parcelId);
+            button.setAttribute('aria-pressed', String(selected));
+            button.closest('[data-parcel-search-row]')?.toggleAttribute('data-map-selected', selected);
+        });
+    }
+
+    function highlightParcel(feature) {
+        // Separate non-interactive pane keeps selection visible through viewport
+        // redraws and leaves the actual parcel's click/tooltip behavior intact.
+        const next = window.L.geoJSON(feature, {
+            pane: 'parcel-focus', interactive: false,
+            style: { color: feature.properties.is_flagged ? '#dc2626' : '#15803d', weight: 4.5,
+                opacity: 1, fillOpacity: 0, className: 'parcel-map-focus-outline' },
+        });
+        if (focusHighlight) map.removeLayer(focusHighlight);
+        focusHighlight = next.addTo(map);
+        selectedFeature = feature;
+        syncFocusControls();
     }
 
     function tooltip(record) {
@@ -182,7 +207,7 @@ function initializeParcelMapViewer() {
         try {
             const feature = await getJson(config.focus_url.replace('__ID__', String(record.id)), request.signal);
             if (generation !== focusGeneration) return;
-            selectedFeature = feature;
+            highlightParcel(feature);
             const [west, south, east, north] = record.bounds;
             map.fitBounds([[south, west], [north, east]], { padding: [40, 40], maxZoom: 17 });
             await loadViewport();
@@ -199,6 +224,9 @@ function initializeParcelMapViewer() {
 
     function resetView() {
         selectedFeature = null;
+        if (focusHighlight) map.removeLayer(focusHighlight);
+        focusHighlight = null;
+        syncFocusControls();
         focusRequest?.abort();
         focusGeneration++;
         if (config.bounds) {
@@ -224,6 +252,9 @@ function initializeParcelMapViewer() {
     }
     container.replaceChildren();
     map = window.L.map(container, { zoomControl: false, minZoom: 7, maxZoom: 20 }).setView([9.3068, 123.3054], 12);
+    const focusPane = map.createPane('parcel-focus');
+    focusPane.style.zIndex = '450';
+    focusPane.style.pointerEvents = 'none';
     results.querySelectorAll('[data-map-focus]').forEach(button => { button.hidden = false; });
     // Track actual overlays on this map rather than relying on a global
     // Leaflet prototype patch (the page and bundle may load separate instances).
