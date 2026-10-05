@@ -59,13 +59,8 @@ class ProductionReadinessScanner
             $this->recommend($issues, false, $code, $message);
         }
 
-        foreach ($this->activeLogLevels() as $channel => $level) {
-            $this->recommend(
-                $issues,
-                strtolower((string) $level) !== 'debug',
-                'debug_log_level_'.$channel,
-                "Production log channel {$channel} should not run at debug level."
-            );
+        foreach (app(ProductionLoggingConfiguration::class)->issues() as $code => $message) {
+            $this->recommend($issues, false, $code, $message);
         }
 
         $blockingCount = collect($issues)->where('severity', 'blocking')->count();
@@ -119,21 +114,4 @@ class ProductionReadinessScanner
         return $permissions !== false && ($permissions & 0222) === 0;
     }
 
-    private function activeLogLevels(): array
-    {
-        $default = (string) config('logging.default');
-        $channel = config("logging.channels.{$default}", []);
-
-        if (($channel['driver'] ?? null) !== 'stack') {
-            return [$default => $channel['level'] ?? null];
-        }
-
-        $levels = [];
-
-        foreach ((array) ($channel['channels'] ?? []) as $stackChannel) {
-            $levels[$stackChannel] = config("logging.channels.{$stackChannel}.level");
-        }
-
-        return $levels;
-    }
 }

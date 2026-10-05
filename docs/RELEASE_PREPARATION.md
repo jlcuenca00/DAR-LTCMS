@@ -56,6 +56,12 @@ tar -czf "storage/backups/darltcms_files_pre_v1_$(date +%Y%m%d_%H%M%S).tar.gz" \
 
 Keep the production `.env` secure and outside GitHub. If it is backed up, store it separately in a protected location because it contains secrets.
 
+### C. Encrypted off-site backups
+
+Use `bash scripts/backup_dar_ltcms_production.sh` with the protected configuration described in `scripts/backup.env.example`. Optional retention, staging, snapshot-label, and sampling settings are loaded from that file before defaults are applied. The script backs up PostgreSQL, private/legacy uploads, and the production .env into the encrypted restic repository and removes its temporary dump on exit.
+
+A successful `pg_restore --list` checks the dump catalog; it does not prove a full restore. Before final turnover, verify the actual server schedule, failure monitoring, latest off-site snapshot, and an isolated database/file restore. These operational checks are not established by repository configuration or CI. Never restore into the live database as a test.
+
 ## 2. Run the final release check
 
 Run:
@@ -94,6 +100,9 @@ APP_ENV=production
 APP_DEBUG=false
 APP_URL=https://darltcms.me
 LOG_LEVEL=warning
+LOG_CHANNEL=stack
+LOG_STACK=daily
+LOG_DAILY_DAYS=14
 FILESYSTEM_DISK=local
 SESSION_DRIVER=database
 SESSION_ENCRYPT=true
@@ -107,6 +116,10 @@ For password-recovery email to work for real users, production must use a real d
 SMTP uses `MAIL_TIMEOUT=15` by default (valid production range: 1–30 seconds). Use `MAIL_SCHEME=smtp` on port 587 with automatic STARTTLS, or `MAIL_SCHEME=smtps` on port 465 for implicit TLS; `tls` is not a supported scheme. A blank scheme enables Laravel's port-based selection. Production readiness validates the effective active mailer graph and SMTP settings, including `MAIL_URL` overrides, without sending email or exposing credentials. A clean configuration check does not prove inbox delivery.
 
 Current mail notifications are synchronous and no application jobs or scheduled tasks require a worker. Profile email verification is sent after the profile transaction commits; failed sending preserves the saved profile and unverified address and reports the existing warning. If queued delivery is introduced later, configure a supervised worker and deployment restart before enabling it.
+
+Use daily application logs with 1–365 days of retention (14 by default). Readiness checks traverse nested stacks and warn about discarded logs, missing/cyclic/empty channels, debug levels, and invalid daily retention. If single-file logging is intentional, verify server-managed rotation and retention before setting `LOG_EXTERNAL_ROTATION=true`; this flag records an administrator's acknowledgment and does not inspect the server's rotation service. Existing single logs are preserved and need separate archival/rotation.
+
+Deployment clears compiled configuration, routes, and views but preserves runtime cache so active login and other authentication throttles survive releases. Do not use `cache:clear` or `optimize:clear` as routine deployment steps; if application data later needs invalidation, target its keys explicitly.
 
 Do not create a `public/storage` symlink. Uploaded administrative records are intentionally kept behind authenticated routes.
 

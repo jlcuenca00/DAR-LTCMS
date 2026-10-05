@@ -17,16 +17,6 @@ umask 077
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 BACKUP_ENV_FILE="${BACKUP_ENV_FILE:-$HOME/.config/dar-ltcms/backup.env}"
-STAGING_DIR="${BACKUP_STAGING_DIR:-$HOME/.cache/dar-ltcms-backup}"
-BACKUP_HOST="${BACKUP_HOST:-darltcms-production}"
-BACKUP_TAG="${BACKUP_TAG:-dar-ltcms-production}"
-
-KEEP_DAILY="${BACKUP_KEEP_DAILY:-7}"
-KEEP_WEEKLY="${BACKUP_KEEP_WEEKLY:-4}"
-KEEP_MONTHLY="${BACKUP_KEEP_MONTHLY:-3}"
-CHECK_PERCENT="${BACKUP_CHECK_PERCENT:-5}"
-MIN_HEADROOM_MB="${BACKUP_MIN_HEADROOM_MB:-256}"
-
 export PATH="$HOME/bin:/usr/local/bin:/usr/bin:/bin:${PATH:-}"
 
 fail() {
@@ -62,6 +52,18 @@ set -a
 # shellcheck disable=SC1090
 source "$BACKUP_ENV_FILE"
 set +a
+
+# Resolve optional settings only after the dedicated configuration is loaded.
+STAGING_DIR="${BACKUP_STAGING_DIR:-$HOME/.cache/dar-ltcms-backup}"
+BACKUP_HOST="${BACKUP_HOST:-darltcms-production}"
+BACKUP_TAG="${BACKUP_TAG:-dar-ltcms-production}"
+
+KEEP_DAILY="${BACKUP_KEEP_DAILY:-7}"
+KEEP_WEEKLY="${BACKUP_KEEP_WEEKLY:-4}"
+KEEP_MONTHLY="${BACKUP_KEEP_MONTHLY:-3}"
+CHECK_PERCENT="${BACKUP_CHECK_PERCENT:-5}"
+MIN_HEADROOM_MB="${BACKUP_MIN_HEADROOM_MB:-256}"
+
 
 : "${RESTIC_REPOSITORY:?RESTIC_REPOSITORY is required in $BACKUP_ENV_FILE}"
 : "${RESTIC_PASSWORD_FILE:?RESTIC_PASSWORD_FILE is required in $BACKUP_ENV_FILE}"

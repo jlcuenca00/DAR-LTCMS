@@ -95,8 +95,8 @@ class ReleasePreparationTest extends TestCase
             'filesystems.default' => 'local',
             'filesystems.disks.public.url' => 'https://darltcms.me/staff/protected-storage',
             'mail.default' => 'smtp',
-            'logging.default' => 'single',
-            'logging.channels.single.level' => 'warning',
+            'logging.default' => 'daily',
+            'logging.channels.daily.level' => 'warning',
         ]);
     }
 }
