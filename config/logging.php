@@ -20,6 +20,9 @@ return [
 
     'default' => env('LOG_CHANNEL', 'stack'),
 
+    // Enable only after server-managed rotation/retention has been verified.
+    'external_rotation' => env('LOG_EXTERNAL_ROTATION', false),
+
     /*
     |--------------------------------------------------------------------------
     | Deprecations Log Channel
@@ -54,7 +57,7 @@ return [
 
         'stack' => [
             'driver' => 'stack',
-            'channels' => explode(',', (string) env('LOG_STACK', 'single')),
+            'channels' => explode(',', (string) env('LOG_STACK', 'daily')),
             'ignore_exceptions' => false,
         ],
 
