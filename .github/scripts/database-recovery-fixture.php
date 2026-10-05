@@ -70,7 +70,7 @@ foreach ($fingerprint['constraints'] as $constraint) {
     if (! in_array($constraint->definition, $forms, true)) {
         throw new RuntimeException('Unexpected required-document party constraint.');
     }
-    $expression = substr($constraint->definition, 6, -1);
+    $expression = substr($constraint->definition, 7, -1);
     foreach (['transferor' => true, 'transferee' => true, 'other' => false, '' => false] as $value => $expected) {
         $accepted = DB::selectOne("SELECT {$expression} AS accepts FROM (VALUES (?::varchar)) AS sample(applies_to)", [$value])->accepts;
         if ($accepted !== $expected) {
