@@ -10,6 +10,7 @@ use App\Services\AuditLogger;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
+try {
 if (! app()->environment('testing') || ! str_starts_with(DB::connection()->getDatabaseName(), 'darltcms_recovery_')) {
     throw new RuntimeException('Recovery fixtures require an isolated testing database.');
 }
@@ -98,3 +99,8 @@ if (! $rejected) {
     throw new RuntimeException('Audit append-only protection failed after recovery.');
 }
 echo json_encode($fingerprint, JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT)."\n";
+
+} catch (Throwable $exception) {
+    fwrite(STDERR, 'Recovery verification failed: '.$exception->getMessage()."\n");
+    exit(1);
+}
