@@ -14,6 +14,13 @@ const roles = [
     { role:'geodetic', shell:'geo-shell', mount:'geo-topbar-right', content:'geo-content', prefix:'role-onboarding', file:'role-onboarding-tours.js' },
 ];
 
+async function blankPage(page) {
+    await page.route('**/consolidation-fixture', route => route.fulfill({
+        contentType:'text/html', body:'<!doctype html><html><head></head><body></body></html>',
+    }));
+    await page.goto('/consolidation-fixture');
+}
+
 function tourFixture(config) {
     return '<main id="background" class="' + config.shell + '">' +
         '<header class="' + config.mount + '"></header><a id="outside" href="#outside">Background link</a>' +
@@ -22,7 +29,7 @@ function tourFixture(config) {
 }
 
 async function setupTour(page, config) {
-    await page.goto('/login');
+    await blankPage(page);
     await page.evaluate(path => history.replaceState({}, '', path), '/' + config.role + '/dashboard');
     await page.setContent(tourFixture(config));
     await page.addStyleTag({ content:tourCss });
@@ -96,7 +103,7 @@ for (const config of roles) {
 
 for (const config of [roles[0], roles[2]]) {
     test(config.role + ' Finish releases background controls and records completion', async ({ page }) => {
-        await page.goto('/login');
+        await blankPage(page);
         const path = config.role === 'landowner' ? '/landowner/applications' : '/geodetic/parcel-map';
         await page.evaluate(({ path, role }) => {
             history.replaceState({}, '', path);
@@ -164,7 +171,7 @@ const linkCases = [
 
 for (const fixture of linkCases) {
     test(fixture.name + ' keeps a native destination link beside row navigation', async ({ page }) => {
-        await page.goto('/login');
+        await blankPage(page);
         await page.evaluate(path => history.replaceState({}, '', path), fixture.path);
         await page.setContent(fixture.html);
         await install(page, read('resources/js/' + fixture.file));
@@ -184,7 +191,7 @@ for (const fixture of linkCases) {
 }
 
 test('real-click cancellation after draft initialization preserves the draft and accepted submission clears it', async ({ page }) => {
-    await page.goto('/login');
+    await blankPage(page);
     await page.setContent('<form action="/draft-accepted" method="POST" data-autosave-key="native-cancellation">' +
         '<input name="name" value="Draft value"><button type="submit">Save</button></form>');
     await page.evaluate(() => localStorage.setItem('dar_ltcms_form_draft:native-cancellation', JSON.stringify({
