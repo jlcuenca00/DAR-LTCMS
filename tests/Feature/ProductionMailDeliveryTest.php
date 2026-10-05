@@ -3,7 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\User;
-use Illuminate\Foundation\Testing\DatabaseMigrations;
+use Illuminate\Foundation\Testing\DatabaseTruncation;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
 use Symfony\Component\Mailer\Envelope;
@@ -15,11 +15,19 @@ use Tests\TestCase;
 
 class ProductionMailDeliveryTest extends TestCase
 {
-    use DatabaseMigrations;
+    use DatabaseTruncation;
+
+    protected function tearDown(): void
+    {
+        // These tests need real transaction boundaries, without rolling migrations back.
+        $this->truncateTablesForAllConnections();
+        parent::tearDown();
+    }
 
     public function test_smtp_failure_does_not_advance_recovery_or_claim_code_was_sent(): void
     {
         $this->app['env'] = 'production';
+        $this->withoutMiddleware(\Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class);
         config(['mail.default' => 'smtp']);
         app('mail.manager')->mailer('smtp')->setSymfonyTransport(new class implements TransportInterface {
             public function send(RawMessage $message, ?Envelope $envelope = null): ?SentMessage
@@ -45,6 +53,7 @@ class ProductionMailDeliveryTest extends TestCase
     public function test_production_notification_guard_blocks_log_fallback_before_sending(): void
     {
         $this->app['env'] = 'production';
+        $this->withoutMiddleware(\Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class);
         config(['mail.default' => 'failover', 'mail.mailers.failover.mailers' => ['smtp', 'log']]);
         $user = User::factory()->create(['username' => 'unsafe_mail', 'email' => 'unsafe-mail@example.com']);
         $this->post(route('password.recovery.identify'), ['username' => $user->username]);
