@@ -91,7 +91,7 @@
                target="_blank"
                rel="noopener">
                 <i class="fa-solid fa-file-pdf"></i>
-                Open Form No. 3 PDF
+                Open LTC Form No. 3 PDF
             </a>
         </div>
     </div>
