@@ -724,7 +724,11 @@ body.profile-crop-open {
 .parcel-search-map-target[hidden] { display: none; }
 #parcel-search-results [data-map-selected] { background: #f0f7f2; box-shadow: inset 3px 0 #15803d; }
 .parcel-search-map-target[aria-pressed="true"] { border-color: #86b99a; background: #dfeee4; color: #14532d; }
-.parcel-map-focus-outline { pointer-events: none; filter: drop-shadow(0 0 2px #fff) drop-shadow(0 0 3px rgba(15, 23, 42, .22)); }
+.parcel-map-focus-outline { pointer-events: none; filter: drop-shadow(0 0 3px rgba(37, 99, 235, .45)); }
+/* Leaflet positions oversized SVG renderers itself; responsive media limits distort them. */
+[data-parcel-map-viewer] .leaflet-pane > svg { max-width: none !important; }
+.parcel-map-focus-label { pointer-events: none; width: max-content !important; }
+.parcel-map-focus-label > span { display: block; transform: translate(-50%, -50%); padding: 4px 8px; border: 1px solid #93c5fd; border-radius: 6px; background: #fff; color: #1d4ed8; box-shadow: 0 2px 8px rgba(15, 23, 42, .18); font-size: 11px; font-weight: 700; white-space: nowrap; }
 #parcel-search-pages { display: flex; justify-content: space-between; gap: 8px; margin-top: 4px; }
 #parcel-search-pages:empty { display: none; }
 #parcel-search-pages .parcel-search-page-button:disabled { opacity: .5; cursor: default; }
