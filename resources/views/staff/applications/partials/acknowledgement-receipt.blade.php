@@ -17,9 +17,21 @@
     }
 
     .ltc-form3-output-toolbar .review-panel-header {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
         align-items: center;
         padding-block: 14px;
     }
+
+    .ltc-form3-output-progress {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 8px 12px;
+        margin-top: 12px;
+    }
+
+    .ltc-form3-output-progress-copy { color: #64748b; font-size: 12px; line-height: 1.5; }
 
     .ltc-form3-output-actions {
         display: flex;
@@ -46,6 +58,7 @@
 
     @media (max-width: 760px) {
         .ltc-form3-output-toolbar .review-panel-header {
+            grid-template-columns: minmax(0, 1fr);
             align-items: stretch;
         }
 
@@ -60,20 +73,21 @@
         <div>
             <h2 class="review-panel-title">Document Requirements</h2>
             <p class="review-panel-subtitle">
-                Use the requirement cards below as the working checklist. LTC Form No. 3 is generated from the current encoded requirement data.
+                Review and encode the requirements below. LTC Form No. 3 uses the saved checklist data.
             </p>
+            <div class="ltc-form3-output-progress">
+                <span class="ltc-form3-output-status">
+                    {{ $acknowledgementEncodedCount }} / {{ $acknowledgementBlockingTotal }} required complete
+                </span>
+                @if (! $acknowledgementComplete)
+                    <span class="ltc-form3-output-progress-copy">Intake review requires compliance.</span>
+                @endif
+            </div>
         </div>
 
         <div class="ltc-form3-output-actions">
-            <span class="ltc-form3-output-status">
-                {{ $acknowledgementEncodedCount }} / {{ $acknowledgementBlockingTotal }} required complete
-            </span>
-            @if (! $acknowledgementComplete)
-                <span class="text-sm">Intake review requires compliance.</span>
-            @endif
-
             <a href="{{ route('staff.applications.acknowledgement.pdf', $application) }}"
-               class="staff-button staff-button-primary"
+               class="staff-button staff-button-light"
                target="_blank"
                rel="noopener">
                 <i class="fa-solid fa-file-pdf"></i>

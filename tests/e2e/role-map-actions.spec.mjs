@@ -53,6 +53,10 @@ for (const role of ['staff','geodetic','landowner']) {
         const open = page.getByRole('link', { name:'Open ' + record.parcel_code + ' record', exact:true });
         await expect(show).toBeVisible();
         await expect(open).toHaveAttribute('href', record.details_url);
+        const result = page.locator('#parcel-search-results > div').first();
+        await expect(result.locator('.parcel-search-area')).toHaveText('Parcel area1 ha');
+        await expect(result.locator('.parcel-search-area strong')).toHaveText('1 ha');
+        await expect(result.locator('[class$="-meta"]')).toHaveText('Calindagan, Dumaguete City');
         expect(await show.evaluate(node => node.getBoundingClientRect().height)).toBeGreaterThanOrEqual(48);
         expect(await show.evaluate(node => getComputedStyle(node).borderTopStyle)).toBe('solid');
         const pagination = page.locator('#parcel-search-pages');

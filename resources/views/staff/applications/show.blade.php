@@ -1438,8 +1438,8 @@
                 background: #f8faf9;
                 border-radius: 12px;
                 padding: 14px;
-                display: grid;
-                grid-template-rows: auto auto auto;
+                display: flex;
+                flex-direction: column;
                 gap: 10px;
                 min-height: 100%;
             }
@@ -1510,6 +1510,14 @@
             .workflow-decision-card .staff-button {
                 width: 100%;
                 justify-content: center;
+            }
+
+            .workflow-decision-card > .staff-button {
+                margin-top: auto;
+                flex: 0 0 auto;
+                min-height: 44px;
+                height: auto;
+                padding: 10px 14px;
             }
 
             .workflow-decision-actions {
@@ -4046,7 +4054,7 @@
 
                                 <button type="submit" class="staff-button staff-button-primary">
                                     <i class="fa-solid fa-arrow-right"></i>
-                                    {{ $workflowActionLabel }}
+                                    Record Workflow Update
                                 </button>
                             </form>
                         @endif

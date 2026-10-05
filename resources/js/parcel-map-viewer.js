@@ -43,7 +43,14 @@ function initializeParcelMapViewer() {
             code.textContent = record.parcel_code || 'Parcel record';
             const meta = document.createElement('span');
             meta.className = metaClass;
-            meta.textContent = record.barangay + ', ' + record.municipality + ' · Parcel area: ' + (record.area_hectares ?? 'N/A') + ' ha';
+            meta.textContent = [record.barangay, record.municipality].filter(Boolean).join(', ') || 'Location not recorded';
+            const area = document.createElement('div');
+            area.className = 'parcel-search-area';
+            const areaLabel = document.createElement('span');
+            areaLabel.textContent = 'Parcel area';
+            const areaValue = document.createElement('strong');
+            areaValue.textContent = record.area_hectares == null ? 'Not recorded' : String(record.area_hectares) + ' ha';
+            area.append(areaLabel, areaValue);
             const actions = document.createElement('div');
             actions.className = 'parcel-search-actions';
             const show = document.createElement('button');
@@ -60,7 +67,7 @@ function initializeParcelMapViewer() {
             link.setAttribute('aria-label', 'Open ' + (record.parcel_code || 'parcel') + ' record');
             link.className = 'parcel-search-action parcel-search-action-link';
             actions.append(show, link);
-            item.append(code, meta, actions);
+            item.append(code, meta, area, actions);
             results.appendChild(item);
         }
         for (const [label, page, disabled] of [
