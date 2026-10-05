@@ -12,6 +12,10 @@ function attachClientValidation() {
         const control = event.target;
         if (!(control instanceof HTMLInputElement || control instanceof HTMLSelectElement || control instanceof HTMLTextAreaElement)) return;
         if (!control.closest('.staff-shell, .lo-shell, .geo-shell, .login-page, .auth-page')) return;
+        // Reveal collapsed fields before native validation attempts to focus them.
+        for (let parent = control.parentElement; parent; parent = parent.parentElement) {
+            if (parent instanceof HTMLDetailsElement) parent.open = true;
+        }
 
         control.setAttribute('aria-invalid', 'true');
         let error = control.parentElement?.querySelector(':scope > .ui-field-error[data-ui-client-error]');
@@ -225,9 +229,9 @@ function cleanupLegacyRequirementGroupControls() {
             actions.appendChild(badge);
         }
 
-        /* Desired right edge: chevron, then the Transferor/Transferee badge. */
+        /* Keep the disclosure arrow at the far right, after the side badge. */
         if (actions && indicator) {
-            actions.insertAdjacentElement('beforebegin', indicator);
+            actions.appendChild(indicator);
         }
     });
 }

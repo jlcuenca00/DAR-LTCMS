@@ -3080,18 +3080,21 @@
         </section>
 
 
-        <section id="landowner-links" class="review-panel">
-            <div class="review-panel-header">
+        <details id="landowner-links" class="review-panel landowner-links-disclosure" @if($errors->any()) open @endif>
+            <summary class="review-panel-header">
                 <div>
                     <h2 class="review-panel-title">Landowner Record Links</h2>
                     <p class="review-panel-subtitle">
                         Link every transferor and transferee to a separate Landowner Record. Hectare shares may also be recorded per linked parcel.
                     </p>
                 </div>
-                <span class="staff-badge {{ $allPartyLinksReady ? 'staff-badge-green' : 'staff-badge-amber' }}">
-                    {{ $allPartyLinksReady ? 'Ready for Decision Check' : 'Links Needed' }}
+                <span class="landowner-links-summary-meta">
+                    <span class="staff-badge {{ $allPartyLinksReady ? 'staff-badge-green' : 'staff-badge-amber' }}">
+                        {{ $allPartyLinksReady ? 'Ready for Decision Check' : 'Links Needed' }}
+                    </span>
+                    <i class="fa-solid fa-chevron-down" aria-hidden="true"></i>
                 </span>
-            </div>
+            </summary>
 
             <div class="review-panel-body">
                 <form data-submit-feedback method="POST" action="{{ route('staff.applications.landowner-links.update', $application) }}">
@@ -3121,16 +3124,20 @@
                                         $partySingular = $partyKey === 'transferors' ? 'transferor' : 'transferee';
                                     @endphp
 
-                                    <div class="landowner-link-card {{ $linkedId ? 'linked' : 'unlinked' }}">
-                                        <div class="landowner-link-heading">
+                                    <details class="landowner-link-card {{ $linkedId ? 'linked' : 'unlinked' }}" @if($errors->has($partyKey . '.' . $partyIndex . '.*')) open @endif>
+                                        <summary class="landowner-link-heading">
                                             <div>
                                                 <h4 class="landowner-link-title">{{ $partyGroup['label'] }} {{ $partyIndex + 1 }}</h4>
                                                 <p class="landowner-link-copy">{{ data_get($partyRow, 'name') }}</p>
                                             </div>
-                                            <span class="staff-badge {{ $linkedId ? 'staff-badge-green' : 'staff-badge-amber' }}">
-                                                {{ $linkedId ? 'Linked' : 'Needs Link' }}
+                                            <span class="landowner-links-summary-meta">
+                                                <span class="staff-badge {{ $linkedId ? 'staff-badge-green' : 'staff-badge-amber' }}">
+                                                    {{ $linkedId ? 'Linked' : 'Needs Link' }}
+                                                </span>
+                                                <i class="fa-solid fa-chevron-down" aria-hidden="true"></i>
                                             </span>
-                                        </div>
+                                        </summary>
+                                        <div class="landowner-link-card-body">
 
                                         <input type="hidden" name="{{ $partyKey }}[{{ $partyIndex }}][name]" value="{{ data_get($partyRow, 'name') }}">
 
@@ -3208,7 +3215,8 @@
                                                 Create Separate Record
                                             </button>
                                         @endif
-                                    </div>
+                                        </div>
+                                    </details>
                                 @endforeach
                             </div>
                         </div>
@@ -3257,7 +3265,7 @@
                     @endforeach
                 @endunless
             </div>
-        </section>
+        </details>
 
         @include('staff.applications.partials.acknowledgement-receipt')
 
@@ -4199,7 +4207,11 @@
                     </div>
                 @else
                     <div class="review-note-box">
-                        No workflow action is available for this status.
+                        @if ($application->status === 'pending_review_legal')
+                            This record uses the obsolete demo status “pending_review_legal”. The current workflow uses “pending_legal_review”. A verified data correction is required before workflow actions can resume.
+                        @else
+                            No workflow action is available for the stored status “{{ $application->status }}”. Ask the system administrator to verify this record's workflow state.
+                        @endif
                     </div>
                 @endif
             </div>
@@ -4577,5 +4589,4 @@
         });
     </script>
 </x-staff-shell>
-
 
