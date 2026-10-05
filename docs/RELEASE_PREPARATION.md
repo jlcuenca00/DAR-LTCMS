@@ -102,7 +102,11 @@ SESSION_HTTP_ONLY=true
 SESSION_SAME_SITE=lax
 ```
 
-For password-recovery email to work for real users, production should use a real mail delivery service rather than `MAIL_MAILER=log`.
+For password-recovery email to work for real users, production must use a real delivery transport. `log` and `array` are rejected for production notifications, including when nested inside failover/roundrobin mailers. Delivery failures must reach the caller instead of writing recovery codes or temporary credentials into logs and claiming delivery succeeded.
+
+SMTP uses `MAIL_TIMEOUT=15` by default (valid production range: 1–30 seconds). Use `MAIL_SCHEME=smtp` on port 587 with automatic STARTTLS, or `MAIL_SCHEME=smtps` on port 465 for implicit TLS; `tls` is not a supported scheme. A blank scheme enables Laravel's port-based selection. Production readiness validates the effective active mailer graph and SMTP settings, including `MAIL_URL` overrides, without sending email or exposing credentials. A clean configuration check does not prove inbox delivery.
+
+Current mail notifications are synchronous and no application jobs or scheduled tasks require a worker. Profile email verification is sent after the profile transaction commits; failed sending preserves the saved profile and unverified address and reports the existing warning. If queued delivery is introduced later, configure a supervised worker and deployment restart before enabling it.
 
 Do not create a `public/storage` symlink. Uploaded administrative records are intentionally kept behind authenticated routes.
 

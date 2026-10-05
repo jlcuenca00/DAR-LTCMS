@@ -55,8 +55,9 @@ class ProductionReadinessScanner
             'storage/app/public should be runtime read-only after legacy files are migrated to private storage.'
         );
 
-        $mailDriver = (string) config('mail.default');
-        $this->recommend($issues, ! in_array($mailDriver, ['log', 'array'], true), 'mail_not_deliverable', 'MAIL_MAILER should use a real delivery transport in production so password-recovery messages can be delivered.');
+        foreach (app(ProductionMailConfiguration::class)->issues() as $code => $message) {
+            $this->recommend($issues, false, $code, $message);
+        }
 
         foreach ($this->activeLogLevels() as $channel => $level) {
             $this->recommend(

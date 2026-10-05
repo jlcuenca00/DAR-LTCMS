@@ -61,9 +61,10 @@ class ProfileController extends Controller
     public function update(ProfileUpdateRequest $request): RedirectResponse
     {
         $createdPaths = [];
+        $verificationUser = null;
         try {
-            return DB::transaction(function () use ($request, &$createdPaths) {
-                return $this->updateLocked($request, $createdPaths);
+            $response = DB::transaction(function () use ($request, &$createdPaths, &$verificationUser) {
+                return $this->updateLocked($request, $createdPaths, $verificationUser);
             });
         } catch (Throwable $exception) {
             foreach ($createdPaths as $path) {
@@ -71,9 +72,15 @@ class ProfileController extends Controller
             }
             throw $exception;
         }
+
+        if ($verificationUser !== null) {
+            $response->with('email_verification_status', $this->sendProfileVerification($verificationUser));
+        }
+
+        return $response;
     }
 
-    private function updateLocked(ProfileUpdateRequest $request, array &$createdPaths): RedirectResponse
+    private function updateLocked(ProfileUpdateRequest $request, array &$createdPaths, ?User &$verificationUser): RedirectResponse
     {
         $user = User::query()->whereKey($request->user()->id)->lockForUpdate()->firstOrFail();
         $validated = $request->validated();
@@ -166,51 +173,50 @@ class ProfileController extends Controller
             ]
         );
 
-        $verificationMessage = null;
-
         if ($emailChanged && filled($user->email)) {
-            try {
-                $user->notify(new EmailAddedVerificationNotification());
-
-                AuditLogger::record(
-                    'profile_email_verification_email_sent',
-                    null,
-                    $user,
-                    [
-                        'user_id' => $user->id,
-                        'username' => $user->username,
-                        'recipient_email' => $user->email,
-                        'verification_link_expires_in_hours' => 24,
-                    ]
-                );
-
-                $verificationMessage = 'Your email was changed. Verify the new address before it can be used for password recovery.';
-            } catch (Throwable $exception) {
-                report($exception);
-
-                AuditLogger::record(
-                    'profile_email_verification_email_failed',
-                    null,
-                    $user,
-                    [
-                        'user_id' => $user->id,
-                        'username' => $user->username,
-                        'recipient_email' => $user->email,
-                        'delivery_error_type' => $exception::class,
-                    ]
-                );
-
-                $verificationMessage = 'Your email was changed, but the verification message could not be sent. The address remains unavailable for password recovery.';
-            }
+            $verificationUser = $user;
         }
 
-        $response = Redirect::route('profile.edit')->with('status', 'profile-updated');
+        return Redirect::route('profile.edit')->with('status', 'profile-updated');
+    }
 
-        if ($verificationMessage !== null) {
-            $response->with('email_verification_status', $verificationMessage);
+    private function sendProfileVerification(User $user): string
+    {
+        try {
+            $user->notify(new EmailAddedVerificationNotification());
+
+            AuditLogger::record(
+                'profile_email_verification_email_sent',
+                null,
+                $user,
+                [
+                    'user_id' => $user->id,
+                    'username' => $user->username,
+                    'recipient_email' => $user->email,
+                    'verification_link_expires_in_hours' => 24,
+                ]
+            );
+
+            $verificationMessage = 'Your email was changed. Verify the new address before it can be used for password recovery.';
+        } catch (Throwable $exception) {
+            report($exception);
+
+            AuditLogger::record(
+                'profile_email_verification_email_failed',
+                null,
+                $user,
+                [
+                    'user_id' => $user->id,
+                    'username' => $user->username,
+                    'recipient_email' => $user->email,
+                    'delivery_error_type' => $exception::class,
+                ]
+            );
+
+            $verificationMessage = 'Your email was changed, but the verification message could not be sent. The address remains unavailable for password recovery.';
         }
 
-        return $response;
+        return $verificationMessage;
     }
 
     private function hasRecentPasswordConfirmation(Request $request): bool

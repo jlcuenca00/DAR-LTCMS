@@ -3,6 +3,9 @@
 namespace App\Providers;
 
 use App\Models\LandTransferApplication;
+use App\Services\ProductionMailConfiguration;
+use Illuminate\Notifications\Events\NotificationSending;
+use Illuminate\Support\Facades\Event;
 use App\Models\Parcel;
 use App\Models\SystemNotification;
 use App\Observers\LandTransferApplicationObserver;
@@ -27,6 +30,12 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        Event::listen(NotificationSending::class, function (NotificationSending $event): void {
+            if (app()->environment('production') && $event->channel === 'mail') {
+                app(ProductionMailConfiguration::class)->assertDeliverable();
+            }
+        });
+
         Password::defaults(fn () => Password::min(8)
             ->letters()
             ->mixedCase()
