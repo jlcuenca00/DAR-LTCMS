@@ -179,7 +179,7 @@ for (const fixture of linkCases) {
         await expect(link).toHaveCount(1);
         await link.focus();
         await expect(link).toBeFocused();
-        await page.route('**' + fixture.href, route => route.fulfill({ contentType:'text/html', body:'<p>Opened record</p>' }));
+        await page.context().route('**' + fixture.href, route => route.fulfill({ contentType:'text/html', body:'<p>Opened record</p>' }));
         const popupPromise = page.waitForEvent('popup');
         await link.click({ button:'middle' });
         const popup = await popupPromise;
