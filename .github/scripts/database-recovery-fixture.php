@@ -56,6 +56,29 @@ foreach (DB::select("SELECT tablename FROM pg_tables WHERE schemaname = 'public'
     );
 }
 $fingerprint['constraints'] = DB::select("SELECT conrelid::regclass::text AS relation, conname, pg_get_constraintdef(oid) AS definition FROM pg_constraint WHERE connamespace = 'public'::regnamespace ORDER BY relation, conname");
+// PostgreSQL reparses this varchar-array enum check during restore and moves
+// the text cast from the array to its elements. Accept only the two equivalent
+// forms, and verify their behavior before giving them the same fingerprint.
+foreach ($fingerprint['constraints'] as $constraint) {
+    if ($constraint->relation !== 'required_documents' || $constraint->conname !== 'required_documents_applies_to_check') {
+        continue;
+    }
+    $forms = [
+        "CHECK (((applies_to)::text = ANY ((ARRAY['transferor'::character varying, 'transferee'::character varying])::text[])))",
+        "CHECK (((applies_to)::text = ANY (ARRAY[('transferor'::character varying)::text, ('transferee'::character varying)::text])))",
+    ];
+    if (! in_array($constraint->definition, $forms, true)) {
+        throw new RuntimeException('Unexpected required-document party constraint.');
+    }
+    $expression = substr($constraint->definition, 6, -1);
+    foreach (['transferor' => true, 'transferee' => true, 'other' => false, '' => false] as $value => $expected) {
+        $accepted = DB::selectOne("SELECT {$expression} AS accepts FROM (VALUES (?::varchar)) AS sample(applies_to)", [$value])->accepts;
+        if ($accepted !== $expected) {
+            throw new RuntimeException('Required-document party constraint behavior changed.');
+        }
+    }
+    $constraint->definition = "CHECK (applies_to IN ('transferor', 'transferee'))";
+}
 $fingerprint['triggers'] = DB::select("SELECT tgrelid::regclass::text AS relation, tgname, pg_get_triggerdef(oid) AS definition FROM pg_trigger WHERE NOT tgisinternal AND tgrelid IN (SELECT oid FROM pg_class WHERE relnamespace = 'public'::regnamespace) ORDER BY relation, tgname");
 
 $fingerprint['sequences'] = DB::select("SELECT sequencename, increment_by, min_value, max_value, cache_size, last_value FROM pg_sequences WHERE schemaname = 'public' ORDER BY sequencename");
