@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs';
 const viewer = readFileSync('resources/js/parcel-map-viewer.js', 'utf8');
 const leaflet = readFileSync('node_modules/leaflet/dist/leaflet.js', 'utf8');
 const leafletCss = readFileSync('node_modules/leaflet/dist/leaflet.css', 'utf8');
+const controlsCss = readFileSync('resources/css/app.css', 'utf8');
 
 async function fixture(page, role, withLeaflet = true) {
     await page.route('https://*.basemaps.cartocdn.com/**', route => route.abort());
@@ -22,6 +23,7 @@ async function fixture(page, role, withLeaflet = true) {
             search_url:'https://fixture.test/search', focus_url:'https://fixture.test/feature/__ID__',
             initial_search:{ items:[record], total:1, page:1, last_page:1 },
         }) + '</script></div>');
+    await page.addStyleTag({ content:controlsCss });
     if (withLeaflet) {
         await page.addStyleTag({ content:leafletCss });
         await page.addScriptTag({ content:leaflet });
@@ -52,6 +54,10 @@ for (const role of ['staff','geodetic','landowner']) {
         await expect(show).toBeVisible();
         await expect(open).toHaveAttribute('href', record.details_url);
         expect(await show.evaluate(node => node.getBoundingClientRect().height)).toBeGreaterThanOrEqual(48);
+        expect(await show.evaluate(node => getComputedStyle(node).borderTopStyle)).toBe('solid');
+        const pagination = page.locator('#parcel-search-pages');
+        expect(await pagination.evaluate(node => parseFloat(getComputedStyle(node).gap))).toBeGreaterThan(0);
+        await expect(pagination.getByRole('button', { name:'Previous parcel search page' })).toBeDisabled();
         await show.click();
         await expect.poll(() => page.evaluate(() => window.focusLoads)).toBe(1);
         await expect(page.locator('#parcel-map-status')).toContainText('The parcel list remains available.');

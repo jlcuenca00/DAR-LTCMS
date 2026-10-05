@@ -144,15 +144,15 @@
     }
 
     .requirement-group-panel .requirement-group-actions {
-        order: 3;
+        order: 2;
         flex: 0 0 auto;
         align-items: center !important;
         margin-left: 0;
     }
 
     .requirement-group-panel .ui-requirement-group-chevron {
-        order: 2;
-        margin-left: auto;
+        order: 3;
+        margin-left: 0;
         width: 28px;
         height: 28px;
         display: inline-flex;

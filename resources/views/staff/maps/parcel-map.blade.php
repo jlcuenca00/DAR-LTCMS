@@ -107,7 +107,7 @@
             <div class="map-panel-header">
                 <div>
                     <h3 class="map-panel-title">Mapped Parcel Records</h3>
-                    <p class="map-panel-subtitle">Select a search result to focus the map, or click a parcel boundary to open its record.</p>
+                    <p class="map-panel-subtitle">Use Show on map to focus a boundary or Open record to view parcel details.</p>
                 </div>
                 <div class="map-header-actions">
                     <div class="map-count"><i class="fa-solid fa-draw-polygon" aria-hidden="true"></i>{{ number_format($mappedParcelCount) }} mapped parcel{{ $mappedParcelCount === 1 ? '' : 's' }}</div>
@@ -122,3 +122,4 @@
         <script type="application/json" data-parcel-map-config>@json($mapConfig)</script>
     </x-slot>
 </x-staff-shell>
+

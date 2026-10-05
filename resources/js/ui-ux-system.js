@@ -229,6 +229,8 @@ function enhanceReviewDisclosures() {
     });
 
     formPanels.forEach((panel, index) => {
+        // Native disclosures already own their open state and keyboard behavior.
+        if (panel.matches('details')) return;
         if (panel.dataset.uiDisclosureEnhanced === 'true') return;
         const header = panel.querySelector('.review-panel-header');
         const body = panel.querySelector('.review-panel-body');

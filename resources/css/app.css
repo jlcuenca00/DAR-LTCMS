@@ -637,3 +637,69 @@ body.profile-crop-open {
         width: 100%;
     }
 }
+
+/* Shared parcel viewer controls across Staff, Geodetic and Landowner maps. */
+.parcel-search-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.parcel-search-actions .parcel-search-action,
+#parcel-search-pages .parcel-search-page-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 48px;
+    padding: 8px 12px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    background: #fff;
+    color: #334155;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1.3;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.parcel-search-actions .parcel-search-action-focus {
+    border-color: #166534;
+    background: #166534;
+    color: #fff;
+}
+
+.parcel-search-actions .parcel-search-action:hover,
+#parcel-search-pages .parcel-search-page-button:not(:disabled):hover {
+    border-color: #166534;
+    box-shadow: 0 0 0 1px #166534;
+}
+
+.parcel-search-actions .parcel-search-action[hidden] { display: none; }
+#parcel-search-pages { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+#parcel-search-pages:empty { display: none; }
+#parcel-search-pages .parcel-search-page-button:disabled { opacity: .5; cursor: default; }
+#parcel-search-status { margin: 10px 0 0; color: #64748b; font-size: 12px; line-height: 1.5; }
+#parcel-map-status { margin: 0; padding: 12px 20px 0; color: #475569; font-size: 12px; line-height: 1.5; }
+#parcel-map-status:empty { display: none; }
+
+/* One native disclosure per review section, with compact per-person links. */
+.application-review-page .landowner-links-disclosure > summary,
+.application-review-page .landowner-link-card > summary { list-style: none; cursor: pointer; }
+.application-review-page .landowner-links-disclosure > summary::-webkit-details-marker,
+.application-review-page .landowner-link-card > summary::-webkit-details-marker { display: none; }
+.application-review-page .landowner-links-disclosure:not([open]) > summary { border-bottom: 0; }
+.application-review-page details.landowner-link-card { display: block; }
+.application-review-page .landowner-link-card-body { display: grid; gap: 14px; padding-top: 14px; }
+.application-review-page .landowner-links-summary-meta { display: inline-flex; align-items: center; gap: 12px; flex-shrink: 0; }
+.application-review-page .landowner-links-summary-meta > i { color: #64748b; font-size: 12px; transition: transform 150ms ease; }
+.application-review-page details[open] > summary > .landowner-links-summary-meta > i { transform: rotate(180deg); }
+.application-review-page #ltc-form-no-4-review > summary > div:first-child { flex: 1 1 auto; min-width: 0; }
+.application-review-page #ltc-form-no-4-review > summary { align-items: center; }
+
+@media (max-width: 640px) {
+    .application-review-page .landowner-links-disclosure > summary { flex-wrap: wrap; }
+    .application-review-page #ltc-form-no-4-review > summary { flex-wrap: wrap; }
+    .application-review-page #ltc-form-no-4-review .ltc-form-accordion-meta { width: 100%; justify-content: space-between; }
+}

@@ -89,6 +89,23 @@ test.describe('authenticated UI UX behavior', () => {
         await waitForUiUx(page);
         await expect(page.locator('.ui-decision-scope-note')).toBeVisible();
 
+        const form4 = page.locator('details#ltc-form-no-4-review');
+        await expect(form4.locator('.ui-review-disclosure-toggle')).toHaveCount(0);
+        const form4WasOpen = await form4.evaluate(node => node.open);
+        await form4.locator(':scope > summary').click();
+        await expect.poll(() => form4.evaluate(node => node.open)).toBe(!form4WasOpen);
+        await form4.locator(':scope > summary').click();
+        await expect.poll(() => form4.evaluate(node => node.open)).toBe(form4WasOpen);
+
+        const links = page.locator('details#landowner-links');
+        await expect(links).not.toHaveAttribute('open', '');
+        await links.locator(':scope > summary').press('Enter');
+        await expect(links).toHaveAttribute('open', '');
+        const person = links.locator('details.landowner-link-card').first();
+        await expect(person).not.toHaveAttribute('open', '');
+        await person.locator(':scope > summary').click();
+        await expect(person.locator('select[data-remote-record-control]')).toBeVisible();
+
         const disclosure = page.locator('.ui-review-disclosure').first();
         if (await disclosure.count()) {
             const toggle = disclosure.locator('.ui-review-disclosure-toggle');
@@ -124,13 +141,13 @@ test.describe('authenticated UI UX behavior', () => {
         await expect(header).toHaveAttribute('aria-expanded', 'false');
         await expect(body).toBeHidden();
 
-        const chevronBeforeBadge = await header.evaluate((node) => {
+        const chevronAfterBadge = await header.evaluate((node) => {
             const chevron = node.querySelector('.ui-requirement-group-chevron');
             const actions = node.querySelector('.requirement-group-actions');
             const badge = node.querySelector('.party-group-badge');
-            return Boolean(chevron && actions && badge && chevron.nextElementSibling === actions && badge.parentElement === actions);
+            return Boolean(chevron && actions && badge && actions.lastElementChild === chevron && badge.nextElementSibling === chevron);
         });
-        expect(chevronBeforeBadge).toBe(true);
+        expect(chevronAfterBadge).toBe(true);
 
         await header.click();
         await expect(header).toHaveAttribute('aria-expanded', 'true');
