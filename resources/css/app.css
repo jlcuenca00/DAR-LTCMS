@@ -722,6 +722,9 @@ body.profile-crop-open {
 }
 
 .parcel-search-map-target[hidden] { display: none; }
+#parcel-search-results [data-map-selected] { background: #f0f7f2; box-shadow: inset 3px 0 #15803d; }
+.parcel-search-map-target[aria-pressed="true"] { border-color: #86b99a; background: #dfeee4; color: #14532d; }
+.parcel-map-focus-outline { pointer-events: none; filter: drop-shadow(0 0 2px #fff) drop-shadow(0 0 3px rgba(15, 23, 42, .22)); }
 #parcel-search-pages { display: flex; justify-content: space-between; gap: 8px; margin-top: 4px; }
 #parcel-search-pages:empty { display: none; }
 #parcel-search-pages .parcel-search-page-button:disabled { opacity: .5; cursor: default; }
