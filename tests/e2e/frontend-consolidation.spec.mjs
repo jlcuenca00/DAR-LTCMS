@@ -180,7 +180,7 @@ for (const fixture of linkCases) {
         await link.focus();
         await expect(link).toBeFocused();
         await page.context().route('**' + fixture.href, route => route.fulfill({ contentType:'text/html', body:'<p>Opened record</p>' }));
-        const popupPromise = page.waitForEvent('popup');
+        const popupPromise = page.context().waitForEvent('page');
         await link.click({ button:'middle' });
         const popup = await popupPromise;
         await expect(popup).toHaveURL(new RegExp(fixture.href + '$'));
