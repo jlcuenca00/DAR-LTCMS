@@ -124,7 +124,7 @@ const roleTours = {
                 path: '/geodetic/parcel-map',
                 selectors: ['#parcel-search', '.geo-search-wrap', '.geo-map-sidebar'],
                 title: 'Find Mapped Parcels',
-                copy: 'Search by parcel code, title number, tax declaration, landowner, barangay, or municipality. Use Show on map to focus its mapped boundary, or Open record to view the parcel details.',
+                copy: 'Search by parcel code, title number, tax declaration, landowner, barangay, or municipality. Select a parcel record to open its details, or use the target button to show its boundary on the map.',
                 side: 'right',
             },
             {
