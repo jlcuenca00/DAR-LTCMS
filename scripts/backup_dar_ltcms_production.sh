@@ -88,43 +88,28 @@ flock -n 9 || fail "Another production backup is already running."
 
 cd "$PROJECT_ROOT"
 
-laravel_config() {
-    local key="$1"
-    php -r '
-        $key = $argv[1];
-        require "vendor/autoload.php";
-        $app = require "bootstrap/app.php";
-        $app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
-        $value = config($key);
-        if ($value !== null) {
-            echo is_bool($value) ? ($value ? "1" : "0") : $value;
-        }
-    ' "$key"
-}
-
-DB_CONNECTION="${DB_CONNECTION:-$(laravel_config 'database.default')}"
-[ "$DB_CONNECTION" = "pgsql" ] || fail "Production backup currently supports PostgreSQL only (configured: $DB_CONNECTION)."
-
-DB_HOST="${DB_HOST:-$(laravel_config 'database.connections.pgsql.host')}"
-DB_PORT="${DB_PORT:-$(laravel_config 'database.connections.pgsql.port')}"
-DB_DATABASE="${DB_DATABASE:-$(laravel_config 'database.connections.pgsql.database')}"
-DB_USERNAME="${DB_USERNAME:-$(laravel_config 'database.connections.pgsql.username')}"
-DB_PASSWORD="${DB_PASSWORD:-$(laravel_config 'database.connections.pgsql.password')}"
-
-[ -n "$DB_DATABASE" ] || fail "Could not resolve the PostgreSQL database name from Laravel configuration."
-[ -n "$DB_USERNAME" ] || fail "Could not resolve the PostgreSQL username from Laravel configuration."
-
 DB_DUMP="$STAGING_DIR/database.dump"
 DB_DUMP_TMP="$STAGING_DIR/database.dump.tmp"
 MANIFEST="$STAGING_DIR/backup-manifest.txt"
+DB_SETTINGS_FILE="$STAGING_DIR/database-settings.tmp"
 
 cleanup() {
-    rm -f "$DB_DUMP_TMP" "$DB_DUMP" "$MANIFEST"
-    unset PGPASSWORD DB_PASSWORD
+    rm -f "$DB_DUMP_TMP" "$DB_DUMP" "$MANIFEST" "$DB_SETTINGS_FILE"
+    unset PGPASSWORD PGSSLKEY PGSSLCERT PGSSLROOTCERT
 }
 trap cleanup EXIT INT TERM
 
-export PGPASSWORD="$DB_PASSWORD"
+# Resolve the same effective connection used by Laravel, including DB_URL.
+# Null-delimited values preserve spaces, quotes, and special characters without eval.
+php "$SCRIPT_DIR/resolve_backup_database.php" > "$DB_SETTINGS_FILE"
+mapfile -d '' -t DB_SETTINGS < "$DB_SETTINGS_FILE"
+[ "${#DB_SETTINGS[@]}" -eq 9 ] || fail "Incomplete resolved backup connection."
+export "${DB_SETTINGS[@]}"
+rm -f "$DB_SETTINGS_FILE"
+DB_HOST="$PGHOST"
+DB_PORT="$PGPORT"
+DB_DATABASE="$PGDATABASE"
+DB_USERNAME="$PGUSER"
 
 # Optional conservative disk-space check. Only the database dump is staged
 # locally; storage/app files and .env are streamed directly to the repository.
@@ -164,7 +149,7 @@ pg_dump \
 mv "$DB_DUMP_TMP" "$DB_DUMP"
 pg_restore --list "$DB_DUMP" >/dev/null
 
-unset PGPASSWORD DB_PASSWORD
+unset PGPASSWORD
 
 GIT_COMMIT="unknown"
 RELEASE_COMMIT_FILE="$PROJECT_ROOT/.release-commit"

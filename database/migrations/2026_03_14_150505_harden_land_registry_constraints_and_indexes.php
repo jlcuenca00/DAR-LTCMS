@@ -53,7 +53,10 @@ return new class extends Migration
     public function down(): void
     {
         // Drop check constraints
-        DB::statement("ALTER TABLE landholding_mutations DROP CONSTRAINT IF EXISTS landholding_mutations_transferred_positive_chk");
+        // A later one-way migration intentionally removed registry mutations.
+        if (Schema::hasTable('landholding_mutations')) {
+            DB::statement("ALTER TABLE landholding_mutations DROP CONSTRAINT IF EXISTS landholding_mutations_transferred_positive_chk");
+        }
         DB::statement("ALTER TABLE application_parcels DROP CONSTRAINT IF EXISTS application_parcels_area_positive_chk");
         DB::statement("ALTER TABLE landholdings DROP CONSTRAINT IF EXISTS landholdings_area_nonnegative_chk");
 

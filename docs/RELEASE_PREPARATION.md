@@ -60,6 +60,10 @@ Keep the production `.env` secure and outside GitHub. If it is backed up, store 
 
 Use `bash scripts/backup_dar_ltcms_production.sh` with the protected configuration described in `scripts/backup.env.example`. Optional retention, staging, snapshot-label, and sampling settings are loaded from that file before defaults are applied. The script backs up PostgreSQL, private/legacy uploads, and the production .env into the encrypted restic repository and removes its temporary dump on exit.
 
+The production backup resolves Laravel's effective default PostgreSQL connection, including `DB_URL`, write-connection settings, and TLS mode/certificate paths. Do not use separate database-target overrides in `backup.env`; configure the application connection itself. The resolver writes null-delimited values only into a private temporary file, removes that file before dumping, and stops before uploading when resolution fails. Database credentials are never printed.
+
+CI verifies full rollback/remigration and a PostgreSQL custom-dump restore in separately named disposable service-container databases. It compares all table records, constraints, triggers, sequences, and application trigger functions and checks restored audit append-only behavior. This checks application recovery mechanics using synthetic records; it does not verify the live off-site snapshot or restore uploaded files.
+
 A successful `pg_restore --list` checks the dump catalog; it does not prove a full restore. Before final turnover, verify the actual server schedule, failure monitoring, latest off-site snapshot, and an isolated database/file restore. These operational checks are not established by repository configuration or CI. Never restore into the live database as a test.
 
 ## 2. Run the final release check
@@ -215,6 +219,8 @@ A smoke test is a short check that the most important parts still open and work 
 Do not immediately restore a database backup for a visual or code-only problem.
 
 ### Code/UI problem only
+
+Schema changes require separate review: reverting application code does not undo migrations, and historical data-cleanup migrations are intentionally one-way. The full rollback check is for disposable CI databases, not a production recovery procedure.
 
 The safest first action is to revert the problem commit or pull request in GitHub and let the normal `main` deployment publish the previous code again.
 

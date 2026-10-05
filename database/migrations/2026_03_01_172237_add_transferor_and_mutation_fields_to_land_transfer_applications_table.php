@@ -32,8 +32,13 @@ return new class extends Migration
             $table->dropForeign(['transferor_landowner_id']);
             $table->dropColumn('transferor_landowner_id');
 
-            $table->dropForeign(['registry_mutated_by']);
-            $table->dropColumn(['registry_mutated_at', 'registry_mutated_by']);
+            if (Schema::hasColumn('land_transfer_applications', 'registry_mutated_by')) {
+                $table->dropForeign(['registry_mutated_by']);
+                $table->dropColumn('registry_mutated_by');
+            }
+            if (Schema::hasColumn('land_transfer_applications', 'registry_mutated_at')) {
+                $table->dropColumn('registry_mutated_at');
+            }
         });
     }
 };
