@@ -69,8 +69,10 @@ class ReleasePreparationTest extends TestCase
         $this->assertStringContainsString('/storage/app/private/', $deployment);
         $this->assertStringContainsString('/storage/app/public/', $deployment);
         $this->assertStringContainsString('/.env,', $deployment);
-        $this->assertStringContainsString("printf '%s\\n'", $deployment);
-        $this->assertStringContainsString('> .release-commit', $deployment);
+        $finalize = file_get_contents(base_path('scripts/finalize_production_deployment.sh'));
+        $this->assertStringContainsString("printf '%s\\n'", $finalize);
+        $this->assertStringContainsString('> .release-commit.next', $finalize);
+        $this->assertStringContainsString('finalize_production_deployment.sh', $deployment);
     }
 
     private function configureCleanProductionEnvironment(): void

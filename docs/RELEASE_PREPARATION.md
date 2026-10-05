@@ -137,9 +137,15 @@ When intentionally upgrading a third-party GitHub Action, review the new upstrea
 
 ## 5. Deploy and verify the exact version
 
-Merging to `main` automatically deploys the current version to CloudPanel.
+Merging to `main` automatically deploys the current version to CloudPanel. Production runs are serialized without canceling an active deployment.
 
-After the deployment completes, the server stores the exact deployed GitHub commit in:
+The workflow enters a pre-rendered maintenance window before copying application files. Users receive a temporary 503 response while dependencies, migrations, private-storage checks, and application caches are updated. A failed copy or update retains maintenance; an already-maintained application is not automatically reopened by a new deployment.
+
+After the update succeeds, the workflow reopens the application and runs `php artisan dar:check-deployment-http`. This checks the configured HTTPS `/up` endpoint, the login form, and the login page's built CSS and JavaScript. Missing assets, redirects, unexpected asset content types, or unhealthy responses fail deployment and restore maintenance. The health endpoint verifies application boot; this smoke test does not replace authenticated role testing or database-integrity checks.
+
+If a deployment fails, inspect its logs and current server state before recovery. Do not run `php artisan up` merely to clear the error: finish or revert the interrupted code update, verify dependencies/migrations and production readiness, then rerun finalization with the intended commit. A new deployment refuses an existing maintenance state so it cannot silently reopen a failed or manually paused deployment.
+
+Only after the live HTTP checks pass, the server atomically records the verified deployed GitHub commit in:
 
 ```text
 .release-commit
