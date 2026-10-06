@@ -9,7 +9,7 @@ This guide explains how a tester should populate the DAR-LTCMS barebones test en
 Use the primary tester account:
 
 ```text
-Email: staff.tester@dar-ltcms.local
+Username: staff.tester
 Password: password
 ```
 
@@ -26,7 +26,7 @@ Staff Dashboard → User / Role Management
 Create only the accounts required by the test scenario:
 
 - Landowner account for Landowner portal/privacy testing
-- Geodetic account for limited read-only parcel/reference/map testing
+- Geodetic account for parcel/reference/map review and authorized, versioned geometry editing
 - additional Legal Clearance Staff accounts only when a multi-actor recording/audit scenario is required
 
 A Landowner user must be linked to the correct Landowner record before that user can see their own records.

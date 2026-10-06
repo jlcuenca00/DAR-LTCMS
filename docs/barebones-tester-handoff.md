@@ -28,15 +28,15 @@ The required document list is kept because it is workflow reference/configuratio
 
 The seeder creates these Legal Clearance Staff accounts (stored with the internal `staff` role value for compatibility). All use the test password `password` and are for local/staging testing only.
 
-| Name | Email |
-|---|---|
-| Legal Clearance Staff Tester | `staff.tester@dar-ltcms.local` |
-| Jay | `jay.staff@dar-ltcms.local` |
-| Miles | `miles.staff@dar-ltcms.local` |
-| Vea | `vea.staff@dar-ltcms.local` |
-| Lloyd | `lloyd.staff@dar-ltcms.local` |
+| Name | Username | Email |
+|---|---|---|
+| Legal Clearance Staff Tester | `staff.tester` | `staff.tester@dar-ltcms.local` |
+| Jay | `jay.staff` | `jay.staff@dar-ltcms.local` |
+| Miles | `miles.staff` | `miles.staff@dar-ltcms.local` |
+| Vea | `vea.staff` | `vea.staff@dar-ltcms.local` |
+| Lloyd | `lloyd.staff` | `lloyd.staff@dar-ltcms.local` |
 
-Use `staff.tester@dar-ltcms.local` as the primary starting account unless a test specifically needs multiple Legal Clearance Staff users.
+Sign in with the **username** `staff.tester` as the primary starting account unless a test specifically needs multiple Legal Clearance Staff users.
 
 ## Reset command
 
