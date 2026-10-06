@@ -9,6 +9,18 @@ async function waitForUiUx(page) {
     await page.waitForFunction(() => document.documentElement.classList.contains('dar-ui-ux-ready'));
 }
 
+async function openReviewFixture(page) {
+    const applicationId = process.env.E2E_REVIEW_APPLICATION_ID || '';
+    expect(applicationId, 'Prepare the application review fixture before running review checks').toMatch(/^[1-9]\d*$/);
+    const path = `/staff/applications/${applicationId}`;
+    const response = await page.goto(path);
+    expect(response?.status(), 'The explicit application review fixture must render').toBe(200);
+    expect(new URL(page.url()).pathname).toBe(path);
+    await waitForUiUx(page);
+    await expect(page.locator('.application-review-page')).toBeVisible();
+    await expect(page.locator('.application-review-page')).toContainText('E2E-REVIEW-001');
+}
+
 async function loginAsStaff(page) {
     await page.goto('/login');
     await waitForUiUx(page);
@@ -37,6 +49,10 @@ test.describe('public UI UX baseline', () => {
 test.describe('authenticated UI UX behavior', () => {
     test.beforeEach(async ({ page }, testInfo) => {
         test.skip(testInfo.project.name !== 'chromium-responsive', 'Authenticated UI UX checks run once.');
+        if (process.env.CI) {
+            expect(staffCredentials.username, 'CI must provide Staff credentials').toBeTruthy();
+            expect(staffCredentials.password, 'CI must provide Staff credentials').toBeTruthy();
+        }
         test.skip(!staffCredentials.username || !staffCredentials.password, 'Staff E2E credentials are required.');
         await loginAsStaff(page);
     });
@@ -78,16 +94,11 @@ test.describe('authenticated UI UX behavior', () => {
         await expect(disclosure).toHaveAttribute('open', '');
     });
 
-    test('application review exposes final-decision scope and collapsible LTC detail panels when records exist', async ({ page }) => {
-        await page.goto('/staff/applications');
-        await waitForUiUx(page);
-
-        const firstApplication = page.locator('.application-desktop-table tbody a.staff-link').first();
-        if (!(await firstApplication.count())) test.skip(true, 'No application record is available for review.');
-
-        await firstApplication.click();
-        await waitForUiUx(page);
-        await expect(page.locator('.ui-decision-scope-note')).toBeVisible();
+    test('application review renders the decision scope boundary and collapsible LTC detail panels', async ({ page }) => {
+        await openReviewFixture(page);
+        const scopeNote = page.locator('#decision-confirm-modal .ui-decision-scope-note');
+        await expect(scopeNote).toContainText('does not itself execute or finalize legal land ownership transfer');
+        await expect(scopeNote).toBeHidden();
 
         const form4 = page.locator('details#ltc-form-no-4-review');
         await expect(form4.locator('.ui-review-disclosure-toggle')).toHaveCount(0);
@@ -101,33 +112,20 @@ test.describe('authenticated UI UX behavior', () => {
         await expect(links).not.toHaveAttribute('open', '');
         await links.locator(':scope > summary').press('Enter');
         await expect(links).toHaveAttribute('open', '');
+        await expect(links.locator('details.landowner-link-card')).toHaveCount(4);
         const person = links.locator('details.landowner-link-card').first();
         await expect(person).not.toHaveAttribute('open', '');
         await person.locator(':scope > summary').click();
         await expect(person.locator('select[data-remote-record-control]')).toBeVisible();
-
-        const disclosure = page.locator('.ui-review-disclosure').first();
-        if (await disclosure.count()) {
-            const toggle = disclosure.locator('.ui-review-disclosure-toggle');
-            await expect(toggle).toHaveAttribute('aria-expanded', 'false');
-            await toggle.click();
-            await expect(toggle).toHaveAttribute('aria-expanded', 'true');
-        }
     });
 
     test('requirement group cards toggle from the full header without an Expand button', async ({ page }) => {
         await page.setViewportSize({ width: 390, height: 844 });
-        await page.goto('/staff/applications');
-        await waitForUiUx(page);
-
-        const firstApplication = page.locator('.application-desktop-table tbody a.staff-link').first();
-        if (!(await firstApplication.count())) test.skip(true, 'No application record is available for review.');
-
-        await firstApplication.click();
-        await waitForUiUx(page);
+        await openReviewFixture(page);
 
         const panel = page.locator('.requirement-group-panel').first();
-        if (!(await panel.count())) test.skip(true, 'No requirement group is available for review.');
+        await expect(page.locator('.requirement-group-panel')).toHaveCount(2);
+        await expect(panel).toContainText('E2E Review Transferor Requirement');
 
         const header = panel.locator(':scope > .review-panel-header');
         const body = panel.locator(':scope > .review-panel-body');
@@ -160,17 +158,10 @@ test.describe('authenticated UI UX behavior', () => {
 
     test('Manage Workflow opens from the integrated workflow panel and covers the viewport', async ({ page }) => {
         await page.setViewportSize({ width: 1440, height: 900 });
-        await page.goto('/staff/applications');
-        await waitForUiUx(page);
-
-        const firstApplication = page.locator('.application-desktop-table tbody a.staff-link').first();
-        if (!(await firstApplication.count())) test.skip(true, 'No application record is available for review.');
-
-        await firstApplication.click();
-        await waitForUiUx(page);
+        await openReviewFixture(page);
 
         const trigger = page.locator('#workflow-overview [data-workflow-modal-open]').first();
-        if (!(await trigger.count())) test.skip(true, 'Manage Workflow is not available for this record.');
+        await expect(trigger).toBeVisible();
 
         await expect(page.locator('#workflow-overview')).toBeVisible();
         await expect(page.locator('.workflow-fab')).toHaveCount(0);
@@ -179,6 +170,10 @@ test.describe('authenticated UI UX behavior', () => {
         await expect(backdrop).toHaveAttribute('data-ui-viewport-portal', 'true');
         await trigger.click();
         await expect(backdrop).toBeVisible();
+        const complianceForm = backdrop.locator('[data-compliance-request-form]');
+        await expect(complianceForm).toBeVisible();
+        await expect(complianceForm.locator('button[type="submit"]')).toHaveText('Request Compliance');
+        await expect(complianceForm.locator('button[type="submit"]')).toBeEnabled();
 
         const bounds = await backdrop.evaluate((node) => {
             const rect = node.getBoundingClientRect();
