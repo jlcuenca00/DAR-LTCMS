@@ -57,9 +57,9 @@ $baseline = Illuminate\Support\Facades\DB::transaction(function () use ($staff, 
             'application_code' => 'E2E-JOURNEY-'.$kind,
             'transferor_name' => $transferor->full_name, 'transferee_name' => $transferee->full_name,
             'transferors' => [['name' => $transferor->full_name, 'landowner_id' => $transferor->id,
-                'parcel_shares' => [(string) $parcel->id => 1]]],
+                'parcel_shares' => []]],
             'transferees' => [['name' => $transferee->full_name, 'landowner_id' => $transferee->id,
-                'parcel_shares' => [(string) $parcel->id => 1]]],
+                'parcel_shares' => []]],
             'transferor_landowner_id' => $transferor->id, 'transferee_landowner_id' => $transferee->id,
             'municipality' => 'Dumaguete City', 'barangay' => 'Bantayan',
             'date_of_application' => today()->toDateString(), 'encoded_by' => $staff->id,
@@ -76,12 +76,19 @@ $baseline = Illuminate\Support\Facades\DB::transaction(function () use ($staff, 
             ];
         }
         $application = App\Models\LandTransferApplication::create($attributes);
-        App\Models\ApplicationParcel::create([
+        $applicationParcel = App\Models\ApplicationParcel::create([
             'land_transfer_application_id' => $application->id, 'parcel_id' => $parcel->id,
             'parcel_code' => $parcel->parcel_code, 'title_no' => $parcel->title_no,
             'tax_decl_no' => $parcel->tax_decl_no, 'lot_number' => $parcel->lot_number,
             'area_hectares' => 1, 'area_square_meters' => 10000,
         ]);
+        $application->forceFill([
+            'transferors' => [['name' => $transferor->full_name, 'landowner_id' => $transferor->id,
+                'parcel_shares' => [(string) $applicationParcel->id => 1]]],
+            'transferees' => [['name' => $transferee->full_name, 'landowner_id' => $transferee->id,
+                'parcel_shares' => [(string) $applicationParcel->id => 1]]],
+        ])->save();
+        app(App\Services\ApplicationPartyShareIntegrityService::class)->assertValid($application);
         if ($kind === 'APPROVAL') {
             foreach (App\Models\RequiredDocument::all() as $requirement) {
                 App\Models\ApplicationDocument::create([
