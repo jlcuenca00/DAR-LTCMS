@@ -6,7 +6,7 @@ DAR-LTCMS is a web-based administrative processing, records-management, clearanc
 
 ## Live System
 
-**Production site:** https://darltcms.me
+**Production site:** [darltcms.me](https://darltcms.me)
 
 The deployed internal workflow is operated by authorized Legal Clearance Staff, with approved Landowner and Geodetic stakeholder access according to role. Access to functions and records is controlled by role and record ownership.
 
@@ -66,29 +66,17 @@ Geodetic users have limited technical access. They can review authorized Parcel/
 
 ## Current Application Workflow
 
-```text
-Legal Completeness Review
-        ↓
-Payment / Official Receipt Recording
-        ↓
-With LTID for Verification
-        ↓
-Returned to Legal Division
-        ↓
-Legal Evaluation / CSW Preparation
-        ↓
-With Chief Legal for Review
-        ↓
-With PARPO II for Decision
-        ↓
-PARPO II Decision Ready to Record
-        ↓
-Approved (FINAL)
-        ↓
-Signed Form No. 5 / Ready for Release
-        ↓
-Released to Client
-```
+1. Legal Completeness Review
+2. Payment / Official Receipt Recording
+3. With LTID for Verification
+4. Returned to Legal Division
+5. Legal Evaluation / CSW Preparation
+6. With Chief Legal for Review
+7. With PARPO II for Decision
+8. PARPO II Decision Ready to Record
+9. Approved — final decision
+
+After approval, the separate delivery record progresses from signed Form No. 5 / Ready for Release to Released to Client.
 
 **Approved** is the only current final application decision state. Once Approved is recorded, substantive editing and supporting-document changes are locked by the UI, backend, and model-level integrity guard.
 
@@ -113,18 +101,22 @@ Historical database values such as `released`, `not_approved`, `denied`, `pendin
 | Parcel Map | Review mapped agricultural Parcel information |
 | Notifications | Surface important authorized application events |
 | Monitoring and Reports | Produce office-level monitoring summaries and printable reports |
-| Audit Logs | Record significant actions with actor, timestamp, and record context |
+| Audit Logs | Activity shows record/workflow actions; Login History separately shows authentication events |
 | Administration | Manage authorized accounts and role assignments |
 
 ## LTC Forms and Outputs
 
-DAR-LTCMS supports LTC-related forms used in the application workflow, including:
+DAR-LTCMS handles received requirements and generated outputs differently:
 
-- **LTC Form No. 1** – application/data form
-- **LTC Form No. 2** – acknowledgment/certification-related requirement
-- **LTC Form No. 3** – acknowledgment receipt / printable application output
-- **LTC Form No. 4** – review checklist
-- **LTC Form No. 5** – final Land Transfer Clearance certification/output
+| Form | Current system handling |
+|---|---|
+| LTC Form No. 1 — Notarized Application | Received supporting requirement; Staff upload and record its details |
+| LTC Form No. 2 — MARPO Certification | Received supporting requirement; Staff upload and review its details |
+| LTC Form No. 3 — Acknowledgment Receipt | Printable application output with a PDF route |
+| LTC Form No. 4 — Attestation and Recommendation | Staff record review findings and generate the PDF output |
+| LTC Form No. 5 — Land Transfer Clearance | Final clearance output preserved with the decision |
+
+Forms No. 1 and 2 are not documented as separate generated forms: they are received requirements in the current implementation.
 
 For LTC Form No. 5, the current implementation preserves annual LTC numbering/page references, linked Parcel details, GRANTED output for current Approved decisions, preserved DENIED rendering only for historical negative records, the recorded PARPO II decision officer/signatory from immutable final-decision metadata, notarial details, and 8.5 x 13 inch print/PDF behavior.
 
@@ -132,7 +124,7 @@ Final outputs remain administrative clearance records only and do not automatica
 
 ## Security, Integrity, and Auditability
 
-DAR-LTCMS prioritizes government-grade traceability and controlled access through:
+DAR-LTCMS implements controlled access and traceability through:
 
 - strict role-based access control
 - Landowner record isolation
@@ -160,11 +152,52 @@ DAR-LTCMS prioritizes government-grade traceability and controlled access throug
 | Package Management | Composer and npm |
 | Deployment | Linux server with CloudPanel |
 
-The local/development PostgreSQL database name remains `dar_iland`.
+The `.env.example` PostgreSQL database name defaults to `dar_iland`; use a separate database for each local or test environment.
+
+## Local Development Setup
+
+Use a fresh local checkout and a separate empty PostgreSQL database. These instructions are for development, not the production server.
+
+The automated workflows use PHP 8.4, PostgreSQL 18 and Node.js 22. Install Composer and npm, and enable PHP's PostgreSQL driver (`pdo_pgsql`) and the extensions required by `composer.lock`.
+
+1. Clone the repository and enter its folder:
+
+   ```bash
+   git clone https://github.com/jlcuenca00/DAR-LTCMS.git
+   cd DAR-LTCMS
+   composer install
+   ```
+
+2. Composer normally creates `.env` from `.env.example` on a new checkout. If it does not exist, copy the example with `cp .env.example .env` (PowerShell: `Copy-Item .env.example .env`). Keep an existing `.env` rather than overwriting it.
+
+3. Create a dedicated empty database, for example `dar_ltcms_local`, through pgAdmin or PostgreSQL tools. In `.env`, keep `APP_ENV=local`, set `DB_DATABASE=dar_ltcms_local`, and enter your local database host, port, username and password. The example's legacy default is `dar_iland`; verify the actual target before running migrations or test seeders. Never point this checkout at production.
+
+4. Prepare the application:
+
+   ```bash
+   php artisan key:generate
+   php artisan migrate
+   npm ci
+   npm run build
+   ```
+
+5. For an empty, disposable tester database, follow the [tester handoff](docs/barebones-tester-handoff.md). Its seeder clears records even when called on its own; never run it against a database you need to keep. The testing-only initial username is `staff.tester` after that setup. Public registration is not a way to create Staff accounts.
+
+6. Start the local website:
+
+   ```bash
+   php artisan serve
+   ```
+
+   Open [127.0.0.1:8000](http://127.0.0.1:8000). For frontend development, run `npm run dev` in another terminal.
+
+The local example sends mail to application logs, not an inbox. Use a test mail service if you need to check email delivery. Current application notifications are synchronous; a queue worker is not required for the implemented flows.
+
+Create a separate empty `dar_iland_beta_testing` PostgreSQL database for the default `phpunit.xml` configuration before running `php artisan test`. Verify the effective test connection and credentials first: database tests may reset records in that target. Never run them against production.
 
 ## Production and Release Operations
 
-The protected `main` branch is the production source baseline. Merging to `main` triggers the CloudPanel deployment workflow.
+The protected `main` branch is the production source baseline. The GitHub Actions check `responsive-browser-tests` must pass and the branch must be up to date before merging. Merging to `main` triggers the CloudPanel deployment workflow.
 
 Production secrets, `.env`, database backups, and private administrative uploads are intentionally excluded from source deployment/commits.
 
@@ -174,26 +207,30 @@ Before `v1.0.0`, the production server must pass:
 php artisan dar:release-check
 ```
 
-and the database/private-file backup, exact deployment verification, and smoke-test requirements in `docs/RELEASE_PREPARATION.md`.
+and the database/private-file backup, exact deployment verification, and smoke-test requirements in [release guide](docs/RELEASE_PREPARATION.md).
 
 ## Canonical Documentation
 
 Use these files as the current project reference:
 
-- `docs/FINAL_SYSTEM_BASELINE.md` – canonical scope, roles, workflow, final states, Form 5, and system boundaries
-- `docs/thesis-documentation-alignment.md` – wording/diagram rules for thesis alignment
-- `docs/final-manual-testing-checklist.md` – final controlled UAT checklist
-- `docs/RELEASE_PREPARATION.md` – production backup, release check, smoke test, and rollback procedure
-- `docs/barebones-tester-handoff.md` – local/staging tester reset behavior
-- `docs/tester-data-entry-guide.md` – current tester data-entry workflow/fields
+- [system baseline](docs/FINAL_SYSTEM_BASELINE.md) – canonical scope, roles, workflow, final states, Form 5, and system boundaries
+- [thesis alignment guide](docs/thesis-documentation-alignment.md) – wording/diagram rules for thesis alignment
+- [manual testing checklist](docs/final-manual-testing-checklist.md) – final controlled UAT checklist
+- [release guide](docs/RELEASE_PREPARATION.md) – production backup, release check, smoke test, and rollback procedure
+- [tester handoff](docs/barebones-tester-handoff.md) – local/staging tester reset behavior
+- [tester data-entry guide](docs/tester-data-entry-guide.md) – current tester data-entry workflow/fields
 
 ## Project Status
 
-**Status:** Release candidate / production validation pending.
+**Status:** Release candidate; Stage 1 audit complete as of 7 October 2026. No final `v1.0.0` release is claimed.
 
-The repository baseline has completed responsive hardening, UI/UX refinement, data-integrity hardening, audit/notification/reporting hardening, production/security hardening, performance pass, final automated UAT coverage, LTC Form No. 5 finalization, and release-preparation hardening.
+Stage 1 closed with a clean live record/configuration check, an actual isolated backup/database/file recovery, confirmed recovery and backup-alert email receipt, and a successful deployment. Jake also confirmed the live application, map and Form No. 5 preview. These are dated checks of the current mock dataset, not formal evaluator results or a guarantee of future operation.
 
-The final `v1.0.0` tag must not be created until the live production `dar:release-check`, backups, exact deployed commit verification, and post-deployment smoke test are actually completed.
+Stage 2 repository documentation has been aligned with this baseline. Stage 3 manuscript alignment is next. Final visual refinement is reserved until after Stage 3.
+
+SSH host-trust hardening remains explicitly deferred until Jake says his defense is finished. It must be completed before the planned `v1.0.0` release. Completing an audit or documentation stage does not authorize that change or the final release.
+
+Follow the [release guide](docs/RELEASE_PREPARATION.md) for fresh checks at the actual release date.
 
 ## Academic Context
 

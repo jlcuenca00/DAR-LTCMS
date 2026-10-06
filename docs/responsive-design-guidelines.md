@@ -9,7 +9,7 @@ This checklist applies to interactive DAR-LTCMS web views for DAR Staff, Landown
 - Maintain at least **16px horizontal page gutter on phone layouts**. Cards may have additional internal padding.
 - Use flexible widths (`width: 100%`, `max-width`, `minmax(0, 1fr)`) and set `min-width: 0` on grid/flex children that contain long record values.
 - Reflow multi-column content to fewer columns and eventually one column when the content becomes crowded.
-- Use a **44px DAR-LTCMS project target size** for primary buttons, form controls, navigation controls, and other common touch interactions on phone/touch layouts. WCAG 2.2 requires at least 24 by 24 CSS pixels or sufficient spacing; the project intentionally uses a larger ergonomic target where practical.
+- Use a **44px DAR-LTCMS project target size** for primary buttons, form controls, navigation controls, and other common touch interactions on phone/touch layouts. WCAG 2.2 Target Size (Minimum) uses at least 24 by 24 CSS pixels, with spacing and other defined exceptions; the project intentionally uses a larger ergonomic target where practical.
 - Form fields use at least 16px text on phones to remain readable and avoid common mobile browser input zoom behavior.
 - Images, SVGs, videos, and canvases must not exceed their containers.
 - Long parcel codes, names, references, statuses, and filenames must wrap or truncate intentionally; they must never force the whole page wider.
@@ -53,3 +53,11 @@ Also test browser zoom/reflow where practical, keyboard focus, long realistic re
 ## Standards basis
 
 The project follows the responsive design principles documented by web.dev and MDN: flexible layouts, content-driven breakpoints, and mobile-first reflow. It also uses WCAG 2.2 Reflow as the minimum accessibility baseline: vertically scrolling content should work at a width equivalent to 320 CSS pixels without two-dimensional page scrolling, except content whose meaning genuinely requires two dimensions such as maps or certain data tables. WCAG 2.2 Target Size (Minimum) is also considered for touch and pointer controls.
+
+## Primary references
+
+- [W3C WCAG 2.2](https://www.w3.org/TR/WCAG22/)
+- [W3C Target Size (Minimum)](https://www.w3.org/WAI/WCAG22/Understanding/target-size-minimum)
+- [W3C Reflow](https://www.w3.org/WAI/WCAG22/Understanding/reflow)
+
+These are design/checking targets, not a claim that a complete accessibility conformance evaluation has been performed.

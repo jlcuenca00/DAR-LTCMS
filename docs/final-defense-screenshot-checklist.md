@@ -1,6 +1,6 @@
 # Final Defense Screenshot Checklist
 
-Capture screenshots only from the final polished DAR-LTCMS UI using realistic non-sensitive test/demo data.
+Capture screenshots from one recorded, validated DAR-LTCMS version using realistic non-sensitive test/demo data. Record the date, user role and deployed version. Final visual refinement is reserved until after Stage 3; if later UI changes affect a thesis figure, recapture that figure and update its caption.
 
 ## Core system identity
 
@@ -67,7 +67,8 @@ Capture at least one clear final output showing:
 - [ ] Monitoring Reports dashboard with current statuses
 - [ ] Printable Monitoring Report
 - [ ] Recorded Output Area label/scope notice
-- [ ] Audit Log Viewer
+- [ ] Audit Logs — Activity (record/workflow actions)
+- [ ] Login History (authentication events separately)
 - [ ] Expanded audit event showing actor/timestamp/context
 
 ## Administration screenshots
@@ -85,7 +86,8 @@ Capture at least one clear final output showing:
 ## Geodetic restriction proof
 
 - [ ] Geodetic Parcel list/details
-- [ ] Geodetic map read-only state
+- [ ] Geodetic map/reference review
+- [ ] Authorized geometry-only editor, including stale/invalid-save feedback
 - [ ] 403/denied result when attempting a Staff-only application/action
 
 ## Suggested screenshot naming
@@ -102,15 +104,17 @@ Capture at least one clear final output showing:
 09-approved-locked-state.png
 10-release-tracking.png
 11-ltc-form5-output.png
-09-landowner-records.png
-10-parcel-records.png
-11-source-records.png
-12-staff-parcel-map.png
-13-landowner-map-privacy.png
-14-geodetic-map-readonly.png
-15-monitoring-report.png
-16-audit-log-viewer.png
-17-user-management.png
+12-landowner-records.png
+13-parcel-records.png
+14-source-records.png
+15-staff-parcel-map.png
+16-landowner-map-privacy.png
+17-geodetic-map-review.png
+18-geodetic-geometry-editor.png
+19-monitoring-report.png
+20-audit-activity.png
+21-login-history.png
+22-user-management.png
 ```
 
 ## Screenshot quality rules

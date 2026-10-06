@@ -93,34 +93,17 @@ Geodetic users:
 
 ## Current application workflow
 
-```text
-Legal Completeness Review
-        ↓
-Payment / Official Receipt Recording
-        ↓
-With LTID for Verification
-        ↓
-Returned to Legal Division
-        ↓
-Legal Evaluation / CSW Preparation
-        ↓
-With Chief Legal for Review
-        ↓
-With PARPO II for Decision
-        ↓
-PARPO II Decision Ready to Record
-        ↓
-Approved (FINAL)
-        ↓
-Signed Form No. 5 / Ready for Release
-        ↓
-Released to Client
+1. Legal Completeness Review
+2. Payment / Official Receipt Recording
+3. With LTID for Verification
+4. Returned to Legal Division
+5. Legal Evaluation / CSW Preparation
+6. With Chief Legal for Review
+7. With PARPO II for Decision
+8. PARPO II Decision Ready to Record
+9. Approved — final decision
 
-Any supported open stage
-        ↕
-Compliance Required
-        ↳ resolves back to its saved resume stage
-```
+The separate delivery lifecycle then records signed Form No. 5 / Ready for Release and Released to Client. Any supported open stage can enter Compliance Required and return to its saved stage after resolution.
 
 The only current final application decision state is:
 
@@ -191,7 +174,7 @@ The system preserves:
 - protected administrative uploads/source scans
 - no public `storage` symlink requirement for sensitive records
 - final-decision locking
-- timestamped actor-based audit logs
+- timestamped actor-based audit logs, with Activity and Login History separated
 - application/record traceability
 - production security/configuration checks
 - production dependency security audits
@@ -221,14 +204,15 @@ Merging to `main` triggers the CloudPanel deployment workflow.
 
 Before the final `v1.0.0` tag:
 
-1. automatic test/security gates must be green;
-2. production database backup must exist;
-3. production private-file backup must exist;
-4. `php artisan dar:release-check` must pass on the live server;
-5. `.release-commit` must match the intended `main` commit; and
-6. the post-deployment smoke test must pass.
+1. strict SSH host verification must be restored after Jake explicitly says his defense is finished;
+2. automatic test/security gates must be green;
+3. production database backup must exist;
+4. production private-file backup must exist;
+5. `php artisan dar:release-check` must pass on the live server;
+6. `.release-commit` must match the intended `main` commit; and
+7. the post-deployment smoke test must pass.
 
-Until those live production checks are complete, the project should be described as a **release candidate**, not a completed `v1.0.0` release.
+Stage 1 closed on 7 October 2026 with verified backup recovery, email delivery, a clean live record/configuration check and a successful deployment. These dated checks do not complete the final release gate: SSH host trust remains deferred, repository/manuscript alignment and required evaluator acceptance remain separate work. Continue to describe the project as a **release candidate**, not a completed `v1.0.0` release. See [release preparation](RELEASE_PREPARATION.md) for the operational evidence and fresh final-release checks.
 
 ## Thesis/diagram rule
 

@@ -1,4 +1,6 @@
-# DAR-LTCMS Patch Notes
+# DAR-LTCMS Multi-party Implementation Notes
+
+These are feature-specific notes, not the complete release or installation procedure. Use the [README](README.md), [system baseline](docs/FINAL_SYSTEM_BASELINE.md) and [release guide](docs/RELEASE_PREPARATION.md) for the current project.
 
 ## Implemented
 
@@ -20,14 +22,15 @@ Application approval or release does not create a transferee landholding, transf
 
 ## Database
 
-No new migration is required. The current `transferors` and `transferees` JSONB fields and the existing unique `(landowner_id, parcel_id)` landholding structure are used.
+This feature's original patch added no migration. The current `transferors` and `transferees` JSONB fields and the existing unique `(landowner_id, parcel_id)` landholding structure are used.
 
-## Verification commands
+## Local/staging verification commands
+
+Use an isolated test database. These are not production deployment instructions.
 
 ```bash
 composer install
-npm install
-php artisan optimize:clear
+npm ci
 php artisan migrate
 php artisan test --filter=MultipleApplicationPartyLinkTest
 php artisan test

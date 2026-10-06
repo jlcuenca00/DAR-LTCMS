@@ -139,7 +139,9 @@ class DocumentationAlignmentTest extends TestCase
             $this->assertStringContainsString('DENIED', $content);
         }
 
-        $this->assertStringContainsString('Release candidate / production validation pending', $readme);
+        $this->assertStringContainsString('Release candidate', $readme);
+        $this->assertStringContainsString('No final `v1.0.0` release is claimed.', $readme);
+        $this->assertStringContainsString('SSH host-trust hardening remains explicitly deferred', $readme);
         $this->assertStringContainsString('php artisan dar:release-check', $release);
         $this->assertStringContainsString('v1.0.0', $release);
         $this->assertStringContainsString('.release-commit', $release);

@@ -8,55 +8,28 @@ DAR-LTCMS is a clearance generation, processing, records-management, and monitor
 
 Do these checks on the production server before creating the `v1.0.0` release.
 
-### A. Create a database backup
+### A. Back up the actual production connection
 
-From the DAR-LTCMS project folder on the production server:
+From the production project folder:
 
 ```bash
 cd /home/darltcms/htdocs/darltcms.me
-mkdir -p storage/backups
+bash scripts/run_production_backup_with_alert.sh
 ```
 
-Create a PostgreSQL custom-format backup. Replace `<production_db_user>` with the database user configured on the server. Do **not** put the database password directly in the command or commit it to GitHub.
+The wrapper runs the encrypted off-site backup and records its output under `darltcms-backup`. A backup failure attempts an email to the privately configured operator; successful backups do not send mail.
 
-```bash
-pg_dump -Fc \
-  -h 127.0.0.1 \
-  -U <production_db_user> \
-  -d dar_iland \
-  -f "storage/backups/dar_iland_pre_v1_$(date +%Y%m%d_%H%M%S).dump"
-```
+Use the server's protected `~/.config/dar-ltcms/backup.env` configuration and `~/.config/dar-ltcms/backup-alert-email` recipient file. Do not overwrite an existing configuration with the example. See [alert setup](../scripts/backup-alert-setup.md) and [recovery procedure](../RECOVERY_PROCEDURE.md).
 
-Confirm that the file exists and is not empty:
+The backup includes the database, production `.env`, private uploads in `storage/app/private` and preserved legacy uploads in `storage/app/public`. It resolves the connection actually used by Laravel rather than assuming `127.0.0.1`, a particular database user, or the legacy `dar_iland` database name.
 
-```bash
-ls -lh storage/backups/
-```
+### B. Confirm recoverability
 
-Optionally inspect the backup catalog without restoring it:
+Check that a fresh snapshot exists and that the scheduled job completed successfully. Restore a selected backup into a private, fresh directory and a separate test database. Verify both the database and uploaded files. Never use the live database or live upload directories as test restore targets.
 
-```bash
-pg_restore -l storage/backups/<backup-file>.dump | head
-```
+A local dump or archive can be additional protection, but a copy kept only on the production server does not replace the encrypted off-site backup.
 
-### B. Back up uploaded/private files
-
-The deployment intentionally does not overwrite these folders:
-
-- `storage/app/private`
-- `storage/app/public`
-
-Create a separate archive before the final release:
-
-```bash
-tar -czf "storage/backups/darltcms_files_pre_v1_$(date +%Y%m%d_%H%M%S).tar.gz" \
-  storage/app/private \
-  storage/app/public
-```
-
-Keep the production `.env` secure and outside GitHub. If it is backed up, store it separately in a protected location because it contains secrets.
-
-### C. Encrypted off-site backups
+### C. Backup behavior and limits
 
 Use `bash scripts/backup_dar_ltcms_production.sh` with the protected configuration described in `scripts/backup.env.example`. Optional retention, staging, snapshot-label, and sampling settings are loaded from that file before defaults are applied. The script backs up PostgreSQL, private/legacy uploads, and the production .env into the encrypted restic repository and removes its temporary dump on exit.
 
@@ -138,12 +111,12 @@ During this temporary period:
 - keep production SSH credentials restricted to the GitHub `production` Environment when possible;
 - keep the `Protect main` ruleset active;
 - keep the verification job before deployment;
-- require the `Responsive Browser Regression / responsive-browser-tests` status check before merging to `main`; and
+- require the exact GitHub Actions check `responsive-browser-tests` before merging to `main`, with up-to-date branches and no added bypass actors; and
 - keep all third-party GitHub Actions pinned to immutable commit SHAs.
 
 ### Mandatory post-defense hardening
 
-Before the final `v1.0.0` release, restore strict SSH host verification:
+This work is explicitly deferred until Jake says his defense is finished. Completing Stage 1, Stage 2 or Stage 3 alone does not authorize it. Before the final `v1.0.0` release, and only after that explicit instruction, restore strict SSH host verification:
 
 - configure an Environment secret named `SSH_KNOWN_HOSTS` containing the trusted production SSH host public-key entry for the same host stored in `SSH_HOST`;
 - use `StrictHostKeyChecking=yes` with that preconfigured `known_hosts` file;
@@ -247,7 +220,15 @@ php artisan up
 
 A PostgreSQL restore should be performed by an authorized administrator/developer who has confirmed the target database and backup file. Do not run a destructive restore command from copied instructions without checking both first.
 
-## 8. When to create `v1.0.0`
+## 8. Dated Stage 1 operational verification
+
+On 7 October 2026 Philippine time, the live release check reported zero data issues, blockers and warnings. Backup snapshot `5357b9b6` was restored to an isolated PostgreSQL instance; it contained 35 applications, 25 parcels and 13 users. All five restored files were verified. Recovery-email receipt and backup-alert test receipt were confirmed, and the nightly alert wrapper was enabled at `30 18 * * *` on the UTC server (2:30 AM Philippine time).
+
+[PR #221](https://github.com/jlcuenca00/DAR-LTCMS/pull/221) corrected a false database-driver preflight failure. Its [production deployment](https://github.com/jlcuenca00/DAR-LTCMS/actions/runs/37525130288) succeeded. The server's `.release-commit` was confirmed as `87c751fb4003ccd2ca0a6c87e464c3795491928f`, and Jake confirmed the live application, map and Form No. 5 preview.
+
+These are dated checks of a mock dataset. They do not replace fresh backups/checks at the final release date, full formal role/evaluator testing, or the deferred SSH hardening. A failure email also cannot detect a whole-server, scheduler or mail-provider outage; independent missed-backup monitoring is a separate control.
+
+## 9. When to create `v1.0.0`
 
 Create the final version tag/release only when all of these are true:
 

@@ -57,7 +57,8 @@ class ReleasePreparationTest extends TestCase
         $guide = file_get_contents(base_path('docs/RELEASE_PREPARATION.md'));
         $deployment = file_get_contents(base_path('.github/workflows/deploy.yml'));
 
-        $this->assertStringContainsString('pg_dump -Fc', $guide);
+        $this->assertStringContainsString('run_production_backup_with_alert.sh', $guide);
+        $this->assertStringContainsString('isolated', $guide);
         $this->assertStringContainsString('php artisan dar:release-check', $guide);
         $this->assertStringContainsString('storage/app/private', $guide);
         $this->assertStringContainsString('storage/app/public', $guide);

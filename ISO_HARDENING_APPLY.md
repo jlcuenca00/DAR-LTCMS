@@ -1,40 +1,22 @@
-# DAR-LTCMS ISO Hardening Patch - Apply Steps
+# Historical ISO Hardening Patch Notes
 
-1. Back up the current database and private uploaded files.
+This file describes an earlier patch package. Those changes are already part of the repository; do not copy the old patch files over the current system or rerun its old apply commands.
 
-```bash
-bash scripts/backup_dar_ltcms.sh
-```
+## Current procedures
 
-2. Copy the patch files into the project root, preserving folders.
+- [Local development setup](README.md#local-development-setup)
+- [Local/staging tester reset](docs/barebones-tester-handoff.md)
+- [Production backup, deployment and recovery](docs/RELEASE_PREPARATION.md)
+- [Current engineering readiness assessment](ISO_IEC_25010_2023_SYSTEM_READINESS.md)
 
-3. Apply the database changes.
+The earlier instruction that `/register` is unavailable is obsolete. The current guest routes support Landowner registration, including the configured Google registration flow; account access follows Staff review/linking. Staff and Geodetic accounts are managed through authorized Staff controls.
 
-```bash
-php artisan migrate
-php artisan optimize:clear
-npm run build
-```
+Username remains the login identifier. Password recovery uses the implemented email-confirmed code flow where available, with Staff-assisted reset for other cases.
 
-4. Run verification.
+Approved is the only current final decision. Historical negative records remain read-only. Release is tracked separately and does not change land ownership.
 
-```bash
-php artisan test
-```
+Do not run `optimize:clear` as a routine production update step: the current deployment preserves runtime cache, including authentication throttles. Do not run local test/reset commands on production.
 
-5. Confirm these behaviors manually:
+## Historical migration note
 
-- `/register` is unavailable.
-- Login and password confirmation use username-based accounts.
-- Authenticated pages cannot be restored from browser cache after logout.
-- Staff password reset still forces a password change.
-- Executable supporting-document uploads are rejected.
-- Requirement details can be saved without attaching a file.
-- Released and denied applications remain locked.
-- Final decision confirmation is required.
-- Landowner and geodetic access remains limited to authorized records.
-- Map pages show a useful fallback when map resources cannot load.
-
-## Migration note
-
-The hardening migration removes the obsolete `landholding_mutations` table and the `registry_mutated_at` / `registry_mutated_by` columns because automatic ownership transfer and registry alteration are outside DAR-LTCMS scope.
+The earlier patch removed obsolete automatic ownership/registry-mutation structures because those operations are outside DAR-LTCMS scope. This historical note is not permission to reverse or manually reapply that migration.
