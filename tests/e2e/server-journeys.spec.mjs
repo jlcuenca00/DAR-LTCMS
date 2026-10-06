@@ -64,6 +64,14 @@ async function outputBlocked(page, id) {
     expect(response.headers()['content-type'] || '').not.toContain('application/pdf');
 }
 
+async function clearanceSnapshot(page, id) {
+    const response = await page.request.get(`/staff/applications/${id}/clearance`);
+    expect(response.status()).toBe(200);
+    const content = (await response.text()).match(/<main class="ltc-page">([\s\S]*?)<\/main>/);
+    expect(content, 'The real frozen Form No. 5 output must render').toBeTruthy();
+    return content[1];
+}
+
 test.describe('real browser-to-server journeys', () => {
     test.describe.configure({ retries: 0 });
     test.setTimeout(90_000);
@@ -152,6 +160,7 @@ test.describe('real browser-to-server journeys', () => {
             expect(approved.release_status).toBe('not_ready');
             expect(approved.decision_officer_name).toBe('Journey PARPO II');
             expect(approved.clearance_integrity_valid).toBe(true);
+            const frozenOutput = await clearanceSnapshot(page, approvalId);
             let card = await ownerCard(owner, approvalId);
             await expect(card).toContainText('Decision recorded');
             await expect(card.locator('.lo-clearance-link')).toHaveCount(0);
@@ -164,6 +173,7 @@ test.describe('real browser-to-server journeys', () => {
             const ready = await state(page, approvalId);
             expect(ready.release_status).toBe('ready_for_release');
             expect(ready.clearance_integrity_valid).toBe(true);
+            expect(await clearanceSnapshot(page, approvalId)).toBe(frozenOutput);
             card = await ownerCard(owner, approvalId);
             await expect(card).toContainText('Ready for Release');
             await expect(card.locator('.lo-clearance-link')).toHaveCount(0);
@@ -182,6 +192,7 @@ test.describe('real browser-to-server journeys', () => {
             expect(released.release_status).toBe('released');
             expect(released.release_recipient_name).toBe('Journey Client');
             expect(released.clearance_integrity_valid).toBe(true);
+            expect(await clearanceSnapshot(page, approvalId)).toBe(frozenOutput);
             expect(released.can_release_output).toBe(false);
             card = await ownerCard(owner, approvalId);
             await expect(card).toContainText('Released to Client');

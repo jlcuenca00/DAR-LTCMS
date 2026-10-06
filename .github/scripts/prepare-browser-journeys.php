@@ -120,7 +120,9 @@ $baseline = Illuminate\Support\Facades\DB::transaction(function () use ($staff, 
         'holdings' => App\Models\Landholding::whereIn('parcel_id', $parcelIds)->orderBy('id')->get()->toArray(),
     ];
 });
-file_put_contents(storage_path('app/browser-journeys.json'), json_encode($baseline, JSON_THROW_ON_ERROR));
+if (file_put_contents(storage_path('app/browser-journeys.json'), json_encode($baseline, JSON_THROW_ON_ERROR)) === false) {
+    throw new RuntimeException('Could not save browser journey baseline.');
+}
 $exports = [
     'E2E_COMPLIANCE_APPLICATION_ID' => $baseline['applications']['compliance'],
     'E2E_APPROVAL_APPLICATION_ID' => $baseline['applications']['approval'],

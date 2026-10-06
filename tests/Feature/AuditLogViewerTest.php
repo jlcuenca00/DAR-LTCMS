@@ -35,10 +35,12 @@ class AuditLogViewerTest extends TestCase
             ->assertViewHas('actions', fn ($actions) => $actions->all() === ['user_login', 'user_logout']);
 
         $this->get(route('staff.audit-logs.print'))->assertOk()
-            ->assertSee('scope-document_uploaded')->assertDontSee('scope-user_login');
+            ->assertSee('Document Uploaded')->assertDontSee('User Login')->assertDontSee('User Logout')
+            ->assertViewHas('auditLogs', fn ($logs) => $logs->pluck('action')->all() === ['document_uploaded']);
         $this->get(route('staff.audit-logs.print', ['view' => 'logins']))->assertOk()
-            ->assertSee('Login History Report')->assertSee('scope-user_login')
-            ->assertSee('scope-user_logout')->assertDontSee('scope-document_uploaded');
+            ->assertSee('Login History Report')->assertSee('User Login')
+            ->assertSee('User Logout')->assertDontSee('Document Uploaded')
+            ->assertViewHas('auditLogs', fn ($logs) => $logs->pluck('action')->sort()->values()->all() === ['user_login', 'user_logout']);
 
         $this->assertDatabaseCount('audit_logs', 3);
     }
