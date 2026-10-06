@@ -2,9 +2,6 @@ import { test, expect } from '@playwright/test';
 
 const username = process.env.E2E_STAFF_USERNAME;
 const password = process.env.E2E_STAFF_PASSWORD;
-const complianceId = process.env.E2E_COMPLIANCE_APPLICATION_ID;
-const approvalId = process.env.E2E_APPROVAL_APPLICATION_ID;
-const geometryId = process.env.E2E_GEOMETRY_PARCEL_ID;
 const decisionDate = process.env.E2E_JOURNEY_DATE;
 
 async function login(page, account, role) {
@@ -42,6 +39,10 @@ async function review(page, id, expectedStatus) {
     expect((await (await loaded).json()).status).toBe(expectedStatus);
     await page.locator('#workflow-overview [data-workflow-modal-open]').click();
     await expect(page.locator('#workflow-modal')).toBeVisible();
+    const modal = await page.locator('#workflow-modal .workflow-modal-card').boundingBox();
+    const viewport = page.viewportSize();
+    expect(modal.x).toBeGreaterThanOrEqual(0);
+    expect(modal.x + modal.width).toBeLessThanOrEqual(viewport.width + 1);
 }
 
 async function submit(page, form, button) {
@@ -59,6 +60,7 @@ async function ownerCard(page, id) {
     expect(response.status()).toBe(200);
     const card = page.locator(`#application-${id}`);
     await expect(card).toBeVisible();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1)).toBe(true);
     return card;
 }
 
@@ -83,25 +85,34 @@ async function clearanceSnapshot(page, id) {
     return content[1];
 }
 
-test.describe('real browser-to-server journeys', () => {
+for (const mode of [
+    { name: 'desktop', project: 'chromium-responsive', prefix: 'E2E_', suffix: '' },
+    { name: 'phone', project: 'chromium-coarse-pointer', prefix: 'E2E_PHONE_', suffix: '-PHONE' },
+]) {
+test.describe(`real ${mode.name} browser-to-server journeys`, () => {
+    const complianceId = process.env[mode.prefix + 'COMPLIANCE_APPLICATION_ID'];
+    const approvalId = process.env[mode.prefix + 'APPROVAL_APPLICATION_ID'];
+    const geometryId = process.env[mode.prefix + 'GEOMETRY_PARCEL_ID'];
     test.describe.configure({ retries: 0 });
     test.setTimeout(90_000);
-    test.beforeEach(({}, testInfo) => {
-        test.skip(testInfo.project.name !== 'chromium-responsive', 'Mutable server journeys run once with dedicated fixtures.');
+    test.beforeEach(async ({ page }, testInfo) => {
+        test.skip(testInfo.project.name !== mode.project, 'Each device uses its own mutable server fixtures.');
         expect(username, 'Staff credentials are required').toBeTruthy();
         expect(password, 'Staff credentials are required').toBeTruthy();
         for (const id of [complianceId, approvalId, geometryId]) {
             expect(id, 'Dedicated server journey fixture IDs are required').toMatch(/^\d+$/);
         }
         expect(decisionDate, 'Server decision date is required').toMatch(/^\d{4}-\d{2}-\d{2}$/);
+        expect(await page.evaluate(() => matchMedia('(pointer: coarse)').matches)).toBe(mode.name === 'phone');
     });
 
-    test('compliance request and resolution persist and reach the linked Landowner', async ({ page, browser }) => {
-        const ownerContext = await browser.newContext();
+    test('compliance request and resolution persist and reach the linked Landowner', async ({ page, browser }, testInfo) => {
+        const ownerContext = await browser.newContext({ viewport: testInfo.project.use.viewport,
+            hasTouch: testInfo.project.use.hasTouch, isMobile: testInfo.project.use.isMobile });
         const owner = await ownerContext.newPage();
         try {
             await login(page, username, 'staff');
-            await login(owner, `${username}.owner`, 'landowner');
+            await login(owner, `${username}.owner${mode.suffix.toLowerCase()}`, 'landowner');
             await review(page, complianceId, 'pending_legal_review');
             const initial = await state(page, complianceId);
             expect(initial.can_request_compliance).toBe(true);
@@ -120,7 +131,7 @@ test.describe('real browser-to-server journeys', () => {
             const card = await ownerCard(owner, complianceId);
             await expect(card.locator('.lo-denial-reason')).toContainText('Survey clarification');
             await expect(card).toContainText('Corrected survey reference');
-            await notification(owner, 'E2E-JOURNEY-COMPLIANCE', 'Action required for your clearance application');
+            await notification(owner, `E2E-JOURNEY-COMPLIANCE${mode.suffix}`, 'Action required for your clearance application');
 
             await review(page, complianceId, 'returned_for_compliance');
             const resolve = page.locator('form[action$="/compliance/resolve"]');
@@ -132,18 +143,19 @@ test.describe('real browser-to-server journeys', () => {
             expect(resumed.active_compliance_notice).toBeNull();
             expect(resumed.workflow_revision).toBeGreaterThan(requested.workflow_revision);
             await expect((await ownerCard(owner, complianceId)).locator('.lo-denial-reason')).toHaveCount(0);
-            await notification(owner, 'E2E-JOURNEY-COMPLIANCE', 'Compliance issue resolved');
+            await notification(owner, `E2E-JOURNEY-COMPLIANCE${mode.suffix}`, 'Compliance issue resolved');
         } finally {
             await ownerContext.close();
         }
     });
 
-    test('confirmed approval and release persist without exposing output early', async ({ page, browser }) => {
-        const ownerContext = await browser.newContext();
+    test('confirmed approval and release persist without exposing output early', async ({ page, browser }, testInfo) => {
+        const ownerContext = await browser.newContext({ viewport: testInfo.project.use.viewport,
+            hasTouch: testInfo.project.use.hasTouch, isMobile: testInfo.project.use.isMobile });
         const owner = await ownerContext.newPage();
         try {
             await login(page, username, 'staff');
-            await login(owner, `${username}.owner`, 'landowner');
+            await login(owner, `${username}.owner${mode.suffix.toLowerCase()}`, 'landowner');
             await review(page, approvalId, 'for_releasing');
             const initial = await state(page, approvalId);
             expect(initial.can_finalize_decision).toBe(true);
@@ -177,7 +189,7 @@ test.describe('real browser-to-server journeys', () => {
             await expect(card).toContainText('Decision recorded');
             await expect(card.locator('.lo-clearance-link')).toHaveCount(0);
             await outputBlocked(owner, approvalId);
-            await notification(owner, 'E2E-JOURNEY-APPROVAL', 'Final clearance decision recorded');
+            await notification(owner, `E2E-JOURNEY-APPROVAL${mode.suffix}`, 'Final clearance decision recorded');
 
             await review(page, approvalId, 'approved');
             await submit(page, page.locator('form[action$="/ready-for-release"]'), 'Mark Ready for Release');
@@ -190,7 +202,7 @@ test.describe('real browser-to-server journeys', () => {
             await expect(card).toContainText('Ready for Release');
             await expect(card.locator('.lo-clearance-link')).toHaveCount(0);
             await outputBlocked(owner, approvalId);
-            await notification(owner, 'E2E-JOURNEY-APPROVAL', 'Decision output ready for release');
+            await notification(owner, `E2E-JOURNEY-APPROVAL${mode.suffix}`, 'Decision output ready for release');
 
             await review(page, approvalId, 'approved');
             const release = page.locator('form[action$="/release"]');
@@ -211,14 +223,15 @@ test.describe('real browser-to-server journeys', () => {
             await card.getByRole('link', { name: 'View Decision Output', exact: true }).click();
             await expect(owner).toHaveURL(new RegExp(`/landowner/applications/${approvalId}/decision-output`));
             await expect(owner.locator('body')).toContainText('Journey PARPO II');
-            await notification(owner, 'E2E-JOURNEY-APPROVAL', 'Decision output released');
+            await notification(owner, `E2E-JOURNEY-APPROVAL${mode.suffix}`, 'Decision output released');
         } finally {
             await ownerContext.close();
         }
     });
 
-    test('real PRS92 editor rejects invalid input, saves, reloads and blocks a stale second editor', async ({ page, browser }) => {
-        const secondContext = await browser.newContext();
+    test('real PRS92 editor rejects invalid input, saves, reloads and blocks a stale second editor', async ({ page, browser }, testInfo) => {
+        const secondContext = await browser.newContext({ viewport: testInfo.project.use.viewport,
+            hasTouch: testInfo.project.use.hasTouch, isMobile: testInfo.project.use.isMobile });
         const second = await secondContext.newPage();
         const url = `/geodetic/parcels/${geometryId}/geometry/edit`;
         const points = [[500000, 1000000], [500100, 1000000], [500100, 1000100], [500000, 1000100]];
@@ -296,3 +309,4 @@ test.describe('real browser-to-server journeys', () => {
         await expect(page.locator('.audit-table tbody')).not.toContainText('User Login');
     });
 });
+}
