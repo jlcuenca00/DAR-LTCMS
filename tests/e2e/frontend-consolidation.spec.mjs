@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { readFileSync } from 'node:fs';
+import { openWithDraftClock } from './helpers/draft-clock.mjs';
 
 const read = path => readFileSync(path, 'utf8');
 const clean = source => source.replace(/^import .*;$/gm, '').replace(/^export .*;$/gm, '');
@@ -191,7 +192,10 @@ for (const fixture of linkCases) {
 }
 
 test('real-click cancellation after draft initialization preserves the draft and accepted submission clears it', async ({ page }) => {
-    await blankPage(page);
+    await page.route('**/consolidation-fixture', route => route.fulfill({
+        contentType: 'text/html', body: '<!doctype html><html><head></head><body></body></html>',
+    }));
+    await openWithDraftClock(page, '/consolidation-fixture');
     await page.setContent('<form action="/draft-accepted" method="POST" data-autosave-key="native-cancellation">' +
         '<input name="name" value="Draft value"><button type="submit">Save</button></form>');
     await page.evaluate(() => localStorage.setItem('dar_ltcms_form_draft:native-cancellation', JSON.stringify({
@@ -200,14 +204,27 @@ test('real-click cancellation after draft initialization preserves the draft and
     await install(page, read('resources/js/form-drafts.js'));
     await page.evaluate(() => document.querySelector('form').addEventListener('submit', event => event.preventDefault(), { once:true }));
     await page.locator('button').click();
-    await page.waitForTimeout(50);
+    await page.clock.runFor(1);
     expect(await page.evaluate(() => localStorage.getItem('dar_ltcms_form_draft:native-cancellation'))).not.toBeNull();
     await page.locator('input').fill('Pending draft write');
+    let releaseResponse;
+    const responseGate = new Promise(resolve => { releaseResponse = resolve; });
     await page.route('**/draft-accepted', async route => {
-        await new Promise(resolve => setTimeout(resolve, 750));
+        await responseGate;
         await route.fulfill({ contentType:'text/html', body:'<p>Saved</p>' });
     });
-    await page.locator('button').click();
+    const requested = page.waitForRequest(request => new URL(request.url()).pathname === '/draft-accepted' && request.method() === 'POST');
+    try {
+        await page.locator('button').click({ noWaitAfter: true });
+        await requested;
+        await page.clock.runFor(1);
+        expect(await page.evaluate(() => localStorage.getItem('dar_ltcms_form_draft:native-cancellation'))).toBeNull();
+        // Pass the autosave deadline while the real native submission is still pending.
+        await page.clock.runFor(1000);
+        expect(await page.evaluate(() => localStorage.getItem('dar_ltcms_form_draft:native-cancellation'))).toBeNull();
+    } finally {
+        releaseResponse();
+    }
     await expect(page).toHaveURL(/draft-accepted$/);
     expect(await page.evaluate(() => localStorage.getItem('dar_ltcms_form_draft:native-cancellation'))).toBeNull();
 });

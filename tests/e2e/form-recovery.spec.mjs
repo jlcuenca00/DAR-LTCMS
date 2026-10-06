@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { readFileSync } from 'node:fs';
+import { openWithDraftClock } from './helpers/draft-clock.mjs';
 
 const drafts = readFileSync('resources/js/form-drafts.js', 'utf8').replace(/^export .*;$/m, '');
 const ui = readFileSync('resources/js/ui-ux-system.js', 'utf8').replace(/^export .*;$/m, '');
@@ -50,8 +51,9 @@ test('application draft reload preserves extra parties, instruments and selected
     await expect(page.locator('#parcel_id img')).toHaveCount(0);
 });
 
-async function draftFixture(page, hasOldInput = false) {
-    await page.goto('/login');
+async function draftFixture(page, hasOldInput = false, controlledClock = false) {
+    if (controlledClock) await openWithDraftClock(page, '/login');
+    else await page.goto('/login');
     await page.setContent('<form data-autosave-key="recovery-fixture"><input name="name" value="Server value"><button type="submit">Save</button></form>');
     await page.evaluate(hasOldInput => {
         localStorage.setItem('dar_ltcms_form_draft:recovery-fixture', JSON.stringify({
@@ -68,34 +70,52 @@ test('server-returned input takes precedence over browser drafts', async ({ page
 });
 
 test('canceled submission preserves draft, accepted submission cancels pending saves', async ({ page }) => {
-    await draftFixture(page);
+    await draftFixture(page, false, true);
     await expect(page.locator('[name="name"]')).toHaveValue('Browser draft');
     await page.evaluate(() => {
         const form = document.querySelector('form');
         form.addEventListener('submit', event => event.preventDefault(), { once: true });
         form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
     });
+    await page.clock.runFor(1);
     expect(await page.evaluate(() => localStorage.getItem('dar_ltcms_form_draft:recovery-fixture'))).not.toBeNull();
+    await page.locator('[name="name"]').fill('Canceled draft edit');
+    await page.clock.runFor(449);
+    expect(await page.evaluate(() => JSON.parse(localStorage.getItem('dar_ltcms_form_draft:recovery-fixture')).data.name)).toBe('Browser draft');
+    await page.clock.runFor(1);
+    expect(await page.evaluate(() => JSON.parse(localStorage.getItem('dar_ltcms_form_draft:recovery-fixture')).data.name)).toBe('Canceled draft edit');
     await page.locator('[name="name"]').fill('Pending draft write');
     await page.evaluate(() => document.querySelector('form').dispatchEvent(new Event('submit', { bubbles: true, cancelable: true })));
-    await page.waitForTimeout(650);
+    await page.clock.runFor(1);
+    expect(await page.evaluate(() => localStorage.getItem('dar_ltcms_form_draft:recovery-fixture'))).toBeNull();
+    await page.clock.runFor(1000);
+    expect(await page.evaluate(() => localStorage.getItem('dar_ltcms_form_draft:recovery-fixture'))).toBeNull();
+    await page.locator('[name="name"]').fill('Input after accepted submission');
+    await page.clock.runFor(1000);
     expect(await page.evaluate(() => localStorage.getItem('dar_ltcms_form_draft:recovery-fixture'))).toBeNull();
 });
 
 test('unavailable draft storage does not break submit handlers', async ({ page }) => {
-    await page.goto('/login');
+    await openWithDraftClock(page, '/login');
     await page.setContent('<form data-autosave-key="storage-fixture"><input name="name"><button>Save</button></form>');
     const errors = [];
     page.on('pageerror', error => errors.push(error.message));
     await page.evaluate(() => {
-        Storage.prototype.getItem = () => { throw new Error('Storage blocked'); };
-        Storage.prototype.setItem = () => { throw new Error('Storage blocked'); };
-        Storage.prototype.removeItem = () => { throw new Error('Storage blocked'); };
+        window.storageAttempts = { get: 0, set: 0, remove: 0 };
+        Storage.prototype.getItem = () => { window.storageAttempts.get++; throw new Error('Storage blocked'); };
+        Storage.prototype.setItem = () => { window.storageAttempts.set++; throw new Error('Storage blocked'); };
+        Storage.prototype.removeItem = () => { window.storageAttempts.remove++; throw new Error('Storage blocked'); };
     });
     await page.addScriptTag({ content: '(() => {' + drafts + '})();' });
+    await expect(page.locator('form')).toHaveAttribute('data-draft-ready', 'true');
     await page.locator('input').fill('Test');
+    await page.clock.runFor(450);
     await page.evaluate(() => document.querySelector('form').dispatchEvent(new Event('submit', { bubbles: true, cancelable: true })));
-    await page.waitForTimeout(650);
+    await page.clock.runFor(1000);
+    const attempts = await page.evaluate(() => window.storageAttempts);
+    expect(attempts.get).toBeGreaterThan(0);
+    expect(attempts.set).toBeGreaterThan(0);
+    expect(attempts.remove).toBeGreaterThan(0);
     expect(errors).toEqual([]);
 });
 
