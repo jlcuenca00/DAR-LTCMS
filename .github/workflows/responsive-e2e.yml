@@ -151,6 +151,9 @@ jobs:
       - name: Prepare isolated Geodetic directory browser fixtures
         run: php .github/scripts/prepare-geodetic-directory-e2e.php
 
+      - name: Prepare isolated application review browser fixture
+        run: php .github/scripts/prepare-application-review-e2e.php
+
       - name: Install Playwright browser
         run: npx playwright install --with-deps chromium
 
@@ -194,3 +197,4 @@ jobs:
             storage/logs/e2e-server.log
           if-no-files-found: ignore
           retention-days: 7
+

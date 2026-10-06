@@ -16,24 +16,24 @@ const viewportMatrix = [
 ];
 
 const staffRouteMatrix = [
-    '/staff/dashboard',
-    '/staff/applications',
-    '/staff/applications/create',
-    '/staff/records/landowners',
-    '/staff/records/landowners/create',
-    '/staff/records/parcels',
-    '/staff/records/parcels/create',
-    '/staff/legacy-records',
-    '/staff/legacy-records/create',
-    '/staff/source-record-packages/create',
-    '/staff/source-record-package-imports/create',
-    '/staff/parcel-map',
-    '/staff/reports/monitoring',
-    '/staff/audit-logs',
-    '/staff/users',
-    '/staff/users/create',
-    '/profile',
-    '/notifications',
+    { path: '/staff/dashboard', title: 'Staff Dashboard', heading: 'Applications Requiring Action' },
+    { path: '/staff/applications', title: 'Land Transfer Clearance Applications', heading: 'Application Records' },
+    { path: '/staff/applications/create', title: 'Encode New Clearance Application', heading: 'New Clearance Application Record' },
+    { path: '/staff/records/landowners', title: 'Landowner Records', heading: 'Landowner Directory' },
+    { path: '/staff/records/landowners/create', title: 'Create Landowner Record', heading: 'Landowner / Person Information' },
+    { path: '/staff/records/parcels', title: 'Parcel Records', heading: 'Parcel Directory' },
+    { path: '/staff/records/parcels/create', title: 'Add Parcel Record', heading: 'Parcel Information' },
+    { path: '/staff/legacy-records', title: 'Source Records', heading: 'Source Record Workspace' },
+    { path: '/staff/legacy-records/create', title: 'Source Package Workspace', heading: 'Source encoding is now handled in one workspace' },
+    { path: '/staff/source-record-packages/create', title: 'Source Package Workspace', heading: 'Encode Source Package' },
+    { path: '/staff/source-record-package-imports/create', title: 'Import Source Packages', heading: 'Upload Completed CSV Template' },
+    { path: '/staff/parcel-map', title: 'Parcel Map Viewer', selector: '[data-parcel-map-viewer]' },
+    { path: '/staff/reports/monitoring', title: 'Monitoring and Reports', heading: 'Report Filters' },
+    { path: '/staff/audit-logs', title: 'Audit Logs', heading: 'Audit Trail Overview' },
+    { path: '/staff/users', title: 'User Management', heading: 'Authorized User Accounts' },
+    { path: '/staff/users/create', title: 'Create User Account', heading: 'Account Setup' },
+    { path: '/profile', title: 'Profile Settings', selector: '.profile-stack' },
+    { path: '/notifications', title: 'Notifications', heading: 'System Notifications' },
 ];
 
 const staffCredentials = {
@@ -96,9 +96,26 @@ async function loginAsStaff(page) {
     await page.goto('/login');
     await page.locator('#username').fill(staffCredentials.username);
     await page.locator('#password').fill(staffCredentials.password);
+    const tourStatusResponse = page.waitForResponse(response =>
+        new URL(response.url()).pathname === '/onboarding-tours/staff_portal'
+        && response.request().method() === 'GET');
     await page.locator('button[type="submit"]').click();
     await expect(page).toHaveURL(/\/staff\/dashboard/);
     await waitForResponsiveController(page);
+
+    // A first-login tour makes the page inert. Close it through the real UI
+    // before asserting accessible route landmarks, and persist that dismissal.
+    const tourResponse = await tourStatusResponse;
+    expect(tourResponse.status(), 'Staff tour status must load').toBe(200);
+    const tourStatus = await tourResponse.json();
+    if (!tourStatus.seen) {
+        const dismissal = page.waitForResponse(response =>
+            new URL(response.url()).pathname === '/onboarding-tours/staff_portal'
+            && response.request().method() === 'PATCH');
+        await page.getByRole('button', { name: 'Skip Tour', exact: true }).click();
+        expect((await dismissal).status(), 'The tour dismissal must persist').toBe(200);
+        await expect(page.getByRole('dialog', { name: 'Welcome to the Legal Clearance Staff Portal' })).toHaveCount(0);
+    }
 }
 
 test.describe('public responsive reflow matrix', () => {
@@ -143,6 +160,10 @@ test.describe('authenticated Staff responsive route matrix', () => {
             testInfo.project.name !== 'chromium-responsive',
             'Authenticated route matrix runs once in desktop Chromium.',
         );
+        if (process.env.CI) {
+            expect(staffCredentials.username, 'CI must provide Staff credentials').toBeTruthy();
+            expect(staffCredentials.password, 'CI must provide Staff credentials').toBeTruthy();
+        }
         test.skip(
             !staffCredentials.username || !staffCredentials.password,
             'Set E2E_STAFF_USERNAME and E2E_STAFF_PASSWORD to exercise authenticated Staff routes.',
@@ -164,10 +185,16 @@ test.describe('authenticated Staff responsive route matrix', () => {
             await page.setViewportSize({ width: viewport.width, height: viewport.height });
 
             for (const route of staffRouteMatrix) {
-                const response = await page.goto(route);
-                expect(response?.status(), `${route} should render successfully`).toBeLessThan(500);
+                const response = await page.goto(route.path);
+                expect(response?.status(), `${route.path} should render successfully`).toBe(200);
+                expect(new URL(page.url()).pathname, 'Authentication or error redirects must fail').toBe(route.path);
+                await expect(page.locator('h1.staff-page-title')).toHaveText(route.title);
+                const landmark = route.heading
+                    ? page.getByRole('heading', { name: route.heading, exact: true })
+                    : page.locator(route.selector);
+                await expect(landmark, `${route.path} must render its own content`).toBeVisible();
                 await waitForResponsiveController(page);
-                await assertNoPageLevelHorizontalOverflow(page, `${route} ${viewport.label}`);
+                await assertNoPageLevelHorizontalOverflow(page, `${route.path} ${viewport.label}`);
             }
         });
     }
