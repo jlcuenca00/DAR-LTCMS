@@ -147,6 +147,7 @@ test.describe('real browser-to-server journeys', () => {
             expect((await state(page, approvalId)).workflow_revision).toBe(initial.workflow_revision);
             expect((await state(page, approvalId)).status).toBe('for_releasing');
 
+            await page.locator('#workflow-overview [data-workflow-modal-open]').click();
             await approve.getByRole('button', { name: 'Record Approved Decision', exact: true }).click();
             const posted = page.waitForResponse(response =>
                 new URL(response.url()).pathname === `/staff/applications/${approvalId}/approve`
