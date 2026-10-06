@@ -96,9 +96,26 @@ async function loginAsStaff(page) {
     await page.goto('/login');
     await page.locator('#username').fill(staffCredentials.username);
     await page.locator('#password').fill(staffCredentials.password);
+    const tourStatusResponse = page.waitForResponse(response =>
+        new URL(response.url()).pathname === '/onboarding-tours/staff_portal'
+        && response.request().method() === 'GET');
     await page.locator('button[type="submit"]').click();
     await expect(page).toHaveURL(/\/staff\/dashboard/);
     await waitForResponsiveController(page);
+
+    // A first-login tour makes the page inert. Close it through the real UI
+    // before asserting accessible route landmarks, and persist that dismissal.
+    const tourResponse = await tourStatusResponse;
+    expect(tourResponse.status(), 'Staff tour status must load').toBe(200);
+    const tourStatus = await tourResponse.json();
+    if (!tourStatus.seen) {
+        const dismissal = page.waitForResponse(response =>
+            new URL(response.url()).pathname === '/onboarding-tours/staff_portal'
+            && response.request().method() === 'PATCH');
+        await page.getByRole('button', { name: 'Skip Tour', exact: true }).click();
+        expect((await dismissal).status(), 'The tour dismissal must persist').toBe(200);
+        await expect(page.getByRole('dialog', { name: 'Welcome to the Legal Clearance Staff Portal' })).toHaveCount(0);
+    }
 }
 
 test.describe('public responsive reflow matrix', () => {
@@ -282,4 +299,3 @@ test.describe('authenticated Staff responsive route matrix', () => {
         await expect(select).not.toHaveValue('');
     });
 });
-
