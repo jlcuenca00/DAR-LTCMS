@@ -39,7 +39,7 @@ required document reference list
 The primary starting account is:
 
 ```text
-Email: staff.tester@dar-ltcms.local
+Username: staff.tester
 Password: password
 ```
 

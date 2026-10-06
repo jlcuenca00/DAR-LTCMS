@@ -36,16 +36,17 @@ class BarebonesTesterSeeder extends Seeder
         $password = Hash::make('password');
 
         $users = [
-            ['name' => 'Legal Clearance Staff Tester', 'email' => 'staff.tester@dar-ltcms.local'],
-            ['name' => 'Jay', 'email' => 'jay.staff@dar-ltcms.local'],
-            ['name' => 'Miles', 'email' => 'miles.staff@dar-ltcms.local'],
-            ['name' => 'Vea', 'email' => 'vea.staff@dar-ltcms.local'],
-            ['name' => 'Lloyd', 'email' => 'lloyd.staff@dar-ltcms.local'],
+            ['name' => 'Legal Clearance Staff Tester', 'username' => 'staff.tester', 'email' => 'staff.tester@dar-ltcms.local'],
+            ['name' => 'Jay', 'username' => 'jay.staff', 'email' => 'jay.staff@dar-ltcms.local'],
+            ['name' => 'Miles', 'username' => 'miles.staff', 'email' => 'miles.staff@dar-ltcms.local'],
+            ['name' => 'Vea', 'username' => 'vea.staff', 'email' => 'vea.staff@dar-ltcms.local'],
+            ['name' => 'Lloyd', 'username' => 'lloyd.staff', 'email' => 'lloyd.staff@dar-ltcms.local'],
         ];
 
         foreach ($users as $user) {
             DB::table('users')->insert([
                 'name' => $user['name'],
+                'username' => $user['username'],
                 'email' => $user['email'],
                 'email_verified_at' => $now,
                 'password' => $password,

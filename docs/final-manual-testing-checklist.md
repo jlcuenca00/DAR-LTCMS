@@ -174,7 +174,9 @@ Expected: these modules manage administrative records; clearance finalization do
 - [ ] Staff map loads authorized broad Parcel data
 - [ ] Municipality/barangay filtering works
 - [ ] Parcel hover/click/details behavior works
-- [ ] Geodetic map remains read-only
+- [ ] Map browsing does not change parcel or ownership records
+- [ ] Authorized Geodetic geometry editing creates a versioned revision and audit event
+- [ ] Invalid geometry and stale editor saves are rejected without overwriting the current geometry
 - [ ] Landowner map includes only own linked Parcels
 - [ ] Geometry display is usable and non-overlapping for the test data
 
@@ -194,7 +196,10 @@ Expected: map features support review/reference only and do not mutate ownership
 
 ## 15. Audit Logs
 
-- [ ] Audit Log Viewer loads
+- [ ] Audit Log Viewer opens on Activity and excludes user login/logout events
+- [ ] Login History separately shows user login/logout events
+- [ ] Switching Activity / Login History preserves applicable filters
+- [ ] Print / Save as PDF matches the selected audit view
 - [ ] Filters work
 - [ ] Actor and timestamp are visible
 - [ ] Application/record context is traceable

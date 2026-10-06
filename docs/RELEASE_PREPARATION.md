@@ -198,10 +198,11 @@ A smoke test is a short check that the most important parts still open and work 
 - Open an application review page.
 - Confirm supporting documents remain protected.
 - Confirm a finalized application is locked against edits/uploads.
-- Open a released and a denied LTC Form No. 5.
+- Open a released Approved LTC Form No. 5 and, if available, a preserved historical Not Approved / Denied output. Historical negative records remain read-only; current workflow creates only Approved decisions.
 - Confirm Form No. 5 uses 8.5 x 13 in. layout, correct LTC number, GRANTED/DENIED result, parcel information, signatory, and notarial details.
 - Open Monitoring/Reports and confirm filters and print view work.
-- Open Audit Logs and confirm important actions remain traceable.
+- Open Audit Logs on Activity and confirm important actions remain traceable without login/logout events.
+- Switch to Login History and confirm authentication events and its filtered print report remain available.
 
 ### Landowner
 
@@ -212,7 +213,8 @@ A smoke test is a short check that the most important parts still open and work 
 ### Geodetic Personnel
 
 - Confirm parcel/reference/map information can be viewed as intended.
-- Confirm editing/approval actions are not available.
+- Confirm approval, application processing, and ownership editing are unavailable.
+- Confirm the authorized parcel-geometry editor can save a versioned revision; invalid geometry and stale saves are rejected without overwriting the current version.
 
 ## 7. If something goes wrong after release
 
