@@ -267,7 +267,7 @@ jobs:
               exit 1
             }
 
-            php -m | grep -q pdo_pgsql || {
+            php -r 'exit(extension_loaded("pdo_pgsql") ? 0 : 1);' || {
               echo "PHP PostgreSQL driver is missing."
               exit 1
             }
