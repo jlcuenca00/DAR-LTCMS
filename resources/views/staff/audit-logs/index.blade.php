@@ -390,7 +390,9 @@
     </x-slot>
 
     @php
-        $hasFilters = collect($filters ?? [])->filter(fn ($value) => filled($value))->isNotEmpty();
+        $loginHistory = ($filters['view'] ?? 'activity') === 'logins';
+        $tabFilters = \Illuminate\Support\Arr::only($filters, ['actor', 'date_from', 'date_to']);
+        $hasFilters = collect($filters ?? [])->except('view')->filter(fn ($value) => filled($value))->isNotEmpty();
 
         $actionBadgeClass = function (?string $action): string {
             $normalized = strtolower((string) $action);
@@ -412,11 +414,19 @@
     @endphp
 
     <div class="audit-page">
+        <nav class="flex flex-wrap gap-2" aria-label="Audit views">
+            <a href="{{ route('staff.audit-logs.index', array_merge($tabFilters, ['view' => 'activity'])) }}"
+               class="staff-button {{ $loginHistory ? 'staff-button-light' : 'staff-button-primary' }}"
+               @if(! $loginHistory) aria-current="page" @endif>Activity</a>
+            <a href="{{ route('staff.audit-logs.index', array_merge($tabFilters, ['view' => 'logins'])) }}"
+               class="staff-button {{ $loginHistory ? 'staff-button-primary' : 'staff-button-light' }}"
+               @if($loginHistory) aria-current="page" @endif>Login History</a>
+        </nav>
         <section class="audit-hero">
             <div>
                 <h2 class="audit-title">Audit Trail Overview</h2>
                 <p class="audit-copy">
-                    Review timestamped actions, responsible users, linked applications, and record context for system accountability.
+                    {{ $loginHistory ? 'Review successful logins and logouts, responsible users, and recorded connection details.' : 'Review record changes and workflow actions. Logins and logouts are shown separately in Login History.' }}
                     Print output is safely capped at the newest 500 matching entries; use the date filters to narrow older audit periods.
                 </p>
             </div>
@@ -486,6 +496,7 @@
             </div>
 
             <form method="GET" action="{{ route('staff.audit-logs.index') }}" class="audit-filter-form">
+                <input type="hidden" name="view" value="{{ $filters['view'] }}">
                 <div>
                     <label class="staff-form-label" for="action">ACTION</label>
                     <select
@@ -553,7 +564,7 @@
                         <i class="fa-solid fa-filter"></i>
                         Apply
                     </button>
-                    <a href="{{ route('staff.audit-logs.index') }}" class="staff-button staff-button-light h-10 min-h-10 px-4">
+                    <a href="{{ route('staff.audit-logs.index', ['view' => $filters['view']]) }}" class="staff-button staff-button-light h-10 min-h-10 px-4">
                         Reset
                     </a>
                 </div>
@@ -563,7 +574,7 @@
         <section class="audit-records-panel">
             <div class="audit-records-header">
                 <div>
-                    <h2 class="audit-section-title">Audit Records</h2>
+                    <h2 class="audit-section-title">{{ $loginHistory ? 'Login History' : 'Audit Records' }}</h2>
                     <p class="audit-section-copy">
                         Showing {{ $auditLogs->count() }} of {{ $auditLogs->total() }} record(s). Entries cannot be edited from this viewer.
                     </p>
@@ -674,3 +685,4 @@
         </section>
     </div>
 </x-staff-shell>
+

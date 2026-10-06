@@ -6,8 +6,10 @@
     <title>Audit Log Report | DAR-LTCMS</title>
 
     @php
+        $reportTitle = ($filters['view'] ?? 'activity') === 'logins' ? 'Login History Report' : 'Audit Log Report';
         $generatedAtPh = $generatedAt?->timezone('Asia/Manila');
         $activeFilters = collect([
+            'View' => ($filters['view'] ?? 'activity') === 'logins' ? 'Login History' : 'Activity',
             'Action' => filled($filters['action'] ?? null)
                 ? ucwords(str_replace('_', ' ', $filters['action']))
                 : null,
@@ -267,7 +269,7 @@
             >
                 Return to Audit Logs
             </a>
-            <span class="toolbar-title">Audit Log Report</span>
+            <span class="toolbar-title">{{ $reportTitle }}</span>
         </div>
 
         <button type="button" class="toolbar-button primary" onclick="window.print()">
@@ -279,7 +281,7 @@
         <header class="report-header">
             <div>
                 <p class="agency">DAR Negros Oriental Provincial Office</p>
-                <h1>Audit Log Report</h1>
+                <h1>{{ $reportTitle }}</h1>
                 <p class="report-copy">Read-only system activity history for accountability and traceability.</p>
             </div>
             <span class="record-count">{{ number_format($auditLogs->count()) }} record(s)</span>
@@ -379,3 +381,4 @@
     </main>
 </body>
 </html>
+
