@@ -73,7 +73,7 @@ class WorkflowPostgresConcurrencyTest extends TestCase
         $second = $this->worker($staff->id, $application->id, $method, $payload);
         $this->assertWorkersBlocked([$first, $second]);
         DB::commit();
-        $results = [$this->result($first), $this->result($second)];
+        $results = [$this->workerResult($first), $this->workerResult($second)];
         $this->assertSame(1, count(array_filter($results, fn ($r) => $r['result'] === 'success')));
         $loser = array_values(array_filter($results, fn ($r) => $r['result'] !== 'success'))[0];
         $this->assertSame('validation', $loser['result']);
@@ -129,7 +129,7 @@ class WorkflowPostgresConcurrencyTest extends TestCase
         $second = $this->worker($staff->id, $secondApplication->id, 'approve', $secondPayload);
         $this->assertWorkersBlocked([$first, $second]);
         DB::commit();
-        $results = [$this->result($first), $this->result($second)];
+        $results = [$this->workerResult($first), $this->workerResult($second)];
         $this->assertSame(1, count(array_filter($results, fn ($r) => $r['result'] === 'success')));
         $loser = array_values(array_filter($results, fn ($r) => $r['result'] !== 'success'))[0];
         $this->assertSame('validation', $loser['result']);
@@ -171,7 +171,7 @@ class WorkflowPostgresConcurrencyTest extends TestCase
         }
         DB::commit();
         $holdings = $this->holdings();
-        $result = $this->result($worker);
+        $result = $this->workerResult($worker);
         $this->assertSame('validation', $result['result']);
         $this->assertContains('workflow_dependency', $result['fields']);
         $this->assertSame($before, (array) DB::table('land_transfer_applications')->find($application->id));
@@ -220,7 +220,7 @@ class WorkflowPostgresConcurrencyTest extends TestCase
         $this->fail('Workers did not reach PostgreSQL lock contention before the deadline.');
     }
 
-    private function result(Process $worker): array
+    private function workerResult(Process $worker): array
     {
         $this->assertSame(0, $worker->wait(), $worker->getOutput().$worker->getErrorOutput());
         $lines = explode("\n", trim($worker->getOutput()));
@@ -232,3 +232,4 @@ class WorkflowPostgresConcurrencyTest extends TestCase
         return DB::table('landholdings')->orderBy('id')->get()->map(fn ($row) => (array) $row)->all();
     }
 }
+
