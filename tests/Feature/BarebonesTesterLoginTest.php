@@ -43,7 +43,7 @@ class BarebonesTesterLoginTest extends TestCase
         $this->app->instance('env', 'production');
 
         try {
-            $this->seed(BarebonesTesterSeeder::class);
+            $this->app->make(BarebonesTesterSeeder::class)->run();
             $this->fail('Production must reject destructive tester seeding.');
         } catch (\LogicException $exception) {
             $this->assertStringContainsString('must never run in production', $exception->getMessage());
