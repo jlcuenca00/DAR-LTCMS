@@ -54,7 +54,9 @@ jobs:
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
       - name: Verify production backup safeguards
-        run: python3 .github/scripts/test-production-backup.py
+        run: |
+          python3 .github/scripts/test-production-backup.py
+          python3 .github/scripts/test-production-backup-alert.py
 
       - name: Set up PHP
         uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # v2
@@ -62,6 +64,9 @@ jobs:
           php-version: '8.4'
           extensions: mbstring, pdo_pgsql, bcmath, intl
           coverage: none
+
+      - name: Check backup alert PHP syntax
+        run: php -l scripts/send_production_backup_alert.php
 
       - name: Install and audit PHP dependencies
         run: |
