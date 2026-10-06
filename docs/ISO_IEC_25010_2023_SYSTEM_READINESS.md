@@ -82,13 +82,11 @@ The project discussion below describes safeguards for administrative records. It
 
 Obsolete automatic ownership/registry mutation artifacts were removed. **Approved/GRANTED clearance and subsequent release tracking only record the administrative clearance result and its delivery; they do not execute legal ownership transfer or registry alteration.**
 
-## Stage 1 verification and final-release work
-
-Stage 1 closed on 7 October 2026 with a clean live record/configuration check, actual isolated off-site backup/database/file recovery, confirmed email receipt, a configured backup-failure alert and exact deployed-version verification. See [release preparation](docs/RELEASE_PREPARATION.md) for dated evidence. These checks used the current mock dataset and do not establish formal evaluator ratings.
+## Evaluation and release checks
 
 Before formal evaluation/final release:
 
-1. Restore strict SSH host verification only after Jake explicitly says his defense is finished; this remains required for the planned final release.
+1. Verify production SSH host identity using an independently trusted host key.
 2. Repeat the live production `php artisan dar:release-check` with no blockers/warnings.
 3. Create and verify the final production database and private-file backups.
 4. Confirm `.release-commit` matches the intended `main` commit after deployment.

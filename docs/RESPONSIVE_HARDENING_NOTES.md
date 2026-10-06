@@ -1,6 +1,6 @@
 # Responsive Hardening Notes
 
-This branch consolidates DAR-LTCMS responsive behavior into one screen-only responsive contract.
+DAR-LTCMS responsive behavior follows a shared screen-only responsive contract.
 
 Scope:
 - Staff, Landowner, and Geodetic portal navigation at 1100px and below

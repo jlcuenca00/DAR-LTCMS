@@ -32,4 +32,4 @@ The public documentation does not publish passwords, API keys, server credential
 
 ## Claims and limits
 
-These controls describe implemented behavior, not a certification or a guarantee that every possible security issue has been eliminated. The final release process includes fresh operational checks and explicitly deferred SSH host-trust hardening after the defense-finished instruction.
+These controls describe implemented behavior, not a certification or a guarantee that every possible security issue has been eliminated. Deployment and release procedures are covered in the operator documentation.

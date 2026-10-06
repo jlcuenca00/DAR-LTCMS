@@ -1,6 +1,6 @@
 # DAR-LTCMS Multi-party Implementation Notes
 
-These are feature-specific notes, not the complete release or installation procedure. Use the [README](README.md), [system baseline](docs/FINAL_SYSTEM_BASELINE.md) and [release guide](docs/RELEASE_PREPARATION.md) for the current project.
+These are feature-specific notes, not the complete release or installation procedure. Use the [README](../README.md), [system baseline](FINAL_SYSTEM_BASELINE.md) and [release guide](RELEASE_PREPARATION.md) for the current project.
 
 ## Implemented
 
