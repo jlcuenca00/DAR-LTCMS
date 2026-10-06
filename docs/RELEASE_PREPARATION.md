@@ -21,7 +21,7 @@ The wrapper runs the encrypted off-site backup and records its output under `dar
 
 Use the server's protected `~/.config/dar-ltcms/backup.env` configuration and `~/.config/dar-ltcms/backup-alert-email` recipient file. Do not overwrite an existing configuration with the example. See [alert setup](../scripts/backup-alert-setup.md) and [recovery procedure](../RECOVERY_PROCEDURE.md).
 
-The backup includes the database, production `.env`, private uploads and preserved legacy uploads. It resolves the connection actually used by Laravel rather than assuming `127.0.0.1`, a particular database user, or the legacy `dar_iland` database name.
+The backup includes the database, production `.env`, private uploads in `storage/app/private` and preserved legacy uploads in `storage/app/public`. It resolves the connection actually used by Laravel rather than assuming `127.0.0.1`, a particular database user, or the legacy `dar_iland` database name.
 
 ### B. Confirm recoverability
 
