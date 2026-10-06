@@ -11,9 +11,20 @@ async function login(page, account, role) {
     await page.goto('/login');
     await page.locator('#username').fill(account);
     await page.locator('#password').fill(password);
+    const tourPath = `/onboarding-tours/${role}_portal`;
+    const tourStatus = page.waitForResponse(response =>
+        new URL(response.url()).pathname === tourPath && response.request().method() === 'GET');
     await page.locator('button[type="submit"]').click();
     await expect(page).toHaveURL(new RegExp(`/${role}/dashboard`));
-    // Journeys use real review pages; dashboard onboarding does not apply there.
+    const loaded = await tourStatus;
+    expect(loaded.status()).toBe(200);
+    if (!(await loaded.json()).seen) {
+        const dismissal = page.waitForResponse(response =>
+            new URL(response.url()).pathname === tourPath && response.request().method() === 'PATCH');
+        await page.getByRole('button', { name: 'Skip Tour', exact: true }).click();
+        expect((await dismissal).status()).toBe(200);
+        await expect(page.locator('.onboarding-welcome-layer')).toHaveCount(0);
+    }
 }
 
 async function state(page, id) {
@@ -37,7 +48,7 @@ async function submit(page, form, button) {
     const action = new URL(await form.getAttribute('action'), page.url()).pathname;
     const posted = page.waitForResponse(response =>
         new URL(response.url()).pathname === action && response.request().method() === 'POST');
-    await form.getByRole('button', { name: button, exact: true }).click();
+    await form.getByRole('button', { name: new RegExp(`${button}$`) }).click();
     expect((await posted).status(), `Real form POST ${action}`).toBe(302);
     await expect(page.locator('.review-alert-success')).toBeVisible();
     await expect(page.locator('.review-alert-error')).toHaveCount(0);
@@ -140,7 +151,7 @@ test.describe('real browser-to-server journeys', () => {
             const approve = page.locator('form[action$="/approve"]');
             await approve.locator('[name="decision_officer_name"]').fill('Journey PARPO II');
             await approve.locator('[name="decision_date"]').fill(decisionDate);
-            await approve.getByRole('button', { name: 'Record Approved Decision', exact: true }).click();
+            await approve.getByRole('button', { name: /Record Approved Decision$/ }).click();
             await expect(page.locator('#decision-confirm-modal')).toBeVisible();
             await expect(page.locator('#decision-confirm-modal .ui-decision-scope-note')).toBeVisible();
             await page.locator('#decision-confirm-cancel').click();
@@ -148,7 +159,7 @@ test.describe('real browser-to-server journeys', () => {
             expect((await state(page, approvalId)).status).toBe('for_releasing');
 
             await page.locator('#workflow-overview [data-workflow-modal-open]').click();
-            await approve.getByRole('button', { name: 'Record Approved Decision', exact: true }).click();
+            await approve.getByRole('button', { name: /Record Approved Decision$/ }).click();
             const posted = page.waitForResponse(response =>
                 new URL(response.url()).pathname === `/staff/applications/${approvalId}/approve`
                 && response.request().method() === 'POST');
@@ -274,7 +285,7 @@ test.describe('real browser-to-server journeys', () => {
         await expect(page).toHaveURL(/view=logins/);
         await expect(page.locator('.audit-table tbody')).toContainText('User Login');
         await page.locator('[name="actor"]').fill(username);
-        await page.getByRole('button', { name: 'Apply', exact: true }).click();
+        await page.getByRole('button', { name: /Apply$/ }).click();
         await expect(page.locator('[name="view"]')).toHaveValue('logins');
         const printLink = page.getByRole('link', { name: 'Print / Save as PDF' });
         const report = await page.request.get(await printLink.getAttribute('href'));
