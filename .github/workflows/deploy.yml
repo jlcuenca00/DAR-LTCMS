@@ -127,6 +127,18 @@ jobs:
       - name: Prepare isolated application review browser fixture
         run: php .github/scripts/prepare-application-review-e2e.php
 
+      - name: Prepare isolated browser journey fixtures
+        run: php .github/scripts/prepare-browser-journeys.php
+
+      - name: Verify journey verifier rejects unfinished fixtures
+        run: |
+          if php .github/scripts/verify-browser-journeys.php > storage/logs/browser-journey-guard.log 2>&1; then
+            cat storage/logs/browser-journey-guard.log
+            echo "::error::Unfinished browser journeys must fail verification."
+            exit 1
+          fi
+          echo "Unfinished browser journeys correctly rejected with a nonzero exit."
+
       - name: Install Playwright browser
         run: npx playwright install --with-deps chromium
 
@@ -144,6 +156,9 @@ jobs:
 
       - name: Run responsive browser matrix
         run: npx playwright test --config=playwright.config.mjs
+
+      - name: Verify persisted browser journeys and protected records
+        run: php .github/scripts/verify-browser-journeys.php
 
       - name: Validate realistic agricultural demo seed
         env:

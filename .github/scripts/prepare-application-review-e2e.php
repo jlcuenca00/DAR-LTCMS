@@ -1,5 +1,15 @@
 <?php
 
+$completed = false;
+// Laravel renders uncaught exceptions in these standalone bootstrapped scripts.
+// Require explicit completion so every guard/assertion failure also fails CI.
+register_shutdown_function(function () use (&$completed): void {
+    if (! $completed) {
+        fwrite(STDERR, "Browser fixture/verification script did not complete.\n");
+        exit(1);
+    }
+});
+
 require __DIR__.'/../../vendor/autoload.php';
 $app = require __DIR__.'/../../bootstrap/app.php';
 $app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
@@ -38,7 +48,7 @@ $applicationId = Illuminate\Support\Facades\DB::transaction(function () use ($st
             );
             $parties[$side][] = [
                 'name' => $owner->full_name, 'landowner_id' => $owner->id,
-                'parcel_shares' => [(string) $parcel->id => 0.625],
+                'parcel_shares' => [],
             ];
         }
 
@@ -67,7 +77,7 @@ $applicationId = Illuminate\Support\Facades\DB::transaction(function () use ($st
         throw new RuntimeException('Application review fixture is not in the expected initial state.');
     }
 
-    App\Models\ApplicationParcel::query()->firstOrCreate(
+    $applicationParcel = App\Models\ApplicationParcel::query()->firstOrCreate(
         ['land_transfer_application_id' => $application->id, 'parcel_id' => $parcel->id],
         [
             'parcel_code' => $parcel->parcel_code, 'title_no' => $parcel->title_no,
@@ -76,6 +86,15 @@ $applicationId = Illuminate\Support\Facades\DB::transaction(function () use ($st
         ]
     );
 
+    foreach (['transferor', 'transferee'] as $side) {
+        foreach ($parties[$side] as &$party) {
+            $party['parcel_shares'] = [(string) $applicationParcel->id => 0.625];
+        }
+        unset($party);
+    }
+    $application->forceFill(['transferors' => $parties['transferor'], 'transferees' => $parties['transferee']])->save();
+    app(App\Services\ApplicationPartyShareIntegrityService::class)->assertValid($application);
+
     return $application->id;
 });
 
@@ -83,3 +102,4 @@ if (file_put_contents($environmentFile, "E2E_REVIEW_APPLICATION_ID={$application
     throw new RuntimeException('Could not export the application review fixture ID.');
 }
 echo "Application review fixture prepared: E2E-REVIEW-001 (ID {$applicationId}).\n";
+$completed = true;

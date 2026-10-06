@@ -11,6 +11,7 @@ use Illuminate\Support\Carbon;
 class AuditLogController extends Controller
 {
     private const PRINT_RECORD_LIMIT = 500;
+    private const LOGIN_ACTIONS = ['user_login', 'user_logout'];
 
     public function index(Request $request)
     {
@@ -40,7 +41,7 @@ class AuditLogController extends Controller
             ->paginate(15)
             ->withQueryString();
 
-        $actions = AuditLog::query()
+        $actions = $this->scopedQuery($filters['view'])
             ->select('action')
             ->distinct()
             ->orderBy('action')
@@ -80,18 +81,32 @@ class AuditLogController extends Controller
 
     private function validatedFilters(Request $request): array
     {
-        return $request->validate([
+        $filters = $request->validate([
+            'view' => ['nullable', 'in:activity,logins'],
             'action' => ['nullable', 'string', 'max:100'],
             'application_code' => ['nullable', 'string', 'max:100'],
             'actor' => ['nullable', 'string', 'max:255'],
             'date_from' => ['nullable', 'date'],
             'date_to' => ['nullable', 'date', 'after_or_equal:date_from'],
         ]);
+
+        $filters['view'] = $filters['view'] ?? 'activity';
+
+        return $filters;
+    }
+
+    private function scopedQuery(string $view): Builder
+    {
+        $query = AuditLog::query();
+
+        return $view === 'logins'
+            ? $query->whereIn('action', self::LOGIN_ACTIONS)
+            : $query->whereNotIn('action', self::LOGIN_ACTIONS);
     }
 
     private function filteredQuery(array $filters): Builder
     {
-        $query = AuditLog::query()
+        $query = $this->scopedQuery($filters['view'])
             ->with(['actor', 'application'])
             ->latest();
 
@@ -148,3 +163,4 @@ class AuditLogController extends Controller
         return $query;
     }
 }
+
