@@ -1,6 +1,6 @@
 # DAR-LTCMS Backup and Recovery Procedure
 
-This document describes supported backup/recovery procedures for DAR-LTCMS. It does **not** by itself prove that an off-site backup job is currently configured on the live server; production configuration and successful restore testing must be verified operationally.
+This document describes backup/recovery procedures. Stage 1 operational verification on 7 October 2026 confirmed a successful scheduled off-site backup, isolated database recovery and five restored-file verifications. These dated results do not guarantee later backups: check current logs/snapshots and repeat recovery testing before turnover. See [release preparation](docs/RELEASE_PREPARATION.md).
 
 DAR-LTCMS supports two backup approaches:
 
@@ -17,7 +17,7 @@ From the project root:
 bash scripts/backup_dar_ltcms.sh
 ```
 
-The local backup script creates a timestamped backup under `storage/backups/` containing the data handled by the script, such as the PostgreSQL dump/private files/manifest/checksums where available.
+The local helper uses shell settings/defaults, not Laravel's resolved connection. Confirm `DB_HOST`, `DB_PORT`, `DB_DATABASE` and `DB_USERNAME` before using it; it defaults to `dar_iland` and `postgres`. It writes a database dump, private-file archive when present, a manifest and optional checksums under `storage/backups/`. It does not include the production `.env` or legacy `storage/app/public` files. Use the effective-connection off-site script for production.
 
 `storage/backups/` and database dump files are excluded from deployment/source-control use and must never be committed.
 
@@ -39,7 +39,7 @@ When correctly configured, the production script is designed to:
 4. include the dump, production `.env`, `storage/app/private`, and `storage/app/public` in the protected snapshot;
 5. encrypt/upload the snapshot through restic;
 6. apply configured retention;
-7. verify repository data; and
+7. check repository metadata and the configured data sample (5% by default); and
 8. remove the temporary local database dump after completion.
 
 Application source, `vendor/`, `node_modules/`, generated frontend assets, and a public storage symlink do not need to be duplicated as production data backups.
@@ -106,15 +106,17 @@ Also confirm temporary plaintext dumps are not left behind after a successful pr
 
 ## 7. Scheduling
 
-If automated daily production backups are approved and configured, use the `darltcms` deployment account rather than requiring root.
-
-Example cron schedule:
+The verified production server uses UTC. Its nightly schedule runs at 18:30 UTC, which is 2:30 AM Philippine time the next day:
 
 ```cron
-30 2 * * * cd /home/darltcms/htdocs/darltcms.me && /usr/bin/bash scripts/backup_dar_ltcms_production.sh >> /home/darltcms/.cache/dar-ltcms-backup/backup.log 2>&1
+30 18 * * * /usr/bin/bash /home/darltcms/htdocs/darltcms.me/scripts/run_production_backup_with_alert.sh
 ```
 
-Confirm the server timezone, log location, credentials, retention, and successful scheduled execution. A configured cron entry is not sufficient evidence of recoverability by itself.
+Keep exactly one backup cron entry, running as `darltcms`. Preserve other cron tasks. Recalculate the schedule if the server timezone changes.
+
+The wrapper writes to `darltcms-backup` logs and attempts a failure-only email using the application's mail service and the private recipient file. Follow [alert setup](scripts/backup-alert-setup.md) to configure and test inbox delivery.
+
+A failure email cannot detect a stopped scheduler, server outage or unavailable mail service. Current snapshots, periodic restore tests and optional independent missed-backup monitoring remain important.
 
 ## 8. Restore into a test environment first
 
@@ -123,8 +125,9 @@ Never test restoration against the active production database.
 Create a separate restore location and load the backup credentials:
 
 ```bash
-mkdir -p ~/dar-ltcms-restore-test
-chmod 700 ~/dar-ltcms-restore-test
+umask 077
+RESTORE_TEST_DIR=$(mktemp -d "$HOME/dar-ltcms-restore-test.XXXXXX")
+export PATH="$HOME/bin:$PATH"
 set -a
 source ~/.config/dar-ltcms/backup.env
 set +a
@@ -134,8 +137,10 @@ List snapshots and restore the selected snapshot to the temporary target:
 
 ```bash
 restic snapshots --host darltcms-production --tag dar-ltcms-production
-restic restore <snapshot-id> --target ~/dar-ltcms-restore-test
+restic restore <snapshot-id> --target "$RESTORE_TEST_DIR" --verify
 ```
+
+Use a fresh target for verification: some Restic versions skip files already restored and can report zero files verified. Require a successful restore and meaningful verification result.
 
 Validate the restored database dump:
 
@@ -143,14 +148,13 @@ Validate the restored database dump:
 pg_restore --list /path/to/restored/database.dump > /dev/null
 ```
 
-Restore into a separate PostgreSQL test database, never the live database:
+Restore into a newly created, separate PostgreSQL test database, never the live database. Confirm the test host/port and credentials; the example assumes a local test PostgreSQL service and refuses restore on the first error:
 
 ```bash
-createdb -U postgres dar_iland_restore_test
+createdb -U postgres dar_iland_restore_test &&
 pg_restore -U postgres \
   --dbname=dar_iland_restore_test \
-  --clean \
-  --if-exists \
+  --exit-on-error \
   --no-owner \
   --no-privileges \
   /path/to/restored/database.dump
@@ -172,7 +176,7 @@ Verify at minimum:
 - Audit Logs
 - private/reference/profile files included by the selected backup
 
-Do not send production email, mutate live records, or point the restore test copy at the live database.
+Do not send production email, mutate live records, or point the restore test copy at the live database. After documenting successful checks, stop any temporary database instance and remove only the private test directories/databases created for this exercise; restored settings and records are sensitive.
 
 ## 9. Production restoration rule
 

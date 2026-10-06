@@ -18,7 +18,7 @@ The workflow follows the administrative clearance process used by the DAR Negros
    Legal Clearance Staff record the return of the LTID verification results and LTC Form No. 4.
 
 6. **Legal evaluation and CSW preparation**  
-   Legal evaluation and the required case summary or supporting administrative documentation are prepared.
+   Legal evaluation and Completed Staff Work (CSW) and the required supporting administrative documentation are prepared.
 
 7. **With Chief Legal for review**  
    Legal Clearance Staff record the forwarding and later completion/return of the Chief Legal review. Chief Legal does not need a DAR-LTCMS account.
@@ -27,7 +27,7 @@ The workflow follows the administrative clearance process used by the DAR Negros
    Legal Clearance Staff record the forwarding of the reviewed folder to PARPO II.
 
 9. **PARPO II Approved decision recorded by Legal**  
-   After official PARPO II approval is received, Legal Clearance Staff record the decision authority, officer/signatory, official decision date, and the final **Approved** result. Approved is the only current final application decision in DAR-LTCMS. Issues that prevent approval remain open through the compliance workflow rather than being recorded as a new negative final decision.
+   The application first reaches **PARPO II Decision Ready to Record**. After official PARPO II approval is received, Legal Clearance Staff record the decision authority, officer/signatory, official decision date, and the final **Approved** result. Approved is the only current final application decision in DAR-LTCMS. Issues that prevent approval remain open through the compliance workflow rather than being recorded as a new negative final decision.
 
 10. **Clearance output preparation and release tracking**  
     The signed clearance result can be marked ready for release and later recorded as released to the client.
@@ -40,3 +40,5 @@ The workflow follows the administrative clearance process used by the DAR Negros
 
 !!! important
     No workflow step automatically changes parcel ownership or registry records.
+
+The compliance loop is available from supported open stages, not only the initial completeness review. **Other** accepts a custom issue category; repeated notices retain their own history and resume stage.

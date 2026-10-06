@@ -36,3 +36,15 @@ Before moving an application forward, confirm that the linked parcel, parties, d
 LTID, Chief Legal, PARPO II, the cashier, and other offices do not require DAR-LTCMS user accounts. Their actions happen through the official administrative process outside the system workspace. Legal Clearance Staff record those movements/results in DAR-LTCMS for traceability.
 
 For a final PARPO II decision, record the official decision officer/signatory and decision date. The logged-in Legal Clearance Staff account remains the **system recorder**, not the decision-maker.
+
+## Compliance requests
+
+Use **Request Compliance** while the application is still open. Choose a category, or **Other** with custom text, and write what the applicant needs to correct or provide. After the office receives and reviews the response, record **Compliance Resolved**. The same application returns to its saved stage and keeps the earlier notice in its history. Landowners do not upload compliance documents through their portal.
+
+## Activity and Login History
+
+Audit Logs opens on **Activity**, showing record and workflow actions. Use **Login History** to view authentication events separately. Keep the selected view and filters in mind when printing an audit report.
+
+## Stale-screen warnings
+
+If another user has changed a record or its supporting information, reload and review the new details before saving or recording the next action. Do not treat a stale-screen rejection as proof that your intended change was saved.

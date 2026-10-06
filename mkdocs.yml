@@ -42,7 +42,7 @@ nav:
   - Scope & Limitations: scope-and-limitations.md
   - Clearance Workflow: clearance-workflow.md
   - User Guides:
-      - DAR Staff: guides/dar-staff.md
+      - Legal Clearance Staff: guides/dar-staff.md
       - Landowner: guides/landowner.md
       - Geodetic Personnel: guides/geodetic.md
   - Security & Auditability: security-and-auditability.md

@@ -1,6 +1,6 @@
 # DAR-LTCMS ISO/IEC 25010:2023 System Readiness
 
-This document maps implemented DAR-LTCMS controls to the nine product-quality characteristics used by the project evaluation. It is an engineering readiness assessment, not a guarantee of evaluator ratings or legal/administrative outcomes.
+This document maps implemented DAR-LTCMS controls to the nine product-quality characteristics in [ISO/IEC 25010:2023](https://www.iso.org/standard/78176.html). It is an engineering readiness assessment, not ISO certification, a measured evaluator score, or a guarantee of legal/administrative outcomes.
 
 ## 1. Functional Suitability
 
@@ -68,7 +68,7 @@ The production site is deployed at `https://darltcms.me`; final `v1.0.0` release
 
 ## 9. Safety
 
-DAR-LTCMS is not safety-critical in the industrial/medical ISO sense, but it contains important operational safeguards for sensitive administrative records:
+The project discussion below describes safeguards for administrative records. It does not establish that each listed safeguard satisfies the standard's Safety subcharacteristics; applicability and evaluation evidence must be assessed explicitly:
 
 - strict role restrictions
 - Landowner privacy isolation
@@ -82,12 +82,17 @@ DAR-LTCMS is not safety-critical in the industrial/medical ISO sense, but it con
 
 Obsolete automatic ownership/registry mutation artifacts were removed. **Approved/GRANTED clearance and subsequent release tracking only record the administrative clearance result and its delivery; they do not execute legal ownership transfer or registry alteration.**
 
-## Residual items before final formal evaluation / v1.0.0
+## Stage 1 verification and final-release work
 
-1. Complete the live production `php artisan dar:release-check` with no blockers/warnings.
-2. Create and verify the final production database and private-file backups.
-3. Confirm `.release-commit` matches the intended `main` commit after deployment.
-4. Complete the production smoke test, including role isolation and LTC Form No. 5 output.
-5. Conduct any required evaluator-led UAT/usability sessions using the final scenarios.
-6. Capture final thesis screenshots from the validated baseline.
-7. Create the `v1.0.0` tag only after the production release gate is actually complete.
+Stage 1 closed on 7 October 2026 with a clean live record/configuration check, actual isolated off-site backup/database/file recovery, confirmed email receipt, a configured backup-failure alert and exact deployed-version verification. See [release preparation](docs/RELEASE_PREPARATION.md) for dated evidence. These checks used the current mock dataset and do not establish formal evaluator ratings.
+
+Before formal evaluation/final release:
+
+1. Restore strict SSH host verification only after Jake explicitly says his defense is finished; this remains required for the planned final release.
+2. Repeat the live production `php artisan dar:release-check` with no blockers/warnings.
+3. Create and verify the final production database and private-file backups.
+4. Confirm `.release-commit` matches the intended `main` commit after deployment.
+5. Complete the production smoke test, including role isolation and LTC Form No. 5 output.
+6. Conduct any required evaluator-led UAT/usability sessions using the final scenarios.
+7. Capture final thesis screenshots from the validated baseline.
+8. Create the `v1.0.0` tag only after the production release gate is actually complete.
