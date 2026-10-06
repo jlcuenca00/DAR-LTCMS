@@ -152,7 +152,7 @@ DAR-LTCMS implements controlled access and traceability through:
 | Package Management | Composer and npm |
 | Deployment | Linux server with CloudPanel |
 
-The local/development PostgreSQL database name remains `dar_iland`.
+The `.env.example` PostgreSQL database name defaults to `dar_iland`; use a separate database for each local or test environment.
 
 ## Local Development Setup
 
