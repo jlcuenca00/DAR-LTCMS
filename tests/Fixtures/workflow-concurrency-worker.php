@@ -26,13 +26,22 @@ $app->make('url')->setRequest($request);
 Illuminate\Support\Facades\Auth::setUser(App\Models\User::findOrFail($input['staff_id']));
 $request->setUserResolver(fn () => Illuminate\Support\Facades\Auth::user());
 $application = App\Models\LandTransferApplication::findOrFail($input['application_id']);
+$route = new Illuminate\Routing\Route('POST', 'workflow-concurrency', fn () => null);
+$route->name('staff.applications.concurrency')->bind($request);
+$route->setParameter('application', $application);
+$request->setRouteResolver(fn () => $route);
 $pid = Illuminate\Support\Facades\DB::selectOne('SELECT pg_backend_pid() AS pid')->pid;
 echo json_encode(['pid' => (int) $pid], JSON_THROW_ON_ERROR)."\n";
 flush();
 try {
     $controller = $app->make(App\Http\Controllers\Staff\ApplicationWorkflowController::class);
-    $controller->{$input['method']}($request, $application);
-    $result = $session->has('success') ? ['result' => 'success'] : ['result' => 'error', 'message' => $session->get('error')];
+    $app->make(App\Http\Middleware\LockApplicationMutation::class)->handle($request, function ($request) use ($controller, $input) {
+        return $controller->{$input['method']}($request, $request->route('application'));
+    });
+    $errors = $session->get('errors');
+    $result = $errors && $errors->any()
+        ? ['result' => 'validation', 'fields' => array_keys($errors->getBag('default')->getMessages())]
+        : ($session->has('success') ? ['result' => 'success'] : ['result' => 'error', 'message' => $session->get('error')]);
 } catch (Illuminate\Validation\ValidationException $exception) {
     $result = ['result' => 'validation', 'fields' => array_keys($exception->errors())];
 }

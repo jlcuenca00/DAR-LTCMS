@@ -77,7 +77,10 @@ class WorkflowPostgresConcurrencyTest extends TestCase
         $this->assertSame(1, count(array_filter($results, fn ($r) => $r['result'] === 'success')));
         $loser = array_values(array_filter($results, fn ($r) => $r['result'] !== 'success'))[0];
         $this->assertSame('validation', $loser['result']);
-        $this->assertContains('workflow_revision', $loser['fields']);
+        $expectedField = match ($method) {
+            'approve' => 'status', 'requestCompliance' => 'workflow_revision', 'release' => 'release',
+        };
+        $this->assertContains($expectedField, $loser['fields']);
         $action = match ($method) {
             'approve' => 'application_approved', 'requestCompliance' => 'application_compliance_requested', 'release' => 'application_released_to_client',
         };
@@ -147,6 +150,11 @@ class WorkflowPostgresConcurrencyTest extends TestCase
         $payload = $this->approvalPayload($application);
         $before = (array) DB::table('land_transfer_applications')->find($application->id);
         $parcel = $application->applicationParcels()->firstOrFail()->parcel()->firstOrFail();
+        $holdingParcel = $dependency === 'landowner' ? Parcel::create([
+            'parcel_code' => 'ATOMIC-EXISTING-HOLDING', 'title_no' => 'T-ATOMIC-HOLDING',
+            'municipality' => 'Dumaguete City', 'barangay' => 'Bantayan', 'province' => 'Negros Oriental',
+            'area_hectares' => 5, 'area_square_meters' => 50000, 'status' => 'active',
+        ]) : null;
         DB::beginTransaction();
         if ($dependency === 'parcel') {
             Parcel::whereKey($parcel->id)->lockForUpdate()->firstOrFail();
@@ -159,7 +167,7 @@ class WorkflowPostgresConcurrencyTest extends TestCase
             $parcel->forceFill(['area_hectares' => 2, 'area_square_meters' => 20000])->save();
         } else {
             // A newly committed holding would put this transferee beyond 5 ha.
-            Landholding::create(['landowner_id' => $application->transferee_landowner_id, 'parcel_id' => $parcel->id, 'area_hectares' => 5, 'status' => 'active']);
+            Landholding::create(['landowner_id' => $application->transferee_landowner_id, 'parcel_id' => $holdingParcel->id, 'area_hectares' => 5, 'status' => 'active']);
         }
         DB::commit();
         $holdings = $this->holdings();
