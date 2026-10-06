@@ -63,7 +63,7 @@ class WorkflowPostgresConcurrencyTest extends TestCase
         $application->refresh();
         $payload = match ($method) {
             'approve' => $this->approvalPayload($application),
-            'requestCompliance' => ['expected_status' => $application->status, 'expected_workflow_revision' => $application->workflow_revision, 'category' => 'clarification', 'details' => 'Concurrent request.'],
+            'requestCompliance' => ['expected_status' => $application->status, 'expected_workflow_revision' => $application->workflow_revision, 'category' => \App\Models\ApplicationComplianceNotice::CATEGORY_CLARIFICATION, 'details' => 'Concurrent request.'],
             'release' => ['expected_workflow_revision' => $application->workflow_revision, 'release_confirmation' => '1', 'release_recipient_name' => 'Concurrent Recipient', 'csm_status' => 'received'],
         };
         $holdings = $this->holdings();
@@ -232,4 +232,3 @@ class WorkflowPostgresConcurrencyTest extends TestCase
         return DB::table('landholdings')->orderBy('id')->get()->map(fn ($row) => (array) $row)->all();
     }
 }
-

@@ -90,7 +90,7 @@ class WorkflowTransactionRollbackTest extends TestCase
         $base = ['expected_status' => $application->status, 'expected_workflow_revision' => $application->workflow_revision];
         return match ($operation) {
             'approve' => $this->approvalPayload($application),
-            'compliance.request' => $base + ['category' => 'clarification', 'details' => 'Atomic compliance test.'],
+            'compliance.request' => $base + ['category' => \App\Models\ApplicationComplianceNotice::CATEGORY_CLARIFICATION, 'details' => 'Atomic compliance test.'],
             'compliance.resolve' => $base + ['compliance_notice_id' => $application->activeComplianceNotice()->value('id'), 'resolution_note' => 'Atomic resolution.'],
             'ready_for_release' => $base,
             'release' => $base + ['release_confirmation' => '1', 'release_recipient_name' => 'Atomic Recipient', 'release_logbook_reference' => 'ATOMIC-LOG', 'csm_status' => 'received'],
