@@ -4,9 +4,9 @@ This file describes an earlier patch package. Those changes are already part of 
 
 ## Current procedures
 
-- [Local development setup](README.md#local-development-setup)
-- [Local/staging tester reset](docs/barebones-tester-handoff.md)
-- [Production backup, deployment and recovery](docs/RELEASE_PREPARATION.md)
+- [Local development setup](DEVELOPMENT_SETUP.md)
+- [Local/staging tester reset](barebones-tester-handoff.md)
+- [Production backup, deployment and recovery](RELEASE_PREPARATION.md)
 - [Current engineering readiness assessment](ISO_IEC_25010_2023_SYSTEM_READINESS.md)
 
 The earlier instruction that `/register` is unavailable is obsolete. The current guest routes support Landowner registration, including the configured Google registration flow; account access follows Staff review/linking. Staff and Geodetic accounts are managed through authorized Staff controls.

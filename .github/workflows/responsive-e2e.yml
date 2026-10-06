@@ -16,7 +16,6 @@ on:
       - 'tests/**'
       - 'docs/**'
       - 'README.md'
-      - 'ISO_IEC_25010_2023_SYSTEM_READINESS.md'
       - 'composer.json'
       - 'composer.lock'
       - 'package.json'

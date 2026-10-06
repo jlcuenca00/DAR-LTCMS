@@ -1,6 +1,6 @@
 # DAR-LTCMS Backup and Recovery Procedure
 
-This document describes backup/recovery procedures. Stage 1 operational verification on 7 October 2026 confirmed a successful scheduled off-site backup, isolated database recovery and five restored-file verifications. These dated results do not guarantee later backups: check current logs/snapshots and repeat recovery testing before turnover. See [release preparation](docs/RELEASE_PREPARATION.md).
+This document describes how to back up and recover the database, configuration, and uploaded files. Check current logs and snapshots, and verify recovery in an isolated environment before restoring production.
 
 DAR-LTCMS supports two backup approaches:
 
@@ -114,7 +114,7 @@ The verified production server uses UTC. Its nightly schedule runs at 18:30 UTC,
 
 Keep exactly one backup cron entry, running as `darltcms`. Preserve other cron tasks. Recalculate the schedule if the server timezone changes.
 
-The wrapper writes to `darltcms-backup` logs and attempts a failure-only email using the application's mail service and the private recipient file. Follow [alert setup](scripts/backup-alert-setup.md) to configure and test inbox delivery.
+The wrapper writes to `darltcms-backup` logs and attempts a failure-only email using the application's mail service and the private recipient file. Follow [alert setup](BACKUP_ALERT_SETUP.md) to configure and test inbox delivery.
 
 A failure email cannot detect a stopped scheduler, server outage or unavailable mail service. Current snapshots, periodic restore tests and optional independent missed-backup monitoring remain important.
 

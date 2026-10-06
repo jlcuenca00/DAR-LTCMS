@@ -204,7 +204,7 @@ Merging to `main` triggers the CloudPanel deployment workflow.
 
 Before the final `v1.0.0` tag:
 
-1. strict SSH host verification must be restored after Jake explicitly says his defense is finished;
+1. strict SSH host verification must use an independently trusted production host key;
 2. automatic test/security gates must be green;
 3. production database backup must exist;
 4. production private-file backup must exist;
@@ -212,7 +212,7 @@ Before the final `v1.0.0` tag:
 6. `.release-commit` must match the intended `main` commit; and
 7. the post-deployment smoke test must pass.
 
-Stage 1 closed on 7 October 2026 with verified backup recovery, email delivery, a clean live record/configuration check and a successful deployment. These dated checks do not complete the final release gate: SSH host trust remains deferred, repository/manuscript alignment and required evaluator acceptance remain separate work. Continue to describe the project as a **release candidate**, not a completed `v1.0.0` release. See [release preparation](RELEASE_PREPARATION.md) for the operational evidence and fresh final-release checks.
+See [release preparation](RELEASE_PREPARATION.md) for the operational checks.
 
 ## Thesis/diagram rule
 

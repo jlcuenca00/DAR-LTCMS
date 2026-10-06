@@ -19,7 +19,7 @@ bash scripts/run_production_backup_with_alert.sh
 
 The wrapper runs the encrypted off-site backup and records its output under `darltcms-backup`. A backup failure attempts an email to the privately configured operator; successful backups do not send mail.
 
-Use the server's protected `~/.config/dar-ltcms/backup.env` configuration and `~/.config/dar-ltcms/backup-alert-email` recipient file. Do not overwrite an existing configuration with the example. See [alert setup](../scripts/backup-alert-setup.md) and [recovery procedure](../RECOVERY_PROCEDURE.md).
+Use the server's protected `~/.config/dar-ltcms/backup.env` configuration and `~/.config/dar-ltcms/backup-alert-email` recipient file. Do not overwrite an existing configuration with the example. See [alert setup](BACKUP_ALERT_SETUP.md) and [recovery procedure](RECOVERY_PROCEDURE.md).
 
 The backup includes the database, production `.env`, private uploads in `storage/app/private` and preserved legacy uploads in `storage/app/public`. It resolves the connection actually used by Laravel rather than assuming `127.0.0.1`, a particular database user, or the legacy `dar_iland` database name.
 
@@ -102,30 +102,11 @@ Do not create a `public/storage` symlink. Uploaded administrative records are in
 
 ## 4. GitHub production protection
 
-### Temporary audit / defense mode
+Keep production SSH credentials in the GitHub `production` Environment, keep the `Protect main` ruleset active, and require the exact GitHub Actions check `responsive-browser-tests` before merging to `main`. Branches must be up to date; third-party GitHub Actions must be pinned to immutable commit SHAs.
 
-While DAR-LTCMS is still under active audit and pre-defense iteration, production deployment temporarily uses the previously working SSH deployment method so verified `main` changes can continue reaching the CloudPanel server without requiring the not-yet-configured `SSH_KNOWN_HOSTS` secret.
+Production SSH host verification should use a preconfigured `known_hosts` file and `StrictHostKeyChecking=yes`. Obtain the trusted host public key from the server console or another independently authenticated administrative channel. A connection obtained through first-use acceptance or `ssh-keyscan` alone does not establish independent host trust.
 
-During this temporary period:
-
-- keep production SSH credentials restricted to the GitHub `production` Environment when possible;
-- keep the `Protect main` ruleset active;
-- keep the verification job before deployment;
-- require the exact GitHub Actions check `responsive-browser-tests` before merging to `main`, with up-to-date branches and no added bypass actors; and
-- keep all third-party GitHub Actions pinned to immutable commit SHAs.
-
-### Mandatory post-defense hardening
-
-This work is explicitly deferred until Jake says his defense is finished. Completing Stage 1, Stage 2 or Stage 3 alone does not authorize it. Before the final `v1.0.0` release, and only after that explicit instruction, restore strict SSH host verification:
-
-- configure an Environment secret named `SSH_KNOWN_HOSTS` containing the trusted production SSH host public-key entry for the same host stored in `SSH_HOST`;
-- use `StrictHostKeyChecking=yes` with that preconfigured `known_hosts` file;
-- remove first-use host-key acceptance / `ssh-keyscan` from production workflows; and
-- rerun the full deployment and release-readiness checks after the strict verification is restored.
-
-Obtain the trusted host public key from the CloudPanel/server console or another independently authenticated administrative channel.
-
-The deployment workflow continues to run its secret-free verification job before production deployment. A failed verification therefore still prevents production synchronization even during temporary audit mode.
+Keep the secret-free verification job before production deployment. A failed verification must prevent production synchronization.
 
 When intentionally upgrading a third-party GitHub Action, review the new upstream release/tag first, then update the pinned SHA in a pull request.
 
@@ -220,15 +201,7 @@ php artisan up
 
 A PostgreSQL restore should be performed by an authorized administrator/developer who has confirmed the target database and backup file. Do not run a destructive restore command from copied instructions without checking both first.
 
-## 8. Dated Stage 1 operational verification
-
-On 7 October 2026 Philippine time, the live release check reported zero data issues, blockers and warnings. Backup snapshot `5357b9b6` was restored to an isolated PostgreSQL instance; it contained 35 applications, 25 parcels and 13 users. All five restored files were verified. Recovery-email receipt and backup-alert test receipt were confirmed, and the nightly alert wrapper was enabled at `30 18 * * *` on the UTC server (2:30 AM Philippine time).
-
-[PR #221](https://github.com/jlcuenca00/DAR-LTCMS/pull/221) corrected a false database-driver preflight failure. Its [production deployment](https://github.com/jlcuenca00/DAR-LTCMS/actions/runs/37525130288) succeeded. The server's `.release-commit` was confirmed as `87c751fb4003ccd2ca0a6c87e464c3795491928f`, and Jake confirmed the live application, map and Form No. 5 preview.
-
-These are dated checks of a mock dataset. They do not replace fresh backups/checks at the final release date, full formal role/evaluator testing, or the deferred SSH hardening. A failure email also cannot detect a whole-server, scheduler or mail-provider outage; independent missed-backup monitoring is a separate control.
-
-## 9. When to create `v1.0.0`
+## 8. When to create `v1.0.0`
 
 Create the final version tag/release only when all of these are true:
 

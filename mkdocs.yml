@@ -1,7 +1,7 @@
 site_name: DAR-LTCMS Documentation
 site_description: Official user documentation for the DAR Land Transfer Clearance and Monitoring System of the DAR Negros Oriental Provincial Office.
 site_url: https://docs.darltcms.me/
-docs_dir: docs-site
+docs_dir: docs/user-guide
 site_dir: site
 
 theme:

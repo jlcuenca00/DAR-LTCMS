@@ -9,6 +9,9 @@ class DocumentationAlignmentTest extends TestCase
     /** @var array<int, string> */
     private array $canonicalDocuments = [
         'README.md',
+        'docs/README.md',
+        'docs/SYSTEM_OVERVIEW.md',
+        'docs/DEVELOPMENT_SETUP.md',
         'docs/FINAL_SYSTEM_BASELINE.md',
         'docs/thesis-documentation-alignment.md',
         'docs/barebones-tester-handoff.md',
@@ -17,7 +20,7 @@ class DocumentationAlignmentTest extends TestCase
         'docs/final-manual-testing-checklist.md',
         'docs/final-defense-screenshot-checklist.md',
         'docs/RELEASE_PREPARATION.md',
-        'ISO_IEC_25010_2023_SYSTEM_READINESS.md',
+        'docs/ISO_IEC_25010_2023_SYSTEM_READINESS.md',
     ];
 
     public function test_canonical_documents_use_dar_ltcms_identity_only(): void
@@ -60,11 +63,11 @@ class DocumentationAlignmentTest extends TestCase
     {
         $paths = [
             'README.md',
-            'docs-site/faq.md',
-            'docs-site/guides/dar-staff.md',
-            'docs-site/clearance-workflow.md',
-            'docs-site/security-and-auditability.md',
-            'ISO_IEC_25010_2023_SYSTEM_READINESS.md',
+            'docs/user-guide/faq.md',
+            'docs/user-guide/guides/dar-staff.md',
+            'docs/user-guide/clearance-workflow.md',
+            'docs/user-guide/security-and-auditability.md',
+            'docs/ISO_IEC_25010_2023_SYSTEM_READINESS.md',
         ];
 
         foreach ($paths as $path) {
@@ -76,11 +79,11 @@ class DocumentationAlignmentTest extends TestCase
             $this->assertStringNotContainsString('application becomes either **Approved** or **Not Approved**', $content, "{$path} still presents Not Approved as a current outcome.");
         }
 
-        $readme = $this->read('README.md');
+        $readme = $this->read('docs/SYSTEM_OVERVIEW.md');
         $this->assertStringContainsString('**Approved** is the only current final application decision state.', $readme);
         $this->assertStringContainsString('Historical database values', $readme);
 
-        $workflow = $this->read('docs-site/clearance-workflow.md');
+        $workflow = $this->read('docs/user-guide/clearance-workflow.md');
         $this->assertStringContainsString('Approved is the only current final application decision', $workflow);
         $this->assertStringContainsString('Request Compliance', $workflow);
         $this->assertStringContainsString('Historical Not Approved / Denied records remain read-only', $workflow);
@@ -127,7 +130,7 @@ class DocumentationAlignmentTest extends TestCase
 
     public function test_form5_and_release_documentation_match_final_baseline(): void
     {
-        $readme = $this->read('README.md');
+        $readme = $this->read('docs/SYSTEM_OVERVIEW.md');
         $baseline = $this->read('docs/FINAL_SYSTEM_BASELINE.md');
         $release = $this->read('docs/RELEASE_PREPARATION.md');
 
@@ -139,9 +142,12 @@ class DocumentationAlignmentTest extends TestCase
             $this->assertStringContainsString('DENIED', $content);
         }
 
-        $this->assertStringContainsString('Release candidate', $readme);
-        $this->assertStringContainsString('No final `v1.0.0` release is claimed.', $readme);
-        $this->assertStringContainsString('SSH host-trust hardening remains explicitly deferred', $readme);
+        $landing = $this->read('README.md');
+        $this->assertStringContainsString('docs/README.md', $landing);
+        $this->assertStringNotContainsString('## Project Status', $landing);
+        foreach ([$landing, $readme, $baseline, $release] as $document) {
+            $this->assertDoesNotMatchRegularExpression('/\\bStage [123]\\b|Jake|defense-finished|defense is finished/i', $document);
+        }
         $this->assertStringContainsString('php artisan dar:release-check', $release);
         $this->assertStringContainsString('v1.0.0', $release);
         $this->assertStringContainsString('.release-commit', $release);

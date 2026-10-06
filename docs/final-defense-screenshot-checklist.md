@@ -1,6 +1,6 @@
 # Final Defense Screenshot Checklist
 
-Capture screenshots from one recorded, validated DAR-LTCMS version using realistic non-sensitive test/demo data. Record the date, user role and deployed version. Final visual refinement is reserved until after Stage 3; if later UI changes affect a thesis figure, recapture that figure and update its caption.
+Capture screenshots from one recorded, validated DAR-LTCMS version using realistic non-sensitive test/demo data. Record the date, user role and deployed version. If UI changes affect a thesis figure, recapture that figure and update its caption.
 
 ## Core system identity
 
