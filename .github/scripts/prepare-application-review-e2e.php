@@ -1,5 +1,15 @@
 <?php
 
+$completed = false;
+// Laravel renders uncaught exceptions in these standalone bootstrapped scripts.
+// Require explicit completion so every guard/assertion failure also fails CI.
+register_shutdown_function(function () use (&$completed): void {
+    if (! $completed) {
+        fwrite(STDERR, "Browser fixture/verification script did not complete.\n");
+        exit(1);
+    }
+});
+
 require __DIR__.'/../../vendor/autoload.php';
 $app = require __DIR__.'/../../bootstrap/app.php';
 $app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
@@ -92,3 +102,4 @@ if (file_put_contents($environmentFile, "E2E_REVIEW_APPLICATION_ID={$application
     throw new RuntimeException('Could not export the application review fixture ID.');
 }
 echo "Application review fixture prepared: E2E-REVIEW-001 (ID {$applicationId}).\n";
+$completed = true;

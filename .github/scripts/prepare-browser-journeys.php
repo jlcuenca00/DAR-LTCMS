@@ -1,5 +1,15 @@
 <?php
 
+$completed = false;
+// Laravel renders uncaught exceptions in these standalone bootstrapped scripts.
+// Require explicit completion so every guard/assertion failure also fails CI.
+register_shutdown_function(function () use (&$completed): void {
+    if (! $completed) {
+        fwrite(STDERR, "Browser fixture/verification script did not complete.\n");
+        exit(1);
+    }
+});
+
 require __DIR__.'/../../vendor/autoload.php';
 $app = require __DIR__.'/../../bootstrap/app.php';
 $app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
@@ -142,3 +152,4 @@ foreach ($exports as $key => $value) {
     }
 }
 echo "Dedicated workflow and geometry browser journey fixtures prepared.\n";
+$completed = true;

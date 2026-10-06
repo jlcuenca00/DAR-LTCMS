@@ -157,6 +157,15 @@ jobs:
       - name: Prepare isolated browser journey fixtures
         run: php .github/scripts/prepare-browser-journeys.php
 
+      - name: Verify journey verifier rejects unfinished fixtures
+        run: |
+          if php .github/scripts/verify-browser-journeys.php > storage/logs/browser-journey-guard.log 2>&1; then
+            cat storage/logs/browser-journey-guard.log
+            echo "::error::Unfinished browser journeys must fail verification."
+            exit 1
+          fi
+          echo "Unfinished browser journeys correctly rejected with a nonzero exit."
+
       - name: Install Playwright browser
         run: npx playwright install --with-deps chromium
 
@@ -203,4 +212,3 @@ jobs:
             storage/logs/e2e-server.log
           if-no-files-found: ignore
           retention-days: 7
-

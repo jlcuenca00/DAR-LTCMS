@@ -1,5 +1,15 @@
 <?php
 
+$completed = false;
+// Laravel renders uncaught exceptions in these standalone bootstrapped scripts.
+// Require explicit completion so every guard/assertion failure also fails CI.
+register_shutdown_function(function () use (&$completed): void {
+    if (! $completed) {
+        fwrite(STDERR, "Browser fixture/verification script did not complete.\n");
+        exit(1);
+    }
+});
+
 require __DIR__.'/../../vendor/autoload.php';
 $app = require __DIR__.'/../../bootstrap/app.php';
 $app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
@@ -49,10 +59,14 @@ $check(App\Models\Landholding::where('landowner_id', $baseline['transferee_id'])
     'Approval must not execute an ownership transfer.');
 foreach ($baseline['parcels'] as $original) {
     $current = App\Models\Parcel::findOrFail($original['id'])->toArray();
-    foreach (['geometry_geojson', 'geometry_version', 'updated_at', 'record_revision'] as $field) {
-        unset($current[$field], $original[$field]);
+    if ((int) $original['id'] === (int) $baseline['geometry_parcel_id']) {
+        $geometryFields = array_merge(['geometry_geojson', 'geometry_version', 'updated_at', 'record_revision'],
+            App\Services\ParcelMapBounds::COLUMNS);
+        foreach ($geometryFields as $field) {
+            unset($current[$field], $original[$field]);
+        }
     }
-    $check($current === $original, 'Browser journey changed protected parcel reference fields.');
+    $check($current === $original, 'Browser journey changed protected fields on Parcel #'.$original['id'].'.');
 }
 $parcel = App\Models\Parcel::findOrFail($baseline['geometry_parcel_id']);
 $check((int) $parcel->geometry_version === 1, 'Invalid or stale geometry save changed the geometry version.');
@@ -64,3 +78,4 @@ $points = $parcel->geometry_geojson['dar_source']['coordinates'] ?? [];
 $check(count($points) >= 4 && (float) $points[0][0] === 500000.0 && (float) $points[1][0] === 500100.0,
     'The stale editor overwrote the first editor’s survey coordinates.');
 echo "Browser journey persistence verified: compliance, approval/release, notifications, audit events, ownership scope, clearance integrity, geometry concurrency.\n";
+$completed = true;
