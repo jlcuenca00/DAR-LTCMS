@@ -206,25 +206,17 @@ test('real-click cancellation after draft initialization preserves the draft and
     await page.locator('button').click();
     await page.clock.runFor(1);
     expect(await page.evaluate(() => localStorage.getItem('dar_ltcms_form_draft:native-cancellation'))).not.toBeNull();
+    // Native navigation suspends the old document's timers; restore real time
+    // before the accepted click and assert cleanup after the destination loads.
+    // The recovery fixture separately advances the pending autosave deadline.
+    await page.clock.resume();
     await page.locator('input').fill('Pending draft write');
-    let releaseResponse;
-    const responseGate = new Promise(resolve => { releaseResponse = resolve; });
-    await page.route('**/draft-accepted', async route => {
-        await responseGate;
-        await route.fulfill({ contentType:'text/html', body:'<p>Saved</p>' });
-    });
+    await page.route('**/draft-accepted', route => route.fulfill({
+        contentType: 'text/html', body: '<p>Saved</p>',
+    }));
     const requested = page.waitForRequest(request => new URL(request.url()).pathname === '/draft-accepted' && request.method() === 'POST');
-    try {
-        await page.locator('button').click({ noWaitAfter: true });
-        await requested;
-        await page.clock.runFor(1);
-        expect(await page.evaluate(() => localStorage.getItem('dar_ltcms_form_draft:native-cancellation'))).toBeNull();
-        // Pass the autosave deadline while the real native submission is still pending.
-        await page.clock.runFor(1000);
-        expect(await page.evaluate(() => localStorage.getItem('dar_ltcms_form_draft:native-cancellation'))).toBeNull();
-    } finally {
-        releaseResponse();
-    }
+    await page.locator('button').click();
+    await requested;
     await expect(page).toHaveURL(/draft-accepted$/);
     expect(await page.evaluate(() => localStorage.getItem('dar_ltcms_form_draft:native-cancellation'))).toBeNull();
 });
