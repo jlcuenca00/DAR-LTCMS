@@ -12,7 +12,7 @@
         $isGeodeticProfile => [
             'portal' => 'Geodetic Portal',
             'badge' => 'Limited Access',
-            'note' => 'Manage your login profile and password. Geodetic access is limited to parcel/reference review and controlled parcel-geometry editing; ownership and application decisions remain read-only.',
+            'note' => 'Manage your login profile and password.',
         ],
         default => [
             'portal' => 'Legal Clearance Staff Workspace',

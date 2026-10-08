@@ -1,6 +1,6 @@
 <x-staff-shell
     title="Parcel Review Flag"
-    subtitle="Mark parcel records that require administrative or technical verification without changing their lifecycle or ownership information."
+    subtitle="Mark parcel records that need administrative or technical verification."
     active="parcel-records"
 >
     <x-slot name="actions">
@@ -32,7 +32,7 @@
             </div>
 
             <div class="mt-5 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-950">
-                A review flag only indicates that this parcel record requires further administrative or technical checking. It does not invalidate the parcel, change landownership, alter landholding records, decide a clearance application, or mutate official registry records.
+                Describe what needs checking so the reviewing staff can follow up.
             </div>
 
             @if ($parcel->status === 'inactive')

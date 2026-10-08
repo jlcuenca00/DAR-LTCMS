@@ -105,7 +105,7 @@
         </div>
 
         <div class="flex flex-col gap-3 border-t border-gray-200 bg-gray-50 px-6 py-4 md:flex-row md:items-center md:justify-between">
-            <p class="text-xs leading-relaxed text-gray-500">Saving this form does not edit computed hectares or transfer ownership.</p>
+            <p class="text-xs leading-relaxed text-gray-500">Computed hectares are calculated from linked landholding records.</p>
             <button type="submit" class="staff-button staff-button-primary">
                 <i class="fa-solid fa-floppy-disk"></i>
                 Save Landowner Record

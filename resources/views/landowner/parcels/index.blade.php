@@ -107,7 +107,7 @@
             <div>
                 <p class="lo-parcel-kicker">Linked Land Records</p>
                 <h2 class="lo-parcel-title">My Parcel Records</h2>
-                <p class="lo-parcel-copy">View only parcel and landholding references connected to your landowner account. These records support monitoring and do not independently establish or transfer legal ownership.</p>
+                <p class="lo-parcel-copy">View only parcel and landholding references connected to your landowner account.</p>
             </div>
 
             <div class="lo-parcel-overview-actions">

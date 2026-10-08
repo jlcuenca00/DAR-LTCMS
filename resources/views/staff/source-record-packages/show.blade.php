@@ -1053,7 +1053,7 @@
                         <div>
                             <p class="source-detail-eyebrow">Source Package Edit</p>
                             <h3 class="source-detail-title">Edit Source Package Details</h3>
-                            <p class="source-detail-help">Update the encoded reference data in one place. Related source records are synchronized for traceability only; this does not mutate parcel ownership or transfer land.</p>
+                            <p class="source-detail-help">Update the encoded reference data in one place. Related source records are synchronized when you save.</p>
                         </div>
                         <span class="staff-badge staff-badge-green">Unified Edit</span>
                     </div>
@@ -1199,7 +1199,7 @@
                                 </div>
 
                                 <div class="source-scope-warning">
-                                    Changes here update administrative source/reference records only. They do not automatically change parcel ownership, landholding ownership, or any external registry record.
+                                    Check the source document before saving changes.
                                 </div>
 
                                 <div class="source-action-row">
@@ -1382,7 +1382,7 @@
                         </div>
 
                         <div class="source-link-guidance">
-                            <strong>Note:</strong> Linking a source party only connects this digitized source package to a landowner record for traceability. It does not transfer ownership or mutate registry records.
+                            <strong>Note:</strong> Link each source party to the matching Landowner Record.
                         </div>
                     </div>
                 </section>
@@ -1649,7 +1649,7 @@
                                     <p class="source-detail-label">Source Scan / Reference File</p>
                                     <p class="source-detail-info-value">{{ $package->has_source_file ? ($package->source_file_original_filename ?? 'Attached source file') : 'No source file attached yet' }}</p>
                                     <p class="source-file-proof-subtitle">
-                                        Attach or replace the scanned document, PDF, or image used as the basis of this source package. This supports traceability but does not legally verify ownership or mutate registry records.
+                                        Attach or replace the scanned document, PDF, or image used as the basis of this source package.
                                     </p>
                                 </div>
                                 <span class="staff-badge {{ $package->source_file_status_class }}">{{ $package->source_file_status_label }}</span>

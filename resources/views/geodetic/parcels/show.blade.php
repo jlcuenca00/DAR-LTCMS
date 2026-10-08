@@ -213,7 +213,7 @@
                         <div class="geo-geometry-summary">
                             <p class="geo-geometry-label">Geometry Reference</p>
                             <p class="geo-geometry-value">{{ $parcel->geometryReferenceLabel() }}</p>
-                            <p class="geo-geometry-copy">Stored geometry is a technical reference and does not establish legal boundaries or ownership. Archived records and geometry needing review may not appear on the map.</p>
+                            <p class="geo-geometry-copy">Archived records and geometry needing review may not appear on the map.</p>
                         </div>
 
                         <a href="{{ route('geodetic.parcel-map.index') }}" class="geo-button geo-button-primary">

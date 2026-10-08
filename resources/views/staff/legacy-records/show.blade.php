@@ -536,7 +536,7 @@
                                         <input name="contact_number" value="{{ old('contact_number') }}" class="w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-green-600 focus:ring-green-600">
                                     </div>
                                     <div class="rounded-lg border border-yellow-200 bg-yellow-50 p-3 text-xs leading-relaxed text-yellow-900">
-                                        This creates a main Landowner Record for administrative use only. It does not certify legal ownership, execute transfer, or alter registry records.
+                                        Verify the source details before creating the Landowner Record.
                                     </div>
                                     <button type="submit" class="staff-button staff-button-dark justify-center">
                                         <i class="fa-solid fa-user-plus"></i>
@@ -559,7 +559,7 @@
                     <p class="text-xs font-black uppercase tracking-[0.16em] text-green-700">Parcel Record Linkage</p>
                     <h2 class="staff-panel-title mt-1">Attach Source to Main Parcel Record</h2>
                     <p class="staff-panel-subtitle mt-1">
-                        Link an existing parcel or create a main parcel record only after staff confirms the source reference. This does not create or transfer ownership.
+                        Link an existing parcel or create a main parcel record only after staff confirms the source reference.
                     </p>
                 </div>
 

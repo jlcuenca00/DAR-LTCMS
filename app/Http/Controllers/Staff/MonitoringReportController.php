@@ -137,8 +137,8 @@ class MonitoringReportController extends Controller
             'hasActiveFilters' => $filterLabels->isNotEmpty(),
             'statusOptions' => $statusOptions,
             'municipalities' => $municipalities,
-            'scopeNotice' => 'This report is for administrative monitoring, records management, and decision support. Approved is the only current final clearance decision; older Not Approved / Denied records remain historical and read-only. Client release is tracked separately. No clearance decision or release record mutates parcel ownership or registry records, or replaces separate legal and administrative procedures.',
-            'areaNotice' => 'Recorded output area is the summed parcel area preserved in final clearance snapshots. It is not a measurement of land whose legal ownership has been transferred.',
+            'scopeNotice' => 'Results include Approved clearances and preserved historical negative records. Client release is tracked separately.',
+            'areaNotice' => 'Recorded output area is the summed parcel area preserved in final clearance snapshots.',
         ];
     }
 

@@ -14,7 +14,7 @@ function initializeGeodeticDashboardQueue() {
 
     const heroCopy = hero.querySelector('.geo-dashboard-copy');
     if (heroCopy) {
-        heroCopy.textContent = 'Review parcel references and map geometry. Administrative, ownership, landholding, application, and clearance data remain read-only in the Geodetic workspace.';
+        heroCopy.textContent = 'Review parcel references and map geometry. Open a parcel to inspect its details or update its mapped shape when available.';
     }
 
     const panel = makeElement('article', 'geo-mapping-queue');

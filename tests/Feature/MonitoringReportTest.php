@@ -49,8 +49,8 @@ class MonitoringReportTest extends TestCase
         $response->assertSee('REPORT-PENDING-001');
         $response->assertSee('REPORT-NOT-APPROVED-001');
         $response->assertSee('1803-2026-0001 (1)');
-        $response->assertSee('not ownership transferred');
-        $response->assertSee('No clearance decision or release record mutates parcel ownership or registry records');
+        $response->assertSee('recorded in final clearance snapshots');
+        $response->assertSee('Results include Approved clearances and preserved historical negative records.');
 
         $this->assertSame($pending->id, $pending->fresh()->id);
     }
@@ -221,8 +221,8 @@ class MonitoringReportTest extends TestCase
         $response->assertSee('Dumaguete City');
         $response->assertSee('PRINT-KEEP-001');
         $response->assertDontSee('PRINT-DROP-001');
-        $response->assertSee('not ownership transferred');
-        $response->assertSee('does not constitute a registry mutation');
+        $response->assertSee('recorded in final clearance snapshots');
+        $response->assertSee('Recorded output area is the summed parcel area preserved in final clearance snapshots.');
     }
 
     public function test_non_staff_users_cannot_access_monitoring_or_print_reports(): void
