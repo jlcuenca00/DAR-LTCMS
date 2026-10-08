@@ -271,7 +271,7 @@
                         <div class="workflow-step"><span class="workflow-number">7</span><strong>Signed Form No. 5 / Ready for Release</strong></div>
                         <div class="workflow-step"><span class="workflow-number">8</span><strong>Release to Client</strong></div>
                     </div>
-                    <div class="decision-note">Approved is the only current final application decision in DAR-LTCMS. Issues that block approval use the Compliance Required workflow instead of a negative final decision. Release of the signed result is tracked separately, and approval does not itself change land ownership.</div>
+                    <div class="decision-note">If additional documents or corrections are needed, DAR will request compliance. You can track application progress and clearance release through your account.</div>
                 </div>
             </div>
         </section>

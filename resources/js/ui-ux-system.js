@@ -381,7 +381,7 @@ function enhanceReadOnlyContext() {
         const banner = document.createElement('div');
         banner.className = 'ui-locked-state';
         banner.setAttribute('role', 'status');
-        banner.innerHTML = '<strong>Final decision recorded — editing is locked.</strong><span>Application data and uploads remain available for authorized viewing and archival actions only. The clearance decision does not itself execute or finalize land ownership transfer or registry mutation.</span>';
+        banner.innerHTML = '<strong>Final decision recorded — editing is locked.</strong><span>Application data and uploads remain available for authorized viewing and archival actions only.</span>';
         page.prepend(banner);
     });
 }
