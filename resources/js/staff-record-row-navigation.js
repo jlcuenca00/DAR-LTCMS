@@ -161,7 +161,7 @@ function enhanceParcelEditReviewFlag() {
             </div>
         </div>
         <div class="parcel-review-shortcut-note">
-            Review flags do not change parcel ownership, landholding, application decisions, or registry records.
+            Flag this parcel for staff follow-up.
         </div>
         <a class="staff-button staff-button-light justify-center parcel-review-shortcut-action" href="/staff/records/parcels/${parcelId}/review-flag">
             <i class="fa-solid fa-flag"></i>

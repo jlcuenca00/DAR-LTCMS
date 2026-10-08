@@ -108,7 +108,7 @@
             <div>
                 <p class="geo-record-kicker">Technical Reference View</p>
                 <h2 class="geo-record-title">Parcel and Landholding Records</h2>
-                <p class="geo-record-copy">Review encoded parcel references, linked landowners, hectare values, and geometry reference state. Ownership and application records remain read-only; parcel geometry may be updated only through the controlled Geodetic geometry workflow.</p>
+                <p class="geo-record-copy">Review encoded parcel references, linked landowners, hectare values, and geometry reference state. Open a parcel to inspect its details and available geometry actions.</p>
             </div>
 
             <div class="geo-record-actions">

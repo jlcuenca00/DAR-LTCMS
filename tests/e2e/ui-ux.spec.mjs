@@ -94,11 +94,10 @@ test.describe('authenticated UI UX behavior', () => {
         await expect(disclosure).toHaveAttribute('open', '');
     });
 
-    test('application review renders the decision scope boundary and collapsible LTC detail panels', async ({ page }) => {
+    test('application review keeps confirmation hidden and LTC detail panels collapsible', async ({ page }) => {
         await openReviewFixture(page);
-        const scopeNote = page.locator('#decision-confirm-modal .ui-decision-scope-note');
-        await expect(scopeNote).toContainText('does not itself execute or finalize legal land ownership transfer');
-        await expect(scopeNote).toBeHidden();
+        await expect(page.locator('#decision-confirm-modal .ui-decision-scope-note')).toHaveCount(0);
+        await expect(page.locator('#decision-confirm-modal')).toBeHidden();
 
         const form4 = page.locator('details#ltc-form-no-4-review');
         await expect(form4.locator('.ui-review-disclosure-toggle')).toHaveCount(0);

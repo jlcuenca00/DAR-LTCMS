@@ -376,7 +376,7 @@
         </table>
 
         <p class="report-note">
-            Audit records are read-only system activity entries. This report supports administrative traceability and does not itself execute or confirm any land ownership transfer or registry mutation.
+            Audit records are read-only system activity entries.
         </p>
     </main>
 </body>

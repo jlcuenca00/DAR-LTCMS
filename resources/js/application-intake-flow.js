@@ -135,10 +135,6 @@ function initApplicationCreate() {
                 <h2 class="intake-flow-title">Use this page as the starting point for a new clearance case.</h2>
                 <p class="intake-flow-copy">The application can be saved even when a Landowner or Parcel Record still needs to be created or linked. The saved case will guide the remaining record work.</p>
             </div>
-            <div class="intake-flow-note">
-                <strong>No ownership change occurs here.</strong><br>
-                Encoding and record linking support clearance processing, monitoring, validation, and traceability only.
-            </div>
         </div>
         <div class="intake-flow-steps">
             <div class="intake-flow-step"><strong>1 · Intake</strong><span>Applicant and application date. Payment is recorded later after completeness review.</span></div>
@@ -187,7 +183,7 @@ function initApplicationCreate() {
 
     const footerNote = form.querySelector('.footer-note');
     if (footerNote) {
-        footerNote.textContent = 'Saving creates the clearance application under Legal Completeness Review, then opens the case for parcel links, Landowner links, requirement review, and workflow processing. Saving does not transfer ownership or alter registry records.';
+        footerNote.textContent = 'Saving creates the clearance application under Legal Completeness Review, then opens the case for parcel links, Landowner links, requirement review, and workflow processing.';
     }
 }
 
@@ -321,7 +317,6 @@ function initApplicationShow() {
                 <h2 class="intake-readiness-title">Record Readiness</h2>
                 <p class="intake-readiness-subtitle">
                     Use this checklist to finish the record links and review information needed for clearance processing.
-                    These checks support administrative processing and traceability only; they do not execute or finalize ownership transfer.
                 </p>
             </div>
             <span class="intake-readiness-badge"><i class="fa-solid fa-route"></i>${finalized ? 'Final Record Snapshot' : 'Next Actions'}</span>

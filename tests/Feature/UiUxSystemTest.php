@@ -56,8 +56,7 @@ class UiUxSystemTest extends TestCase
         $this->assertStringContainsString('attachClientValidation', $lastMile);
         $this->assertStringContainsString('enhanceRecordSelects', $lastMile);
         $this->assertStringContainsString('enhanceRequirementGroupHeaders', $lastMile);
-        $this->assertStringContainsString('addDecisionScopeBoundary', $lastMile);
-        $this->assertStringContainsString('does not itself execute or finalize legal land ownership transfer or registry mutation', $lastMile);
+        $this->assertStringNotContainsString('ui-decision-scope-note', $lastMile);
     }
 
     public function test_notification_ui_keeps_approval_and_release_as_distinct_events(): void
@@ -86,6 +85,7 @@ class UiUxSystemTest extends TestCase
         $this->assertStringContainsString('data-decision-confirm="approve"', $review);
         $this->assertStringNotContainsString('data-decision-confirm="deny"', $review);
         $this->assertStringContainsString('final_decision_confirmation', $review);
+        $this->assertStringContainsString('This finalizes and locks the application.', $review);
         $this->assertStringContainsString('Record PARPO II Approved Decision', $review);
         $this->assertStringContainsString('Record Approved Decision', $review);
         $this->assertStringContainsString('Request Compliance / Action Required', $review);

@@ -145,7 +145,7 @@ const roleTours = {
                 path: '/geodetic/parcel-map',
                 selectors: ['.geo-legend-list', '.geo-map-sidebar', '.geo-content'],
                 title: 'Map Legend and Review Flags',
-                copy: 'The legend distinguishes mapped parcel records from parcels flagged for review. Flags are review cues only and do not authorize ownership or registry changes.',
+                copy: 'The legend distinguishes mapped parcel records from parcels flagged for review. Use review flags to identify parcels that need checking.',
                 side: 'right',
             },
             {

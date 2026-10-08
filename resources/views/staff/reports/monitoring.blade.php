@@ -187,12 +187,12 @@
             <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
                 <p class="text-xs font-black uppercase tracking-wide text-slate-500">Recorded Output Area</p>
                 <p class="mt-2 text-3xl font-black text-slate-950">{{ number_format((float) $totalClearanceArea, 4) }}</p>
-                <p class="mt-2 text-xs font-semibold text-slate-500">hectares in final output snapshots; not ownership transferred.</p>
+                <p class="mt-2 text-xs font-semibold text-slate-500">hectares recorded in final clearance snapshots.</p>
             </article>
         </section>
 
         <section class="rounded-2xl border border-green-200 bg-green-50 p-4 text-sm font-semibold leading-6 text-green-950">
-            <strong class="font-black">Scope notice.</strong> {{ $scopeNotice }}
+            <strong class="font-black">Report basis.</strong> {{ $scopeNotice }}
             <span class="block mt-1 text-xs text-green-900">{{ $areaNotice }}</span>
         </section>
 

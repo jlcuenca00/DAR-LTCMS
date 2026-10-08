@@ -2983,7 +2983,6 @@
                         <p class="workflow-overview-next">
                             <strong>{{ $isFinal ? 'Available action:' : 'Expected next recording action:' }}</strong>
                             {{ $workflowActionLabel }}.
-                            DAR-LTCMS records and monitors the administrative action; it does not impersonate the external DAR authority or execute land ownership transfer.
                         </p>
                     </div>
 
@@ -3245,7 +3244,7 @@
 
                     <div class="landowner-link-save-row">
                         <p class="landowner-link-save-note">
-                            Link selections and hectare-share edits are not autosaved. Press Save Link Changes to record them. This supports administrative review only and does not transfer ownership or mutate registry records.
+                            Link selections and hectare-share edits are not autosaved. Press Save Link Changes to record them.
                         </p>
 
                         <button type="submit" class="staff-button staff-button-primary" @disabled($isFinal)>
@@ -3781,7 +3780,7 @@
                         @else
                             All linked transferee projections are within the 5-hectare reference limit based on encoded system records.
                         @endif
-                        This validation is assistive only and does not execute or finalize legal land transfer.
+                        Verify the supporting records before continuing.
                     </div>
                 </div>
             </section>
@@ -4094,7 +4093,7 @@
                                     </div>
 
                                     <div class="workflow-decision-note">
-                                        Approval is final and locks the application. It does not transfer ownership. Client release is recorded separately afterward.
+                                        Approval is final and locks the application. Record client release separately afterward.
                                     </div>
                                 </div>
 
@@ -4202,7 +4201,7 @@
                                     </div>
 
                                     <div class="workflow-decision-note">
-                                        Resolving compliance resumes the previous workflow stage. It does not approve the clearance by itself.
+                                        Resolving compliance resumes the previous workflow stage.
                                     </div>
                                 </div>
 
@@ -4224,9 +4223,6 @@
                 @endif
             </div>
 
-            <div class="workflow-modal-footer">
-                <span class="text-xs font-semibold text-slate-500">Workflow updates are recorded by Legal Clearance Staff and preserved in the application audit trail.</span>
-            </div>
         </div>
     </div>
 

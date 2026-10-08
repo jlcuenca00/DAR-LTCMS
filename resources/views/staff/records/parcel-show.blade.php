@@ -738,7 +738,7 @@
                 <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-3 mb-5">
                     <div>
                         <h3 class="staff-panel-title">Parcel Reference Information</h3>
-                        <p class="staff-panel-subtitle">Core encoded reference values used for DAR clearance review, source matching, and map display. This page does not execute ownership transfer or registry mutation.</p>
+                        <p class="staff-panel-subtitle">Core encoded reference values used for DAR clearance review, source matching, and map display.</p>
                     </div>
                 </div>
 
@@ -1135,7 +1135,7 @@
 
             <div class="archive-modal-body">
                 <div class="archive-modal-warning">
-                    This is not a permanent deletion and does not transfer ownership, change landholding ownership, or mutate registry records.
+                    The record will be archived, not permanently deleted.
                 </div>
             </div>
 

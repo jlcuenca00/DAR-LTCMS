@@ -178,7 +178,7 @@
             <div>
                 <p class="geo-dashboard-kicker">Geodetic Review Workspace</p>
                 <h2 class="geo-dashboard-title">Parcel and map reference overview</h2>
-                <p class="geo-dashboard-copy">Review parcel boundaries, encoded references, and linked landholding information through the limited Geodetic workspace. Only parcel geometry has a controlled edit workflow; ownership and application decisions remain read-only.</p>
+                <p class="geo-dashboard-copy">Review parcel boundaries, encoded references, and linked landholding information. Open the map to inspect parcel locations.</p>
                 <a href="{{ route('geodetic.parcel-map.index') }}" class="geo-dashboard-action">
                     <i class="fa-solid fa-map-location-dot"></i>
                     Open Parcel Map

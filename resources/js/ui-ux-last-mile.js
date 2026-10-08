@@ -247,17 +247,6 @@ function portalApplicationReviewModals() {
     });
 }
 
-function addDecisionScopeBoundary() {
-    const modal = document.getElementById('decision-confirm-modal');
-    const body = modal?.querySelector('.decision-modal-body');
-    if (!modal || !body || body.querySelector('.ui-decision-scope-note')) return;
-
-    const note = document.createElement('div');
-    note.className = 'ui-decision-scope-note';
-    note.innerHTML = '<strong>Clearance scope</strong><span>This final decision records the DAR clearance result and locks the application record. It does not itself execute or finalize legal land ownership transfer or registry mutation.</span>';
-    body.appendChild(note);
-}
-
 function addAuditTimezoneNote() {
     const audit = document.querySelector('.audit-page');
     const recordsHeader = audit?.querySelector('.audit-records-header');
@@ -277,7 +266,6 @@ function initUiUxLastMile() {
     cleanupLegacyRequirementGroupControls();
     window.setTimeout(cleanupLegacyRequirementGroupControls, 0);
     portalApplicationReviewModals();
-    addDecisionScopeBoundary();
     addAuditTimezoneNote();
 }
 

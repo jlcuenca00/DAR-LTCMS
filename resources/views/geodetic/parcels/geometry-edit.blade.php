@@ -202,7 +202,7 @@
                     </div>
 
                     <div class="geo-map-editor-scope">
-                        <strong>Geodetic permission scope:</strong> map geometry only. All administrative, ownership, application, and clearance information remains protected from Geodetic edits. Saving geometry does not establish or transfer legal ownership.
+                        Review the parcel shape before saving. Your changes are saved as a new geometry revision.
                     </div>
 
                     <div class="geo-map-editor-history">

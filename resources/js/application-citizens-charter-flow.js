@@ -169,7 +169,7 @@ function configureFinalDecisionCards(state) {
 
     if (title) title.textContent = 'Record PARPO II Approved Decision';
     if (copy) copy.textContent = 'Legal Clearance Staff records the official PARPO II Approved decision, signatory, and decision date, then DAR-LTCMS generates the immutable GRANTED LTC Form No. 5 output.';
-    if (note) note.textContent = 'Approval is final and locks the application. It does not transfer ownership. Client release is recorded separately afterward.';
+    if (note) note.textContent = 'Approval is final and locks the application. Record client release separately afterward.';
     if (button) button.innerHTML = '<i class="fa-solid fa-check"></i> Record Approved Decision';
 
     approveForm.addEventListener('submit', () => {
@@ -239,7 +239,7 @@ function addReleaseTracking(state, applicationId) {
                         </select>
                     </label>
                 </div>
-                <div class="workflow-decision-note">This records document delivery only. It does not alter the final decision, parcel ownership, landholding ownership, or registry records.</div>
+                <div class="workflow-decision-note">Record delivery of the signed clearance to the client.</div>
             </div>
             <button type="submit" class="staff-button staff-button-primary"><i class="fa-solid fa-hand-holding-document"></i> Confirm Release to Client</button>
         `;
