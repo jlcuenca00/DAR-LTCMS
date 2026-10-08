@@ -165,7 +165,8 @@ test.describe(`real ${mode.name} browser-to-server journeys`, () => {
             await approve.locator('[name="decision_date"]').fill(decisionDate);
             await approve.getByRole('button', { name: /Record Approved Decision$/ }).click();
             await expect(page.locator('#decision-confirm-modal')).toBeVisible();
-            await expect(page.locator('#decision-confirm-modal .ui-decision-scope-note')).toBeVisible();
+            await expect(page.locator('#decision-confirm-warning')).toBeVisible();
+            await expect(page.locator('#decision-confirm-warning')).toContainText('This finalizes and locks the application.');
             await page.locator('#decision-confirm-cancel').click();
             expect((await state(page, approvalId)).workflow_revision).toBe(initial.workflow_revision);
             expect((await state(page, approvalId)).status).toBe('for_releasing');
