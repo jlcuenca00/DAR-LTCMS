@@ -63,5 +63,5 @@ test('parcel viewer keeps one tooltip and cleans overlays before redraws', async
         window.fixtureMap.eachLayer(layer => { if (layer.getTooltip?.()) layer.openTooltip(); });
     });
     await expect(page.locator('.parcel-tooltip')).toHaveCount(1);
-    await expect(page.locator('.parcel-tooltip')).toContainText('Current active linked area');
+    await expect(page.locator('.parcel-tooltip')).toContainText('Active holding area');
 });

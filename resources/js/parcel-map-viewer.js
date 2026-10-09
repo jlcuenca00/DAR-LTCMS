@@ -144,12 +144,15 @@ function initializeParcelMapViewer() {
 
     function tooltip(record) {
         const row = (label, value) => '<div class="parcel-tooltip-row"><span class="parcel-tooltip-label">' + label + ':</span> ' + esc(value) + '</div>';
+        const location = [record.barangay, record.municipality]
+            .filter(value => value && value !== 'N/A').join(', ') || 'Location not recorded';
         return '<div class="parcel-tooltip-card"><div class="parcel-tooltip-title">' + esc(record.parcel_code) + '</div>' +
-            row('Landowner reference', record.landowner) + row('Reference scope', record.reference_scope) +
-            row('Location', record.barangay + ', ' + record.municipality) +
+            row('Landowner', record.landowner) +
+            (record.reference_scope && record.reference_scope !== record.landowner ? row('Reference', record.reference_scope) : '') +
+            row('Location', location) +
             row('Parcel area', (record.area_hectares ?? 'N/A') + ' ha') +
-            row(config.role === 'landowner' ? 'Your current active linked area' : 'Current active linked area', record.active_linked_area_hectares + ' ha') +
-            row('Historical/non-active holding records', record.historical_holding_count) +
+            row(config.role === 'landowner' ? 'Your active holding area' : 'Active holding area', record.active_linked_area_hectares + ' ha') +
+            row('Previous/inactive holdings', record.historical_holding_count) +
             row('Title No.', record.title_no) + row('Tax Declaration', record.tax_decl_no) +
             (record.is_flagged ? row('Review flag', record.flag_reason) : '') +
             row('Click', 'Open parcel record') + '</div>';

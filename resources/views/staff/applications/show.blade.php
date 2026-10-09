@@ -323,6 +323,14 @@
                 align-items: end;
             }
 
+            .application-parcel-lookup { position: relative; }
+            .application-parcel-help { position: absolute; top: 100%; left: 0; right: 0; }
+            .application-parcel-form { padding-bottom: 32px; }
+            @media (max-width: 760px) {
+                .application-parcel-form { grid-template-columns: minmax(0, 1fr); padding-bottom: 0; }
+                .application-parcel-help { position: static; }
+            }
+
             .application-parcel-empty {
                 border: 1px dashed #bbd7c4;
                 background: #ffffff;
@@ -3051,7 +3059,7 @@
 
                         <div>
                             <label for="application_parcel_id">Parcel record</label>
-                            <div data-remote-record-select data-lookup-url="{{ route('staff.lookups.parcels', ['scope' => 'active']) }}" class="space-y-2">
+                            <div data-remote-record-select data-lookup-url="{{ route('staff.lookups.parcels', ['scope' => 'active']) }}" class="space-y-2 application-parcel-lookup">
                                 <input type="search"
                                        class="review-input"
                                        placeholder="Search parcel code, title, lot, survey, or record ID"
@@ -3066,12 +3074,12 @@
                                         data-placeholder="Select parcel record">
                                     <option value="">Select parcel record</option>
                                 </select>
-                                <p class="review-panel-subtitle" data-remote-record-status>Search loads a bounded set of active parcel records.</p>
+                                <p class="review-panel-subtitle application-parcel-help" data-remote-record-status>Search and select a parcel to add to this application.</p>
                             </div>
                         </div>
 
                         <div>
-                            <label for="application_parcel_area">Area hectares</label>
+                            <label for="application_parcel_area">Area (ha)</label>
                             <input id="application_parcel_area" type="number" step="0.0001" min="0.0001" name="area_hectares" class="review-input" placeholder="Use parcel area" data-application-parcel-area>
                         </div>
 

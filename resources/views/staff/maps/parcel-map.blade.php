@@ -38,8 +38,8 @@
             .map-fallback strong { display: block; margin-bottom: 6px; color: #0f172a; }
             .leaflet-control-zoom a { background: #fff !important; color: #14532d !important; }
             .leaflet-control-attribution { background: rgba(255, 255, 255, .92) !important; }
-            .parcel-tooltip { padding: 0; border: 1px solid #bbf7d0; border-radius: 12px; background: rgba(255, 255, 255, .98); color: #111827; box-shadow: 0 15px 30px rgba(15, 23, 42, .18); }
-            .parcel-tooltip-card { min-width: 0; width: min(230px, calc(100vw - 64px)); padding: 13px; }
+            .parcel-tooltip { white-space: normal; padding: 0; border: 1px solid #bbf7d0; border-radius: 12px; background: rgba(255, 255, 255, .98); color: #111827; box-shadow: 0 15px 30px rgba(15, 23, 42, .18); }
+            .parcel-tooltip-card { box-sizing: border-box; overflow-wrap: anywhere; min-width: 0; width: min(290px, calc(100vw - 64px)); padding: 13px; }
             .parcel-tooltip-title { margin-bottom: 6px; color: #14532d; font-size: 13px; font-weight: 900; }
             .parcel-tooltip-row { margin-top: 4px; color: #374151; font-size: 11px; line-height: 1.4; overflow-wrap: anywhere; }
             .parcel-tooltip-label { color: #6b7280; font-weight: 800; }
