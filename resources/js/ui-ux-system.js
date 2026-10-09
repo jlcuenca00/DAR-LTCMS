@@ -132,7 +132,10 @@ function selectToRadio(select, config = {}) {
     select.dataset.uiRadioEnhanced = 'true';
     select.classList.add('ui-native-select-fallback');
     select.hidden = true;
-    if (label) label.hidden = true;
+    if (label) {
+        label.hidden = true;
+        label.classList.add('ui-native-label-fallback');
+    }
     select.before(fieldset);
 }
 
@@ -146,15 +149,15 @@ function enhanceBinaryQuestions() {
 
     selectToRadio(document.getElementById('is_succession_case'), {
         labels: {
-            '0': 'No / not indicated',
-            '1': 'Yes, succession / inheritance context',
+            '0': 'No',
+            '1': 'Yes',
         },
     });
 
     selectToRadio(document.getElementById('retention_certificate_required'), {
         labels: {
-            '0': 'Not required / not indicated',
-            '1': 'Required for this review',
+            '0': 'Not required',
+            '1': 'Required',
         },
     });
 }

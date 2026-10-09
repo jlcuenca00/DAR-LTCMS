@@ -126,9 +126,9 @@
             .leaflet-popup-tip { background: #ffffff; color: #111827; border: 1px solid #d7ded9; box-shadow: 0 18px 40px rgba(15, 23, 42, .18); }
             .leaflet-popup-content { margin: 14px 16px; font-family: inherit; }
 
-            .parcel-tooltip { background: rgba(255, 255, 255, .98); color: #111827; border: 1px solid #bbf7d0; border-radius: 10px; padding: 0; box-shadow: 0 15px 30px rgba(15, 23, 42, .18); }
+            .parcel-tooltip { white-space: normal; background: rgba(255, 255, 255, .98); color: #111827; border: 1px solid #bbf7d0; border-radius: 10px; padding: 0; box-shadow: 0 15px 30px rgba(15, 23, 42, .18); }
             .parcel-tooltip::before { border-top-color: #ffffff; }
-            .parcel-tooltip-card { min-width: 0; width: min(240px, calc(100vw - 64px)); padding: 12px; }
+            .parcel-tooltip-card { box-sizing: border-box; overflow-wrap: anywhere; min-width: 0; width: min(290px, calc(100vw - 64px)); padding: 12px; }
             .parcel-tooltip-title { color: var(--geo-green-900); font-size: 12px; font-weight: 900; margin-bottom: 6px; }
             .parcel-tooltip-row { margin-top: 4px; color: #344054; font-size: 10px; line-height: 1.4; overflow-wrap: anywhere; }
             .parcel-tooltip-label { color: #667085; font-weight: 900; }

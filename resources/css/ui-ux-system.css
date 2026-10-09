@@ -333,7 +333,8 @@
         accent-color: var(--dar-brand-700);
     }
 
-    .ui-native-select-fallback[hidden] {
+    .ui-native-select-fallback[hidden],
+    .ui-native-label-fallback[hidden] {
         display: none !important;
     }
 
