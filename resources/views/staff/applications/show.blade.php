@@ -3387,7 +3387,8 @@
                             $isUploaded = (bool) data_get($requirementStates->get($req->id), 'present', false);
                             $documentSaved = $doc !== null;
                             $editPanelId = 'document-edit-panel-' . $req->id;
-                            $documentExists = $isUploaded && $doc->file_path && \Illuminate\Support\Facades\Storage::exists($doc->file_path);
+                            $hasAttachedFile = $documentSaved && filled($doc->file_path);
+                            $documentExists = $hasAttachedFile && \Illuminate\Support\Facades\Storage::exists($doc->file_path);
                             $documentMime = $documentExists ? (\Illuminate\Support\Facades\Storage::mimeType($doc->file_path) ?: null) : null;
                             $isImageDocument = $documentMime && str_starts_with((string) $documentMime, 'image/');
                             $isPdfDocument = $documentMime === 'application/pdf';
@@ -3445,9 +3446,13 @@
                                             Requirement Details
                                         </p>
                                         <p class="document-status-copy">
-                                            Requirement details have been encoded. The attached file is optional/supporting only; use Edit to update the details or replace the file if needed.
+                                            Requirement details have been encoded. Supporting file attachments are optional.
+                                            @unless ($isFinal)
+                                                Use Edit to update the details or supporting attachment.
+                                            @endunless
                                         </p>
 
+                                        @if ($hasAttachedFile)
                                         <div class="document-detail-grid mt-3">
                                             <div class="document-detail-item">
                                                 <strong>Filename</strong>
@@ -3455,6 +3460,8 @@
                                             </div>
 
                                         </div>
+
+                                        @endif
 
                                         @if ($documentExists)
                                             <div class="document-file-review">
@@ -3502,10 +3509,15 @@
                                                     </div>
                                                 </div>
                                             </div>
-                                        @else
+                                        @elseif ($hasAttachedFile)
                                             <div class="document-file-missing">
                                                 <i class="fa-solid fa-triangle-exclamation"></i>
-                                                Uploaded file record found, but the stored file could not be located. Check storage/app and the file path before review.
+                                                The attached file is unavailable.
+                                                @if ($isFinal)
+                                                    Contact the system administrator for assistance.
+                                                @else
+                                                    Please upload it again using Edit.
+                                                @endif
                                             </div>
                                         @endif
 
