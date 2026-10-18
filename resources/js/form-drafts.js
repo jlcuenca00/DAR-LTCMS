@@ -120,29 +120,61 @@ function initFormDrafts() {
         if (form.dataset.draftReady) return;
         form.dataset.draftReady = 'true';
         const key = draftPrefix + form.dataset.autosaveKey;
+        const retainUntilConfirmed = form.hasAttribute('data-draft-confirmed-save');
+        const status = form.querySelector('[data-draft-status]');
+        const setStatus = message => { if (status) status.textContent = message; };
+        if (retainUntilConfirmed && window.darFormDraftContext?.savedKey === form.dataset.autosaveKey) {
+            try { localStorage.removeItem(key); } catch { /* Storage is optional. */ }
+        }
         let timer;
         let submitting = false;
+        let dirty = false;
         const save = () => {
             if (submitting) return;
-            try { localStorage.setItem(key, JSON.stringify(readDraft(form))); } catch { /* Storage is optional. */ }
+            try {
+                const draft = readDraft(form);
+                if (retainUntilConfirmed) draft.serverVersion = form.dataset.draftServerVersion;
+                localStorage.setItem(key, JSON.stringify(draft));
+                if (retainUntilConfirmed) setStatus('Draft saved on this browser. Click Save This Requirement to save it to the system. Select attachments again after reloading.');
+            } catch {
+                if (retainUntilConfirmed) setStatus('Browser draft storage is unavailable. Keep this page open until you can save.');
+            }
         };
         try {
             const raw = localStorage.getItem(key);
-            if (raw && !window.darFormDraftContext?.hasOldInput) restoreDraft(form, JSON.parse(raw));
+            if (raw) {
+                const draft = JSON.parse(raw);
+                const obsolete = retainUntilConfirmed && (draft.serverVersion !== form.dataset.draftServerVersion
+                    || !Number.isFinite(Date.parse(draft.savedAt))
+                    || Date.now() - Date.parse(draft.savedAt) > 7 * 24 * 60 * 60 * 1000);
+                if (obsolete) localStorage.removeItem(key);
+                else if (!window.darFormDraftContext?.hasOldInput) {
+                    restoreDraft(form, draft);
+                    dirty = true;
+                    if (retainUntilConfirmed) setStatus('Unsaved details restored from this browser. Review them and click Save This Requirement. Select attachments again.');
+                }
+            }
         } catch { /* Ignore unavailable storage or malformed drafts. */ }
 
         const schedule = () => {
+            dirty = true;
             clearTimeout(timer);
             if (!submitting) timer = window.setTimeout(save, 450);
         };
         form.addEventListener('input', schedule);
         form.addEventListener('change', schedule);
+        if (retainUntilConfirmed) window.addEventListener('pagehide', () => { if (dirty) save(); });
         form.addEventListener('submit', event => {
             // Native events can run microtasks between listeners. Wait until
             // all validation and confirmation handlers finish before cleanup.
             window.setTimeout(() => {
                 if (event.defaultPrevented) return;
                 clearTimeout(timer);
+                if (retainUntilConfirmed) {
+                    save();
+                    setStatus('Saving requirement. The browser draft is kept until the system confirms success.');
+                    return;
+                }
                 submitting = true;
                 try { localStorage.removeItem(key); } catch { /* Storage is optional. */ }
             }, 0);
