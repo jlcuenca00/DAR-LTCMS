@@ -45,13 +45,13 @@ test("account details keep shared gutters and switch panels without losing edits
         expect(title.height).toBeLessThan(65);
         await page.getByRole("tab", { name: "Details", exact: true }).click();
         await expect(page.getByLabel("Role", { exact: true })).toBeVisible();
-        await expect(page.getByLabel("Linked Landowner Record")).toBeHidden();
+        await expect(page.getByLabel("Linked Landowner Record", { exact: true })).toBeHidden();
         await page
             .getByLabel("Role", { exact: true })
             .selectOption("landowner");
-        await expect(page.getByLabel("Linked Landowner Record")).toBeVisible();
+        await expect(page.getByLabel("Linked Landowner Record", { exact: true })).toBeVisible();
         await page.getByLabel("Role", { exact: true }).selectOption("geodetic");
-        await expect(page.getByLabel("Linked Landowner Record")).toBeHidden();
+        await expect(page.getByLabel("Linked Landowner Record", { exact: true })).toBeHidden();
         await page
             .getByLabel("Name", { exact: true })
             .fill("Unsaved browser check");
