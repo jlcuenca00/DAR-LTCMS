@@ -3,11 +3,13 @@
 namespace App\Http\Controllers\Staff;
 
 use App\Http\Controllers\Controller;
+use App\Models\AuditLog;
 use App\Models\Landowner;
 use App\Models\User;
 use App\Notifications\AccountCreatedNotification;
 use App\Notifications\EmailAddedVerificationNotification;
 use App\Services\AuditLogger;
+use App\Services\UserAccountDeletionService;
 use App\Services\UserAccountReviewService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -24,7 +26,7 @@ class UserManagementController extends Controller
     {
         $filters = $request->validate([
             'role' => ['nullable', 'string', Rule::in(User::ROLES)],
-            'status' => ['nullable', 'string', Rule::in(['active', 'inactive', 'pending'])],
+            'status' => ['nullable', 'string', Rule::in(['active', 'inactive', 'pending', 'deleted'])],
             'search' => ['nullable', 'string', 'max:255'],
         ]);
 
@@ -33,16 +35,20 @@ class UserManagementController extends Controller
         $filters['status'] = $filters['status'] ?? 'active';
 
         $accountCounts = [
-            'active' => User::query()->where('is_active', true)->count(),
-            'inactive' => User::query()->where('is_active', false)->count(),
-            'pending' => User::query()->where('registration_status', User::REGISTRATION_PENDING)->count(),
+            'active' => User::query()->whereNull('account_deleted_at')->where('is_active', true)->count(),
+            'inactive' => User::query()->whereNull('account_deleted_at')->where('is_active', false)->count(),
+            'deleted' => User::query()->whereNotNull('account_deleted_at')->count(),
+            'pending' => User::query()->whereNull('account_deleted_at')->where('registration_status', User::REGISTRATION_PENDING)->count(),
         ];
 
         $usersQuery = User::with('landowner')
+            ->when($filters['status'] === 'deleted', fn ($query) => $query->whereNotNull('account_deleted_at'), fn ($query) => $query->whereNull('account_deleted_at'))
             ->when($filters['status'] === 'pending', function ($query) {
                 $query->where('registration_status', User::REGISTRATION_PENDING);
             }, function ($query) use ($filters) {
-                $query->where('is_active', $filters['status'] === 'active');
+                if ($filters['status'] !== 'deleted') {
+                    $query->where('is_active', $filters['status'] === 'active');
+                }
             })
             ->latest();
 
@@ -210,7 +216,11 @@ class UserManagementController extends Controller
             'user',
             'selectedLandowner',
             'linkedLandownerId'
-        ) + ['accountRevision' => app(UserAccountReviewService::class)->revision($user)]);
+        ) + [
+            'accountRevision' => app(UserAccountReviewService::class)->revision($user),
+            'deletionBlockedReason' => app(UserAccountDeletionService::class)->blockedReason($user, $request->user()),
+            'accountHistory' => AuditLog::query()->where('auditable_type', User::class)->where('auditable_id', $user->id)->whereNotIn('action', ['user_login', 'user_logout'])->latest('id')->limit(10)->get(),
+        ]);
     }
 
     public function update(Request $request, User $user)
@@ -242,6 +252,7 @@ class UserManagementController extends Controller
         $email = $this->normalizeEmail($validated['email'] ?? null);
         [$previousEmail, $emailChanged] = DB::transaction(function () use ($validated, $user, $email, $currentUser) {
             $user = User::query()->whereKey($user->id)->lockForUpdate()->firstOrFail();
+            $this->assertNotDeleted($user);
             $review = app(UserAccountReviewService::class);
             $selectedId = $validated['role'] === User::ROLE_LANDOWNER && ! empty($validated['landowner_id'])
                 ? (int) $validated['landowner_id'] : null;
@@ -299,6 +310,9 @@ class UserManagementController extends Controller
             }
 
             $user->save();
+            if (! $requestedIsActive) {
+                app(UserAccountDeletionService::class)->revokeSessions($user);
+            }
 
             $review->sync($user, $selectedId);
 
@@ -323,6 +337,7 @@ class UserManagementController extends Controller
                     'email_verification_reset' => $emailChanged,
                 ]
             );
+
             return [$previousEmail, $emailChanged];
         }, 3);
         $user->refresh();
@@ -334,7 +349,7 @@ class UserManagementController extends Controller
         if ($verificationRequired) {
             try {
                 $user->refresh();
-                $user->notify(new EmailAddedVerificationNotification());
+                $user->notify(new EmailAddedVerificationNotification);
                 $verificationDelivery = 'sent';
 
                 AuditLogger::record(
@@ -391,11 +406,13 @@ class UserManagementController extends Controller
             );
         }
 
+        $this->assertNotDeleted($user);
         $temporaryPassword = $this->generateTemporaryPassword();
         $temporaryPasswordExpiresAt = $this->temporaryPasswordExpiresAt();
 
         $reset = DB::transaction(function () use ($user, $temporaryPassword, $temporaryPasswordExpiresAt, $request) {
             $user = User::query()->whereKey($user->id)->lockForUpdate()->firstOrFail();
+            $this->assertNotDeleted($user);
             if ($this->hasVerifiedRecoveryEmail($user)) {
                 return false;
             }
@@ -422,6 +439,7 @@ class UserManagementController extends Controller
                 ],
                 $request->user()->id
             );
+
             return true;
         }, 3);
         if (! $reset) {
@@ -437,6 +455,81 @@ class UserManagementController extends Controller
             ->with('success', $statusMessage)
             ->with('temporary_password', $temporaryPassword)
             ->with('temporary_password_username', $user->username);
+    }
+
+    public function destroy(Request $request, User $user): RedirectResponse
+    {
+        $validated = $request->validate([
+            'expected_account_revision' => ['required', 'string', 'size:64'],
+            'confirmation' => ['required', 'in:DELETE'],
+            'reason' => ['required', 'string', 'max:1000'],
+        ]);
+
+        DB::transaction(function () use ($request, $user, $validated) {
+            $user = User::query()->whereKey($user->id)->lockForUpdate()->firstOrFail();
+            $service = app(UserAccountDeletionService::class);
+            app(UserAccountReviewService::class)->lockLandowners($user, null);
+            app(UserAccountReviewService::class)->assertExpected($user, $validated['expected_account_revision']);
+            if ($reason = $service->blockedReason($user, $request->user())) {
+                throw ValidationException::withMessages(['deletion' => $reason]);
+            }
+
+            // Login events have an immutable actor FK. Retain a disabled historical
+            // identity when necessary, but release both unique sign-in identifiers.
+            $retainHistory = AuditLog::query()->where('actor_user_id', $user->id)->exists();
+            AuditLogger::record('user_deleted', null, $user, [
+                'deleted_user_id' => $user->id,
+                'deleted_username' => $user->username,
+                'deleted_user_role' => $user->role,
+                'reason' => $validated['reason'],
+                'historical_identity_retained' => $retainHistory,
+                'google_sign_in_released' => filled($user->google_id),
+            ]);
+            $service->revokeSessions($user);
+            if ($user->email) {
+                DB::table('password_reset_tokens')->where('email', $user->email)->delete();
+            }
+            if ($retainHistory) {
+                $user->forceFill([
+                    'account_deleted_at' => now(),
+                    'is_active' => false,
+                    'email' => null,
+                    'email_verified_at' => null,
+                    'google_id' => null,
+                    'password' => Str::random(80),
+                    'remember_token' => null,
+                ])->save();
+            } else {
+                $user->delete();
+            }
+        }, 3);
+
+        return redirect()->route('staff.users.index')
+            ->with('success', 'Account deleted. Its email and Google sign-in can be used to register again. Existing audit history is preserved.');
+    }
+
+    public function revokeSessions(Request $request, User $user): RedirectResponse
+    {
+        $validated = $request->validate([
+            'expected_account_revision' => ['required', 'string', 'size:64'],
+        ]);
+        abort_if($user->id === $request->user()->id, 403);
+        DB::transaction(function () use ($user, $validated) {
+            $user = User::query()->whereKey($user->id)->lockForUpdate()->firstOrFail();
+            $this->assertNotDeleted($user);
+            app(UserAccountReviewService::class)->assertExpected($user, $validated['expected_account_revision']);
+            app(UserAccountDeletionService::class)->revokeSessions($user);
+            AuditLogger::record('user_sessions_revoked', null, $user);
+        }, 3);
+
+        return back()->with('success', 'Existing sessions revoked. The user must sign in again.');
+    }
+
+    private function assertNotDeleted(User $user): void
+    {
+        if ($user->account_deleted_at !== null) {
+            throw ValidationException::withMessages(['account' => 'Deleted accounts cannot be changed or reactivated.']);
+        }
     }
 
     private function temporaryPasswordExpiresAt()

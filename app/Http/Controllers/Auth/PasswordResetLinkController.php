@@ -17,8 +17,11 @@ use Throwable;
 class PasswordResetLinkController extends Controller
 {
     private const OTP_TTL_SECONDS = 600;
+
     private const OTP_RESEND_COOLDOWN_SECONDS = 60;
+
     private const MAX_EMAIL_ATTEMPTS = 5;
+
     private const MAX_CODE_ATTEMPTS = 5;
 
     public function create(Request $request): View
@@ -236,6 +239,7 @@ class PasswordResetLinkController extends Controller
 
         Auth::guard('web')->login($user);
         $request->session()->regenerate();
+        $request->session()->put('auth_session_version', (int) $user->session_version);
         $request->session()->put(
             'auth_password_changed_at',
             $user->password_changed_at?->format('Y-m-d H:i:s.u')

@@ -112,6 +112,7 @@ class EmailOtpPasswordRecoveryTest extends TestCase
 
         $user = User::factory()->create([
             'username' => 'recover_me',
+            'session_version' => 1,
             'email' => 'recover@example.com',
             'password' => 'OldPassword123!',
             'must_change_password' => false,
@@ -131,6 +132,7 @@ class EmailOtpPasswordRecoveryTest extends TestCase
             PasswordRecoveryCodeNotification::class,
             function (PasswordRecoveryCodeNotification $notification) use (&$code) {
                 $code = $notification->code;
+
                 return true;
             }
         );
@@ -142,6 +144,7 @@ class EmailOtpPasswordRecoveryTest extends TestCase
         ])->assertRedirect(route('password.required'));
 
         $this->assertAuthenticatedAs($user);
+        $this->assertSame(1, session('auth_session_version'));
         $this->assertTrue($user->fresh()->must_change_password);
         $this->assertNotNull($user->fresh()->email_verified_at);
 
@@ -190,6 +193,7 @@ class EmailOtpPasswordRecoveryTest extends TestCase
             PasswordRecoveryCodeNotification::class,
             function (PasswordRecoveryCodeNotification $notification) use (&$sentCode) {
                 $sentCode = $notification->code;
+
                 return true;
             }
         );

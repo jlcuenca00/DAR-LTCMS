@@ -99,7 +99,7 @@ class RecordLookupController extends Controller
         $currentUserId = isset($filters['landowner_id'])
             ? Landowner::query()->whereKey($filters['landowner_id'])->value('user_id')
             : null;
-        $query = User::query()->where('role', User::ROLE_LANDOWNER)
+        $query = User::query()->whereNull('account_deleted_at')->where('role', User::ROLE_LANDOWNER)
             ->where(function ($eligible) use ($currentUserId) {
                 $eligible->whereDoesntHave('landowner');
                 if ($currentUserId) {
@@ -108,7 +108,7 @@ class RecordLookupController extends Controller
             });
         $search = trim((string) ($filters['q'] ?? ''));
         if ($search !== '') {
-            $needle = '%' . mb_strtolower($search) . '%';
+            $needle = '%'.mb_strtolower($search).'%';
             $query->where(function ($matching) use ($needle, $search) {
                 $matching->whereRaw("LOWER(COALESCE(name, '') || ' ' || COALESCE(email, '') || ' ' || COALESCE(username, '')) LIKE ?", [$needle]);
                 if (ctype_digit($search)) {
@@ -118,7 +118,8 @@ class RecordLookupController extends Controller
         }
         $results = $query->orderBy('name')->orderBy('id')->limit(self::RESULT_LIMIT)
             ->get(['id', 'name', 'email'])
-            ->map(fn (User $user) => ['id' => $user->id, 'text' => $user->name . ' — ' . ($user->email ?: 'ID ' . $user->id)]);
+            ->map(fn (User $user) => ['id' => $user->id, 'text' => $user->name.' — '.($user->email ?: 'ID '.$user->id)]);
+
         return response()->json(['results' => $results]);
     }
 

@@ -9,9 +9,11 @@ use App\Models\Parcel;
 use App\Models\User;
 use App\Services\AuditLogger;
 use App\Services\LandholdingAreaValidationService;
+use App\Services\RecordEditRevisionService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class LandownerRecordController extends Controller
 {
@@ -80,7 +82,7 @@ class LandownerRecordController extends Controller
             'province' => ['nullable', 'string', 'max:255'],
             'user_id' => [
                 'nullable',
-                'exists:users,id',
+                Rule::exists('users', 'id')->whereNull('account_deleted_at'),
                 Rule::unique('landowners', 'user_id')->ignore($landowner->id),
             ],
         ]);
@@ -90,12 +92,13 @@ class LandownerRecordController extends Controller
         }
 
         $landowner = DB::transaction(function () use ($landowner, $validated, $expectedRevision) {
+            $this->assertLinkableUser($validated['user_id'] ?? null);
             $lockedLandowner = Landowner::query()
                 ->whereKey($landowner->id)
                 ->lockForUpdate()
                 ->firstOrFail();
 
-            app(\App\Services\RecordEditRevisionService::class)->assertExpected($lockedLandowner, $expectedRevision);
+            app(RecordEditRevisionService::class)->assertExpected($lockedLandowner, $expectedRevision);
 
             $oldValues = $lockedLandowner->only(array_keys($validated));
             $lockedLandowner->update($validated);
@@ -118,6 +121,7 @@ class LandownerRecordController extends Controller
             ->route('staff.records.landowners.show', $landowner)
             ->with('success', 'Landowner record updated successfully. Current hectares remain computed from active landholding records.');
     }
+
     public function create()
     {
         $selectedUser = $this->selectedUser(request()->old('user_id'));
@@ -144,7 +148,7 @@ class LandownerRecordController extends Controller
             'province' => ['nullable', 'string', 'max:255'],
             'user_id' => [
                 'nullable',
-                'exists:users,id',
+                Rule::exists('users', 'id')->whereNull('account_deleted_at'),
                 Rule::unique('landowners', 'user_id'),
             ],
         ]);
@@ -154,6 +158,7 @@ class LandownerRecordController extends Controller
         }
 
         $landowner = DB::transaction(function () use ($validated) {
+            $this->assertLinkableUser($validated['user_id'] ?? null);
             $landowner = Landowner::create($validated);
 
             AuditLogger::record(
@@ -173,12 +178,27 @@ class LandownerRecordController extends Controller
             ->route('staff.records.landowners.show', $landowner)
             ->with('success', 'Landowner record created successfully. Add landholding records separately when needed.');
     }
+
+    private function assertLinkableUser($userId): void
+    {
+        if (! $userId) {
+            return;
+        }
+        $user = User::query()->whereKey($userId)->lockForUpdate()->first();
+        if (! $user || $user->account_deleted_at !== null || ! $user->isLandowner()) {
+            throw ValidationException::withMessages([
+                'user_id' => 'Choose an existing landowner account that has not been deleted.',
+            ]);
+        }
+    }
+
     private function selectedUser($userId, ?Landowner $landowner = null): ?User
     {
         if (! $userId) {
             return null;
         }
-        return User::query()->where('role', User::ROLE_LANDOWNER)
+
+        return User::query()->whereNull('account_deleted_at')->where('role', User::ROLE_LANDOWNER)
             ->where(function ($query) use ($landowner) {
                 $query->whereDoesntHave('landowner');
                 if ($landowner?->user_id) {
@@ -186,5 +206,4 @@ class LandownerRecordController extends Controller
                 }
             })->find($userId);
     }
-
 }

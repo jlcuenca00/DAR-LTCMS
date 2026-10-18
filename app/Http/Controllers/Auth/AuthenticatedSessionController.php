@@ -25,46 +25,47 @@ class AuthenticatedSessionController extends Controller
     /**
      * Handle an incoming authentication request.
      */
-   public function store(LoginRequest $request): RedirectResponse
-{
-    $request->authenticate();
+    public function store(LoginRequest $request): RedirectResponse
+    {
+        $request->authenticate();
 
-    $request->session()->regenerate();
+        $request->session()->regenerate();
 
-    $user = Auth::user();
+        $user = Auth::user();
 
-    if ($user) {
-        $user->forceFill(['last_login_at' => now()])->save();
+        if ($user) {
+            $user->forceFill(['last_login_at' => now()])->save();
 
-        AuditLogger::record(
-            'user_login',
-            null,
-            $user,
-            [
-                'user_id' => $user->id,
-                'username' => $user->username,
-                'role' => $user->role,
-                'login_at' => $user->last_login_at?->toDateTimeString(),
-            ],
-            $user->id
+            AuditLogger::record(
+                'user_login',
+                null,
+                $user,
+                [
+                    'user_id' => $user->id,
+                    'username' => $user->username,
+                    'role' => $user->role,
+                    'login_at' => $user->last_login_at?->toDateTimeString(),
+                ],
+                $user->id
+            );
+        }
+
+        $request->session()->put('auth_session_version', (int) $user?->session_version);
+        $request->session()->put(
+            'auth_password_changed_at',
+            $user?->password_changed_at?->format('Y-m-d H:i:s.u')
         );
+
+        if ($user?->must_change_password) {
+            return redirect()->route('password.required');
+        }
+
+        return match ($user?->role) {
+            'staff' => redirect()->intended('/staff/dashboard'),
+            'geodetic' => redirect()->intended('/geodetic/dashboard'),
+            default => redirect()->intended('/landowner/dashboard'),
+        };
     }
-
-    $request->session()->put(
-        'auth_password_changed_at',
-        $user?->password_changed_at?->format('Y-m-d H:i:s.u')
-    );
-
-    if ($user?->must_change_password) {
-        return redirect()->route('password.required');
-    }
-
-    return match ($user?->role) {
-        'staff' => redirect()->intended('/staff/dashboard'),
-        'geodetic' => redirect()->intended('/geodetic/dashboard'),
-        default => redirect()->intended('/landowner/dashboard'),
-    };
-}
 
     /**
      * Destroy an authenticated session.

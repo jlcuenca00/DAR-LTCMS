@@ -12,12 +12,14 @@ class UserAccountReviewService
     {
         // Activity timestamps and tour preferences must not invalidate a review.
         $state = $user->only([
-            'id', 'name', 'username', 'email', 'email_verified_at',
+            'session_version', 'account_deleted_at', 'id', 'name', 'username', 'email', 'email_verified_at',
             'role', 'is_active', 'registration_status', 'registration_notes',
             'registration_reviewed_at', 'registration_reviewed_by_user_id',
             'google_id', 'auth_provider', 'must_change_password',
             'password_changed_at', 'temporary_password_expires_at',
         ]);
+        $state['session_version'] = (int) $user->session_version;
+        $state['account_deleted_at'] = $user->account_deleted_at;
         $state['credential_version'] = $user->getRawOriginal('password');
         $state['linked_landowner_id'] = $user->landowner()->value('id');
 
