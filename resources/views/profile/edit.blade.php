@@ -33,7 +33,7 @@
         @include('profile.partials.account-settings-content', ['user' => $profileUser, 'context' => $profileContext])
     </x-landowner-shell>
 @else
-    <x-staff-shell title="Profile Settings" active="profile" maxWidth="max-w-5xl">
+    <x-staff-shell title="Profile Settings" active="profile">
         @include('profile.partials.account-settings-content', ['user' => $profileUser, 'context' => $profileContext])
     </x-staff-shell>
 @endif

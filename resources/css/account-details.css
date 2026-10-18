@@ -1,45 +1,16 @@
 /* Shared account workspace for all three portals. */
 .account-workspace,
 .profile-stack {
-    max-width: 1160px;
-    margin: 0 auto;
+    width: 100%;
+    min-width: 0;
+    margin: 0;
     display: grid;
-    gap: 24px;
+    gap: 18px;
     color: #172b24;
-}
-.account-header {
-    display: flex;
-    align-items: center;
-    gap: 20px;
-    padding: 28px;
-    background: #fff;
-    border: 1px solid #d9e4de;
-    border-radius: 16px;
-    border-top: 4px solid #166534;
-}
-.account-header h2 {
-    margin: 4px 0;
-    font-size: clamp(22px, 3vw, 30px);
-    font-weight: 750;
-    letter-spacing: -0.03em;
-    overflow-wrap: anywhere;
-    line-height: 1.2;
 }
 .account-header > div:nth-child(2) {
     min-width: 0;
     flex: 1;
-}
-.account-monogram {
-    display: grid;
-    place-items: center;
-    width: 64px;
-    height: 64px;
-    flex-shrink: 0;
-    background: #eaf4ed;
-    color: #166534;
-    border-radius: 18px;
-    font-size: 26px;
-    font-weight: 700;
 }
 .account-eyebrow {
     margin: 0;
@@ -61,30 +32,6 @@
     padding: 6px 12px;
     font-size: 12px;
     font-weight: 700;
-}
-.account-nav {
-    display: flex;
-    gap: 6px;
-    flex-wrap: wrap;
-    border-bottom: 1px solid #d8e3dc;
-    padding-bottom: 12px;
-}
-.account-nav a {
-    padding: 9px 14px;
-    border-radius: 8px;
-    font-size: 14px;
-    font-weight: 650;
-    color: #345443;
-    text-decoration: none;
-}
-.account-nav a:hover,
-.account-nav a:focus-visible {
-    background: #e9f3ec;
-}
-.account-back {
-    font-size: 14px;
-    color: #166534;
-    font-weight: 650;
 }
 .account-panel,
 .profile-panel {
@@ -113,26 +60,11 @@
     color: #64746b;
     margin: 6px 0;
 }
-.account-editor {
-    display: grid;
-    grid-template-columns: minmax(0, 1.2fr) minmax(280px, 1fr);
-    gap: 24px;
-    align-items: start;
-}
-.account-save {
-    grid-column: 1/-1;
-    display: flex;
-    gap: 12px;
-    justify-content: flex-end;
-    padding: 0 0 4px;
-}
-.user-form-grid,
 .profile-form-grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 22px;
 }
-.user-field-full,
 .profile-field.full {
     grid-column: 1/-1;
 }
@@ -212,12 +144,6 @@
 .user-disclosure-chevron {
     margin-top: 6px;
 }
-.account-facts {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 20px;
-    margin: 0 0 20px;
-}
 .account-facts dt {
     font-size: 12px;
     color: #687a6e;
@@ -248,9 +174,6 @@
 }
 .account-action-row form {
     flex-shrink: 0;
-}
-.account-danger {
-    border-color: #efceca;
 }
 .account-danger h3 {
     color: #a32b22;
@@ -297,16 +220,6 @@
     color: #6b7b70;
     font-size: 12px;
     margin-top: 5px;
-}
-.profile-grid {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) 300px;
-    gap: 24px;
-    align-items: start;
-}
-.profile-column {
-    display: grid;
-    gap: 24px;
 }
 .profile-panel-header {
     margin-bottom: 22px;
@@ -371,24 +284,12 @@
     border-radius: 8px;
     font-size: 13px;
 }
-.profile-grid aside .account-facts {
-    grid-template-columns: 1fr;
-}
 .account-workspace a:focus-visible,
 .account-workspace button:focus-visible,
 .profile-stack a:focus-visible,
 .profile-stack button:focus-visible {
     outline: 3px solid #83ba95;
     outline-offset: 3px;
-}
-@media (max-width: 1000px) {
-    .account-editor,
-    .profile-grid {
-        grid-template-columns: 1fr;
-    }
-    .profile-grid aside .account-facts {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
 }
 @media (max-width: 600px) {
     .account-header {
@@ -408,7 +309,6 @@
     .profile-panel {
         padding: 20px;
     }
-    .user-form-grid,
     .profile-form-grid,
     .account-facts {
         grid-template-columns: 1fr;
@@ -420,27 +320,6 @@
     .account-save {
         justify-content: flex-start;
     }
-    .account-nav a {
-        padding: 8px;
-        font-size: 13px;
-    }
-}
-
-.account-access-status {
-    border-top: 1px solid #e4ebe6;
-    margin-top: 24px;
-    padding-top: 20px;
-}
-.account-access-status h4 {
-    font-size: 15px;
-    font-weight: 700;
-    margin: 0;
-}
-.account-access-status .account-muted {
-    margin: 8px 0 18px;
-}
-.account-editor [x-cloak] {
-    display: none !important;
 }
 @media (max-width: 600px) {
     .account-header {
@@ -451,5 +330,219 @@
         grid-column: 2;
         margin-left: 0;
         justify-self: start;
+    }
+}
+
+/* Follow each portal's shared content gutters; do not impose a page-width cap. */
+.account-workspace [hidden],
+.profile-stack [hidden] {
+    display: none !important;
+}
+.account-header {
+    display: flex;
+    align-items: center;
+    background: #fff;
+    border: 1px solid #d9e4de;
+    gap: 14px;
+    padding: 18px 22px;
+    border-top: 1px solid #d9e4de;
+    border-radius: 12px;
+}
+.account-header h2 {
+    font-weight: 750;
+    letter-spacing: -0.03em;
+    overflow-wrap: anywhere;
+    line-height: 1.2;
+    font-size: 22px;
+    margin: 0;
+}
+.account-header .account-muted {
+    margin: 4px 0 0;
+    font-size: 13px;
+}
+.account-monogram {
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    background: #eaf4ed;
+    color: #166534;
+    font-weight: 700;
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    font-size: 20px;
+}
+.account-header-badges {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+.account-role {
+    font-size: 13px;
+    color: #526b5d;
+}
+.account-tabs {
+    display: flex;
+    gap: 24px;
+    border-bottom: 1px solid #d9e4de;
+}
+.account-tabs [role="tab"] {
+    padding: 12px 2px;
+    border: 0;
+    border-bottom: 3px solid transparent;
+    background: transparent;
+    color: #64746b;
+    font-size: 14px;
+    font-weight: 650;
+    cursor: pointer;
+}
+.account-tabs [aria-selected="true"] {
+    color: #166534;
+    border-bottom-color: #166534;
+}
+.account-tabs [role="tab"]:focus-visible {
+    outline: 2px solid #166534;
+    outline-offset: 3px;
+}
+[data-account-pane] {
+    display: grid;
+    gap: 18px;
+    min-width: 0;
+}
+.account-details-form {
+    padding: 0;
+    overflow: hidden;
+}
+.account-form-section {
+    padding: 24px;
+}
+.account-form-section + .account-form-section {
+    border-top: 1px solid #e4ebe6;
+}
+.account-form-section h3 {
+    margin: 0 0 20px;
+}
+.account-fields {
+    display: grid;
+    gap: 20px;
+}
+.account-fields-three {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.account-access-fields {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 20px;
+}
+.account-access-fields .user-field {
+    margin: 0;
+}
+.account-access-fields [data-landowner-fields] {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+    gap: 24px;
+    padding-top: 4px;
+}
+.account-landowner-link .user-disclosure-panel {
+    padding-top: 0;
+}
+.account-status-field p {
+    font-size: 12px;
+}
+.account-save {
+    grid-column: 1/-1;
+    display: flex;
+    gap: 12px;
+    padding: 16px 24px;
+    margin: 0;
+    border-top: 1px solid #e4ebe6;
+    justify-content: flex-start;
+    align-items: center;
+    background: #fafcfb;
+}
+.account-save [data-account-unsaved] {
+    margin-right: auto;
+    color: #8a5a16;
+    font-size: 13px;
+}
+.account-facts {
+    display: grid;
+    gap: 20px;
+    margin: 0 0 20px;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+.account-danger {
+    border-color: #efceca;
+    padding: 20px 24px;
+}
+.account-danger > header {
+    margin-bottom: 8px;
+}
+.account-access-summary {
+    background: white;
+    border: 1px solid #d9e4de;
+    border-radius: 10px;
+    padding: 12px 20px;
+}
+.account-access-summary > summary {
+    cursor: pointer;
+    color: #526b5d;
+    font-size: 13px;
+    font-weight: 650;
+}
+.account-access-summary .profile-panel-header {
+    margin-top: 16px;
+}
+.profile-stack .profile-panel {
+    padding: 24px;
+}
+.profile-stack .profile-form-grid {
+    max-width: 100%;
+}
+@media (max-width: 900px) {
+    .account-fields-three {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .account-access-fields [data-landowner-fields] {
+        grid-template-columns: 1fr;
+    }
+    .account-facts {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+@media (max-width: 600px) {
+    .account-header {
+        display: grid;
+        padding: 16px;
+        grid-template-columns: 44px minmax(0, 1fr);
+    }
+    .account-header-badges {
+        grid-column: 2;
+    }
+    .account-header .account-status {
+        margin: 0;
+    }
+    .account-header h2 {
+        font-size: 20px;
+    }
+    .account-fields-three,
+    .account-access-fields {
+        grid-template-columns: 1fr;
+    }
+    .account-form-section,
+    .profile-stack .profile-panel {
+        padding: 20px;
+    }
+    .account-save {
+        padding: 16px 20px;
+        flex-wrap: wrap;
+    }
+    .account-save [data-account-unsaved] {
+        flex-basis: 100%;
+    }
+    .account-tabs {
+        gap: 20px;
     }
 }

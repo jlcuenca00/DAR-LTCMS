@@ -1,12 +1,37 @@
-<div class="profile-stack">
+@php
+    $profileInitialTab = $errors->getBag('updatePassword')->any() || session('status') === 'password-updated' ? 'security' : 'personal';
+@endphp
+<div class="profile-stack" data-account-tabs data-initial-tab="{{ $profileInitialTab }}">
     <header class="account-header">
         <div class="account-monogram" aria-hidden="true">{{ mb_strtoupper(mb_substr($user->name, 0, 1)) }}</div>
-        <div><p class="account-eyebrow">{{ $context['portal'] }}</p><h2>{{ $user->name }}</h2><p class="account-muted">{{ $user->email ?? $user->username }}</p></div>
-        <span class="account-status">{{ $context['badge'] }}</span>
+        <div class="account-identity"><h2>{{ $user->name }}</h2><p class="account-muted">{{ $user->email ?? $user->username }}</p></div>
+        <div class="account-header-badges"><span class="account-role">{{ $context['badge'] }}</span><span class="account-status">{{ $user->is_active ? 'Active' : 'Suspended' }}</span></div>
     </header>
-    <nav class="account-nav" aria-label="Profile sections"><a href="#profile-information">Personal details</a><a href="#profile-security">Sign-in & security</a><a href="#profile-access">My access</a></nav>
-    <div class="profile-grid">
-        <div class="profile-column">
+        <details class="account-access-summary"><summary>My access</summary>
+            <div class="profile-panel-header"><h3 class="profile-panel-title">My access</h3><p class="profile-panel-subtitle">{{ $context['portal'] }}</p></div>
+            <div class="profile-panel-body">
+                <dl class="account-facts">
+                    <div><dt>Account status</dt><dd>{{ $user->is_active ? 'Active' : 'Suspended' }}</dd></div>
+                    <div><dt>Sign-in method</dt><dd>{{ $user->google_id ? 'Google' : 'Username and password' }}</dd></div>
+                    <div><dt>Email</dt><dd>{{ $user->email ? ($user->email_verified_at ? 'Verified' : 'Not verified') : 'Not provided' }}</dd></div>
+                    <div><dt>Member since</dt><dd>{{ $user->created_at?->timezone('Asia/Manila')->format('M j, Y') }}</dd></div>
+                </dl>
+                @if($user->isLandowner())
+                    <h4 class="account-section-title">Linked DAR record</h4><p class="profile-copy">{{ $user->landowner?->full_name ?? 'No landowner record linked. Contact DAR staff for assistance.' }}</p>
+                    <p class="profile-copy">Your account can view only your linked records and application status.</p>
+                @elseif($user->isGeodetic())
+                    <h4 class="account-section-title">Parcel review access</h4><p class="profile-copy">View parcel and map information. Account management and clearance decisions are handled by Legal Clearance Staff.</p>
+                @else
+                    <h4 class="account-section-title">Legal Clearance Staff</h4><p class="profile-copy">Manage clearance processing and authorized records.</p><a href="{{ route('staff.users.index') }}" class="profile-button secondary" style="margin-top:16px">User Management</a>
+                @endif
+            </div>
+        </details>
+    <nav class="account-tabs" role="tablist" aria-label="Profile sections">
+        @foreach(['personal' => 'Personal Details', 'security' => 'Security'] as $tab => $label)
+            <button type="button" role="tab" id="profile-tab-{{ $tab }}" aria-controls="profile-pane-{{ $tab }}" aria-selected="{{ $profileInitialTab === $tab ? 'true' : 'false' }}" tabindex="{{ $profileInitialTab === $tab ? '0' : '-1' }}" data-account-tab="{{ $tab }}">{{ $label }}</button>
+        @endforeach
+    </nav>
+    <div id="profile-pane-personal" role="tabpanel" aria-labelledby="profile-tab-personal" tabindex="0" data-account-pane="personal" @if($profileInitialTab !== 'personal') hidden @endif>
             <section id="profile-information" class="profile-panel">
                 <div class="profile-panel-header">
                     <h3 class="profile-panel-title">Profile Information</h3>
@@ -201,6 +226,9 @@
                 </div>
             </section>
 
+
+    </div>
+    <div id="profile-pane-security" role="tabpanel" aria-labelledby="profile-tab-security" tabindex="0" data-account-pane="security" @if($profileInitialTab !== 'security') hidden @endif>
             <section id="profile-security" class="profile-panel">
                 <div class="profile-panel-header">
                     <h3 class="profile-panel-title">Change Password</h3>
@@ -257,27 +285,6 @@
                     </form>
                 </div>
             </section>
-        </div>
 
-        <aside id="profile-access" class="profile-panel">
-            <div class="profile-panel-header"><h3 class="profile-panel-title">My access</h3><p class="profile-panel-subtitle">{{ $context['portal'] }}</p></div>
-            <div class="profile-panel-body">
-                <dl class="account-facts">
-                    <div><dt>Account status</dt><dd>{{ $user->is_active ? 'Active' : 'Suspended' }}</dd></div>
-                    <div><dt>Sign-in method</dt><dd>{{ $user->google_id ? 'Google' : 'Username and password' }}</dd></div>
-                    <div><dt>Email</dt><dd>{{ $user->email ? ($user->email_verified_at ? 'Verified' : 'Not verified') : 'Not provided' }}</dd></div>
-                    <div><dt>Member since</dt><dd>{{ $user->created_at?->timezone('Asia/Manila')->format('M j, Y') }}</dd></div>
-                </dl>
-                @if($user->isLandowner())
-                    <h4 class="account-section-title">Linked DAR record</h4><p class="profile-copy">{{ $user->landowner?->full_name ?? 'No landowner record linked. Contact DAR staff for assistance.' }}</p>
-                    <p class="profile-copy">Your account can view only your linked records and application status.</p>
-                @elseif($user->isGeodetic())
-                    <h4 class="account-section-title">Parcel review access</h4><p class="profile-copy">View parcel and map information. Account management and clearance decisions are handled by Legal Clearance Staff.</p>
-                @else
-                    <h4 class="account-section-title">Legal Clearance Staff</h4><p class="profile-copy">Manage clearance processing and authorized records.</p><a href="{{ route('staff.users.index') }}" class="profile-button secondary" style="margin-top:16px">User Management</a>
-                @endif
-            </div>
-        </aside>
     </div>
 </div>
-
