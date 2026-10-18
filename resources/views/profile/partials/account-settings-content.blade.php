@@ -1,23 +1,13 @@
 <div class="profile-stack">
-    <section class="profile-hero">
-        <div class="profile-hero-main">
-            <div class="profile-hero-icon">
-                <i class="fa-solid fa-user-gear"></i>
-            </div>
-
-            <div>
-                <p class="profile-eyebrow">{{ $context['portal'] }}</p>
-                <h2 class="profile-title">Account and Password Settings</h2>
-                <p class="profile-copy">{{ $context['note'] }}</p>
-            </div>
-        </div>
-
-        <span class="profile-badge">{{ $context['badge'] }}</span>
-    </section>
-
+    <header class="account-header">
+        <div class="account-monogram" aria-hidden="true">{{ mb_strtoupper(mb_substr($user->name, 0, 1)) }}</div>
+        <div><p class="account-eyebrow">{{ $context['portal'] }}</p><h2>{{ $user->name }}</h2><p class="account-muted">{{ $user->email ?? $user->username }}</p></div>
+        <span class="account-status">{{ $context['badge'] }}</span>
+    </header>
+    <nav class="account-nav" aria-label="Profile sections"><a href="#profile-information">Personal details</a><a href="#profile-security">Sign-in & security</a><a href="#profile-access">My access</a></nav>
     <div class="profile-grid">
         <div class="profile-column">
-            <section class="profile-panel">
+            <section id="profile-information" class="profile-panel">
                 <div class="profile-panel-header">
                     <h3 class="profile-panel-title">Profile Information</h3>
                     <p class="profile-panel-subtitle">Update your name and contact email. Your username is managed by authorized DAR staff.</p>
@@ -150,7 +140,7 @@
 
                             <div class="profile-field">
                                 <label class="profile-label" for="name">Name</label>
-                                <input id="name" name="name" type="text" class="profile-input" value="{{ old('name', $user->name) }}" required autofocus autocomplete="name" @error('name', 'default') aria-invalid="true" aria-describedby="name-server-error" data-ui-server-invalid @enderror>
+                                <input id="name" name="name" type="text" class="profile-input" value="{{ old('name', $user->name) }}" required autocomplete="name" @error('name', 'default') aria-invalid="true" aria-describedby="name-server-error" data-ui-server-invalid @enderror>
                                 @error('name')
                                     <div id="name-server-error" class="profile-error">{{ $message }}</div>
                                 @enderror
@@ -211,10 +201,11 @@
                 </div>
             </section>
 
-            <section class="profile-panel">
+            <section id="profile-security" class="profile-panel">
                 <div class="profile-panel-header">
                     <h3 class="profile-panel-title">Change Password</h3>
-                    <p class="profile-panel-subtitle">Enter your current password, then create a new password for your username-based account.</p>
+                    <p class="profile-panel-subtitle">Enter your current DAR-LTCMS password, then create a new one.</p>
+                    @if($user->google_id)<p class="profile-panel-subtitle">Your Google password is managed by Google. If you have never set a DAR-LTCMS password, use Forgot Password with your verified recovery email or contact DAR staff.</p>@endif
                 </div>
 
                 <div class="profile-panel-body">
@@ -268,31 +259,23 @@
             </section>
         </div>
 
-        <aside class="profile-panel">
-            <div class="profile-panel-header">
-                <h3 class="profile-panel-title">Account Access Notes</h3>
-                <p class="profile-panel-subtitle">Profile changes do not alter your username, role, or permissions.</p>
-            </div>
-
+        <aside id="profile-access" class="profile-panel">
+            <div class="profile-panel-header"><h3 class="profile-panel-title">My access</h3><p class="profile-panel-subtitle">{{ $context['portal'] }}</p></div>
             <div class="profile-panel-body">
-                <ul class="profile-note-list">
-                    <li class="profile-note-item">
-                        <i class="fa-solid fa-shield-halved"></i>
-                        <span>Access remains controlled by your assigned system role and account status.</span>
-                    </li>
-                    <li class="profile-note-item">
-                        <i class="fa-solid fa-user-lock"></i>
-                        <span>Changing profile details does not grant additional permissions or record access.</span>
-                    </li>
-                    <li class="profile-note-item">
-                        <i class="fa-solid fa-file-signature"></i>
-                        <span>All operational actions remain subject to role-based controls and auditability rules.</span>
-                    </li>
-                    <li class="profile-note-item">
-                        <i class="fa-solid fa-building-shield"></i>
-                        <span>Role assignment, deactivation, and account recovery are handled by authorized DAR staff.</span>
-                    </li>
-                </ul>
+                <dl class="account-facts">
+                    <div><dt>Account status</dt><dd>{{ $user->is_active ? 'Active' : 'Suspended' }}</dd></div>
+                    <div><dt>Sign-in method</dt><dd>{{ $user->google_id ? 'Google' : 'Username and password' }}</dd></div>
+                    <div><dt>Email</dt><dd>{{ $user->email ? ($user->email_verified_at ? 'Verified' : 'Not verified') : 'Not provided' }}</dd></div>
+                    <div><dt>Member since</dt><dd>{{ $user->created_at?->timezone('Asia/Manila')->format('M j, Y') }}</dd></div>
+                </dl>
+                @if($user->isLandowner())
+                    <h4 class="account-section-title">Linked DAR record</h4><p class="profile-copy">{{ $user->landowner?->full_name ?? 'No landowner record linked. Contact DAR staff for assistance.' }}</p>
+                    <p class="profile-copy">Your account can view only your linked records and application status.</p>
+                @elseif($user->isGeodetic())
+                    <h4 class="account-section-title">Parcel review access</h4><p class="profile-copy">View parcel and map information. Account management and clearance decisions are handled by Legal Clearance Staff.</p>
+                @else
+                    <h4 class="account-section-title">Legal Clearance Staff</h4><p class="profile-copy">Manage clearance processing and authorized records.</p><a href="{{ route('staff.users.index') }}" class="profile-button secondary" style="margin-top:16px">User Management</a>
+                @endif
             </div>
         </aside>
     </div>

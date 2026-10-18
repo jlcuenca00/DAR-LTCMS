@@ -17,6 +17,14 @@ class EnsurePasswordIsCurrent
             return $next($request);
         }
 
+        if ((int) $request->session()->get('auth_session_version', 0) !== (int) $user->session_version) {
+            Auth::guard('web')->logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+
+            return redirect()->route('login')->with('status', 'Your sessions were ended. Sign in again to continue.');
+        }
+
         $currentVersion = $this->passwordVersion($user->password_changed_at);
         $sessionVersion = $request->session()->get('auth_password_changed_at');
 

@@ -3,21 +3,26 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
 class User extends Authenticatable
 {
-    /** @use HasFactory<\Database\Factories\UserFactory> */
+    /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
 
     public const ROLE_STAFF = 'staff';
+
     public const ROLE_LANDOWNER = 'landowner';
+
     public const ROLE_GEODETIC = 'geodetic';
 
     public const REGISTRATION_PENDING = 'pending_review';
+
     public const REGISTRATION_APPROVED = 'approved';
+
     public const REGISTRATION_DECLINED = 'declined';
 
     public const REGISTRATION_STATUSES = [
@@ -84,6 +89,8 @@ class User extends Authenticatable
             'password_changed_at' => 'datetime',
             'temporary_password_expires_at' => 'datetime',
             'last_login_at' => 'datetime',
+            'account_deleted_at' => 'datetime',
+            'session_version' => 'integer',
             'onboarding_state' => 'array',
         ];
     }

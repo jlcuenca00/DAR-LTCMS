@@ -9,6 +9,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Tests\TestCase;
 
 class UserAccountReviewIntegrityTest extends TestCase
@@ -18,13 +19,14 @@ class UserAccountReviewIntegrityTest extends TestCase
     private function account(array $attributes = []): User
     {
         return User::factory()->create(array_replace([
-            'username' => 'review_'.\Illuminate\Support\Str::lower(\Illuminate\Support\Str::random(12)),
+            'username' => 'review_'.Str::lower(Str::random(12)),
         ], $attributes));
     }
 
     private function staff(): User
     {
         Notification::fake();
+
         return $this->account(['role' => User::ROLE_STAFF, 'is_active' => true]);
     }
 
@@ -140,8 +142,9 @@ class UserAccountReviewIntegrityTest extends TestCase
             ->put(route('staff.users.update', $target), $payload)->assertSessionHasErrors('name');
         $html = $this->get(route('staff.users.edit', $target))->assertOk()->getContent();
         $this->assertStringContainsString('value="'.$payload['expected_account_revision'].'"', $html);
-        $this->assertMatchesRegularExpression('/id="is_active"[^>]*value="1"\s+class=/', $html);
-        $this->assertStringContainsString('type="hidden" name="is_active" value="0"', $html);
+        $this->assertStringContainsString('id="is_active" name="is_active"', $html);
+        $this->assertStringContainsString('<option value="0" selected>Suspended', $html);
+        $this->assertStringNotContainsString('<option value="1" selected>', $html);
     }
 
     public function test_user_list_renders_private_and_legacy_photos_and_missing_photo_fallback(): void

@@ -1,4 +1,5 @@
 import './bootstrap';
+import '../css/account-details.css';
 import './dialog-focus';
 import './responsive-tables';
 import './remote-record-select';

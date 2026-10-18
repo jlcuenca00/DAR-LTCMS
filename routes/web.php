@@ -2,13 +2,15 @@
 
 use App\Http\Controllers\Geodetic\GeodeticDashboardController;
 use App\Http\Controllers\Geodetic\GeodeticPortalController;
+use App\Http\Controllers\Geodetic\ParcelDirectoryController;
 use App\Http\Controllers\Geodetic\ParcelMapController as GeodeticParcelMapController;
 use App\Http\Controllers\Landowner\ApplicationClearanceController as LandownerApplicationClearanceController;
 use App\Http\Controllers\Landowner\LandownerDashboardController;
 use App\Http\Controllers\Landowner\LandownerPortalController;
 use App\Http\Controllers\Landowner\ParcelMapController as LandownerParcelMapController;
-use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\ParcelMapDataController;
+use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Staff\ApplicationClearanceController;
 use App\Http\Controllers\Staff\ApplicationDocumentController;
 use App\Http\Controllers\Staff\ApplicationLandownerLinkController;
@@ -20,15 +22,16 @@ use App\Http\Controllers\Staff\LandTransferApplicationController;
 use App\Http\Controllers\Staff\LegacyRecordController;
 use App\Http\Controllers\Staff\MonitoringReportController;
 use App\Http\Controllers\Staff\ParcelMapController;
-use App\Http\Controllers\ParcelMapDataController;
 use App\Http\Controllers\Staff\ParcelReviewFlagController;
-use App\Http\Controllers\Staff\RecordSearchController;
 use App\Http\Controllers\Staff\RecordLookupController;
+use App\Http\Controllers\Staff\RecordSearchController;
 use App\Http\Controllers\Staff\SourceRecordLandownerLinkController;
 use App\Http\Controllers\Staff\SourceRecordPackageController;
 use App\Http\Controllers\Staff\SourceRecordPackageImportController;
 use App\Http\Controllers\Staff\StaffDashboardController;
 use App\Http\Controllers\Staff\UserManagementController;
+use App\Http\Middleware\EnsureForm4ReviewStage;
+use App\Models\User;
 use Illuminate\Support\Facades\Route;
 
 Route::view('/', 'welcome')->name('home');
@@ -41,7 +44,7 @@ Route::get('/dashboard', function () {
     return match ($user?->role) {
         'staff' => redirect()->route('staff.dashboard'),
         'geodetic' => redirect()->route('geodetic.dashboard'),
-        default => $user?->registration_status === \App\Models\User::REGISTRATION_APPROVED
+        default => $user?->registration_status === User::REGISTRATION_APPROVED
             ? redirect()->route('landowner.dashboard')
             : redirect()->route('landowner.registration.pending'),
     };
@@ -88,7 +91,9 @@ Route::middleware(['auth', 'role:staff'])
             ->name('lookups.parcels');
 
         Route::resource('users', UserManagementController::class)
-            ->only(['index', 'create', 'store', 'edit', 'update']);
+            ->only(['index', 'create', 'store', 'edit', 'update', 'destroy']);
+        Route::post('/users/{user}/revoke-sessions', [UserManagementController::class, 'revokeSessions'])
+            ->middleware('throttle:5,1')->name('users.revoke-sessions');
         Route::post('/users/{user}/reset-password', [UserManagementController::class, 'resetPassword'])
             ->middleware('throttle:5,1')
             ->name('users.reset-password');
@@ -210,7 +215,7 @@ Route::middleware(['auth', 'role:staff'])
         Route::get('/applications/{application}/acknowledgement/pdf', [ApplicationClearanceController::class, 'acknowledgementPdf'])
             ->name('applications.acknowledgement.pdf');
         Route::patch('/applications/{application}/form-4-review', [LandTransferApplicationController::class, 'updateForm4Review'])
-            ->middleware(\App\Http\Middleware\EnsureForm4ReviewStage::class)
+            ->middleware(EnsureForm4ReviewStage::class)
             ->name('applications.form4.update');
         Route::get('/applications/{application}/form-4/pdf', [ApplicationClearanceController::class, 'form4Pdf'])
             ->name('applications.form4.pdf');
@@ -265,7 +270,7 @@ Route::middleware(['auth', 'role:geodetic'])
     ->prefix('geodetic')
     ->name('geodetic.')
     ->group(function () {
-        Route::get('/parcel-directory', \App\Http\Controllers\Geodetic\ParcelDirectoryController::class)
+        Route::get('/parcel-directory', ParcelDirectoryController::class)
             ->name('parcels.directory');
         Route::get('/parcels', [GeodeticPortalController::class, 'parcels'])
             ->name('parcels.index');

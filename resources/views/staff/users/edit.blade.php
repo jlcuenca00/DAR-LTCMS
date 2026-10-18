@@ -1,554 +1,5 @@
-<x-staff-shell
-    title="Edit User Account"
-    active="users"
->
-    
-
-    <style>
-        .user-editor-wrap {
-            max-width: 1240px;
-            margin: 0 auto;
-        }
-
-        .user-editor-summary {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 1.5rem;
-            padding: 1.35rem 1.5rem;
-            border: 1px solid #d9e2dc;
-            border-radius: 1.25rem;
-            background: #ffffff;
-            box-shadow: 0 10px 24px rgba(15, 23, 42, 0.05);
-        }
-
-        .user-editor-identity {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            min-width: 0;
-        }
-
-        .user-editor-avatar {
-            width: 3rem;
-            height: 3rem;
-            display: grid;
-            place-items: center;
-            flex: 0 0 auto;
-            border-radius: 1rem;
-            border: 1px solid #bbf7d0;
-            background: #f0fdf4;
-            color: #166534;
-            font-weight: 900;
-            font-size: 1rem;
-        }
-
-        .user-editor-kicker {
-            margin: 0 0 .25rem;
-            font-size: .68rem;
-            font-weight: 900;
-            letter-spacing: .22em;
-            text-transform: uppercase;
-            color: #047857;
-        }
-
-        .user-editor-title {
-            margin: 0;
-            color: #020617;
-            font-size: 1.45rem;
-            line-height: 1.15;
-            font-weight: 900;
-        }
-
-        .user-editor-muted {
-            margin: .3rem 0 0;
-            color: #64748b;
-            font-size: .9rem;
-        }
-
-        .user-editor-badges {
-            display: flex;
-            flex-wrap: wrap;
-            align-items: center;
-            justify-content: flex-end;
-            gap: .5rem;
-        }
-
-        .user-editor-layout {
-            display: grid;
-            grid-template-columns: minmax(0, 1fr) 365px;
-            gap: 1.25rem;
-            align-items: start;
-        }
-
-        .user-editor-main,
-        .user-editor-side {
-            display: flex;
-            flex-direction: column;
-            gap: 1.25rem;
-            min-width: 0;
-        }
-
-        .user-editor-side {
-            position: sticky;
-            top: 5.5rem;
-        }
-
-        .user-card {
-            border: 1px solid #d9e2dc;
-            border-radius: 1.25rem;
-            background: #ffffff;
-            box-shadow: 0 10px 24px rgba(15, 23, 42, 0.045);
-            overflow: hidden;
-        }
-
-        .user-card-head {
-            display: flex;
-            align-items: flex-start;
-            gap: .85rem;
-            padding: 1.2rem 1.35rem 1rem;
-            border-bottom: 1px solid #e5e7eb;
-            background: #ffffff;
-        }
-
-        .user-card-icon {
-            width: 2.45rem;
-            height: 2.45rem;
-            display: grid;
-            place-items: center;
-            flex: 0 0 auto;
-            border-radius: .9rem;
-            border: 1px solid #bbf7d0;
-            background: #f0fdf4;
-            color: #166534;
-            font-size: .9rem;
-        }
-
-        .user-card-title {
-            margin: 0;
-            color: #020617;
-            font-size: 1.05rem;
-            line-height: 1.25;
-            font-weight: 900;
-        }
-
-        .user-card-copy {
-            margin: .25rem 0 0;
-            color: #64748b;
-            font-size: .87rem;
-            line-height: 1.55;
-        }
-
-        .user-card-body {
-            padding: 1.35rem;
-        }
-
-        .user-form-grid {
-            display: grid;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-            gap: 1rem;
-        }
-
-        .user-field {
-            min-width: 0;
-        }
-
-        .user-field-full {
-            grid-column: 1 / -1;
-        }
-
-        .user-label {
-            display: block;
-            margin-bottom: .45rem;
-            color: #334155;
-            font-size: .68rem;
-            font-weight: 900;
-            letter-spacing: .16em;
-            text-transform: uppercase;
-        }
-
-        .user-input,
-        .user-select {
-            width: 100%;
-            min-height: 2.65rem;
-            border: 1px solid #cbd5e1;
-            border-radius: .8rem;
-            background: #fff;
-            color: #0f172a;
-            font-size: .92rem;
-            box-shadow: 0 1px 2px rgba(15, 23, 42, .03);
-        }
-
-        .user-input:focus,
-        .user-select:focus {
-            border-color: #15803d;
-            box-shadow: 0 0 0 3px rgba(22, 163, 74, .12);
-            outline: none;
-        }
-
-        .user-note {
-            border: 1px solid #e2e8f0;
-            border-radius: .95rem;
-            background: #f8fafc;
-            padding: .85rem 1rem;
-            color: #475569;
-            font-size: .8rem;
-            line-height: 1.55;
-        }
-
-        .user-check-card {
-            display: flex;
-            align-items: flex-start;
-            gap: .75rem;
-            border: 1px solid #e2e8f0;
-            border-radius: 1rem;
-            background: #f8fafc;
-            padding: 1rem;
-        }
-
-
-
-        .user-check-card input {
-            accent-color: #15803d !important;
-        }
-
-        .user-toggle-card input {
-            position: absolute;
-            inline-size: 1px;
-            block-size: 1px;
-            overflow: hidden;
-            clip: rect(0, 0, 0, 0);
-            white-space: nowrap;
-        }
-
-        .user-toggle-card-compact {
-            min-height: 3rem;
-            align-items: center;
-            justify-content: space-between;
-            gap: 1rem;
-            padding: .75rem .85rem;
-        }
-
-        .user-toggle-title {
-            display: block;
-            color: #0f172a;
-            font-size: .9rem;
-            font-weight: 900;
-            line-height: 1.2;
-            white-space: nowrap;
-        }
-
-        .user-toggle-indicator {
-            position: relative;
-            width: 2.55rem;
-            height: 1.45rem;
-            flex: 0 0 2.55rem;
-            border-radius: 999px;
-            border: 1px solid #cbd5e1;
-            background: #e2e8f0;
-            transition: background .16s ease, border-color .16s ease, box-shadow .16s ease;
-        }
-
-        .user-toggle-indicator::after {
-            content: "";
-            position: absolute;
-            top: 50%;
-            left: .18rem;
-            width: 1.05rem;
-            height: 1.05rem;
-            border-radius: 999px;
-            background: #ffffff;
-            box-shadow: 0 1px 3px rgba(15, 23, 42, .2);
-            transform: translateY(-50%);
-            transition: transform .16s ease;
-        }
-
-        .user-toggle-card input:checked + .user-toggle-indicator {
-            border-color: #15803d;
-            background: #15803d;
-        }
-
-        .user-toggle-card input:checked + .user-toggle-indicator::after {
-            transform: translate(1.1rem, -50%);
-        }
-
-        .user-toggle-card input:focus-visible + .user-toggle-indicator {
-            box-shadow: 0 0 0 3px rgba(22, 163, 74, .16);
-        }
-
-
-        .user-normal-check-card {
-            display: flex;
-            align-items: center;
-            gap: .75rem;
-            width: 100%;
-            cursor: pointer;
-            border: 1px solid #e2e8f0;
-            border-radius: 1rem;
-            background: #f8fafc;
-            padding: .85rem .95rem;
-            transition: border-color .16s ease, background .16s ease, box-shadow .16s ease;
-        }
-
-        .user-normal-check-card:hover {
-            border-color: #bbf7d0;
-            background: #ffffff;
-            box-shadow: 0 8px 18px rgba(15, 23, 42, .035);
-        }
-
-        .user-native-checkbox {
-            appearance: none;
-            -webkit-appearance: none;
-            display: inline-grid;
-            place-content: center;
-            width: 1.05rem;
-            height: 1.05rem;
-            margin: 0;
-            flex: 0 0 auto;
-            cursor: pointer;
-            border: 1.5px solid #86efac;
-            border-radius: .3rem;
-            background: #ffffff;
-            transition: background-color .14s ease, border-color .14s ease, box-shadow .14s ease;
-        }
-
-        .user-native-checkbox::before {
-            content: '';
-            width: .58rem;
-            height: .58rem;
-            transform: scale(0);
-            transition: transform .12s ease-in-out;
-            clip-path: polygon(14% 44%, 0 58%, 38% 96%, 100% 22%, 86% 8%, 36% 68%);
-            background: #ffffff;
-        }
-
-        .user-native-checkbox:checked {
-            background: #15803d !important;
-            border-color: #15803d !important;
-            accent-color: #15803d !important;
-        }
-
-        .user-native-checkbox:checked::before {
-            transform: scale(1);
-        }
-
-        .user-native-checkbox:focus {
-            outline: none !important;
-            box-shadow: none !important;
-        }
-
-        .user-native-checkbox:focus-visible {
-            outline: 2px solid rgba(22, 163, 74, .40) !important;
-            outline-offset: 3px;
-            box-shadow: none !important;
-        }
-
-        .user-availability-card {
-            overflow: hidden;
-        }
-
-        .user-availability-control {
-            display: flex;
-            align-items: flex-start;
-            gap: .85rem;
-            width: 100%;
-            padding: 1.05rem 1.15rem;
-            cursor: pointer;
-            user-select: none;
-        }
-
-        .user-availability-control:hover {
-            background: #ffffff;
-        }
-
-        .user-availability-control .user-native-checkbox {
-            margin-top: .18rem;
-        }
-
-        .user-availability-text {
-            min-width: 0;
-        }
-
-        .user-availability-text .user-card-copy {
-            display: block;
-            margin-top: .25rem;
-        }
-
-        .user-actions {
-            display: grid;
-            gap: .65rem;
-        }
-
-        .user-actions .staff-button {
-            width: 100%;
-            justify-content: center;
-        }
-
-
-
-        .user-side-panel {
-            border-color: #dbe4de;
-            box-shadow: 0 12px 28px rgba(15, 23, 42, 0.04);
-        }
-
-        .user-side-panel .user-card-head {
-            align-items: center;
-            gap: .75rem;
-            padding: 1rem 1.15rem .75rem;
-            border-bottom: 0;
-        }
-
-        .user-side-panel .user-card-icon {
-            width: 2rem;
-            height: 2rem;
-            border-radius: .75rem;
-            font-size: .8rem;
-        }
-
-        .user-side-panel .user-card-body {
-            padding: 0 1.15rem 1.15rem;
-        }
-
-        .user-side-panel .user-card-copy {
-            font-size: .82rem;
-            line-height: 1.45;
-        }
-
-        .user-disclosure {
-            border: 1px solid #e2e8f0;
-            border-radius: .95rem;
-            background: #f8fafc;
-            overflow: hidden;
-        }
-
-        .user-disclosure summary {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: .75rem;
-            list-style: none;
-            cursor: pointer;
-            padding: .85rem .95rem;
-            color: #0f172a;
-            font-size: .86rem;
-            font-weight: 850;
-        }
-
-        .user-disclosure summary::-webkit-details-marker {
-            display: none;
-        }
-
-        .user-disclosure-hint {
-            display: block;
-            margin-top: .1rem;
-            color: #64748b;
-            font-size: .72rem;
-            font-weight: 650;
-            line-height: 1.35;
-        }
-
-        .user-disclosure-chevron {
-            color: #64748b;
-            font-size: .72rem;
-            transition: transform .16s ease;
-        }
-
-        .user-disclosure[open] .user-disclosure-chevron {
-            transform: rotate(180deg);
-        }
-
-        .user-disclosure-panel {
-            border-top: 1px solid #e2e8f0;
-            padding: .95rem;
-            background: #ffffff;
-        }
-
-        .user-rule-text {
-            margin: 0;
-            color: #475569;
-            font-size: .8rem;
-            line-height: 1.6;
-        }
-
-        .user-toggle-card {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 1rem;
-            cursor: pointer;
-            border: 1px solid #e2e8f0;
-            border-radius: 1rem;
-            background: #f8fafc;
-            padding: .9rem .95rem;
-            transition: border-color .16s ease, background .16s ease, box-shadow .16s ease;
-        }
-
-        .user-toggle-card:hover {
-            border-color: #bbf7d0;
-            background: #ffffff;
-            box-shadow: 0 8px 18px rgba(15, 23, 42, .035);
-        }
-
-
-        .user-toggle-card-compact {
-            align-items: center;
-            padding: .85rem .95rem;
-            min-height: 3.35rem;
-        }
-
-        .user-toggle-card-compact .user-toggle-title {
-            margin: 0;
-        }
-
-        .user-toggle-title {
-            display: block;
-            color: #0f172a;
-            font-size: .9rem;
-            font-weight: 900;
-            line-height: 1.2;
-        }
-
-        .user-toggle-copy {
-            display: block;
-            margin-top: .25rem;
-            color: #64748b;
-            font-size: .76rem;
-            line-height: 1.45;
-        }
-
-        .user-error {
-            margin-top: .45rem;
-            color: #b91c1c;
-            font-size: .78rem;
-            font-weight: 700;
-        }
-
-        @media (max-width: 1120px) {
-            .user-editor-layout {
-                grid-template-columns: 1fr;
-            }
-
-            .user-editor-side {
-                position: static;
-            }
-        }
-
-        @media (max-width: 720px) {
-            .user-editor-summary {
-                align-items: flex-start;
-                flex-direction: column;
-            }
-
-            .user-editor-badges {
-                justify-content: flex-start;
-            }
-
-            .user-form-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-    </style>
-
+<x-staff-shell title="Account Details" active="users">
+<div class="account-workspace">
     @if ($errors->any())
         <div class="rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-800 shadow-sm">
             <div class="mb-2 font-black">Please fix the following:</div>
@@ -560,7 +11,7 @@
         </div>
     @endif
 
-    <div class="user-editor-wrap space-y-6">
+    <div class="account-workspace">
         @if (session('success'))
             <div class="rounded-2xl border border-green-200 bg-green-50 px-5 py-4 text-sm font-semibold text-green-800 shadow-sm">
                 <i class="fa-solid fa-circle-check mr-2"></i>{{ session('success') }}
@@ -581,47 +32,21 @@
             </section>
         @endif
 
-        <form method="POST" action="{{ route('staff.users.update', $user) }}" class="space-y-5">
-            @csrf
-            @method('PUT')
+
+        <a href="{{ route('staff.users.index') }}" class="account-back">← User Management</a>
+        <header class="account-header">
+            <div class="account-monogram" aria-hidden="true">{{ mb_strtoupper(mb_substr($user->name, 0, 1)) }}</div>
+            <div><p class="account-eyebrow">Account details · #{{ $user->id }}</p><h2>{{ $user->name }}</h2><p class="account-muted">{{ $user->email ?? $user->username }}</p></div>
+            <span class="account-status">{{ $user->account_deleted_at ? 'Deleted' : ($user->is_active ? 'Active' : 'Suspended') }}</span>
+        </header>
+        <nav class="account-nav" aria-label="Account sections"><a href="#account-profile">Profile</a><a href="#account-access">Access & records</a><a href="#account-security">Security</a><a href="#account-history">History</a></nav>
+        @if ($user->account_deleted_at)
+            <section class="account-panel"><h3>Deleted account</h3><p>This historical identity is retained for audit history. Sign-in is disabled and its email and Google sign-in have been released. It cannot be reactivated.</p></section>
+        @else
+        <form method="POST" action="{{ route('staff.users.update', $user) }}" class="account-editor" x-data="{ accountRole: @js(old('role', $user->role)) }">
+            @csrf @method('PUT')
             <input type="hidden" name="expected_account_revision" value="{{ old('expected_account_revision', $accountRevision) }}">
-
-            <section class="user-editor-summary">
-                <div class="user-editor-identity">
-                    <div class="user-editor-avatar">{{ strtoupper(substr($user->name, 0, 1)) }}</div>
-                    <div class="min-w-0">
-                        <p class="user-editor-kicker">Authorized Account</p>
-                        <h2 class="user-editor-title">{{ $user->name }}</h2>
-                        <p class="user-editor-muted">{{ $user->username ?? $user->email }}</p>
-                    </div>
-                </div>
-
-                <div class="user-editor-badges">
-                    <span class="staff-badge staff-badge-slate">{{ $user->role === 'staff' ? 'Legal Clearance Staff' : ucwords($user->role) }}</span>
-                    <span class="staff-badge {{ $user->is_active ? 'staff-badge-green' : 'staff-badge-red' }}">
-                        {{ $user->is_active ? 'Active' : 'Inactive' }}
-                    </span>
-                    @if ($user->registration_status === \App\Models\User::REGISTRATION_PENDING)
-                        <span class="staff-badge staff-badge-amber">Pending DAR Review</span>
-                    @elseif ($user->registration_status === \App\Models\User::REGISTRATION_DECLINED)
-                        <span class="staff-badge staff-badge-red">Registration Declined</span>
-                    @endif
-                    @if ($user->must_change_password)
-                        <span class="staff-badge staff-badge-amber">Password Change Required</span>
-                    @endif
-                </div>
-            </section>
-
-            <div class="user-editor-layout">
-                <main class="user-editor-main">
-                    <section class="user-card">
-                        <div class="user-card-head">
-                            <span class="user-card-icon"><i class="fa-solid fa-id-card"></i></span>
-                            <div>
-                                <h3 class="user-card-title">Login Information</h3>
-                                <p class="user-card-copy">Maintain the name, username, and recovery email used for account access and credential delivery.</p>
-                            </div>
-                        </div>
+            <section id="account-profile" class="account-panel"><header><h3>Profile</h3><p>Contact and login details for this account.</p></header>
                         <div class="user-card-body user-form-grid">
                             <div class="user-field">
                                 <label for="field-default-name" class="user-label">Name</label>
@@ -650,60 +75,23 @@
                         </div>
                     </section>
 
-                    <section class="user-card">
-                        <div class="user-card-head">
-                            <span class="user-card-icon"><i class="fa-solid fa-key"></i></span>
-                            <div>
-                                <h3 class="user-card-title">Staff-Assisted Password Reset</h3>
-                                <p class="user-card-copy">Generate a temporary password when the user cannot sign in. The current password is never displayed.</p>
-                            </div>
-                        </div>
-                        <div class="user-card-body">
-                            <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                                <div>
-                                    <p class="font-bold text-gray-950">Force password change on next login</p>
-                                    <p class="mt-1 text-sm leading-6 text-gray-500">Resetting does not activate an inactive account. Existing sessions are invalidated by the password-version check.</p>
-                                </div>
-                                @if (auth()->id() === $user->id)
-                                    <span class="staff-badge staff-badge-slate">Use Profile Settings</span>
-                                @else
-                                    <button
-                                        type="submit"
-                                        form="staff-password-reset-form"
-                                        class="staff-button staff-button-dark whitespace-nowrap"
-                                        onclick="return confirm('Generate a new temporary password for this user?');"
-                                    >
-                                        <i class="fa-solid fa-key"></i>
-                                        Reset Password
-                                    </button>
-                                @endif
-                            </div>
-                        </div>
-                    </section>
-                </main>
 
-                <aside class="user-editor-side">
-                    <section class="user-card user-side-panel">
-                        <div class="user-card-head">
-                            <span class="user-card-icon"><i class="fa-solid fa-shield-halved"></i></span>
-                            <div>
-                                <h3 class="user-card-title">Access Control</h3>
-                                <p class="user-card-copy">Set the role first. Open landowner linking only when the account is for a landowner.</p>
-                            </div>
-                        </div>
+            <section id="account-access" class="account-panel"><header><h3>Access & linked records</h3><p>Review the assigned role and the records this account may access.</p></header>
                         <div class="user-card-body space-y-3">
                             <div class="user-field">
                                 <label for="field-default-role" class="user-label">Role</label>
-                                <select id="field-default-role" name="role" required class="user-select" @error('role', 'default') aria-invalid="true" aria-describedby="field-default-role-server-error" data-ui-server-invalid @enderror>
+                                <select id="field-default-role" name="role" x-model="accountRole" required class="user-select" @disabled(auth()->id() === $user->id) @error('role', 'default') aria-invalid="true" aria-describedby="field-default-role-server-error" data-ui-server-invalid @enderror>
                                     <option value="staff" {{ old('role', $user->role) === 'staff' ? 'selected' : '' }}>Legal Clearance Staff</option>
                                     <option value="landowner" {{ old('role', $user->role) === 'landowner' ? 'selected' : '' }}>Landowner</option>
                                     <option value="geodetic" {{ old('role', $user->role) === 'geodetic' ? 'selected' : '' }}>Geodetic</option>
                                 </select>
+                                @if(auth()->id() === $user->id)<input type="hidden" name="role" value="{{ $user->role }}">@endif
                                 @error('role')
                                     <p id="field-default-role-server-error" class="user-error">{{ $message }}</p>
                                 @enderror
                             </div>
 
+                            <div x-show="accountRole === 'landowner'" x-cloak>
                             <details class="user-disclosure" {{ old('role', $user->role) === 'landowner' || old('landowner_id', $linkedLandownerId) ? 'open' : '' }}>
                                 <summary>
                                     <span>
@@ -732,7 +120,7 @@
                                                     </option>
                                                 @endif
                                             </select>
-                                            <p class="user-card-copy" data-remote-record-status>Search loads a bounded set of eligible landowner records.</p>
+                                            <p class="user-card-copy" data-remote-record-status>Search by name, then select the correct DAR record.</p>
                                         </div>
                                         @error('landowner_id')
                                             <p id="field-default-landowner_id-server-error" class="user-error">{{ $message }}</p>
@@ -754,62 +142,49 @@
                                 @error('registration_status')
                                     <p id="field-default-registration_status-server-error" class="user-error">{{ $message }}</p>
                                 @enderror
-                            </div>
+                                </div>
                         </div>
+                        </div>
+                <div class="account-access-status"><h4>Sign-in access</h4><p class="account-muted">Suspending access preserves records and ends existing sessions.</p>
+                <label for="is_active" class="user-label">Account status</label>
+                <select id="is_active" name="is_active" class="user-select" @disabled(auth()->id() === $user->id)>
+                    <option value="1" @selected(old('is_active', $user->is_active) == 1)>Active — allow sign-in</option>
+                    <option value="0" @selected(old('is_active', $user->is_active) == 0)>Suspended — block sign-in</option>
+                </select>
+                @if(auth()->id() === $user->id)<input type="hidden" name="is_active" value="1"><p class="account-muted">Your own account must remain active.</p>@endif
+                </div>
                     </section>
 
-                    <section class="user-card user-side-panel user-availability-card">
-                        <div class="user-availability-control">
-                            <input type="hidden" name="is_active" value="0">
-                            <input id="is_active" type="checkbox" name="is_active" value="1" {{ old('is_active', $user->is_active) ? 'checked' : '' }} class="user-native-checkbox">
-                            <label for="is_active" class="user-availability-text cursor-pointer">
-                                <span class="user-card-title">Active Account</span>
-                                <span class="user-card-copy">Allow this user to access the system.</span>
-                            </label>
-                        </div>
 
-                        @if (auth()->id() === $user->id)
-                            <div class="px-5 pb-5">
-                                <details class="user-disclosure" open>
-                                    <summary>
-                                        <span>
-                                            Self-edit protection
-                                            <span class="user-disclosure-hint">Unsafe self role/status changes are blocked.</span>
-                                        </span>
-                                        <i class="fa-solid fa-chevron-down user-disclosure-chevron"></i>
-                                    </summary>
-                                    <div class="user-disclosure-panel">
-                                        <p class="user-rule-text">
-                                            The backend prevents unsafe role changes or self-deactivation for the currently signed-in account.
-                                        </p>
-                                    </div>
-                                </details>
-                            </div>
-                        @endif
-                    </section>
 
-                    <section class="user-card">
-                        <div class="user-card-body">
-                            <h3 class="user-card-title">Save Changes</h3>
-                            <p class="user-card-copy">User updates are audit logged for traceability.</p>
-                            <div class="user-actions mt-4">
-                                <button type="submit" class="staff-button staff-button-primary">
-                                    <i class="fa-solid fa-floppy-disk"></i>
-                                    Save Changes
-                                </button>
-                                <a href="{{ route('staff.users.index') }}" class="staff-button staff-button-light">Cancel</a>
-                            </div>
-                        </div>
-                    </section>
-                </aside>
-            </div>
+            <footer class="account-save"><button class="staff-button staff-button-primary" type="submit">Save Changes</button><a href="{{ route('staff.users.index') }}" class="staff-button staff-button-light">Cancel</a></footer>
         </form>
-
-        @if (auth()->id() !== $user->id)
-            <form id="staff-password-reset-form" method="POST" action="{{ route('staff.users.reset-password', $user) }}" class="hidden">
-                @csrf
-            </form>
+        <section id="account-security" class="account-panel"><header><h3>Sign-in & security</h3><p>Manage recovery and end existing sessions.</p></header>
+            <dl class="account-facts"><div><dt>Sign-in method</dt><dd>{{ $user->google_id ? 'Google' : 'Username and password' }}</dd></div><div><dt>Recovery email</dt><dd>{{ $user->email ? ($user->email_verified_at ? 'Verified' : 'Not verified') : 'Not provided' }}</dd></div><div><dt>Last sign-in</dt><dd>{{ $user->last_login_at?->timezone('Asia/Manila')->format('M j, Y · g:i A') ?? 'Never signed in' }}</dd></div><div><dt>Created</dt><dd>{{ $user->created_at?->timezone('Asia/Manila')->format('M j, Y') }}</dd></div></dl>
+            @if(auth()->id() !== $user->id)
+            <div class="account-action-row"><div><h4>End existing sessions</h4><p>The user will need to sign in again. Their password stays the same.</p></div><form method="POST" action="{{ route('staff.users.revoke-sessions', $user) }}" onsubmit="return confirm('Sign this user out of existing sessions?')">@csrf<input type="hidden" name="expected_account_revision" value="{{ $accountRevision }}"><button class="staff-button staff-button-light">Revoke Sessions</button></form></div>
+            <div class="account-action-row"><div><h4>Password recovery</h4><p>{{ $user->email && $user->email_verified_at ? 'This user can recover their password through Forgot Password.' : 'Generate a temporary password that must be changed at the next sign-in.' }}</p></div>
+            @unless($user->email && $user->email_verified_at)
+            <form id="staff-password-reset-form" method="POST" action="{{ route('staff.users.reset-password', $user) }}" onsubmit="return confirm('Generate a temporary password for this user?')">@csrf<button class="staff-button staff-button-light">Reset Password</button></form>
+            @endunless</div>
+            @else<a class="staff-button staff-button-light" href="{{ route('profile.edit') }}">Open My Profile</a>@endif
+        </section>
+        <section class="account-panel account-danger"><header><h3>Delete account</h3><p>Remove an unused account and release its email and Google sign-in for registration again.</p></header>
+            @if($deletionBlockedReason)<p>{{ $deletionBlockedReason }}</p>
+            @else
+            <details @if($errors->hasAny(['reason', 'confirmation', 'deletion'])) open @endif><summary class="account-delete-trigger">Delete account…</summary>
+                <form method="POST" action="{{ route('staff.users.destroy', $user) }}" class="account-delete-form">@csrf @method('DELETE')
+                    <input type="hidden" name="expected_account_revision" value="{{ $accountRevision }}">
+                    <p>This cannot be undone. Existing audit history is preserved; the old account cannot be restored. This does not revoke Google's consent grant.</p>
+                    <label for="deletion-reason">Reason</label><textarea id="deletion-reason" name="reason" maxlength="1000" required class="user-input">{{ old('reason') }}</textarea>
+                    <label for="deletion-confirmation">Type DELETE to confirm deletion of {{ $user->username }}</label><input id="deletion-confirmation" name="confirmation" required pattern="DELETE" autocomplete="off" class="user-input">
+                    <button type="submit" class="account-delete-button">Delete Account</button>
+                </form>
+            </details>
+            @endif
+        </section>
         @endif
+        <section id="account-history" class="account-panel"><header><h3>Account history</h3><p>Latest account changes and management actions.</p></header><ol class="account-timeline">@forelse($accountHistory as $event)<li><strong>{{ ucfirst(str_replace('_', ' ', $event->action)) }}</strong><span>{{ $event->actor_name_snapshot ?? 'System' }} · {{ $event->created_at->timezone('Asia/Manila')->format('M j, Y · g:i A') }}</span></li>@empty<li>No account management actions recorded.</li>@endforelse</ol></section>
     </div>
+</div>
 </x-staff-shell>
-

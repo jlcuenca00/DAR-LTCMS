@@ -87,7 +87,7 @@ class RegisteredUserController extends Controller
 
         if (filled($user->email)) {
             try {
-                $user->notify(new EmailAddedVerificationNotification());
+                $user->notify(new EmailAddedVerificationNotification);
 
                 AuditLogger::record(
                     'user_email_verification_email_sent',
@@ -251,7 +251,7 @@ class RegisteredUserController extends Controller
         );
 
         try {
-            $user->notify(new LandownerRegistrationReceived());
+            $user->notify(new LandownerRegistrationReceived);
         } catch (Throwable $exception) {
             report($exception);
             $request->session()->flash('registration_email_warning',
@@ -260,7 +260,7 @@ class RegisteredUserController extends Controller
 
         if (! $googleEmailAuthoritative) {
             try {
-                $user->notify(new EmailAddedVerificationNotification());
+                $user->notify(new EmailAddedVerificationNotification);
 
                 AuditLogger::record(
                     'user_email_verification_email_sent',
@@ -327,6 +327,7 @@ class RegisteredUserController extends Controller
 
         Auth::login($user);
         $request->session()->regenerate();
+        $request->session()->put('auth_session_version', (int) $user->session_version);
         $request->session()->put(
             'auth_password_changed_at',
             $user->password_changed_at?->format('Y-m-d H:i:s.u')

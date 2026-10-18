@@ -369,11 +369,14 @@
                     Pending Review
                     <span class="user-management-tab-count">{{ $accountCounts['pending'] }}</span>
                 </a>
+                <a href="{{ route('staff.users.index', ['status' => 'deleted']) }}" class="user-management-tab {{ $currentStatus === 'deleted' ? 'is-active' : '' }}">Deleted history <span class="user-management-tab-count">{{ $accountCounts['deleted'] }}</span></a>
             </nav>
 
             <div class="user-management-context">
                 <i class="fa-solid {{ $currentStatus === 'inactive' ? 'fa-circle-info' : 'fa-shield-halved' }}" aria-hidden="true"></i>
-                @if ($currentStatus === 'inactive')
+                @if ($currentStatus === 'deleted')
+                    <div>Deleted historical identities cannot sign in or be reactivated. Their audit history is preserved.</div>
+                @elseif ($currentStatus === 'inactive')
                     <div><strong>Inactive accounts cannot sign in.</strong> They remain available here so authorized Staff can review or reactivate them without deleting historical account references.</div>
                 @else
                     <div><strong>Active accounts are shown by default.</strong> Use this list for day-to-day account administration; inactive accounts are kept in the separate view above.</div>
@@ -491,7 +494,9 @@
                                 </td>
                                 <td>
                                     <div class="user-management-readiness">
-                                        @if ($currentStatus === 'inactive')
+                                        @if ($user->account_deleted_at)
+                                            <span class="staff-badge staff-badge-red">Deleted</span>
+                                        @elseif ($currentStatus === 'inactive')
                                             <span class="staff-badge staff-badge-red">Access Disabled</span>
                                         @elseif ($user->registration_status === \App\Models\User::REGISTRATION_PENDING)
                                             <span class="staff-badge staff-badge-amber">Pending DAR Review</span>
