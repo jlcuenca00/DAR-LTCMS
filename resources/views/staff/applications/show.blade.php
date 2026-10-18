@@ -2,6 +2,12 @@
     title="Application Review"
     active="applications"
 >
+    <script>
+        window.darFormDraftContext = {
+            hasOldInput: @js(session()->hasOldInput()),
+            savedKey: @js(session('saved_requirement_draft_key'))
+        };
+    </script>
     <x-slot name="actions">
         <button
             type="button"
@@ -3649,6 +3655,9 @@
                                                       action="{{ route('staff.applications.documents.store', ['application' => $application->id, 'requiredDocument' => $req->id]) }}"
                                                       enctype="multipart/form-data"
                                                       class="document-form-section"
+                                                      data-autosave-key="requirement-{{ auth()->id() }}-{{ $application->id }}-{{ $req->id }}"
+                                                      data-draft-confirmed-save
+                                                      data-draft-server-version="{{ hash('sha256', json_encode($doc->getAttributes())) }}"
                                                       data-preserve-scroll>
                                                     @csrf
                     <input type="hidden" name="expected_workflow_revision" value="{{ old('expected_workflow_revision', $application->workflow_revision) }}">
@@ -3667,6 +3676,7 @@
                                                     ])
 
                                                     <div class="document-action-row">
+                                                        <p data-draft-status aria-live="polite" class="text-sm text-gray-600">Unsaved details are kept on this browser. Save This Requirement records them in the system. Files are not included in drafts.</p>
                                                         <button type="submit" class="staff-button staff-button-primary">
                                                             <i class="fa-solid fa-floppy-disk"></i>
                                                             Save This Requirement
@@ -3691,6 +3701,9 @@
                                           action="{{ route('staff.applications.documents.store', ['application' => $application->id, 'requiredDocument' => $req->id]) }}"
                                           enctype="multipart/form-data"
                                           class="document-upload-panel"
+                                          data-autosave-key="requirement-{{ auth()->id() }}-{{ $application->id }}-{{ $req->id }}"
+                                          data-draft-confirmed-save
+                                          data-draft-server-version="new"
                                           data-preserve-scroll>
                                         @csrf
                     <input type="hidden" name="expected_workflow_revision" value="{{ old('expected_workflow_revision', $application->workflow_revision) }}">
@@ -3725,6 +3738,7 @@
                                             ])
 
                                             <div class="document-action-row">
+                                                <p data-draft-status aria-live="polite" class="text-sm text-gray-600">Unsaved details are kept on this browser. Save This Requirement records them in the system. Files are not included in drafts.</p>
                                                 <button type="submit"
                                                         class="staff-button staff-button-dark"
                                                         title="{{ $isFinal ? $lockMsg : '' }}"

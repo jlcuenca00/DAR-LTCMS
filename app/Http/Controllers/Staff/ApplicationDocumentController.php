@@ -213,6 +213,7 @@ class ApplicationDocumentController extends Controller
 
         return redirect()
             ->route('staff.applications.show', ['application' => $application->id])
+            ->with('saved_requirement_draft_key', 'requirement-'.Auth::id().'-'.$application->id.'-'.$requiredDocument->id)
             ->with('success', $request->hasFile('file')
                 ? 'Requirement details and optional supporting file saved successfully.'
                 : 'Requirement details saved successfully. No file upload was required.');
