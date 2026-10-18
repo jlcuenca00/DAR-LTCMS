@@ -1,5 +1,8 @@
 <x-staff-shell title="Account Details" active="users">
-<div class="account-workspace">
+@php
+    $initialTab = $errors->hasAny(['reason', 'confirmation', 'deletion']) || ($errors->any() && old('confirmation')) || session('temporary_password') ? 'security' : 'details';
+@endphp
+<div class="account-workspace" data-account-tabs data-initial-tab="{{ $initialTab }}">
     @if ($errors->any())
         <div class="rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-800 shadow-sm">
             <div class="mb-2 font-black">Please fix the following:</div>
@@ -11,7 +14,7 @@
         </div>
     @endif
 
-    <div class="account-workspace">
+
         @if (session('success'))
             <div class="rounded-2xl border border-green-200 bg-green-50 px-5 py-4 text-sm font-semibold text-green-800 shadow-sm">
                 <i class="fa-solid fa-circle-check mr-2"></i>{{ session('success') }}
@@ -33,21 +36,34 @@
         @endif
 
 
-        <a href="{{ route('staff.users.index') }}" class="account-back">← User Management</a>
-        <header class="account-header">
-            <div class="account-monogram" aria-hidden="true">{{ mb_strtoupper(mb_substr($user->name, 0, 1)) }}</div>
-            <div><p class="account-eyebrow">Account details · #{{ $user->id }}</p><h2>{{ $user->name }}</h2><p class="account-muted">{{ $user->email ?? $user->username }}</p></div>
+
+    <header class="account-header">
+        <div class="account-monogram" aria-hidden="true">{{ mb_strtoupper(mb_substr($user->name, 0, 1)) }}</div>
+        <div class="account-identity">
+            <h2>{{ $user->name }}</h2>
+            <p class="account-muted">{{ $user->email ?? $user->username }}</p>
+        </div>
+        <div class="account-header-badges">
+            <span class="account-role">{{ $user->isStaff() ? 'Legal Clearance Staff' : ucfirst($user->role) }}</span>
             <span class="account-status">{{ $user->account_deleted_at ? 'Deleted' : ($user->is_active ? 'Active' : 'Suspended') }}</span>
-        </header>
-        <nav class="account-nav" aria-label="Account sections"><a href="#account-profile">Profile</a><a href="#account-access">Access & records</a><a href="#account-security">Security</a><a href="#account-history">History</a></nav>
-        @if ($user->account_deleted_at)
-            <section class="account-panel"><h3>Deleted account</h3><p>This historical identity is retained for audit history. Sign-in is disabled and its email and Google sign-in have been released. It cannot be reactivated.</p></section>
+        </div>
+    </header>
+    <nav class="account-tabs" role="tablist" aria-label="Account sections">
+        @foreach(['details' => 'Details', 'security' => 'Security', 'activity' => 'Activity'] as $tab => $label)
+            <button type="button" role="tab" id="account-tab-{{ $tab }}" aria-controls="account-pane-{{ $tab }}" aria-selected="{{ $initialTab === $tab ? 'true' : 'false' }}" tabindex="{{ $initialTab === $tab ? '0' : '-1' }}" data-account-tab="{{ $tab }}">{{ $label }}</button>
+        @endforeach
+    </nav>
+    <div id="account-pane-details" role="tabpanel" aria-labelledby="account-tab-details" tabindex="0" data-account-pane="details" @if($initialTab !== 'details') hidden @endif>
+        @if($user->account_deleted_at)
+            <section class="account-panel"><h3>Deleted account</h3><p>This account cannot sign in or be reactivated. Its historical identity is preserved for audit records.</p></section>
         @else
-        <form method="POST" action="{{ route('staff.users.update', $user) }}" class="account-editor" x-data="{ accountRole: @js(old('role', $user->role)) }">
-            @csrf @method('PUT')
-            <input type="hidden" name="expected_account_revision" value="{{ old('expected_account_revision', $accountRevision) }}">
-            <section id="account-profile" class="account-panel"><header><h3>Profile</h3><p>Contact and login details for this account.</p></header>
-                        <div class="user-card-body user-form-grid">
+            <form method="POST" action="{{ route('staff.users.update', $user) }}" data-account-edit-form class="account-panel account-details-form">
+                @csrf
+                @method('PUT')
+                <input type="hidden" name="expected_account_revision" value="{{ old('expected_account_revision', $accountRevision) }}">
+                <section class="account-form-section">
+                    <h3>Profile</h3>
+                        <div class="account-fields account-fields-three">
                             <div class="user-field">
                                 <label for="field-default-name" class="user-label">Name</label>
                                 <input id="field-default-name" type="text" name="name" value="{{ old('name', $user->name) }}" required class="user-input" @error('name', 'default') aria-invalid="true" aria-describedby="field-default-name-server-error" data-ui-server-invalid @enderror>
@@ -64,23 +80,23 @@
                                 @enderror
                             </div>
 
-                            <div class="user-field user-field-full">
+                            <div class="user-field">
                                 <label for="field-default-email" class="user-label">Email Address <span class="normal-case tracking-normal font-medium text-slate-500">(Optional)</span></label>
                                 <input id="field-default-email" type="email" name="email" value="{{ old('email', $user->email) }}" class="user-input" autocomplete="email" placeholder="Example: user@example.com" @error('email', 'default') aria-invalid="true" aria-describedby="field-default-email-server-error" data-ui-server-invalid @enderror>
-                                <p class="mt-2 text-xs leading-5 text-slate-500">Used for account recovery and credential delivery. Leaving this blank keeps Staff-assisted temporary password recovery available.</p>
+                                <p class="mt-2 text-xs leading-5 text-slate-500">Used for password recovery and account messages.</p>
                                 @error('email')
                                     <p id="field-default-email-server-error" class="user-error">{{ $message }}</p>
                                 @enderror
                             </div>
                         </div>
-                    </section>
 
-
-            <section id="account-access" class="account-panel"><header><h3>Access & linked records</h3><p>Review the assigned role and the records this account may access.</p></header>
-                        <div class="user-card-body space-y-3">
+                </section>
+                <section class="account-form-section">
+                    <h3>Access & linked records</h3>
+                        <div class="account-access-fields">
                             <div class="user-field">
                                 <label for="field-default-role" class="user-label">Role</label>
-                                <select id="field-default-role" name="role" x-model="accountRole" required class="user-select" @disabled(auth()->id() === $user->id) @error('role', 'default') aria-invalid="true" aria-describedby="field-default-role-server-error" data-ui-server-invalid @enderror>
+                                <select id="field-default-role" name="role" required class="user-select" @disabled(auth()->id() === $user->id) @error('role', 'default') aria-invalid="true" aria-describedby="field-default-role-server-error" data-ui-server-invalid @enderror>
                                     <option value="staff" {{ old('role', $user->role) === 'staff' ? 'selected' : '' }}>Legal Clearance Staff</option>
                                     <option value="landowner" {{ old('role', $user->role) === 'landowner' ? 'selected' : '' }}>Landowner</option>
                                     <option value="geodetic" {{ old('role', $user->role) === 'geodetic' ? 'selected' : '' }}>Geodetic</option>
@@ -91,15 +107,17 @@
                                 @enderror
                             </div>
 
-                            <div x-show="accountRole === 'landowner'" x-cloak>
-                            <details class="user-disclosure" {{ old('role', $user->role) === 'landowner' || old('landowner_id', $linkedLandownerId) ? 'open' : '' }}>
-                                <summary>
-                                    <span>
-                                        Landowner link
-                                        <span class="user-disclosure-hint">Required only for landowner accounts.</span>
-                                    </span>
-                                    <i class="fa-solid fa-chevron-down user-disclosure-chevron"></i>
-                                </summary>
+                <div class="account-status-field">
+                <label for="is_active" class="user-label">Account status</label>
+                <select id="is_active" name="is_active" class="user-select" @disabled(auth()->id() === $user->id)>
+                    <option value="1" @selected(old('is_active', $user->is_active) == 1)>Active</option>
+                    <option value="0" @selected(old('is_active', $user->is_active) == 0)>Suspended</option>
+                </select>
+                @if(auth()->id() === $user->id)<input type="hidden" name="is_active" value="1"><p class="account-muted">Your own account must remain active.</p>@endif
+                </div>
+                            <div data-landowner-fields @if(old('role', $user->role) !== 'landowner') hidden @endif>
+                            <div class="account-landowner-link">
+
                                 <div class="user-disclosure-panel">
                                     <div class="user-field">
                                         <label for="field-default-landowner_id" class="user-label">Linked Landowner Record</label>
@@ -127,7 +145,7 @@
                                         @enderror
                                     </div>
                                 </div>
-                            </details>
+                            </div>
 
                             <div class="user-field">
                                 <label for="field-default-registration_status" class="user-label">Landowner Registration Review</label>
@@ -145,21 +163,21 @@
                                 </div>
                         </div>
                         </div>
-                <div class="account-access-status"><h4>Sign-in access</h4><p class="account-muted">Suspending access preserves records and ends existing sessions.</p>
-                <label for="is_active" class="user-label">Account status</label>
-                <select id="is_active" name="is_active" class="user-select" @disabled(auth()->id() === $user->id)>
-                    <option value="1" @selected(old('is_active', $user->is_active) == 1)>Active — allow sign-in</option>
-                    <option value="0" @selected(old('is_active', $user->is_active) == 0)>Suspended — block sign-in</option>
-                </select>
-                @if(auth()->id() === $user->id)<input type="hidden" name="is_active" value="1"><p class="account-muted">Your own account must remain active.</p>@endif
-                </div>
-                    </section>
 
-
-
-            <footer class="account-save"><button class="staff-button staff-button-primary" type="submit">Save Changes</button><a href="{{ route('staff.users.index') }}" class="staff-button staff-button-light">Cancel</a></footer>
-        </form>
-        <section id="account-security" class="account-panel"><header><h3>Sign-in & security</h3><p>Manage recovery and end existing sessions.</p></header>
+                </section>
+                <footer class="account-save">
+                    <span data-account-unsaved role="status" hidden>Unsaved changes</span>
+                    <button type="submit" class="staff-button staff-button-primary">Save Changes</button>
+                    <a href="{{ route('staff.users.index') }}" class="staff-button staff-button-light">Cancel</a>
+                </footer>
+            </form>
+        @endif
+    </div>
+    <div id="account-pane-security" role="tabpanel" aria-labelledby="account-tab-security" tabindex="0" data-account-pane="security" @if($initialTab !== 'security') hidden @endif>
+        @if($user->account_deleted_at)
+            <section class="account-panel"><h3>Sign-in disabled</h3><p>The deleted account’s email and Google sign-in have been released. No further account actions are available.</p></section>
+        @else
+        <section class="account-panel"><header><h3>Sign-in & security</h3><p>Manage recovery and end existing sessions.</p></header>
             <dl class="account-facts"><div><dt>Sign-in method</dt><dd>{{ $user->google_id ? 'Google' : 'Username and password' }}</dd></div><div><dt>Recovery email</dt><dd>{{ $user->email ? ($user->email_verified_at ? 'Verified' : 'Not verified') : 'Not provided' }}</dd></div><div><dt>Last sign-in</dt><dd>{{ $user->last_login_at?->timezone('Asia/Manila')->format('M j, Y · g:i A') ?? 'Never signed in' }}</dd></div><div><dt>Created</dt><dd>{{ $user->created_at?->timezone('Asia/Manila')->format('M j, Y') }}</dd></div></dl>
             @if(auth()->id() !== $user->id)
             <div class="account-action-row"><div><h4>End existing sessions</h4><p>The user will need to sign in again. Their password stays the same.</p></div><form method="POST" action="{{ route('staff.users.revoke-sessions', $user) }}" onsubmit="return confirm('Sign this user out of existing sessions?')">@csrf<input type="hidden" name="expected_account_revision" value="{{ $accountRevision }}"><button class="staff-button staff-button-light">Revoke Sessions</button></form></div>
@@ -183,8 +201,12 @@
             </details>
             @endif
         </section>
+
         @endif
-        <section id="account-history" class="account-panel"><header><h3>Account history</h3><p>Latest account changes and management actions.</p></header><ol class="account-timeline">@forelse($accountHistory as $event)<li><strong>{{ ucfirst(str_replace('_', ' ', $event->action)) }}</strong><span>{{ $event->actor_name_snapshot ?? 'System' }} · {{ $event->created_at->timezone('Asia/Manila')->format('M j, Y · g:i A') }}</span></li>@empty<li>No account management actions recorded.</li>@endforelse</ol></section>
+    </div>
+    <div id="account-pane-activity" role="tabpanel" aria-labelledby="account-tab-activity" tabindex="0" data-account-pane="activity" hidden>
+        <section class="account-panel"><header><h3>Account history</h3><p>Latest account changes and management actions.</p></header><ol class="account-timeline">@forelse($accountHistory as $event)<li><strong>{{ ucfirst(str_replace('_', ' ', $event->action)) }}</strong><span>{{ $event->actor_name_snapshot ?? 'System' }} · {{ $event->created_at->timezone('Asia/Manila')->format('M j, Y · g:i A') }}</span></li>@empty<li>No account management actions recorded.</li>@endforelse</ol></section>
+
     </div>
 </div>
 </x-staff-shell>
