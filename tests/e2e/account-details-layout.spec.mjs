@@ -17,7 +17,7 @@ test("account details keep shared gutters and switch panels without losing edits
         `/staff/users?search=${encodeURIComponent(username + ".geo2")}`,
     );
     await page
-        .getByRole("link", { name: "Manage", exact: true })
+        .getByRole("link", { name: /Manage$/ })
         .first()
         .click();
     const originalName = await page
