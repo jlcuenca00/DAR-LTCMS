@@ -98,6 +98,9 @@
                     <dl class="account-facts">
                         <div><dt>Contact number</dt><dd>{{ $user->registration_details['contact_number'] ?? 'Not provided' }}</dd></div>
                         <div><dt>Current address</dt><dd class="break-words">{{ $user->registration_details['address'] ?? 'Not provided' }}</dd></div>
+                        <div><dt>Date of birth</dt><dd>{{ $user->registration_details['date_of_birth'] ?? 'Not provided' }}</dd></div>
+                        <div><dt>Civil / registered owner status</dt><dd>{{ \App\Models\Landowner::registeredOwnerStatusOptions()[$user->registration_details['registered_owner_status'] ?? ''] ?? 'Not provided' }}</dd></div>
+                        @if(filled($user->registration_details['spouse_name'] ?? null))<div><dt>Name of spouse</dt><dd>{{ $user->registration_details['spouse_name'] }}</dd></div>@endif
                     </dl>
                 </section>
                 @endif
@@ -198,13 +201,13 @@
             @endunless</div>
             @else<a class="staff-button staff-button-light" href="{{ route('profile.edit') }}">Open My Profile</a>@endif
         </section>
-        <section class="account-panel account-danger"><header><h3>Delete account</h3><p>Remove an unused account and release its email and Google sign-in for registration again.</p></header>
+        <section class="account-panel account-danger"><header><h3>Delete account</h3><p>Remove sign-in access and release the email and Google sign-in for registration again. Any linked landowner record and its history are preserved.</p></header>
             @if($deletionBlockedReason)<p>{{ $deletionBlockedReason }}</p>
             @else
             <details @if($errors->hasAny(['reason', 'confirmation', 'deletion'])) open @endif><summary class="account-delete-trigger">Delete account…</summary>
                 <form method="POST" action="{{ route('staff.users.destroy', $user) }}" class="account-delete-form">@csrf @method('DELETE')
                     <input type="hidden" name="expected_account_revision" value="{{ $accountRevision }}">
-                    <p>This cannot be undone. Existing audit history is preserved; the old account cannot be restored. This does not revoke Google's consent grant.</p>
+                    <p>This cannot be undone. The linked landowner record will be detached and kept with its landholdings and applications. Existing audit history is preserved; the old account cannot be restored. This does not revoke Google's consent grant.</p>
                     <label for="deletion-reason">Reason</label><textarea id="deletion-reason" name="reason" maxlength="1000" required class="user-input">{{ old('reason') }}</textarea>
                     <label for="deletion-confirmation">Type DELETE to confirm deletion of {{ $user->username }}</label><input id="deletion-confirmation" name="confirmation" required pattern="DELETE" autocomplete="off" class="user-input">
                     <button type="submit" class="account-delete-button">Delete Account</button>

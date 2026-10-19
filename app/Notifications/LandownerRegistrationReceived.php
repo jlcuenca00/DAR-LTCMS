@@ -20,6 +20,7 @@ class LandownerRegistrationReceived extends Notification
         return (new MailMessage)
             ->subject('DAR-LTCMS: Registration received')
             ->view('emails.landowner-registration-received', [
+                'usesGoogle' => $notifiable->auth_provider === 'google',
                 'name' => $notifiable->name ?? null,
                 'loginUrl' => route('login'),
                 'logoUrl' => asset('images/favicon.png'),
