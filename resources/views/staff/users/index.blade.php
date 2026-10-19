@@ -429,7 +429,6 @@
                             <th>Linked Record</th>
                             <th>Activity</th>
                             <th>Sign-in</th>
-                            <th class="staff-table-action">Action</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -457,7 +456,7 @@
                                         </div>
                                         <div class="min-w-0">
                                             <div class="user-management-primary">
-                                                {{ $user->name }}
+                                                <a href="{{ route('staff.users.edit', $user) }}" data-account-manage-link>{{ $user->name }}</a>
                                                 @if (auth()->id() === $user->id)
                                                     <span class="ml-1 text-[10px] font-black uppercase tracking-wider text-green-700">You</span>
                                                 @endif
@@ -509,18 +508,10 @@
                                         @endif
                                     </div>
                                 </td>
-                                <td class="staff-table-action">
-                                    <div class="staff-table-action-group">
-                                        <a href="{{ route('staff.users.edit', $user) }}" class="staff-button staff-button-light">
-                                            <i class="fa-solid fa-sliders"></i>
-                                            Manage
-                                        </a>
-                                    </div>
-                                </td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="6" class="user-management-empty">
+                                <td colspan="5" class="user-management-empty">
                                     <i class="fa-regular {{ $currentStatus === 'inactive' ? 'fa-circle-check' : 'fa-user' }}" aria-hidden="true"></i>
                                     @if ($currentStatus === 'inactive' && empty($filters['search']) && empty($filters['role']))
                                         <strong>No inactive accounts.</strong>

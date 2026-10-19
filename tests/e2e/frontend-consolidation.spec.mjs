@@ -163,7 +163,7 @@ for (const config of [roles[0], roles[2]]) {
 
 const linkCases = [
     { name:'user management', path:'/staff/users', file:'user-management-linked-records.js', href:'/staff/users/23/edit',
-        html:'<table class="user-management-table"><thead><tr><th>User</th><th>Role</th><th>Record</th><th>Activity</th><th>Sign-in</th><th class="staff-table-action">Action</th></tr></thead><tbody><tr><td><span class="user-management-primary">Test User</span></td><td>Staff</td><td>None</td><td>Active</td><td>Ready</td><td><a href="/staff/users/23/edit">Manage</a></td></tr></tbody></table>' },
+        html:'<table class="user-management-table"><thead><tr><th>User</th><th>Role</th><th>Record</th><th>Activity</th><th>Sign-in</th></tr></thead><tbody><tr><td><span class="user-management-primary"><a href="/staff/users/23/edit" data-account-manage-link>Test User</a></span></td><td>Staff</td><td>None</td><td>Active</td><td>Ready</td></tr></tbody></table>' },
     { name:'source package cards', path:'/staff/legacy-records', file:'staff-record-row-navigation.js', href:'/staff/source-record-packages/23',
         html:'<article class="source-package-row"><p class="source-package-code">SOURCE-23</p><a href="/staff/source-record-packages/23">Open Package</a></article>' },
     { name:'matched source rows', path:'/staff/applications/23', file:'staff-record-row-navigation.js', href:'/staff/legacy-records/23',
