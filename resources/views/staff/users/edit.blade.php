@@ -131,6 +131,7 @@
                                 <div class="user-disclosure-panel">
                                     <div class="user-field">
                                         <label for="field-default-landowner_id" class="user-label">Linked Landowner Record</label>
+                                        <button type="button" class="staff-button staff-button-light mb-3" data-create-landowner-open>Create Landowner Record</button>
                                         <div data-remote-record-select data-lookup-url="{{ route('staff.lookups.landowners', ['scope' => 'user-link', 'current_user_id' => $user->id]) }}" class="space-y-2">
                                             <input type="search"
                                                    class="user-input"
@@ -218,5 +219,8 @@
         <section class="account-panel"><header><h3>Account history</h3><p>Latest account changes and management actions.</p></header><ol class="account-timeline">@forelse($accountHistory as $event)<li><strong>{{ ucfirst(str_replace('_', ' ', $event->action)) }}</strong><span>{{ $event->actor_name_snapshot ?? 'System' }} · {{ $event->created_at->timezone('Asia/Manila')->format('M j, Y · g:i A') }}</span></li>@empty<li>No account management actions recorded.</li>@endforelse</ol></section>
 
     </div>
+    @unless($user->account_deleted_at)
+        @include('staff.users.partials.create-landowner-modal')
+    @endunless
 </div>
 </x-staff-shell>

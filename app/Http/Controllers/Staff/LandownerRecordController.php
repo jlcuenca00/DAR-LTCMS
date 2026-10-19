@@ -174,6 +174,13 @@ class LandownerRecordController extends Controller
             return $landowner;
         });
 
+        if ($request->expectsJson()) {
+            return response()->json([
+                'id' => $landowner->id,
+                'text' => $landowner->full_name.' — ID '.$landowner->id,
+            ], 201);
+        }
+
         return redirect()
             ->route('staff.records.landowners.show', $landowner)
             ->with('success', 'Landowner record created successfully. Add landholding records separately when needed.');
