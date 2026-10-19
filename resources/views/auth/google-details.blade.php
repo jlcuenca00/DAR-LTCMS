@@ -11,9 +11,11 @@
         <p class="registration-help">This email will be used for your account. You will sign in with Google.</p>
     </div>
 
-    <form method="POST" action="{{ route('register.google.complete') }}" class="registration-form">
+    <form method="POST" action="{{ route('register.google.complete') }}" class="registration-form" enctype="multipart/form-data">
         @csrf
         @include('auth.partials.landowner-details', ['initialName' => $identity['name']])
+        @include('auth.partials.identity-evidence')
+
         <div class="registration-consent-block">
             <label class="consent">
                 <input type="checkbox" name="privacy_consent" value="1" required @checked(old('privacy_consent'))>

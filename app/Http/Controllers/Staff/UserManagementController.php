@@ -12,9 +12,11 @@ use App\Notifications\LandownerRegistrationReviewed;
 use App\Services\AuditLogger;
 use App\Services\UserAccountDeletionService;
 use App\Services\UserAccountReviewService;
+use App\Services\RegistrationEvidence;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -481,7 +483,7 @@ class UserManagementController extends Controller
             'reason' => ['required', 'string', 'max:1000'],
         ]);
 
-        DB::transaction(function () use ($request, $user, $validated) {
+        $evidence = DB::transaction(function () use ($request, $user, $validated) {
             $user = User::query()->whereKey($user->id)->lockForUpdate()->firstOrFail();
             $service = app(UserAccountDeletionService::class);
             app(UserAccountReviewService::class)->lockLandowners($user, null);
@@ -492,6 +494,7 @@ class UserManagementController extends Controller
 
             // Login events have an immutable actor FK. Retain a disabled historical
             // identity when necessary, but release the unique sign-in identifiers.
+            $evidence = $user->identity_evidence;
             $retainHistory = AuditLog::query()->where('actor_user_id', $user->id)->exists() || $service->hasOfficialReferences($user);
             $linkedLandowner = $user->landowner()->first();
             if ($linkedLandowner) {
@@ -514,6 +517,7 @@ class UserManagementController extends Controller
             if ($retainHistory) {
                 $user->forceFill([
                     'account_deleted_at' => now(),
+                    'identity_evidence' => null,
                     'is_active' => false,
                     'email' => null,
                     'email_verified_at' => null,
@@ -525,7 +529,10 @@ class UserManagementController extends Controller
             } else {
                 $user->delete();
             }
+
+            return $evidence;
         }, 3);
+        app(RegistrationEvidence::class)->delete($evidence);
 
         return redirect()->route('staff.users.index')
             ->with('success', 'Account deleted. Its email and Google sign-in can be used to register again. Existing audit history is preserved.');
@@ -546,6 +553,21 @@ class UserManagementController extends Controller
         }, 3);
 
         return back()->with('success', 'Existing sessions revoked. The user must sign in again.');
+    }
+
+    public function identityEvidence(Request $request, User $user, string $kind)
+    {
+        abort_unless(in_array($kind, RegistrationEvidence::KINDS, true), 404);
+        abort_if($user->account_deleted_at !== null, 404);
+        $path = $user->identity_evidence[$kind] ?? null;
+        abort_unless(RegistrationEvidence::isEvidencePath($path), 404);
+        abort_unless(Storage::disk('local')->exists($path), 404);
+        AuditLogger::record('identity_evidence_viewed', null, $user, ['kind' => $kind], $request->user()->id);
+
+        return Storage::disk('local')->response($path, $kind.'.'.pathinfo($path, PATHINFO_EXTENSION), [
+            'Cache-Control' => 'no-store, private',
+            'X-Content-Type-Options' => 'nosniff',
+        ], 'inline');
     }
 
     private function assertNotDeleted(User $user): void

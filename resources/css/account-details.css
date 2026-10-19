@@ -571,3 +571,9 @@
 @media (max-width: 540px) {
     .account-create-grid { grid-template-columns: minmax(0, 1fr); }
 }
+
+.account-evidence-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+.account-evidence-grid figure { min-width: 0; margin: 0; padding: .7rem; background: #f8faf9; border: 1px solid #d9e2dc; border-radius: .75rem; }
+.account-evidence-grid img { width: 100%; height: 220px; object-fit: contain; }
+.account-evidence-grid figcaption { margin-top: .6rem; font-size: .8rem; font-weight: 600; }
+@media (max-width: 540px) { .account-evidence-grid { grid-template-columns: minmax(0, 1fr); } }

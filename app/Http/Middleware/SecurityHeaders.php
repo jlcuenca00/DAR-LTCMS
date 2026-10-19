@@ -17,7 +17,8 @@ class SecurityHeaders
         $response->headers->set('X-Content-Type-Options', 'nosniff');
         $response->headers->set('X-Frame-Options', 'SAMEORIGIN');
         $response->headers->set('Referrer-Policy', 'strict-origin-when-cross-origin');
-        $response->headers->set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+        $allowsSelfieCamera = $request->routeIs('register', 'register.google.details');
+        $response->headers->set('Permissions-Policy', ($allowsSelfieCamera ? 'camera=(self)' : 'camera=()').', microphone=(), geolocation=()');
         $response->headers->set('X-Permitted-Cross-Domain-Policies', 'none');
         $response->headers->set('Cross-Origin-Opener-Policy', $usesGoogleSignIn ? 'same-origin-allow-popups' : 'same-origin');
         $response->headers->set('Cross-Origin-Resource-Policy', 'same-origin');
@@ -43,6 +44,7 @@ class SecurityHeaders
                 "connect-src 'self'".($usesGoogleSignIn ? ' https://accounts.google.com/gsi/' : ''),
                 "frame-src 'self'".($usesGoogleSignIn ? ' https://accounts.google.com/gsi/' : ''),
                 "worker-src 'self' blob:",
+                "media-src 'self' blob:",
                 'upgrade-insecure-requests',
             ]));
         }
@@ -52,6 +54,7 @@ class SecurityHeaders
         $isSensitiveAuthPage = $request->routeIs(
             'login',
             'register',
+            'register.google.*',
             'password.request',
             'password.recovery.*',
             'password.required',

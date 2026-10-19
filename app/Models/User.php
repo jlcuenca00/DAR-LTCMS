@@ -53,6 +53,7 @@ class User extends Authenticatable
         'registration_status',
         'registration_notes',
         'registration_details',
+        'identity_evidence',
         'registration_reviewed_at',
         'registration_reviewed_by_user_id',
         'is_active',
@@ -72,6 +73,7 @@ class User extends Authenticatable
     protected $hidden = [
         'password',
         'remember_token',
+        'identity_evidence',
     ];
 
     /**
@@ -86,6 +88,7 @@ class User extends Authenticatable
             'password' => 'hashed',
             'registration_reviewed_at' => 'datetime',
             'registration_details' => 'array',
+            'identity_evidence' => 'array',
             'is_active' => 'boolean',
             'must_change_password' => 'boolean',
             'password_changed_at' => 'datetime',

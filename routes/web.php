@@ -92,6 +92,9 @@ Route::middleware(['auth', 'role:staff'])
 
         Route::resource('users', UserManagementController::class)
             ->only(['index', 'create', 'store', 'edit', 'update', 'destroy']);
+        Route::get('/users/{user}/identity/{kind}', [UserManagementController::class, 'identityEvidence'])
+            ->whereIn('kind', \App\Services\RegistrationEvidence::KINDS)
+            ->name('users.identity-evidence');
         Route::post('/users/{user}/revoke-sessions', [UserManagementController::class, 'revokeSessions'])
             ->middleware('throttle:5,1')->name('users.revoke-sessions');
         Route::post('/users/{user}/reset-password', [UserManagementController::class, 'resetPassword'])

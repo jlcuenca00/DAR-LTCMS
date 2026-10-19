@@ -12,7 +12,7 @@
         </div>
     @endif
 
-    <form id="manual-registration-form" method="POST" action="{{ route('register') }}" class="registration-form">
+    <form id="manual-registration-form" method="POST" action="{{ route('register') }}" class="registration-form" enctype="multipart/form-data">
         @csrf
 
         @include('auth.partials.landowner-details')
@@ -42,6 +42,8 @@
             <x-text-input id="password_confirmation" class="form-input" type="password" name="password_confirmation" required autocomplete="new-password" />
             <x-input-error :messages="$errors->get('password_confirmation')" class="mt-2" />
         </div>
+
+        @include('auth.partials.identity-evidence')
 
         <div class="registration-consent-block">
             <label class="consent">

@@ -478,3 +478,5 @@ if (document.readyState === 'loading') {
 }
 
 import './account-create-landowner';
+
+import './registration-evidence';
