@@ -36,6 +36,14 @@ Route::middleware('guest')->group(function () {
         ->middleware('throttle:10,1')
         ->name('register.google');
 
+    Route::get('register/google/details', [RegisteredUserController::class, 'googleDetails'])
+        ->name('register.google.details');
+    Route::post('register/google/details', [RegisteredUserController::class, 'completeGoogleRegistration'])
+        ->middleware('throttle:5,1')
+        ->name('register.google.complete');
+    Route::post('register/google/cancel', [RegisteredUserController::class, 'cancelGoogleRegistration'])
+        ->name('register.google.cancel');
+
     Route::get('login', [AuthenticatedSessionController::class, 'create'])
         ->name('login');
 

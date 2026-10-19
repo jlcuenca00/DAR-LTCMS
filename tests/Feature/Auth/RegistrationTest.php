@@ -26,11 +26,93 @@ class RegistrationTest extends TestCase
         });
     }
 
-    private function registerGoogle()
+    private function beginGoogle()
     {
         return $this->post(route('register.google'), [
             'credential' => 'test-token', 'intent' => 'register', 'privacy_consent' => '1',
         ]);
+    }
+
+    private function completeGoogle(array $overrides = [])
+    {
+        return $this->post(route('register.google.complete'), array_merge([
+            'name' => 'Test Landowner',
+            'contact_number' => '0917 123 4567',
+            'address' => 'Barangay Test, Dumaguete City, Negros Oriental',
+            'privacy_consent' => '1',
+        ], $overrides));
+    }
+
+    private function registerGoogle()
+    {
+        $this->beginGoogle()->assertRedirect(route('register.google.details'));
+
+        return $this->completeGoogle();
+    }
+
+    public function test_google_identity_does_not_create_an_account_before_details_are_submitted(): void
+    {
+        Notification::fake();
+        $this->googlePayload();
+        $this->beginGoogle()->assertRedirect(route('register.google.details'));
+        $this->assertGuest();
+        $this->assertDatabaseCount('users', 0);
+        Notification::assertNothingSent();
+        $this->get(route('register.google.details'))->assertOk()->assertSee('Test Landowner')->assertSee('landowner@example.com');
+        $this->completeGoogle(['name' => 'Juan Dela Cruz', 'email' => 'attacker@gmail.com', 'google_id' => 'attacker', 'role' => 'staff'])->assertRedirect(route('landowner.registration.pending'))->assertSessionMissing('google_registration');
+        $user = User::where('google_id', 'google-test-id')->firstOrFail();
+        $this->assertSame('Juan Dela Cruz', $user->name);
+        $this->assertSame('landowner@example.com', $user->email);
+        $this->assertSame(User::ROLE_LANDOWNER, $user->role);
+        $this->assertSame('0917 123 4567', $user->registration_details['contact_number']);
+        $this->assertDatabaseCount('landowners', 0);
+    }
+
+    public function test_missing_or_expired_google_session_cannot_create_an_account(): void
+    {
+        $this->get(route('register.google.details'))->assertRedirect(route('register'));
+        $this->completeGoogle()->assertRedirect(route('register'));
+        $this->googlePayload();
+        $this->beginGoogle();
+        $this->travel(16)->minutes();
+        $this->completeGoogle()->assertRedirect(route('register'))->assertSessionHasErrors('google')->assertSessionMissing('google_registration');
+        $this->assertDatabaseCount('users', 0);
+        $this->assertGuest();
+    }
+
+    public function test_google_details_require_contact_address_and_consent_and_can_be_cancelled(): void
+    {
+        $this->googlePayload();
+        $this->beginGoogle();
+        $this->from(route('register.google.details'))->completeGoogle(['name' => ' ', 'contact_number' => 'abc', 'address' => '', 'privacy_consent' => '0'])
+            ->assertRedirect(route('register.google.details'))->assertSessionHasErrors(['name', 'contact_number', 'address', 'privacy_consent']);
+        $this->assertDatabaseCount('users', 0);
+        $this->post(route('register.google.cancel'))->assertRedirect(route('register'))->assertSessionMissing('google_registration');
+        $this->completeGoogle()->assertRedirect(route('register'));
+    }
+
+    public function test_submitted_google_details_are_visible_to_staff_for_review(): void
+    {
+        Notification::fake();
+        $this->googlePayload();
+        $this->registerGoogle();
+        $user = User::where('google_id', 'google-test-id')->firstOrFail();
+        $staff = User::factory()->create(['role' => User::ROLE_STAFF]);
+        $this->actingAs($staff)->get(route('staff.users.edit', $user))
+            ->assertOk()->assertSee('Submitted registration details')
+            ->assertSee('0917 123 4567')->assertSee('Barangay Test, Dumaguete City, Negros Oriental');
+    }
+
+    public function test_google_completion_rechecks_duplicate_identity(): void
+    {
+        Notification::fake();
+        $this->googlePayload();
+        $this->beginGoogle();
+        User::factory()->create(['email' => 'landowner@example.com']);
+        $this->completeGoogle()->assertStatus(409)->assertSessionMissing('google_registration');
+        $this->assertDatabaseCount('users', 1);
+        $this->assertGuest();
+        Notification::assertNothingSent();
     }
 
     public function test_google_registration_sends_a_pending_review_receipt(): void
@@ -107,7 +189,7 @@ class RegistrationTest extends TestCase
         User::factory()->create(['google_id' => 'google-test-id']);
         $this->googlePayload();
         $count = User::count();
-        $this->registerGoogle()->assertStatus(409)->assertViewIs('auth.account-exists')
+        $this->beginGoogle()->assertStatus(409)->assertViewIs('auth.account-exists')
             ->assertSee('This account already exists.')
             ->assertSee('Proceed to sign in')->assertSee(route('login'), false);
         $this->assertGuest();
@@ -120,7 +202,7 @@ class RegistrationTest extends TestCase
         Notification::fake();
         $user = User::factory()->create(['email' => 'Landowner@Example.com']);
         $this->googlePayload();
-        $this->registerGoogle()->assertStatus(409);
+        $this->beginGoogle()->assertStatus(409);
         $this->assertNull($user->fresh()->google_id);
         $this->assertGuest();
         Notification::assertNothingSent();
@@ -142,7 +224,7 @@ class RegistrationTest extends TestCase
     {
         Notification::fake();
         $this->googlePayload(['email_verified' => false]);
-        $this->registerGoogle()->assertSessionHasErrors('google');
+        $this->beginGoogle()->assertSessionHasErrors('google');
         $this->assertGuest();
         Notification::assertNothingSent();
     }

@@ -208,15 +208,80 @@ class RegisteredUserController extends Controller
             ]);
         }
 
-        $googleEmailAuthoritative = $this->googleEmailIsAuthoritative($payload, $email);
-
         if (User::query()->whereRaw('LOWER(email) = ?', [$email])->exists()) {
             return $this->accountExists();
         }
 
-        $name = trim((string) ($payload['name'] ?? 'Landowner'));
+        // Retain only verified claims server-side; never trust identity fields posted
+        // by the completion form and never retain the raw Google credential.
+        $request->session()->regenerate();
+        $request->session()->put('google_registration', [
+            'sub' => $googleId,
+            'email' => $email,
+            'email_verified' => true,
+            'name' => (string) ($payload['name'] ?? ''),
+            'hd' => (string) ($payload['hd'] ?? ''),
+            'expires_at' => min((int) ($payload['exp'] ?? PHP_INT_MAX), now()->addMinutes(15)->timestamp),
+        ]);
+
+        return redirect()->route('register.google.details');
+    }
+
+    public function googleDetails(Request $request): Response|RedirectResponse
+    {
+        $identity = $this->pendingGoogleIdentity($request);
+
+        if (! $identity) {
+            return $this->expiredGoogleRegistration();
+        }
+
+        return response()->view('auth.google-details', ['identity' => $identity])
+            ->header('Cache-Control', 'no-store, private');
+    }
+
+    public function cancelGoogleRegistration(Request $request): RedirectResponse
+    {
+        $request->session()->forget('google_registration');
+
+        return redirect()->route('register');
+    }
+
+    public function completeGoogleRegistration(Request $request): RedirectResponse|Response
+    {
+        $payload = $this->pendingGoogleIdentity($request);
+
+        if (! $payload) {
+            return $this->expiredGoogleRegistration();
+        }
+
+        $request->merge([
+            'name' => is_string($request->input('name')) ? trim($request->input('name')) : $request->input('name'),
+            'contact_number' => is_string($request->input('contact_number')) ? trim($request->input('contact_number')) : $request->input('contact_number'),
+            'address' => is_string($request->input('address')) ? trim($request->input('address')) : $request->input('address'),
+        ]);
+        $details = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'contact_number' => ['required', 'string', 'max:30', 'regex:/^\+?[0-9][0-9 ()-]{5,28}[0-9]$/'],
+            'address' => ['required', 'string', 'max:500'],
+            'privacy_consent' => ['accepted'],
+        ]);
+
+        $email = $payload['email'];
+        $googleId = $payload['sub'];
+        if (User::query()->where('google_id', $googleId)->orWhereRaw('LOWER(email) = ?', [$email])->exists()) {
+            $request->session()->forget('google_registration');
+
+            return $this->accountExists();
+        }
+
+        $googleEmailAuthoritative = $this->googleEmailIsAuthoritative($payload, $email);
+        $name = $details['name'];
         $user = new User([
-            'name' => $name !== '' ? $name : 'Landowner',
+            'name' => $name,
+            'registration_details' => [
+                'contact_number' => $details['contact_number'],
+                'address' => $details['address'],
+            ],
             'username' => $this->uniqueGoogleUsername($email, $name),
             'email' => $email,
             'google_id' => $googleId,
@@ -229,7 +294,19 @@ class RegisteredUserController extends Controller
             'password_changed_at' => now(),
         ]);
         $user->email_verified_at = $googleEmailAuthoritative ? now() : null;
-        $user->save();
+        try {
+            $user->save();
+        } catch (UniqueConstraintViolationException $exception) {
+            // A second request may have registered this identity while the form was open.
+            if (User::query()->where('google_id', $googleId)->orWhereRaw('LOWER(email) = ?', [$email])->exists()) {
+                $request->session()->forget('google_registration');
+
+                return $this->accountExists();
+            }
+
+            throw ValidationException::withMessages(['name' => 'Registration could not be completed. Please submit the form again.']);
+        }
+        $request->session()->forget('google_registration');
 
         event(new Registered($user));
 
@@ -307,6 +384,25 @@ class RegisteredUserController extends Controller
         return redirect()->route('landowner.registration.pending');
     }
 
+    private function pendingGoogleIdentity(Request $request): ?array
+    {
+        $identity = $request->session()->get('google_registration');
+        if (! is_array($identity) || ($identity['expires_at'] ?? 0) <= now()->timestamp) {
+            $request->session()->forget('google_registration');
+
+            return null;
+        }
+
+        return $identity;
+    }
+
+    private function expiredGoogleRegistration(): RedirectResponse
+    {
+        return redirect()->route('register')->withErrors([
+            'google' => 'Your Google registration session expired. Please continue with Google again.',
+        ]);
+    }
+
     private function accountExists(): Response
     {
         return response()->view('auth.account-exists', [], 409)
@@ -323,6 +419,7 @@ class RegisteredUserController extends Controller
 
     private function login(Request $request, User $user): void
     {
+        $request->session()->forget('google_registration');
         $user->forceFill(['last_login_at' => now()])->save();
 
         Auth::login($user);
