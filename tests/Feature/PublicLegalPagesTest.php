@@ -57,7 +57,7 @@ class PublicLegalPagesTest extends TestCase
         }
     }
 
-    public function test_registration_has_one_shared_consent_with_and_without_google(): void
+    public function test_registration_has_shared_privacy_consent_and_separate_identity_consent_with_and_without_google(): void
     {
         foreach (['test-client', null] as $clientId) {
             config(['services.google.client_id' => $clientId]);
@@ -65,7 +65,9 @@ class PublicLegalPagesTest extends TestCase
             $html = $response->getContent();
 
             $this->assertSame(1, substr_count($html, 'I have read the'));
-            $this->assertSame(1, substr_count($html, 'type="checkbox"'));
+            $this->assertSame(1, substr_count($html, 'name="privacy_consent"'));
+            $this->assertSame(1, substr_count($html, 'name="identity_consent"'));
+            $this->assertSame(2, substr_count($html, 'type="checkbox"'));
             $response->assertSee('id="registration-privacy-consent" form="manual-registration-form"', false);
             $response->assertSee('id="manual-registration-form"', false);
         }
