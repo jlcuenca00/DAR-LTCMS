@@ -40,7 +40,7 @@
                                 @else
                                     Hello,
                                 @endif
-                                your landowner registration through Google was received.
+                                your landowner registration was received.
                             </p>
 
                             <div style="padding:22px 18px;border:1px solid #b7e4c7;border-radius:14px;background:#f0fdf4;">
@@ -54,7 +54,12 @@
                                 <a href="{{ $loginUrl }}" style="display:inline-block;padding:12px 20px;border-radius:9px;background:#0d6b38;color:#ffffff;text-decoration:none;font-size:14px;font-weight:700;">Sign in to DAR-LTCMS</a>
                             </div>
                             <p style="margin:18px 0 0;font-size:14px;line-height:22px;color:#475569;">
-                                Use <strong>Continue with Google</strong> on the sign-in page. You do not need to register again.
+                                @if($usesGoogle ?? false)
+                                    Use <strong>Continue with Google</strong> on the sign-in page.
+                                @else
+                                    Sign in using the username and password you chose during registration.
+                                @endif
+                                You do not need to register again.
                             </p>
 
                             <div style="margin-top:22px;padding:14px 16px;border-left:4px solid #d97706;background:#fffbeb;font-size:13px;line-height:21px;color:#7c4a03;">
@@ -62,7 +67,7 @@
                                 This email is not an approval of your account, land ownership, or clearance.
                             </div>
                             <p style="margin:20px 0 0;font-size:13px;line-height:21px;color:#64748b;">
-                                For assistance, contact the DAR Negros Oriental Provincial Office.
+                                Please allow a few business days for verification. You will receive an email once your registration has been reviewed.
                             </p>
                             <p style="margin:16px 0 0;font-size:12px;line-height:20px;color:#64748b;word-break:break-word;">
                                 If the button does not work, open

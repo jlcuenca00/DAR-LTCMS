@@ -8,6 +8,7 @@ use App\Notifications\EmailAddedVerificationNotification;
 use App\Notifications\LandownerRegistrationReceived;
 use App\Services\AuditLogger;
 use App\Services\GoogleIdentity;
+use App\Services\LandownerRegistrationDetails;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\RedirectResponse;
@@ -37,9 +38,9 @@ class RegisteredUserController extends Controller
         }
 
         $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
+            ...LandownerRegistrationDetails::rules(),
             'username' => ['required', 'string', 'alpha_dash:ascii', 'max:100', 'unique:users,username'],
-            'email' => ['nullable', 'string', 'lowercase', 'email', 'max:255', 'unique:users,email'],
+            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:users,email'],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
             'privacy_consent' => ['accepted'],
         ]);
@@ -56,6 +57,7 @@ class RegisteredUserController extends Controller
                 'password' => Hash::make($validated['password']),
                 'role' => User::ROLE_LANDOWNER,
                 'auth_provider' => 'local',
+                'registration_details' => LandownerRegistrationDetails::fromValidated($validated),
                 'registration_status' => User::REGISTRATION_PENDING,
                 'is_active' => true,
                 'must_change_password' => false,
@@ -129,6 +131,13 @@ class RegisteredUserController extends Controller
                     'Your registration was received, but the email verification message could not be sent. Your account is still waiting for DAR review.'
                 );
             }
+        }
+
+        try {
+            $user->notify(new LandownerRegistrationReceived);
+        } catch (Throwable $exception) {
+            report($exception);
+            $request->session()->flash('registration_email_warning', 'Your account was created, but the registration receipt could not be sent. You can sign in to check your review status.');
         }
 
         return redirect()->route('landowner.registration.pending');
@@ -260,9 +269,7 @@ class RegisteredUserController extends Controller
             'address' => is_string($request->input('address')) ? trim($request->input('address')) : $request->input('address'),
         ]);
         $details = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'contact_number' => ['required', 'string', 'max:30', 'regex:/^\+?[0-9][0-9 ()-]{5,28}[0-9]$/'],
-            'address' => ['required', 'string', 'max:500'],
+            ...LandownerRegistrationDetails::rules(),
             'privacy_consent' => ['accepted'],
         ]);
 
@@ -278,10 +285,7 @@ class RegisteredUserController extends Controller
         $name = $details['name'];
         $user = new User([
             'name' => $name,
-            'registration_details' => [
-                'contact_number' => $details['contact_number'],
-                'address' => $details['address'],
-            ],
+            'registration_details' => LandownerRegistrationDetails::fromValidated($details),
             'username' => $this->uniqueGoogleUsername($email, $name),
             'email' => $email,
             'google_id' => $googleId,

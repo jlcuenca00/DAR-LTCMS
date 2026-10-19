@@ -13,23 +13,7 @@
 
     <form method="POST" action="{{ route('register.google.complete') }}" class="registration-form">
         @csrf
-        <div class="registration-field">
-            <x-input-label class="form-label" for="name" value="Full legal name" />
-            <x-text-input id="name" class="form-input" type="text" name="name" :value="old('name', $identity['name'])" required maxlength="255" autocomplete="name" autofocus />
-            <p class="registration-help">Use your name as it appears on your official documents.</p>
-            <x-input-error :messages="$errors->get('name')" class="mt-2" />
-        </div>
-        <div class="registration-field">
-            <x-input-label class="form-label" for="contact_number" value="Contact number" />
-            <x-text-input id="contact_number" class="form-input" type="tel" name="contact_number" :value="old('contact_number')" required maxlength="30" autocomplete="tel" placeholder="e.g. 0917 123 4567" />
-            <x-input-error :messages="$errors->get('contact_number')" class="mt-2" />
-        </div>
-        <div class="registration-field">
-            <x-input-label class="form-label" for="address" value="Current address" />
-            <textarea id="address" name="address" class="form-input w-full" rows="3" required maxlength="500" autocomplete="street-address">{{ old('address') }}</textarea>
-            <p class="registration-help">Include your street or sitio, barangay, city or municipality, and province.</p>
-            <x-input-error :messages="$errors->get('address')" class="mt-2" />
-        </div>
+        @include('auth.partials.landowner-details', ['initialName' => $identity['name']])
         <div class="registration-consent-block">
             <label class="consent">
                 <input type="checkbox" name="privacy_consent" value="1" required @checked(old('privacy_consent'))>

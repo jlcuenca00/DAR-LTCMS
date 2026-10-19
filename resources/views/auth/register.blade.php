@@ -15,11 +15,7 @@
     <form id="manual-registration-form" method="POST" action="{{ route('register') }}" class="registration-form">
         @csrf
 
-        <div class="registration-field">
-            <x-input-label class="form-label" for="name" :value="__('Full name')" />
-            <x-text-input id="name" class="form-input" type="text" name="name" :value="old('name')" required autofocus autocomplete="name" />
-            <x-input-error :messages="$errors->get('name')" class="mt-2" />
-        </div>
+        @include('auth.partials.landowner-details')
 
         <div class="registration-field">
             <x-input-label class="form-label" for="username" :value="__('Username')" />
@@ -29,9 +25,9 @@
         </div>
 
         <div class="registration-field">
-            <x-input-label class="form-label" for="email" :value="__('Email (optional)')" />
-            <x-text-input id="email" class="form-input" type="email" name="email" :value="old('email')" autocomplete="email" />
-            <p class="registration-help">If you add an email, verify the link we send before using email password recovery. Leave it blank if you do not use email.</p>
+            <x-input-label class="form-label" for="email" :value="__('Email address')" />
+            <x-text-input id="email" class="form-input" type="email" name="email" :value="old('email')" required autocomplete="email" />
+            <p class="registration-help">We will email your registration review update here. Verify the link we send before using email password recovery.</p>
             <x-input-error :messages="$errors->get('email')" class="mt-2" />
         </div>
 

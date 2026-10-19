@@ -44,6 +44,7 @@ class AccountDeletionTest extends TestCase
         Notification::fake();
         $staff = $this->staff();
         $user = User::factory()->create(['role' => 'landowner', 'google_id' => 'repeat-google', 'email' => 'repeat@gmail.com', 'registration_status' => User::REGISTRATION_PENDING]);
+        $landowner = Landowner::create(['first_name' => 'Repeat', 'last_name' => 'Owner', 'user_id' => $user->id]);
         $event = AuditLogger::record('user_login', null, $user, [], $user->id);
         $this->actingAs($staff)->delete(route('staff.users.destroy', $user), $this->payload($user))->assertSessionHasNoErrors();
         $deleted = $user->fresh();
@@ -51,6 +52,8 @@ class AccountDeletionTest extends TestCase
         $this->assertFalse($deleted->is_active);
         $this->assertNull($deleted->google_id);
         $this->assertNull($deleted->email);
+        $this->assertNotSame($user->username, $deleted->username);
+        $this->assertDatabaseHas('landowners', ['id' => $landowner->id, 'user_id' => null]);
         $this->assertDatabaseHas('audit_logs', ['id' => $event->id, 'actor_user_id' => $user->id]);
         $this->post(route('logout'));
         $this->mock(GoogleIdentity::class, function ($mock) {
@@ -63,14 +66,14 @@ class AccountDeletionTest extends TestCase
         $this->assertAuthenticatedAs($new);
     }
 
-    public function test_official_landowner_link_blocks_deletion(): void
+    public function test_deleting_a_landowner_account_detaches_and_preserves_its_official_record(): void
     {
         $staff = $this->staff();
         $user = User::factory()->create(['role' => 'landowner']);
         $landowner = Landowner::create(['first_name' => 'Official', 'last_name' => 'Owner', 'user_id' => $user->id]);
-        $this->actingAs($staff)->delete(route('staff.users.destroy', $user), $this->payload($user))->assertSessionHasErrors('deletion');
-        $this->assertDatabaseHas('landowners', ['id' => $landowner->id, 'user_id' => $user->id]);
-        $this->assertNull($user->fresh()->account_deleted_at);
+        $this->actingAs($staff)->delete(route('staff.users.destroy', $user), $this->payload($user))->assertSessionHasNoErrors();
+        $this->assertDatabaseHas('landowners', ['id' => $landowner->id, 'first_name' => 'Official', 'last_name' => 'Owner', 'user_id' => null]);
+        $this->assertDatabaseMissing('users', ['id' => $user->id]);
     }
 
     public function test_self_deletion_missing_confirmation_and_stale_revision_are_rejected(): void

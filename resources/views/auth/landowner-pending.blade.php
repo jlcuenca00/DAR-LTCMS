@@ -20,9 +20,9 @@
             </h1>
             <p class="mt-2 text-sm leading-6 text-gray-600">
                 @if ($declined)
-                    DAR staff could not approve this registration. Your land records, parcel maps, and clearance outputs remain locked. Please contact the DAR Negros Oriental Provincial Office so staff can check your identity and account details.
+                    Your registration needs further review. Your land records remain unavailable. Please check your email for a review update.
                 @else
-                    Your landowner account is waiting for DAR staff review. You can sign in, but land records, parcel maps, and clearance outputs will stay locked until your identity is verified and your account is linked to the correct landowner record.
+                    Your registration is pending verification. Please allow a few business days for DAR staff to review your details.
                 @endif
             </p>
         </div>
@@ -30,8 +30,8 @@
         <div class="rounded-lg border px-4 py-3 text-left text-sm leading-6 {{ $declined ? 'border-red-200 bg-red-50 text-red-900' : 'border-amber-200 bg-amber-50 text-amber-900' }}">
             <strong>Next step:</strong>
             {{ $declined
-                ? 'contact authorized DAR staff for assistance.'
-                : 'wait for DAR staff confirmation, or visit/contact the DAR Negros Oriental Provincial Office if they need to verify your details.' }}
+                ? 'check your email for your registration review update.'
+                : 'wait for verification. You will receive an email once your registration has been reviewed.' }}
         </div>
 
         @if (session('registration_email_status'))

@@ -59,12 +59,14 @@ class RegistrationTest extends TestCase
         $this->assertDatabaseCount('users', 0);
         Notification::assertNothingSent();
         $this->get(route('register.google.details'))->assertOk()->assertSee('Test Landowner')->assertSee('landowner@example.com');
-        $this->completeGoogle(['name' => 'Juan Dela Cruz', 'email' => 'attacker@gmail.com', 'google_id' => 'attacker', 'role' => 'staff'])->assertRedirect(route('landowner.registration.pending'))->assertSessionMissing('google_registration');
+        $this->completeGoogle(['date_of_birth' => '1990-01-01', 'registered_owner_status' => 'single', 'name' => 'Juan Dela Cruz', 'email' => 'attacker@gmail.com', 'google_id' => 'attacker', 'role' => 'staff'])->assertRedirect(route('landowner.registration.pending'))->assertSessionMissing('google_registration');
         $user = User::where('google_id', 'google-test-id')->firstOrFail();
         $this->assertSame('Juan Dela Cruz', $user->name);
         $this->assertSame('landowner@example.com', $user->email);
         $this->assertSame(User::ROLE_LANDOWNER, $user->role);
         $this->assertSame('0917 123 4567', $user->registration_details['contact_number']);
+        $this->assertSame('1990-01-01', $user->registration_details['date_of_birth']);
+        $this->assertSame('single', $user->registration_details['registered_owner_status']);
         $this->assertDatabaseCount('landowners', 0);
     }
 
@@ -255,6 +257,11 @@ class RegistrationTest extends TestCase
         $this->post('/register', [
             'name' => 'Maria Santos',
             'username' => 'maria_landowner',
+            'contact_number' => '09171234567',
+            'address' => 'Dumaguete City, Negros Oriental',
+            'date_of_birth' => '1990-01-01',
+            'registered_owner_status' => 'married',
+            'spouse_name' => 'Juan Santos',
             'email' => 'maria@example.com',
             'password' => 'Example-Password-123!',
             'password_confirmation' => 'Example-Password-123!',
@@ -264,10 +271,13 @@ class RegistrationTest extends TestCase
         $user = User::query()->where('username', 'maria_landowner')->firstOrFail();
 
         $this->assertNull($user->email_verified_at);
+        $this->assertSame('Juan Santos', $user->registration_details['spouse_name']);
+        $this->assertSame('1990-01-01', $user->registration_details['date_of_birth']);
         Notification::assertSentTo($user, EmailAddedVerificationNotification::class);
+        Notification::assertSentTo($user, LandownerRegistrationReceived::class);
     }
 
-    public function test_landowner_can_register_without_email_and_is_kept_pending(): void
+    public function test_new_manual_registration_requires_email_and_contact_details(): void
     {
         $response = $this->post('/register', [
             'name' => 'Juan Dela Cruz',
@@ -280,11 +290,8 @@ class RegistrationTest extends TestCase
 
         $user = User::query()->where('username', 'juan_landowner')->first();
 
-        $response->assertRedirect(route('landowner.registration.pending'));
-        $this->assertNotNull($user);
-        $this->assertSame(User::ROLE_LANDOWNER, $user->role);
-        $this->assertSame(User::REGISTRATION_PENDING, $user->registration_status);
-        $this->assertNull($user->email);
+        $response->assertSessionHasErrors(['email', 'contact_number', 'address']);
+        $this->assertNull($user);
     }
 
     public function test_pending_landowner_cannot_open_landowner_records(): void

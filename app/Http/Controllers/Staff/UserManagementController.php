@@ -8,6 +8,7 @@ use App\Models\Landowner;
 use App\Models\User;
 use App\Notifications\AccountCreatedNotification;
 use App\Notifications\EmailAddedVerificationNotification;
+use App\Notifications\LandownerRegistrationReviewed;
 use App\Services\AuditLogger;
 use App\Services\UserAccountDeletionService;
 use App\Services\UserAccountReviewService;
@@ -250,7 +251,7 @@ class UserManagementController extends Controller
         ]);
 
         $email = $this->normalizeEmail($validated['email'] ?? null);
-        [$previousEmail, $emailChanged] = DB::transaction(function () use ($validated, $user, $email, $currentUser) {
+        [$previousEmail, $emailChanged, $registrationChanged] = DB::transaction(function () use ($validated, $user, $email, $currentUser) {
             $user = User::query()->whereKey($user->id)->lockForUpdate()->firstOrFail();
             $this->assertNotDeleted($user);
             $review = app(UserAccountReviewService::class);
@@ -338,9 +339,20 @@ class UserManagementController extends Controller
                 ]
             );
 
-            return [$previousEmail, $emailChanged];
+            return [$previousEmail, $emailChanged, $oldValues['registration_status'] !== $user->registration_status];
         }, 3);
         $user->refresh();
+        $reviewEmailFailed = false;
+        if ($registrationChanged && $user->isLandowner() && filled($user->email)) {
+            try {
+                $user->notify(new LandownerRegistrationReviewed);
+                AuditLogger::record('registration_review_email_sent', null, $user, ['registration_status' => $user->registration_status]);
+            } catch (Throwable $exception) {
+                report($exception);
+                AuditLogger::record('registration_review_email_failed', null, $user, ['registration_status' => $user->registration_status]);
+                $reviewEmailFailed = true;
+            }
+        }
         $verificationRequired = $emailChanged && filled($email);
         $emailChangeReason = blank($previousEmail) ? 'email_added' : 'email_changed';
 
@@ -387,6 +399,10 @@ class UserManagementController extends Controller
             'failed' => "User account {$user->username} updated successfully, but the email verification message could not be sent. The address remains unverified.",
             default => "User account {$user->username} updated successfully.",
         };
+
+        if ($reviewEmailFailed) {
+            $statusMessage .= ' The registration review email could not be sent.';
+        }
 
         return redirect()
             ->route('staff.users.index')
@@ -475,14 +491,20 @@ class UserManagementController extends Controller
             }
 
             // Login events have an immutable actor FK. Retain a disabled historical
-            // identity when necessary, but release both unique sign-in identifiers.
-            $retainHistory = AuditLog::query()->where('actor_user_id', $user->id)->exists();
+            // identity when necessary, but release the unique sign-in identifiers.
+            $retainHistory = AuditLog::query()->where('actor_user_id', $user->id)->exists() || $service->hasOfficialReferences($user);
+            $linkedLandowner = $user->landowner()->first();
+            if ($linkedLandowner) {
+                $linkedLandowner->user_id = null;
+                $linkedLandowner->save();
+            }
             AuditLogger::record('user_deleted', null, $user, [
                 'deleted_user_id' => $user->id,
                 'deleted_username' => $user->username,
                 'deleted_user_role' => $user->role,
                 'reason' => $validated['reason'],
                 'historical_identity_retained' => $retainHistory,
+                'preserved_landowner_id' => $linkedLandowner?->id,
                 'google_sign_in_released' => filled($user->google_id),
             ]);
             $service->revokeSessions($user);
@@ -496,6 +518,7 @@ class UserManagementController extends Controller
                     'email' => null,
                     'email_verified_at' => null,
                     'google_id' => null,
+                    'username' => 'deleted_'.$user->id.'_'.Str::lower(Str::random(8)),
                     'password' => Str::random(80),
                     'remember_token' => null,
                 ])->save();

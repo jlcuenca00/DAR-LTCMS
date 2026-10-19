@@ -176,6 +176,7 @@ class UserAccountReviewIntegrityTest extends TestCase
         $this->assertSame($count, User::count());
         $this->post(route('register'), [
             'name' => 'New Owner', 'username' => 'NEW_OWNER',
+            'email' => 'new.owner@example.com', 'contact_number' => '09171234567', 'address' => 'Dumaguete City',
             'password' => 'Strong-Password-123!', 'password_confirmation' => 'Strong-Password-123!',
             'privacy_consent' => '1',
         ])->assertSessionHasNoErrors()->assertRedirect(route('landowner.registration.pending'));
