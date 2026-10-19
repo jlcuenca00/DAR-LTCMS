@@ -16,10 +16,11 @@ test("account details keep shared gutters and switch panels without losing edits
     await page.goto(
         `/staff/users?search=${encodeURIComponent(username + ".geo2")}`,
     );
-    await page
-        .getByRole("link", { name: /Manage$/ })
-        .first()
-        .click();
+    await expect(page.locator('.user-management-table thead th')).toHaveCount(5);
+    const accountRow = page.locator('.user-management-table tbody tr[data-manage-url]').first();
+    await expect(accountRow.locator('[data-account-manage-link]')).toHaveAttribute('href', /\/staff\/users\/\d+\/edit$/);
+    await accountRow.locator('td').nth(1).click();
+    await expect(page).toHaveURL(/\/staff\/users\/\d+\/edit$/);
     const originalName = await page
         .getByLabel("Name", { exact: true })
         .inputValue();

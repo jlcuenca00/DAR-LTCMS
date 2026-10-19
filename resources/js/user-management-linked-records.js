@@ -5,10 +5,6 @@ function initUserManagementLinkedRecords() {
         return;
     }
 
-    const headers = Array.from(table.querySelectorAll('thead th'));
-    const actionHeader = table.querySelector('thead .staff-table-action');
-    const actionIndex = actionHeader ? headers.indexOf(actionHeader) : -1;
-
     table.querySelectorAll('tbody tr').forEach((row) => {
         const cells = Array.from(row.querySelectorAll('td'));
         const linkedRecordCell = cells[2];
@@ -42,12 +38,7 @@ function initUserManagementLinkedRecords() {
             }
         }
 
-        if (actionIndex < 0 || !cells[actionIndex]) {
-            return;
-        }
-
-        const actionCell = cells[actionIndex];
-        const manageLink = actionCell.querySelector('a[href]');
+        const manageLink = row.querySelector('[data-account-manage-link]');
 
         if (manageLink) {
             const userName = cells[0]?.querySelector('.user-management-primary')?.textContent?.trim() || 'user';
