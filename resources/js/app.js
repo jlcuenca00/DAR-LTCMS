@@ -476,3 +476,5 @@ if (document.readyState === 'loading') {
 } else {
     initDarLtcmsResponsivePublicNavigation();
 }
+
+import './account-create-landowner';
