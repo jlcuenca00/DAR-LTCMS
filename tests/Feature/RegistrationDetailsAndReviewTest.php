@@ -30,7 +30,7 @@ class RegistrationDetailsAndReviewTest extends TestCase
     {
         Notification::fake();
         $staff = User::factory()->create(['role' => User::ROLE_STAFF]);
-        $user = User::factory()->create(['role' => User::ROLE_LANDOWNER, 'registration_status' => User::REGISTRATION_PENDING]);
+        $user = User::factory()->create(['username' => 'registration_review_owner', 'role' => User::ROLE_LANDOWNER, 'registration_status' => User::REGISTRATION_PENDING]);
         $record = Landowner::create(['first_name' => 'Maria', 'last_name' => 'Santos']);
         $payload = [
             'expected_account_revision' => app(UserAccountReviewService::class)->revision($user),
@@ -50,7 +50,7 @@ class RegistrationDetailsAndReviewTest extends TestCase
     public function test_review_email_failure_does_not_undo_the_saved_review(): void
     {
         $staff = User::factory()->create(['role' => User::ROLE_STAFF]);
-        $user = User::factory()->create(['role' => User::ROLE_LANDOWNER, 'registration_status' => User::REGISTRATION_PENDING]);
+        $user = User::factory()->create(['username' => 'registration_review_owner', 'role' => User::ROLE_LANDOWNER, 'registration_status' => User::REGISTRATION_PENDING]);
         Notification::shouldReceive('send')->once()->andThrow(new \RuntimeException('Mail unavailable'));
         $this->actingAs($staff)->put(route('staff.users.update', $user), [
             'expected_account_revision' => app(UserAccountReviewService::class)->revision($user),
@@ -64,7 +64,7 @@ class RegistrationDetailsAndReviewTest extends TestCase
 
     public function test_pending_page_has_email_and_business_day_guidance_without_an_office_visit(): void
     {
-        $user = User::factory()->create(['role' => User::ROLE_LANDOWNER, 'registration_status' => User::REGISTRATION_PENDING]);
+        $user = User::factory()->create(['username' => 'registration_review_owner', 'role' => User::ROLE_LANDOWNER, 'registration_status' => User::REGISTRATION_PENDING]);
         $this->actingAs($user)->get(route('landowner.registration.pending'))
             ->assertOk()->assertSee('few business days')->assertSee('receive an email')
             ->assertDontSee('visit/contact')->assertDontSee('Next step: contact');

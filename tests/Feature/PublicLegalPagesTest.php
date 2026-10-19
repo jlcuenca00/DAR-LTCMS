@@ -38,7 +38,7 @@ class PublicLegalPagesTest extends TestCase
             ->assertSee('form-input', false)
             ->assertSee('data-ux_mode="popup"', false)
             ->assertSee('name="privacy_consent"', false)
-            ->assertSee('Email (optional)');
+            ->assertSee('Email address')->assertSee('Contact number')->assertSee('Date of birth (optional)');
     }
 
     public function test_pending_and_declined_accounts_can_read_policies_without_unlocking_records(): void
