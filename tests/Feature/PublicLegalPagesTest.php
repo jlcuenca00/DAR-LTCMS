@@ -65,8 +65,12 @@ class PublicLegalPagesTest extends TestCase
             $html = $response->getContent();
 
             $this->assertSame(1, substr_count($html, 'I have read the'));
-            $this->assertSame(1, substr_count($html, 'name="privacy_consent"'));
-            $this->assertSame(1, substr_count($html, 'name="identity_consent"'));
+            // Google also has a hidden privacy-consent transport field.
+            $document = new \DOMDocument();
+            @$document->loadHTML($html);
+            $xpath = new \DOMXPath($document);
+            $this->assertSame(1, $xpath->query('//input[@type="checkbox" and @name="privacy_consent"]')->length);
+            $this->assertSame(1, $xpath->query('//input[@type="checkbox" and @name="identity_consent"]')->length);
             $this->assertSame(2, substr_count($html, 'type="checkbox"'));
             $response->assertSee('id="registration-privacy-consent" form="manual-registration-form"', false);
             $response->assertSee('id="manual-registration-form"', false);
