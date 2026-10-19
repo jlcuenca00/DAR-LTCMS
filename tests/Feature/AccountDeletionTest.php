@@ -56,7 +56,8 @@ class AccountDeletionTest extends TestCase
         $this->mock(GoogleIdentity::class, function ($mock) {
             $mock->shouldReceive('verify')->once()->andReturn(['sub' => 'repeat-google', 'email' => 'repeat@gmail.com', 'email_verified' => true, 'name' => 'Repeat Test']);
         });
-        $this->post(route('register.google'), ['credential' => 'test-token', 'intent' => 'register', 'privacy_consent' => '1'])->assertSessionHasNoErrors()->assertRedirect(route('landowner.registration.pending'));
+        $this->post(route('register.google'), ['credential' => 'test-token', 'intent' => 'register', 'privacy_consent' => '1'])->assertSessionHasNoErrors()->assertRedirect(route('register.google.details'));
+        $this->post(route('register.google.complete'), ['name' => 'Repeat Test', 'contact_number' => '09171234567', 'address' => 'Dumaguete City, Negros Oriental', 'privacy_consent' => '1'])->assertSessionHasNoErrors()->assertRedirect(route('landowner.registration.pending'));
         $new = User::where('google_id', 'repeat-google')->firstOrFail();
         $this->assertNotSame($user->id, $new->id);
         $this->assertAuthenticatedAs($new);

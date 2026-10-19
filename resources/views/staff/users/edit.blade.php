@@ -91,6 +91,16 @@
                         </div>
 
                 </section>
+                @if($user->registration_details)
+                <section class="account-form-section">
+                    <h3>Submitted registration details</h3>
+                    <p class="account-muted">Provided by the applicant for DAR review.</p>
+                    <dl class="account-facts">
+                        <div><dt>Contact number</dt><dd>{{ $user->registration_details['contact_number'] ?? 'Not provided' }}</dd></div>
+                        <div><dt>Current address</dt><dd class="break-words">{{ $user->registration_details['address'] ?? 'Not provided' }}</dd></div>
+                    </dl>
+                </section>
+                @endif
                 <section class="account-form-section">
                     <h3>Access & linked records</h3>
                         <div class="account-access-fields">
