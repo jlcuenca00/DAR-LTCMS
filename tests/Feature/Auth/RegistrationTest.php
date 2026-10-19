@@ -13,6 +13,7 @@ use Tests\TestCase;
 class RegistrationTest extends TestCase
 {
     use RefreshDatabase;
+    use \Tests\Concerns\BuildsRegistrationEvidence;
 
     private function googlePayload(array $overrides = []): void
     {
@@ -40,7 +41,7 @@ class RegistrationTest extends TestCase
             'contact_number' => '0917 123 4567',
             'address' => 'Barangay Test, Dumaguete City, Negros Oriental',
             'privacy_consent' => '1',
-        ], $overrides));
+        ], $this->evidenceFiles(), $overrides));
     }
 
     private function registerGoogle()
@@ -254,7 +255,7 @@ class RegistrationTest extends TestCase
     {
         Notification::fake();
 
-        $this->post('/register', [
+        $this->post('/register', array_merge([
             'name' => 'Maria Santos',
             'username' => 'maria_landowner',
             'contact_number' => '09171234567',
@@ -266,7 +267,7 @@ class RegistrationTest extends TestCase
             'password' => 'Example-Password-123!',
             'password_confirmation' => 'Example-Password-123!',
             'privacy_consent' => '1',
-        ])->assertRedirect(route('landowner.registration.pending'));
+        ], $this->evidenceFiles()))->assertRedirect(route('landowner.registration.pending'));
 
         $user = User::query()->where('username', 'maria_landowner')->firstOrFail();
 

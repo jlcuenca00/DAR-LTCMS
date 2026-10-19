@@ -104,6 +104,7 @@
                     </dl>
                 </section>
                 @endif
+                @include('staff.users.partials.identity-evidence')
                 <section class="account-form-section">
                     <h3>Access & linked records</h3>
                         <div class="account-access-fields">

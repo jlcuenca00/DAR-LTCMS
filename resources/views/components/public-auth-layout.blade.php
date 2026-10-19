@@ -12,6 +12,15 @@
     @include('auth.partials.styles')
     <style>
         body { overflow: auto; }
+        .registration-evidence { display: grid; gap: 1rem; border-top: 1px solid #e3e9e5; padding-top: 1rem; }
+        .registration-evidence h2 { font-size: 1rem; font-weight: 700; color: #166b3a; }
+        .registration-evidence-preview, .registration-camera video { width: 100%; max-height: 240px; object-fit: contain; border-radius: .6rem; margin-top: .6rem; background: #f1f5f9; }
+        .registration-camera video { transform: scaleX(-1); }
+        .registration-camera-button { padding: .55rem .75rem; border: 1px solid #cbd5e1; border-radius: .5rem; font-weight: 600; font-size: .8rem; margin: .25rem .25rem .25rem 0; }
+        .registration-camera-button:disabled { opacity: .5; }
+        .registration-evidence [hidden] { display: none !important; }
+        .registration-evidence input[type="file"] { max-width: 100%; padding: .5rem; }
+
         .public-auth .login-bg { position: fixed; inset: 0; background-size: cover; background-position: center; }
         .public-auth .logo-slot { flex-shrink: 0; }
         .public-auth a.login-button { display: block; color: #fff; text-align: center; text-decoration: none; }

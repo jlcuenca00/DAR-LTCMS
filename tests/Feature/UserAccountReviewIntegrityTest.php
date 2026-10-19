@@ -15,6 +15,7 @@ use Tests\TestCase;
 class UserAccountReviewIntegrityTest extends TestCase
 {
     use RefreshDatabase;
+    use \Tests\Concerns\BuildsRegistrationEvidence;
 
     private function account(array $attributes = []): User
     {
@@ -174,12 +175,12 @@ class UserAccountReviewIntegrityTest extends TestCase
             'privacy_consent' => '1',
         ])->assertSessionHasErrors('username');
         $this->assertSame($count, User::count());
-        $this->post(route('register'), [
+        $this->post(route('register'), array_merge([
             'name' => 'New Owner', 'username' => 'NEW_OWNER',
             'email' => 'new.owner@example.com', 'contact_number' => '09171234567', 'address' => 'Dumaguete City',
             'password' => 'Strong-Password-123!', 'password_confirmation' => 'Strong-Password-123!',
             'privacy_consent' => '1',
-        ])->assertSessionHasNoErrors()->assertRedirect(route('landowner.registration.pending'));
+        ], $this->evidenceFiles()))->assertSessionHasNoErrors()->assertRedirect(route('landowner.registration.pending'));
         $this->assertDatabaseHas('users', ['username' => 'new_owner']);
     }
 }

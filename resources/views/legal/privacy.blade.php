@@ -1,16 +1,21 @@
 <x-public-auth-layout title="Privacy Policy" :wide="true">
     <article class="legal-copy">
         <h1>Privacy Policy</h1>
-        <p>Last updated: September 12, 2026</p>
+        <p>Last updated: October 19, 2026</p>
         <p>This policy explains how DAR-LTCMS at darltcms.me handles information when you register, sign in, or use its land transfer clearance and monitoring services for the DAR Negros Oriental Provincial Office.</p>
 
         <h2>Information the system handles</h2>
         <ul>
-            <li><strong>Account information:</strong> your name, username, optional email for manual registration, a securely hashed password, account status, and registration review details.</li>
+            <li><strong>Account information:</strong> your name, username, email (required for new manual registrations), a securely hashed password, account status, and registration review details.</li>
             <li><strong>Google sign-in:</strong> your Google account identifier, name, email address, and email verification status. Google may include a profile picture in its sign-in response; the current registration flow does not save that picture to your profile.</li>
             <li><strong>Service records:</strong> linked landowner and contact details, landholdings, parcels and maps, application documents, review history, and clearance results, as entered by authorized personnel. A profile photo may be stored if you upload one.</li>
             <li><strong>Security and activity information:</strong> sign-in times, account actions, IP address, browser information, and audit records used to investigate changes and protect the service.</li>
         </ul>
+
+        <h2>Registration ID and selfie submissions</h2>
+        <p>New landowner registrations collect your selected ID type, an ID image, an optional back image, and a selfie, along with the personal and contact details you provide. You may capture a selfie with your device camera or upload one. Camera access is requested only when you open the selfie camera; microphone access is not requested.</p>
+        <p>Identity images are stored privately for authorized DAR staff to review alongside your registration details. They are not sent to an external identity-verification provider. Staff review the submissions manually; the system does not perform automated facial matching, liveness detection, or document-authenticity verification.</p>
+        <p>Identity evidence is retained with the account for registration review and support. Active copies are removed when the account is deleted; backup copies may remain until the applicable backup retention period expires. Official landowner records and audit history are preserved separately.</p>
 
         <h2>How Google information is used</h2>
         <p>Continuing with Google lets the system verify your sign-in and create or recognize your DAR-LTCMS account. The sign-in response is checked on the server. The system stores your Google identifier, name, email, and verification status with your account. It does not receive your Google password or request access to your Gmail messages, Google Drive files, contacts, or calendar.</p>

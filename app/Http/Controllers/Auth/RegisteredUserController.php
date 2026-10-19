@@ -9,6 +9,7 @@ use App\Notifications\LandownerRegistrationReceived;
 use App\Services\AuditLogger;
 use App\Services\GoogleIdentity;
 use App\Services\LandownerRegistrationDetails;
+use App\Services\RegistrationEvidence;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\RedirectResponse;
@@ -39,6 +40,7 @@ class RegisteredUserController extends Controller
 
         $validated = $request->validate([
             ...LandownerRegistrationDetails::rules(),
+            ...RegistrationEvidence::rules(),
             'username' => ['required', 'string', 'alpha_dash:ascii', 'max:100', 'unique:users,username'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:users,email'],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
@@ -49,6 +51,7 @@ class RegisteredUserController extends Controller
             ? mb_strtolower(trim($validated['email']))
             : null;
 
+        $evidence = app(RegistrationEvidence::class)->store($request);
         try {
             $user = User::create([
                 'name' => trim($validated['name']),
@@ -58,16 +61,21 @@ class RegisteredUserController extends Controller
                 'role' => User::ROLE_LANDOWNER,
                 'auth_provider' => 'local',
                 'registration_details' => LandownerRegistrationDetails::fromValidated($validated),
+                'identity_evidence' => $evidence,
                 'registration_status' => User::REGISTRATION_PENDING,
                 'is_active' => true,
                 'must_change_password' => false,
                 'password_changed_at' => now(),
             ]);
         } catch (UniqueConstraintViolationException $exception) {
+            app(RegistrationEvidence::class)->delete($evidence);
             $field = User::query()->where('username', $validated['username'])->exists() ? 'username' : 'email';
             throw ValidationException::withMessages([
                 $field => 'This '.$field.' is already registered. Use another value or sign in to your existing account.',
             ]);
+        } catch (Throwable $exception) {
+            app(RegistrationEvidence::class)->delete($evidence);
+            throw $exception;
         }
 
         event(new Registered($user));
@@ -109,7 +117,7 @@ class RegisteredUserController extends Controller
                     'registration_email_status',
                     'A verification link was sent to your email. Verify it before using email password recovery.'
                 );
-            } catch (Throwable $exception) {
+           } catch (Throwable $exception) {
                 report($exception);
 
                 AuditLogger::record(
@@ -270,6 +278,7 @@ class RegisteredUserController extends Controller
         ]);
         $details = $request->validate([
             ...LandownerRegistrationDetails::rules(),
+            ...RegistrationEvidence::rules(),
             'privacy_consent' => ['accepted'],
         ]);
 
@@ -298,9 +307,12 @@ class RegisteredUserController extends Controller
             'password_changed_at' => now(),
         ]);
         $user->email_verified_at = $googleEmailAuthoritative ? now() : null;
+        $evidence = app(RegistrationEvidence::class)->store($request);
+        $user->identity_evidence = $evidence;
         try {
             $user->save();
         } catch (UniqueConstraintViolationException $exception) {
+            app(RegistrationEvidence::class)->delete($evidence);
             // A second request may have registered this identity while the form was open.
             if (User::query()->where('google_id', $googleId)->orWhereRaw('LOWER(email) = ?', [$email])->exists()) {
                 $request->session()->forget('google_registration');
@@ -309,6 +321,9 @@ class RegisteredUserController extends Controller
             }
 
             throw ValidationException::withMessages(['name' => 'Registration could not be completed. Please submit the form again.']);
+        } catch (Throwable $exception) {
+            app(RegistrationEvidence::class)->delete($evidence);
+            throw $exception;
         }
         $request->session()->forget('google_registration');
 
@@ -361,7 +376,7 @@ class RegisteredUserController extends Controller
                     'registration_email_status',
                     'Google sign-in was verified, but this third-party email still needs a DAR-LTCMS verification link before it can be used for password recovery.'
                 );
-            } catch (Throwable $exception) {
+           } catch (Throwable $exception) {
                 report($exception);
 
                 AuditLogger::record(
