@@ -14,11 +14,11 @@ test.describe('public registration and legal pages', () => {
                 await expect(page.locator('.legal-links')).toBeInViewport();
             }
             await page.goto('/register');
-            await expect(page.locator('#email')).toHaveAttribute('required', '');
-            await expect(page.locator('#contact_number')).toHaveAttribute('required', '');
+            await expect(page.locator('#email')).toHaveJSProperty('required', true);
+            await expect(page.locator('#contact_number')).toHaveJSProperty('required', true);
             await page.locator('#registered_owner_status').selectOption('married');
             await expect(page.locator('#spouse_name')).toBeVisible();
-            await expect(page.locator('#spouse_name')).toHaveAttribute('required', '');
+            await expect(page.locator('#spouse_name')).toHaveJSProperty('required', true);
             await page.locator('#registered_owner_status').selectOption('single');
             await expect(page.locator('#spouse_name')).toBeHidden();
             await expect(page.locator('button[type="submit"]')).toHaveText('Create Landowner Account');
