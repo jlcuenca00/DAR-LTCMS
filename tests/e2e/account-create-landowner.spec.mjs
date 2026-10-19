@@ -4,14 +4,14 @@ import { readFileSync } from 'node:fs';
 test('inline landowner creation preserves account edits and handles errors without navigation', async ({ page }) => {
     await page.route('**/inline-landowner-fixture', route => route.fulfill({
         contentType: 'text/html',
-        body: `<form data-account-edit-form><label>Account name<input name="name" value="Unsaved account name"></label>
+        body: `<meta name="viewport" content="width=device-width, initial-scale=1"><form data-account-edit-form><label>Account name<input name="name" value="Unsaved account name"></label>
             <button type="button" data-create-landowner-open>Create Landowner Record</button>
             <select id="field-default-landowner_id"><option value="">None</option></select></form>
             <dialog class="account-create-dialog" data-create-landowner-dialog aria-labelledby="title">
                 <form action="/staff/records/landowners" method="post"><header><h2 id="title">Create Landowner Record</h2></header>
                     <div class="account-create-body"><div data-create-landowner-errors role="alert" hidden></div><div class="account-create-grid">
                     <label>First name<input name="first_name" required></label><label>Last name<input name="last_name" required></label>
-                    <label>Status<select name="registered_owner_status"><option value="">None</option><option value="married">Married</option></select></label>
+                    <label for="fixture-owner-status">Status</label><select id="fixture-owner-status" name="registered_owner_status"><option value="">None</option><option value="married">Married</option></select>
                     <label data-inline-spouse hidden>Spouse<input name="spouse_name" disabled></label></div></div>
                     <footer><button type="button" data-create-landowner-close>Cancel</button><button type="submit">Create & Select</button></footer>
                 </form></dialog><p data-create-landowner-status role="status"></p>`,

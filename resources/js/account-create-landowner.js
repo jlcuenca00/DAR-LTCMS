@@ -58,6 +58,7 @@ function initAccountLandownerCreation() {
             select.add(new Option(payload.text, String(payload.id), true, true));
             select.value = String(payload.id);
             select.dispatchEvent(new Event('change', { bubbles: true }));
+            status.hidden = false;
             status.textContent = 'Landowner record created and selected. Save Changes to link it to this account.';
             form.reset();
             ownerStatus.dispatchEvent(new Event('change'));

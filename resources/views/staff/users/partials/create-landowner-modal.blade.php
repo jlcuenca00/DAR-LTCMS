@@ -53,4 +53,4 @@
         </footer>
     </form>
 </dialog>
-<p class="account-muted" role="status" data-create-landowner-status></p>
+<p class="account-muted" role="status" data-create-landowner-status hidden></p>
