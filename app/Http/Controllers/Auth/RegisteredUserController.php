@@ -117,7 +117,7 @@ class RegisteredUserController extends Controller
                     'registration_email_status',
                     'A verification link was sent to your email. Verify it before using email password recovery.'
                 );
-           } catch (Throwable $exception) {
+            } catch (Throwable $exception) {
                 report($exception);
 
                 AuditLogger::record(
@@ -376,7 +376,7 @@ class RegisteredUserController extends Controller
                     'registration_email_status',
                     'Google sign-in was verified, but this third-party email still needs a DAR-LTCMS verification link before it can be used for password recovery.'
                 );
-           } catch (Throwable $exception) {
+            } catch (Throwable $exception) {
                 report($exception);
 
                 AuditLogger::record(
