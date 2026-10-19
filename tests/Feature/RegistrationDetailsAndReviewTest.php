@@ -47,6 +47,21 @@ class RegistrationDetailsAndReviewTest extends TestCase
         Notification::assertNothingSent();
     }
 
+    public function test_review_email_failure_does_not_undo_the_saved_review(): void
+    {
+        $staff = User::factory()->create(['role' => User::ROLE_STAFF]);
+        $user = User::factory()->create(['role' => User::ROLE_LANDOWNER, 'registration_status' => User::REGISTRATION_PENDING]);
+        Notification::shouldReceive('send')->once()->andThrow(new \RuntimeException('Mail unavailable'));
+        $this->actingAs($staff)->put(route('staff.users.update', $user), [
+            'expected_account_revision' => app(UserAccountReviewService::class)->revision($user),
+            'name' => $user->name, 'username' => $user->username, 'email' => $user->email,
+            'role' => User::ROLE_LANDOWNER, 'is_active' => '1',
+            'registration_status' => User::REGISTRATION_DECLINED,
+        ])->assertSessionHasNoErrors()->assertSessionHas('success', fn ($message) => str_contains($message, 'review email could not be sent'));
+        $this->assertSame(User::REGISTRATION_DECLINED, $user->fresh()->registration_status);
+        $this->assertDatabaseHas('audit_logs', ['action' => 'registration_review_email_failed']);
+    }
+
     public function test_pending_page_has_email_and_business_day_guidance_without_an_office_visit(): void
     {
         $user = User::factory()->create(['role' => User::ROLE_LANDOWNER, 'registration_status' => User::REGISTRATION_PENDING]);

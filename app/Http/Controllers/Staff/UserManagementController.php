@@ -342,6 +342,7 @@ class UserManagementController extends Controller
             return [$previousEmail, $emailChanged, $oldValues['registration_status'] !== $user->registration_status];
         }, 3);
         $user->refresh();
+        $reviewEmailFailed = false;
         if ($registrationChanged && $user->isLandowner() && filled($user->email)) {
             try {
                 $user->notify(new LandownerRegistrationReviewed);
@@ -349,7 +350,7 @@ class UserManagementController extends Controller
             } catch (Throwable $exception) {
                 report($exception);
                 AuditLogger::record('registration_review_email_failed', null, $user, ['registration_status' => $user->registration_status]);
-                $request->session()->flash('error', 'The account was saved, but the registration review email could not be sent.');
+                $reviewEmailFailed = true;
             }
         }
         $verificationRequired = $emailChanged && filled($email);
@@ -398,6 +399,10 @@ class UserManagementController extends Controller
             'failed' => "User account {$user->username} updated successfully, but the email verification message could not be sent. The address remains unverified.",
             default => "User account {$user->username} updated successfully.",
         };
+
+        if ($reviewEmailFailed) {
+            $statusMessage .= ' The registration review email could not be sent.';
+        }
 
         return redirect()
             ->route('staff.users.index')
@@ -486,7 +491,7 @@ class UserManagementController extends Controller
             }
 
             // Login events have an immutable actor FK. Retain a disabled historical
-            // identity when necessary, but release both unique sign-in identifiers.
+            // identity when necessary, but release the unique sign-in identifiers.
             $retainHistory = AuditLog::query()->where('actor_user_id', $user->id)->exists() || $service->hasOfficialReferences($user);
             $linkedLandowner = $user->landowner()->first();
             if ($linkedLandowner) {
