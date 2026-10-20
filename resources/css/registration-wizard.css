@@ -1,0 +1,37 @@
+[data-registration-wizard] [hidden], [data-signup-method][hidden], [data-registration-wizard][hidden], [data-signup-email][hidden] { display:none !important; }
+.signup-method { max-width:30rem; margin:1.5rem auto; }
+.signup-preparation { padding:1rem; margin-bottom:1.25rem; border:1px solid #dce9df; border-radius:.75rem; background:#f3f8f4; color:#34483b; font-size:.875rem; line-height:1.6; }
+.signup-method .registration-google-section { display:grid; gap:1rem; }
+.signup-progress { margin:1.75rem 0; }
+.signup-progress > p { margin-bottom:.75rem; color:#166b3a; font-size:.8rem; font-weight:700; }
+.signup-progress ol { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:.4rem; padding:0; list-style:none; }
+.signup-progress li { border-top:4px solid #dbe5de; padding-top:.65rem; color:#53645a; font-size:.78rem; display:flex; align-items:center; gap:.4rem; }
+.signup-progress li span { font-weight:700; }
+.signup-progress li[data-state="current"] { border-color:#166b3a; color:#124f2d; font-weight:700; }
+.signup-progress li[data-state="complete"] { border-color:#76ac87; color:#285c38; }
+.signup-form [data-signup-step] { display:grid; gap:1rem; }
+.signup-form h2 { font-size:1.35rem; color:#173d27; font-weight:700; margin:0; }
+.signup-form .step-intro { margin:-.45rem 0 .35rem; color:#53645a; font-size:.875rem; line-height:1.6; }
+.signup-credentials, .signup-personal { display:grid; gap:1rem; }
+.signup-credentials { border-bottom:1px solid #e1e9e3; padding-bottom:1.25rem; margin-bottom:.25rem; }
+.signup-actions { display:flex; align-items:center; gap:.75rem; border-top:1px solid #e1e9e3; padding-top:1.25rem; margin-top:.5rem; }
+.signup-actions .login-button { width:auto; min-width:10rem; margin:0 0 0 auto; }
+.signup-secondary, .registration-camera-button { cursor:pointer; background:white; color:#166b3a; border:1px solid #9fb9a8; border-radius:.6rem; padding:.75rem 1rem; font:inherit; font-size:.875rem; font-weight:600; }
+.signup-secondary:hover, .registration-camera-button:hover { background:#eef6f0; }
+.signup-text-button { color:#166b3a; font-size:.85rem; font-weight:600; text-decoration:underline; text-underline-offset:3px; cursor:pointer; }
+.signup-consents { display:grid; gap:1rem; }
+.public-auth .signup-form .consent input[type="checkbox"] { appearance:auto; width:1.1rem; height:1.1rem; accent-color:#166b3a; border-radius:.25rem; }
+.upload-card { padding:1rem; border:1px dashed #a6beae; border-radius:.75rem; background:#f8fbf9; }
+.public-auth .upload-card input[type="file"] { background:white; max-width:100%; padding:.5rem; border:1px solid #dce5df; border-radius:.6rem; font-size:.8rem; }
+.upload-card input::file-selector-button { border:0; border-radius:.4rem; padding:.6rem .8rem; margin-right:.75rem; background:#166b3a; color:white; font-family:inherit; font-weight:600; cursor:pointer; }
+.signup-form .registration-camera { padding:1rem; background:#f2f7f3; border-radius:.75rem; }
+.signup-form .registration-camera-button[data-selfie-start], .signup-form .registration-camera-button[data-selfie-capture] { background:#166b3a; color:white; border-color:#166b3a; }
+.signup-review-section { border:1px solid #dce5df; border-radius:.75rem; padding:1rem; margin-bottom:1rem; overflow-wrap:anywhere; }
+.signup-review-heading { display:flex; justify-content:space-between; gap:1rem; margin-bottom:.75rem; }
+.signup-review-heading h3 { font-weight:700; color:#173d27; }
+.signup-review-section dl > div { display:grid; grid-template-columns:1fr 1.5fr; gap:1rem; padding:.5rem 0; font-size:.85rem; border-top:1px solid #edf1ee; }
+.signup-review-section dt { color:#53645a; }.signup-review-section dd { margin:0; white-space:pre-wrap; }
+.signup-review-photos { display:flex; flex-wrap:wrap; gap:.75rem; margin-top:.75rem; }.signup-review-photos img { max-width:100%; width:calc(50% - .4rem); height:160px; object-fit:contain; border-radius:.5rem; background:#f0f4f1; }
+.signup-error { padding:.85rem; color:#991b1b; background:#fef2f2; border:1px solid #fecaca; border-radius:.6rem; font-size:.85rem; }
+@media(max-width:480px) { .signup-progress li { font-size:.65rem; gap:.2rem; }.signup-actions .login-button { min-width:0; }.signup-secondary { padding:.75rem; }.signup-review-section dl > div { grid-template-columns:1fr; gap:.15rem; }.signup-review-photos img { width:100%; }.signup-form h2 { font-size:1.2rem; } }
+@media(min-width:641px) { .signup-credentials, .signup-personal { grid-template-columns:repeat(2,minmax(0,1fr)); }.signup-personal > .registration-field:has(#name), .signup-personal > .registration-field:has(#address), .signup-personal > [data-registration-spouse] { grid-column:1 / -1; } }

@@ -29,6 +29,8 @@ function initRegistrationEvidence() {
             preview.hidden = true;
             preview.removeAttribute('src');
             input.setCustomValidity('');
+            const selectedName = root.querySelector(`[data-evidence-name="${kind}"]`);
+            if (selectedName) selectedName.textContent = '';
             const file = input.files?.[0];
             if (!file) return;
             if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type) || file.size > 2 * 1024 * 1024) {
@@ -40,12 +42,14 @@ function initRegistrationEvidence() {
             previews.set(kind, url);
             preview.src = url;
             preview.hidden = false;
+            const name = root.querySelector(`[data-evidence-name="${kind}"]`);
+            if (name) name.textContent = `Selected: ${file.name}. Choose another file to replace it.`;
             if (kind === 'selfie') stop();
         });
     });
     start.addEventListener('click', async () => {
         if (!navigator.mediaDevices?.getUserMedia) {
-            status.textContent = 'Camera access is unavailable. Upload a clear selfie using the field above.';
+            status.textContent = 'Camera access is unavailable. Upload a clear selfie using the upload field.';
             return;
         }
         stop();
@@ -63,7 +67,7 @@ function initRegistrationEvidence() {
             status.textContent = 'Face the camera, then capture your selfie. You can retake it before submitting.';
         } catch {
             stop();
-            status.textContent = 'Unable to open the camera. Check permission or upload a clear selfie above.';
+            status.textContent = 'Unable to open the camera. Check permission or upload a clear selfie instead.';
         }
     });
     capture.addEventListener('click', () => {
@@ -94,6 +98,7 @@ function initRegistrationEvidence() {
         status.textContent = 'Camera closed. You can upload a selfie or open it again.';
     });
     form.addEventListener('submit', stop);
+    form.addEventListener('signup:stepchange', stop);
     window.addEventListener('pagehide', () => {
         stop();
         previews.forEach(url => URL.revokeObjectURL(url));
