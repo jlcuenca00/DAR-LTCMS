@@ -26,7 +26,13 @@
         <x-input-label class="form-label" for="id_type" value="ID type" />
         <select id="id_type" name="id_type" class="form-input" required>
             <option value="">Select an ID</option>
-        
+            @foreach(\App\Services\RegistrationEvidence::idTypes() as $value => $label)
+                <option value="{{ $value }}" @selected(old('id_type') === $value)>{{ $label }}</option>
+            @endforeach
+        </select>
+        <x-input-error :messages="$errors->get('id_type')" class="mt-2" />
+    </div>
+
             @include('auth.partials.registration-upload', ['kind' => 'id_front', 'label' => 'ID front / passport information page'])
             @include('auth.partials.registration-upload', ['kind' => 'id_back', 'label' => 'ID back (optional)'])
         </section>

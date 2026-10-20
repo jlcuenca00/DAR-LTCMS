@@ -6,6 +6,9 @@ test('public page backgrounds stay fixed while content scrolls', async ({ page }
         await page.setViewportSize({ width, height: 700 });
         for (const path of ['/register', '/privacy-policy', '/terms-of-service']) {
             await page.goto(path);
+            if (path === '/register') await page.getByRole('button', { name: 'Sign up with email' }).click();
+            await page.evaluate(() => window.scrollTo(0, 0));
+            await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0);
             const bg = page.locator('.public-auth .login-bg');
             await expect(bg).toHaveCSS('position', 'fixed');
             await expect(bg).toHaveCSS('background-size', 'cover');
