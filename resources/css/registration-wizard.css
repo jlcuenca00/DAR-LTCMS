@@ -1,3 +1,5 @@
+/* Registration needs room for paired fields; other authentication pages keep their compact cap. */
+.public-auth .login-content.wide:has([data-registration-wizard]) { max-width:min(100%,800px) !important; }
 [data-registration-wizard] [hidden], [data-signup-method][hidden], [data-registration-wizard][hidden], [data-signup-email][hidden] { display:none !important; }
 .signup-method { max-width:30rem; margin:1.5rem auto; }
 .signup-preparation { padding:1rem; margin-bottom:1.25rem; border:1px solid #dce9df; border-radius:.75rem; background:#f3f8f4; color:#34483b; font-size:.875rem; line-height:1.6; }

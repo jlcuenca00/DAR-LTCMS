@@ -14,6 +14,11 @@ test.describe('public registration and legal pages', () => {
                 await expect(page.locator('.legal-links')).toBeInViewport();
             }
             await page.goto('/register');
+            if (width === 1280) {
+                const card = await page.locator('.login-card').boundingBox();
+                expect(card.width).toBeGreaterThanOrEqual(760);
+                expect(card.width).toBeLessThanOrEqual(800);
+            }
             await page.getByRole('button', { name: 'Sign up with email' }).click();
             await expect(page.locator('[data-step-status]')).toHaveText('Step 1 of 4 · Your details');
             await expect(page.locator('#email')).toHaveJSProperty('required', true);
