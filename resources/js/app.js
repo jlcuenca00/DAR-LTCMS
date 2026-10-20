@@ -480,3 +480,6 @@ if (document.readyState === 'loading') {
 import './account-create-landowner';
 
 import './registration-evidence';
+
+import '../css/registration-wizard.css';
+import './registration-wizard';
