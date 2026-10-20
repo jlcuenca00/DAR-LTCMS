@@ -1,6 +1,6 @@
 <div class="registration-field">
     <x-input-label class="form-label" for="name" value="Full legal name" />
-    <x-text-input id="name" class="form-input" type="text" name="name" :value="old('name', $initialName ?? '')" required maxlength="255" autocomplete="name" autofocus />
+    <x-text-input id="name" class="form-input" type="text" name="name" :value="old('name', $initialName ?? '')" required maxlength="255" autocomplete="name" />
     <p class="registration-help">Use your name as it appears on your official documents.</p>
     <x-input-error :messages="$errors->get('name')" class="mt-2" />
 </div>
