@@ -21,6 +21,12 @@ class SourceRecordLandownerLinkController extends Controller
         $landowner = Landowner::findOrFail($data['landowner_id']);
 
         DB::transaction(function () use ($sourceRecordPackage, $landowner) {
+            $sourceRecordPackage = SourceRecordPackage::query()->whereKey($sourceRecordPackage->id)->lockForUpdate()->firstOrFail();
+            if ($sourceRecordPackage->landholding()->exists() && (int) $sourceRecordPackage->landowner_id !== (int) $landowner->id) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'landowner_id' => 'This package already created a Landholding. Its source Landowner link cannot be changed.',
+                ]);
+            }
             $sourceRecordPackage->update([
                 'landowner_id' => $landowner->id,
             ]);

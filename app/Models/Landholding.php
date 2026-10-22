@@ -31,6 +31,7 @@ class Landholding extends Model
         'date_acquired',
         'date_transferred',
         'source_application_id',
+        'source_record_package_id',
         'source_reference_number',
         'remarks',
         'reference_photo_path',
@@ -63,6 +64,11 @@ class Landholding extends Model
     public function parcel()
     {
         return $this->belongsTo(Parcel::class);
+    }
+
+    public function sourceRecordPackage()
+    {
+        return $this->belongsTo(SourceRecordPackage::class);
     }
 
     public function sourceApplication()

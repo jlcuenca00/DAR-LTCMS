@@ -131,7 +131,7 @@ class SourceRecordPackageController extends Controller
 
     public function show(SourceRecordPackage $sourceRecordPackage)
     {
-        $sourceRecordPackage->load(['records', 'parcel', 'landowner', 'sourceFileUploadedBy']);
+        $sourceRecordPackage->load(['records', 'parcel', 'landowner', 'landholding', 'sourceFileUploadedBy']);
 
         $selectedParcelId = request()->session()->getOldInput('parcel_id', $sourceRecordPackage->parcel_id);
         $selectedParcel = $selectedParcelId
@@ -156,6 +156,11 @@ class SourceRecordPackageController extends Controller
     {
         $inputService = app(SourceRecordPackageInputService::class);
         $data = $request->validate($inputService->updateRules());
+        if ($sourceRecordPackage->landholding()->exists() && $sourceRecordPackage->source_record_scope !== $data['source_record_scope']) {
+            throw ValidationException::withMessages([
+                'source_record_scope' => 'This package already created a Landholding. Its active/historical source scope cannot be changed.',
+            ]);
+        }
         $types = $sourceRecordPackage->records->pluck('record_type');
         if ($types->isNotEmpty()) {
             $inputService->assertIncludedSections(array_merge($data, [
@@ -233,6 +238,12 @@ class SourceRecordPackageController extends Controller
         $parcel = Parcel::findOrFail($data['parcel_id']);
 
         DB::transaction(function () use ($sourceRecordPackage, $parcel) {
+            $sourceRecordPackage = SourceRecordPackage::query()->whereKey($sourceRecordPackage->id)->lockForUpdate()->firstOrFail();
+            if ($sourceRecordPackage->landholding()->exists() && (int) $sourceRecordPackage->parcel_id !== (int) $parcel->id) {
+                throw ValidationException::withMessages([
+                    'parcel_id' => 'This package already created a Landholding. Its source Parcel link cannot be changed.',
+                ]);
+            }
             $sourceRecordPackage->update([
                 'parcel_id' => $parcel->id,
                 'parcel_code' => $parcel->parcel_code,
@@ -269,6 +280,7 @@ class SourceRecordPackageController extends Controller
         }
 
         $data = $request->validate([
+            'expected_record_revision' => ['required', 'integer', 'min:1'],
             'parcel_code' => ['required', 'string', 'max:255', 'unique:parcels,parcel_code'],
             'title_no' => ['nullable', 'string', 'max:255'],
             'municipality' => ['nullable', 'string', 'max:255'],
@@ -288,6 +300,27 @@ class SourceRecordPackageController extends Controller
         );
 
         DB::transaction(function () use ($data, $geometry, $sourceRecordPackage, $request) {
+            $sourceRecordPackage = SourceRecordPackage::query()
+                ->whereKey($sourceRecordPackage->id)->lockForUpdate()->firstOrFail();
+            app(\App\Services\RecordEditRevisionService::class)->assertExpected(
+                $sourceRecordPackage, (int) $data['expected_record_revision']
+            );
+            if ($sourceRecordPackage->parcel_id) {
+                throw ValidationException::withMessages(['parcel_code' => 'This package is already linked to a parcel.']);
+            }
+            if (! empty($data['landowner_id'])) {
+                if ($sourceRecordPackage->source_record_scope !== LegacyRecord::SOURCE_SCOPE_CURRENT_ACTIVE
+                    || ! $sourceRecordPackage->records()->where('record_type', LegacyRecord::TYPE_LANDHOLDING)->exists()) {
+                    throw ValidationException::withMessages([
+                        'landowner_id' => 'Only verified current/active packages with landholding source evidence can create an active Landholding.',
+                    ]);
+                }
+                if ($sourceRecordPackage->landowner_id && (int) $sourceRecordPackage->landowner_id !== (int) $data['landowner_id']) {
+                    throw ValidationException::withMessages([
+                        'landowner_id' => 'The selected Landowner conflicts with the existing source package link.',
+                    ]);
+                }
+            }
             if (! empty($data['landowner_id'])) {
                 app(LandownerConcurrencyService::class)->lockLandowner((int) $data['landowner_id']);
             }
@@ -315,13 +348,22 @@ class SourceRecordPackageController extends Controller
             }
 
             if (! empty($data['landowner_id'])) {
-                Landholding::create([
+                $landholding = Landholding::create([
                     'landowner_id' => $data['landowner_id'],
                     'parcel_id' => $parcel->id,
+                    'source_record_package_id' => $sourceRecordPackage->id,
+                    'source_reference_number' => $sourceRecordPackage->landholding_reference_number,
                     'area_hectares' => $parcel->area_hectares ?? 0,
-                    'status' => 'active',
+                    'status' => Landholding::STATUS_ACTIVE,
                     'date_acquired' => $data['date_acquired'] ?? null,
-                    'remarks' => 'Created from source package ' . $sourceRecordPackage->package_code . '.',
+                    'remarks' => 'Staff-confirmed administrative record from source package ' . $sourceRecordPackage->package_code . '.',
+                ]);
+                AuditLogger::record('landholding_created_from_source_package', null, $landholding, [
+                    'source_record_package_id' => $sourceRecordPackage->id,
+                    'landowner_id' => $landholding->landowner_id,
+                    'parcel_id' => $parcel->id,
+                    'area_hectares' => $landholding->area_hectares,
+                    'scope_note' => 'Administrative landholding only. No legal ownership transfer or registry mutation.',
                 ]);
             }
 

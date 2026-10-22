@@ -69,6 +69,11 @@ class SourceRecordPackage extends Model
         return $this->hasMany(LegacyRecord::class);
     }
 
+    public function landholding()
+    {
+        return $this->hasOne(Landholding::class, 'source_record_package_id');
+    }
+
     public function parcel()
     {
         return $this->belongsTo(Parcel::class);

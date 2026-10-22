@@ -28,6 +28,7 @@ use App\Http\Controllers\Staff\RecordSearchController;
 use App\Http\Controllers\Staff\SourceRecordLandownerLinkController;
 use App\Http\Controllers\Staff\SourceRecordPackageController;
 use App\Http\Controllers\Staff\SourceRecordPackageImportController;
+use App\Http\Controllers\Staff\SourceRecordPackageLandholdingController;
 use App\Http\Controllers\Staff\StaffDashboardController;
 use App\Http\Controllers\Staff\UserManagementController;
 use App\Http\Middleware\EnsureForm4ReviewStage;
@@ -183,6 +184,10 @@ Route::middleware(['auth', 'role:staff'])
             ->name('source-record-packages.source-file.destroy');
         Route::post('/source-record-packages/{sourceRecordPackage}/create-parcel', [SourceRecordPackageController::class, 'createParcel'])
             ->name('source-record-packages.create-parcel');
+        Route::get('/source-record-packages/{sourceRecordPackage}/landholding/review', [SourceRecordPackageLandholdingController::class, 'review'])
+            ->name('source-record-packages.landholding.review');
+        Route::post('/source-record-packages/{sourceRecordPackage}/landholding', [SourceRecordPackageLandholdingController::class, 'store'])
+            ->name('source-record-packages.landholding.store');
         Route::post('/source-record-packages/{sourceRecordPackage}/link-landowner', [SourceRecordLandownerLinkController::class, 'linkSourceRecordPackage'])
             ->name('source-record-packages.link-landowner');
         Route::post('/source-record-packages/{sourceRecordPackage}/create-landowner', [SourceRecordLandownerLinkController::class, 'createFromSourceRecordPackage'])

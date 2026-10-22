@@ -1544,8 +1544,7 @@
                                                 <label>Status *</label>
                                                 <select name="status" class="source-input">
                                                     <option value="active" @selected(old('status', 'active') === 'active')>Active</option>
-                                                    <option value="pending_legal_review" @selected(old('status') === 'pending_legal_review')>Legal Completeness Review</option>
-                                                    <option value="archived" @selected(old('status') === 'archived')>Archived</option>
+                                                    <option value="inactive" @selected(old('status') === 'inactive')>Inactive / Archived</option>
                                                 </select>
                                             </div>
                                             <div class="source-form-field">
@@ -1612,6 +1611,28 @@
                     </div>
                 </section>
 
+
+                <section class="source-detail-panel">
+                    <div class="source-detail-panel-header">
+                        <div>
+                            <p class="source-detail-eyebrow">Master Landholding Record</p>
+                            <h3 class="source-detail-title">Create a Verified Landholding</h3>
+                            <p class="source-detail-help">After linking a verified Landowner and Parcel, confirm their landholding share in a separate review step. Only current/active source holdings contribute to the 5-hectare calculation.</p>
+                        </div>
+                    </div>
+                    <div class="source-detail-body">
+                        @if ($package->landholding)
+                            <p class="source-detail-help">A Landholding was already created from this source package.</p>
+                            <a class="staff-button staff-button-light" href="{{ route('staff.records.landowners.show', $package->landholding->landowner_id) }}#landholdings">View Landholding</a>
+                        @elseif ($package->parcel_id && $package->landowner_id)
+                            <a class="staff-button staff-button-primary" href="{{ route('staff.source-record-packages.landholding.review', $package) }}">
+                                <i class="fa-solid fa-clipboard-check"></i> Review &amp; Create Landholding
+                            </a>
+                        @else
+                            <p class="source-link-guidance">Link a Landowner and Parcel above before reviewing Landholding creation.</p>
+                        @endif
+                    </div>
+                </section>
 
             </main>
 
