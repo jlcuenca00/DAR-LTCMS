@@ -115,6 +115,7 @@ class SourceRecordPackageLandholdingConversionTest extends TestCase
         $otherOwner = Landowner::create(['first_name' => 'Different', 'last_name' => 'Owner']);
         $this->actingAs($staff)->post(route('staff.source-record-packages.link-landowner', $package), [
             'landowner_id' => $otherOwner->id,
+            'expected_record_revision' => $package->fresh()->record_revision,
         ])->assertSessionHasErrors('landowner_id');
 
         $this->assertNotSame($otherOwner->id, $package->fresh()->landowner_id);
