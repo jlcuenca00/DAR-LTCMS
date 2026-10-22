@@ -369,9 +369,16 @@ class SourceRecordPackageController extends Controller
 
             $sourceRecordPackage->update([
                 'parcel_id' => $parcel->id,
+                'landowner_id' => $data['landowner_id'] ?? $sourceRecordPackage->landowner_id,
                 'parcel_code' => $parcel->parcel_code,
                 'status' => SourceRecordPackage::STATUS_PARCEL_CREATED,
             ]);
+
+            if (! empty($data['landowner_id'])) {
+                $sourceRecordPackage->records()->get()->each(function (LegacyRecord $record) use ($data): void {
+                    $record->update(['landowner_id' => $data['landowner_id']]);
+                });
+            }
 
             $this->syncPackageRecordsToParcel($sourceRecordPackage, $parcel);
 

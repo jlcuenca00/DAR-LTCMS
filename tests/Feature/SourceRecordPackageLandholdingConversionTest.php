@@ -105,6 +105,48 @@ class SourceRecordPackageLandholdingConversionTest extends TestCase
         $this->assertDatabaseCount('landholdings', 0);
     }
 
+
+    public function test_source_landowner_link_cannot_change_after_conversion(): void
+    {
+        [$staff, $package] = $this->fixture();
+        $this->actingAs($staff)->post(route('staff.source-record-packages.landholding.store', $package), $this->input($package))
+            ->assertRedirect();
+
+        $otherOwner = Landowner::create(['first_name' => 'Different', 'last_name' => 'Owner']);
+        $this->actingAs($staff)->post(route('staff.source-record-packages.link-landowner', $package), [
+            'landowner_id' => $otherOwner->id,
+        ])->assertSessionHasErrors('landowner_id');
+
+        $this->assertNotSame($otherOwner->id, $package->fresh()->landowner_id);
+        $this->assertDatabaseCount('landholdings', 1);
+    }
+
+    public function test_existing_active_area_and_duplicate_pair_do_not_create_extra_records(): void
+    {
+        [$staff, $package, $landowner, $parcel] = $this->fixture();
+        Landholding::create([
+            'landowner_id' => $landowner->id,
+            'parcel_id' => $parcel->id,
+            'area_hectares' => 1.5000,
+            'status' => Landholding::STATUS_ACTIVE,
+        ]);
+
+        $this->actingAs($staff)->post(route('staff.source-record-packages.landholding.store', $package), $this->input($package))
+            ->assertSessionHasErrors('conversion');
+        $this->assertDatabaseCount('landholdings', 1);
+        $this->assertSame(1.5, (float) app(LandholdingAreaValidationService::class)
+            ->forLandowner($landowner)['current_active_total']);
+    }
+
+    public function test_source_package_without_landholding_evidence_cannot_be_converted(): void
+    {
+        [$staff, $package] = $this->fixture();
+        $package->records()->delete();
+        $this->actingAs($staff)->post(route('staff.source-record-packages.landholding.store', $package), $this->input($package))
+            ->assertSessionHasErrors('conversion');
+        $this->assertDatabaseCount('landholdings', 0);
+    }
+
     private function fixture(string $scope = LegacyRecord::SOURCE_SCOPE_CURRENT_ACTIVE): array
     {
         $staff = User::factory()->create(['role' => User::ROLE_STAFF, 'is_active' => true]);
