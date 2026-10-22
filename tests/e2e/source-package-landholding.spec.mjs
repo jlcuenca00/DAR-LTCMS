@@ -3,6 +3,9 @@ import { test, expect } from '@playwright/test';
 const username = process.env.E2E_STAFF_USERNAME;
 const password = process.env.E2E_STAFF_PASSWORD;
 
+// This journey commits real database records; replaying it with the same codes is not safe.
+test.describe.configure({ retries: 0 });
+
 function csvCell(value) {
     const text = String(value ?? '');
     return /[,"\n\r]/.test(text) ? '"' + text.replaceAll('"', '""') + '"' : text;
@@ -101,7 +104,7 @@ test('source package CSV import becomes a reviewed master landholding and affect
     const reviewLink = page.getByRole('link', { name: 'Review & Create Landholding' });
     await expect(reviewLink).toBeVisible();
     await reviewLink.click();
-    await expect(page.getByRole('heading', { name: 'Review Landholding' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Review Landholding', exact: true })).toBeVisible();
     await expect(page.locator('dl')).toContainText(landholdingRef);
     await expect(page.locator('dl')).toContainText('0.0000 ha');
 
