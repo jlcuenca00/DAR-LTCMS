@@ -1559,12 +1559,8 @@
                                                 <label>Province</label>
                                                 <input name="province" value="{{ old('province', $package->province ?? 'Negros Oriental') }}" class="source-input">
                                             </div>
-                                            <div class="source-form-field">
-                                                <label>Date Acquired</label>
-                                                <input type="date" name="date_acquired" value="{{ old('date_acquired') }}" class="source-input">
-                                            </div>
                                             <div class="source-form-field full">
-                                                <label>Link Existing Landowner As Active Landholding</label>
+                                                <label>Link Existing Landowner to This Source Package</label>
                                                 <div data-remote-record-select data-lookup-url="{{ route('staff.lookups.landowners') }}" class="space-y-2">
                                                     <input type="search"
                                                            class="source-input"
@@ -1584,7 +1580,7 @@
                                                     </select>
                                                     <p class="source-mini-copy" data-remote-record-status>Search loads a bounded set of matching landowner records.</p>
                                                 </div>
-                                                <p class="source-mini-copy">The map displays owner names through active landholding records.</p>
+                                                <p class="source-mini-copy">This only links the Landowner to the source package. An active Landholding and its acreage require separate staff review and confirmation.</p>
                                             </div>
                                             <div class="source-form-field full">
                                                 <label>Parcel GeoJSON Geometry</label>
@@ -1598,7 +1594,7 @@
                                         </div>
                                         <button type="submit" class="staff-button staff-button-dark justify-center">
                                             <i class="fa-solid fa-map-location-dot"></i>
-                                            Create Parcel Record
+                                            Create and Link Parcel (Landholding Reviewed Separately)
                                         </button>
                                     </form>
                                 </details>

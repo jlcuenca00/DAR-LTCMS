@@ -292,7 +292,6 @@ class SourceRecordPackageController extends Controller
             'remarks' => ['nullable', 'string', 'max:5000'],
 
             'landowner_id' => ['nullable', 'exists:landowners,id'],
-            'date_acquired' => ['nullable', 'date', 'after_or_equal:1900-01-01', 'before_or_equal:today'],
         ]);
 
         $geometry = app(ParcelGeometryService::class)->decodePolygon(
@@ -309,12 +308,6 @@ class SourceRecordPackageController extends Controller
                 throw ValidationException::withMessages(['parcel_code' => 'This package is already linked to a parcel.']);
             }
             if (! empty($data['landowner_id'])) {
-                if ($sourceRecordPackage->source_record_scope !== LegacyRecord::SOURCE_SCOPE_CURRENT_ACTIVE
-                    || ! $sourceRecordPackage->records()->where('record_type', LegacyRecord::TYPE_LANDHOLDING)->exists()) {
-                    throw ValidationException::withMessages([
-                        'landowner_id' => 'Only verified current/active packages with landholding source evidence can create an active Landholding.',
-                    ]);
-                }
                 if ($sourceRecordPackage->landowner_id && (int) $sourceRecordPackage->landowner_id !== (int) $data['landowner_id']) {
                     throw ValidationException::withMessages([
                         'landowner_id' => 'The selected Landowner conflicts with the existing source package link.',
@@ -347,25 +340,8 @@ class SourceRecordPackageController extends Controller
                 );
             }
 
-            if (! empty($data['landowner_id'])) {
-                $landholding = Landholding::create([
-                    'landowner_id' => $data['landowner_id'],
-                    'parcel_id' => $parcel->id,
-                    'source_record_package_id' => $sourceRecordPackage->id,
-                    'source_reference_number' => $sourceRecordPackage->landholding_reference_number,
-                    'area_hectares' => $parcel->area_hectares ?? 0,
-                    'status' => Landholding::STATUS_ACTIVE,
-                    'date_acquired' => $data['date_acquired'] ?? null,
-                    'remarks' => 'Staff-confirmed administrative record from source package ' . $sourceRecordPackage->package_code . '.',
-                ]);
-                AuditLogger::record('landholding_created_from_source_package', null, $landholding, [
-                    'source_record_package_id' => $sourceRecordPackage->id,
-                    'landowner_id' => $landholding->landowner_id,
-                    'parcel_id' => $parcel->id,
-                    'area_hectares' => $landholding->area_hectares,
-                    'scope_note' => 'Administrative landholding only. No legal ownership transfer or registry mutation.',
-                ]);
-            }
+            // A Parcel or a Landowner source link does not establish active landholding.
+            // Staff must separately confirm the Landholding share in the review flow.
 
             $sourceRecordPackage->update([
                 'parcel_id' => $parcel->id,
@@ -391,7 +367,7 @@ class SourceRecordPackageController extends Controller
                     'source_record_package_id' => $sourceRecordPackage->id,
                     'parcel_id' => $parcel->id,
                     'parcel_code' => $parcel->parcel_code,
-                    'linked_landowner_id' => $data['landowner_id'] ?? null,
+                    'linked_landowner_id' => $data['landowner_id'] ?? $sourceRecordPackage->landowner_id,
                     'source_records_linked' => $sourceRecordPackage->records()->count(),
                 ]
             );
@@ -402,7 +378,7 @@ class SourceRecordPackageController extends Controller
 
         return redirect()
             ->route('staff.source-record-packages.show', $sourceRecordPackage)
-            ->with('success', 'Parcel record created from source package and linked successfully.');
+            ->with('success', 'Parcel record created and linked. Verify the landholding share separately before it contributes to hectare monitoring.');
     }
 
     public function uploadSourceFile(Request $request, SourceRecordPackage $sourceRecordPackage)

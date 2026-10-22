@@ -148,6 +148,62 @@ class SourceRecordPackageLandholdingConversionTest extends TestCase
         $this->assertDatabaseCount('landholdings', 0);
     }
 
+    public function test_parcel_creation_with_landowner_selection_does_not_implicitly_activate_landholding(): void
+    {
+        [$staff, $package, $landowner] = $this->fixture();
+        $package->update(['parcel_id' => null, 'landowner_id' => null]);
+        $package = $package->fresh();
+
+        $this->actingAs($staff)->post(route('staff.source-record-packages.create-parcel', $package), [
+            'expected_record_revision' => $package->record_revision,
+            'parcel_code' => 'REVIEW-NEW-PARCEL',
+            'title_no' => 'TCT-REVIEW-NEW',
+            'municipality' => 'Dumaguete City',
+            'barangay' => 'Bantayan',
+            'province' => 'Negros Oriental',
+            'area_hectares' => '3.0000',
+            'geometry_geojson' => null,
+            'status' => 'active',
+            'remarks' => null,
+            'landowner_id' => $landowner->id,
+        ])->assertRedirect(route('staff.source-record-packages.show', $package));
+
+        $this->assertDatabaseCount('landholdings', 0);
+        $this->assertSame(0.0, (float) app(LandholdingAreaValidationService::class)
+            ->forLandowner($landowner)['current_active_total']);
+        $this->assertSame($landowner->id, $package->fresh()->landowner_id);
+        $this->assertNotNull($package->fresh()->parcel_id);
+        $this->assertDatabaseHas('audit_logs', ['action' => 'parcel_created_from_source_record_package']);
+    }
+
+    public function test_historical_source_linked_during_parcel_creation_does_not_activate_hectares(): void
+    {
+        [$staff, $package, $landowner] = $this->fixture(LegacyRecord::SOURCE_SCOPE_HISTORICAL);
+        $package->update(['parcel_id' => null, 'landowner_id' => null]);
+        $package = $package->fresh();
+
+        $this->actingAs($staff)->post(route('staff.source-record-packages.create-parcel', $package), [
+            'expected_record_revision' => $package->record_revision,
+            'parcel_code' => 'REVIEW-HIST-PARCEL',
+            'title_no' => null,
+            'municipality' => 'Dumaguete City',
+            'barangay' => 'Bantayan',
+            'province' => 'Negros Oriental',
+            'area_hectares' => '3.0000',
+            'geometry_geojson' => null,
+            'status' => 'active',
+            'remarks' => null,
+            'landowner_id' => $landowner->id,
+        ])->assertRedirect();
+
+        $this->assertDatabaseCount('landholdings', 0);
+        $this->actingAs($staff)->post(route('staff.source-record-packages.landholding.store', $package), $this->input($package->fresh()))
+            ->assertRedirect();
+        $this->assertSame(Landholding::STATUS_HISTORICAL, Landholding::firstOrFail()->status);
+        $this->assertSame(0.0, (float) app(LandholdingAreaValidationService::class)
+            ->forLandowner($landowner)['current_active_total']);
+    }
+
     private function fixture(string $scope = LegacyRecord::SOURCE_SCOPE_CURRENT_ACTIVE): array
     {
         $staff = User::factory()->create(['role' => User::ROLE_STAFF, 'is_active' => true]);
