@@ -1544,8 +1544,7 @@
                                                 <label>Status *</label>
                                                 <select name="status" class="source-input">
                                                     <option value="active" @selected(old('status', 'active') === 'active')>Active</option>
-                                                    <option value="pending_legal_review" @selected(old('status') === 'pending_legal_review')>Legal Completeness Review</option>
-                                                    <option value="archived" @selected(old('status') === 'archived')>Archived</option>
+                                                    <option value="inactive" @selected(old('status') === 'inactive')>Inactive / Archived</option>
                                                 </select>
                                             </div>
                                             <div class="source-form-field">
@@ -1560,12 +1559,8 @@
                                                 <label>Province</label>
                                                 <input name="province" value="{{ old('province', $package->province ?? 'Negros Oriental') }}" class="source-input">
                                             </div>
-                                            <div class="source-form-field">
-                                                <label>Date Acquired</label>
-                                                <input type="date" name="date_acquired" value="{{ old('date_acquired') }}" class="source-input">
-                                            </div>
                                             <div class="source-form-field full">
-                                                <label>Link Existing Landowner As Active Landholding</label>
+                                                <label>Link Existing Landowner to This Source Package</label>
                                                 <div data-remote-record-select data-lookup-url="{{ route('staff.lookups.landowners') }}" class="space-y-2">
                                                     <input type="search"
                                                            class="source-input"
@@ -1585,7 +1580,7 @@
                                                     </select>
                                                     <p class="source-mini-copy" data-remote-record-status>Search loads a bounded set of matching landowner records.</p>
                                                 </div>
-                                                <p class="source-mini-copy">The map displays owner names through active landholding records.</p>
+                                                <p class="source-mini-copy">This only links the Landowner to the source package. An active Landholding and its acreage require separate staff review and confirmation.</p>
                                             </div>
                                             <div class="source-form-field full">
                                                 <label>Parcel GeoJSON Geometry</label>
@@ -1599,7 +1594,7 @@
                                         </div>
                                         <button type="submit" class="staff-button staff-button-dark justify-center">
                                             <i class="fa-solid fa-map-location-dot"></i>
-                                            Create Parcel Record
+                                            Create and Link Parcel (Landholding Reviewed Separately)
                                         </button>
                                     </form>
                                 </details>
@@ -1612,6 +1607,28 @@
                     </div>
                 </section>
 
+
+                <section class="source-detail-panel">
+                    <div class="source-detail-panel-header">
+                        <div>
+                            <p class="source-detail-eyebrow">Master Landholding Record</p>
+                            <h3 class="source-detail-title">Create a Verified Landholding</h3>
+                            <p class="source-detail-help">After linking a verified Landowner and Parcel, confirm their landholding share in a separate review step. Only current/active source holdings contribute to the 5-hectare calculation.</p>
+                        </div>
+                    </div>
+                    <div class="source-detail-body">
+                        @if ($package->landholding)
+                            <p class="source-detail-help">A Landholding was already created from this source package.</p>
+                            <a class="staff-button staff-button-light" href="{{ route('staff.records.landowners.show', $package->landholding->landowner_id) }}#landholdings">View Landholding</a>
+                        @elseif ($package->parcel_id && $package->landowner_id)
+                            <a class="staff-button staff-button-primary" href="{{ route('staff.source-record-packages.landholding.review', $package) }}">
+                                <i class="fa-solid fa-clipboard-check"></i> Review &amp; Create Landholding
+                            </a>
+                        @else
+                            <p class="source-link-guidance">Link a Landowner and Parcel above before reviewing Landholding creation.</p>
+                        @endif
+                    </div>
+                </section>
 
             </main>
 

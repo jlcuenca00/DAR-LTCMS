@@ -131,7 +131,7 @@ class SourceRecordPackageController extends Controller
 
     public function show(SourceRecordPackage $sourceRecordPackage)
     {
-        $sourceRecordPackage->load(['records', 'parcel', 'landowner', 'sourceFileUploadedBy']);
+        $sourceRecordPackage->load(['records', 'parcel', 'landowner', 'landholding', 'sourceFileUploadedBy']);
 
         $selectedParcelId = request()->session()->getOldInput('parcel_id', $sourceRecordPackage->parcel_id);
         $selectedParcel = $selectedParcelId
@@ -156,6 +156,11 @@ class SourceRecordPackageController extends Controller
     {
         $inputService = app(SourceRecordPackageInputService::class);
         $data = $request->validate($inputService->updateRules());
+        if ($sourceRecordPackage->landholding()->exists() && $sourceRecordPackage->source_record_scope !== $data['source_record_scope']) {
+            throw ValidationException::withMessages([
+                'source_record_scope' => 'This package already created a Landholding. Its active/historical source scope cannot be changed.',
+            ]);
+        }
         $types = $sourceRecordPackage->records->pluck('record_type');
         if ($types->isNotEmpty()) {
             $inputService->assertIncludedSections(array_merge($data, [
@@ -233,6 +238,12 @@ class SourceRecordPackageController extends Controller
         $parcel = Parcel::findOrFail($data['parcel_id']);
 
         DB::transaction(function () use ($sourceRecordPackage, $parcel) {
+            $sourceRecordPackage = SourceRecordPackage::query()->whereKey($sourceRecordPackage->id)->lockForUpdate()->firstOrFail();
+            if ($sourceRecordPackage->landholding()->exists() && (int) $sourceRecordPackage->parcel_id !== (int) $parcel->id) {
+                throw ValidationException::withMessages([
+                    'parcel_id' => 'This package already created a Landholding. Its source Parcel link cannot be changed.',
+                ]);
+            }
             $sourceRecordPackage->update([
                 'parcel_id' => $parcel->id,
                 'parcel_code' => $parcel->parcel_code,
@@ -269,6 +280,7 @@ class SourceRecordPackageController extends Controller
         }
 
         $data = $request->validate([
+            'expected_record_revision' => ['required', 'integer', 'min:1'],
             'parcel_code' => ['required', 'string', 'max:255', 'unique:parcels,parcel_code'],
             'title_no' => ['nullable', 'string', 'max:255'],
             'municipality' => ['nullable', 'string', 'max:255'],
@@ -280,7 +292,6 @@ class SourceRecordPackageController extends Controller
             'remarks' => ['nullable', 'string', 'max:5000'],
 
             'landowner_id' => ['nullable', 'exists:landowners,id'],
-            'date_acquired' => ['nullable', 'date', 'after_or_equal:1900-01-01', 'before_or_equal:today'],
         ]);
 
         $geometry = app(ParcelGeometryService::class)->decodePolygon(
@@ -288,6 +299,21 @@ class SourceRecordPackageController extends Controller
         );
 
         DB::transaction(function () use ($data, $geometry, $sourceRecordPackage, $request) {
+            $sourceRecordPackage = SourceRecordPackage::query()
+                ->whereKey($sourceRecordPackage->id)->lockForUpdate()->firstOrFail();
+            app(\App\Services\RecordEditRevisionService::class)->assertExpected(
+                $sourceRecordPackage, (int) $data['expected_record_revision']
+            );
+            if ($sourceRecordPackage->parcel_id) {
+                throw ValidationException::withMessages(['parcel_code' => 'This package is already linked to a parcel.']);
+            }
+            if (! empty($data['landowner_id'])) {
+                if ($sourceRecordPackage->landowner_id && (int) $sourceRecordPackage->landowner_id !== (int) $data['landowner_id']) {
+                    throw ValidationException::withMessages([
+                        'landowner_id' => 'The selected Landowner conflicts with the existing source package link.',
+                    ]);
+                }
+            }
             if (! empty($data['landowner_id'])) {
                 app(LandownerConcurrencyService::class)->lockLandowner((int) $data['landowner_id']);
             }
@@ -314,22 +340,21 @@ class SourceRecordPackageController extends Controller
                 );
             }
 
-            if (! empty($data['landowner_id'])) {
-                Landholding::create([
-                    'landowner_id' => $data['landowner_id'],
-                    'parcel_id' => $parcel->id,
-                    'area_hectares' => $parcel->area_hectares ?? 0,
-                    'status' => 'active',
-                    'date_acquired' => $data['date_acquired'] ?? null,
-                    'remarks' => 'Created from source package ' . $sourceRecordPackage->package_code . '.',
-                ]);
-            }
+            // A Parcel or a Landowner source link does not establish active landholding.
+            // Staff must separately confirm the Landholding share in the review flow.
 
             $sourceRecordPackage->update([
                 'parcel_id' => $parcel->id,
+                'landowner_id' => $data['landowner_id'] ?? $sourceRecordPackage->landowner_id,
                 'parcel_code' => $parcel->parcel_code,
                 'status' => SourceRecordPackage::STATUS_PARCEL_CREATED,
             ]);
+
+            if (! empty($data['landowner_id'])) {
+                $sourceRecordPackage->records()->get()->each(function (LegacyRecord $record) use ($data): void {
+                    $record->update(['landowner_id' => $data['landowner_id']]);
+                });
+            }
 
             $this->syncPackageRecordsToParcel($sourceRecordPackage, $parcel);
 
@@ -342,7 +367,7 @@ class SourceRecordPackageController extends Controller
                     'source_record_package_id' => $sourceRecordPackage->id,
                     'parcel_id' => $parcel->id,
                     'parcel_code' => $parcel->parcel_code,
-                    'linked_landowner_id' => $data['landowner_id'] ?? null,
+                    'linked_landowner_id' => $data['landowner_id'] ?? $sourceRecordPackage->landowner_id,
                     'source_records_linked' => $sourceRecordPackage->records()->count(),
                 ]
             );
@@ -353,7 +378,7 @@ class SourceRecordPackageController extends Controller
 
         return redirect()
             ->route('staff.source-record-packages.show', $sourceRecordPackage)
-            ->with('success', 'Parcel record created from source package and linked successfully.');
+            ->with('success', 'Parcel record created and linked. Verify the landholding share separately before it contributes to hectare monitoring.');
     }
 
     public function uploadSourceFile(Request $request, SourceRecordPackage $sourceRecordPackage)
