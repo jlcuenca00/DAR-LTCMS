@@ -82,6 +82,36 @@ test('source package CSV import becomes a reviewed master landholding and affect
     await expect(page).toHaveURL(/\/staff\/source-record-packages\/\d+$/);
     await expect(page.locator('.source-detail-code')).toContainText('SRC-PKG-');
 
+    // The source package must use the Staff workspace width, including its review controls.
+    const workspace = await page.locator('.staff-content-inner').boundingBox();
+    const detail = await page.locator('.source-detail-page').boundingBox();
+    const hero = await page.locator('.source-detail-hero').boundingBox();
+    const workflow = await page.locator('.source-record-workflow').boundingBox();
+    expect(Math.abs(detail.x - workspace.x)).toBeLessThan(2);
+    expect(Math.abs(detail.width - workspace.width)).toBeLessThan(2);
+    expect(Math.abs(workflow.x - hero.x)).toBeLessThan(2);
+    expect(Math.abs(workflow.width - hero.width)).toBeLessThan(2);
+    expect(workflow.y).toBeGreaterThan(hero.y + hero.height);
+
+    // The reference card and both Landowner action cards must remain readable on each device.
+    const cards = await page.locator('.source-record-workflow .source-link-overview-grid .source-action-card')
+        .evaluateAll(nodes => nodes.map(node => {
+            const bounds = node.getBoundingClientRect();
+            return { x: bounds.x, right: bounds.right, width: bounds.width, y: bounds.y };
+        }));
+    expect(cards).toHaveLength(2);
+    for (const card of cards) {
+        expect(card.width).toBeGreaterThan(260);
+        expect(card.x).toBeGreaterThanOrEqual(workflow.x - 1);
+        expect(card.right).toBeLessThanOrEqual(workflow.x + workflow.width + 1);
+    }
+    if (testInfo.project.name === 'chromium-responsive') {
+        expect(Math.abs(cards[0].y - cards[1].y)).toBeLessThan(3);
+    } else {
+        expect(cards[1].y).toBeGreaterThan(cards[0].y + 20);
+    }
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true);
+
     // Source evidence alone must never be treated as an operational landholding.
     await expect(page.getByText('Link a Landowner and Parcel above before reviewing Landholding creation.')).toBeVisible();
 
