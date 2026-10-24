@@ -320,8 +320,9 @@ class SourceRecordPackageLandholdingConversionTest extends TestCase
         $this->actingAs($staff)->post(route('staff.source-record-packages.landholding.store', $package), $this->input($package))->assertRedirect();
         $holding = Landholding::firstOrFail();
         for ($index = 0; $index < 16; $index++) {
+            $parcel = Parcel::create(['parcel_code' => 'PAGINATION-'.$index, 'area_hectares' => 1, 'status' => 'active']);
             Landholding::create([
-                'landowner_id' => $owner->id, 'parcel_id' => $holding->parcel_id,
+                'landowner_id' => $owner->id, 'parcel_id' => $parcel->id,
                 'status' => Landholding::STATUS_HISTORICAL, 'area_hectares' => 1,
             ]);
         }
