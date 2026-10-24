@@ -20,7 +20,7 @@ class LandownerRecordController extends Controller
     public function show(Landowner $landowner, LandholdingAreaValidationService $hectareValidator)
     {
         $landowner->load('user');
-        $landholdings = $landowner->landholdings()->with(['parcel', 'sourceApplication'])
+        $landholdings = $landowner->landholdings()->with(['parcel', 'sourceApplication', 'sourceRecordPackage'])
             ->orderByDesc('id')->paginate(15, ['*'], 'holdings_page')->withQueryString()->fragment('landholdings');
         $activeHoldingCount = $landowner->activeLandholdings()->count();
         $otherHoldingCount = $landowner->landholdings()->where('status', '!=', 'active')->count();

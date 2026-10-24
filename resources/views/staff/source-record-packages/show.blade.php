@@ -1822,7 +1822,7 @@
                 <div class="source-detail-body">
                     @if ($package->landholding)
                         <p class="source-detail-help">A Landholding was already created from this source package.</p>
-                        <a class="staff-button staff-button-light" href="{{ route('staff.records.landowners.show', $package->landholding->landowner_id) }}#landholdings">View Landholding</a>
+                        <a class="staff-button staff-button-light" href="{{ route('staff.records.landowners.show', [$package->landholding->landowner_id, 'holdings_page' => $holdingPage]) }}#landholding-{{ $package->landholding->id }}">View Landholding</a>
                     @elseif ($package->parcel_id && $package->landowner_id)
                         <a class="staff-button staff-button-primary" href="{{ route('staff.source-record-packages.landholding.review', $package) }}">
                             <i class="fa-solid fa-clipboard-check"></i> Review &amp; Create Landholding

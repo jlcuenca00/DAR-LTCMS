@@ -7,6 +7,7 @@ use App\Models\Concerns\TracksRecordRevision;
 use App\Services\ParcelAreaIntegrityService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Validation\ValidationException;
 
 class Landholding extends Model
 {
@@ -47,8 +48,38 @@ class Landholding extends Model
     protected static function booted(): void
     {
         static::saving(function (Landholding $landholding) {
+            $landholding->assertSourceProvenance();
             app(ParcelAreaIntegrityService::class)->assertLandholdingCapacity($landholding);
         });
+    }
+
+    private function assertSourceProvenance(): void
+    {
+        if ($this->exists && $this->getRawOriginal('source_record_package_id') !== null
+            && $this->isDirty('source_record_package_id')) {
+            throw ValidationException::withMessages([
+                'source_record_package_id' => 'The verified source package cannot be removed or replaced.',
+            ]);
+        }
+
+        if (! $this->source_record_package_id) {
+            return;
+        }
+
+        $package = SourceRecordPackage::query()->findOrFail($this->source_record_package_id);
+        if ((int) $this->parcel_id !== (int) $package->parcel_id
+            || (int) $this->landowner_id !== (int) $package->landowner_id) {
+            throw ValidationException::withMessages([
+                'parcel_id' => 'A source-linked Landholding must retain its verified Landowner and Parcel. Review the source package before correcting these links.',
+            ]);
+        }
+
+        if ($this->status === self::STATUS_ACTIVE
+            && $package->source_record_scope !== LegacyRecord::SOURCE_SCOPE_CURRENT_ACTIVE) {
+            throw ValidationException::withMessages([
+                'status' => 'Historical or reference-only source evidence cannot establish an active Landholding.',
+            ]);
+        }
     }
 
     public function scopeActive(Builder $query): Builder

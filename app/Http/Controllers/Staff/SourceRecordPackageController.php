@@ -143,7 +143,13 @@ class SourceRecordPackageController extends Controller
             ? Landowner::query()->find($selectedLandownerId)
             : null;
 
+        $holding = $sourceRecordPackage->landholding;
+        $holdingPage = $holding
+            ? intdiv($holding->landowner->landholdings()->where('id', '>', $holding->id)->count(), 15) + 1
+            : null;
+
         return view('staff.source-record-packages.show', [
+            'holdingPage' => $holdingPage,
             'package' => $sourceRecordPackage,
             'selectedParcel' => $selectedParcel,
             'selectedLandowner' => $selectedLandowner,
@@ -178,6 +184,7 @@ class SourceRecordPackageController extends Controller
         }
 
         DB::transaction(function () use ($data, $sourceRecordPackage, $request) {
+            $oldValues = \Illuminate\Support\Arr::only($sourceRecordPackage->attributesToArray(), array_keys($data));
             $sourceRecordPackage->update($data);
 
             foreach ($sourceRecordPackage->records as $record) {
@@ -218,6 +225,8 @@ class SourceRecordPackageController extends Controller
                     'package_code' => $sourceRecordPackage->package_code,
                     'source_record_package_id' => $sourceRecordPackage->id,
                     'records_synced' => $sourceRecordPackage->records()->count(),
+                    'old_values' => $oldValues,
+                    'new_values' => \Illuminate\Support\Arr::only($sourceRecordPackage->fresh()->attributesToArray(), array_keys($data)),
                     'actor_user_id' => $request->user()?->id,
                     'actor_name' => $request->user()?->name,
                 ]
@@ -414,7 +423,7 @@ class SourceRecordPackageController extends Controller
             throw $e;
         }
 
-        if ($oldSourceFilePath && $oldSourceFilePath !== $newSourceFilePath) {
+        if ($oldSourceFilePath && $oldSourceFilePath !== $newSourceFilePath && ! $this->isVerifiedSourceFile($oldSourceFilePath)) {
             \App\Services\ApplicationMutationFileLifecycle::fromRequest(request())?->deleteAfterCommit($oldSourceFilePath);
         }
 
@@ -446,13 +455,21 @@ class SourceRecordPackageController extends Controller
             );
         });
 
-        if ($oldSourceFilePath) {
+        if ($oldSourceFilePath && ! $this->isVerifiedSourceFile($oldSourceFilePath)) {
             \App\Services\ApplicationMutationFileLifecycle::fromRequest(request())?->deleteAfterCommit($oldSourceFilePath);
         }
 
         return back()->with('success', 'Source file removed from source package.');
     }
 
+
+    private function isVerifiedSourceFile(string $path): bool
+    {
+        return \App\Models\AuditLog::query()
+            ->where('action', 'landholding_created_from_source_package')
+            ->where('metadata->source_snapshot->source_file_path', $path)
+            ->exists();
+    }
 
     private function assertNoConflictingSourceRecords(Request $request, array $data): void
     {
