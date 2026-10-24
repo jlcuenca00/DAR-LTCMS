@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\AuditLog;
 use App\Models\Landholding;
 use App\Models\Landowner;
 use App\Models\LandTransferApplication;
@@ -11,6 +12,9 @@ use App\Models\SourceRecordPackage;
 use App\Models\User;
 use App\Services\LandholdingAreaValidationService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\ValidationException;
 use Tests\TestCase;
 
 class SourceRecordPackageLandholdingConversionTest extends TestCase
@@ -202,6 +206,129 @@ class SourceRecordPackageLandholdingConversionTest extends TestCase
         $this->assertSame(Landholding::STATUS_HISTORICAL, Landholding::firstOrFail()->status);
         $this->assertSame(0.0, (float) app(LandholdingAreaValidationService::class)
             ->forLandowner($landowner)['current_active_total']);
+    }
+
+    public function test_normal_editor_cannot_activate_a_historical_source_holding(): void
+    {
+        [$staff, $package, $owner, $parcel] = $this->fixture(LegacyRecord::SOURCE_SCOPE_HISTORICAL);
+        $this->actingAs($staff)->post(route('staff.source-record-packages.landholding.store', $package), $this->input($package))->assertRedirect();
+        $holding = Landholding::firstOrFail();
+        $auditCount = AuditLog::where('action', 'landholding_record_updated')->count();
+
+        $this->patch(route('staff.records.landowners.landholdings.update', [$owner, $holding]), [
+            'expected_record_revision' => $holding->record_revision,
+            'parcel_id' => $parcel->id,
+            'area_hectares' => '2.5000',
+            'status' => Landholding::STATUS_ACTIVE,
+        ])->assertSessionHasErrors('status');
+
+        $this->assertSame(Landholding::STATUS_HISTORICAL, $holding->fresh()->status);
+        $this->assertSame($auditCount, AuditLog::where('action', 'landholding_record_updated')->count());
+        $this->assertSame(0.0, (float) app(LandholdingAreaValidationService::class)->forLandowner($owner)['current_active_total']);
+    }
+
+    public function test_normal_editor_cannot_move_a_source_holding_to_another_parcel(): void
+    {
+        [$staff, $package, $owner, $parcel] = $this->fixture();
+        $this->actingAs($staff)->post(route('staff.source-record-packages.landholding.store', $package), $this->input($package))->assertRedirect();
+        $holding = Landholding::firstOrFail();
+        $otherParcel = Parcel::create(['parcel_code' => 'OTHER-SOURCE-PARCEL', 'area_hectares' => 5, 'status' => 'active']);
+
+        $this->patch(route('staff.records.landowners.landholdings.update', [$owner, $holding]), [
+            'expected_record_revision' => $holding->record_revision,
+            'parcel_id' => $otherParcel->id,
+            'area_hectares' => '2.5000',
+            'status' => Landholding::STATUS_ACTIVE,
+        ])->assertSessionHasErrors('parcel_id');
+
+        $this->assertSame($parcel->id, $holding->fresh()->parcel_id);
+        $this->assertSame($parcel->id, $package->fresh()->parcel_id);
+    }
+
+    public function test_source_holding_still_allows_audited_share_corrections(): void
+    {
+        [$staff, $package, $owner, $parcel] = $this->fixture();
+        $this->actingAs($staff)->post(route('staff.source-record-packages.landholding.store', $package), $this->input($package))->assertRedirect();
+        $holding = Landholding::firstOrFail();
+
+        $this->patch(route('staff.records.landowners.landholdings.update', [$owner, $holding]), [
+            'expected_record_revision' => $holding->record_revision,
+            'parcel_id' => $parcel->id,
+            'area_hectares' => '2.0000',
+            'status' => Landholding::STATUS_ACTIVE,
+            'remarks' => 'Corrected verified share',
+        ])->assertSessionHasNoErrors()->assertRedirect();
+
+        $this->assertSame('2.0000', $holding->fresh()->area_hectares);
+        $this->assertDatabaseHas('audit_logs', ['action' => 'landholding_record_updated', 'auditable_id' => $holding->id]);
+    }
+
+    public function test_verified_snapshot_and_original_file_survive_source_corrections_and_replacement(): void
+    {
+        Storage::fake('local');
+        [$staff, $package] = $this->fixture();
+        $originalPath = 'source-record-packages/verified-original.pdf';
+        Storage::disk('local')->put($originalPath, 'original verified bytes');
+        $package->update(['source_file_path' => $originalPath, 'source_file_original_filename' => 'original.pdf']);
+        $package = $package->fresh();
+        $revision = (int) $package->record_revision;
+        $this->actingAs($staff)->post(route('staff.source-record-packages.landholding.store', $package),
+            array_merge($this->input($package), ['date_acquired' => '2020-01-01']))->assertSessionHasNoErrors();
+        $audit = AuditLog::where('action', 'landholding_created_from_source_package')->firstOrFail();
+        $snapshot = $audit->metadata;
+        $this->assertSame($revision, $snapshot['source_record_revision']);
+        $this->assertSame('2020-01-01', $snapshot['date_acquired']);
+        $this->assertSame('Verified source book', $snapshot['source_snapshot']['source_book']);
+        $this->assertIsString($snapshot['source_snapshot']['transcription_date']);
+        $this->assertCount(1, $snapshot['source_records']);
+
+        $data = array_intersect_key($package->attributesToArray(), app(\App\Services\SourceRecordPackageInputService::class)->updateRules());
+        $data['source_book'] = 'Corrected book';
+        $data['expected_record_revision'] = $package->fresh()->record_revision;
+        $this->patch(route('staff.source-record-packages.update', $package), $data)->assertSessionHasNoErrors();
+        $update = AuditLog::where('action', 'source_record_package_updated')->latest('id')->firstOrFail();
+        $this->assertSame('Verified source book', $update->metadata['old_values']['source_book']);
+        $this->assertSame('Corrected book', $update->metadata['new_values']['source_book']);
+
+        $this->post(route('staff.source-record-packages.source-file.store', $package), [
+            'expected_record_revision' => $package->fresh()->record_revision,
+            'source_file' => UploadedFile::fake()->create('replacement.pdf', 10, 'application/pdf'),
+        ])->assertSessionHasNoErrors();
+        Storage::disk('local')->assertExists($originalPath);
+        $replacement = $package->fresh()->source_file_path;
+        $this->assertNotSame($originalPath, $replacement);
+        $this->delete(route('staff.source-record-packages.source-file.destroy', $package), [
+            'expected_record_revision' => $package->fresh()->record_revision,
+        ])->assertSessionHasNoErrors();
+        Storage::disk('local')->assertMissing($replacement);
+        Storage::disk('local')->assertExists($originalPath);
+        $this->assertSame($snapshot, $audit->fresh()->metadata);
+    }
+
+    public function test_source_provenance_cannot_be_detached_through_model_saves(): void
+    {
+        [$staff, $package] = $this->fixture();
+        $this->actingAs($staff)->post(route('staff.source-record-packages.landholding.store', $package), $this->input($package))->assertRedirect();
+        $holding = Landholding::firstOrFail();
+        $this->expectException(ValidationException::class);
+        $holding->update(['source_record_package_id' => null]);
+    }
+
+    public function test_view_holding_link_targets_its_actual_page_and_row(): void
+    {
+        [$staff, $package, $owner] = $this->fixture();
+        $this->actingAs($staff)->post(route('staff.source-record-packages.landholding.store', $package), $this->input($package))->assertRedirect();
+        $holding = Landholding::firstOrFail();
+        for ($index = 0; $index < 16; $index++) {
+            $parcel = Parcel::create(['parcel_code' => 'PAGINATION-'.$index, 'area_hectares' => 1, 'status' => 'active']);
+            Landholding::create([
+                'landowner_id' => $owner->id, 'parcel_id' => $parcel->id,
+                'status' => Landholding::STATUS_HISTORICAL, 'area_hectares' => 1,
+            ]);
+        }
+        $url = route('staff.records.landowners.show', [$owner->id, 'holdings_page' => 2]).'#landholding-'.$holding->id;
+        $this->get(route('staff.source-record-packages.show', $package))->assertOk()->assertSee(e($url), false);
+        $this->get($url)->assertOk()->assertSee('id="landholding-'.$holding->id.'"', false);
     }
 
     private function fixture(string $scope = LegacyRecord::SOURCE_SCOPE_CURRENT_ACTIVE): array

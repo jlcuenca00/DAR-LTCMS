@@ -159,6 +159,14 @@ class SourceRecordPackageLandholdingController extends Controller
                 'status' => $status,
                 'source_reference_number' => $package->landholding_reference_number,
                 'verified_by_user_id' => $request->user()->id,
+                'verified_at' => now()->toIso8601String(),
+                'date_acquired' => $landholding->date_acquired?->toDateString(),
+                'source_record_revision' => (int) $package->record_revision,
+                'source_snapshot' => \Illuminate\Support\Arr::only($package->attributesToArray(), array_diff($package->getFillable(), ['source_geometry_geojson'])),
+                'source_geometry_sha256' => $package->source_geometry_geojson === null
+                    ? null : hash('sha256', json_encode($package->source_geometry_geojson, JSON_THROW_ON_ERROR)),
+                'source_records' => $package->records()->orderBy('id')->get()
+                    ->map(fn ($record) => $record->only(['id', 'record_revision', 'record_type', 'source_record_scope']))->all(),
                 'scope_note' => 'Administrative record and assistive monitoring only. No land ownership transfer or registry mutation was executed.',
             ]);
         });

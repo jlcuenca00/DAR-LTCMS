@@ -146,6 +146,13 @@ test('source package CSV import becomes a reviewed master landholding and affect
     await expect(page.locator('.source-detail-page')).toContainText('Verified Landholding created and linked');
 
     await page.getByRole('link', { name: 'View Landholding' }).click();
+    await expect(page).toHaveURL(/holdings_page=1#landholding-\d+$/);
+    const holdingRow = page.locator(new URL(page.url()).hash);
+    await expect(holdingRow).toBeVisible();
+    await holdingRow.getByText('Edit landholding', { exact: true }).click();
+    await expect(holdingRow.locator('input[type="hidden"][name="parcel_id"]')).toHaveCount(1);
+    await expect(holdingRow.locator('select[name="parcel_id"]')).toHaveCount(0);
+    await expect(holdingRow.getByText('Parcel retained from the verified source package.')).toBeVisible();
     await expect(page.locator('.hectare-focus-card')).toContainText('2.5000 ha');
     await expect(page.locator('#landholdings')).toContainText(landholdingRef);
     await expect(page.locator('#landholdings')).toContainText(parcelCode);

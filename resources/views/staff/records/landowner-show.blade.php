@@ -976,6 +976,11 @@
                                             <div class="landholding-edit-field span-6">
                                                 <label class="landholding-field-label">Parcel</label>
                                                 @php($holdingParcelReference = collect([filled($holding->parcel?->title_no) ? 'Title: '.$holding->parcel->title_no : null, filled($holding->parcel?->tax_decl_no) ? 'Tax Declaration: '.$holding->parcel->tax_decl_no : null])->filter()->implode(' / '))
+                                                @if ($holding->source_record_package_id)
+                                                    <input type="hidden" name="parcel_id" value="{{ $holding->parcel_id }}">
+                                                    <p class="landholding-input">{{ $holding->parcel?->parcel_code }}</p>
+                                                    <p class="landholding-field-help">Parcel retained from the verified source package.</p>
+                                                @else
                                                 <div data-remote-record-select data-lookup-url="{{ route('staff.lookups.parcels') }}" class="space-y-2">
                                                     <input type="search"
                                                            class="landholding-input"
@@ -1000,6 +1005,7 @@
                                                     </select>
                                                     <p class="landholding-field-help" data-remote-record-status>Search loads a bounded set of matching parcel records.</p>
                                                 </div>
+                                                @endif
                                             </div>
 
                                             <div class="landholding-edit-field span-3">
@@ -1011,6 +1017,8 @@
                                                 <label class="landholding-field-label">Status</label>
                                                 <select name="status" class="landholding-input" required>
                                                     @foreach (\App\Models\Landholding::STATUSES as $status)
+                                                        @continue($status === 'active' && $holding->sourceRecordPackage
+                                                            && $holding->sourceRecordPackage->source_record_scope !== \App\Models\LegacyRecord::SOURCE_SCOPE_CURRENT_ACTIVE)
                                                         <option value="{{ $status }}" @selected($holding->status === $status)>{{ ucwords(str_replace('_', ' ', $status)) }}</option>
                                                     @endforeach
 
