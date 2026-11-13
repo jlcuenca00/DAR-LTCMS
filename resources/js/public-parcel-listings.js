@@ -24,7 +24,7 @@ function listingDetails(properties) {
 
     if (properties.demo) {
         const badge = document.createElement('p');
-        badge.textContent = 'Demo only · Fictional listing';
+        badge.textContent = 'Demo only · Fictional parcel, unavailable for purchase';
         content.append(badge);
     } else if (/^\+639\d{9}$/.test(properties.mobile)) {
         const link = document.createElement('a');
@@ -38,7 +38,12 @@ function listingDetails(properties) {
 }
 
 const parcels = L.geoJSON([], {
-    style: { color: '#047857', weight: 2, fillOpacity: 0.25 },
+    style: (feature) => ({
+        color: feature.properties.demo ? '#92400e' : '#047857',
+        dashArray: feature.properties.demo ? '5 4' : null,
+        weight: 2,
+        fillOpacity: 0.25,
+    }),
     onEachFeature(feature, layer) {
         layer.bindPopup(listingDetails(feature.properties));
         const item = document.createElement('li');
@@ -65,6 +70,9 @@ async function loadListings() {
         if (!response.ok) throw new Error('Listing request failed');
         const page = await response.json();
         parcels.addData(page.features);
+        if (page.features.some((feature) => feature.properties.demo)) {
+            document.getElementById('listing-demo-note').hidden = false;
+        }
         nextPage = page.next;
         const count = list.children.length;
         status.textContent = count ? `${count} ${count === 1 ? 'listing' : 'listings'} shown.` : 'No parcels are currently listed.';
