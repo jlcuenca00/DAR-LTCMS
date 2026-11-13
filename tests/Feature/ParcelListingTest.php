@@ -89,6 +89,26 @@ class ParcelListingTest extends TestCase
 
         $this->assertSame(15, ParcelListing::query()->where('is_demo', true)->whereNull('mobile')->count());
         $this->assertSame(15, ParcelListing::query()->current()->where('is_demo', true)->count());
-        $this->getJson(route('parcel-listings.features'))->assertOk()->assertJsonCount(15, 'features');
+        $this->getJson(route('parcel-listings.features'))->assertOk()->assertJsonCount(15, 'features')
+            ->assertJsonPath('features.0.properties.demo', true)
+            ->assertJsonPath('features.0.properties.mobile', null);
+    }
+
+    public function test_production_demo_migration_publishes_only_fictional_contact_free_examples(): void
+    {
+        $migration = require database_path('migrations/2026_11_13_000100_publish_fictional_parcel_listing_examples.php');
+
+        $this->app->instance('env', 'production');
+        $migration->up();
+        $migration->up();
+
+        $this->assertSame(15, ParcelListing::query()->current()->where('is_demo', true)->count());
+        $this->getJson(route('parcel-listings.features'))->assertOk()->assertJsonCount(15, 'features')
+            ->assertJsonPath('features.0.properties.demo', true)
+            ->assertJsonPath('features.0.properties.mobile', null);
+
+        $migration->down();
+        $this->getJson(route('parcel-listings.features'))->assertOk()->assertJsonCount(0, 'features');
+        $this->assertDatabaseCount('landholdings', 15);
     }
 }

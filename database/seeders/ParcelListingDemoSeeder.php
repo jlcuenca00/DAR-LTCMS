@@ -13,13 +13,13 @@ use RuntimeException;
 
 class ParcelListingDemoSeeder extends Seeder
 {
-    public function run(): void
+    public function run(bool $allowProduction = false): void
     {
-        if (! app()->environment('local', 'testing', 'staging')) {
-            throw new RuntimeException('Parcel listing demo records are restricted to local, testing, and staging databases.');
+        if (! app()->environment('local', 'testing', 'staging') && ! ($allowProduction && app()->isProduction())) {
+            throw new RuntimeException('Production demo seeding requires the dedicated data migration.');
         }
 
-        DB::transaction(function () {
+        DB::transaction(function () use ($allowProduction) {
             for ($index = 0; $index < 15; $index++) {
                 $sequence = str_pad((string) ($index + 1), 2, '0', STR_PAD_LEFT);
                 $code = 'DEMO-LISTING-'.$sequence;
@@ -29,6 +29,11 @@ class ParcelListingDemoSeeder extends Seeder
                     if ($parcel->remarks !== 'Fictional parcel listing demo'
                         || ! $holding?->parcelListing?->is_demo) {
                         throw new RuntimeException('Demo parcel code is already in use: '.$code);
+                    }
+
+                    if ($allowProduction && $holding->parcelListing->status === ParcelListing::WITHDRAWN) {
+                        $holding->parcelListing->update(['status' => ParcelListing::PUBLISHED]);
+                        AuditLogger::record('parcel_listing.demo_republished', auditable: $holding->parcelListing);
                     }
 
                     continue;

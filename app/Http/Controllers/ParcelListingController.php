@@ -19,7 +19,6 @@ class ParcelListingController extends Controller
             ->where(fn ($query) => $query->where('is_demo', true)
                 ->orWhere(fn ($real) => $real->whereNotNull('consented_at')->whereNotNull('mobile')))
             ->current()
-            ->when(app()->isProduction(), fn ($query) => $query->where('is_demo', false))
             ->with('landholding.parcel')
             ->orderBy('id')
             ->cursorPaginate(200);
@@ -45,7 +44,7 @@ class ParcelListingController extends Controller
                         'barangay' => $parcel->barangay,
                         'area_hectares' => $parcel->area_hectares,
                         'display_name' => $listing->display_name,
-                        'mobile' => $listing->mobile,
+                        'mobile' => $listing->is_demo ? null : $listing->mobile,
                         'demo' => $listing->is_demo,
                     ],
                 ];
