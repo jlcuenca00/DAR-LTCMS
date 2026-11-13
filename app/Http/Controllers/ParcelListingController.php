@@ -12,11 +12,6 @@ use Illuminate\Validation\ValidationException;
 
 class ParcelListingController extends Controller
 {
-    public function map()
-    {
-        return view('parcel-listings.map');
-    }
-
     public function features()
     {
         $features = ParcelListing::query()
