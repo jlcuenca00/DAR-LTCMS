@@ -26,11 +26,18 @@ function listingDetails(properties) {
         const button = document.createElement('button');
         button.type = 'button';
         button.className = 'parcel-call-link';
-        button.textContent = `Call owner · 09XX XXX ${properties.simulation_contact}`;
+        const contact = `09XX XXX ${properties.simulation_contact}`;
+        button.textContent = `Copy number · ${contact}`;
         const feedback = document.createElement('p');
         feedback.setAttribute('role', 'status');
-        button.addEventListener('click', () => {
-            feedback.textContent = `Simulated call to ${properties.display_name}.`;
+        button.addEventListener('click', async () => {
+            feedback.textContent = '';
+            try {
+                await navigator.clipboard.writeText(contact);
+                feedback.textContent = 'Copied to clipboard.';
+            } catch {
+                feedback.textContent = 'Could not copy the number.';
+            }
         });
         content.append(button, feedback);
     } else if (/^\+639\d{9}$/.test(properties.mobile)) {
