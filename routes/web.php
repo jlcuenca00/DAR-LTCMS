@@ -37,7 +37,7 @@ use App\Models\User;
 use Illuminate\Support\Facades\Route;
 
 Route::view('/', 'welcome')->name('home');
-Route::get('/parcels-for-sale', [ParcelListingController::class, 'map'])->name('parcel-listings.map');
+Route::redirect('/parcels-for-sale', '/#parcels-for-sale', 301);
 Route::get('/parcels-for-sale/features', [ParcelListingController::class, 'features'])
     ->middleware('throttle:60,1')->name('parcel-listings.features');
 Route::view('/privacy-policy', 'legal.privacy')->name('privacy');

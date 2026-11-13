@@ -15,6 +15,16 @@ class ParcelListingTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_public_map_is_embedded_in_the_landing_page(): void
+    {
+        $this->withoutVite();
+
+        $this->get(route('home'))->assertOk()
+            ->assertSee('href="#parcels-for-sale"', false)
+            ->assertSee('id="public-parcel-map"', false);
+        $this->get('/parcels-for-sale')->assertStatus(301)->assertRedirect('/#parcels-for-sale');
+    }
+
     public function test_public_listing_requires_owner_consent_and_staff_approval_and_can_be_withdrawn(): void
     {
         $owner = User::factory()->create(['role' => 'landowner', 'registration_status' => User::REGISTRATION_APPROVED]);

@@ -9,7 +9,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Google+Sans:opsz,wght@17..18,400..700&display=swap" rel="stylesheet">
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @vite(['resources/css/app.css', 'resources/js/app.js', 'resources/js/public-parcel-listings.js'])
 
     <style>
         :root {
@@ -73,6 +73,10 @@
 
         .section { padding: 4.5rem 0; }
         .section-white { background: #fff; }
+        #parcels-for-sale { scroll-margin-top: 10rem; }
+        .parcel-list-item { border: 1px solid var(--border); border-radius: .5rem; padding: .75rem; font-size: .875rem; }
+        .parcel-call-link { color: var(--green-800); font-weight: 600; text-decoration: underline; }
+        .parcel-locate { margin-top: .5rem; text-decoration: underline; }
         .section-dark { background: #0d3421; color: #fff; }
         .section-grid { display: grid; grid-template-columns: 250px minmax(0, 1fr); gap: 4rem; }
         .section-kicker { margin: 0 0 .45rem; color: var(--green-700); font-size: .78rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
@@ -186,7 +190,7 @@
                     <div class="hero-actions">
                         <a href="{{ route('login') }}" class="button button-light">Sign In</a>
                         <a href="#requirements" class="button button-outline">View Requirements</a>
-                        <a href="{{ route('parcel-listings.map') }}" class="button button-outline">Explore Parcels for Sale</a>
+                        <a href="#parcels-for-sale" class="button button-outline">Explore Parcels for Sale</a>
                     </div>
                 </div>
 
@@ -206,6 +210,8 @@
                 </aside>
             </div>
         </section>
+
+        @include('parcel-listings.map')
 
         <section class="section section-white" id="about" aria-labelledby="about-title">
             <div class="container section-grid">
