@@ -4,7 +4,7 @@
         <p class="mt-2 text-slate-700">Zoom in and select a parcel on the map, or choose one from the list.</p>
         <p class="mt-1 text-sm text-slate-600">Listings express the owner's interest in selling. Clearance and legal transfer follow separate procedures.</p>
         <p id="listing-demo-note" hidden class="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-            Dashed outlines show fictional examples. These parcels are unavailable for purchase.
+            This map includes simulated listings with fictional owners, boundaries, and contact details.
         </p>
         <div class="mt-6 grid gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]">
             <div id="public-parcel-map" class="isolate h-[52vh] min-h-80 rounded-xl border bg-slate-100"

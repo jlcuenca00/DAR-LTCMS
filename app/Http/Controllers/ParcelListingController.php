@@ -46,6 +46,9 @@ class ParcelListingController extends Controller
                         'display_name' => $listing->display_name,
                         'mobile' => $listing->is_demo ? null : $listing->mobile,
                         'demo' => $listing->is_demo,
+                        'simulation_contact' => $listing->is_demo
+                            ? str_pad(substr((string) $listing->id, -4), 4, '0', STR_PAD_LEFT)
+                            : null,
                     ],
                 ];
             })->filter()->values(),

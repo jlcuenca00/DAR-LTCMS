@@ -23,9 +23,16 @@ function listingDetails(properties) {
     content.append(heading, details);
 
     if (properties.demo) {
-        const badge = document.createElement('p');
-        badge.textContent = 'Demo only · Fictional parcel, unavailable for purchase';
-        content.append(badge);
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'parcel-call-link';
+        button.textContent = `Call owner · 09XX XXX ${properties.simulation_contact}`;
+        const feedback = document.createElement('p');
+        feedback.setAttribute('role', 'status');
+        button.addEventListener('click', () => {
+            feedback.textContent = `Simulated call to ${properties.display_name}.`;
+        });
+        content.append(button, feedback);
     } else if (/^\+639\d{9}$/.test(properties.mobile)) {
         const link = document.createElement('a');
         link.href = `tel:${properties.mobile}`;
@@ -38,12 +45,7 @@ function listingDetails(properties) {
 }
 
 const parcels = L.geoJSON([], {
-    style: (feature) => ({
-        color: feature.properties.demo ? '#92400e' : '#047857',
-        dashArray: feature.properties.demo ? '5 4' : null,
-        weight: 2,
-        fillOpacity: 0.25,
-    }),
+    style: { color: '#047857', weight: 2, fillOpacity: 0.25 },
     onEachFeature(feature, layer) {
         layer.bindPopup(listingDetails(feature.properties));
         const item = document.createElement('li');

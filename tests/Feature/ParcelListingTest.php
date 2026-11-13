@@ -91,6 +91,8 @@ class ParcelListingTest extends TestCase
         $this->assertSame(15, ParcelListing::query()->current()->where('is_demo', true)->count());
         $this->getJson(route('parcel-listings.features'))->assertOk()->assertJsonCount(15, 'features')
             ->assertJsonPath('features.0.properties.demo', true)
+            ->assertJsonPath('features.0.properties.display_name', 'Mariel Abellanosa')
+            ->assertJsonCount(6, 'features.0.geometry.coordinates.0')
             ->assertJsonPath('features.0.properties.mobile', null);
     }
 
@@ -105,6 +107,8 @@ class ParcelListingTest extends TestCase
         $this->assertSame(15, ParcelListing::query()->current()->where('is_demo', true)->count());
         $this->getJson(route('parcel-listings.features'))->assertOk()->assertJsonCount(15, 'features')
             ->assertJsonPath('features.0.properties.demo', true)
+            ->assertJsonPath('features.0.properties.display_name', 'Mariel Abellanosa')
+            ->assertJsonCount(6, 'features.0.geometry.coordinates.0')
             ->assertJsonPath('features.0.properties.mobile', null);
 
         $migration->down();
