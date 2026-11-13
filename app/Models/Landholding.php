@@ -7,6 +7,7 @@ use App\Models\Concerns\TracksRecordRevision;
 use App\Services\ParcelAreaIntegrityService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Validation\ValidationException;
 
 class Landholding extends Model
@@ -90,6 +91,11 @@ class Landholding extends Model
     public function landowner()
     {
         return $this->belongsTo(Landowner::class);
+    }
+
+    public function parcelListing(): HasOne
+    {
+        return $this->hasOne(ParcelListing::class);
     }
 
     public function parcel()

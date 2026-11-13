@@ -1134,6 +1134,7 @@
             ['active' => 'applications', 'route' => 'staff.applications.index', 'icon' => 'fa-file-lines', 'label' => 'Applications'],
             ['active' => 'landowner-records', 'route' => 'staff.records.landowners.index', 'icon' => 'fa-users', 'label' => 'Landowner Records'],
             ['active' => 'parcel-records', 'route' => 'staff.records.parcels.index', 'icon' => 'fa-map-location-dot', 'label' => 'Parcel Records'],
+            ['active' => 'parcel-listings', 'route' => 'staff.parcel-listings.index', 'icon' => 'fa-list', 'label' => 'Parcel Listings'],
             ['active' => 'parcel-map', 'route' => 'staff.parcel-map.index', 'icon' => 'fa-map', 'label' => 'Parcel Map'],
             ['active' => 'source-records', 'route' => 'staff.legacy-records.index', 'icon' => 'fa-box-archive', 'label' => 'Source Records'],
             ['active' => 'reports', 'route' => 'staff.reports.monitoring.index', 'icon' => 'fa-chart-column', 'label' => 'Monitoring Reports'],
