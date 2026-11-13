@@ -186,6 +186,7 @@
                     <div class="hero-actions">
                         <a href="{{ route('login') }}" class="button button-light">Sign In</a>
                         <a href="#requirements" class="button button-outline">View Requirements</a>
+                        <a href="{{ route('parcel-listings.map') }}" class="button button-outline">Explore Parcels for Sale</a>
                     </div>
                 </div>
 

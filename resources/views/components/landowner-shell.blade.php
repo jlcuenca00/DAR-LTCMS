@@ -724,6 +724,9 @@
                         Dashboard
                     </a>
 
+                    <a href="{{ route('landowner.parcel-listings.index') }}" class="lo-nav-link {{ $active === 'parcel-listings' ? 'active' : '' }}">
+                        <i class="fa-solid fa-list" aria-hidden="true"></i> <span>My Parcel Listings</span>
+                    </a>
                     <a href="{{ route('landowner.parcel-map.index') }}" class="lo-nav-link {{ $active === 'parcel-map' ? 'active' : '' }}">
                         <i class="fa-solid fa-map-location-dot"></i>
                         My Parcel Map

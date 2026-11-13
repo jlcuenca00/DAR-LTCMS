@@ -32,10 +32,14 @@ use App\Http\Controllers\Staff\SourceRecordPackageLandholdingController;
 use App\Http\Controllers\Staff\StaffDashboardController;
 use App\Http\Controllers\Staff\UserManagementController;
 use App\Http\Middleware\EnsureForm4ReviewStage;
+use App\Http\Controllers\ParcelListingController;
 use App\Models\User;
 use Illuminate\Support\Facades\Route;
 
 Route::view('/', 'welcome')->name('home');
+Route::get('/parcels-for-sale', [ParcelListingController::class, 'map'])->name('parcel-listings.map');
+Route::get('/parcels-for-sale/features', [ParcelListingController::class, 'features'])
+    ->middleware('throttle:60,1')->name('parcel-listings.features');
 Route::view('/privacy-policy', 'legal.privacy')->name('privacy');
 Route::view('/terms-of-service', 'legal.terms')->name('terms');
 
@@ -79,6 +83,9 @@ Route::middleware(['auth', 'role:staff'])
     ->prefix('staff')
     ->name('staff.')
     ->group(function () {
+        Route::get('/parcel-listings', [ParcelListingController::class, 'staffIndex'])->name('parcel-listings.index');
+        Route::post('/parcel-listings/{listing}', [ParcelListingController::class, 'review'])
+            ->whereNumber('listing')->name('parcel-listings.review');
         Route::get('/audit-logs', [AuditLogController::class, 'index'])
             ->name('audit-logs.index');
         Route::get('/audit-logs/print', [AuditLogController::class, 'print'])
@@ -257,6 +264,11 @@ Route::middleware(['auth', 'role:landowner'])
     ->prefix('landowner')
     ->name('landowner.')
     ->group(function () {
+        Route::get('/parcel-listings', [ParcelListingController::class, 'ownerIndex'])->name('parcel-listings.index');
+        Route::post('/parcel-listings/{holding}', [ParcelListingController::class, 'submit'])
+            ->whereNumber('holding')->name('parcel-listings.submit');
+        Route::delete('/parcel-listings/{holding}', [ParcelListingController::class, 'withdraw'])
+            ->whereNumber('holding')->name('parcel-listings.withdraw');
         Route::get('/parcel-map', [LandownerParcelMapController::class, 'index'])
             ->name('parcel-map.index');
         Route::get('/parcel-map/features', [ParcelMapDataController::class, 'features'])->name('parcel-map.features');
