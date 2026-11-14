@@ -142,6 +142,10 @@
         }
 
         @media (max-width: 720px) {
+            .header-inner { flex-wrap: wrap; gap: 0; padding-top: .35rem; }
+            .nav { flex-wrap: wrap; }
+            .nav a { padding-inline: .45rem; font-size: .8rem; }
+            .nav .sign-in { margin-left: 0; padding-inline: .55rem; }
             .hero-grid { padding: 3.5rem 0; }
             .section { padding: 3.5rem 0; }
             .feature-line,
@@ -173,7 +177,7 @@
                     <a href="#about">About</a>
                     <a href="#requirements">Requirements</a>
                     <a href="#process">Process</a>
-                    <a href="#office">Office</a>
+                    <a href="#parcels-for-sale">Parcel Listings</a>
                     <a href="{{ route('login') }}" class="sign-in">Sign In</a>
                 </nav>
             </div>
@@ -190,7 +194,6 @@
                     <div class="hero-actions">
                         <a href="{{ route('login') }}" class="button button-light">Sign In</a>
                         <a href="#requirements" class="button button-outline">View Requirements</a>
-                        <a href="#parcels-for-sale" class="button button-outline">Explore Parcels for Sale</a>
                     </div>
                 </div>
 
@@ -210,8 +213,6 @@
                 </aside>
             </div>
         </section>
-
-        @include('parcel-listings.map')
 
         <section class="section section-white" id="about" aria-labelledby="about-title">
             <div class="container section-grid">
@@ -282,6 +283,8 @@
                 </div>
             </div>
         </section>
+
+        @include('parcel-listings.map')
 
         <section class="section section-dark" aria-labelledby="access-title">
             <div class="container">
